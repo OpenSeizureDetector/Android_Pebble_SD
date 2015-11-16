@@ -125,7 +125,7 @@ public class SdData implements Parcelable {
 			jsonObj.put("dataTimeStr","00000000T000000");
 			jsonObj.put("dataTime","00-00-00 00:00:00");
 		    }
-		    Log.v(TAG,"sdData.dataTime = "+dataTime);
+		    Log.v(TAG,"mSdData.dataTime = "+dataTime);
 		    jsonObj.put("maxVal",maxVal);
 		    jsonObj.put("maxFreq",maxFreq);
 		    jsonObj.put("specPower",specPower);

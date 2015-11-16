@@ -25,9 +25,7 @@
 
 package uk.org.openseizuredetector;
 
-import android.app.ActionBar;
 import android.app.Activity;
-import android.app.IntentService;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.content.ComponentName;
@@ -35,22 +33,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageInfo;
-import android.preference.Preference;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.content.Context;
 import android.graphics.Color;
-import android.media.AudioManager;
-import android.media.ToneGenerator;
 import android.net.Uri;
-import android.net.wifi.WifiManager;
-import android.net.wifi.WifiInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
-import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
@@ -58,7 +49,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Button;
 import java.lang.reflect.Field;
@@ -69,28 +59,12 @@ import java.util.Enumeration;
 import java.util.Timer;
 import java.util.TimerTask;
 import org.apache.http.conn.util.InetAddressUtils;
-import java.lang.CharSequence;
-import android.util.AttributeSet;
 
 //MPAndroidChart
 import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.components.Legend.LegendForm;
-import com.github.mikephil.charting.components.LimitLine;
-import com.github.mikephil.charting.components.LimitLine.LimitLabelPosition;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.DataSet;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.data.filter.Approximator;
-import com.github.mikephil.charting.data.filter.Approximator.ApproximatorType;
-import com.github.mikephil.charting.listener.OnChartGestureListener;
-import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
-import com.github.mikephil.charting.utils.Highlight;
-
-import uk.org.openseizuredetector.SdServer;
 
 public class MainActivity extends Activity
 {
@@ -466,31 +440,31 @@ public class MainActivity extends Activity
 		try {
 		    if (mBound) {
 			tv = (TextView) findViewById(R.id.alarmTv);
-			if ((mSdServer.sdData.alarmState==0)
-                    && !mSdServer.sdData.alarmStanding
-                    && !mSdServer.sdData.fallAlarmStanding) {
+			if ((mSdServer.mSdData.alarmState==0)
+                    && !mSdServer.mSdData.alarmStanding
+                    && !mSdServer.mSdData.fallAlarmStanding) {
 			    tv.setText("OK");
 			    tv.setBackgroundColor(okColour);
 			}
-			if ((mSdServer.sdData.alarmState==1)
-                    && !mSdServer.sdData.alarmStanding
-                    && !mSdServer.sdData.fallAlarmStanding) {
+			if ((mSdServer.mSdData.alarmState==1)
+                    && !mSdServer.mSdData.alarmStanding
+                    && !mSdServer.mSdData.fallAlarmStanding) {
 			    tv.setText("WARNING");
 			    tv.setBackgroundColor(warnColour);
 			}
-			if (mSdServer.sdData.alarmStanding) {
+			if (mSdServer.mSdData.alarmStanding) {
 			    tv.setText("**ALARM**");
 			    tv.setBackgroundColor(alarmColour);
 			}
-                if (mSdServer.sdData.fallAlarmStanding) {
+                if (mSdServer.mSdData.fallAlarmStanding) {
                     tv.setText("**FALL**");
                     tv.setBackgroundColor(alarmColour);
                 }
 			tv = (TextView) findViewById(R.id.pebTimeTv);
-			tv.setText(mSdServer.mPebbleStatusTime.format("%H:%M:%S"));
+			tv.setText(mSdServer.mSdData.dataTime.format("%H:%M:%S"));
 			// Pebble Connected Phrase
 			tv = (TextView) findViewById(R.id.pebbleTv);
-			if (mSdServer.sdData.pebbleConnected) {
+			if (mSdServer.mSdData.pebbleConnected) {
 			    tv.setText("Pebble Watch Connected OK");	    
 			    tv.setBackgroundColor(okColour);
 			} else {
@@ -498,7 +472,7 @@ public class MainActivity extends Activity
 			    tv.setBackgroundColor(alarmColour);
 			}
 			tv = (TextView) findViewById(R.id.appTv);
-			if (mSdServer.sdData.pebbleAppRunning) {
+			if (mSdServer.mSdData.pebbleAppRunning) {
 			    tv.setText("Pebble App OK");	    
 			    tv.setBackgroundColor(okColour);
 			} else {
@@ -506,19 +480,19 @@ public class MainActivity extends Activity
 			    tv.setBackgroundColor(alarmColour);
 			}
 			tv = (TextView) findViewById(R.id.battTv);
-			tv.setText("Pebble Battery = "+String.valueOf(mSdServer.sdData.batteryPc)+"%");
-			if (mSdServer.sdData.batteryPc<=20)
+			tv.setText("Pebble Battery = "+String.valueOf(mSdServer.mSdData.batteryPc)+"%");
+			if (mSdServer.mSdData.batteryPc<=20)
 			    tv.setBackgroundColor(alarmColour);
-			if (mSdServer.sdData.batteryPc>20)
+			if (mSdServer.mSdData.batteryPc>20)
 			    tv.setBackgroundColor(warnColour);
-			if (mSdServer.sdData.batteryPc>=40)
+			if (mSdServer.mSdData.batteryPc>=40)
 			    tv.setBackgroundColor(okColour);
     
 			tv = (TextView) findViewById(R.id.debugTv);
 			String specStr = "";
 			for (int i=0;i<10;i++)
 			    specStr = specStr 
-				+ mSdServer.sdData.simpleSpec[i] 
+				+ mSdServer.mSdData.simpleSpec[i]
 				+ ", ";
 			tv.setText("Spec = "+specStr);
 		    }
@@ -544,7 +518,7 @@ public class MainActivity extends Activity
 		ArrayList<Entry> yVals = new ArrayList<Entry>();
 		for (int i = 0; i < 10; i++) {
 		    if (mSdServer!=null)
-			yVals.add(new Entry(mSdServer.sdData.simpleSpec[i], i));
+			yVals.add(new Entry(mSdServer.mSdData.simpleSpec[i], i));
 		    else
 			yVals.add(new Entry(i, i));
 		}
