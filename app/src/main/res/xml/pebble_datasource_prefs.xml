@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="Seizure Detector Settings">
+        <EditTextPreference
+            android:defaultValue="5"
+            android:key="AlarmFreqMin"
+            android:summary="Minimum Frequency of ROI (Hz) (Default = 5 Hz)"
+            android:title="AlarmFreqMin (Hz)" />
+        <EditTextPreference
+            android:defaultValue="10"
+            android:key="AlarmFreqMax"
+            android:summary="Maximum Frequency of ROI (Hz) (Default = 10 Hz)"
+            android:title="AlarmFreqMax (Hz)" />
+        <EditTextPreference
+            android:defaultValue="5"
+            android:key="WarnTime"
+            android:summary="Time to wait before initiating warning (Default = 5 sec)"
+            android:title="WarnTime (sec)" />
+        <EditTextPreference
+            android:defaultValue="10"
+            android:key="AlarmTime"
+            android:summary="Time to wait before initiating alarm (Default = 10 sec)"
+            android:title="AlarmTime (sec)" />
+        <EditTextPreference
+            android:defaultValue="100"
+            android:key="AlarmThresh"
+            android:summary="Alarm Threshold (Default = 100)"
+            android:title="AlarmThresh" />
+        <EditTextPreference
+            android:defaultValue="30"
+            android:key="AlarmRatioThresh"
+            android:summary="Alarm Ratio Threshold (Default = 30)"
+            android:title="AlarmRatioThresh" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Fall Detector Settings">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="FallActive"
+            android:summary=""
+            android:title="Activate Fall Detection Function" />
+        <EditTextPreference
+            android:defaultValue="200"
+            android:key="FallThreshMin"
+            android:summary=""
+            android:title="Fall Detection Lower Threshold (milli-g)" />
+        <EditTextPreference
+            android:defaultValue="1200"
+            android:key="FallThreshMax"
+            android:summary=""
+            android:title="Fall Detection Upper Threshold (milli-g)" />
+        <EditTextPreference
+            android:defaultValue="1500"
+            android:key="FallWindow"
+            android:summary=""
+            android:title="Fall Detection Window (milli-seconds)" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Watch Communications Settings">
+        <EditTextPreference
+            android:defaultValue="10"
+            android:key="AppRestartTimeout"
+            android:numeric="integer"
+            android:summary="Period (seconds) that we wait for data from the watch before assuming the watch app is not running and re-starting it."
+            android:title="Period (sec) we wait for data before restarting watch app." />
+    </PreferenceCategory>
+</PreferenceScreen>

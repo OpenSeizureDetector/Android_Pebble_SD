@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="UseIpCamera"
+        android:summary=""
+        android:title="Use IP Camera to show images" />
+    <EditTextPreference
+        android:defaultValue="192.168.1.25"
+        android:key="CameraIp"
+        android:summary="IP Address of the IP Camera (e.g. 192.168.1.175)."
+        android:title="Camera IP Address." />
+    <EditTextPreference
+        android:defaultValue="0"
+        android:key="CameraCmdSet"
+        android:numeric="integer"
+        android:summary="Camera Command Set Number (0=mjpeg,1=h264)"
+        android:title="Camera Command Set Number" />
+    <EditTextPreference
+        android:defaultValue="guest"
+        android:key="CameraUname"
+        android:summary=""
+        android:title="Camera User Name" />
+    <EditTextPreference
+        android:defaultValue="guest"
+        android:key="CameraPasswd"
+        android:summary=""
+        android:title="Camera User Password" />
+    <EditTextPreference
+        android:defaultValue="2000"
+        android:key="DataUpdatePeriod"
+        android:numeric="integer"
+        android:summary="Period between server data requests in miliseconds."
+        android:title="Data Update Period (ms)" />
+    <EditTextPreference
+        android:defaultValue="2000"
+        android:key="ConnTimeout"
+        android:numeric="integer"
+        android:summary=""
+        android:title="Connection Timeout (ms)" />
+    <EditTextPreference
+        android:defaultValue="2000"
+        android:key="SoTimeout"
+        android:numeric="integer"
+        android:summary=""
+        android:title="So Timeout (ms)" />
+</PreferenceScreen>

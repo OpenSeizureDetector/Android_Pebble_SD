@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<preference-headers
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <header android:fragment="uk.org.openseizuredetector.PrefActivity$GeneralPrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="General"
+        android:summary="General Preferences" />
+
+    <header android:fragment="uk.org.openseizuredetector.PrefActivity$AlarmPrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="Alarms"
+        android:summary="Alarms Preferences" />
+
+    <header android:fragment="uk.org.openseizuredetector.PrefActivity$PebbleDatasourcePrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="Pebble Datasource"
+        android:summary="Pebble Datasource Preferences" />
+
+    <header android:fragment="uk.org.openseizuredetector.PrefActivity$NetworkDatasourcePrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="Network Datasource"
+        android:summary="Network Datasource Preferences" />
+
+    <header android:fragment="uk.org.openseizuredetector.PrefActivity$CameraPrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="Camera Settings"
+        android:summary="IP Camera Preferences" />
+
+
+</preference-headers>

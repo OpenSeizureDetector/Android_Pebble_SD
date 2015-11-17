@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="datasource_list">
+        <item>"Pebble Watch"</item>
+        <item>"Network"</item>
+    </string-array>
+    <string-array name="datasource_list_values">
+        <item>"pebble"</item>
+        <item>"network"</item>
+    </string-array>
+
+</resources>

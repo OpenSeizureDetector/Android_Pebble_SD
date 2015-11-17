@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Alarm Functionality Settings">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="LatchAlarms"
+            android:summary="Require manual reset of alarms to reset them to silence them."
+            android:title="Latch Alarms" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Audible Alarm Settings">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="AudibleAlarm"
+            android:summary="Issue an audible alarm if the seizure detector enters an alarm condition."
+            android:title="Enable Audible Alarm" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="AudibleWarning"
+            android:summary="Issue an audible alarm if the seizure detector enters a warning (pre-alarm) condition."
+            android:title="Enable Audible Warnings" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="AudibleFaultWarning"
+            android:summary="Issue an audible alarm if the system detects a fault (e.g. can not talk to Pebble)."
+            android:title="Enable Audible System FaultWarnings" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="SMS Alarm Settings">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="SMSAlarm"
+            android:summary="Issue a SMS (Text Message) alarm if the seizure detector enters an alarm condition."
+            android:title="Enable SMS Alarm" />
+        <EditTextPreference
+            android:defaultValue=""
+            android:key="SMSNumbers"
+            android:summary="Telephone number(s) to notify by SMS of Alarm (comma separated)."
+            android:title="SMS Alarm numbers" />
+        <EditTextPreference
+            android:defaultValue="**SEIZURE DETECTED**"
+            android:key="SMSMsg"
+            android:summary="Message to be Sent by SMS when a Seizure is Detected."
+            android:title="SMS Message" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Alarm Logging">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="LogAlarms"
+            android:summary="Log Alarm events to SD Card"
+            android:title="Log Alarm events to SD Card" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="LogData"
+            android:summary="Log Data to SD Card Regularly"
+            android:title="Log Data to SD Card" />
+    </PreferenceCategory>
+</PreferenceScreen>
