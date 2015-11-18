@@ -74,6 +74,7 @@ public class MainActivity extends Activity {
     private int okColour = Color.BLUE;
     private int warnColour = Color.MAGENTA;
     private int alarmColour = Color.RED;
+    OsdUtil mUtil;
     SdServer mSdServer;
     boolean mBound = false;
     private Menu mOptionsMenu;
@@ -89,6 +90,8 @@ public class MainActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mUtil = new OsdUtil(this);
 
         // Initialise the User Interface
         setContentView(R.layout.main);
@@ -249,7 +252,7 @@ public class MainActivity extends Activity {
         }
         tv.setText("OpenSeizureDetector Server Version " + versionName);
 
-        if (!isServerRunning()) {
+        if (!mUtil.isServerRunning()) {
             Log.v(TAG, "Server not Running - Starting Server");
             startServer();
         } else {
@@ -321,15 +324,8 @@ public class MainActivity extends Activity {
         }
     }
 
-    /**
-     * Start the SdServer service
-     */
     private void startServer() {
-        // Start the server
-        sdServerIntent = new Intent(MainActivity.this, SdServer.class);
-        sdServerIntent.setData(Uri.parse("Start"));
-        getApplicationContext().startService(sdServerIntent);
-
+        mUtil.startServer();
         // Change the action bar icon to show the option to stop the service.
         if (mOptionsMenu != null) {
             Log.v(TAG, "Changing menu icons");
@@ -341,17 +337,9 @@ public class MainActivity extends Activity {
         }
     }
 
-    /**
-     * Stop the SdServer service
-     */
     private void stopServer() {
         Log.v(TAG, "stopping Server...");
-
-        // then send an Intent to stop the service.
-        sdServerIntent = new Intent(MainActivity.this, SdServer.class);
-        sdServerIntent.setData(Uri.parse("Stop"));
-        getApplicationContext().stopService(sdServerIntent);
-
+        mUtil.stopServer();
         // Change the action bar icon to show the option to start the service.
         if (mOptionsMenu != null) {
             Log.v(TAG, "Changing action bar icons");
@@ -360,27 +348,6 @@ public class MainActivity extends Activity {
         } else {
             Log.v(TAG, "mOptionsMenu is null, not changing icons!");
         }
-
-    }
-
-    /**
-     * Based on http://stackoverflow.com/questions/7440473/android-how-to-check-if-the-intent-service-is-still-running-or-has-stopped-running
-     */
-    public boolean isServerRunning() {
-        //Log.v(TAG,"isServerRunning()................");
-        ActivityManager manager =
-                (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-        for (RunningServiceInfo service :
-                manager.getRunningServices(Integer.MAX_VALUE)) {
-            //Log.v(TAG,"Service: "+service.service.getClassName());
-            if ("uk.org.openseizuredetector.SdServer"
-                    .equals(service.service.getClassName())) {
-                //Log.v(TAG,"Yes!");
-                return true;
-            }
-        }
-        //Log.v(TAG,"No!");
-        return false;
     }
 
 
@@ -426,14 +393,14 @@ public class MainActivity extends Activity {
     }
 
     /*
-     * serverStatusRunnable - called by updateServerStatus - updates the
+     * serverStatusRunnable - called by serverStatus - updates the
      * user interface to reflect the current status received from the server.
      */
     final Runnable serverStatusRunnable = new Runnable() {
         public void run() {
             TextView tv;
             tv = (TextView) findViewById(R.id.textView1);
-            if (isServerRunning()) {
+            if (mUtil.isServerRunning()) {
                 tv.setText("Server Running OK");
                 tv.setBackgroundColor(okColour);
                 tv = (TextView) findViewById(R.id.textView2);
@@ -584,7 +551,7 @@ public class MainActivity extends Activity {
     private void showAbout() {
         View aboutView = getLayoutInflater().inflate(R.layout.about_layout, null, false);
         String versionName = getAppVersionName();
-        Log.v(TAG,"showAbout() - version name = "+versionName);
+        Log.v(TAG, "showAbout() - version name = " + versionName);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setIcon(R.drawable.icon_24x24);
         builder.setTitle("OpenSeizureDetector V"+versionName);
