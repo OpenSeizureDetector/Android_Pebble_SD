@@ -47,6 +47,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
+import android.support.v7.app.NotificationCompat;
 import android.telephony.SmsManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -231,15 +232,18 @@ public class SdServer extends Service implements SdDataReceiver {
      */
     private void showNotification() {
         Log.v(TAG, "showNotification()");
-        CharSequence text = "OpenSeizureDetector Server Running";
-        Notification notification =
-                new Notification(R.drawable.star_of_life_24x24, text,
-                        System.currentTimeMillis());
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-                new Intent(this, MainActivity.class), 0);
-        notification.setLatestEventInfo(this, "OpenSeizureDetector Server",
-                text, contentIntent);
-        notification.flags |= Notification.FLAG_NO_CLEAR;
+        Intent i = new Intent(getApplicationContext(),MainActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        PendingIntent contentIntent = PendingIntent.getActivity(this,0,i,PendingIntent.FLAG_UPDATE_CURRENT);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        Notification notification = builder.setContentIntent(contentIntent)
+                .setSmallIcon(R.drawable.star_of_life_24x24)
+                .setTicker("OpenSeizureDetector")
+                .setAutoCancel(false)
+                .setContentTitle("OpenSeizureDetector")
+                .setContentText("osdtext")
+                .build();
+
         mNM = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mNM.notify(NOTIFICATION_ID, notification);
     }
