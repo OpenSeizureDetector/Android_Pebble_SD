@@ -94,4 +94,35 @@ public class SdServiceConnection implements ServiceConnection {
         return false;
     }
 
+    /**
+     * Check if the pebble watch is connected to the server device via bluetooth.
+     * @return true if watch connected.
+     */
+    public boolean pebbleConnected() {
+        if (mSdServer!=null) {
+            if (mSdServer.mSdData!=null) {
+                if (mSdServer.mSdData.pebbleConnected) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if the openseizuredetector pebble watch app is running..
+     * @return true if watch app running.
+     */
+    public boolean pebbleAppRunning() {
+        if (mSdServer!=null) {
+            if (mSdServer.mSdData!=null) {
+                if (mSdServer.mSdData.pebbleAppRunning) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
 }

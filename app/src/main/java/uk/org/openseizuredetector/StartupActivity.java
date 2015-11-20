@@ -26,6 +26,9 @@ package uk.org.openseizuredetector;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -44,6 +47,10 @@ import java.util.TimerTask;
  */
 public class StartupActivity extends Activity {
     private String TAG = "StartupActivity";
+    private int okColour = Color.BLUE;
+    private int warnColour = Color.MAGENTA;
+    private int alarmColour = Color.RED;
+
     private OsdUtil mUtil;
     private Timer mUiTimer;
     private SdServiceConnection mConnection;
@@ -68,6 +75,22 @@ public class StartupActivity extends Activity {
                     startActivity(intent);
                 } catch (Exception ex) {
                     Log.v(TAG, "exception starting settings activity " + ex.toString());
+                }
+
+            }
+        });
+
+        b = (Button)findViewById(R.id.pebbleButton);
+        b.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.v(TAG, "pebble button clicked");
+                try {
+                    PackageManager pm = getPackageManager();
+                    Intent pebbleAppIntent = pm.getLaunchIntentForPackage("com.getpebble.android");
+                    startActivity(pebbleAppIntent);
+                } catch (Exception ex) {
+                    Log.v(TAG, "exception starting pebble App " + ex.toString());
                 }
 
             }
@@ -126,12 +149,12 @@ public class StartupActivity extends Activity {
             pb = (ProgressBar) findViewById(R.id.progressBar1);
             if (mUtil.isServerRunning()) {
                 tv.setText("Background Service Running OK");
-                pb.setIndeterminate(false);
-                pb.setMax(100);
-                pb.setProgress(100);
-                pb.setVisibility(0);
+                tv.setBackgroundColor(okColour);
+                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
+                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
                 tv.setText("Waiting for Background Service...");
+                tv.setBackgroundColor(alarmColour);
                 pb.setIndeterminate(true);
                 allOk = false;
             }
@@ -141,42 +164,74 @@ public class StartupActivity extends Activity {
             pb = (ProgressBar) findViewById(R.id.progressBar2);
             if (mConnection.mBound) {
                 tv.setText("Bound to Service OK");
-                pb.setIndeterminate(false);
-                pb.setMax(100);
-                pb.setProgress(100);
-                pb.setVisibility(0);
+                tv.setBackgroundColor(okColour);
+                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
+                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
                 tv.setText("Binding to Background Service...");
+                tv.setBackgroundColor(alarmColour);
                 pb.setIndeterminate(true);
                 allOk = false;
             }
 
-            // Do we have seizure detector data?
+            // Is Pebble Watch Connected?
             tv = (TextView) findViewById(R.id.textItem3);
             pb = (ProgressBar) findViewById(R.id.progressBar3);
-            if (mConnection.hasSdData()) {
-                tv.setText("Seizure Detector Data Received OK");
-                pb.setIndeterminate(false);
-                pb.setMax(100);
-                pb.setProgress(100);
-                pb.setVisibility(0);
+            if (mConnection.pebbleConnected()) {
+                tv.setText("Pebble Watch Connected OK");
+                tv.setBackgroundColor(okColour);
+                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
+                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
-                tv.setText("Waiting for Seizure Detector Data...");
+                tv.setText("Waiting to Connect to Pebble Watch.....");
+                tv.setBackgroundColor(alarmColour);
                 pb.setIndeterminate(true);
                 allOk = false;
             }
 
-            // Do we have seizure detector settings yet?
+            // Is Pebble Watch App Running?
             tv = (TextView) findViewById(R.id.textItem4);
             pb = (ProgressBar) findViewById(R.id.progressBar4);
+            if (mConnection.pebbleAppRunning()) {
+                tv.setText("Watch App Running OK");
+                tv.setBackgroundColor(okColour);
+                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
+                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+            } else {
+                tv.setText("Waiting for Watch App to Start.....");
+                tv.setBackgroundColor(alarmColour);
+                pb.setIndeterminate(true);
+                allOk = false;
+            }
+
+
+            // Do we have seizure detector data?
+            tv = (TextView) findViewById(R.id.textItem5);
+            pb = (ProgressBar) findViewById(R.id.progressBar5);
+            if (mConnection.hasSdData()) {
+                tv.setText("Seizure Detector Data Received OK");
+                tv.setBackgroundColor(okColour);
+                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
+                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+            } else {
+                tv.setText("Waiting for Seizure Detector Data...");
+                tv.setBackgroundColor(alarmColour);
+                pb.setIndeterminate(true);
+                allOk = false;
+            }
+
+
+            // Do we have seizure detector settings yet?
+            tv = (TextView) findViewById(R.id.textItem6);
+            pb = (ProgressBar) findViewById(R.id.progressBar6);
             if (mConnection.hasSdSettings()) {
                 tv.setText("Seizure Detector Settings Received OK");
-                pb.setIndeterminate(false);
-                pb.setMax(100);
-                pb.setProgress(100);
-                pb.setVisibility(0);
+                tv.setBackgroundColor(okColour);
+                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
+                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
                 tv.setText("Waiting for Seizure Detector Settings...");
+                tv.setBackgroundColor(alarmColour);
                 pb.setIndeterminate(true);
                 allOk = false;
             }

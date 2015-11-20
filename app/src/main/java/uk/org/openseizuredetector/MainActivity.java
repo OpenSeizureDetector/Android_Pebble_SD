@@ -74,9 +74,8 @@ public class MainActivity extends Activity {
     private int okColour = Color.BLUE;
     private int warnColour = Color.MAGENTA;
     private int alarmColour = Color.RED;
-    OsdUtil mUtil;
-    SdServer mSdServer;
-    boolean mBound = false;
+    private OsdUtil mUtil;
+    private SdServiceConnection mConnection;
     private Menu mOptionsMenu;
 
     private Intent sdServerIntent;
@@ -92,6 +91,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         mUtil = new OsdUtil(this);
+        mConnection = new SdServiceConnection(this);
 
         // Initialise the User Interface
         setContentView(R.layout.main);
@@ -119,8 +119,8 @@ public class MainActivity extends Activity {
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Log.v(TAG, "acceptAlarmButton.onClick()");
-                if (mBound) {
-                    mSdServer.acceptAlarm();
+                if (mConnection.mBound) {
+                    mConnection.mSdServer.acceptAlarm();
                 }
             }
         });
@@ -163,46 +163,46 @@ public class MainActivity extends Activity {
 
             case R.id.action_accept_alarm:
                 Log.v(TAG, "action_accept_alarm");
-                if (mBound) {
-                    mSdServer.acceptAlarm();
+                if (mConnection.mBound) {
+                    mConnection.mSdServer.acceptAlarm();
                 }
                 return true;
             case R.id.action_start_stop:
                 // Respond to the start/stop server menu item.
                 Log.v(TAG, "action_sart_stop");
-                if (mBound) {
+                if (mConnection.mBound) {
                     Log.v(TAG, "Stopping Server");
-                    unbindFromServer();
+                    mUtil.unbindFromServer(this, mConnection);
                     stopServer();
                 } else {
                     Log.v(TAG, "Starting Server");
                     startServer();
                     // and bind to it so we can see its data
-                    bindToServer();
+                    mUtil.bindToServer(this, mConnection);
                 }
                 return true;
             case R.id.action_test_fault_beep:
                 Log.v(TAG, "action_test_fault_beep");
-                if (mBound) {
-                    mSdServer.faultWarningBeep();
+                if (mConnection.mBound) {
+                    mConnection.mSdServer.faultWarningBeep();
                 }
                 return true;
             case R.id.action_test_alarm_beep:
                 Log.v(TAG, "action_test_alarm_beep");
-                if (mBound) {
-                    mSdServer.alarmBeep();
+                if (mConnection.mBound) {
+                    mConnection.mSdServer.alarmBeep();
                 }
                 return true;
             case R.id.action_test_warning_beep:
                 Log.v(TAG, "action_test_warning_beep");
-                if (mBound) {
-                    mSdServer.warningBeep();
+                if (mConnection.mBound) {
+                    mConnection.mSdServer.warningBeep();
                 }
                 return true;
             case R.id.action_test_sms_alarm:
                 Log.v(TAG, "action_test_sms_alarm");
-                if (mBound) {
-                    mSdServer.sendSMSAlarm();
+                if (mConnection.mBound) {
+                    mConnection.mSdServer.sendSMSAlarm();
                 }
                 return true;
             case R.id.action_settings:
@@ -236,93 +236,19 @@ public class MainActivity extends Activity {
 
         TextView tv;
         tv = (TextView) findViewById(R.id.versionTv);
-        String versionName = "unknown";
-        // From http://stackoverflow.com/questions/4471025/
-        //         how-can-you-get-the-manifest-version-number-
-        //         from-the-apps-layout-xml-variable
-        final PackageManager packageManager = getPackageManager();
-        if (packageManager != null) {
-            try {
-                PackageInfo packageInfo = packageManager.getPackageInfo(getPackageName(), 0);
-                versionName = packageInfo.versionName;
-            } catch (PackageManager.NameNotFoundException e) {
-                Log.v(TAG, "failed to find versionName");
-                versionName = null;
-            }
-        }
+        String versionName = mUtil.getAppVersionName();
         tv.setText("OpenSeizureDetector Server Version " + versionName);
 
-        if (!mUtil.isServerRunning()) {
-            Log.v(TAG, "Server not Running - Starting Server");
-            startServer();
-        } else {
-            Log.v(TAG, "Server Already Running OK");
-        }
-        // and bind to it so we can see its data
-        bindToServer();
+        mUtil.bindToServer(this, mConnection);
 
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        unbindFromServer();
+        mUtil.unbindFromServer(this,mConnection);
     }
 
-    /**
-     * Defines callbacks for service binding, passed to bindService()
-     */
-    private ServiceConnection mConnection = new ServiceConnection() {
-
-        @Override
-        public void onServiceConnected(ComponentName className,
-                                       IBinder service) {
-            // We've bound to LocalService, cast the IBinder and get LocalService instance
-            SdServer.SdBinder binder = (SdServer.SdBinder) service;
-            mSdServer = binder.getService();
-            mBound = true;
-            if (mSdServer != null) {
-                Log.v(TAG, "onServiceConnected() - Asking server to update its settings");
-                mSdServer.updatePrefs();
-            } else {
-                Log.v(TAG, "onServiceConnected() - mSdServer is null - this is wrong!");
-            }
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            Log.v(TAG, "onServiceDisonnected()");
-            mBound = false;
-        }
-    };
-
-
-    /**
-     * bind to an already running server.
-     */
-    private void bindToServer() {
-        Log.v(TAG, "bindToServer() - binding to SdServer");
-        Intent intent = new Intent(this, SdServer.class);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-    }
-
-    /**
-     * unbind from server
-     */
-    private void unbindFromServer() {
-        // unbind this activity from the service if it is bound.
-        if (mBound) {
-            Log.v(TAG, "unbindFromServer() - unbinding");
-            try {
-                unbindService(mConnection);
-                mBound = false;
-            } catch (Exception ex) {
-                Log.e(TAG, "unbindFromServer() - error unbinding service - " + ex.toString());
-            }
-        } else {
-            Log.v(TAG, "unbindFromServer() - not bound to server - ignoring");
-        }
-    }
 
     private void startServer() {
         mUtil.startServer();
@@ -351,38 +277,6 @@ public class MainActivity extends Activity {
     }
 
 
-    /**
-     * get the ip address of the phone.
-     * Based on http://stackoverflow.com/questions/11015912/how-do-i-get-ip-address-in-ipv4-format
-     */
-    public String getLocalIpAddress() {
-        try {
-            for (Enumeration<NetworkInterface> en = NetworkInterface
-                    .getNetworkInterfaces(); en.hasMoreElements(); ) {
-                NetworkInterface intf = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = intf
-                        .getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    //Log.v(TAG,"ip1--:" + inetAddress);
-                    //Log.v(TAG,"ip2--:" + inetAddress.getHostAddress());
-
-                    // for getting IPV4 format
-                    if (!inetAddress.isLoopbackAddress()
-                            && InetAddressUtils.isIPv4Address(
-                            inetAddress.getHostAddress())) {
-
-                        String ip = inetAddress.getHostAddress().toString();
-                        //Log.v(TAG,"ip---::" + ip);
-                        return ip;
-                    }
-                }
-            }
-        } catch (Exception ex) {
-            Log.e("IP Address", ex.toString());
-        }
-        return null;
-    }
-
 
     /*
      * updateServerStatus - called by the uiTimer timer periodically.
@@ -405,7 +299,7 @@ public class MainActivity extends Activity {
                 tv.setBackgroundColor(okColour);
                 tv = (TextView) findViewById(R.id.textView2);
                 tv.setText("Access Server at http://"
-                        + getLocalIpAddress()
+                        + mUtil.getLocalIpAddress()
                         + ":8080");
                 tv.setBackgroundColor(okColour);
             } else {
@@ -415,33 +309,33 @@ public class MainActivity extends Activity {
 
 
             try {
-                if (mBound) {
+                if (mConnection.mBound) {
                     tv = (TextView) findViewById(R.id.alarmTv);
-                    if ((mSdServer.mSdData.alarmState == 0)
-                            && !mSdServer.mSdData.alarmStanding
-                            && !mSdServer.mSdData.fallAlarmStanding) {
+                    if ((mConnection.mSdServer.mSdData.alarmState == 0)
+                            && !mConnection.mSdServer.mSdData.alarmStanding
+                            && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
                         tv.setText("OK");
                         tv.setBackgroundColor(okColour);
                     }
-                    if ((mSdServer.mSdData.alarmState == 1)
-                            && !mSdServer.mSdData.alarmStanding
-                            && !mSdServer.mSdData.fallAlarmStanding) {
+                    if ((mConnection.mSdServer.mSdData.alarmState == 1)
+                            && !mConnection.mSdServer.mSdData.alarmStanding
+                            && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
                         tv.setText("WARNING");
                         tv.setBackgroundColor(warnColour);
                     }
-                    if (mSdServer.mSdData.alarmStanding) {
+                    if (mConnection.mSdServer.mSdData.alarmStanding) {
                         tv.setText("**ALARM**");
                         tv.setBackgroundColor(alarmColour);
                     }
-                    if (mSdServer.mSdData.fallAlarmStanding) {
+                    if (mConnection.mSdServer.mSdData.fallAlarmStanding) {
                         tv.setText("**FALL**");
                         tv.setBackgroundColor(alarmColour);
                     }
                     tv = (TextView) findViewById(R.id.pebTimeTv);
-                    tv.setText(mSdServer.mSdData.dataTime.format("%H:%M:%S"));
+                    tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
                     // Pebble Connected Phrase
                     tv = (TextView) findViewById(R.id.pebbleTv);
-                    if (mSdServer.mSdData.pebbleConnected) {
+                    if (mConnection.mSdServer.mSdData.pebbleConnected) {
                         tv.setText("Pebble Watch Connected OK");
                         tv.setBackgroundColor(okColour);
                     } else {
@@ -449,7 +343,7 @@ public class MainActivity extends Activity {
                         tv.setBackgroundColor(alarmColour);
                     }
                     tv = (TextView) findViewById(R.id.appTv);
-                    if (mSdServer.mSdData.pebbleAppRunning) {
+                    if (mConnection.mSdServer.mSdData.pebbleAppRunning) {
                         tv.setText("Pebble App OK");
                         tv.setBackgroundColor(okColour);
                     } else {
@@ -457,19 +351,19 @@ public class MainActivity extends Activity {
                         tv.setBackgroundColor(alarmColour);
                     }
                     tv = (TextView) findViewById(R.id.battTv);
-                    tv.setText("Pebble Battery = " + String.valueOf(mSdServer.mSdData.batteryPc) + "%");
-                    if (mSdServer.mSdData.batteryPc <= 20)
+                    tv.setText("Pebble Battery = " + String.valueOf(mConnection.mSdServer.mSdData.batteryPc) + "%");
+                    if (mConnection.mSdServer.mSdData.batteryPc <= 20)
                         tv.setBackgroundColor(alarmColour);
-                    if (mSdServer.mSdData.batteryPc > 20)
+                    if (mConnection.mSdServer.mSdData.batteryPc > 20)
                         tv.setBackgroundColor(warnColour);
-                    if (mSdServer.mSdData.batteryPc >= 40)
+                    if (mConnection.mSdServer.mSdData.batteryPc >= 40)
                         tv.setBackgroundColor(okColour);
 
                     tv = (TextView) findViewById(R.id.debugTv);
                     String specStr = "";
                     for (int i = 0; i < 10; i++)
                         specStr = specStr
-                                + mSdServer.mSdData.simpleSpec[i]
+                                + mConnection.mSdServer.mSdData.simpleSpec[i]
                                 + ", ";
                     tv.setText("Spec = " + specStr);
                 } else {
@@ -493,8 +387,8 @@ public class MainActivity extends Activity {
             // Y Values
             ArrayList<Entry> yVals = new ArrayList<Entry>();
             for (int i = 0; i < 10; i++) {
-                if (mSdServer != null)
-                    yVals.add(new Entry(mSdServer.mSdData.simpleSpec[i], i));
+                if (mConnection.mSdServer != null)
+                    yVals.add(new Entry(mConnection.mSdServer.mSdData.simpleSpec[i], i));
                 else
                     yVals.add(new Entry(i, i));
             }
@@ -524,33 +418,11 @@ public class MainActivity extends Activity {
         super.onResume();
     }
 
-    //public void updateUi() {
-    //	String statusPhrase;
-    //	String alarmPhrase;
-    //	String viewText = "Unknown";
-    //}
 
-    private String getAppVersionName() {
-        String versionName = "unknown";
-        // From http://stackoverflow.com/questions/4471025/
-        //         how-can-you-get-the-manifest-version-number-
-        //         from-the-apps-layout-xml-variable
-        final PackageManager packageManager = getPackageManager();
-        if (packageManager != null) {
-            try {
-                PackageInfo packageInfo = packageManager.getPackageInfo(getPackageName(), 0);
-                versionName = packageInfo.versionName;
-            } catch (PackageManager.NameNotFoundException e) {
-                Log.v(TAG, "failed to find versionName");
-                versionName = null;
-            }
-        }
-        return versionName;
-    }
 
     private void showAbout() {
         View aboutView = getLayoutInflater().inflate(R.layout.about_layout, null, false);
-        String versionName = getAppVersionName();
+        String versionName = mUtil.getAppVersionName();
         Log.v(TAG, "showAbout() - version name = " + versionName);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setIcon(R.drawable.icon_24x24);
