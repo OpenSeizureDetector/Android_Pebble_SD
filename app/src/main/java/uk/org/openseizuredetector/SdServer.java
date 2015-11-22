@@ -84,6 +84,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private WakeLock mWakeLock = null;
     public SdDataSource mSdDataSource;
     public SdData mSdData;
+    private String mSdDataSourceName = "undefined";  // The name of the data soruce specified in the preferences.
     private boolean mLatchAlarms = false;
     private boolean mCancelAudible = false;
     private boolean mAudibleAlarm = false;
@@ -96,6 +97,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private boolean mLogAlarms = true;
     private boolean mLogData = false;
     private File mOutFile;
+    private OsdUtil mUtil;
 
     private final IBinder mBinder = new SdBinder();
 
@@ -134,6 +136,7 @@ public class SdServer extends Service implements SdDataReceiver {
     public void onCreate() {
         Log.v(TAG, "onCreate()");
 
+        mUtil = new OsdUtil(getApplicationContext());
 
         // Create a wake lock, but don't use it until the service is started.
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
@@ -152,7 +155,22 @@ public class SdServer extends Service implements SdDataReceiver {
         // Update preferences.
         Log.v(TAG, "onStartCommand() - calling updatePrefs()");
         updatePrefs();
-        mSdDataSource = new SdDataSourcePebble(this.getApplicationContext(), this);
+
+        Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName);
+        switch (mSdDataSourceName) {
+            case "Pebble":
+                Log.v(TAG,"Selecting Pebble DataSource");
+                mSdDataSource = new SdDataSourcePebble(this.getApplicationContext(), this);
+                break;
+            case "Network":
+                Log.v(TAG, "Selecting Network DataSource");
+                mSdDataSource = new SdDataSourceNetwork(this.getApplicationContext(),this);
+                break;
+            default:
+                Log.v(TAG, "Datasource " + mSdDataSourceName + " not recognised - Exiting");
+                mUtil.showToast("Datasource " + mSdDataSourceName + " not recognised - Exiting");
+                return 1;
+        }
         mSdDataSource.start();
 
 
@@ -491,6 +509,8 @@ public class SdServer extends Service implements SdDataReceiver {
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
         try {
+            mSdDataSourceName = SP.getString("DataSource","undefined");
+            Log.v(TAG,"updatePrefs() - DataSource = "+mSdDataSourceName);
             mLatchAlarms = SP.getBoolean("LatchAlarms", false);
             Log.v(TAG, "updatePrefs() - mLatchAlarms = " + mLatchAlarms);
             mAudibleFaultWarning = SP.getBoolean("AudibleFaultWarning", true);

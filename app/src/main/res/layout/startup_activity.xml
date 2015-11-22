@@ -26,7 +26,7 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="Starting......"
-        android:id="@+id/textView3"
+        android:id="@+id/dataSourceTextView"
         android:layout_gravity="center_horizontal" />
 
     <LinearLayout

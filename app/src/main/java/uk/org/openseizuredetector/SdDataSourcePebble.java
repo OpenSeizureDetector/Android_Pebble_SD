@@ -97,6 +97,7 @@ public class SdDataSourcePebble extends SdDataSource {
 
     public SdDataSourcePebble(Context context, SdDataReceiver sdDataReceiver) {
         super(context,sdDataReceiver);
+        mName = "Pebble";
     }
 
 

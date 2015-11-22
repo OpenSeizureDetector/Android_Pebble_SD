@@ -36,6 +36,7 @@ import android.net.Uri;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import org.apache.http.conn.util.InetAddressUtils;
 
@@ -177,6 +178,13 @@ public class OsdUtil {
         return null;
     }
 
-
+    /**
+     * Display a Toast message on screen.
+     * @param msg - message to display.
+     */
+    public void showToast(String msg) {
+        Toast.makeText(mContext, msg,
+                Toast.LENGTH_LONG).show();
+    }
 
 }

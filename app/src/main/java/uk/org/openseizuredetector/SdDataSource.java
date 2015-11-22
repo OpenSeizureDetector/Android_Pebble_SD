@@ -37,6 +37,7 @@ interface SdDataReceiver {
  */
 public abstract class SdDataSource {
     public SdData mSdData;
+    public String mName = "undefined";
     protected Context mContext;
     protected SdDataReceiver mSdDataReceiver;
     private String TAG = "SdDataSource";

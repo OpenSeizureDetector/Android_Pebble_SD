@@ -26,11 +26,13 @@ package uk.org.openseizuredetector;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -101,6 +103,14 @@ public class StartupActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+
+        // Display the DataSource name
+        SharedPreferences SP = PreferenceManager
+                .getDefaultSharedPreferences(getBaseContext());;
+        String dataSourceName = SP.getString("DataSource","undefined");
+        TextView tv = (TextView)findViewById(R.id.dataSourceTextView);
+        tv.setText("DataSource = "+dataSourceName);
+
         if (mUtil.isServerRunning()) {
             Log.v(TAG, "onStart() - server running - stopping it");
             mUtil.stopServer();

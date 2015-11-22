@@ -5,8 +5,8 @@
         <item>"Network"</item>
     </string-array>
     <string-array name="datasource_list_values">
-        <item>"pebble"</item>
-        <item>"network"</item>
+        <item>"Pebble"</item>
+        <item>"Network"</item>
     </string-array>
 
 </resources>
