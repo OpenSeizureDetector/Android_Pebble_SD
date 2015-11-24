@@ -87,12 +87,31 @@
   </LinearLayout>
 
 
-  <TextView  
-      android:id="@+id/debugTv"
-      android:layout_width="wrap_content" 
-      android:layout_height="wrap_content" 
-      android:text="battTv"
-      />
+
+	<TextView
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="Power"
+		android:id="@+id/powerTv" />
+
+	<ProgressBar
+		style="?android:attr/progressBarStyleHorizontal"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:id="@+id/powerProgressBar" />
+
+	<TextView
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="Spectal Range"
+		android:id="@+id/spectrumTv" />
+
+	<ProgressBar
+		style="?android:attr/progressBarStyleHorizontal"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:id="@+id/spectrumProgressBar"
+		android:indeterminate="false" />
 
 	<Button
 		android:layout_width="wrap_content"
@@ -104,6 +123,6 @@
         android:id="@+id/chart1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/seekBar1" />
+         />
 </LinearLayout>
 

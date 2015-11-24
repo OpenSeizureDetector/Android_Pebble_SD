@@ -37,6 +37,7 @@ import android.content.pm.PackageInfo;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -50,6 +51,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Button;
 
@@ -359,13 +361,35 @@ public class MainActivity extends Activity {
                     if (mConnection.mSdServer.mSdData.batteryPc >= 40)
                         tv.setBackgroundColor(okColour);
 
-                    tv = (TextView) findViewById(R.id.debugTv);
-                    String specStr = "";
-                    for (int i = 0; i < 10; i++)
-                        specStr = specStr
-                                + mConnection.mSdServer.mSdData.simpleSpec[i]
-                                + ", ";
-                    tv.setText("Spec = " + specStr);
+                    // Set ProgressBars to show margin to alarm.
+                    long powerPc = mConnection.mSdServer.mSdData.roiPower * 100 /
+                            mConnection.mSdServer.mSdData.alarmThresh;
+                    long specPc = 100 * (mConnection.mSdServer.mSdData.roiPower * 10 /
+                            mConnection.mSdServer.mSdData.specPower) /
+                            mConnection.mSdServer.mSdData.alarmRatioThresh;
+
+                    ((TextView)findViewById(R.id.powerTv)).setText("Power = "+mConnection.mSdServer.mSdData.roiPower+
+                        " (threshold = "+mConnection.mSdServer.mSdData.alarmThresh+")");
+                    ((TextView)findViewById(R.id.spectrumTv)).setText("Spectrum Ratio = "+10 * mConnection.mSdServer.mSdData.roiPower /
+                            mConnection.mSdServer.mSdData.specPower+
+                            " (threshold = "+mConnection.mSdServer.mSdData.alarmRatioThresh+")");
+
+                    ProgressBar pb;
+                    pb =   ((ProgressBar)findViewById(R.id.powerProgressBar));
+                    pb.setMax(100);
+                    pb.setProgress((int)powerPc);
+                    int colour = Color.BLUE;
+                    if (powerPc>75) colour = Color.YELLOW;
+                    if (powerPc>100) colour = Color.RED;
+                    pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
+
+                    pb =   ((ProgressBar)findViewById(R.id.spectrumProgressBar));
+                    pb.setMax(100);
+                    pb.setProgress((int)specPc);
+                    colour = Color.BLUE;
+                    if (specPc>75) colour = Color.YELLOW;
+                    if (specPc>100) colour = Color.RED;
+                    pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
                 } else {
                     tv = (TextView) findViewById(R.id.alarmTv);
                     tv.setText("Not Connected to Server");
