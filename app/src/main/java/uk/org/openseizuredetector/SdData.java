@@ -85,7 +85,7 @@ public class SdData implements Parcelable {
 	    //dataTime = cal.getTime();
 	    // FIXME - this doesn't work!!!
 	    dataTime.setToNow();
-	    Log.v(TAG,"fromJSON(): dataTime = "+dataTime.toString());
+	    Log.v(TAG, "fromJSON(): dataTime = " + dataTime.toString());
 	    maxVal = jo.optInt("maxVal");
 	    maxFreq = jo.optInt("maxFreq");
 	    specPower = jo.optInt("specPower");
@@ -95,6 +95,8 @@ public class SdData implements Parcelable {
 	    pebbleAppRunning = jo.optBoolean("pebbleAppRunning");
 	    alarmState = jo.optInt("alarmState");
 	    alarmPhrase = jo.optString("alarmPhrase");
+		alarmThresh = jo.optInt("alarmThresh");
+		alarmRatioThresh = jo.optInt("alarmRatioThresh");
 	    JSONArray specArr = jo.optJSONArray("simpleSpec");
 	    for (int i=0;i<specArr.length();i++) {
 		simpleSpec[i] = specArr.optInt(i);
@@ -125,16 +127,19 @@ public class SdData implements Parcelable {
 			jsonObj.put("dataTimeStr","00000000T000000");
 			jsonObj.put("dataTime","00-00-00 00:00:00");
 		    }
-		    Log.v(TAG,"mSdData.dataTime = "+dataTime);
-		    jsonObj.put("maxVal",maxVal);
+		    Log.v(TAG,"mSdData.dataTime = " + dataTime);
+		    jsonObj.put("maxVal", maxVal);
 		    jsonObj.put("maxFreq",maxFreq);
 		    jsonObj.put("specPower",specPower);
 		    jsonObj.put("roiPower",roiPower);
 		    jsonObj.put("batteryPc",batteryPc);
 		    jsonObj.put("pebbleConnected",pebbleConnected);
 		    jsonObj.put("pebbleAppRunning",pebbleAppRunning);
+			jsonObj.put("haveSettings",haveSettings);
 		    jsonObj.put("alarmState",alarmState);
 		    jsonObj.put("alarmPhrase",alarmPhrase);
+			jsonObj.put("alarmThresh",alarmThresh);
+			jsonObj.put("alarmRatioThresh",alarmRatioThresh);
 		    JSONArray arr = new JSONArray();
 		    for (int i=0;i<simpleSpec.length;i++) {
 			arr.put(simpleSpec[i]);

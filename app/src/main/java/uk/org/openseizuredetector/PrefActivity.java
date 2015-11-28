@@ -71,7 +71,7 @@ public class PrefActivity extends PreferenceActivity {
             }
             if (h.title.toString().equals("Network Datasource")) {
                 Log.v(TAG, "found Network Datasource Header");
-                if (!dataSourceStr.equals("network")) {
+                if (!dataSourceStr.equals("Network")) {
                     Log.v(TAG, "Removing network settings header");
                     target.remove(i);
                     i = i -1;

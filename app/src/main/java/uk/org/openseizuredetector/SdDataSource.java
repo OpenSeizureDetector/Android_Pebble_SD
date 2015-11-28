@@ -25,6 +25,7 @@ package uk.org.openseizuredetector;
 
 import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 
 interface SdDataReceiver {
     public void onSdDataReceived(SdData sdData);
@@ -71,5 +72,15 @@ public abstract class SdDataSource {
     public void stop() {
         Log.v(TAG, "stop()");
     }
+
+    /**
+     * Display a Toast message on screen.
+     * @param msg - message to display.
+     */
+    public void showToast(String msg) {
+        Toast.makeText(mContext, msg,
+                Toast.LENGTH_LONG).show();
+    }
+
 
 }

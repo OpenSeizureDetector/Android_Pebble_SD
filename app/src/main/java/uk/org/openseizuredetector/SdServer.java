@@ -40,6 +40,7 @@ import android.content.res.AssetManager;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
+import android.os.CountDownTimer;
 import android.os.Environment;
 import android.os.HandlerThread;
 import android.os.Binder;
@@ -80,6 +81,9 @@ public class SdServer extends Service implements SdDataReceiver {
     private WebServer webServer = null;
     private final static String TAG = "SdServer";
     private Timer dataLogTimer = null;
+    private CancelAudibleTimer mCancelAudibleTimer = null;
+    private int mCancelAudiblePeriod = 10;  // Cancel Audible Period in minutes
+    private long mCancelAudibleTimeRemaining = 0;
     private HandlerThread thread;
     private WakeLock mWakeLock = null;
     public SdDataSource mSdDataSource;
@@ -351,6 +355,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         }
         mSdData = sdData;
+        Log.v(TAG,"onSdDataReceived() - setting mSdData to "+mSdData.toString());
     }
 
     public void onSdDataFault(SdData sdData) {
@@ -453,6 +458,34 @@ public class SdServer extends Service implements SdDataReceiver {
         mSdData.alarmStanding = false;
         mSdData.fallAlarmStanding = false;
     }
+
+
+    public void cancelAudible() {
+        // Start timer to remove the cancel audible flag
+        // after the required period.
+        if (mCancelAudibleTimer!=null) {
+            Log.v(TAG,"onCreate(): cancel audible timer already running - cancelling it.");
+            mCancelAudibleTimer.cancel();
+            mCancelAudibleTimer = null;
+            mCancelAudible = false;
+        } else {
+            Log.v(TAG,"cancelAudible(): starting cancel audible timer");
+            mCancelAudible = true;
+            mCancelAudibleTimer =
+                    // conver to ms.
+                    new CancelAudibleTimer(mCancelAudiblePeriod*60*1000,1000);
+            mCancelAudibleTimer.start();
+        }
+    }
+
+    public boolean isAudibleCancelled() {
+        return mCancelAudible;
+    }
+
+    public long cancelAudibleTimeRemaining() {
+        return mCancelAudibleTimeRemaining;
+    }
+
 
 
     /**
@@ -608,6 +641,30 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.e(TAG, "ERROR - Can not Write to External Folder");
         }
     }
+
+    /*
+ * Temporary cancel audible alarms, for the period specified by the
+ * CancelAudiblePeriod setting.
+ */
+    private class CancelAudibleTimer extends CountDownTimer {
+        public CancelAudibleTimer(long startTime, long interval) {
+            super(startTime, interval);
+        }
+        @Override
+        public void onFinish() {
+            mCancelAudible = false;
+            Log.v(TAG,"mCancelAudibleTimer - removing cancelAudible flag");
+        }
+        @Override
+        public void onTick(long msRemaining) {
+            mCancelAudibleTimeRemaining = msRemaining/1000;
+            Log.v(TAG,"mCancelAudibleTimer - onTick() - Time Remaining = "
+                    + mCancelAudibleTimeRemaining);
+        }
+
+    }
+
+
 
     /**
      * Class describing the seizure detector web server - appears on port
