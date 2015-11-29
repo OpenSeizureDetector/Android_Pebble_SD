@@ -63,7 +63,7 @@ public class PrefActivity extends PreferenceActivity {
             Log.v(TAG,"found - "+h.title.toString());
             if (h.title.toString().equals("Pebble Datasource")) {
                 Log.v(TAG, "found Pebble Datasource Header");
-                if (!dataSourceStr.equals("pebble")) {
+                if (!dataSourceStr.equals("Pebble")) {
                     Log.v(TAG, "Removing pebble settings header");
                     target.remove(i);
                     i = i-1;
