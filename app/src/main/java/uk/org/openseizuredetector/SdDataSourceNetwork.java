@@ -116,7 +116,7 @@ public class SdDataSourceNetwork extends SdDataSource {
                     sdData.serverOK = false;
                     sdData.pebbleConnected = false;
                     sdData.pebbleAppRunning = false;
-                    sdData.alarmState = 0;
+                    sdData.alarmState = 4;
                     sdData.alarmPhrase = "Warning - No Connection to Server";
                     Log.v(TAG,"doInBackground(): No Connection to Server - sdData = "+sdData.toString());
                 } else {
@@ -135,7 +135,7 @@ public class SdDataSourceNetwork extends SdDataSource {
                 sdData.serverOK = false;
                 sdData.pebbleConnected = false;
                 sdData.pebbleAppRunning = false;
-                sdData.alarmState = 0;
+                sdData.alarmState = 4;
                 sdData.alarmPhrase = "Warning - No Connection to Server";
                 Log.v(TAG,"doInBackground(): IOException - "+e.toString());
                 return sdData;

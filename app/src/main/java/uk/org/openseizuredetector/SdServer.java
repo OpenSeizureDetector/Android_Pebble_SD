@@ -78,7 +78,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
     private NotificationManager mNM;
 
-    private WebServer webServer = null;
+    private SdWebServer webServer = null;
     private final static String TAG = "SdServer";
     private Timer dataLogTimer = null;
     private CancelAudibleTimer mCancelAudibleTimer = null;
@@ -276,7 +276,7 @@ public class SdServer extends Service implements SdDataReceiver {
      * @param sdData
      */
     public void onSdDataReceived(SdData sdData) {
-        Log.v(TAG, "onSdDataReceived()");
+        Log.v(TAG, "onSdDataReceived() - "+sdData.toString());
         if (sdData.alarmState == 0) {
             if ((!mLatchAlarms) ||
                     (mLatchAlarms &&
@@ -354,12 +354,22 @@ public class SdServer extends Service implements SdDataReceiver {
             }
 
         }
+        // Fault
+        if ((sdData.alarmState == 4)) {
+            sdData.alarmPhrase = "FAULT";
+            faultWarningBeep();
+        }
         mSdData = sdData;
+        if (webServer!=null) webServer.setSdData(mSdData);
         Log.v(TAG,"onSdDataReceived() - setting mSdData to "+mSdData.toString());
     }
 
+    // Called by SdDataSource when a fault condition is detected.
     public void onSdDataFault(SdData sdData) {
         Log.v(TAG,"onSdDataFault()");
+        mSdData = sdData;
+        mSdData.alarmState = 4;  // set fault alarm state.
+        if (webServer!=null) webServer.setSdData(mSdData);
         if (mAudibleFaultWarning) {
             faultWarningBeep();
         }
@@ -494,7 +504,7 @@ public class SdServer extends Service implements SdDataReceiver {
     protected void startWebServer() {
         Log.v(TAG, "startWebServer()");
         if (webServer == null) {
-            webServer = new WebServer();
+            webServer = new SdWebServer(getApplicationContext(),getDataStorageDir(),mSdData);
             try {
                 webServer.start();
             } catch (IOException ioe) {
@@ -666,195 +676,4 @@ public class SdServer extends Service implements SdDataReceiver {
 
 
 
-    /**
-     * Class describing the seizure detector web server - appears on port
-     * 8080.
-     */
-    private class WebServer extends NanoHTTPD {
-        private String TAG = "WebServer";
-
-        public WebServer() {
-            // Set the port to listen on (8080)
-            super(8080);
-        }
-
-        @Override
-        public Response serve(String uri, Method method,
-                              Map<String, String> header,
-                              Map<String, String> parameters,
-                              Map<String, String> files) {
-            Log.v(TAG, "WebServer.serve() - uri=" + uri + " Method=" + method.toString());
-            String answer = "Error - you should not see this message! - Something wrong in WebServer.serve()";
-
-            Iterator it = parameters.keySet().iterator();
-            while (it.hasNext()) {
-                Object key = it.next();
-                Object value = parameters.get(key);
-                //Log.v(TAG,"Request parameters - key="+key+" value="+value);
-            }
-
-            if (uri.equals("/")) uri = "/index.html";
-            switch (uri) {
-                case "/data":
-                    //Log.v(TAG,"WebServer.serve() - Returning data");
-                    try {
-                        answer = mSdData.toString();
-                    } catch (Exception ex) {
-                        Log.v(TAG, "Error Creating Data Object - " + ex.toString());
-                        answer = "Error Creating Data Object";
-                    }
-                    break;
-
-                case "/settings":
-                    //Log.v(TAG,"WebServer.serve() - Returning settings");
-                    try {
-                        JSONObject jsonObj = new JSONObject();
-                        jsonObj.put("alarmFreqMin", mSdData.alarmFreqMin);
-                        jsonObj.put("alarmFreqMax", mSdData.alarmFreqMax);
-                        jsonObj.put("nMin", mSdData.nMin);
-                        jsonObj.put("nMax", mSdData.nMax);
-                        jsonObj.put("warnTime", mSdData.warnTime);
-                        jsonObj.put("alarmTime", mSdData.alarmTime);
-                        jsonObj.put("alarmThresh", mSdData.alarmThresh);
-                        jsonObj.put("alarmRatioThresh", mSdData.alarmRatioThresh);
-                        jsonObj.put("batteryPc", mSdData.batteryPc);
-                        answer = jsonObj.toString();
-                    } catch (Exception ex) {
-                        Log.v(TAG, "Error Creating Data Object - " + ex.toString());
-                        answer = "Error Creating Data Object";
-                    }
-                    break;
-
-                case "/spectrum":
-                    Log.v(TAG, "WebServer.serve() - Returning spectrum - 1");
-                    try {
-                        JSONObject jsonObj = new JSONObject();
-                        Log.v(TAG, "WebServer.serve() - Returning spectrum - 2");
-                        // Initialised it this way because one phone was ok with JSONArray(mSdData.simpleSpec), and the other crashed...
-                        JSONArray arr = new JSONArray();
-                        for (int i = 0; i < mSdData.simpleSpec.length; i++) {
-                            arr.put(mSdData.simpleSpec[i]);
-                        }
-
-                        Log.v(TAG, "WebServer.serve() - Returning spectrum - 3");
-                        jsonObj.put("simpleSpec", arr);
-                        Log.v(TAG, "WebServer.serve() - Returning spectrum - 4");
-                        answer = jsonObj.toString();
-                        Log.v(TAG, "WebServer.serve() - Returning spectrum - 5" + answer);
-                    } catch (Exception ex) {
-                        Log.v(TAG, "Error Creating Data Object - " + ex.toString());
-                        answer = "Error Creating Data Object";
-                    }
-                    break;
-
-                default:
-                    if (uri.startsWith("/index.html") ||
-                            uri.startsWith("/favicon.ico") ||
-                            uri.startsWith("/js/") ||
-                            uri.startsWith("/css/") ||
-                            uri.startsWith("/img/")) {
-                        //Log.v(TAG,"Serving File");
-                        return serveFile(uri);
-                    } else if (uri.startsWith("/logs")) {
-                        Log.v(TAG, "WebServer.serve() - serving data logs - uri=" + uri);
-                        NanoHTTPD.Response resp = serveLogFile(uri);
-                        Log.v(TAG, "WebServer.serve() - response = " + resp.toString());
-                        return resp;
-                    } else {
-                        Log.v(TAG, "WebServer.serve() - Unknown uri -" +
-                                uri);
-                        answer = "Unknown URI: ";
-                    }
-            }
-
-            return new NanoHTTPD.Response(answer);
-        }
-
-
-        /**
-         * Return a file from the external storage folder
-         */
-        NanoHTTPD.Response serveLogFile(String uri) {
-            NanoHTTPD.Response res;
-            InputStream ip = null;
-            String uripart;
-            Log.v(TAG, "serveLogFile(" + uri + ")");
-            try {
-                if (ip != null) ip.close();
-                String storageDir = getDataStorageDir().toString();
-                StringTokenizer uriParts = new StringTokenizer(uri, "/");
-                Log.v(TAG, "serveExternalFile - number of tokens = " + uriParts.countTokens());
-                while (uriParts.hasMoreTokens()) {
-                    uripart = uriParts.nextToken();
-                    Log.v(TAG, "uripart=" + uripart);
-                }
-
-                // If we have only given a "/logs" URI, return a list of
-                // available files.
-                // Re-start the StringTokenizer from the start.
-                uriParts = new StringTokenizer(uri, "/");
-                Log.v(TAG, "serveExternalFile - number of tokens = "
-                        + uriParts.countTokens());
-                if (uriParts.countTokens() == 1) {
-                    Log.v(TAG, "Returning list of files");
-
-                    File dirs = getDataStorageDir();
-                    try {
-                        JSONObject jsonObj = new JSONObject();
-                        if (dirs.exists()) {
-                            String[] fileList = dirs.list();
-                            JSONArray arr = new JSONArray();
-                            for (int i = 0; i < fileList.length; i++)
-                                arr.put(fileList[i]);
-                            jsonObj.put("logFileList", arr);
-                        }
-                        res = new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK,
-                                "text/html", jsonObj.toString());
-                    } catch (Exception ex) {
-                        res = new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK,
-                                "text/html", "ERROR - " + ex.toString());
-                    }
-                    return res;
-                }
-
-                uripart = uriParts.nextToken();  // This will just be /logs
-                uripart = uriParts.nextToken();  // this is the requested file.
-                String fname = storageDir + "/" + uripart;
-                Log.v(TAG, "serveLogFile - uri=" + uri + ", fname=" + fname);
-                ip = new FileInputStream(fname);
-                String mimeStr = "text/html";
-                res = new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK,
-                        mimeStr, ip);
-                res.addHeader("Content-Length", "" + ip.available());
-            } catch (IOException ex) {
-                Log.v(TAG, "serveLogFile(): Error Opening File - " + ex.toString());
-                res = new NanoHTTPD.Response("serveLogFile(): Error Opening file " + uri);
-            }
-            return (res);
-        }
-
-        /**
-         * Return a file from the apps /assets folder
-         */
-        NanoHTTPD.Response serveFile(String uri) {
-            NanoHTTPD.Response res;
-            InputStream ip = null;
-            try {
-                if (ip != null) ip.close();
-                String assetPath = "www";
-                String fname = assetPath + uri;
-                //Log.v(TAG,"serveFile - uri="+uri+", fname="+fname);
-                AssetManager assetManager = getResources().getAssets();
-                ip = assetManager.open(fname);
-                String mimeStr = "text/html";
-                res = new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK,
-                        mimeStr, ip);
-                res.addHeader("Content-Length", "" + ip.available());
-            } catch (IOException ex) {
-                Log.v(TAG, "serveFile(): Error Opening File - " + ex.toString());
-                res = new NanoHTTPD.Response("serveFile(): Error Opening file " + uri);
-            }
-            return (res);
-        }
-    }
 }
