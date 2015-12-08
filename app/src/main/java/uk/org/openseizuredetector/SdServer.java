@@ -91,7 +91,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private String mSdDataSourceName = "undefined";  // The name of the data soruce specified in the preferences.
     private boolean mLatchAlarms = false;
     private boolean mCancelAudible = false;
-    private boolean mAudibleAlarm = false;
+    public boolean mAudibleAlarm = false;
     private boolean mAudibleWarning = false;
     private boolean mAudibleFaultWarning = false;
     private boolean mSMSAlarm = false;
@@ -231,6 +231,15 @@ public class SdServer extends Service implements SdDataReceiver {
         }
 
         mSdDataSource.stop();
+
+        // Stop the data update timer
+        if (mCancelAudibleTimer !=null) {
+            Log.v(TAG,"stop(): cancelling Cancel_Audible timer");
+            mCancelAudibleTimer.cancel();
+            //mCancelAudibleTimer.purge();
+            mCancelAudibleTimer = null;
+        }
+
 
         try {
             // Cancel the notification.

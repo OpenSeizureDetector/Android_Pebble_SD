@@ -113,11 +113,20 @@
 		android:id="@+id/spectrumProgressBar"
 		android:indeterminate="false" />
 
-	<Button
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content">
+		<Button
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Accept Alarm"
+			android:id="@+id/acceptAlarmButton" />
+		<Button
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-		android:text="Accept Alarm"
-		android:id="@+id/acceptAlarmButton" />
+		android:text="Cancel Audible (temporarily)"
+		android:id="@+id/cancelAudibleButton" />
+	</LinearLayout>
 
 	<com.github.mikephil.charting.charts.LineChart
         android:id="@+id/chart1"

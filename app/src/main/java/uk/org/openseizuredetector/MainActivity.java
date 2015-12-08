@@ -127,6 +127,18 @@ public class MainActivity extends Activity {
             }
         });
 
+        // Deal with the 'Cancel Audible Button'
+        button = (Button) findViewById(R.id.cancelAudibleButton);
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Log.v(TAG, "cancelAudibleButton.onClick()");
+                if (mConnection.mBound) {
+                    mConnection.mSdServer.cancelAudible();
+                }
+            }
+        });
+
+
         // start timer to refresh user interface every second.
         Timer uiTimer = new Timer();
         uiTimer.schedule(new TimerTask() {
@@ -402,6 +414,26 @@ public class MainActivity extends Activity {
             } catch (Exception e) {
                 Log.v(TAG, "ServerStatusRunnable: Exception - " + e.toString());
             }
+
+
+            // Deal with Cancel Audible button
+            Button cancelAudibleButton =
+                    (Button) findViewById(R.id.cancelAudibleButton);
+            if (mConnection.mSdServer.isAudibleCancelled()) {
+                cancelAudibleButton.setText("Audible Alarms Cancelled "
+                        + "for "
+                        + mConnection.mSdServer.
+                        cancelAudibleTimeRemaining()
+                        + " sec."
+                        + " Press to re-enable");
+            } else {
+                if (mConnection.mSdServer.mAudibleAlarm) {
+                    cancelAudibleButton.setText("Cancel Audible Alarms (temporarily)");
+                } else {
+                    cancelAudibleButton.setText("Audible Alarms OFF");
+                }
+            }
+
             ////////////////////////////////////////////////////////////
             // Produce graph
             LineChart mChart = (LineChart) findViewById(R.id.chart1);
