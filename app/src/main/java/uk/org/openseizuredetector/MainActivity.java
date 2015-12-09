@@ -260,7 +260,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        mUtil.unbindFromServer(this,mConnection);
+        mUtil.unbindFromServer(this, mConnection);
     }
 
 
@@ -289,7 +289,6 @@ public class MainActivity extends Activity {
             Log.v(TAG, "mOptionsMenu is null, not changing icons!");
         }
     }
-
 
 
     /*
@@ -384,27 +383,27 @@ public class MainActivity extends Activity {
                             mConnection.mSdServer.mSdData.specPower) /
                             mConnection.mSdServer.mSdData.alarmRatioThresh;
 
-                    ((TextView)findViewById(R.id.powerTv)).setText("Power = "+mConnection.mSdServer.mSdData.roiPower+
-                        " (threshold = "+mConnection.mSdServer.mSdData.alarmThresh+")");
-                    ((TextView)findViewById(R.id.spectrumTv)).setText("Spectrum Ratio = "+10 * mConnection.mSdServer.mSdData.roiPower /
-                            mConnection.mSdServer.mSdData.specPower+
-                            " (threshold = "+mConnection.mSdServer.mSdData.alarmRatioThresh+")");
+                    ((TextView) findViewById(R.id.powerTv)).setText("Power = " + mConnection.mSdServer.mSdData.roiPower +
+                            " (threshold = " + mConnection.mSdServer.mSdData.alarmThresh + ")");
+                    ((TextView) findViewById(R.id.spectrumTv)).setText("Spectrum Ratio = " + 10 * mConnection.mSdServer.mSdData.roiPower /
+                            mConnection.mSdServer.mSdData.specPower +
+                            " (threshold = " + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
 
                     ProgressBar pb;
-                    pb =   ((ProgressBar)findViewById(R.id.powerProgressBar));
+                    pb = ((ProgressBar) findViewById(R.id.powerProgressBar));
                     pb.setMax(100);
-                    pb.setProgress((int)powerPc);
+                    pb.setProgress((int) powerPc);
                     int colour = Color.BLUE;
-                    if (powerPc>75) colour = Color.YELLOW;
-                    if (powerPc>100) colour = Color.RED;
+                    if (powerPc > 75) colour = Color.YELLOW;
+                    if (powerPc > 100) colour = Color.RED;
                     pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
 
-                    pb =   ((ProgressBar)findViewById(R.id.spectrumProgressBar));
+                    pb = ((ProgressBar) findViewById(R.id.spectrumProgressBar));
                     pb.setMax(100);
-                    pb.setProgress((int)specPc);
+                    pb.setProgress((int) specPc);
                     colour = Color.BLUE;
-                    if (specPc>75) colour = Color.YELLOW;
-                    if (specPc>100) colour = Color.RED;
+                    if (specPc > 75) colour = Color.YELLOW;
+                    if (specPc > 100) colour = Color.RED;
                     pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
                 } else {
                     tv = (TextView) findViewById(R.id.alarmTv);
@@ -419,20 +418,21 @@ public class MainActivity extends Activity {
             // Deal with Cancel Audible button
             Button cancelAudibleButton =
                     (Button) findViewById(R.id.cancelAudibleButton);
-            if (mConnection.mSdServer.isAudibleCancelled()) {
-                cancelAudibleButton.setText("Audible Alarms Cancelled "
-                        + "for "
-                        + mConnection.mSdServer.
-                        cancelAudibleTimeRemaining()
-                        + " sec."
-                        + " Press to re-enable");
-            } else {
-                if (mConnection.mSdServer.mAudibleAlarm) {
-                    cancelAudibleButton.setText("Cancel Audible Alarms (temporarily)");
+            if (mConnection.mBound)
+                if (mConnection.mSdServer.isAudibleCancelled()) {
+                    cancelAudibleButton.setText("Audible Alarms Cancelled "
+                            + "for "
+                            + mConnection.mSdServer.
+                            cancelAudibleTimeRemaining()
+                            + " sec."
+                            + " Press to re-enable");
                 } else {
-                    cancelAudibleButton.setText("Audible Alarms OFF");
+                    if (mConnection.mSdServer.mAudibleAlarm) {
+                        cancelAudibleButton.setText("Cancel Audible Alarms (temporarily)");
+                    } else {
+                        cancelAudibleButton.setText("Audible Alarms OFF");
+                    }
                 }
-            }
 
             ////////////////////////////////////////////////////////////
             // Produce graph
@@ -479,14 +479,13 @@ public class MainActivity extends Activity {
     }
 
 
-
     private void showAbout() {
         View aboutView = getLayoutInflater().inflate(R.layout.about_layout, null, false);
         String versionName = mUtil.getAppVersionName();
         Log.v(TAG, "showAbout() - version name = " + versionName);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setIcon(R.drawable.icon_24x24);
-        builder.setTitle("OpenSeizureDetector V"+versionName);
+        builder.setTitle("OpenSeizureDetector V" + versionName);
         builder.setView(aboutView);
         builder.create();
         builder.show();
