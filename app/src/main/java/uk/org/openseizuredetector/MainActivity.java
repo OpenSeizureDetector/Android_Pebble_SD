@@ -38,6 +38,7 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -390,21 +391,26 @@ public class MainActivity extends Activity {
                             " (threshold = " + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
 
                     ProgressBar pb;
+                    Drawable pbDrawable;
                     pb = ((ProgressBar) findViewById(R.id.powerProgressBar));
                     pb.setMax(100);
                     pb.setProgress((int) powerPc);
-                    int colour = Color.BLUE;
-                    if (powerPc > 75) colour = Color.YELLOW;
-                    if (powerPc > 100) colour = Color.RED;
-                    pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
+                    pbDrawable = getResources().getDrawable(R.drawable.progress_bar_blue);
+                    if (powerPc > 75)  pbDrawable = getResources().getDrawable(R.drawable.progress_bar_yellow);
+                    if (powerPc > 100) pbDrawable = getResources().getDrawable(R.drawable.progress_bar_red);
+
+                    //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
+
+                    pb.setProgressDrawable(pbDrawable);
 
                     pb = ((ProgressBar) findViewById(R.id.spectrumProgressBar));
                     pb.setMax(100);
                     pb.setProgress((int) specPc);
-                    colour = Color.BLUE;
-                    if (specPc > 75) colour = Color.YELLOW;
-                    if (specPc > 100) colour = Color.RED;
-                    pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
+                    pbDrawable = getResources().getDrawable(R.drawable.progress_bar_blue);
+                    if (specPc > 75) pbDrawable = getResources().getDrawable(R.drawable.progress_bar_yellow);
+                    if (specPc > 100) pbDrawable = getResources().getDrawable(R.drawable.progress_bar_red);
+                    //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
+                    pb.setProgressDrawable(pbDrawable);
                 } else {
                     tv = (TextView) findViewById(R.id.alarmTv);
                     tv.setText("Not Connected to Server");
