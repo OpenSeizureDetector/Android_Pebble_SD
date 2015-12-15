@@ -284,6 +284,13 @@ public class SdServer extends Service implements SdDataReceiver {
         mNM.notify(NOTIFICATION_ID, notification);
     }
 
+    // Show the main activity on the user's screen.
+    private void showMainActivity() {
+        Log.v(TAG, "showMainActivity()");
+        Intent i = new Intent(getApplicationContext(),MainActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
+        this.startActivity(i);
+    }
 
     /**
      * Process the data received from the SdData source.
@@ -329,6 +336,8 @@ public class SdServer extends Service implements SdDataReceiver {
             }
             // Make alarm beep tone
             alarmBeep();
+            // Display MainActvity
+            showMainActivity();
             // Send SMS Alarm.
             if (mSMSAlarm) {
                 Time tnow = new Time(Time.getCurrentTimezone());
@@ -354,6 +363,8 @@ public class SdServer extends Service implements SdDataReceiver {
             }
             // Make alarm beep tone
             alarmBeep();
+            // Display MainActvity
+            showMainActivity();
             // Send SMS Alarm.
             if (mSMSAlarm) {
                 Time tnow = new Time(Time.getCurrentTimezone());
