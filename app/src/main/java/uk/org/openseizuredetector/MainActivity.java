@@ -26,23 +26,14 @@
 package uk.org.openseizuredetector;
 
 import android.app.Activity;
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningServiceInfo;
 import android.app.AlertDialog;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageInfo;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.preference.PreferenceManager;
@@ -57,14 +48,9 @@ import android.widget.TextView;
 import android.widget.Button;
 
 import java.lang.reflect.Field;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import org.apache.http.conn.util.InetAddressUtils;
 
 //MPAndroidChart
 import com.github.mikephil.charting.charts.LineChart;
@@ -77,6 +63,9 @@ public class MainActivity extends Activity {
     private int okColour = Color.BLUE;
     private int warnColour = Color.MAGENTA;
     private int alarmColour = Color.RED;
+    private int okTextColour = Color.WHITE;
+    private int warnTextColour = Color.WHITE;
+    private int alarmTextColour = Color.BLACK;
     private OsdUtil mUtil;
     private SdServiceConnection mConnection;
     private Menu mOptionsMenu;
@@ -307,18 +296,26 @@ public class MainActivity extends Activity {
     final Runnable serverStatusRunnable = new Runnable() {
         public void run() {
             TextView tv;
-            tv = (TextView) findViewById(R.id.textView1);
             if (mUtil.isServerRunning()) {
+                tv = (TextView) findViewById(R.id.serverStatusTv);
                 tv.setText("Server Running OK");
                 tv.setBackgroundColor(okColour);
-                tv = (TextView) findViewById(R.id.textView2);
+                tv.setTextColor(okTextColour);
+                tv = (TextView) findViewById(R.id.serverIpTv);
                 tv.setText("Access Server at http://"
                         + mUtil.getLocalIpAddress()
                         + ":8080");
                 tv.setBackgroundColor(okColour);
+                tv.setTextColor(okTextColour);
             } else {
-                tv.setText("*** Server Stopped ***");
-                tv.setBackgroundColor(alarmColour);
+                tv = (TextView) findViewById(R.id.serverStatusTv);
+                tv.setText("Server Stopped");
+                tv.setBackgroundColor(warnColour);
+                tv.setTextColor(warnTextColour);
+                tv = (TextView) findViewById(R.id.serverIpTv);
+                tv.setText("--");
+                tv.setBackgroundColor(warnColour);
+                tv.setTextColor(warnTextColour);
             }
 
 
@@ -330,53 +327,71 @@ public class MainActivity extends Activity {
                             && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
                         tv.setText("OK");
                         tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
                     }
                     if ((mConnection.mSdServer.mSdData.alarmState == 1)
                             && !mConnection.mSdServer.mSdData.alarmStanding
                             && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
                         tv.setText("WARNING");
                         tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
                     }
                     if (mConnection.mSdServer.mSdData.alarmState == 4) {
                         tv.setText("FAULT");
                         tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
                     }
                     if (mConnection.mSdServer.mSdData.alarmStanding) {
                         tv.setText("**ALARM**");
                         tv.setBackgroundColor(alarmColour);
+                        tv.setTextColor(alarmTextColour);
                     }
                     if (mConnection.mSdServer.mSdData.fallAlarmStanding) {
                         tv.setText("**FALL**");
                         tv.setBackgroundColor(alarmColour);
+                        tv.setTextColor(alarmTextColour);
                     }
                     tv = (TextView) findViewById(R.id.pebTimeTv);
                     tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+
                     // Pebble Connected Phrase
                     tv = (TextView) findViewById(R.id.pebbleTv);
                     if (mConnection.mSdServer.mSdData.pebbleConnected) {
                         tv.setText("Pebble Watch Connected OK");
                         tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+
                     } else {
-                        tv.setText("** Pebble Watch NOT Connected **");
-                        tv.setBackgroundColor(alarmColour);
+                        tv.setText("Pebble Watch NOT Connected");
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
                     }
                     tv = (TextView) findViewById(R.id.appTv);
                     if (mConnection.mSdServer.mSdData.pebbleAppRunning) {
                         tv.setText("Pebble App OK");
                         tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
                     } else {
-                        tv.setText("** Pebble App NOT Running **");
-                        tv.setBackgroundColor(alarmColour);
+                        tv.setText("Pebble App NOT Running");
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
                     }
                     tv = (TextView) findViewById(R.id.battTv);
                     tv.setText("Pebble Battery = " + String.valueOf(mConnection.mSdServer.mSdData.batteryPc) + "%");
-                    if (mConnection.mSdServer.mSdData.batteryPc <= 20)
+                    if (mConnection.mSdServer.mSdData.batteryPc <= 20) {
                         tv.setBackgroundColor(alarmColour);
-                    if (mConnection.mSdServer.mSdData.batteryPc > 20)
+                        tv.setTextColor(alarmTextColour);
+                    }
+                    if (mConnection.mSdServer.mSdData.batteryPc > 20) {
                         tv.setBackgroundColor(warnColour);
-                    if (mConnection.mSdServer.mSdData.batteryPc >= 40)
+                        tv.setTextColor(warnTextColour);
+                    }
+                    if (mConnection.mSdServer.mSdData.batteryPc >= 40) {
                         tv.setBackgroundColor(okColour);
-
+                        tv.setTextColor(okTextColour);
+                    }
                     // Set ProgressBars to show margin to alarm.
                     long powerPc = mConnection.mSdServer.mSdData.roiPower * 100 /
                             mConnection.mSdServer.mSdData.alarmThresh;
@@ -411,15 +426,25 @@ public class MainActivity extends Activity {
                     if (specPc > 100) pbDrawable = getResources().getDrawable(R.drawable.progress_bar_red);
                     //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
                     pb.setProgressDrawable(pbDrawable);
-                } else {
+                } else {   // Not bound to server
                     tv = (TextView) findViewById(R.id.alarmTv);
-                    tv.setText("Not Connected to Server");
+                    tv.setText("------");
                     tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+
                 }
             } catch (Exception e) {
                 Log.v(TAG, "ServerStatusRunnable: Exception - " + e.toString());
             }
 
+            // deal with latch alarms button
+            Button acceptAlarmButton = (Button) findViewById(R.id.acceptAlarmButton);
+            if (mConnection.mBound)
+                if (mConnection.mSdServer.isLatchAlarms()) {
+                    acceptAlarmButton.setEnabled(true);
+                } else {
+                    acceptAlarmButton.setEnabled(false);
+                }
 
             // Deal with Cancel Audible button
             Button cancelAudibleButton =

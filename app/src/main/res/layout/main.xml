@@ -1,139 +1,139 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	      android:orientation="vertical"
-	      android:layout_width="fill_parent"
-	      android:layout_height="fill_parent"
-	      >
-  <TextView  
-      android:id="@+id/versionTv"
-      android:layout_width="wrap_content" 
-      android:layout_height="wrap_content" 
-      android:text="Android OpenSeizureDetector Version x.xx"
-      />
-  
-  
-  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-		android:orientation="horizontal"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		>
-    <TextView  
-	android:id="@+id/textView1"
-	android:layout_width="0dp" 
-	android:layout_height="wrap_content"
-	android:layout_weight="0.5"
-	android:text="textView1"
-	/>
-    <TextView  
-	android:id="@+id/textView2"
-	android:layout_width="0dp" 
-	android:layout_height="wrap_content" 
-	android:layout_weight="0.5"
-	android:text="textView2"
-	/>
-  </LinearLayout>
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical">
 
-  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-		android:orientation="horizontal"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		>
+    <TextView
+        android:id="@+id/versionTv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Android OpenSeizureDetector Version x.xx" />
+
+
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-		  android:orientation="vertical"
-		  android:layout_width="0dp"
-		  android:layout_height="wrap_content"
-		  android:layout_weight="0.5"
-		  >
-      <TextView  
-	  android:id="@+id/alarmTv"
-	  android:layout_width="wrap_content" 
-	  android:layout_height="wrap_content"
-	  android:text="alarmTv"
-	  android:textSize="32sp"
-	  />
-      <TextView  
-	  android:id="@+id/pebTimeTv"
-	  android:layout_width="wrap_content" 
-	  android:layout_height="wrap_content"
-	  android:text="pebTimeTv"
-	  />
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/serverStatusTv"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:layout_weight="0.5"
+            android:text="textView1" />
+
+        <TextView
+            android:id="@+id/serverIpTv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_weight="0.5"
+            android:text="textView2" />
     </LinearLayout>
+
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-		  android:orientation="vertical"
-		  android:layout_width="0dp"
-		  android:layout_height="wrap_content"
-		  android:layout_weight="0.5"
-		  >
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
-      <TextView  
-	  android:id="@+id/pebbleTv"
-	  android:layout_width="wrap_content" 
-	  android:layout_height="wrap_content" 
-	  android:text="pebbleTv"
-	  />
-      <TextView  
-	  android:id="@+id/appTv"
-	  android:layout_width="wrap_content" 
-	  android:layout_height="wrap_content" 
-	  android:text="appTv"
-	  />
-      <TextView  
-	  android:id="@+id/battTv"
-	  android:layout_width="wrap_content" 
-	  android:layout_height="wrap_content" 
-	  android:text="battTv"
-	  />
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/pebTimeTv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="pebTimeTv" />
+
+            <TextView
+                android:id="@+id/alarmTv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="alarmTv"
+                android:textSize="32sp" />
+        </LinearLayout>
+
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.5"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/pebbleTv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="pebbleTv" />
+
+            <TextView
+                android:id="@+id/appTv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="appTv" />
+
+            <TextView
+                android:id="@+id/battTv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="battTv" />
+        </LinearLayout>
     </LinearLayout>
-  </LinearLayout>
 
 
+    <TextView
+        android:id="@+id/powerTv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Power" />
 
-	<TextView
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:text="Power"
-		android:id="@+id/powerTv" />
+    <ProgressBar
+        android:id="@+id/powerProgressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="20dp" />
 
-	<ProgressBar
-		style="?android:attr/progressBarStyleHorizontal"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:id="@+id/powerProgressBar"
-		android:minHeight="20dp" />
+    <TextView
+        android:id="@+id/spectrumTv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Spectal Range" />
 
-	<TextView
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:text="Spectal Range"
-		android:id="@+id/spectrumTv" />
+    <ProgressBar
+        android:id="@+id/spectrumProgressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="false"
+        android:minHeight="20dp" />
 
-	<ProgressBar
-		style="?android:attr/progressBarStyleHorizontal"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:id="@+id/spectrumProgressBar"
-		android:indeterminate="false"
-		android:minHeight="20dp" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-	<LinearLayout
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content">
-		<Button
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="Accept Alarm"
-			android:id="@+id/acceptAlarmButton" />
-		<Button
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:text="Cancel Audible (temporarily)"
-		android:id="@+id/cancelAudibleButton" />
-	</LinearLayout>
+        <Button
+            android:id="@+id/acceptAlarmButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Accept Alarm" />
 
-	<com.github.mikephil.charting.charts.LineChart
+        <Button
+            android:id="@+id/cancelAudibleButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel Audible (temporarily)" />
+    </LinearLayout>
+
+    <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/chart1"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-         />
+        android:layout_height="match_parent" />
 </LinearLayout>
 

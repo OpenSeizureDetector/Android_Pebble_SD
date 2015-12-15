@@ -52,6 +52,10 @@ public class StartupActivity extends Activity {
     private int okColour = Color.BLUE;
     private int warnColour = Color.MAGENTA;
     private int alarmColour = Color.RED;
+    private int okTextColour = Color.WHITE;
+    private int warnTextColour = Color.BLACK;
+    private int alarmTextColour = Color.BLACK;
+
 
     private OsdUtil mUtil;
     private Timer mUiTimer;
@@ -111,6 +115,13 @@ public class StartupActivity extends Activity {
         TextView tv = (TextView)findViewById(R.id.dataSourceTextView);
         tv.setText("DataSource = "+dataSourceName);
 
+        // disable pebble configuration button if we have not selected the pebble datasource
+        if (!dataSourceName.equals("Pebble")) {
+            Log.v(TAG, "Not Pebble Datasource - deactivating Pebble Button");
+            Button b = (Button) findViewById(R.id.pebbleButton);
+            b.setEnabled(false);
+        }
+
         if (mUtil.isServerRunning()) {
             Log.v(TAG, "onStart() - server running - stopping it");
             mUtil.stopServer();
@@ -160,11 +171,13 @@ public class StartupActivity extends Activity {
             if (mUtil.isServerRunning()) {
                 tv.setText("Background Service Running OK");
                 tv.setBackgroundColor(okColour);
+                tv.setTextColor(okTextColour);
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
                 tv.setText("Waiting for Background Service...");
                 tv.setBackgroundColor(alarmColour);
+                tv.setTextColor(alarmTextColour);
                 pb.setIndeterminate(true);
                 allOk = false;
             }
@@ -175,11 +188,13 @@ public class StartupActivity extends Activity {
             if (mConnection.mBound) {
                 tv.setText("Bound to Service OK");
                 tv.setBackgroundColor(okColour);
+                tv.setTextColor(okTextColour);
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
                 tv.setText("Binding to Background Service...");
                 tv.setBackgroundColor(alarmColour);
+                tv.setTextColor(alarmTextColour);
                 pb.setIndeterminate(true);
                 allOk = false;
             }
@@ -190,11 +205,13 @@ public class StartupActivity extends Activity {
             if (mConnection.pebbleConnected()) {
                 tv.setText("Pebble Watch Connected OK");
                 tv.setBackgroundColor(okColour);
+                tv.setTextColor(okTextColour);
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
                 tv.setText("Waiting to Connect to Pebble Watch.....");
                 tv.setBackgroundColor(alarmColour);
+                tv.setTextColor(alarmTextColour);
                 pb.setIndeterminate(true);
                 allOk = false;
             }
@@ -205,11 +222,13 @@ public class StartupActivity extends Activity {
             if (mConnection.pebbleAppRunning()) {
                 tv.setText("Watch App Running OK");
                 tv.setBackgroundColor(okColour);
+                tv.setTextColor(okTextColour);
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
                 tv.setText("Waiting for Watch App to Start.....");
                 tv.setBackgroundColor(alarmColour);
+                tv.setTextColor(alarmTextColour);
                 pb.setIndeterminate(true);
                 allOk = false;
             }
@@ -221,11 +240,13 @@ public class StartupActivity extends Activity {
             if (mConnection.hasSdData()) {
                 tv.setText("Seizure Detector Data Received OK");
                 tv.setBackgroundColor(okColour);
+                tv.setTextColor(okTextColour);
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
                 tv.setText("Waiting for Seizure Detector Data...");
                 tv.setBackgroundColor(alarmColour);
+                tv.setTextColor(alarmTextColour);
                 pb.setIndeterminate(true);
                 allOk = false;
             }
@@ -237,11 +258,13 @@ public class StartupActivity extends Activity {
             if (mConnection.hasSdSettings()) {
                 tv.setText("Seizure Detector Settings Received OK");
                 tv.setBackgroundColor(okColour);
+                tv.setTextColor(okTextColour);
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
                 tv.setText("Waiting for Seizure Detector Settings...");
                 tv.setBackgroundColor(alarmColour);
+                tv.setTextColor(alarmTextColour);
                 pb.setIndeterminate(true);
                 allOk = false;
             }

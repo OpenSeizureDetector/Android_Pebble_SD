@@ -224,8 +224,13 @@ public class SdServer extends Service implements SdDataReceiver {
         // release the wake lock to allow CPU to sleep and reduce
         // battery drain.
         if (mWakeLock != null) {
-            mWakeLock.release();
-            Log.v(TAG, "Released Wake Lock to allow device to sleep.");
+            try {
+                mWakeLock.release();
+                Log.v(TAG, "Released Wake Lock to allow device to sleep.");
+            } catch (Exception e) {
+                Log.e(TAG, "Error Releasing Wakelock - " + e.toString());
+                mUtil.showToast("Error Releasing Wakelock");
+            }
         } else {
             Log.d(TAG, "mmm...mWakeLock is null, so not releasing lock.  This shouldn't happen!");
         }
@@ -505,6 +510,9 @@ public class SdServer extends Service implements SdDataReceiver {
         return mCancelAudibleTimeRemaining;
     }
 
+    public boolean isLatchAlarms() {
+        return mLatchAlarms;
+    }
 
 
     /**

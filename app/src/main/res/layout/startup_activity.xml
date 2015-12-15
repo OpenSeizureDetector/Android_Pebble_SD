@@ -47,7 +47,7 @@
 
             <TextView
                 android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:gravity="center_vertical"
                 android:text="New Text"
                 android:id="@+id/textItem1" />
@@ -65,7 +65,7 @@
 
             <TextView
                 android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:gravity="center_vertical"
                 android:text="New Text"
                 android:id="@+id/textItem2" />
@@ -83,7 +83,7 @@
 
             <TextView
                 android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:gravity="center_vertical"
                 android:text="New Text"
                 android:id="@+id/textItem3" />
@@ -99,7 +99,7 @@
                 android:id="@+id/progressBar4" />
             <TextView
                 android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:gravity="center_vertical"
                 android:text="New Text"
                 android:id="@+id/textItem4" />
@@ -115,7 +115,7 @@
                 android:id="@+id/progressBar5" />
             <TextView
                 android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:text="New Text"
                 android:gravity="center_vertical"
                 android:id="@+id/textItem5" />
@@ -131,7 +131,7 @@
                 android:id="@+id/progressBar6" />
             <TextView
                 android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:gravity="center_vertical"
                 android:text="New Text"
                 android:id="@+id/textItem6" />

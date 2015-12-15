@@ -363,6 +363,7 @@ public class SdDataSourcePebble extends SdDataSource {
      * Attempt to start the pebble_sd watch app on the pebble watch.
      */
     public void startWatchApp() {
+        Log.v(TAG, "startWatchApp()");
         PebbleKit.startAppOnPebble(mContext, SD_UUID);
 
     }
@@ -371,6 +372,7 @@ public class SdDataSourcePebble extends SdDataSource {
      * stop the pebble_sd watch app on the pebble watch.
      */
     public void stopWatchApp() {
+        Log.v(TAG, "stopWatchApp()");
         PebbleKit.closeAppOnPebble(mContext, SD_UUID);
     }
 
@@ -395,6 +397,7 @@ public class SdDataSourcePebble extends SdDataSource {
      * If the watch app is not running, it attempts to re-start it.
      */
     public void getPebbleStatus() {
+        Log.v(TAG, "getPebbleStatus()");
         Time tnow = new Time(Time.getCurrentTimezone());
         long tdiff;
         tnow.setToNow();
