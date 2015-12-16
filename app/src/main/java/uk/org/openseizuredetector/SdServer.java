@@ -235,7 +235,12 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.d(TAG, "mmm...mWakeLock is null, so not releasing lock.  This shouldn't happen!");
         }
 
-        mSdDataSource.stop();
+        if (mSdDataSource!=null) {
+            Log.v(TAG,"stopping mSdDataSource");
+            mSdDataSource.stop();
+        } else {
+            Log.e(TAG,"ERROR - mSdDataSource is null - why????");
+        }
 
         // Stop the data update timer
         if (mCancelAudibleTimer !=null) {

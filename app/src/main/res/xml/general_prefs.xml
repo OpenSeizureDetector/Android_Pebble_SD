@@ -17,12 +17,6 @@
         android:key="LogData"
         android:summary="Log Data to SD Card Regularly"
         android:title="Log Data to SD Card" />
-    <EditTextPreference
-        android:key="FaultTimerPeriod"
-        android:title="Fault Timer Duration (sec)"
-        android:summary="Duration that fault alarms are muted before initiating."
-        android:numeric="integer"
-        android:defaultValue="30" />
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="PreventSleep"

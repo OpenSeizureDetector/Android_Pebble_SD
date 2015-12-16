@@ -23,6 +23,13 @@
             android:key="AudibleFaultWarning"
             android:summary="Issue an audible alarm if the system detects a fault (e.g. can not talk to Pebble)."
             android:title="Enable Audible System FaultWarnings" />
+        <EditTextPreference
+            android:key="FaultTimerPeriod"
+            android:title="Fault Timer Duration (sec)"
+            android:summary="Duration that fault alarms are muted before initiating."
+            android:numeric="integer"
+            android:defaultValue="30" />
+
     </PreferenceCategory>
 
     <PreferenceCategory android:title="SMS Alarm Settings">
