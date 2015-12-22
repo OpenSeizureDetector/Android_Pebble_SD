@@ -359,22 +359,22 @@ public class MainActivity extends Activity {
                     // Pebble Connected Phrase
                     tv = (TextView) findViewById(R.id.pebbleTv);
                     if (mConnection.mSdServer.mSdData.pebbleConnected) {
-                        tv.setText("Pebble Watch Connected OK");
+                        tv.setText("Watch Connected OK");
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
 
                     } else {
-                        tv.setText("Pebble Watch NOT Connected");
+                        tv.setText("Watch NOT Connected");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
                     }
                     tv = (TextView) findViewById(R.id.appTv);
                     if (mConnection.mSdServer.mSdData.pebbleAppRunning) {
-                        tv.setText("Pebble App OK");
+                        tv.setText("Watch App OK");
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
                     } else {
-                        tv.setText("Pebble App NOT Running");
+                        tv.setText("Watch App NOT Running");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
                     }
