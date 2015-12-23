@@ -45,6 +45,7 @@ import android.os.Environment;
 import android.os.HandlerThread;
 import android.os.Binder;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
@@ -413,7 +414,7 @@ public class SdServer extends Service implements SdDataReceiver {
     /* from http://stackoverflow.com/questions/12154940/how-to-make-a-beep-in-android */
 
     /**
-     * beep for duration miliseconds, but only if mAudibleAlarm is set.
+     * beep for duration milliseconds, but only if mAudibleAlarm is set.
      */
     private void beep(int duration) {
         ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
@@ -742,7 +743,7 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "startFaultTimer(): starting fault timer.");
             mFaultTimerCompleted = false;
             mFaultTimer =
-                    // conver to ms.
+                    // convert to ms.
                     new FaultTimer(mFaultTimerPeriod * 1000, 1000);
             mFaultTimer.start();
         }
