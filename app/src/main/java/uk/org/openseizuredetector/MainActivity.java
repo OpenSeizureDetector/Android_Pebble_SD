@@ -298,7 +298,8 @@ public class MainActivity extends Activity {
             TextView tv;
             if (mUtil.isServerRunning()) {
                 tv = (TextView) findViewById(R.id.serverStatusTv);
-                tv.setText("Server Running OK");
+                if (mConnection.mBound)
+                    tv.setText("Server Running OK\n"+mConnection.mSdServer.mSdDataSourceName+" Data Source");
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
                 tv = (TextView) findViewById(R.id.serverIpTv);

@@ -30,14 +30,17 @@ import java.util.Map;
 
 import fi.iki.elonen.NanoHTTPD;
 
+import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.SharedPreferences;
+import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.CountDownTimer;
@@ -93,7 +96,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private WakeLock mWakeLock = null;
     public SdDataSource mSdDataSource;
     public SdData mSdData;
-    private String mSdDataSourceName = "undefined";  // The name of the data soruce specified in the preferences.
+    public String mSdDataSourceName = "undefined";  // The name of the data soruce specified in the preferences.
     private boolean mLatchAlarms = false;
     private boolean mCancelAudible = false;
     public boolean mAudibleAlarm = false;
@@ -137,7 +140,9 @@ public class SdServer extends Service implements SdDataReceiver {
         return mBinder;
     }
 
-    /** used to make suer timers run on UI thread */
+    /**
+     * used to make suer timers run on UI thread
+     */
     private void runOnUiThread(Runnable runnable) {
         mHandler.post(runnable);
     }
@@ -192,7 +197,7 @@ public class SdServer extends Service implements SdDataReceiver {
         // Display a notification icon in the status bar of the phone to
         // show the service is running.
         Log.v(TAG, "showing Notification");
-        showNotification();
+        showNotification(0);
 
         // Record last time we sent an SMS so we can limit rate of SMS
         // sending to one per minute.
@@ -281,18 +286,32 @@ public class SdServer extends Service implements SdDataReceiver {
     /**
      * Show a notification while this service is running.
      */
-    private void showNotification() {
+    private void showNotification(int alarmLevel) {
         Log.v(TAG, "showNotification()");
+        int iconId;
+        switch (alarmLevel) {
+            case 0:
+                iconId = R.drawable.star_of_life_24x24;
+                break;
+            case 1:
+                iconId = R.drawable.star_of_life_yellow_24x24;
+                break;
+            case 2:
+                iconId = R.drawable.star_of_life_red_24x24;
+                break;
+            default:
+                iconId = R.drawable.star_of_life_24x24;
+        }
         Intent i = new Intent(getApplicationContext(), MainActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         Notification notification = builder.setContentIntent(contentIntent)
-                .setSmallIcon(R.drawable.star_of_life_24x24)
+                .setSmallIcon(iconId)
                 .setTicker("OpenSeizureDetector")
                 .setAutoCancel(false)
                 .setContentTitle("OpenSeizureDetector")
-                .setContentText("osdtext")
+                .setContentText(mSdDataSourceName + " Data Source")
                 .build();
 
         mNM = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -302,9 +321,19 @@ public class SdServer extends Service implements SdDataReceiver {
     // Show the main activity on the user's screen.
     private void showMainActivity() {
         Log.v(TAG, "showMainActivity()");
-        Intent i = new Intent(getApplicationContext(), MainActivity.class);
-        i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
-        this.startActivity(i);
+
+        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        List<ActivityManager.RunningTaskInfo> runningTaskInfo = manager.getRunningTasks(1);
+        ComponentName componentInfo = runningTaskInfo.get(0).topActivity;
+
+        if (componentInfo.getPackageName().equals("uk.org.openseizuredetector")) {
+            Log.v(TAG,"showMainActivity(): OpenSeizureDetector Activity is already shown on top - not doing anything");
+        } else {
+            Log.v(TAG,"showMainActivity(): Showing Main Activity");
+            Intent i = new Intent(getApplicationContext(), MainActivity.class);
+            i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
+            this.startActivity(i);
+        }
     }
 
     /**
@@ -321,6 +350,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 sdData.alarmPhrase = "OK";
                 sdData.alarmStanding = false;
                 sdData.fallAlarmStanding = false;
+                showNotification(0);
             }
         }
         if (sdData.alarmState == 1) {
@@ -339,6 +369,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 Log.v(TAG, "WARNING");
             }
             warningBeep();
+            showNotification(1);
         }
         if ((sdData.alarmState == 2) || (sdData.alarmStanding)) {
             sdData.alarmPhrase = "ALARM";
@@ -352,6 +383,7 @@ public class SdServer extends Service implements SdDataReceiver {
             }
             // Make alarm beep tone
             alarmBeep();
+            showNotification(2);
             // Display MainActvity
             showMainActivity();
             // Send SMS Alarm.
@@ -460,7 +492,7 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "alarmBeep() - CancelAudible Active - silent beep...");
         } else {
             if (mAudibleAlarm) {
-                beep(1000);
+                beep(3000);
                 Log.v(TAG, "alarmBeep()");
             } else {
                 Log.v(TAG, "alarmBeep() - silent...");
@@ -716,9 +748,9 @@ public class SdServer extends Service implements SdDataReceiver {
     }
 
     /*
- * Temporary cancel audible alarms, for the period specified by the
- * CancelAudiblePeriod setting.
- */
+    * Temporary cancel audible alarms, for the period specified by the
+    * CancelAudiblePeriod setting.
+    */
     private class CancelAudibleTimer extends CountDownTimer {
         public CancelAudibleTimer(long startTime, long interval) {
             super(startTime, interval);
