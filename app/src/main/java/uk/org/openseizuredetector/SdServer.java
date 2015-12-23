@@ -42,6 +42,7 @@ import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.CountDownTimer;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Binder;
 import android.os.IBinder;
@@ -106,6 +107,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private boolean mLogData = false;
     private File mOutFile;
     private OsdUtil mUtil;
+    private Handler mHandler;
 
     private final IBinder mBinder = new SdBinder();
 
@@ -135,6 +137,10 @@ public class SdServer extends Service implements SdDataReceiver {
         return mBinder;
     }
 
+    /** used to make suer timers run on UI thread */
+    private void runOnUiThread(Runnable runnable) {
+        mHandler.post(runnable);
+    }
 
     /**
      * onCreate() - called when services is created.  Starts message
@@ -143,6 +149,7 @@ public class SdServer extends Service implements SdDataReceiver {
     @Override
     public void onCreate() {
         Log.v(TAG, "onCreate()");
+        mHandler = new Handler();
 
         mUtil = new OsdUtil(getApplicationContext());
 
@@ -741,11 +748,15 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "startFaultTimer(): fault timer already running - not doing anything.");
         } else {
             Log.v(TAG, "startFaultTimer(): starting fault timer.");
-            mFaultTimerCompleted = false;
-            mFaultTimer =
-                    // convert to ms.
-                    new FaultTimer(mFaultTimerPeriod * 1000, 1000);
-            mFaultTimer.start();
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    mFaultTimerCompleted = false;
+                    mFaultTimer =
+                            // convert to ms.
+                            new FaultTimer(mFaultTimerPeriod * 1000, 1000);
+                    mFaultTimer.start();
+                }
+            });
         }
     }
 
