@@ -65,7 +65,6 @@ import org.json.JSONObject;
 import org.json.JSONArray;
 
 
-
 /**
  * Based on example at:
  * http://stackoverflow.com/questions/14309256/using-nanohttpd-in-android
@@ -84,6 +83,10 @@ public class SdServer extends Service implements SdDataReceiver {
     private CancelAudibleTimer mCancelAudibleTimer = null;
     private int mCancelAudiblePeriod = 10;  // Cancel Audible Period in minutes
     private long mCancelAudibleTimeRemaining = 0;
+    private FaultTimer mFaultTimer = null;
+    private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
+    private boolean mFaultTimerCompleted = false;
+
     private HandlerThread thread;
     private WakeLock mWakeLock = null;
     public SdDataSource mSdDataSource;
@@ -163,12 +166,12 @@ public class SdServer extends Service implements SdDataReceiver {
         Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName);
         switch (mSdDataSourceName) {
             case "Pebble":
-                Log.v(TAG,"Selecting Pebble DataSource");
+                Log.v(TAG, "Selecting Pebble DataSource");
                 mSdDataSource = new SdDataSourcePebble(this.getApplicationContext(), this);
                 break;
             case "Network":
                 Log.v(TAG, "Selecting Network DataSource");
-                mSdDataSource = new SdDataSourceNetwork(this.getApplicationContext(),this);
+                mSdDataSource = new SdDataSourceNetwork(this.getApplicationContext(), this);
                 break;
             default:
                 Log.v(TAG, "Datasource " + mSdDataSourceName + " not recognised - Exiting");
@@ -186,7 +189,6 @@ public class SdServer extends Service implements SdDataReceiver {
         // Record last time we sent an SMS so we can limit rate of SMS
         // sending to one per minute.
         mSMSTime = new Time(Time.getCurrentTimezone());
-
 
 
         // Start timer to log data regularly..
@@ -235,16 +237,16 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.d(TAG, "mmm...mWakeLock is null, so not releasing lock.  This shouldn't happen!");
         }
 
-        if (mSdDataSource!=null) {
-            Log.v(TAG,"stopping mSdDataSource");
+        if (mSdDataSource != null) {
+            Log.v(TAG, "stopping mSdDataSource");
             mSdDataSource.stop();
         } else {
-            Log.e(TAG,"ERROR - mSdDataSource is null - why????");
+            Log.e(TAG, "ERROR - mSdDataSource is null - why????");
         }
 
         // Stop the data update timer
-        if (mCancelAudibleTimer !=null) {
-            Log.v(TAG,"stop(): cancelling Cancel_Audible timer");
+        if (mCancelAudibleTimer != null) {
+            Log.v(TAG, "stop(): cancelling Cancel_Audible timer");
             mCancelAudibleTimer.cancel();
             //mCancelAudibleTimer.purge();
             mCancelAudibleTimer = null;
@@ -273,9 +275,9 @@ public class SdServer extends Service implements SdDataReceiver {
      */
     private void showNotification() {
         Log.v(TAG, "showNotification()");
-        Intent i = new Intent(getApplicationContext(),MainActivity.class);
+        Intent i = new Intent(getApplicationContext(), MainActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        PendingIntent contentIntent = PendingIntent.getActivity(this,0,i,PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         Notification notification = builder.setContentIntent(contentIntent)
                 .setSmallIcon(R.drawable.star_of_life_24x24)
@@ -292,17 +294,18 @@ public class SdServer extends Service implements SdDataReceiver {
     // Show the main activity on the user's screen.
     private void showMainActivity() {
         Log.v(TAG, "showMainActivity()");
-        Intent i = new Intent(getApplicationContext(),MainActivity.class);
+        Intent i = new Intent(getApplicationContext(), MainActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
         this.startActivity(i);
     }
 
     /**
      * Process the data received from the SdData source.
+     *
      * @param sdData
      */
     public void onSdDataReceived(SdData sdData) {
-        Log.v(TAG, "onSdDataReceived() - "+sdData.toString());
+        Log.v(TAG, "onSdDataReceived() - " + sdData.toString());
         if (sdData.alarmState == 0) {
             if ((!mLatchAlarms) ||
                     (mLatchAlarms &&
@@ -388,18 +391,20 @@ public class SdServer extends Service implements SdDataReceiver {
         if ((sdData.alarmState == 4)) {
             sdData.alarmPhrase = "FAULT";
             faultWarningBeep();
+        } else {
+            stopFaultTimer();
         }
         mSdData = sdData;
-        if (webServer!=null) webServer.setSdData(mSdData);
-        Log.v(TAG,"onSdDataReceived() - setting mSdData to "+mSdData.toString());
+        if (webServer != null) webServer.setSdData(mSdData);
+        Log.v(TAG, "onSdDataReceived() - setting mSdData to " + mSdData.toString());
     }
 
     // Called by SdDataSource when a fault condition is detected.
     public void onSdDataFault(SdData sdData) {
-        Log.v(TAG,"onSdDataFault()");
+        Log.v(TAG, "onSdDataFault()");
         mSdData = sdData;
         mSdData.alarmState = 4;  // set fault alarm state.
-        if (webServer!=null) webServer.setSdData(mSdData);
+        if (webServer != null) webServer.setSdData(mSdData);
         if (mAudibleFaultWarning) {
             faultWarningBeep();
         }
@@ -420,16 +425,22 @@ public class SdServer extends Service implements SdDataReceiver {
      * beep, provided mAudibleAlarm is set
      */
     public void faultWarningBeep() {
-        if (mCancelAudible) {
-            Log.v(TAG, "faultWarningBeep() - CancelAudible Active - silent beep...");
-        } else {
-            if (mAudibleFaultWarning) {
-                beep(10);
-                Log.v(TAG, "faultWarningBeep()");
+        if (mFaultTimerCompleted) {
+            if (mCancelAudible) {
+                Log.v(TAG, "faultWarningBeep() - CancelAudible Active - silent beep...");
             } else {
-                Log.v(TAG, "faultWarningBeep() - silent...");
+                if (mAudibleFaultWarning) {
+                    beep(10);
+                    Log.v(TAG, "faultWarningBeep()");
+                } else {
+                    Log.v(TAG, "faultWarningBeep() - silent...");
+                }
             }
+        } else {
+            startFaultTimer();
+            Log.v(TAG, "faultWarningBeep() - starting Fault Timer");
         }
+
     }
 
 
@@ -503,17 +514,17 @@ public class SdServer extends Service implements SdDataReceiver {
     public void cancelAudible() {
         // Start timer to remove the cancel audible flag
         // after the required period.
-        if (mCancelAudibleTimer!=null) {
-            Log.v(TAG,"onCreate(): cancel audible timer already running - cancelling it.");
+        if (mCancelAudibleTimer != null) {
+            Log.v(TAG, "onCreate(): cancel audible timer already running - cancelling it.");
             mCancelAudibleTimer.cancel();
             mCancelAudibleTimer = null;
             mCancelAudible = false;
         } else {
-            Log.v(TAG,"cancelAudible(): starting cancel audible timer");
+            Log.v(TAG, "cancelAudible(): starting cancel audible timer");
             mCancelAudible = true;
             mCancelAudibleTimer =
                     // conver to ms.
-                    new CancelAudibleTimer(mCancelAudiblePeriod*60*1000,1000);
+                    new CancelAudibleTimer(mCancelAudiblePeriod * 60 * 1000, 1000);
             mCancelAudibleTimer.start();
         }
     }
@@ -537,7 +548,7 @@ public class SdServer extends Service implements SdDataReceiver {
     protected void startWebServer() {
         Log.v(TAG, "startWebServer()");
         if (webServer == null) {
-            webServer = new SdWebServer(getApplicationContext(),getDataStorageDir(),mSdData);
+            webServer = new SdWebServer(getApplicationContext(), getDataStorageDir(), mSdData);
             try {
                 webServer.start();
             } catch (IOException ioe) {
@@ -585,12 +596,23 @@ public class SdServer extends Service implements SdDataReceiver {
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
         try {
-            mSdDataSourceName = SP.getString("DataSource","undefined");
-            Log.v(TAG,"updatePrefs() - DataSource = "+mSdDataSourceName);
+            mSdDataSourceName = SP.getString("DataSource", "undefined");
+            Log.v(TAG, "updatePrefs() - DataSource = " + mSdDataSourceName);
             mLatchAlarms = SP.getBoolean("LatchAlarms", false);
             Log.v(TAG, "updatePrefs() - mLatchAlarms = " + mLatchAlarms);
             mAudibleFaultWarning = SP.getBoolean("AudibleFaultWarning", true);
             Log.v(TAG, "updatePrefs() - mAuidbleFaultWarning = " + mAudibleFaultWarning);
+            // Parse the faultTimer period setting.
+            try {
+                String faultTimerPeriodStr = SP.getString("FaultTimerPeriod", "30");
+                mFaultTimerPeriod = Integer.parseInt(faultTimerPeriodStr);
+                Log.v(TAG, "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
+            } catch (Exception ex) {
+                Log.v(TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!");
+                Toast toast = Toast.makeText(getApplicationContext(), "Problem Parsing FaultTimerPeriod Preference", Toast.LENGTH_SHORT);
+                toast.show();
+            }
+
             mAudibleAlarm = SP.getBoolean("AudibleAlarm", true);
             Log.v(TAG, "updatePrefs() - mAuidbleAlarm = " + mAudibleAlarm);
             mAudibleWarning = SP.getBoolean("AudibleWarning", true);
@@ -693,20 +715,76 @@ public class SdServer extends Service implements SdDataReceiver {
         public CancelAudibleTimer(long startTime, long interval) {
             super(startTime, interval);
         }
+
         @Override
         public void onFinish() {
             mCancelAudible = false;
-            Log.v(TAG,"mCancelAudibleTimer - removing cancelAudible flag");
+            Log.v(TAG, "mCancelAudibleTimer - removing cancelAudible flag");
         }
+
         @Override
         public void onTick(long msRemaining) {
-            mCancelAudibleTimeRemaining = msRemaining/1000;
-            Log.v(TAG,"mCancelAudibleTimer - onTick() - Time Remaining = "
+            mCancelAudibleTimeRemaining = msRemaining / 1000;
+            Log.v(TAG, "mCancelAudibleTimer - onTick() - Time Remaining = "
                     + mCancelAudibleTimeRemaining);
         }
 
     }
 
+    /**
+     * Start the fault timer that is used to require a fault to remain
+     * standing for a period before raising fault beeps.
+     */
+    public void startFaultTimer() {
+        if (mFaultTimer != null) {
+            Log.v(TAG, "startFaultTimer(): fault timer already running - not doing anything.");
+        } else {
+            Log.v(TAG, "startFaultTimer(): starting fault timer.");
+            mFaultTimerCompleted = false;
+            mFaultTimer =
+                    // conver to ms.
+                    new FaultTimer(mFaultTimerPeriod * 1000, 1000);
+            mFaultTimer.start();
+        }
+    }
+
+    public void stopFaultTimer() {
+        if (mFaultTimer != null) {
+            Log.v(TAG, "stopFaultTimer(): fault timer already running - cancelling it.");
+            mFaultTimer.cancel();
+            mFaultTimer = null;
+            mFaultTimerCompleted = false;
+        } else {
+            Log.v(TAG, "stopFaultTimer(): fault timer not running - not doing anything.");
+        }
+    }
+
+
+    /**
+     * Inhibit fault alarm initiation for a period to avoid spurious warning
+     * beeps caused by short term network interruptions.
+     */
+    private class FaultTimer extends CountDownTimer {
+        public long mFaultTimerRemaining = 0;
+
+        public FaultTimer(long startTime, long interval) {
+            super(startTime, interval);
+        }
+
+        @Override
+        public void onFinish() {
+            mFaultTimerCompleted = true;
+            Log.v(TAG, "mFaultTimer - removing mFaultTimerRunning flag");
+        }
+
+        @Override
+        public void onTick(long msRemaining) {
+            mFaultTimerRemaining = msRemaining / 1000;
+            Log.v(TAG, "mFaultTimer - onTick() - Time Remaining = "
+                    + mFaultTimerRemaining);
+        }
+
+    }
 
 
 }
