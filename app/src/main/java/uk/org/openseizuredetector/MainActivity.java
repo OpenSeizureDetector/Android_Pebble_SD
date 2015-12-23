@@ -393,16 +393,32 @@ public class MainActivity extends Activity {
                         tv.setTextColor(okTextColour);
                     }
                     // Set ProgressBars to show margin to alarm.
-                    long powerPc = mConnection.mSdServer.mSdData.roiPower * 100 /
+                    long powerPc;
+                    if (mConnection.mSdServer.mSdData.alarmThresh != 0)
+                        powerPc = mConnection.mSdServer.mSdData.roiPower * 100 /
                             mConnection.mSdServer.mSdData.alarmThresh;
-                    long specPc = 100 * (mConnection.mSdServer.mSdData.roiPower * 10 /
+                    else
+                        powerPc = 0;
+
+                    long specPc;
+                    if (mConnection.mSdServer.mSdData.specPower != 0 &&
+                            mConnection.mSdServer.mSdData.alarmRatioThresh != 0)
+                        specPc = 100 * (mConnection.mSdServer.mSdData.roiPower * 10 /
                             mConnection.mSdServer.mSdData.specPower) /
                             mConnection.mSdServer.mSdData.alarmRatioThresh;
+                    else
+                        specPc = 0;
+
+                    long specRatio;
+                    if (mConnection.mSdServer.mSdData.specPower != 0) {
+                        specRatio = 10 * mConnection.mSdServer.mSdData.roiPower /
+                                mConnection.mSdServer.mSdData.specPower;
+                    } else
+                        specRatio = 0;
 
                     ((TextView) findViewById(R.id.powerTv)).setText("Power = " + mConnection.mSdServer.mSdData.roiPower +
                             " (threshold = " + mConnection.mSdServer.mSdData.alarmThresh + ")");
-                    ((TextView) findViewById(R.id.spectrumTv)).setText("Spectrum Ratio = " + 10 * mConnection.mSdServer.mSdData.roiPower /
-                            mConnection.mSdServer.mSdData.specPower +
+                    ((TextView) findViewById(R.id.spectrumTv)).setText("Spectrum Ratio = " + specRatio +
                             " (threshold = " + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
 
                     ProgressBar pb;
@@ -434,7 +450,8 @@ public class MainActivity extends Activity {
 
                 }
             } catch (Exception e) {
-                Log.v(TAG, "ServerStatusRunnable: Exception - " + e.toString());
+                Log.v(TAG, "ServerStatusRunnable: Exception - ");
+                e.printStackTrace();
             }
 
             // deal with latch alarms button
