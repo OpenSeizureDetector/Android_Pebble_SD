@@ -111,7 +111,7 @@ public class StartupActivity extends Activity {
         // Display the DataSource name
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());;
-        String dataSourceName = SP.getString("DataSource","undefined");
+        String dataSourceName = SP.getString("DataSource","Pebble");
         TextView tv = (TextView)findViewById(R.id.dataSourceTextView);
         tv.setText("DataSource = "+dataSourceName);
 
