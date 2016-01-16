@@ -52,7 +52,7 @@ public class PrefActivity extends PreferenceActivity {
 
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(this.getApplicationContext());
-        String dataSourceStr = SP.getString("DataSource", "pebble");
+        String dataSourceStr = SP.getString("DataSource", "Pebble");
         Log.v(TAG, "onBuildHeaders DataSource = " + dataSourceStr);
 
         Boolean cameraEnabled = SP.getBoolean("UseIpCamera", false);
