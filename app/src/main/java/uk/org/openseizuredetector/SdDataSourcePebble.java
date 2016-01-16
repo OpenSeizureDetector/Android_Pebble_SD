@@ -94,7 +94,6 @@ public class SdDataSourcePebble extends SdDataSource {
     private int DATA_TYPE_RESULTS = 1;   // Analysis Results
     private int DATA_TYPE_SETTINGS = 2;  // Settings
     private int DATA_TYPE_SPEC = 3;      // FFT Spectrum (or part of a spectrum)
-
     public SdDataSourcePebble(Context context, SdDataReceiver sdDataReceiver) {
         super(context,sdDataReceiver);
         mName = "Pebble";
@@ -344,6 +343,9 @@ public class SdDataSourcePebble extends SdDataSource {
             }
         };
         PebbleKit.registerReceivedDataHandler(mContext, msgDataHandler);
+        // We struggle to connect to pebble time if app is already running, so stop app so we can
+        // re-connect to it.
+        stopWatchApp();
     }
 
     /**
