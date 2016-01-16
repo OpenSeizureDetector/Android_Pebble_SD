@@ -25,6 +25,8 @@
 
 package uk.org.openseizuredetector;
 
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceActivity;
 import android.os.Bundle;
@@ -35,12 +37,17 @@ import android.widget.Toast;
 
 import java.util.List;
 
-public class PrefActivity extends PreferenceActivity {
+public class PrefActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
     private String TAG = "PreferenceActivity";
+    private OsdUtil mUtil;
+    private boolean mPrefChanged = false;
+    private Context mContext;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mUtil = new OsdUtil(getApplicationContext());
+        mContext = getApplicationContext();
     }
 
     /**
@@ -97,9 +104,41 @@ public class PrefActivity extends PreferenceActivity {
     }
 
     @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+        Log.v(TAG, "SharedPreference " + s + " Changed.");
+        //mUtil.showToast("Shared Preference " + s + " Changed.");
+        mPrefChanged = true;
+    }
+
+
+    @Override
     public void onResume() {
         super.onResume();
-        Log.v(TAG, "onStart()");
+        Log.v(TAG, "onResume()");
+        SharedPreferences SP = PreferenceManager
+                .getDefaultSharedPreferences(getBaseContext());
+        SP.registerOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        SharedPreferences SP = PreferenceManager
+                .getDefaultSharedPreferences(getBaseContext());
+        SP.unregisterOnSharedPreferenceChangeListener(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.v(TAG, "onDestroy.  mPrefChanged=" + mPrefChanged);
+        if (mPrefChanged) {
+            mUtil.showToast("Settings Changed - re-starting OpenSeizureDetector....");
+            Intent intent = new Intent(getApplicationContext(), StartupActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            finish();
+        }
     }
 
     /**
