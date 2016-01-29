@@ -230,7 +230,7 @@ public class SdDataSourcePebble extends SdDataSource {
             Log.v(TAG, "updatePrefs() AlarmTime = " + intVal);
             setDict.addUint16(KEY_ALARM_TIME, (short) intVal);
 
-            prefStr = SP.getString("AlarmThresh", "100");
+            prefStr = SP.getString("AlarmThresh", "70");
             intVal = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() AlarmThresh = " + intVal);
             setDict.addUint16(KEY_ALARM_THRESH, (short) intVal);
