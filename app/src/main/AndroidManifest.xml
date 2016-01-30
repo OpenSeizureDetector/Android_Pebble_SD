@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="uk.org.openseizuredetector"
     android:versionCode="19"
-    android:versionName="2.0c" >
+    android:versionName="2.0d" >
 
     <uses-sdk android:minSdkVersion="14" />
 
