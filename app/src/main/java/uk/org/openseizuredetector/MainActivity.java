@@ -32,6 +32,7 @@ import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -156,13 +157,7 @@ public class MainActivity extends Activity {
         switch (item.getItemId()) {
             case R.id.action_launch_pebble_app:
                 Log.v(TAG, "action_launch_pebble_app");
-                try {
-                    PackageManager pm = this.getPackageManager();
-                    Intent pebbleAppIntent = pm.getLaunchIntentForPackage("com.getpebble.android");
-                    this.startActivity(pebbleAppIntent);
-                } catch (Exception ex) {
-                    Log.v(TAG, "exception starting pebble App " + ex.toString());
-                }
+                mUtil.startPebbleApp();
                 return true;
 
             case R.id.action_accept_alarm:
@@ -185,12 +180,14 @@ public class MainActivity extends Activity {
                     mUtil.bindToServer(this, mConnection);
                 }
                 return true;
+            /* fault beep test does not work with fault timer, so disable test option.
             case R.id.action_test_fault_beep:
                 Log.v(TAG, "action_test_fault_beep");
                 if (mConnection.mBound) {
                     mConnection.mSdServer.faultWarningBeep();
                 }
                 return true;
+                */
             case R.id.action_test_alarm_beep:
                 Log.v(TAG, "action_test_alarm_beep");
                 if (mConnection.mBound) {
@@ -299,7 +296,7 @@ public class MainActivity extends Activity {
             if (mUtil.isServerRunning()) {
                 tv = (TextView) findViewById(R.id.serverStatusTv);
                 if (mConnection.mBound)
-                    tv.setText("Server Running OK\n"+mConnection.mSdServer.mSdDataSourceName+" Data Source");
+                    tv.setText("Server Running OK\n" + mConnection.mSdServer.mSdDataSourceName + " Data Source");
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
                 tv = (TextView) findViewById(R.id.serverIpTv);
@@ -397,7 +394,7 @@ public class MainActivity extends Activity {
                     long powerPc;
                     if (mConnection.mSdServer.mSdData.alarmThresh != 0)
                         powerPc = mConnection.mSdServer.mSdData.roiPower * 100 /
-                            mConnection.mSdServer.mSdData.alarmThresh;
+                                mConnection.mSdServer.mSdData.alarmThresh;
                     else
                         powerPc = 0;
 
@@ -405,8 +402,8 @@ public class MainActivity extends Activity {
                     if (mConnection.mSdServer.mSdData.specPower != 0 &&
                             mConnection.mSdServer.mSdData.alarmRatioThresh != 0)
                         specPc = 100 * (mConnection.mSdServer.mSdData.roiPower * 10 /
-                            mConnection.mSdServer.mSdData.specPower) /
-                            mConnection.mSdServer.mSdData.alarmRatioThresh;
+                                mConnection.mSdServer.mSdData.specPower) /
+                                mConnection.mSdServer.mSdData.alarmRatioThresh;
                     else
                         specPc = 0;
 
@@ -428,8 +425,10 @@ public class MainActivity extends Activity {
                     pb.setMax(100);
                     pb.setProgress((int) powerPc);
                     pbDrawable = getResources().getDrawable(R.drawable.progress_bar_blue);
-                    if (powerPc > 75)  pbDrawable = getResources().getDrawable(R.drawable.progress_bar_yellow);
-                    if (powerPc > 100) pbDrawable = getResources().getDrawable(R.drawable.progress_bar_red);
+                    if (powerPc > 75)
+                        pbDrawable = getResources().getDrawable(R.drawable.progress_bar_yellow);
+                    if (powerPc > 100)
+                        pbDrawable = getResources().getDrawable(R.drawable.progress_bar_red);
 
                     //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
 
@@ -439,8 +438,10 @@ public class MainActivity extends Activity {
                     pb.setMax(100);
                     pb.setProgress((int) specPc);
                     pbDrawable = getResources().getDrawable(R.drawable.progress_bar_blue);
-                    if (specPc > 75) pbDrawable = getResources().getDrawable(R.drawable.progress_bar_yellow);
-                    if (specPc > 100) pbDrawable = getResources().getDrawable(R.drawable.progress_bar_red);
+                    if (specPc > 75)
+                        pbDrawable = getResources().getDrawable(R.drawable.progress_bar_yellow);
+                    if (specPc > 100)
+                        pbDrawable = getResources().getDrawable(R.drawable.progress_bar_red);
                     //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
                     pb.setProgressDrawable(pbDrawable);
                 } else {   // Not bound to server

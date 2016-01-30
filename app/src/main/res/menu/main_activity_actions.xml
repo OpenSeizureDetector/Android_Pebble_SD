@@ -17,12 +17,13 @@
         android:showAsAction="never|withText"
         android:title="Stop Server" />
 
+  <!-- fault beep test does not work because of fault timer so don't show menu option
     <item
         android:id="@+id/action_test_fault_beep"
         android:icon="@drawable/stop_server"
         android:showAsAction="never|withText"
         android:title="Test Fault Beep" />
-
+-->
     <item
         android:id="@+id/action_test_alarm_beep"
         android:icon="@drawable/stop_server"

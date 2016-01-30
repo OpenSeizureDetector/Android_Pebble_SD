@@ -91,14 +91,16 @@ public class StartupActivity extends Activity {
             @Override
             public void onClick(View view) {
                 Log.v(TAG, "pebble button clicked");
-                try {
-                    PackageManager pm = getPackageManager();
-                    Intent pebbleAppIntent = pm.getLaunchIntentForPackage("com.getpebble.android");
-                    startActivity(pebbleAppIntent);
-                } catch (Exception ex) {
-                    Log.v(TAG, "exception starting pebble App " + ex.toString());
-                }
+                mUtil.startPebbleApp();
+            }
+        });
 
+        b = (Button)findViewById(R.id.installOsdAppButton);
+        b.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.v(TAG, "install Osd Watch App button clicked");
+                mUtil.installOsdWatchApp();
             }
         });
 
@@ -115,10 +117,12 @@ public class StartupActivity extends Activity {
         TextView tv = (TextView)findViewById(R.id.dataSourceTextView);
         tv.setText("DataSource = "+dataSourceName);
 
-        // disable pebble configuration button if we have not selected the pebble datasource
+        // disable pebble configuration buttons if we have not selected the pebble datasource
         if (!dataSourceName.equals("Pebble")) {
             Log.v(TAG, "Not Pebble Datasource - deactivating Pebble Button");
             Button b = (Button) findViewById(R.id.pebbleButton);
+            b.setEnabled(false);
+            b = (Button) findViewById(R.id.installOsdAppButton);
             b.setEnabled(false);
         }
 

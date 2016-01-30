@@ -187,4 +187,48 @@ public class OsdUtil {
                 Toast.LENGTH_LONG).show();
     }
 
+
+    /**
+     * Open Pebble or Pebble Time app.  If it is not installed, open Play store so the user can install it.
+     */
+    public void startPebbleApp() {
+        // first try to launch the original pebble app
+        Intent pebbleAppIntent;
+        PackageManager pm = mContext.getPackageManager();
+        try {
+            pebbleAppIntent = pm.getLaunchIntentForPackage("com.getpebble.android");
+            mContext.startActivity(pebbleAppIntent);
+        } catch (Exception ex1) {
+            // and if original pebble app fails, try Pebble Time app...
+            Log.v(TAG, "exception starting original pebble App - trying pebble time..." + ex1.toString());
+            try {
+                pebbleAppIntent = pm.getLaunchIntentForPackage("com.getpebble.android.basalt");
+                mContext.startActivity(pebbleAppIntent);
+            } catch (Exception ex2) {
+                // and if that fails, open play store so the user can install it:
+                Log.v(TAG, "exception starting Pebble Time App." + ex2.toString());
+                this.showToast("Error Launching Pebble or Pebble Time App - Please make sure it is installed...");
+                final String appPackageName = "com.getpebble.android.basalt";
+                try {
+                    // try using play store app.
+                    mContext.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName)));
+                } catch (android.content.ActivityNotFoundException anfe) {
+                    // and if play store app is not installed, use browser to open app page.
+                    mContext.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)));
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Install the OpenSeizureDetector watch app onto the watch.
+     * based on https://forums.getpebble.com/discussion/13128/install-watch-app-pebble-store-from-android-companion-app
+     */
+    public void installOsdWatchApp() {
+        Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("pebble://appstore/54d28a43e4d94c043f000008"));
+        myIntent.setFlags( Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK );
+        mContext.startActivity(myIntent);
+    }
+
 }
