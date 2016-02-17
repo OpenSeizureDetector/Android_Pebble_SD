@@ -1,7 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android">
-
+    <PreferenceCategory android:title="User Interface Settings">
+        <EditTextPreference
+            android:defaultValue="5"
+            android:key="DataUpdatePeriod"
+            android:summary="Time period at which data is sent to the phone."
+            android:title="Data Period (sec)" />
+        <EditTextPreference
+            android:defaultValue="300"
+            android:key="MutePeriod"
+            android:summary="Time that alarms are muted following a long press of the UP button"
+            android:title="Mute Period (sec)" />
+        <EditTextPreference
+            android:defaultValue="30"
+            android:key="ManAlarmPeriod"
+            android:summary="Time that manual alarms sound following a long press of the DOWN button"
+            android:title="Manual Alarm Period (sec)" />
+    </PreferenceCategory>
     <PreferenceCategory android:title="Seizure Detector Settings">
         <EditTextPreference
             android:defaultValue="5"

@@ -339,6 +339,11 @@ public class MainActivity extends Activity {
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
                     }
+                    if (mConnection.mSdServer.mSdData.alarmState == 6) {
+                        tv.setText("MUTE");
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
                     if (mConnection.mSdServer.mSdData.alarmStanding) {
                         tv.setText("**ALARM**");
                         tv.setBackgroundColor(alarmColour);

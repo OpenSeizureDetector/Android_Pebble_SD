@@ -353,6 +353,12 @@ public class SdServer extends Service implements SdDataReceiver {
                 showNotification(0);
             }
         }
+        if (sdData.alarmState == 6) {  // manual mute from watch buttons.
+            sdData.alarmPhrase = "MUTE";
+            sdData.alarmStanding = false;
+            sdData.fallAlarmStanding = false;
+            showNotification(0);
+        }
         if (sdData.alarmState == 1) {
             if ((!mLatchAlarms) ||
                     (mLatchAlarms &&
@@ -371,7 +377,8 @@ public class SdServer extends Service implements SdDataReceiver {
             warningBeep();
             showNotification(1);
         }
-        if ((sdData.alarmState == 2) || (sdData.alarmStanding)) {
+        // respond to normal alarms (2) and manual alarms (5)
+        if ((sdData.alarmState == 2) || (sdData.alarmState == 5) || (sdData.alarmStanding)) {
             sdData.alarmPhrase = "ALARM";
             sdData.alarmStanding = true;
             if (mLogAlarms) {

@@ -54,7 +54,9 @@ public class SdDataSourcePebble extends SdDataSource {
     private Timer mStatusTimer;
     private Time mPebbleStatusTime;
     private boolean mPebbleAppRunningCheck = false;
-    private int mAppRestartTimeout = 10;  // Timeout before re-starting watch app (sec).
+    private int mDataPeriod = 5;    // Period at which data is sent from watch to phone (sec)
+    private int mAppRestartTimeout = 10;  // Timeout before re-starting watch app (sec) if we have not received
+                                           // data after mDataPeriod
     //private Looper mServiceLooper;
     private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
@@ -89,6 +91,9 @@ public class SdDataSourcePebble extends SdDataSource {
     private int KEY_FALL_THRESH_MAX = 22;
     private int KEY_FALL_WINDOW = 23;
     private int KEY_FALL_ACTIVE = 24;
+    private int KEY_DATA_UPDATE_PERIOD = 25;
+    private int KEY_MUTE_PERIOD = 26;
+    private int KEY_MAN_ALARM_PERIOD = 27;
 
     // Values of the KEY_DATA_TYPE entry in a message
     private int DATA_TYPE_RESULTS = 1;   // Analysis Results
@@ -123,7 +128,8 @@ public class SdDataSourcePebble extends SdDataSource {
         } else {
             Log.v(TAG, "onCreate(): status timer already running.");
         }
-
+        // make sure we get some data when we first start.
+        getPebbleData();
         // Start timer to retrieve pebble settings regularly.
         getPebbleSdSettings();
         if (mSettingsTimer == null) {
@@ -193,6 +199,16 @@ public class SdDataSourcePebble extends SdDataSource {
                 toast.show();
             }
 
+            // Parse the DataPeriod setting.
+            try {
+                String dataPeriodStr = SP.getString("DataPeriod", "5");
+                mDataPeriod = Integer.parseInt(dataPeriodStr);
+                Log.v(TAG, "updatePrefs() - mDataPeriod = " + mDataPeriod);
+            } catch (Exception ex) {
+                Log.v(TAG, "updatePrefs() - Problem with DataPeriod preference!");
+                Toast toast = Toast.makeText(mContext, "Problem Parsing DataPeriod Preference", Toast.LENGTH_SHORT);
+                toast.show();
+            }
 
             // Parse the FaultTimer period setting.
             try {
@@ -210,6 +226,23 @@ public class SdDataSourcePebble extends SdDataSource {
             PebbleDictionary setDict = new PebbleDictionary();
             short intVal;
             String prefStr;
+
+            prefStr = SP.getString("DataUpdatePeriod", "5");
+            intVal = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() DataUpdatePeriod = " + intVal);
+            setDict.addInt16(KEY_DATA_UPDATE_PERIOD, intVal);
+
+            prefStr = SP.getString("MutePeriod", "300");
+            intVal = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() MutePeriod = " + intVal);
+            setDict.addInt16(KEY_MUTE_PERIOD, intVal);
+
+            prefStr = SP.getString("ManAlarmPeriod", "30");
+            intVal = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() ManAlarmPeriod = " + intVal);
+            setDict.addInt16(KEY_MAN_ALARM_PERIOD, intVal);
+
+
             prefStr = SP.getString("AlarmFreqMin", "5");
             intVal = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() AlarmFreqMin = " + intVal);
@@ -394,6 +427,21 @@ public class SdDataSourcePebble extends SdDataSource {
     }
 
     /**
+     * Request Pebble App to send us its latest data.
+     * Will be received as a message by the receiveData handler
+     */
+    public void getPebbleData() {
+        Log.v(TAG, "getPebbleData() - requesting data from pebble");
+        PebbleDictionary data = new PebbleDictionary();
+        data.addUint8(KEY_DATA_TYPE, (byte) 1);
+        PebbleKit.sendDataToPebble(
+                mContext,
+                SD_UUID,
+                data);
+    }
+
+
+    /**
      * Checks the status of the connection to the pebble watch,
      * and sets class variables for use by other functions.
      * If the watch app is not running, it attempts to re-start it.
@@ -403,6 +451,7 @@ public class SdDataSourcePebble extends SdDataSource {
         Time tnow = new Time(Time.getCurrentTimezone());
         long tdiff;
         tnow.setToNow();
+        // get time since the last data was received from the Pebble watch.
         tdiff = (tnow.toMillis(false) - mPebbleStatusTime.toMillis(false));
         // Check we are actually connected to the pebble.
         mSdData.pebbleConnected = PebbleKit.isWatchConnected(mContext);
@@ -411,14 +460,14 @@ public class SdDataSourcePebble extends SdDataSource {
         // the app is not talking to us
         // mPebbleAppRunningCheck is set to true in the receiveData handler.
         if (!mPebbleAppRunningCheck &&
-                (tdiff > mAppRestartTimeout * 1000)) {
+                (tdiff > (mDataPeriod+mAppRestartTimeout) * 1000)) {
             Log.v(TAG, "getPebbleStatus() - tdiff = " + tdiff);
             mSdData.pebbleAppRunning = false;
             Log.v(TAG, "getPebbleStatus() - Pebble App Not Running - Attempting to Re-Start");
             startWatchApp();
             getPebbleSdSettings();
             // Only make audible warning beep if we have not received data for more than mFaultTimerPeriod seconds.
-            if (tdiff > mFaultTimerPeriod * 1000) {
+            if (tdiff > (mDataPeriod+mFaultTimerPeriod) * 1000) {
                 mSdDataReceiver.onSdDataFault(mSdData);
             } else {
                 Log.v(TAG, "getPebbleStatus() - Waiting for mFaultTimerPeriod before issuing audible warning...");
