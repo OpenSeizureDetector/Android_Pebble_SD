@@ -140,7 +140,7 @@ public class SdDataSourcePebble extends SdDataSource {
                 public void run() {
                     getPebbleSdSettings();
                 }
-            }, 0, 1000 * 60);
+            }, 0, 1000 * (mDataPeriod + 60));  // ask for settings less frequently than we get data
         } else {
             Log.v(TAG, "onCreate(): settings timer already running.");
         }
@@ -486,6 +486,7 @@ public class SdDataSourcePebble extends SdDataSource {
         if (!mSdData.haveSettings) {
             Log.v(TAG, "getPebbleStatus() - no settings received yet - requesting");
             getPebbleSdSettings();
+            getPebbleData();
         }
     }
 
