@@ -154,6 +154,13 @@ public class SdServer extends Service implements SdDataReceiver {
     @Override
     public void onCreate() {
         Log.v(TAG, "onCreate()");
+
+        // Set our custom uncaught exception handler to report issues.
+        Thread.setDefaultUncaughtExceptionHandler(
+                new OsdUncaughtExceptionHandler(SdServer.this));
+        //int i = 5/0;  // Force exception to test handler.
+
+
         mHandler = new Handler();
 
         mUtil = new OsdUtil(getApplicationContext());

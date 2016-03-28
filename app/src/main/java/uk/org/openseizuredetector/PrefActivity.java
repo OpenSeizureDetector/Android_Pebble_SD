@@ -46,6 +46,12 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Set our custom uncaught exception handler to report issues.
+        Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(PrefActivity.this));
+        //int i = 5/0;  // Force exception to test handler.
+
+
         mUtil = new OsdUtil(getApplicationContext());
         mContext = getApplicationContext();
     }

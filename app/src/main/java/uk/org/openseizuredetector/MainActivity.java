@@ -83,6 +83,9 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Set our custom uncaught exception handler to report issues.
+        Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(MainActivity.this));
+        //int i = 5/0;  // Force exception to test handler.
         mUtil = new OsdUtil(this);
         mConnection = new SdServiceConnection(this);
 

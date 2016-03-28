@@ -66,6 +66,11 @@ public class StartupActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Set our custom uncaught exception handler to report issues.
+        Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(StartupActivity.this));
+        //int i = 5/0;  // Force exception to test handler.
+
         setContentView(R.layout.startup_activity);
         mUtil = new OsdUtil(this);
 
