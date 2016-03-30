@@ -347,6 +347,11 @@ public class MainActivity extends Activity {
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
                     }
+                    if (mConnection.mSdServer.mSdData.alarmState == 7) {
+                        tv.setText("NET FAULT");
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
                     if (mConnection.mSdServer.mSdData.alarmStanding) {
                         tv.setText("**ALARM**");
                         tv.setBackgroundColor(alarmColour);

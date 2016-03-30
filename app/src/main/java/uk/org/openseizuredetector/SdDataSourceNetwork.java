@@ -29,6 +29,8 @@ public class SdDataSourceNetwork extends SdDataSource {
     private int mDataUpdatePeriod = 2000;
     private String mServerIP = "unknown";
 
+    private int ALARM_STATE_NETFAULT = 7;
+
 
     public SdDataSourceNetwork(Context context, SdDataReceiver sdDataReceiver) {
         super(context,sdDataReceiver);
@@ -116,7 +118,7 @@ public class SdDataSourceNetwork extends SdDataSource {
                     sdData.serverOK = false;
                     sdData.pebbleConnected = false;
                     sdData.pebbleAppRunning = false;
-                    sdData.alarmState = 4;
+                    sdData.alarmState = ALARM_STATE_NETFAULT;
                     sdData.alarmPhrase = "Warning - No Connection to Server";
                     Log.v(TAG,"doInBackground(): No Connection to Server - sdData = "+sdData.toString());
                 } else {
@@ -135,7 +137,7 @@ public class SdDataSourceNetwork extends SdDataSource {
                 sdData.serverOK = false;
                 sdData.pebbleConnected = false;
                 sdData.pebbleAppRunning = false;
-                sdData.alarmState = 4;
+                sdData.alarmState = ALARM_STATE_NETFAULT;
                 sdData.alarmPhrase = "Warning - No Connection to Server";
                 Log.v(TAG,"doInBackground(): IOException - "+e.toString());
                 return sdData;
