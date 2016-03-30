@@ -311,7 +311,9 @@ public class SdServer extends Service implements SdDataReceiver {
         }
         Intent i = new Intent(getApplicationContext(), MainActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent contentIntent =
+                PendingIntent.getActivity(this,
+                        0, i, PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         Notification notification = builder.setContentIntent(contentIntent)
                 .setSmallIcon(iconId)

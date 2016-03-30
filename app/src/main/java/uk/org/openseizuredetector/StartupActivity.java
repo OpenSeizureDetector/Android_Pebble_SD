@@ -60,6 +60,7 @@ public class StartupActivity extends Activity {
     private OsdUtil mUtil;
     private Timer mUiTimer;
     private SdServiceConnection mConnection;
+    private boolean mStartedMainActivity = false;
     final Handler mServerStatusHandler = new Handler();   // used to update ui from mUiTimer
 
 
@@ -282,18 +283,23 @@ public class StartupActivity extends Activity {
             // If all the parameters are ok, close this activity and open the main
             // user interface activity instead.
             if (allOk) {
-                Log.v(TAG, "starting main activity...");
-                try {
-                    Intent intent = new Intent(
-                            getApplicationContext(),
-                            MainActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                    startActivity(intent);
-                    finish();
-                } catch (Exception ex) {
-                    Log.v(TAG, "exception starting settings activity " + ex.toString());
+                if (!mStartedMainActivity) {
+                    Log.v(TAG, "starting main activity...");
+                    try {
+                        Intent intent = new Intent(
+                                getApplicationContext(),
+                                MainActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                        startActivity(intent);
+                        mStartedMainActivity = true;
+                        finish();
+                    } catch (Exception ex) {
+                        mStartedMainActivity = false;
+                        Log.v(TAG, "exception starting main activity " + ex.toString());
+                    }
+                } else {
+                    Log.v(TAG,"allOk, but already started MainActivity so not doing anything");
                 }
-
             }
         }
     };
