@@ -25,7 +25,9 @@
     <header android:fragment="uk.org.openseizuredetector.PrefActivity$CameraPrefsFragment"
         android:icon="@drawable/icon_24x24"
         android:title="Camera Settings"
-        android:summary="IP Camera Preferences" />
+        android:summary="IP Camera Preferences"
+        android:enabled="false"
+        />
 
 
 </preference-headers>

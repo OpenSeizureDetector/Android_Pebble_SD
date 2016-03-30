@@ -95,7 +95,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private HandlerThread thread;
     private WakeLock mWakeLock = null;
     public SdDataSource mSdDataSource;
-    public SdData mSdData;
+    public SdData mSdData = null;
     public String mSdDataSourceName = "undefined";  // The name of the data soruce specified in the preferences.
     private boolean mLatchAlarms = false;
     private boolean mCancelAudible = false;

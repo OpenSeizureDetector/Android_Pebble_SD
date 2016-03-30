@@ -28,9 +28,11 @@ import android.os.Parcelable;
 import android.os.Parcel;
 import android.text.format.Time;
 import android.util.Log;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
+
 import org.json.JSONObject;
 import org.json.JSONArray;
 
@@ -40,6 +42,7 @@ public class SdData implements Parcelable {
     private final static String TAG = "SdData";
     /* Analysis settings */
     public boolean haveSettings = false;   // flag to say if we have received settings or not.
+    public boolean haveData = false; // flag to say we have received data.
     public long alarmFreqMin;
     public long alarmFreqMax;
     public long nMin;
@@ -51,9 +54,9 @@ public class SdData implements Parcelable {
     public long batteryPc;
 
     /* Analysis results */
-    public Time dataTime;
+    public Time dataTime = null;
     public long alarmState;
- 	public boolean alarmStanding = false;
+    public boolean alarmStanding = false;
     public boolean fallAlarmStanding = false;
     public long maxVal;
     public long maxFreq;
@@ -66,117 +69,118 @@ public class SdData implements Parcelable {
     public boolean serverOK = false;
 
     public SdData() {
-	simpleSpec = new int[10];
-	dataTime = new Time(Time.getCurrentTimezone());
+        simpleSpec = new int[10];
+        dataTime = new Time(Time.getCurrentTimezone());
     }
 
     /*
      * Intialise this SdData object from a JSON String
      */
     public boolean fromJSON(String jsonStr) {
-	Log.v(TAG,"fromJSON() - parsing jsonString - "+jsonStr);
-	try {
-	    JSONObject jo = new JSONObject(jsonStr);
-	    Log.v(TAG,"fromJSON(): jo = "+jo.toString());
-	    Log.v(TAG,"fromJSON(): dataTimeStr="+jo.optString("dataTimeStr"));
-	    //Calendar cal = Calendar.getInstance();
-	    //SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddTHHmmss", Locale.UK);
-	    //cal.setTime(sdf.parse(jo.optString("dataTimeStr")));
-	    //dataTime = cal.getTime();
-	    // FIXME - this doesn't work!!!
-	    dataTime.setToNow();
-	    Log.v(TAG, "fromJSON(): dataTime = " + dataTime.toString());
-	    maxVal = jo.optInt("maxVal");
-	    maxFreq = jo.optInt("maxFreq");
-	    specPower = jo.optInt("specPower");
-	    roiPower = jo.optInt("roiPower");
-	    batteryPc = jo.optInt("batteryPc");
-	    pebbleConnected = jo.optBoolean("pebbleConnected");
-	    pebbleAppRunning = jo.optBoolean("pebbleAppRunning");
-	    alarmState = jo.optInt("alarmState");
-	    alarmPhrase = jo.optString("alarmPhrase");
-		alarmThresh = jo.optInt("alarmThresh");
-		alarmRatioThresh = jo.optInt("alarmRatioThresh");
-	    JSONArray specArr = jo.optJSONArray("simpleSpec");
-	    for (int i=0;i<specArr.length();i++) {
-		simpleSpec[i] = specArr.optInt(i);
-	    }
-	    return true;
-	} catch (Exception e) {
-	    Log.v(TAG,"fromJSON() - error parsing result");
-	    return false;
-	}
-
-
+        Log.v(TAG, "fromJSON() - parsing jsonString - " + jsonStr);
+        try {
+            JSONObject jo = new JSONObject(jsonStr);
+            Log.v(TAG, "fromJSON(): jo = " + jo.toString());
+            Log.v(TAG, "fromJSON(): dataTimeStr=" + jo.optString("dataTimeStr"));
+            //Calendar cal = Calendar.getInstance();
+            //SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddTHHmmss", Locale.UK);
+            //cal.setTime(sdf.parse(jo.optString("dataTimeStr")));
+            //dataTime = cal.getTime();
+            // FIXME - this doesn't work!!!
+            dataTime.setToNow();
+            Log.v(TAG, "fromJSON(): dataTime = " + dataTime.toString());
+            maxVal = jo.optInt("maxVal");
+            maxFreq = jo.optInt("maxFreq");
+            specPower = jo.optInt("specPower");
+            roiPower = jo.optInt("roiPower");
+            batteryPc = jo.optInt("batteryPc");
+            pebbleConnected = jo.optBoolean("pebbleConnected");
+            pebbleAppRunning = jo.optBoolean("pebbleAppRunning");
+            alarmState = jo.optInt("alarmState");
+            alarmPhrase = jo.optString("alarmPhrase");
+            alarmThresh = jo.optInt("alarmThresh");
+            alarmRatioThresh = jo.optInt("alarmRatioThresh");
+            JSONArray specArr = jo.optJSONArray("simpleSpec");
+            for (int i = 0; i < specArr.length(); i++) {
+                simpleSpec[i] = specArr.optInt(i);
+            }
+            haveData = true;
+            return true;
+        } catch (Exception e) {
+            Log.v(TAG, "fromJSON() - error parsing result");
+            haveData = false;
+            return false;
+        }
     }
 
 
     public String toString() {
-	return toDataString();
+        return toDataString();
     }
 
     public String toDataString() {
-	String retval;
-	retval = "SdData.toDataString() Output";
-		try {
-		    JSONObject jsonObj = new JSONObject();
-		    if (dataTime != null) {
-			jsonObj.put("dataTime",dataTime.format("%d-%m-%Y %H:%M:%S"));
-			jsonObj.put("dataTimeStr",dataTime.format("%Y%m%dT%H%M%S"));
-		    } else {
-			jsonObj.put("dataTimeStr","00000000T000000");
-			jsonObj.put("dataTime","00-00-00 00:00:00");
-		    }
-		    Log.v(TAG,"mSdData.dataTime = " + dataTime);
-		    jsonObj.put("maxVal", maxVal);
-		    jsonObj.put("maxFreq",maxFreq);
-		    jsonObj.put("specPower",specPower);
-		    jsonObj.put("roiPower",roiPower);
-		    jsonObj.put("batteryPc",batteryPc);
-		    jsonObj.put("pebbleConnected",pebbleConnected);
-		    jsonObj.put("pebbleAppRunning",pebbleAppRunning);
-			jsonObj.put("haveSettings",haveSettings);
-		    jsonObj.put("alarmState",alarmState);
-		    jsonObj.put("alarmPhrase",alarmPhrase);
-			jsonObj.put("alarmThresh",alarmThresh);
-			jsonObj.put("alarmRatioThresh",alarmRatioThresh);
-		    JSONArray arr = new JSONArray();
-		    for (int i=0;i<simpleSpec.length;i++) {
-			arr.put(simpleSpec[i]);
-		    }
+        String retval;
+        retval = "SdData.toDataString() Output";
+        try {
+            JSONObject jsonObj = new JSONObject();
+            if (dataTime != null) {
+                jsonObj.put("dataTime", dataTime.format("%d-%m-%Y %H:%M:%S"));
+                jsonObj.put("dataTimeStr", dataTime.format("%Y%m%dT%H%M%S"));
+            }else{
+                jsonObj.put("dataTimeStr", "00000000T000000");
+                jsonObj.put("dataTime", "00-00-00 00:00:00");
+            }
+            Log.v(TAG, "mSdData.dataTime = " + dataTime);
+            jsonObj.put("maxVal", maxVal);
+            jsonObj.put("maxFreq", maxFreq);
+            jsonObj.put("specPower", specPower);
+            jsonObj.put("roiPower", roiPower);
+            jsonObj.put("batteryPc", batteryPc);
+            jsonObj.put("pebbleConnected", pebbleConnected);
+            jsonObj.put("pebbleAppRunning", pebbleAppRunning);
+            jsonObj.put("haveSettings", haveSettings);
+            jsonObj.put("alarmState", alarmState);
+            jsonObj.put("alarmPhrase", alarmPhrase);
+            jsonObj.put("alarmThresh", alarmThresh);
+            jsonObj.put("alarmRatioThresh", alarmRatioThresh);
+            JSONArray arr = new JSONArray();
+            for (int i = 0; i < simpleSpec.length; i++) {
+                arr.put(simpleSpec[i]);
+            }
 
-		    jsonObj.put("simpleSpec",arr);
+            jsonObj.put("simpleSpec", arr);
 
-		    retval = jsonObj.toString();
-		} catch (Exception ex) {
-		    Log.v(TAG,"Error Creating Data Object - "+ex.toString());
-		    retval = "Error Creating Data Object - "+ex.toString();
-		}
+            retval = jsonObj.toString();
+        } catch (Exception ex) {
+            Log.v(TAG, "Error Creating Data Object - " + ex.toString());
+            retval = "Error Creating Data Object - " + ex.toString();
+        }
 
-	return(retval);
+        return (retval);
     }
 
     public int describeContents() {
-	return 0;
+        return 0;
     }
 
     public void writeToParcel(Parcel outParcel, int flags) {
-	//outParcel.writeInt(fMin);
-	//outParcel.writeInt(fMax);
+        //outParcel.writeInt(fMin);
+        //outParcel.writeInt(fMax);
     }
 
     private SdData(Parcel in) {
-	//fMin = in.readInt();
-	//fMax = in.readInt();
+        //fMin = in.readInt();
+        //fMax = in.readInt();
     }
 
     public static final Parcelable.Creator<SdData> CREATOR = new Parcelable.Creator<SdData>() {
-	public SdData createFromParcel(Parcel in) {
-	    return new SdData(in);
-	}
-	public SdData[] newArray(int size) {
-	    return new SdData[size];
-	}
+        public SdData createFromParcel(Parcel in) {
+            return new SdData(in);
+        }
+
+        public SdData[] newArray(int size) {
+            return new SdData[size];
+        }
     };
 
 }

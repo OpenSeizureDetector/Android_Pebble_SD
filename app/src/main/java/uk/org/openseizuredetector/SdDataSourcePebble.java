@@ -338,6 +338,7 @@ public class SdDataSourcePebble extends SdDataSource {
                     mSdData.specPower = data.getUnsignedIntegerAsLong(KEY_SPECPOWER);
                     mSdData.roiPower = data.getUnsignedIntegerAsLong(KEY_ROIPOWER);
                     mSdData.alarmPhrase = "Unknown";
+                    mSdData.haveData = true;
                     mSdDataReceiver.onSdDataReceived(mSdData);
                     }
 
@@ -465,6 +466,7 @@ public class SdDataSourcePebble extends SdDataSource {
             mSdData.pebbleAppRunning = false;
             Log.v(TAG, "getPebbleStatus() - Pebble App Not Running - Attempting to Re-Start");
             startWatchApp();
+            mPebbleStatusTime = tnow;  // set status time to now so we do not re-start app repeatedly.
             getPebbleSdSettings();
             // Only make audible warning beep if we have not received data for more than mFaultTimerPeriod seconds.
             if (tdiff > (mDataPeriod+mFaultTimerPeriod) * 1000) {

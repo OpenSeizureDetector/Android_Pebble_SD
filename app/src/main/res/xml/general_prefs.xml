@@ -31,7 +31,9 @@
         android:defaultValue="true"
         android:key="UseIpCamera"
         android:summary="Use IP Camera to View Images"
-        android:title="Enable IP Camera" />
+        android:title="Enable IP Camera"
+        android:enabled="False"
+        />
 
 
 </PreferenceScreen>

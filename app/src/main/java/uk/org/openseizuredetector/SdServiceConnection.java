@@ -73,7 +73,7 @@ public class SdServiceConnection implements ServiceConnection {
     public boolean hasSdData() {
         if (mSdServer!=null) {
             if (mSdServer.mSdData!=null) {
-                return true;
+                return mSdServer.mSdData.haveData;
             }
         }
         return false;
