@@ -444,7 +444,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         }
         // Fault
-        if ((sdData.alarmState == 4)) {
+        if ((sdData.alarmState) == 4 || (sdData.alarmState == 7)) {
             sdData.alarmPhrase = "FAULT";
             faultWarningBeep();
         } else {
