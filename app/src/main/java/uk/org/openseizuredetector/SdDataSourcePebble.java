@@ -115,7 +115,8 @@ public class SdDataSourcePebble extends SdDataSource {
         startPebbleServer();
         // Start timer to check status of pebble regularly.
         mPebbleStatusTime = new Time(Time.getCurrentTimezone());
-        //getPebbleStatus();
+        // use a timer to check the status of the pebble app on the same frequency
+        // as we get app data.
         if (mStatusTimer == null) {
             Log.v(TAG, "onCreate(): starting status timer");
             mStatusTimer = new Timer();
@@ -124,7 +125,7 @@ public class SdDataSourcePebble extends SdDataSource {
                 public void run() {
                     getPebbleStatus();
                 }
-            }, 0, 1000);
+            }, 0, mDataPeriod * 1000);
         } else {
             Log.v(TAG, "onCreate(): status timer already running.");
         }
@@ -322,6 +323,7 @@ public class SdDataSourcePebble extends SdDataSource {
                 Log.v(TAG, "Received message from Pebble - data type="
                         + data.getUnsignedIntegerAsLong(KEY_DATA_TYPE));
                 // If we ha ve a message, the app must be running
+                Log.v(TAG,"Setting mPebbleAppRunningCheck to true");
                 mPebbleAppRunningCheck = true;
                 PebbleKit.sendAckToPebble(context, transactionId);
                 //Log.v(TAG,"Message is: "+data.toJsonString());
@@ -448,14 +450,15 @@ public class SdDataSourcePebble extends SdDataSource {
      * If the watch app is not running, it attempts to re-start it.
      */
     public void getPebbleStatus() {
-        Log.v(TAG, "getPebbleStatus()");
         Time tnow = new Time(Time.getCurrentTimezone());
         long tdiff;
         tnow.setToNow();
         // get time since the last data was received from the Pebble watch.
         tdiff = (tnow.toMillis(false) - mPebbleStatusTime.toMillis(false));
+        Log.v(TAG, "getPebbleStatus() - mPebbleAppRunningCheck="+mPebbleAppRunningCheck+" tdiff="+tdiff);
         // Check we are actually connected to the pebble.
         mSdData.pebbleConnected = PebbleKit.isWatchConnected(mContext);
+        if (!mSdData.pebbleConnected) mPebbleAppRunningCheck = false;
         // And is the pebble_sd app running?
         // set mPebbleAppRunningCheck has been false for more than 10 seconds
         // the app is not talking to us
@@ -466,7 +469,7 @@ public class SdDataSourcePebble extends SdDataSource {
             mSdData.pebbleAppRunning = false;
             Log.v(TAG, "getPebbleStatus() - Pebble App Not Running - Attempting to Re-Start");
             startWatchApp();
-            mPebbleStatusTime = tnow;  // set status time to now so we do not re-start app repeatedly.
+            //mPebbleStatusTime = tnow;  // set status time to now so we do not re-start app repeatedly.
             getPebbleSdSettings();
             // Only make audible warning beep if we have not received data for more than mFaultTimerPeriod seconds.
             if (tdiff > (mDataPeriod+mFaultTimerPeriod) * 1000) {
