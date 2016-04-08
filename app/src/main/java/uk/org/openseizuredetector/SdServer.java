@@ -111,6 +111,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private File mOutFile;
     private OsdUtil mUtil;
     private Handler mHandler;
+    private ToneGenerator mToneGenerator;
 
     private final IBinder mBinder = new SdBinder();
 
@@ -130,6 +131,8 @@ public class SdServer extends Service implements SdDataReceiver {
     public SdServer() {
         super();
         mSdData = new SdData();
+        mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+
         Log.v(TAG, "SdServer Created");
     }
 
@@ -287,6 +290,8 @@ public class SdServer extends Service implements SdDataReceiver {
         } catch (Exception e) {
             Log.v(TAG, "Error in onDestroy() - " + e.toString());
         }
+
+        mToneGenerator.release();
     }
 
 
@@ -472,8 +477,7 @@ public class SdServer extends Service implements SdDataReceiver {
      * beep for duration milliseconds, but only if mAudibleAlarm is set.
      */
     private void beep(int duration) {
-        ToneGenerator toneG = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
-        toneG.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration);
+        mToneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration);
         Log.v(TAG, "beep()");
     }
 
