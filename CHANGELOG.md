@@ -1,7 +1,17 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
-	V2.0 - January 2015
+	V2.0.3 - 23 April 2016
+		Further modification to beep code to avoid occasional crashes
+		if system tries to beep during a re-start.
+		Log faults to alarm log on SD Card.
+	V2.0.2 - 13 April 2016
+		Modified 'beep' code to try to avoid crashes on some systems.
+
+	V2.0.1 - 02 April 2016
+		Fixed issue with fault alarms not sounding if watch disconnects from phone.
+	
+	V2.0 - 30 March 2016
 	Behind the Scenes
 	- Merged the server and client apps so only one app is needed to remove code duplication.
 	- Major rewrite of background service back-end to handle different data sources - either pebble or network so it can act as either server or client.
@@ -17,4 +27,6 @@
 	- Added an 'about' page with links to http://openseizuredetector.org.uk web site and copyright and acknowledgement notices.
 	- Added ability to latch alarms so they have to be actively accepted to silence the alarm, rather than it re-setting when the movement stops.
 	- Fixed problem with the system being difficult to shut down if as multiple instances of main screen could be active at once.
+
+
 	

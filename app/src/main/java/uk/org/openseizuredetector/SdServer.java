@@ -292,6 +292,7 @@ public class SdServer extends Service implements SdDataReceiver {
         }
 
         mToneGenerator.release();
+        mToneGenerator = null;
     }
 
 
@@ -451,6 +452,7 @@ public class SdServer extends Service implements SdDataReceiver {
         // Fault
         if ((sdData.alarmState) == 4 || (sdData.alarmState == 7)) {
             sdData.alarmPhrase = "FAULT";
+            writeAlarmToSD();
             faultWarningBeep();
         } else {
             stopFaultTimer();
@@ -477,8 +479,13 @@ public class SdServer extends Service implements SdDataReceiver {
      * beep for duration milliseconds, but only if mAudibleAlarm is set.
      */
     private void beep(int duration) {
-        mToneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration);
-        Log.v(TAG, "beep()");
+        if (mToneGenerator!=null) {
+            mToneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration);
+            Log.v(TAG, "beep()");
+        } else {
+            mUtil.showToast("Warming mToneGenerator is null - not beeping!!!");
+            Log.v(TAG, "beep() - Warming mToneGenerator is null - not beeping!!!");
+        }
     }
 
     /*
