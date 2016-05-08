@@ -81,7 +81,6 @@ public class StartupActivity extends Activity {
         PreferenceManager.setDefaultValues(this, R.xml.camera_prefs, true);
         PreferenceManager.setDefaultValues(this, R.xml.general_prefs, true);
         PreferenceManager.setDefaultValues(this, R.xml.network_datasource_prefs, true);
-        PreferenceManager.setDefaultValues(this, R.xml.pebble_datasource_prefs, false);
 
         Button b = (Button)findViewById(R.id.settingsButton);
         b.setOnClickListener(new View.OnClickListener() {
@@ -105,7 +104,9 @@ public class StartupActivity extends Activity {
             @Override
             public void onClick(View view) {
                 Log.v(TAG, "pebble button clicked");
-                mUtil.startPebbleApp();
+                mUtil.showToast("pebble button clicked");
+                //mUtil.startPebbleApp();
+                mConnection.mSdServer.mSdDataSource.installWatchApp();
             }
         });
 

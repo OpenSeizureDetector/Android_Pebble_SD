@@ -74,6 +74,11 @@ public abstract class SdDataSource {
     }
 
     /**
+     * Install the watch app on the watch.
+     */
+    public void installWatchApp() { Log.v(TAG,"installWatchApp"); }
+
+    /**
      * Display a Toast message on screen.
      * @param msg - message to display.
      */

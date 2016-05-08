@@ -24,7 +24,9 @@
 package uk.org.openseizuredetector;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -36,6 +38,11 @@ import com.getpebble.android.kit.Constants;
 import com.getpebble.android.kit.PebbleKit;
 import com.getpebble.android.kit.util.PebbleDictionary;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -575,6 +582,39 @@ public class SdDataSourcePebble extends SdDataSource {
             getPebbleData();
         }
     }
+
+    /**
+     * Install the wach app that is bundled in the 'assets' folder of this
+     * phone app.
+     * from https://github.com/pebble-examples/pebblekit-android-example/blob/master/android/Eclipse/src/com/getpebble/pebblekitexample/MainActivity.java#L148
+     */
+    @Override
+    public void installWatchApp() {
+        Log.v(TAG, "SdDataSourcePebble.installWatchApp()");
+        final String WATCHAPP_FILENAME = "pebble_sd.pbw";
+
+        try {
+            // Read .pbw from assets/
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            File file = new File(mContext.getExternalFilesDir(null), WATCHAPP_FILENAME);
+            InputStream is = mContext.getResources().getAssets().open(WATCHAPP_FILENAME);
+            OutputStream os = new FileOutputStream(file);
+            byte[] pbw = new byte[is.available()];
+            is.read(pbw);
+            os.write(pbw);
+            is.close();
+            os.close();
+
+            // Install via Pebble Android app
+            intent.setDataAndType(Uri.fromFile(file), "application/pbw");
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(intent);
+        } catch (IOException e) {
+            Toast.makeText(mContext, "App install failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+        }
+
+    }
+
 
 
 
