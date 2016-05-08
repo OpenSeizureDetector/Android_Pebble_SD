@@ -43,6 +43,13 @@ public class SdData implements Parcelable {
     /* Analysis settings */
     public boolean haveSettings = false;   // flag to say if we have received settings or not.
     public boolean haveData = false; // flag to say we have received data.
+    public short mDataUpdatePeriod;
+    public short mMutePeriod;
+    public short mManAlarmPeriod;
+    public boolean mFallActive;
+    public short mFallThreshMin;
+    public short mFallThreshMax;
+    public short mFallWindow;
     public long alarmFreqMin;
     public long alarmFreqMax;
     public long nMin;

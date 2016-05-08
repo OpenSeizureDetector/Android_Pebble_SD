@@ -75,6 +75,14 @@ public class StartupActivity extends Activity {
         setContentView(R.layout.startup_activity);
         mUtil = new OsdUtil(this);
 
+        // Read the default settings from the xml preferences files, so we do
+        // not have to use the hard coded ones in the java files.
+        PreferenceManager.setDefaultValues(this, R.xml.alarm_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.camera_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.general_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.network_datasource_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.pebble_datasource_prefs, false);
+
         Button b = (Button)findViewById(R.id.settingsButton);
         b.setOnClickListener(new View.OnClickListener() {
             @Override

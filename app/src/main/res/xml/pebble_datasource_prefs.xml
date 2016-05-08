@@ -20,9 +20,9 @@
     </PreferenceCategory>
     <PreferenceCategory android:title="Seizure Detector Settings">
         <EditTextPreference
-            android:defaultValue="5"
+            android:defaultValue="3"
             android:key="AlarmFreqMin"
-            android:summary="Minimum Frequency of ROI (Hz) (Default = 5 Hz)"
+            android:summary="Minimum Frequency of ROI (Hz) (Default = 3 Hz)"
             android:title="AlarmFreqMin (Hz)" />
         <EditTextPreference
             android:defaultValue="10"
@@ -47,7 +47,7 @@
         <EditTextPreference
             android:defaultValue="30"
             android:key="AlarmRatioThresh"
-            android:summary="Alarm Ratio Threshold (Default = 30)"
+            android:summary="Alarm Ratio Threshold (Default = 30).  Increase this value to reduce sensitivity if false alarms are a problem."
             android:title="AlarmRatioThresh" />
     </PreferenceCategory>
 

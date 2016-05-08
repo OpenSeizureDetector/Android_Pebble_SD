@@ -50,6 +50,7 @@ import java.util.UUID;
  * network data source.
  */
 public class SdDataSourcePebble extends SdDataSource {
+    private Handler mHandler = new Handler();
     private Timer mSettingsTimer;
     private Timer mStatusTimer;
     private Time mPebbleStatusTime;
@@ -99,6 +100,20 @@ public class SdDataSourcePebble extends SdDataSource {
     private int DATA_TYPE_RESULTS = 1;   // Analysis Results
     private int DATA_TYPE_SETTINGS = 2;  // Settings
     private int DATA_TYPE_SPEC = 3;      // FFT Spectrum (or part of a spectrum)
+    private short mDataUpdatePeriod;
+    private short mMutePeriod;
+    private short mManAlarmPeriod;
+    private short mAlarmFreqMin;
+    private short mAlarmFreqMax;
+    private short mWarnTime;
+    private short mAlarmTime;
+    private short mAlarmThresh;
+    private short mAlarmRatioThresh;
+    private boolean mFallActive;
+    private short mFallThreshMin;
+    private short mFallThreshMax;
+    private short mFallWindow;
+
     public SdDataSourcePebble(Context context, SdDataReceiver sdDataReceiver) {
         super(context,sdDataReceiver);
         mName = "Pebble";
@@ -224,82 +239,59 @@ public class SdDataSourcePebble extends SdDataSource {
 
 
             // Watch Settings
-            PebbleDictionary setDict = new PebbleDictionary();
-            short intVal;
             String prefStr;
 
             prefStr = SP.getString("DataUpdatePeriod", "5");
-            intVal = (short) Integer.parseInt(prefStr);
-            Log.v(TAG, "updatePrefs() DataUpdatePeriod = " + intVal);
-            setDict.addInt16(KEY_DATA_UPDATE_PERIOD, intVal);
+            mDataUpdatePeriod = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() DataUpdatePeriod = " + mDataUpdatePeriod);
 
             prefStr = SP.getString("MutePeriod", "300");
-            intVal = (short) Integer.parseInt(prefStr);
-            Log.v(TAG, "updatePrefs() MutePeriod = " + intVal);
-            setDict.addInt16(KEY_MUTE_PERIOD, intVal);
+            mMutePeriod = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() MutePeriod = " + mMutePeriod);
 
             prefStr = SP.getString("ManAlarmPeriod", "30");
-            intVal = (short) Integer.parseInt(prefStr);
-            Log.v(TAG, "updatePrefs() ManAlarmPeriod = " + intVal);
-            setDict.addInt16(KEY_MAN_ALARM_PERIOD, intVal);
+            mManAlarmPeriod = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() ManAlarmPeriod = " + mManAlarmPeriod);
 
-
-            prefStr = SP.getString("AlarmFreqMin", "5");
-            intVal = (short) Integer.parseInt(prefStr);
-            Log.v(TAG, "updatePrefs() AlarmFreqMin = " + intVal);
-            setDict.addInt16(KEY_ALARM_FREQ_MIN, intVal);
+            prefStr = SP.getString("AlarmFreqMin","3");
+            mAlarmFreqMin = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() AlarmFreqMin = " + mAlarmFreqMin);
 
             prefStr = SP.getString("AlarmFreqMax", "10");
-            intVal = (short) Integer.parseInt(prefStr);
-            Log.v(TAG, "updatePrefs() AlarmFreqMax = " + intVal);
-            setDict.addUint16(KEY_ALARM_FREQ_MAX, (short) intVal);
+            mAlarmFreqMax = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() AlarmFreqMax = " + mAlarmFreqMax);
 
             prefStr = SP.getString("WarnTime", "5");
-            intVal = (short) Integer.parseInt(prefStr);
-            Log.v(TAG, "updatePrefs() WarnTime = " + intVal);
-            setDict.addUint16(KEY_WARN_TIME, (short) intVal);
+            mWarnTime = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() WarnTime = " + mWarnTime);
 
             prefStr = SP.getString("AlarmTime", "10");
-            intVal = (short) Integer.parseInt(prefStr);
-            Log.v(TAG, "updatePrefs() AlarmTime = " + intVal);
-            setDict.addUint16(KEY_ALARM_TIME, (short) intVal);
+            mAlarmTime = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() AlarmTime = " + mAlarmTime);
 
             prefStr = SP.getString("AlarmThresh", "70");
-            intVal = (short) Integer.parseInt(prefStr);
-            Log.v(TAG, "updatePrefs() AlarmThresh = " + intVal);
-            setDict.addUint16(KEY_ALARM_THRESH, (short) intVal);
+            mAlarmThresh = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() AlarmThresh = " + mAlarmThresh);
 
             prefStr = SP.getString("AlarmRatioThresh", "30");
-            intVal = (short) Integer.parseInt(prefStr);
-            Log.v(TAG, "updatePrefs() AlarmRatioThresh = " + intVal);
-            setDict.addUint16(KEY_ALARM_RATIO_THRESH, (short) intVal);
+            mAlarmRatioThresh = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() AlarmRatioThresh = " + mAlarmRatioThresh);
 
-            boolean fallActiveBool = SP.getBoolean("FallActive", false);
-            Log.v(TAG, "updatePrefs() FallActive = " + fallActiveBool);
-            if (fallActiveBool)
-                setDict.addUint16(KEY_FALL_ACTIVE, (short) 1);
-            else
-                setDict.addUint16(KEY_FALL_ACTIVE, (short) 0);
+            mFallActive = SP.getBoolean("FallActive", false);
+            Log.v(TAG, "updatePrefs() FallActive = " + mFallActive);
 
             prefStr = SP.getString("FallThreshMin", "200");
-            intVal = (short) Integer.parseInt(prefStr);
-            Log.v(TAG, "updatePrefs() FallThreshMin = " + intVal);
-            setDict.addUint16(KEY_FALL_THRESH_MIN, (short) intVal);
+            mFallThreshMin = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() FallThreshMin = " + mFallThreshMin);
 
             prefStr = SP.getString("FallThreshMax", "1200");
-            intVal = (short) Integer.parseInt(prefStr);
-            Log.v(TAG, "updatePrefs() FallThreshMax = " + intVal);
-            setDict.addUint16(KEY_FALL_THRESH_MAX, (short) intVal);
+            mFallThreshMax = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() FallThreshMax = " + mFallThreshMax);
 
             prefStr = SP.getString("FallWindow", "1500");
-            intVal = (short) Integer.parseInt(prefStr);
-            Log.v(TAG, "updatePrefs() FallWindow = " + intVal);
-            setDict.addUint16(KEY_FALL_WINDOW, (short) intVal);
+            mFallWindow = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() FallWindow = " + mFallWindow);
 
-
-            // Send Watch Settings to Pebble
-            Log.v(TAG, "updatePrefs() - setDict = " + setDict.toJsonString());
-            PebbleKit.sendDataToPebble(mContext, SD_UUID, setDict);
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
             Toast toast = Toast.makeText(mContext, "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
@@ -342,13 +334,12 @@ public class SdDataSourcePebble extends SdDataSource {
                     mSdData.alarmPhrase = "Unknown";
                     mSdData.haveData = true;
                     mSdDataReceiver.onSdDataReceived(mSdData);
-                    }
 
 
                     // Read the data that has been sent, and convert it into
                     // an integer array.
                     byte[] byteArr = data.getBytes(KEY_SPEC_DATA);
-                    if ((byteArr!=null) && (byteArr.length!=0)) {
+                    if ((byteArr != null) && (byteArr.length != 0)) {
                         IntBuffer intBuf = ByteBuffer.wrap(byteArr)
                                 .order(ByteOrder.LITTLE_ENDIAN)
                                 .asIntBuffer();
@@ -358,9 +349,9 @@ public class SdDataSourcePebble extends SdDataSource {
                             mSdData.simpleSpec[i] = intArray[i];
                         }
                     } else {
-                        Log.v(TAG,"***** zero length spectrum received - error!!!!");
+                        Log.v(TAG, "***** zero length spectrum received - error!!!!");
                     }
-
+                }
 
                 if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
                         == DATA_TYPE_SETTINGS) {
@@ -416,10 +407,13 @@ public class SdDataSourcePebble extends SdDataSource {
 
 
     /**
-     * Request Pebble App to send us its latest settings.
+     * Send our latest settings to the watch, then request Pebble App to send
+     * us its latest settings so we can check it has been set up correctly..
      * Will be received as a message by the receiveData handler
      */
     public void getPebbleSdSettings() {
+        Log.v(TAG, "getPebbleSdSettings() - sending required settings to pebble");
+        sendPebbleSdSettings();
         Log.v(TAG, "getPebbleSdSettings() - requesting settings from pebble");
         PebbleDictionary data = new PebbleDictionary();
         data.addUint8(KEY_SETTINGS, (byte) 1);
@@ -427,6 +421,101 @@ public class SdDataSourcePebble extends SdDataSource {
                 mContext,
                 SD_UUID,
                 data);
+    }
+
+    /**
+     * Send the pebble watch settings that are stored as class member
+     * variables to the watch.
+     */
+    public void sendPebbleSdSettings() {
+        Log.v(TAG, "sendPebblSdSettings() - preparing settings dictionary..");
+        // Watch Settings
+        final PebbleDictionary setDict = new PebbleDictionary();
+        setDict.addInt16(KEY_DATA_UPDATE_PERIOD, mDataUpdatePeriod);
+        setDict.addInt16(KEY_MUTE_PERIOD, mMutePeriod);
+        setDict.addInt16(KEY_MAN_ALARM_PERIOD, mManAlarmPeriod);
+        setDict.addInt16(KEY_ALARM_FREQ_MIN, mAlarmFreqMin);
+        setDict.addInt16(KEY_ALARM_FREQ_MAX, mAlarmFreqMax);
+        setDict.addUint16(KEY_WARN_TIME, mWarnTime);
+        setDict.addUint16(KEY_ALARM_TIME, mAlarmTime);
+        setDict.addUint16(KEY_ALARM_THRESH, mAlarmThresh);
+        setDict.addUint16(KEY_ALARM_RATIO_THRESH, mAlarmRatioThresh);
+        if (mFallActive)
+            setDict.addUint16(KEY_FALL_ACTIVE, (short) 1);
+        else
+            setDict.addUint16(KEY_FALL_ACTIVE, (short) 0);
+        setDict.addUint16(KEY_FALL_THRESH_MIN, mFallThreshMin);
+        setDict.addUint16(KEY_FALL_THRESH_MAX, mFallThreshMax);
+        setDict.addUint16(KEY_FALL_WINDOW, mFallWindow);
+
+        // Send Watch Settings to Pebble
+        Log.v(TAG, "sendPebbleSdSettings() - setDict = " + setDict.toJsonString());
+        PebbleKit.sendDataToPebble(mContext, SD_UUID, setDict);
+    }
+
+
+    /**
+     * Compares the watch settings retrieved from the watch (stored in mSdData)
+     * to the required settings stored as member variables to this class.
+     *
+     * @return true if they are all the same, or false if there are discrepancies.
+     */
+    public boolean checkWatchSettings() {
+       boolean settingsOk = true;
+        if (mDataUpdatePeriod !=  mSdData.mDataUpdatePeriod) {
+            Log.v(TAG,"checkWatchSettings - mDataUpdatePeriod Wrong");
+            settingsOk = false;
+        }
+        if (mMutePeriod != mSdData.mMutePeriod) {
+            Log.v(TAG,"checkWatchSettings - mMutePeriod Wrong");
+            settingsOk = false;
+        }
+        if (mManAlarmPeriod != mSdData.mManAlarmPeriod) {
+            Log.v(TAG,"checkWatchSettings - mManAlarmPeriod Wrong");
+            settingsOk = false;
+        }
+        if (mAlarmFreqMin != mSdData.alarmFreqMin) {
+            Log.v(TAG,"checkWatchSettings - mAlarmFreqMin Wrong");
+            settingsOk = false;
+        }
+        if (mAlarmFreqMax != mSdData.alarmFreqMax) {
+            Log.v(TAG,"checkWatchSettings - mAlarmFreqMax Wrong");
+            settingsOk = false;
+        }
+        if (mWarnTime != mSdData.warnTime) {
+            Log.v(TAG,"checkWatchSettings - mWarnTime Wrong");
+            settingsOk = false;
+        }
+        if (mAlarmTime != mSdData.alarmTime) {
+            Log.v(TAG,"checkWatchSettings - mAlarmTime Wrong");
+            settingsOk = false;
+        }
+        if (mAlarmThresh != mSdData.alarmThresh) {
+            Log.v(TAG,"checkWatchSettings - mAlarmThresh Wrong");
+            settingsOk = false;
+        }
+        if (mAlarmRatioThresh != mSdData.alarmRatioThresh) {
+            Log.v(TAG,"checkWatchSettings - mAlarmRatioThresh Wrong");
+            settingsOk = false;
+        }
+        if (mFallActive != mSdData.mFallActive) {
+            Log.v(TAG,"checkWatchSettings - mAlarmFreqMin Wrong");
+            settingsOk = false;
+        }
+        if (mFallThreshMin != mSdData.mFallThreshMin) {
+            Log.v(TAG,"checkWatchSettings - mFallThreshMin Wrong");
+            settingsOk = false;
+        }
+        if (mFallThreshMax != mSdData.mFallThreshMax) {
+            Log.v(TAG,"checkWatchSettings - mFallThreshMax Wrong");
+            settingsOk = false;
+        }
+        if (mFallWindow != mSdData.mFallWindow) {
+            Log.v(TAG,"checkWatchSettings - mFallWindow Wrong");
+            settingsOk = false;
+        }
+
+        return settingsOk;
     }
 
     /**
