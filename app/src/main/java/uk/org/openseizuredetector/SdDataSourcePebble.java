@@ -55,9 +55,8 @@ public class SdDataSourcePebble extends SdDataSource {
     private Timer mStatusTimer;
     private Time mPebbleStatusTime;
     private boolean mPebbleAppRunningCheck = false;
-    private int mDataPeriod = 5;    // Period at which data is sent from watch to phone (sec)
     private int mAppRestartTimeout = 10;  // Timeout before re-starting watch app (sec) if we have not received
-                                           // data after mDataPeriod
+                                           // data after mDataUpdatePeriod
     //private Looper mServiceLooper;
     private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
@@ -117,6 +116,9 @@ public class SdDataSourcePebble extends SdDataSource {
     public SdDataSourcePebble(Context context, SdDataReceiver sdDataReceiver) {
         super(context,sdDataReceiver);
         mName = "Pebble";
+        // Set default settings from XML files (mContext is set by super().
+        PreferenceManager.setDefaultValues(mContext,
+                R.xml.pebble_datasource_prefs, true);
     }
 
 
@@ -140,7 +142,7 @@ public class SdDataSourcePebble extends SdDataSource {
                 public void run() {
                     getPebbleStatus();
                 }
-            }, 0, mDataPeriod * 1000);
+            }, 0, mDataUpdatePeriod * 1000);
         } else {
             Log.v(TAG, "onCreate(): status timer already running.");
         }
@@ -156,7 +158,7 @@ public class SdDataSourcePebble extends SdDataSource {
                 public void run() {
                     getPebbleSdSettings();
                 }
-            }, 0, 1000 * (mDataPeriod + 60));  // ask for settings less frequently than we get data
+            }, 0, 1000 * (mDataUpdatePeriod + 60));  // ask for settings less frequently than we get data
         } else {
             Log.v(TAG, "onCreate(): settings timer already running.");
         }
@@ -215,17 +217,6 @@ public class SdDataSourcePebble extends SdDataSource {
                 toast.show();
             }
 
-            // Parse the DataPeriod setting.
-            try {
-                String dataPeriodStr = SP.getString("DataPeriod", "5");
-                mDataPeriod = Integer.parseInt(dataPeriodStr);
-                Log.v(TAG, "updatePrefs() - mDataPeriod = " + mDataPeriod);
-            } catch (Exception ex) {
-                Log.v(TAG, "updatePrefs() - Problem with DataPeriod preference!");
-                Toast toast = Toast.makeText(mContext, "Problem Parsing DataPeriod Preference", Toast.LENGTH_SHORT);
-                toast.show();
-            }
-
             // Parse the FaultTimer period setting.
             try {
                 String faultTimerPeriodStr = SP.getString("FaultTimerPeriod", "30");
@@ -241,54 +232,54 @@ public class SdDataSourcePebble extends SdDataSource {
             // Watch Settings
             String prefStr;
 
-            prefStr = SP.getString("DataUpdatePeriod", "5");
+            prefStr = SP.getString("PebbleUpdatePeriod", "SET_FROM_XML");
             mDataUpdatePeriod = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() DataUpdatePeriod = " + mDataUpdatePeriod);
 
-            prefStr = SP.getString("MutePeriod", "300");
+            prefStr = SP.getString("MutePeriod", "SET_FROM_XML");
             mMutePeriod = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() MutePeriod = " + mMutePeriod);
 
-            prefStr = SP.getString("ManAlarmPeriod", "30");
+            prefStr = SP.getString("ManAlarmPeriod", "SET_FROM_XML");
             mManAlarmPeriod = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() ManAlarmPeriod = " + mManAlarmPeriod);
 
-            prefStr = SP.getString("AlarmFreqMin","3");
+            prefStr = SP.getString("AlarmFreqMin","SET_FROM_XML");
             mAlarmFreqMin = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() AlarmFreqMin = " + mAlarmFreqMin);
 
-            prefStr = SP.getString("AlarmFreqMax", "10");
+            prefStr = SP.getString("AlarmFreqMax", "SET_FROM_XML");
             mAlarmFreqMax = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() AlarmFreqMax = " + mAlarmFreqMax);
 
-            prefStr = SP.getString("WarnTime", "5");
+            prefStr = SP.getString("WarnTime", "SET_FROM_XML");
             mWarnTime = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() WarnTime = " + mWarnTime);
 
-            prefStr = SP.getString("AlarmTime", "10");
+            prefStr = SP.getString("AlarmTime", "SET_FROM_XML");
             mAlarmTime = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() AlarmTime = " + mAlarmTime);
 
-            prefStr = SP.getString("AlarmThresh", "70");
+            prefStr = SP.getString("AlarmThresh", "SET_FROM_XML");
             mAlarmThresh = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() AlarmThresh = " + mAlarmThresh);
 
-            prefStr = SP.getString("AlarmRatioThresh", "30");
+            prefStr = SP.getString("AlarmRatioThresh", "SET_FROM_XML");
             mAlarmRatioThresh = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() AlarmRatioThresh = " + mAlarmRatioThresh);
 
             mFallActive = SP.getBoolean("FallActive", false);
             Log.v(TAG, "updatePrefs() FallActive = " + mFallActive);
 
-            prefStr = SP.getString("FallThreshMin", "200");
+            prefStr = SP.getString("FallThreshMin", "SET_FROM_XML");
             mFallThreshMin = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() FallThreshMin = " + mFallThreshMin);
 
-            prefStr = SP.getString("FallThreshMax", "1200");
+            prefStr = SP.getString("FallThreshMax", "SET_FROM_XML");
             mFallThreshMax = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() FallThreshMax = " + mFallThreshMax);
 
-            prefStr = SP.getString("FallWindow", "1500");
+            prefStr = SP.getString("FallWindow", "SET_FROM_XML");
             mFallWindow = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() FallWindow = " + mFallWindow);
 
@@ -314,7 +305,7 @@ public class SdDataSourcePebble extends SdDataSource {
                                     final PebbleDictionary data) {
                 Log.v(TAG, "Received message from Pebble - data type="
                         + data.getUnsignedIntegerAsLong(KEY_DATA_TYPE));
-                // If we ha ve a message, the app must be running
+                // If we have a message, the app must be running
                 Log.v(TAG,"Setting mPebbleAppRunningCheck to true");
                 mPebbleAppRunningCheck = true;
                 PebbleKit.sendAckToPebble(context, transactionId);
@@ -370,9 +361,10 @@ public class SdDataSourcePebble extends SdDataSource {
             }
         };
         PebbleKit.registerReceivedDataHandler(mContext, msgDataHandler);
-        // We struggle to connect to pebble time if app is already running, so stop app so we can
-        // re-connect to it.
+        // We struggle to connect to pebble time if app is already running,
+        // so stop app so we can re-connect to it.
         stopWatchApp();
+        startWatchApp();
     }
 
     /**
@@ -553,7 +545,7 @@ public class SdDataSourcePebble extends SdDataSource {
         // the app is not talking to us
         // mPebbleAppRunningCheck is set to true in the receiveData handler.
         if (!mPebbleAppRunningCheck &&
-                (tdiff > (mDataPeriod+mAppRestartTimeout) * 1000)) {
+                (tdiff > (mDataUpdatePeriod+mAppRestartTimeout) * 1000)) {
             Log.v(TAG, "getPebbleStatus() - tdiff = " + tdiff);
             mSdData.pebbleAppRunning = false;
             Log.v(TAG, "getPebbleStatus() - Pebble App Not Running - Attempting to Re-Start");
@@ -561,7 +553,7 @@ public class SdDataSourcePebble extends SdDataSource {
             //mPebbleStatusTime = tnow;  // set status time to now so we do not re-start app repeatedly.
             getPebbleSdSettings();
             // Only make audible warning beep if we have not received data for more than mFaultTimerPeriod seconds.
-            if (tdiff > (mDataPeriod+mFaultTimerPeriod) * 1000) {
+            if (tdiff > (mDataUpdatePeriod+mFaultTimerPeriod) * 1000) {
                 mSdDataReceiver.onSdDataFault(mSdData);
             } else {
                 Log.v(TAG, "getPebbleStatus() - Waiting for mFaultTimerPeriod before issuing audible warning...");

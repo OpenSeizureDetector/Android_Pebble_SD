@@ -4,7 +4,7 @@
     <PreferenceCategory android:title="User Interface Settings">
         <EditTextPreference
             android:defaultValue="5"
-            android:key="DataUpdatePeriod"
+            android:key="PebbleUpdatePeriod"
             android:summary="Time period at which data is sent to the phone."
             android:title="Data Period (sec)" />
         <EditTextPreference
