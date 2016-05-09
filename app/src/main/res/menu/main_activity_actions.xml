@@ -6,12 +6,6 @@
 
 
     <item
-        android:id="@+id/action_launch_pebble_app"
-        android:icon="@drawable/stop_server"
-        android:showAsAction="never|withText"
-        android:title="Launch Pebble App" />
-
-    <item
         android:id="@+id/action_start_stop"
         android:icon="@drawable/stop_server"
         android:showAsAction="never|withText"
@@ -24,6 +18,16 @@
         android:showAsAction="never|withText"
         android:title="Test Fault Beep" />
 -->
+    <item
+        android:id="@+id/action_launch_pebble_app"
+        android:showAsAction="never|withText"
+        android:title="Launch Pebble App" />
+
+    <item
+        android:id="@+id/action_instal_watch_app"
+        android:showAsAction="never|withText"
+        android:title="Install Watch App" />
+
     <item
         android:id="@+id/action_test_alarm_beep"
         android:icon="@drawable/stop_server"

@@ -54,10 +54,16 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 //MPAndroidChart
+import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
 
 public class MainActivity extends Activity {
     static final String TAG = "MainActivity";
@@ -162,6 +168,9 @@ public class MainActivity extends Activity {
                 Log.v(TAG, "action_launch_pebble_app");
                 mUtil.startPebbleApp();
                 return true;
+            case R.id.action_instal_watch_app:
+                Log.v(TAG, "action_install_watch_app");
+                mConnection.mSdServer.mSdDataSource.installWatchApp();
 
             case R.id.action_accept_alarm:
                 Log.v(TAG, "action_accept_alarm");
@@ -499,33 +508,56 @@ public class MainActivity extends Activity {
 
             ////////////////////////////////////////////////////////////
             // Produce graph
-            LineChart mChart = (LineChart) findViewById(R.id.chart1);
-            mChart.setDescription("");
+            BarChart mChart = (BarChart) findViewById(R.id.chart1);
+            mChart.setDescription("Simple Spectrum");
+            mChart.setDrawBarShadow(false);
             mChart.setNoDataTextDescription("You need to provide data for the chart.");
             // X Values
             ArrayList<String> xVals = new ArrayList<String>();
             for (int i = 0; i < 10; i++) {
                 xVals.add((i) + "");
             }
+            XAxis xAxis = mChart.getXAxis();
+            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+            xAxis.setTextSize(10f);
+            xAxis.setDrawAxisLine(true);
+            xAxis.setDrawLabels(true);
+            xAxis.setEnabled(true);
             // Y Values
-            ArrayList<Entry> yVals = new ArrayList<Entry>();
+            //ArrayList<Entry> yVals = new ArrayList<Entry>();
+            ArrayList<BarEntry> yBarVals = new ArrayList<BarEntry>();
             for (int i = 0; i < 10; i++) {
-                if (mConnection.mSdServer != null)
-                    yVals.add(new Entry(mConnection.mSdServer.mSdData.simpleSpec[i], i));
-                else
-                    yVals.add(new Entry(i, i));
+                if (mConnection.mSdServer != null) {
+                    //yVals.add(new Entry(mConnection.mSdServer.mSdData.simpleSpec[i], i));
+                    yBarVals.add(new BarEntry(mConnection.mSdServer.mSdData.simpleSpec[i], i));
+                }
+                else {
+                    //yVals.add(new Entry(i, i));
+                    yBarVals.add(new BarEntry(i,i));
+                }
             }
 
             // create a dataset and give it a type
-            LineDataSet set1 = new LineDataSet(yVals, "DataSet 1");
-            set1.setColor(Color.BLACK);
-            set1.setLineWidth(1f);
+            //LineDataSet set1 = new LineDataSet(yVals, "DataSet 1");
+            //set1.setColor(Color.BLACK);
+            //set1.setLineWidth(1f);
 
-            ArrayList<LineDataSet> dataSets = new ArrayList<LineDataSet>();
-            dataSets.add(set1); // add the datasets
-            LineData data = new LineData(xVals, dataSets);
+            //ArrayList<LineDataSet> dataSets = new ArrayList<LineDataSet>();
+            //dataSets.add(set1); // add the datasets
+            //LineData data = new LineData(xVals, dataSets);
+
+            BarDataSet barDataSet = new BarDataSet(yBarVals,"Spectrum");
+            barDataSet.setColor(Color.GRAY);
+            barDataSet.setBarSpacePercent(20f);
+            barDataSet.setBarShadowColor(Color.WHITE);
+            ArrayList<BarDataSet> barDataSets = new ArrayList<BarDataSet>();
+            barDataSets.add(barDataSet);
+            BarData barData = new BarData(xVals,barDataSets);
+            mChart.setData(barData);
+
+
             //data.setValueTextSize(10f);
-            mChart.setData(data);
+            //mChart.setData(data);
             mChart.invalidate();
         }
     };

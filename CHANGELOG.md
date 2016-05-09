@@ -1,10 +1,17 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
+	V2.0.4 - 09 May 2016
+	Improved handling of watch app settings to make sure
+	they are loaded correctly without having to re-start app.
+	Added watch app to Andid phone app package so watch app can be
+	installed directly from phone rather than using pebble store.
+	Changed main screen graph to bar chart.
+
 	V2.0.3 - 23 April 2016
 		Further modification to beep code to avoid occasional crashes
 		if system tries to beep during a re-start.
-		Log faults to alarm log on SD Card.
+	        Log faults to alarm log on SD Card.
 	V2.0.2 - 13 April 2016
 		Modified 'beep' code to try to avoid crashes on some systems.
 

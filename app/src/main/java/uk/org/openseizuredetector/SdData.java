@@ -148,6 +148,8 @@ public class SdData implements Parcelable {
             jsonObj.put("haveSettings", haveSettings);
             jsonObj.put("alarmState", alarmState);
             jsonObj.put("alarmPhrase", alarmPhrase);
+            jsonObj.put("alarmFreqMin",alarmFreqMin);
+            jsonObj.put("alarmFreqMax",alarmFreqMax);
             jsonObj.put("alarmThresh", alarmThresh);
             jsonObj.put("alarmRatioThresh", alarmRatioThresh);
             JSONArray arr = new JSONArray();
