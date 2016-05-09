@@ -104,9 +104,7 @@ public class StartupActivity extends Activity {
             @Override
             public void onClick(View view) {
                 Log.v(TAG, "pebble button clicked");
-                mUtil.showToast("pebble button clicked");
-                //mUtil.startPebbleApp();
-                mConnection.mSdServer.mSdDataSource.installWatchApp();
+                mUtil.startPebbleApp();
             }
         });
 
@@ -115,7 +113,8 @@ public class StartupActivity extends Activity {
             @Override
             public void onClick(View view) {
                 Log.v(TAG, "install Osd Watch App button clicked");
-                mUtil.installOsdWatchApp();
+                //mUtil.installOsdWatchApp();
+                mConnection.mSdServer.mSdDataSource.installWatchApp();
             }
         });
 
