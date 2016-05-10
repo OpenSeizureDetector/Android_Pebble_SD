@@ -531,7 +531,20 @@ public class MainActivity extends Activity {
 
             // create a dataset and give it a type
             BarDataSet barDataSet = new BarDataSet(yBarVals,"Spectrum");
-            barDataSet.setColor(Color.GRAY);
+            try {
+                int[] barColours = new int[10];
+                for (int i = 0; i < 10; i++) {
+                    if ((i < mConnection.mSdServer.mSdData.alarmFreqMin) ||
+                            (i > mConnection.mSdServer.mSdData.alarmFreqMax)) {
+                        barColours[i] = Color.GRAY;
+                    } else {
+                        barColours[i] = Color.RED;
+                    }
+                }
+                barDataSet.setColors(barColours);
+            } catch (NullPointerException e){
+                Log.v(TAG,"Null pointer exception setting bar colours");
+            }
             barDataSet.setBarSpacePercent(20f);
             barDataSet.setBarShadowColor(Color.WHITE);
             //ArrayList<BarDataSet> barDataSets = new ArrayList<BarDataSet>();
