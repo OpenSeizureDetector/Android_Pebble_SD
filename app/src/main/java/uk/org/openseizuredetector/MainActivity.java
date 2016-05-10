@@ -49,6 +49,7 @@ import android.widget.TextView;
 import android.widget.Button;
 
 import java.lang.reflect.Field;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -65,6 +66,8 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
+import com.github.mikephil.charting.utils.LargeValueFormatter;
+import com.github.mikephil.charting.utils.ValueFormatter;
 
 public class MainActivity extends Activity {
     static final String TAG = "MainActivity";
@@ -510,15 +513,15 @@ public class MainActivity extends Activity {
             ////////////////////////////////////////////////////////////
             // Produce graph
             BarChart mChart = (BarChart) findViewById(R.id.chart1);
-            mChart.setDescription("Simple Spectrum");
             mChart.setDrawBarShadow(false);
             mChart.setNoDataTextDescription("You need to provide data for the chart.");
+            mChart.setDescription("");
 
             // X and Y Values
             ArrayList<String> xVals = new ArrayList<String>();
             ArrayList<BarEntry> yBarVals = new ArrayList<BarEntry>();
             for (int i = 0; i < 10; i++) {
-                xVals.add("x "+i+" Hz");
+                xVals.add(i+"-"+(i+1)+" Hz");
                 if (mConnection.mSdServer != null) {
                     yBarVals.add(new BarEntry(mConnection.mSdServer.mSdData.simpleSpec[i], i));
                 }
@@ -526,8 +529,6 @@ public class MainActivity extends Activity {
                     yBarVals.add(new BarEntry(i,i));
                 }
             }
-            //for (int i = 0;i<10;i++)
-            //    Log.v(TAG,"x="+xVals.get(i)+" y="+yBarVals.get(i));
 
             // create a dataset and give it a type
             BarDataSet barDataSet = new BarDataSet(yBarVals,"Spectrum");
@@ -547,29 +548,50 @@ public class MainActivity extends Activity {
             }
             barDataSet.setBarSpacePercent(20f);
             barDataSet.setBarShadowColor(Color.WHITE);
-            //ArrayList<BarDataSet> barDataSets = new ArrayList<BarDataSet>();
-            //barDataSets.add(barDataSet);
             BarData barData = new BarData(xVals,barDataSet);
-            mChart.setData(barData);
+            barData.setValueFormatter(new ValueFormatter() {
+                                          @Override
+                                          public String getFormattedValue(float v) {
+                                              DecimalFormat format = new DecimalFormat("####");
+                                              return format.format(v);
+                                          }
+                                      });
+                    mChart.setData(barData);
 
+            // format the axes
             XAxis xAxis = mChart.getXAxis();
             xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-            xAxis.setTextSize(30f);
+            xAxis.setTextSize(10f);
             xAxis.setDrawAxisLine(true);
             xAxis.setDrawLabels(true);
-            xAxis.setEnabled(true);
+            // Note:  the default text colour is BLACK, so does not show up on black background!!!
+            //  This took a lot of finding....
+            xAxis.setTextColor(Color.WHITE);
             xAxis.setDrawGridLines(false);
 
             YAxis yAxis = mChart.getAxisLeft();
             yAxis.setAxisMinValue(0f);
             yAxis.setAxisMaxValue(3000f);
             yAxis.setDrawGridLines(true);
+            yAxis.setDrawLabels(true);
+            yAxis.setTextColor(Color.WHITE);
+            yAxis.setValueFormatter(new ValueFormatter() {
+                @Override
+                public String getFormattedValue(float v) {
+                    DecimalFormat format = new DecimalFormat("#####");
+                    return format.format(v);
+                }
+            });
 
             YAxis yAxis2 = mChart.getAxisRight();
             yAxis2.setDrawGridLines(false);
 
-            //data.setValueTextSize(10f);
-            //mChart.setData(data);
+            try {
+                mChart.getLegend().setEnabled(false);
+            } catch (NullPointerException e) {
+                Log.v(TAG,"Null Pointer Exception setting legend");
+            }
+
             mChart.invalidate();
         }
     };
