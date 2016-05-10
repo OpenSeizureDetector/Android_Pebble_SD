@@ -35,6 +35,7 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -71,6 +72,10 @@ public class StartupActivity extends Activity {
         // Set our custom uncaught exception handler to report issues.
         Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(StartupActivity.this));
         //int i = 5/0;  // Force exception to test handler.
+
+        // Force the screen to stay on when the app is running
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
 
         setContentView(R.layout.startup_activity);
         mUtil = new OsdUtil(this);
