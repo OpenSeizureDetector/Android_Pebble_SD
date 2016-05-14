@@ -222,6 +222,17 @@ public class MainActivity extends Activity {
                     mConnection.mSdServer.sendSMSAlarm();
                 }
                 return true;
+            case R.id.action_logs:
+                Log.v(TAG, "action_logs");
+                try {
+                    Intent prefsIntent = new Intent(
+                            MainActivity.this,
+                            LogManagerActivity.class);
+                    this.startActivity(prefsIntent);
+                } catch (Exception ex) {
+                    Log.v(TAG, "exception starting log manager activity " + ex.toString());
+                }
+                return true;
             case R.id.action_settings:
                 Log.v(TAG, "action_settings");
                 try {

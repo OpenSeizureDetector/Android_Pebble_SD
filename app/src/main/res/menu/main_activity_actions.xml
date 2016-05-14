@@ -48,10 +48,19 @@
 
 
     <item
+        android:id="@+id/action_logs"
+        android:icon="@drawable/ic_action_settings"
+        android:showAsAction="never|withText"
+        android:title="View/Edit Log Entries"
+        android:enabled="false"
+        />
+
+    <item
         android:id="@+id/action_settings"
         android:icon="@drawable/ic_action_settings"
         android:showAsAction="never|withText"
-        android:title="Settings" />
+        android:title="Settings"
+        />
 
     <item
         android:id="@+id/action_about"

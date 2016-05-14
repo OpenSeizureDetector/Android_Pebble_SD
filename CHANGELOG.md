@@ -2,11 +2,12 @@
 	============================================
 
 	V2.0.4 - 09 May 2016
-	Improved handling of watch app settings to make sure
+	- Improved handling of watch app settings to make sure
 	they are loaded correctly without having to re-start app.
-	Added watch app to Andid phone app package so watch app can be
+	- Added watch app to Android phone app package so watch app can be
 	installed directly from phone rather than using pebble store.
-	Changed main screen graph to bar chart.
+	- Changed main screen graph to bar chart and highlights frequency
+	region of interest.
 
 	V2.0.3 - 23 April 2016
 		Further modification to beep code to avoid occasional crashes
