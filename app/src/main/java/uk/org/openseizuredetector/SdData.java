@@ -50,6 +50,8 @@ public class SdData implements Parcelable {
     public short mFallThreshMin;
     public short mFallThreshMax;
     public short mFallWindow;
+    public long mSdMode;
+    public long mSampleFreq;
     public long alarmFreqMin;
     public long alarmFreqMax;
     public long nMin;
@@ -148,6 +150,8 @@ public class SdData implements Parcelable {
             jsonObj.put("haveSettings", haveSettings);
             jsonObj.put("alarmState", alarmState);
             jsonObj.put("alarmPhrase", alarmPhrase);
+            jsonObj.put("sdMode",mSdMode);
+            jsonObj.put("sampleFreq",mSampleFreq);
             jsonObj.put("alarmFreqMin",alarmFreqMin);
             jsonObj.put("alarmFreqMax",alarmFreqMax);
             jsonObj.put("alarmThresh", alarmThresh);

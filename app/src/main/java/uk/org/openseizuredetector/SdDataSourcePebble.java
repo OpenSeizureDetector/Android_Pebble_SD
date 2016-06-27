@@ -38,6 +38,9 @@ import com.getpebble.android.kit.Constants;
 import com.getpebble.android.kit.PebbleKit;
 import com.getpebble.android.kit.util.PebbleDictionary;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -46,6 +49,10 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -63,7 +70,7 @@ public class SdDataSourcePebble extends SdDataSource {
     private Time mPebbleStatusTime;
     private boolean mPebbleAppRunningCheck = false;
     private int mAppRestartTimeout = 10;  // Timeout before re-starting watch app (sec) if we have not received
-                                           // data after mDataUpdatePeriod
+    // data after mDataUpdatePeriod
     //private Looper mServiceLooper;
     private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
@@ -103,11 +110,14 @@ public class SdDataSourcePebble extends SdDataSource {
     private int KEY_MAN_ALARM_PERIOD = 27;
     private int KEY_SD_MODE = 28;
     private int KEY_SAMPLE_FREQ = 29;
+    private int KEY_RAW_DATA = 30;
+    private int KEY_NUM_RAW_DATA = 31;
 
     // Values of the KEY_DATA_TYPE entry in a message
     private int DATA_TYPE_RESULTS = 1;   // Analysis Results
     private int DATA_TYPE_SETTINGS = 2;  // Settings
     private int DATA_TYPE_SPEC = 3;      // FFT Spectrum (or part of a spectrum)
+    private int DATA_TYPE_RAW = 4;       // raw accelerometer data.
     private short mDataUpdatePeriod;
     private short mMutePeriod;
     private short mManAlarmPeriod;
@@ -125,7 +135,7 @@ public class SdDataSourcePebble extends SdDataSource {
     private short mFallWindow;
 
     public SdDataSourcePebble(Context context, SdDataReceiver sdDataReceiver) {
-        super(context,sdDataReceiver);
+        super(context, sdDataReceiver);
         mName = "Pebble";
         // Set default settings from XML files (mContext is set by super().
         PreferenceManager.setDefaultValues(mContext,
@@ -255,15 +265,15 @@ public class SdDataSourcePebble extends SdDataSource {
             mManAlarmPeriod = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() ManAlarmPeriod = " + mManAlarmPeriod);
 
-            prefStr = SP.getString("PebbleSdMode","SET_FROM_XML");
+            prefStr = SP.getString("PebbleSdMode", "SET_FROM_XML");
             mPebbleSdMode = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() PebbleSdMode = " + mPebbleSdMode);
 
-            prefStr = SP.getString("SampleFreq","SET_FROM_XML");
+            prefStr = SP.getString("SampleFreq", "SET_FROM_XML");
             mSampleFreq = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() SampleFreq = " + mSampleFreq);
 
-            prefStr = SP.getString("AlarmFreqMin","SET_FROM_XML");
+            prefStr = SP.getString("AlarmFreqMin", "SET_FROM_XML");
             mAlarmFreqMin = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() AlarmFreqMin = " + mAlarmFreqMin);
 
@@ -325,7 +335,7 @@ public class SdDataSourcePebble extends SdDataSource {
                 Log.v(TAG, "Received message from Pebble - data type="
                         + data.getUnsignedIntegerAsLong(KEY_DATA_TYPE));
                 // If we have a message, the app must be running
-                Log.v(TAG,"Setting mPebbleAppRunningCheck to true");
+                Log.v(TAG, "Setting mPebbleAppRunningCheck to true");
                 mPebbleAppRunningCheck = true;
                 PebbleKit.sendAckToPebble(context, transactionId);
                 //Log.v(TAG,"Message is: "+data.toJsonString());
@@ -376,6 +386,16 @@ public class SdDataSourcePebble extends SdDataSource {
                     mSdData.alarmRatioThresh = data.getUnsignedIntegerAsLong(KEY_ALARM_RATIO_THRESH);
                     mSdData.batteryPc = data.getUnsignedIntegerAsLong(KEY_BATTERY_PC);
                     mSdData.haveSettings = true;
+                }
+                if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
+                        == DATA_TYPE_RAW) {
+                    Log.v(TAG, "DATA_TYPE = Raw");
+                    long numSamples = data.getUnsignedIntegerAsLong(KEY_NUM_RAW_DATA);
+                    Log.v(TAG, "numSamples = " + numSamples);
+                    byte[] rawData = data.getBytes(KEY_RAW_DATA);
+                    for (AccelData reading : AccelData.fromDataArray(rawData)) {
+                        Log.i(TAG, "reading ts " + reading.getTimestamp());
+                    }
                 }
             }
         };
@@ -439,14 +459,14 @@ public class SdDataSourcePebble extends SdDataSource {
      * variables to the watch.
      */
     public void sendPebbleSdSettings() {
-        Log.v(TAG, "sendPebblSdSettings() - preparing settings dictionary..");
+        Log.v(TAG, "sendPebblSdSettings() - preparing settings dictionary.. mSampleFreq=" + mSampleFreq);
         // Watch Settings
         final PebbleDictionary setDict = new PebbleDictionary();
         setDict.addInt16(KEY_DATA_UPDATE_PERIOD, mDataUpdatePeriod);
         setDict.addInt16(KEY_MUTE_PERIOD, mMutePeriod);
         setDict.addInt16(KEY_MAN_ALARM_PERIOD, mManAlarmPeriod);
-        setDict.addInt16(KEY_SD_MODE,mPebbleSdMode);
-        setDict.addInt16(KEY_SAMPLE_FREQ,mSampleFreq);
+        setDict.addInt16(KEY_SD_MODE, mPebbleSdMode);
+        setDict.addInt16(KEY_SAMPLE_FREQ, mSampleFreq);
         setDict.addInt16(KEY_ALARM_FREQ_MIN, mAlarmFreqMin);
         setDict.addInt16(KEY_ALARM_FREQ_MAX, mAlarmFreqMax);
         setDict.addUint16(KEY_WARN_TIME, mWarnTime);
@@ -474,57 +494,57 @@ public class SdDataSourcePebble extends SdDataSource {
      * @return true if they are all the same, or false if there are discrepancies.
      */
     public boolean checkWatchSettings() {
-       boolean settingsOk = true;
-        if (mDataUpdatePeriod !=  mSdData.mDataUpdatePeriod) {
-            Log.v(TAG,"checkWatchSettings - mDataUpdatePeriod Wrong");
+        boolean settingsOk = true;
+        if (mDataUpdatePeriod != mSdData.mDataUpdatePeriod) {
+            Log.v(TAG, "checkWatchSettings - mDataUpdatePeriod Wrong");
             settingsOk = false;
         }
         if (mMutePeriod != mSdData.mMutePeriod) {
-            Log.v(TAG,"checkWatchSettings - mMutePeriod Wrong");
+            Log.v(TAG, "checkWatchSettings - mMutePeriod Wrong");
             settingsOk = false;
         }
         if (mManAlarmPeriod != mSdData.mManAlarmPeriod) {
-            Log.v(TAG,"checkWatchSettings - mManAlarmPeriod Wrong");
+            Log.v(TAG, "checkWatchSettings - mManAlarmPeriod Wrong");
             settingsOk = false;
         }
         if (mAlarmFreqMin != mSdData.alarmFreqMin) {
-            Log.v(TAG,"checkWatchSettings - mAlarmFreqMin Wrong");
+            Log.v(TAG, "checkWatchSettings - mAlarmFreqMin Wrong");
             settingsOk = false;
         }
         if (mAlarmFreqMax != mSdData.alarmFreqMax) {
-            Log.v(TAG,"checkWatchSettings - mAlarmFreqMax Wrong");
+            Log.v(TAG, "checkWatchSettings - mAlarmFreqMax Wrong");
             settingsOk = false;
         }
         if (mWarnTime != mSdData.warnTime) {
-            Log.v(TAG,"checkWatchSettings - mWarnTime Wrong");
+            Log.v(TAG, "checkWatchSettings - mWarnTime Wrong");
             settingsOk = false;
         }
         if (mAlarmTime != mSdData.alarmTime) {
-            Log.v(TAG,"checkWatchSettings - mAlarmTime Wrong");
+            Log.v(TAG, "checkWatchSettings - mAlarmTime Wrong");
             settingsOk = false;
         }
         if (mAlarmThresh != mSdData.alarmThresh) {
-            Log.v(TAG,"checkWatchSettings - mAlarmThresh Wrong");
+            Log.v(TAG, "checkWatchSettings - mAlarmThresh Wrong");
             settingsOk = false;
         }
         if (mAlarmRatioThresh != mSdData.alarmRatioThresh) {
-            Log.v(TAG,"checkWatchSettings - mAlarmRatioThresh Wrong");
+            Log.v(TAG, "checkWatchSettings - mAlarmRatioThresh Wrong");
             settingsOk = false;
         }
         if (mFallActive != mSdData.mFallActive) {
-            Log.v(TAG,"checkWatchSettings - mAlarmFreqMin Wrong");
+            Log.v(TAG, "checkWatchSettings - mAlarmFreqMin Wrong");
             settingsOk = false;
         }
         if (mFallThreshMin != mSdData.mFallThreshMin) {
-            Log.v(TAG,"checkWatchSettings - mFallThreshMin Wrong");
+            Log.v(TAG, "checkWatchSettings - mFallThreshMin Wrong");
             settingsOk = false;
         }
         if (mFallThreshMax != mSdData.mFallThreshMax) {
-            Log.v(TAG,"checkWatchSettings - mFallThreshMax Wrong");
+            Log.v(TAG, "checkWatchSettings - mFallThreshMax Wrong");
             settingsOk = false;
         }
         if (mFallWindow != mSdData.mFallWindow) {
-            Log.v(TAG,"checkWatchSettings - mFallWindow Wrong");
+            Log.v(TAG, "checkWatchSettings - mFallWindow Wrong");
             settingsOk = false;
         }
 
@@ -557,7 +577,7 @@ public class SdDataSourcePebble extends SdDataSource {
         tnow.setToNow();
         // get time since the last data was received from the Pebble watch.
         tdiff = (tnow.toMillis(false) - mPebbleStatusTime.toMillis(false));
-        Log.v(TAG, "getPebbleStatus() - mPebbleAppRunningCheck="+mPebbleAppRunningCheck+" tdiff="+tdiff);
+        Log.v(TAG, "getPebbleStatus() - mPebbleAppRunningCheck=" + mPebbleAppRunningCheck + " tdiff=" + tdiff);
         // Check we are actually connected to the pebble.
         mSdData.pebbleConnected = PebbleKit.isWatchConnected(mContext);
         if (!mSdData.pebbleConnected) mPebbleAppRunningCheck = false;
@@ -566,7 +586,7 @@ public class SdDataSourcePebble extends SdDataSource {
         // the app is not talking to us
         // mPebbleAppRunningCheck is set to true in the receiveData handler.
         if (!mPebbleAppRunningCheck &&
-                (tdiff > (mDataUpdatePeriod+mAppRestartTimeout) * 1000)) {
+                (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000)) {
             Log.v(TAG, "getPebbleStatus() - tdiff = " + tdiff);
             mSdData.pebbleAppRunning = false;
             Log.v(TAG, "getPebbleStatus() - Pebble App Not Running - Attempting to Re-Start");
@@ -574,7 +594,7 @@ public class SdDataSourcePebble extends SdDataSource {
             //mPebbleStatusTime = tnow;  // set status time to now so we do not re-start app repeatedly.
             getPebbleSdSettings();
             // Only make audible warning beep if we have not received data for more than mFaultTimerPeriod seconds.
-            if (tdiff > (mDataUpdatePeriod+mFaultTimerPeriod) * 1000) {
+            if (tdiff > (mDataUpdatePeriod + mFaultTimerPeriod) * 1000) {
                 mSdDataReceiver.onSdDataFault(mSdData);
             } else {
                 Log.v(TAG, "getPebbleStatus() - Waiting for mFaultTimerPeriod before issuing audible warning...");
@@ -628,10 +648,9 @@ public class SdDataSourcePebble extends SdDataSource {
         }
 
     }
-
-
-
-
-
 }
+
+
+
+
 
