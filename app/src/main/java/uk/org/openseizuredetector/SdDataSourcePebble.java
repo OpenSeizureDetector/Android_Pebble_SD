@@ -101,6 +101,8 @@ public class SdDataSourcePebble extends SdDataSource {
     private int KEY_DATA_UPDATE_PERIOD = 25;
     private int KEY_MUTE_PERIOD = 26;
     private int KEY_MAN_ALARM_PERIOD = 27;
+    private int KEY_SD_MODE = 28;
+    private int KEY_SAMPLE_FREQ = 29;
 
     // Values of the KEY_DATA_TYPE entry in a message
     private int DATA_TYPE_RESULTS = 1;   // Analysis Results
@@ -109,6 +111,8 @@ public class SdDataSourcePebble extends SdDataSource {
     private short mDataUpdatePeriod;
     private short mMutePeriod;
     private short mManAlarmPeriod;
+    private short mPebbleSdMode;
+    private short mSampleFreq;
     private short mAlarmFreqMin;
     private short mAlarmFreqMax;
     private short mWarnTime;
@@ -250,6 +254,14 @@ public class SdDataSourcePebble extends SdDataSource {
             prefStr = SP.getString("ManAlarmPeriod", "SET_FROM_XML");
             mManAlarmPeriod = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() ManAlarmPeriod = " + mManAlarmPeriod);
+
+            prefStr = SP.getString("PebbleSdMode","SET_FROM_XML");
+            mPebbleSdMode = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() PebbleSdMode = " + mPebbleSdMode);
+
+            prefStr = SP.getString("SampleFreq","SET_FROM_XML");
+            mSampleFreq = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() SampleFreq = " + mSampleFreq);
 
             prefStr = SP.getString("AlarmFreqMin","SET_FROM_XML");
             mAlarmFreqMin = (short) Integer.parseInt(prefStr);
@@ -433,6 +445,8 @@ public class SdDataSourcePebble extends SdDataSource {
         setDict.addInt16(KEY_DATA_UPDATE_PERIOD, mDataUpdatePeriod);
         setDict.addInt16(KEY_MUTE_PERIOD, mMutePeriod);
         setDict.addInt16(KEY_MAN_ALARM_PERIOD, mManAlarmPeriod);
+        setDict.addInt16(KEY_SD_MODE,mPebbleSdMode);
+        setDict.addInt16(KEY_SAMPLE_FREQ,mSampleFreq);
         setDict.addInt16(KEY_ALARM_FREQ_MIN, mAlarmFreqMin);
         setDict.addInt16(KEY_ALARM_FREQ_MAX, mAlarmFreqMax);
         setDict.addUint16(KEY_WARN_TIME, mWarnTime);

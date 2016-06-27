@@ -19,6 +19,23 @@
             android:title="Manual Alarm Period (sec)" />
     </PreferenceCategory>
     <PreferenceCategory android:title="Seizure Detector Settings">
+        <ListPreference
+            android:key="PebbleSdMode"
+            android:title="Seizure Detector Mode"
+            android:summary="Select one of the three available modes of operation."
+            android:entries="@array/pebble_sd_mode_list"
+            android:entryValues="@array/pebble_sd_mode_list_values"
+            android:defaultValue="0"
+            android:dialogTitle="Select Seizure Detector Mode" />
+        <ListPreference
+            android:key="SampleFreq"
+            android:title="Select Sample Frequency"
+            android:summary="Higher Frequency is more Accurate, but uses more battery power."
+            android:entries="@array/pebble_sample_freq_list"
+            android:entryValues="@array/pebble_sample_freq_list_values"
+            android:defaultValue="100"
+            android:dialogTitle="Select Sample Frequency" />
+
         <EditTextPreference
             android:defaultValue="3"
             android:key="AlarmFreqMin"
