@@ -24,7 +24,7 @@ android {
 
 dependencies {
     compile files('libs/mpandroidchartlibrary-2-0-7.jar')
-    compile 'com.getpebble:pebblekit:3.0.0@aar'
+    compile 'com.getpebble:pebblekit:3.1.0@aar'
 
     // Unit testing dependencies
     testCompile 'junit:junit:4.12'
