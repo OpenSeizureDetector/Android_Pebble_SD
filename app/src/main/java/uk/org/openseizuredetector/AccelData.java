@@ -62,6 +62,22 @@ public class AccelData {
         return timestamp;
     }
 
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public int getZ() {
+        return z;
+    }
+
+    public int getMagnitude() {
+        return (int)Math.sqrt(x*x + y*y + z*z);
+    }
+
     public void applyTimezone(TimeZone tz) {
         timestamp -= tz.getOffset(timestamp);
     }

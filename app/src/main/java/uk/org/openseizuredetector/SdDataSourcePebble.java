@@ -40,6 +40,7 @@ import com.getpebble.android.kit.util.PebbleDictionary;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.jtransforms.fft.DoubleFFT_1D;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -118,6 +119,12 @@ public class SdDataSourcePebble extends SdDataSource {
     private int DATA_TYPE_SETTINGS = 2;  // Settings
     private int DATA_TYPE_SPEC = 3;      // FFT Spectrum (or part of a spectrum)
     private int DATA_TYPE_RAW = 4;       // raw accelerometer data.
+
+    // Values for SD_MODE
+    private int SD_MODE_FFT = 0;     // The original OpenSeizureDetector mode (FFT based)
+    private int SD_MODE_RAW = 1;     // Send raw, unprocessed data to the phone.
+    private int SD_MODE_FILTER = 2;  // Use digital filter rather than FFT.
+
     private short mDataUpdatePeriod;
     private short mMutePeriod;
     private short mManAlarmPeriod;
@@ -133,6 +140,11 @@ public class SdDataSourcePebble extends SdDataSource {
     private short mFallThreshMin;
     private short mFallThreshMax;
     private short mFallWindow;
+
+    // raw data storage for SD_MODE_RAW
+    private int MAX_RAW_DATA = 500;
+    private double[] rawData = new double[MAX_RAW_DATA];
+    private int nRawData = 0;
 
     public SdDataSourcePebble(Context context, SdDataReceiver sdDataReceiver) {
         super(context, sdDataReceiver);
@@ -390,12 +402,19 @@ public class SdDataSourcePebble extends SdDataSource {
                 if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
                         == DATA_TYPE_RAW) {
                     Log.v(TAG, "DATA_TYPE = Raw");
-                    long numSamples = data.getUnsignedIntegerAsLong(KEY_NUM_RAW_DATA);
+                    long numSamples;
+                    numSamples = data.getUnsignedIntegerAsLong(KEY_NUM_RAW_DATA);
                     Log.v(TAG, "numSamples = " + numSamples);
-                    byte[] rawData = data.getBytes(KEY_RAW_DATA);
-                    for (AccelData reading : AccelData.fromDataArray(rawData)) {
-                        Log.i(TAG, "reading ts " + reading.getTimestamp());
+                    byte[] rawDataBytes = data.getBytes(KEY_RAW_DATA);
+                    for (AccelData reading : AccelData.fromDataArray(rawDataBytes)) {
+                        if (nRawData < MAX_RAW_DATA) {
+                            rawData[nRawData] = reading.getMagnitude();
+                            nRawData++;
+                        } else {
+                            Log.i(TAG, "WARNING - rawData Buffer Full");
+                        }
                     }
+
                 }
             }
         };
@@ -615,6 +634,19 @@ public class SdDataSourcePebble extends SdDataSource {
             getPebbleSdSettings();
             getPebbleData();
         }
+
+        if (mPebbleSdMode == SD_MODE_RAW) {
+            analyseRawData();
+        }
+    }
+
+
+    private void analyseRawData() {
+        Log.v(TAG,"analyserawData()");
+        DoubleFFT_1D fft = new DoubleFFT_1D(MAX_RAW_DATA);
+        fft.realForward(rawData);
+        // FIXME - rawData should really be a circular buffer.
+        nRawData = 0;
     }
 
     /**

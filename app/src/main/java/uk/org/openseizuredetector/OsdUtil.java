@@ -42,7 +42,12 @@ import org.apache.http.conn.util.InetAddressUtils;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.RandomAccess;
 
 /**
  * OsdUtil - OpenSeizureDetector Utilities
