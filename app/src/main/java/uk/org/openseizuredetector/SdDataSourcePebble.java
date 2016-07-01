@@ -406,14 +406,28 @@ public class SdDataSourcePebble extends SdDataSource {
                     numSamples = data.getUnsignedIntegerAsLong(KEY_NUM_RAW_DATA);
                     Log.v(TAG, "numSamples = " + numSamples);
                     byte[] rawDataBytes = data.getBytes(KEY_RAW_DATA);
-                    for (AccelData reading : AccelData.fromDataArray(rawDataBytes)) {
+                    for (int i = 0; i < rawDataBytes.length - 6; i += 6) { // 6 bytes per sample
+                        int x = (rawDataBytes[i+0] & 0xff) | (rawDataBytes[i+1] << 8);
+                        int y = (rawDataBytes[i+2] & 0xff) | (rawDataBytes[i+3] << 8);
+                        int z = (rawDataBytes[i+4] & 0xff) | (rawDataBytes[i+5] << 8);
+                        Log.v(TAG,"x="+x+", y="+y+", z="+z);
                         if (nRawData < MAX_RAW_DATA) {
-                            rawData[nRawData] = reading.getMagnitude();
-                            nRawData++;
+                            rawData[nRawData] = (int)Math.sqrt(x*x+y*y+z*z);
                         } else {
                             Log.i(TAG, "WARNING - rawData Buffer Full");
                         }
+
                     }
+
+
+                    //for (AccelData reading : AccelData.fromDataArray(rawDataBytes)) {
+                    //    if (nRawData < MAX_RAW_DATA) {
+                    //        rawData[nRawData] = reading.getMagnitude();
+                    //        nRawData++;
+                    //    } else {
+                    //        Log.i(TAG, "WARNING - rawData Buffer Full");
+                    //    }
+                   // }
 
                 }
             }
