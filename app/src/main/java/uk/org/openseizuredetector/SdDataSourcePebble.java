@@ -113,6 +113,8 @@ public class SdDataSourcePebble extends SdDataSource {
     private int KEY_SAMPLE_FREQ = 29;
     private int KEY_RAW_DATA = 30;
     private int KEY_NUM_RAW_DATA = 31;
+    private int KEY_DEBUG = 32;
+    private int KEY_DISPLAY_SPECTRUM = 33;
 
     // Values of the KEY_DATA_TYPE entry in a message
     private int DATA_TYPE_RESULTS = 1;   // Analysis Results
@@ -125,6 +127,8 @@ public class SdDataSourcePebble extends SdDataSource {
     private int SD_MODE_RAW = 1;     // Send raw, unprocessed data to the phone.
     private int SD_MODE_FILTER = 2;  // Use digital filter rather than FFT.
 
+    private short mDebug;
+    private short mDisplaySpectrum;
     private short mDataUpdatePeriod;
     private short mMutePeriod;
     private short mManAlarmPeriod;
@@ -264,6 +268,14 @@ public class SdDataSourcePebble extends SdDataSource {
 
             // Watch Settings
             String prefStr;
+
+            prefStr = SP.getString("PebbleDebug", "SET_FROM_XML");
+            mDebug = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() Debug = " + mDebug);
+
+            prefStr = SP.getString("PebbleDisplaySpectrum", "SET_FROM_XML");
+            mDisplaySpectrum = (short) Integer.parseInt(prefStr);
+            Log.v(TAG, "updatePrefs() DisplaySpectrum = " + mDisplaySpectrum);
 
             prefStr = SP.getString("PebbleUpdatePeriod", "SET_FROM_XML");
             mDataUpdatePeriod = (short) Integer.parseInt(prefStr);
@@ -406,13 +418,14 @@ public class SdDataSourcePebble extends SdDataSource {
                     numSamples = data.getUnsignedIntegerAsLong(KEY_NUM_RAW_DATA);
                     Log.v(TAG, "numSamples = " + numSamples);
                     byte[] rawDataBytes = data.getBytes(KEY_RAW_DATA);
-                    for (int i = 0; i < rawDataBytes.length - 6; i += 6) { // 6 bytes per sample
-                        int x = (rawDataBytes[i+0] & 0xff) | (rawDataBytes[i+1] << 8);
-                        int y = (rawDataBytes[i+2] & 0xff) | (rawDataBytes[i+3] << 8);
-                        int z = (rawDataBytes[i+4] & 0xff) | (rawDataBytes[i+5] << 8);
-                        Log.v(TAG,"x="+x+", y="+y+", z="+z);
+                    for (int i = 0; i < rawDataBytes.length - 4; i += 4) { // 4 bytes per sample
+                        int x = (rawDataBytes[i]);
+                        //int y = (rawDataBytes[i+2] & 0xff) | (rawDataBytes[i+3] << 8);
+                        //int z = (rawDataBytes[i+4] & 0xff) | (rawDataBytes[i+5] << 8);
+                        //Log.v(TAG,"x="+x+", y="+y+", z="+z);
+                        Log.v(TAG,"x="+x);
                         if (nRawData < MAX_RAW_DATA) {
-                            rawData[nRawData] = (int)Math.sqrt(x*x+y*y+z*z);
+                            rawData[nRawData] = (int)Math.sqrt(x);
                         } else {
                             Log.i(TAG, "WARNING - rawData Buffer Full");
                         }
@@ -495,6 +508,8 @@ public class SdDataSourcePebble extends SdDataSource {
         Log.v(TAG, "sendPebblSdSettings() - preparing settings dictionary.. mSampleFreq=" + mSampleFreq);
         // Watch Settings
         final PebbleDictionary setDict = new PebbleDictionary();
+        setDict.addInt16(KEY_DEBUG, mDebug);
+        setDict.addInt16(KEY_DISPLAY_SPECTRUM, mDisplaySpectrum);
         setDict.addInt16(KEY_DATA_UPDATE_PERIOD, mDataUpdatePeriod);
         setDict.addInt16(KEY_MUTE_PERIOD, mMutePeriod);
         setDict.addInt16(KEY_MAN_ALARM_PERIOD, mManAlarmPeriod);
