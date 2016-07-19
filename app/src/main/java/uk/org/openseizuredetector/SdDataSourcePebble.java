@@ -401,9 +401,18 @@ public class SdDataSourcePebble extends SdDataSource {
      * Attempt to start the pebble_sd watch app on the pebble watch.
      */
     public void startWatchApp() {
-        Log.v(TAG, "startWatchApp()");
-        PebbleKit.startAppOnPebble(mContext, SD_UUID);
-
+        Log.v(TAG, "startWatchApp() - closing app first");
+        // first close the watch app if it is running.
+        PebbleKit.closeAppOnPebble(mContext, SD_UUID);
+        // then start it after a 1 second delay.
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.v(TAG, "startWatchApp() - starting watch app...");
+                PebbleKit.startAppOnPebble(mContext, SD_UUID);
+            }
+        }, 1000);
     }
 
     /**
