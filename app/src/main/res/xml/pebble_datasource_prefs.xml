@@ -6,7 +6,7 @@
         <EditTextPreference
             android:defaultValue="5"
             android:key="PebbleUpdatePeriod"
-            android:summary="Time period at which data is sent to the phone."
+            android:summary="Time period at which data is sent to the phone (increase value to reduce battery consumption)"
             android:title="Data Period (sec)" />
         <EditTextPreference
             android:defaultValue="300"
@@ -20,14 +20,6 @@
             android:title="Manual Alarm Period (sec)" />
     </PreferenceCategory>
     <PreferenceCategory android:title="Seizure Detector Settings">
-        <ListPreference
-            android:key="PebbleDebug"
-            android:title="Seizure Detector Debug Mode"
-            android:summary="Set Debug mode on or off."
-            android:entries="@array/pebble_debug_list"
-            android:entryValues="@array/pebble_debug_values"
-            android:defaultValue="0"
-            android:dialogTitle="Select Debug Mode" />
         <ListPreference
             android:key="PebbleDisplaySpectrum"
             android:title="Spectrum display Mode"
@@ -51,7 +43,9 @@
             android:entries="@array/pebble_sample_freq_list"
             android:entryValues="@array/pebble_sample_freq_list_values"
             android:defaultValue="100"
-            android:dialogTitle="Select Sample Frequency" />
+            android:dialogTitle="Select Sample Frequency"
+            android:enabled="false"
+            />
 
         <EditTextPreference
             android:defaultValue="3"
@@ -110,6 +104,14 @@
 
     <PreferenceCategory
         android:title="Watch Communications Settings">
+        <ListPreference
+            android:key="PebbleDebug"
+            android:title="Seizure Detector Debug Mode"
+            android:summary="Set Debug mode on or off."
+            android:entries="@array/pebble_debug_list"
+            android:entryValues="@array/pebble_debug_values"
+            android:defaultValue="0"
+            android:dialogTitle="Select Debug Mode" />
         <EditTextPreference
             android:defaultValue="10"
             android:key="AppRestartTimeout"
