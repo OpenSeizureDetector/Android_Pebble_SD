@@ -28,6 +28,7 @@ package uk.org.openseizuredetector;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Handler;
 import android.preference.PreferenceActivity;
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
@@ -42,6 +43,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     private OsdUtil mUtil;
     private boolean mPrefChanged = false;
     private Context mContext;
+    private Handler mHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,9 +53,10 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(PrefActivity.this));
         //int i = 5/0;  // Force exception to test handler.
 
-
-        mUtil = new OsdUtil(getApplicationContext());
+        mHandler = new Handler();
         mContext = getApplicationContext();
+
+        mUtil = new OsdUtil(mContext,mHandler);
     }
 
     /**

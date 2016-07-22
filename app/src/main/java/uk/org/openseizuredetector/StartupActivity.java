@@ -62,7 +62,7 @@ public class StartupActivity extends Activity {
     private Timer mUiTimer;
     private SdServiceConnection mConnection;
     private boolean mStartedMainActivity = false;
-    final Handler mServerStatusHandler = new Handler();   // used to update ui from mUiTimer
+    private Handler mHandler = new Handler();   // used to update ui from mUiTimer
 
 
     @Override
@@ -78,7 +78,9 @@ public class StartupActivity extends Activity {
 
 
         setContentView(R.layout.startup_activity);
-        mUtil = new OsdUtil(this);
+        mHandler = new Handler();
+
+        mUtil = new OsdUtil(this,mHandler);
 
         // Read the default settings from the xml preferences files, so we do
         // not have to use the hard coded ones in the java files.
@@ -160,7 +162,7 @@ public class StartupActivity extends Activity {
         mUiTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                mServerStatusHandler.post(serverStatusRunnable);
+                mHandler.post(serverStatusRunnable);
                 //updateServerStatus();
             }
         }, 0, 1000);

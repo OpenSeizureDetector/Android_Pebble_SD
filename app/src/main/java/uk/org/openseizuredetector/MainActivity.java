@@ -96,7 +96,7 @@ public class MainActivity extends Activity {
         // Set our custom uncaught exception handler to report issues.
         Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(MainActivity.this));
         //int i = 5/0;  // Force exception to test handler.
-        mUtil = new OsdUtil(this);
+        mUtil = new OsdUtil(this,serverStatusHandler);
         mConnection = new SdServiceConnection(this);
 
         // Initialise the User Interface

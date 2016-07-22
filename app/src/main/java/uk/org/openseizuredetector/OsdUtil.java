@@ -33,6 +33,7 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.MenuItem;
@@ -48,6 +49,7 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.RandomAccess;
+import java.util.concurrent.RunnableFuture;
 
 /**
  * OsdUtil - OpenSeizureDetector Utilities
@@ -58,11 +60,21 @@ public class OsdUtil {
      * Based on http://stackoverflow.com/questions/7440473/android-how-to-check-if-the-intent-service-is-still-running-or-has-stopped-running
      */
     private Context mContext;
+    private Handler mHandler;
     private String TAG = "OsdUtil";
 
-    public OsdUtil(Context context) {
+    public OsdUtil(Context context, Handler handler) {
         mContext = context;
+        mHandler = handler;
     }
+
+    /**
+     * used to make sure timers etc. run on UI thread
+     */
+    public void runOnUiThread(Runnable runnable) {
+        mHandler.post(runnable);
+    }
+
 
     public boolean isServerRunning() {
         //Log.v(TAG,"isServerRunning()................");
@@ -187,9 +199,13 @@ public class OsdUtil {
      * Display a Toast message on screen.
      * @param msg - message to display.
      */
-    public void showToast(String msg) {
-        Toast.makeText(mContext, msg,
-                Toast.LENGTH_LONG).show();
+    public void showToast(final String msg) {
+        runOnUiThread(new Runnable() {
+                          public void run() {
+                              Toast.makeText(mContext, msg,
+                                      Toast.LENGTH_LONG).show();
+                          }
+                      });
     }
 
 

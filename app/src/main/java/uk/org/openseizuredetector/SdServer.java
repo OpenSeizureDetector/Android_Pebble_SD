@@ -166,7 +166,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         mHandler = new Handler();
 
-        mUtil = new OsdUtil(getApplicationContext());
+        mUtil = new OsdUtil(getApplicationContext(),mHandler);
 
         // Create a wake lock, but don't use it until the service is started.
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
