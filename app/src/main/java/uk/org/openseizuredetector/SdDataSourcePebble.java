@@ -40,7 +40,6 @@ import com.getpebble.android.kit.util.PebbleDictionary;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.jtransforms.fft.DoubleFFT_1D;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -681,8 +680,8 @@ public class SdDataSourcePebble extends SdDataSource {
 
     private void analyseRawData() {
         Log.v(TAG,"analyserawData()");
-        DoubleFFT_1D fft = new DoubleFFT_1D(MAX_RAW_DATA);
-        fft.realForward(rawData);
+        //DoubleFFT_1D fft = new DoubleFFT_1D(MAX_RAW_DATA);
+        //fft.realForward(rawData);
         // FIXME - rawData should really be a circular buffer.
         nRawData = 0;
     }

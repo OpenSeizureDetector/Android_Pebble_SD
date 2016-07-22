@@ -33,7 +33,7 @@ dependencies {
     testCompile 'org.hamcrest:hamcrest-library:1.1'
     compile 'com.android.support:appcompat-v7:22.2.1'
     compile 'com.android.support:support-v4:22.2.1'
-    compile files('libs/JTransforms-3.1-with-dependencies.jar')
+    //compile files('libs/JTransforms-3.1-with-dependencies.jar')
     compile 'org.apache.commons:commons-math3:3.6.1'
 
 }
