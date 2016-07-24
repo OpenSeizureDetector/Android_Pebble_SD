@@ -24,6 +24,7 @@
 package uk.org.openseizuredetector;
 
 import android.content.Context;
+import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -39,13 +40,17 @@ interface SdDataReceiver {
 public abstract class SdDataSource {
     public SdData mSdData;
     public String mName = "undefined";
+    protected OsdUtil mUtil;
     protected Context mContext;
+    protected Handler mHandler;
     protected SdDataReceiver mSdDataReceiver;
     private String TAG = "SdDataSource";
 
-    public SdDataSource(Context context, SdDataReceiver sdDataReceiver) {
+    public SdDataSource(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
         Log.v(TAG, "SdDataSource() Constructor");
         mContext = context;
+        mHandler = handler;
+        mUtil = new OsdUtil(mContext, mHandler);
         mSdDataReceiver = sdDataReceiver;
         mSdData = new SdData();
     }
@@ -77,6 +82,8 @@ public abstract class SdDataSource {
      * Install the watch app on the watch.
      */
     public void installWatchApp() { Log.v(TAG,"installWatchApp"); }
+
+    public void startPebbleApp() { Log.v(TAG,"startPebbleApp()"); }
 
     /**
      * Display a Toast message on screen.

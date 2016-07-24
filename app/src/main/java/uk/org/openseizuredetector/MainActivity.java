@@ -170,7 +170,7 @@ public class MainActivity extends Activity {
         switch (item.getItemId()) {
             case R.id.action_launch_pebble_app:
                 Log.v(TAG, "action_launch_pebble_app");
-                mUtil.startPebbleApp();
+                mConnection.mSdServer.mSdDataSource.startPebbleApp();
                 return true;
             case R.id.action_instal_watch_app:
                 Log.v(TAG, "action_install_watch_app");

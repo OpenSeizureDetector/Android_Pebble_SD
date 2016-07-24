@@ -30,12 +30,14 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 import android.view.MenuItem;
@@ -60,17 +62,50 @@ import java.util.concurrent.RunnableFuture;
  * Deals with starting and stopping the background service and binding to it to receive data.
  */
 public class OsdUtil {
+    private final String SYSLOG = "SysLog";
+    private final String ALARMLOG = "AlarmLog";
+    private final String DATALOG = "DataLog";
+
     /**
      * Based on http://stackoverflow.com/questions/7440473/android-how-to-check-if-the-intent-service-is-still-running-or-has-stopped-running
      */
     private Context mContext;
     private Handler mHandler;
     private String TAG = "OsdUtil";
+    private boolean mLogAlarms = true;
+    private boolean mLogSystem = true;
+    private boolean mLogData = true;
 
     public OsdUtil(Context context, Handler handler) {
         mContext = context;
         mHandler = handler;
+        updatePrefs();
+        writeToSysLogFile("OsdUtil() - initialised");
+
     }
+
+    /**
+     * updatePrefs() - update basic settings from the SharedPreferences
+     * - defined in res/xml/prefs.xml
+     */
+    public void updatePrefs() {
+        Log.v(TAG, "updatePrefs()");
+        SharedPreferences SP = PreferenceManager
+                .getDefaultSharedPreferences(mContext);
+        try {
+            mLogAlarms = SP.getBoolean("LogAlarms", true);
+            Log.v(TAG, "updatePrefs() - mLogAlarms = " + mLogAlarms);
+            mLogData = SP.getBoolean("LogData", false);
+            Log.v(TAG, "updatePrefs() - mLogData = " + mLogData);
+            mLogSystem = SP.getBoolean("LogSystem", true);
+            Log.v(TAG, "updatePrefs() - mLogSystem = " + mLogSystem);
+
+        } catch (Exception ex) {
+            Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
+            showToast("Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!");
+        }
+    }
+
 
     /**
      * used to make sure timers etc. run on UI thread
@@ -102,6 +137,8 @@ public class OsdUtil {
      */
     public void startServer() {
         // Start the server
+        Log.v(TAG,"startServer()");
+        writeToSysLogFile("startServer() - starting server");
         Intent sdServerIntent;
         sdServerIntent = new Intent(mContext, SdServer.class);
         sdServerIntent.setData(Uri.parse("Start"));
@@ -113,6 +150,7 @@ public class OsdUtil {
      */
     public void stopServer() {
         Log.v(TAG, "stopping Server...");
+        writeToSysLogFile("stopserver() - stopping server");
 
         // then send an Intent to stop the service.
         Intent sdServerIntent;
@@ -127,6 +165,7 @@ public class OsdUtil {
      */
     public void bindToServer(Activity activity, SdServiceConnection sdServiceConnection) {
         Log.v(TAG, "bindToServer() - binding to SdServer");
+        writeToSysLogFile("bindToServer() - binding to SdServer");
         Intent intent = new Intent(sdServiceConnection.mContext, SdServer.class);
         activity.bindService(intent, sdServiceConnection, Context.BIND_AUTO_CREATE);
     }
@@ -138,14 +177,18 @@ public class OsdUtil {
         // unbind this activity from the service if it is bound.
         if (sdServiceConnection.mBound) {
             Log.v(TAG, "unbindFromServer() - unbinding");
+            writeToSysLogFile("unbindFromServer() - unbinding");
             try {
                 activity.unbindService(sdServiceConnection);
                 sdServiceConnection.mBound = false;
             } catch (Exception ex) {
                 Log.e(TAG, "unbindFromServer() - error unbinding service - " + ex.toString());
+                writeToSysLogFile("unbindFromServer() - error unbinding service - " +ex.toString());
             }
         } else {
             Log.v(TAG, "unbindFromServer() - not bound to server - ignoring");
+            writeToSysLogFile("unbindFromServer() - not bound to server - ignoring");
+
         }
     }
 
@@ -215,46 +258,36 @@ public class OsdUtil {
 
 
     /**
-     * Open Pebble or Pebble Time app.  If it is not installed, open Play store so the user can install it.
+     * Write a message to the system log file, provided mLogSystem is true.
+     * @param msgStr
      */
-    public void startPebbleApp() {
-        // first try to launch the original pebble app
-        Intent pebbleAppIntent;
-        PackageManager pm = mContext.getPackageManager();
-        try {
-            pebbleAppIntent = pm.getLaunchIntentForPackage("com.getpebble.android");
-            mContext.startActivity(pebbleAppIntent);
-        } catch (Exception ex1) {
-            // and if original pebble app fails, try Pebble Time app...
-            Log.v(TAG, "exception starting original pebble App - trying pebble time..." + ex1.toString());
-            try {
-                pebbleAppIntent = pm.getLaunchIntentForPackage("com.getpebble.android.basalt");
-                mContext.startActivity(pebbleAppIntent);
-            } catch (Exception ex2) {
-                // and if that fails, open play store so the user can install it:
-                Log.v(TAG, "exception starting Pebble Time App." + ex2.toString());
-                this.showToast("Error Launching Pebble or Pebble Time App - Please make sure it is installed...");
-                final String appPackageName = "com.getpebble.android.basalt";
-                try {
-                    // try using play store app.
-                    mContext.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName)));
-                } catch (android.content.ActivityNotFoundException anfe) {
-                    // and if play store app is not installed, use browser to open app page.
-                    mContext.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)));
-                }
-            }
-        }
-
+    public void writeToSysLogFile(String msgStr) {
+        if (mLogSystem)
+            writeToLogFile(SYSLOG,msgStr);
+        else
+            Log.v(TAG,"writeToSysLogFile - mLogSystem False so not writing");
     }
 
     /**
-     * Install the OpenSeizureDetector watch app onto the watch.
-     * based on https://forums.getpebble.com/discussion/13128/install-watch-app-pebble-store-from-android-companion-app
+     * Write a message to the alarm log file, provided mLogAlarms is true.
+     * @param msgStr
      */
-    public void installOsdWatchApp() {
-        Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("pebble://appstore/54d28a43e4d94c043f000008"));
-        myIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(myIntent);
+    public void writeToAlarmLogFile(String msgStr) {
+        if (mLogAlarms)
+            writeToLogFile(ALARMLOG,msgStr);
+        else
+            Log.v(TAG,"writeToAlarmLogFile - mLogAlarms False so not writing");
+    }
+
+    /**
+     * Write a message to the data log file, provided mLogData is true.
+     * @param msgStr
+     */
+    public void writeToDataLogFile(String msgStr) {
+        if (mLogData)
+            writeToLogFile(DATALOG,msgStr);
+        else
+            Log.v(TAG,"writeToDataLogFile - mLogData False so not writing");
     }
 
 
@@ -264,7 +297,7 @@ public class OsdUtil {
      */
     public void writeToLogFile(String fname, String msgStr) {
         Log.v(TAG, "writeToLogFile(" + fname + "," + msgStr + ")");
-        showToast("Logging " + msgStr);
+        //showToast("Logging " + msgStr);
         Time tnow = new Time(Time.getCurrentTimezone());
         tnow.setToNow();
         String dateStr = tnow.format("%Y-%m-%d");
@@ -278,7 +311,9 @@ public class OsdUtil {
                 if (msgStr != null) {
                     String dateTimeStr = tnow.format("%Y-%m-%d %H:%M:%S");
                     Log.v(TAG, "writing msgStr");
-                    of.append(dateTimeStr+" : "+msgStr+"<br/>\n");
+                    of.append(dateTimeStr+", "
+                            +tnow.toMillis(true)+", "
+                            +msgStr+"<br/>\n");
                 }
                 of.close();
             } catch (Exception ex) {
