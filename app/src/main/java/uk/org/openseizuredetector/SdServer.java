@@ -79,6 +79,7 @@ import org.json.JSONArray;
 public class SdServer extends Service implements SdDataReceiver {
     // Notification ID
     private int NOTIFICATION_ID = 1;
+    private final String SYSLOG = "SysLog";
 
     private NotificationManager mNM;
 
@@ -614,6 +615,7 @@ public class SdServer extends Service implements SdDataReceiver {
      */
     protected void startWebServer() {
         Log.v(TAG, "startWebServer()");
+        mUtil.writeToLogFile(SYSLOG,"Start Web Server.\n");
         if (webServer == null) {
             webServer = new SdWebServer(getApplicationContext(), getDataStorageDir(), mSdData);
             try {

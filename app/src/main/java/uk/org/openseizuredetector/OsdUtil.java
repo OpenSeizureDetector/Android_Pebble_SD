@@ -33,14 +33,18 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
 import org.apache.http.conn.util.InetAddressUtils;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.AbstractList;
@@ -197,15 +201,16 @@ public class OsdUtil {
 
     /**
      * Display a Toast message on screen.
+     *
      * @param msg - message to display.
      */
     public void showToast(final String msg) {
         runOnUiThread(new Runnable() {
-                          public void run() {
-                              Toast.makeText(mContext, msg,
-                                      Toast.LENGTH_LONG).show();
-                          }
-                      });
+            public void run() {
+                Toast.makeText(mContext, msg,
+                        Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
 
@@ -248,8 +253,62 @@ public class OsdUtil {
      */
     public void installOsdWatchApp() {
         Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("pebble://appstore/54d28a43e4d94c043f000008"));
-        myIntent.setFlags( Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK );
+        myIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(myIntent);
     }
+
+
+    /**
+     * Write data to SD card - writes to data log file unless alarm=true,
+     * in which case writes to alarm log file.
+     */
+    public void writeToLogFile(String fname, String msgStr) {
+        Log.v(TAG, "writeToLogFile(" + fname + "," + msgStr + ")");
+        showToast("Logging " + msgStr);
+        Time tnow = new Time(Time.getCurrentTimezone());
+        tnow.setToNow();
+        String dateStr = tnow.format("%Y-%m-%d");
+
+        fname = fname + "_" + dateStr + ".txt";
+        // Open output directory on SD Card.
+        if (isExternalStorageWritable()) {
+            try {
+                FileWriter of = new FileWriter(getDataStorageDir().toString()
+                        + "/" + fname, true);
+                if (msgStr != null) {
+                    String dateTimeStr = tnow.format("%Y-%m-%d %H:%M:%S");
+                    Log.v(TAG, "writing msgStr");
+                    of.append(dateTimeStr+" : "+msgStr+"<br/>\n");
+                }
+                of.close();
+            } catch (Exception ex) {
+                Log.e(TAG, "writeToLogFile - error " + ex.toString());
+                showToast("ERROR Writing to Log File");
+            }
+        } else {
+            Log.e(TAG, "ERROR - Can not Write to External Folder");
+        }
+    }
+
+    /* Checks if external storage is available for read and write */
+    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
+    }
+
+    public File getDataStorageDir() {
+        // Get the directory for the user's public directory.
+        File file =
+                new File(Environment.getExternalStorageDirectory()
+                        , "OpenSeizureDetector");
+        if (!file.mkdirs()) {
+            Log.e(TAG, "Directory not created");
+        }
+        return file;
+    }
+
 
 }
