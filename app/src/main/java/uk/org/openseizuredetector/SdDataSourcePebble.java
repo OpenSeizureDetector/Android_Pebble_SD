@@ -190,7 +190,7 @@ public class SdDataSourcePebble extends SdDataSource {
             mSettingsTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    mUtil.writeToSysLogFile("SdDataSourcePebble.mSettingsTimer timed out.");
+                    //mUtil.writeToSysLogFile("SdDataSourcePebble.mSettingsTimer timed out.");
                     getPebbleSdSettings();
                 }
             }, 0, 1000 * mSettingsPeriod);  // ask for settings less frequently than we get data
@@ -501,7 +501,7 @@ public class SdDataSourcePebble extends SdDataSource {
         Log.v(TAG, "getPebbleSdSettings() - sending required settings to pebble");
         mUtil.writeToSysLogFile("SdDataSourcePebble.getPebbleSdSettings() - send settings first");
         sendPebbleSdSettings();
-        Log.v(TAG, "getPebbleSdSettings() - requesting settings from pebble");
+        //Log.v(TAG, "getPebbleSdSettings() - requesting settings from pebble");
         mUtil.writeToSysLogFile("SdDataSourcePebble.getPebbleSdSettings() - and request settings from pebble");
         PebbleDictionary data = new PebbleDictionary();
         data.addUint8(KEY_SETTINGS, (byte) 1);

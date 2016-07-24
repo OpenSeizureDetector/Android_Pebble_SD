@@ -507,6 +507,7 @@ public class SdServer extends Service implements SdDataReceiver {
         } else {
             mUtil.showToast("Warming mToneGenerator is null - not beeping!!!");
             Log.v(TAG, "beep() - Warming mToneGenerator is null - not beeping!!!");
+            mUtil.writeToSysLogFile("SdServer.beep() - mToneGenerator is null???");
         }
     }
 
@@ -521,6 +522,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 if (mAudibleFaultWarning) {
                     beep(10);
                     Log.v(TAG, "faultWarningBeep()");
+                    mUtil.writeToSysLogFile("SdServer.faultWarningBeep() - beeping");
                 } else {
                     Log.v(TAG, "faultWarningBeep() - silent...");
                 }
@@ -543,6 +545,7 @@ public class SdServer extends Service implements SdDataReceiver {
             if (mAudibleAlarm) {
                 beep(3000);
                 Log.v(TAG, "alarmBeep()");
+                mUtil.writeToSysLogFile("SdServer.alarmBeep() - beeping");
             } else {
                 Log.v(TAG, "alarmBeep() - silent...");
             }
@@ -559,6 +562,7 @@ public class SdServer extends Service implements SdDataReceiver {
             if (mAudibleWarning) {
                 beep(100);
                 Log.v(TAG, "warningBeep()");
+                mUtil.writeToSysLogFile("SdServer.warningBeep() - beeping");
             } else {
                 Log.v(TAG, "warningBeep() - silent...");
             }
@@ -572,6 +576,7 @@ public class SdServer extends Service implements SdDataReceiver {
     public void sendSMSAlarm() {
         if (mSMSAlarm) {
             Log.v(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers.length + " Numbers");
+            mUtil.writeToSysLogFile("SdServer.sendSMSAlarm()");
             Time tnow = new Time(Time.getCurrentTimezone());
             tnow.setToNow();
             String dateStr = tnow.format("%Y-%m-%d %H-%M-%S");
