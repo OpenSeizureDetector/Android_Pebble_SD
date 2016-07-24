@@ -3,7 +3,7 @@
 
   See http://openseizuredetector.org for more information.
 
-  Copyright Graham Jones, 2015.
+  Copyright Graham Jones, 2015, 2016
 
   This file is part of pebble_sd.
 
@@ -65,6 +65,7 @@ public class SdDataSourcePebble extends SdDataSource {
     // data after mDataUpdatePeriod
     //private Looper mServiceLooper;
     private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
+    private int mSettingsPeriod = 60;  // period between requesting settings in seconds.
     private PebbleKit.PebbleDataReceiver msgDataHandler = null;
 
 
@@ -192,7 +193,7 @@ public class SdDataSourcePebble extends SdDataSource {
                     mUtil.writeToSysLogFile("SdDataSourcePebble.mSettingsTimer timed out.");
                     getPebbleSdSettings();
                 }
-            }, 0, 1000 * (mDataUpdatePeriod + 60));  // ask for settings less frequently than we get data
+            }, 0, 1000 * mSettingsPeriod);  // ask for settings less frequently than we get data
         } else {
             Log.v(TAG, "start(): settings timer already running.");
             mUtil.writeToSysLogFile("SdDataSourcePebble.start() - settings timer already running??");
@@ -650,13 +651,17 @@ public class SdDataSourcePebble extends SdDataSource {
                 (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000)) {
             Log.v(TAG, "getPebbleStatus() - tdiff = " + tdiff);
             mSdData.pebbleAppRunning = false;
-            Log.v(TAG, "getPebbleStatus() - Pebble App Not Running - Attempting to Re-Start");
-            mUtil.writeToSysLogFile("SdDataSourcePebble.getPebbleStatus() - Pebble App not Running - Attempting to Re-Start");
-            startWatchApp();
+            //Log.v(TAG, "getPebbleStatus() - Pebble App Not Running - Attempting to Re-Start");
+            //mUtil.writeToSysLogFile("SdDataSourcePebble.getPebbleStatus() - Pebble App not Running - Attempting to Re-Start");
+            //startWatchApp();
             //mPebbleStatusTime = tnow;  // set status time to now so we do not re-start app repeatedly.
-            getPebbleSdSettings();
+            //getPebbleSdSettings();
             // Only make audible warning beep if we have not received data for more than mFaultTimerPeriod seconds.
             if (tdiff > (mDataUpdatePeriod + mFaultTimerPeriod) * 1000) {
+                Log.v(TAG, "getPebbleStatus() - Pebble App Not Running - Attempting to Re-Start");
+                mUtil.writeToSysLogFile("SdDataSourcePebble.getPebbleStatus() - Pebble App not Running - Attempting to Re-Start");
+                startWatchApp();
+                mPebbleStatusTime.setToNow();
                 mSdDataReceiver.onSdDataFault(mSdData);
             } else {
                 Log.v(TAG, "getPebbleStatus() - Waiting for mFaultTimerPeriod before issuing audible warning...");
