@@ -1,13 +1,15 @@
 <html>
   
   <head>
-    <title>Open Seizure Detector</title>
+    <title>Ben's Pebble Watch Seizure Detector</title>
     <script src="js/jquery.js"></script>
     <script src="js/jBeep.js"></script>
     <script src="js/Chart.min.js"></script>
+    <script src="js/jquery.mobile-1.4.5.min.js"></script>
     <script src="js/osd_main.js"></script>
     <script src="js/osd_logs.js"></script>
     <link rel="stylesheet" href="css/osd.css" />
+    <link rel="stylesheet" href="css/jquery.mobile-1.4.5.min.css" />
   </head>
   
   <body>
@@ -75,11 +77,23 @@
 	</div>
       </div> <!-- content -->
       <div data-role="footer">
-	<a href="logfiles.html">View Log Files</a>
+	<a href="#logs">Logs</a>
 	<div id="debugInfo"></div>
       </div> <!--footer-->
     </div> <!--page -->
     
+    <div data-role="page" id="logs">
+      <div data-role="header">
+	<img src="img/icon_48x48.png" alt="logo"/>
+	<h1>Open Seizure Detector - Logs</h1>
+      </div>
+      <div role="main" class="ui-content">
+	<div id="logfilelist"> </div>
+      </div>
+      <div data-role="footer">
+	<a href="#home">Home</a>
+      </div>
+    </div>
   </body>
   
 </html>
