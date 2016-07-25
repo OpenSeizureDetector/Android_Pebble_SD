@@ -464,8 +464,10 @@ public class SdDataSourcePebble extends SdDataSource {
         mUtil.writeToSysLogFile("SdDataSourcePebble.stopPebbleServer()");
         try {
             mContext.unregisterReceiver(msgDataHandler);
+            stopWatchApp();
         } catch (Exception e) {
             Log.v(TAG, "stopPebbleServer() - error " + e.toString());
+            mUtil.writeToSysLogFile("SdDataSourcePebble.stopPebbleServer() - error " + e.toString());
         }
     }
 
@@ -499,10 +501,10 @@ public class SdDataSourcePebble extends SdDataSource {
      */
     public void getPebbleSdSettings() {
         Log.v(TAG, "getPebbleSdSettings() - sending required settings to pebble");
-        mUtil.writeToSysLogFile("SdDataSourcePebble.getPebbleSdSettings() - send settings first");
+        mUtil.writeToSysLogFile("SdDataSourcePebble.getPebbleSdSettings()");
         sendPebbleSdSettings();
         //Log.v(TAG, "getPebbleSdSettings() - requesting settings from pebble");
-        mUtil.writeToSysLogFile("SdDataSourcePebble.getPebbleSdSettings() - and request settings from pebble");
+        //mUtil.writeToSysLogFile("SdDataSourcePebble.getPebbleSdSettings() - and request settings from pebble");
         PebbleDictionary data = new PebbleDictionary();
         data.addUint8(KEY_SETTINGS, (byte) 1);
         PebbleKit.sendDataToPebble(
