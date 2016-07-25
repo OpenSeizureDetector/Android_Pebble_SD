@@ -98,6 +98,9 @@ public class MainActivity extends Activity {
         //int i = 5/0;  // Force exception to test handler.
         mUtil = new OsdUtil(this,serverStatusHandler);
         mConnection = new SdServiceConnection(this);
+        mUtil.writeToSysLogFile("");
+        mUtil.writeToSysLogFile("* MainActivity Started     *");
+        mUtil.writeToSysLogFile("MainActivity.onCreate()");
 
         // Initialise the User Interface
         setContentView(R.layout.main);
@@ -257,6 +260,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        mUtil.writeToSysLogFile("MainActivity.onStart()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
         boolean audibleAlarm = SP.getBoolean("AudibleAlarm", true);
@@ -267,18 +271,21 @@ public class MainActivity extends Activity {
         String versionName = mUtil.getAppVersionName();
         tv.setText("OpenSeizureDetector Server Version " + versionName);
 
+        mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
         mUtil.bindToServer(this, mConnection);
-
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        mUtil.writeToSysLogFile("MainActivity.onStop()");
         mUtil.unbindFromServer(this, mConnection);
     }
 
 
     private void startServer() {
+        mUtil.writeToSysLogFile("MainActivity.startServer()");
+        Log.v(TAG, "starting Server...");
         mUtil.startServer();
         // Change the action bar icon to show the option to stop the service.
         if (mOptionsMenu != null) {
@@ -292,6 +299,7 @@ public class MainActivity extends Activity {
     }
 
     private void stopServer() {
+        mUtil.writeToSysLogFile("MainActivity.stopServer()");
         Log.v(TAG, "stopping Server...");
         mUtil.stopServer();
         // Change the action bar icon to show the option to start the service.
@@ -611,15 +619,18 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         super.onPause();
+        mUtil.writeToSysLogFile("MainActivity.onPause()");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        mUtil.writeToSysLogFile("MainActivity.onResume()");
     }
 
 
     private void showAbout() {
+        mUtil.writeToSysLogFile("MainActivity.showAbout()");
         View aboutView = getLayoutInflater().inflate(R.layout.about_layout, null, false);
         String versionName = mUtil.getAppVersionName();
         Log.v(TAG, "showAbout() - version name = " + versionName);
@@ -631,11 +642,11 @@ public class MainActivity extends Activity {
         builder.show();
     }
 
-    class ResponseHandler extends Handler {
+    static class ResponseHandler extends Handler {
         @Override
         public void handleMessage(Message message) {
             Log.v(TAG, "Message=" + message.toString());
         }
-    }
+     }
 
 }
