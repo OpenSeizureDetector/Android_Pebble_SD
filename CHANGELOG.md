@@ -10,6 +10,7 @@
 	region of interest.
 	- Fixed problem with log files not showing on web interface.
 	- Added system log file to help with de-bugging start-up/shutdown issues.
+	- Added main activity menu option to view log files (via web browser).
 	- Added options to switch off spectrum display on watch to save battery.
 	- Reduced ammount of bluetooth comms to the watch to save battery.
 	- Added support for future watch app features (such as raw mode and digital

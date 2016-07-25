@@ -51,8 +51,8 @@
         android:id="@+id/action_logs"
         android:icon="@drawable/ic_action_settings"
         android:showAsAction="never|withText"
-        android:title="View/Edit Log Entries"
-        android:enabled="false"
+        android:title="View Log Entries"
+        android:enabled="true"
         />
 
     <item

@@ -228,10 +228,16 @@ public class MainActivity extends Activity {
             case R.id.action_logs:
                 Log.v(TAG, "action_logs");
                 try {
-                    Intent prefsIntent = new Intent(
-                            MainActivity.this,
-                            LogManagerActivity.class);
-                    this.startActivity(prefsIntent);
+                    String url = "http://"
+                            + mUtil.getLocalIpAddress()
+                            + ":8080/logfiles.html";
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setData(Uri.parse(url));
+                    startActivity(i);
+                    //Intent prefsIntent = new Intent(
+                    //        MainActivity.this,
+                    //        LogManagerActivity.class);
+                    //this.startActivity(prefsIntent);
                 } catch (Exception ex) {
                     Log.v(TAG, "exception starting log manager activity " + ex.toString());
                 }
