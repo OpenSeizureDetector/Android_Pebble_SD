@@ -451,7 +451,7 @@ public class SdDataSourcePebble extends SdDataSource {
         PebbleKit.registerReceivedDataHandler(mContext, msgDataHandler);
         // We struggle to connect to pebble time if app is already running,
         // so stop app so we can re-connect to it.
-        stopWatchApp();
+        //stopWatchApp();
         startWatchApp();
     }
 
@@ -479,9 +479,16 @@ public class SdDataSourcePebble extends SdDataSource {
         mUtil.writeToSysLogFile("SdDataSourcePebble.startWatchApp() - closing app first");
         // first close the watch app if it is running.
         PebbleKit.closeAppOnPebble(mContext, SD_UUID);
-        Log.v(TAG, "startWatchApp() - starting watch app...");
-        mUtil.writeToSysLogFile("SdDataSourcePebble.startWatchApp() - starting watch app");
-        PebbleKit.startAppOnPebble(mContext, SD_UUID);
+        Log.v(TAG, "startWatchApp() - starting watch app after 5 seconds delay...");
+        Timer appStartTimer = new Timer();
+        appStartTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Log.v(TAG, "startWatchApp() - starting watch app...");
+                mUtil.writeToSysLogFile("SdDataSourcePebble.startWatchApp() - starting watch app");
+                PebbleKit.startAppOnPebble(mContext, SD_UUID);
+            }
+        }, 5000);
     }
 
     /**
