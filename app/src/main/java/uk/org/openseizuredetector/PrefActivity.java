@@ -28,6 +28,7 @@ package uk.org.openseizuredetector;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Handler;
 import android.preference.PreferenceActivity;
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
@@ -42,6 +43,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     private OsdUtil mUtil;
     private boolean mPrefChanged = false;
     private Context mContext;
+    private Handler mHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,9 +53,11 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(PrefActivity.this));
         //int i = 5/0;  // Force exception to test handler.
 
-
-        mUtil = new OsdUtil(getApplicationContext());
+        mHandler = new Handler();
         mContext = getApplicationContext();
+
+        mUtil = new OsdUtil(mContext,mHandler);
+        mUtil.writeToSysLogFile("PrefActvity.onCreate()");
     }
 
     /**
@@ -105,6 +109,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     @Override
     public void onStart() {
         super.onStart();
+        mUtil.writeToSysLogFile("PrefActvity.onStart()");
         invalidateHeaders();
         Log.v(TAG, "onStart()");
     }
@@ -120,6 +125,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     @Override
     public void onResume() {
         super.onResume();
+        mUtil.writeToSysLogFile("PrefActvity.onResume()");
         Log.v(TAG, "onResume()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
@@ -129,6 +135,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     @Override
     protected void onPause() {
         super.onPause();
+        mUtil.writeToSysLogFile("PrefActvity.onPause()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
         SP.unregisterOnSharedPreferenceChangeListener(this);
@@ -137,8 +144,10 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mUtil.writeToSysLogFile("PrefActvity.onDestroy()");
         Log.v(TAG, "onDestroy.  mPrefChanged=" + mPrefChanged);
         if (mPrefChanged) {
+            mUtil.writeToSysLogFile("PrefActvity.onDestroy() - settings changed - re-starting....");
             mUtil.showToast("Settings Changed - re-starting OpenSeizureDetector....");
             Intent intent = new Intent(getApplicationContext(), StartupActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);

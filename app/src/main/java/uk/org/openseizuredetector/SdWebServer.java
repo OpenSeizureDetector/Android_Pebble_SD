@@ -112,6 +112,7 @@ public class SdWebServer extends NanoHTTPD {
 
             default:
                 if (uri.startsWith("/index.html") ||
+                        uri.startsWith("/logfiles.html") ||
                         uri.startsWith("/favicon.ico") ||
                         uri.startsWith("/js/") ||
                         uri.startsWith("/css/") ||

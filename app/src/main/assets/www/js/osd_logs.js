@@ -21,7 +21,7 @@ function populate_filelist(dataStr) {
 
 
 
-$(document).delegate("#logs","pageinit", function() {  
+$(document).ready(function() {  
     //alert("logs page opened");
     get_filelist();
 });

@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- The ListPreference data is defined in pebble_datasource_values.xml -->
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="User Interface Settings">
         <EditTextPreference
             android:defaultValue="5"
-            android:key="DataUpdatePeriod"
-            android:summary="Time period at which data is sent to the phone."
+            android:key="PebbleUpdatePeriod"
+            android:summary="Time period at which data is sent to the phone (increase value to reduce battery consumption)"
             android:title="Data Period (sec)" />
         <EditTextPreference
             android:defaultValue="300"
@@ -19,10 +20,37 @@
             android:title="Manual Alarm Period (sec)" />
     </PreferenceCategory>
     <PreferenceCategory android:title="Seizure Detector Settings">
+        <ListPreference
+            android:key="PebbleDisplaySpectrum"
+            android:title="Spectrum display Mode"
+            android:summary="Set Display Spectrum mode on or off."
+            android:entries="@array/pebble_display_spectrum_list"
+            android:entryValues="@array/pebble_display_spectrum_values"
+            android:defaultValue="0"
+            android:dialogTitle="Select Display Spectrum Mode" />
+        <ListPreference
+            android:key="PebbleSdMode"
+            android:title="Seizure Detector Mode"
+            android:summary="Select one of the three available modes of operation."
+            android:entries="@array/pebble_sd_mode_list"
+            android:entryValues="@array/pebble_sd_mode_list_values"
+            android:defaultValue="0"
+            android:dialogTitle="Select Seizure Detector Mode" />
+        <ListPreference
+            android:key="SampleFreq"
+            android:title="Select Sample Frequency"
+            android:summary="Higher Frequency is more Accurate, but uses more battery power."
+            android:entries="@array/pebble_sample_freq_list"
+            android:entryValues="@array/pebble_sample_freq_list_values"
+            android:defaultValue="100"
+            android:dialogTitle="Select Sample Frequency"
+            android:enabled="false"
+            />
+
         <EditTextPreference
-            android:defaultValue="5"
+            android:defaultValue="3"
             android:key="AlarmFreqMin"
-            android:summary="Minimum Frequency of ROI (Hz) (Default = 5 Hz)"
+            android:summary="Minimum Frequency of ROI (Hz) (Default = 3 Hz)"
             android:title="AlarmFreqMin (Hz)" />
         <EditTextPreference
             android:defaultValue="10"
@@ -47,7 +75,7 @@
         <EditTextPreference
             android:defaultValue="30"
             android:key="AlarmRatioThresh"
-            android:summary="Alarm Ratio Threshold (Default = 30)"
+            android:summary="Alarm Ratio Threshold (Default = 30).  Increase this value to reduce sensitivity if false alarms are a problem."
             android:title="AlarmRatioThresh" />
     </PreferenceCategory>
 
@@ -76,6 +104,14 @@
 
     <PreferenceCategory
         android:title="Watch Communications Settings">
+        <ListPreference
+            android:key="PebbleDebug"
+            android:title="Seizure Detector Debug Mode"
+            android:summary="Set Debug mode on or off."
+            android:entries="@array/pebble_debug_list"
+            android:entryValues="@array/pebble_debug_values"
+            android:defaultValue="0"
+            android:dialogTitle="Select Debug Mode" />
         <EditTextPreference
             android:defaultValue="10"
             android:key="AppRestartTimeout"

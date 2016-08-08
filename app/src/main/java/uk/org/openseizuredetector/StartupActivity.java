@@ -35,6 +35,7 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -61,7 +62,7 @@ public class StartupActivity extends Activity {
     private Timer mUiTimer;
     private SdServiceConnection mConnection;
     private boolean mStartedMainActivity = false;
-    final Handler mServerStatusHandler = new Handler();   // used to update ui from mUiTimer
+    private Handler mHandler = new Handler();   // used to update ui from mUiTimer
 
 
     @Override
@@ -70,10 +71,26 @@ public class StartupActivity extends Activity {
 
         // Set our custom uncaught exception handler to report issues.
         Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(StartupActivity.this));
-        //int i = 5/0;  // Force exception to test handler.
+
+        mHandler = new Handler();
+        mUtil = new OsdUtil(this,mHandler);
+        mUtil.writeToSysLogFile("");
+        mUtil.writeToSysLogFile("*******************************");
+        mUtil.writeToSysLogFile("* StartUpActivity Started     *");
+        mUtil.writeToSysLogFile("*******************************");
+
+        // Force the screen to stay on when the app is running
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
 
         setContentView(R.layout.startup_activity);
-        mUtil = new OsdUtil(this);
+
+        // Read the default settings from the xml preferences files, so we do
+        // not have to use the hard coded ones in the java files.
+        PreferenceManager.setDefaultValues(this, R.xml.alarm_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.camera_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.general_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.network_datasource_prefs, true);
 
         Button b = (Button)findViewById(R.id.settingsButton);
         b.setOnClickListener(new View.OnClickListener() {
@@ -81,12 +98,14 @@ public class StartupActivity extends Activity {
             public void onClick(View view) {
                 Log.v(TAG, "settings button clicked");
                 try {
+                    mUtil.writeToSysLogFile("Starting Settings Activity");
                     Intent intent = new Intent(
                             StartupActivity.this,
                             PrefActivity.class);
                     startActivity(intent);
                 } catch (Exception ex) {
                     Log.v(TAG, "exception starting settings activity " + ex.toString());
+                    mUtil.writeToSysLogFile("ERROR Starting Settings Activity");
                 }
 
             }
@@ -97,7 +116,8 @@ public class StartupActivity extends Activity {
             @Override
             public void onClick(View view) {
                 Log.v(TAG, "pebble button clicked");
-                mUtil.startPebbleApp();
+                mUtil.writeToSysLogFile("Starting Pebble Phone App");
+                mConnection.mSdServer.mSdDataSource.startPebbleApp();
             }
         });
 
@@ -106,7 +126,8 @@ public class StartupActivity extends Activity {
             @Override
             public void onClick(View view) {
                 Log.v(TAG, "install Osd Watch App button clicked");
-                mUtil.installOsdWatchApp();
+                mUtil.writeToSysLogFile("Installing Watch App");
+                mConnection.mSdServer.mSdDataSource.installWatchApp();
             }
         });
 
@@ -115,6 +136,8 @@ public class StartupActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        mUtil.writeToSysLogFile("StartupActivity.onStart()");
+
 
         // Display the DataSource name
         SharedPreferences SP = PreferenceManager
@@ -134,11 +157,14 @@ public class StartupActivity extends Activity {
 
         if (mUtil.isServerRunning()) {
             Log.v(TAG, "onStart() - server running - stopping it");
+            mUtil.writeToSysLogFile("StartupActivity.onStart() - server already running - stopping it.");
             mUtil.stopServer();
         }
+        mUtil.writeToSysLogFile("StartupActivity.onStart() - starting server");
         mUtil.startServer();
 
         // Bind to the service.
+        mUtil.writeToSysLogFile("StartupActivity.onStart() - binding to server");
         mConnection = new SdServiceConnection(this);
         mUtil.bindToServer(this, mConnection);
 
@@ -147,7 +173,7 @@ public class StartupActivity extends Activity {
         mUiTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                mServerStatusHandler.post(serverStatusRunnable);
+                mHandler.post(serverStatusRunnable);
                 //updateServerStatus();
             }
         }, 0, 1000);
@@ -156,8 +182,9 @@ public class StartupActivity extends Activity {
 
     @Override
     protected void onStop() {
-        Log.v(TAG, "onStop()");
         super.onStop();
+        Log.v(TAG, "onStop()");
+        mUtil.writeToSysLogFile("StartupActivity.onStop() - unbinding from server");
         mUtil.unbindFromServer(this, mConnection);
         mUiTimer.cancel();
     }
@@ -285,6 +312,7 @@ public class StartupActivity extends Activity {
             if (allOk) {
                 if (!mStartedMainActivity) {
                     Log.v(TAG, "starting main activity...");
+                    mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - all checks ok - starting main activity.");
                     try {
                         Intent intent = new Intent(
                                 getApplicationContext(),
@@ -296,9 +324,11 @@ public class StartupActivity extends Activity {
                     } catch (Exception ex) {
                         mStartedMainActivity = false;
                         Log.v(TAG, "exception starting main activity " + ex.toString());
+                        mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - exception starting main activity "+ex.toString());
                     }
                 } else {
                     Log.v(TAG,"allOk, but already started MainActivity so not doing anything");
+                    mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - allOk, but already started MainActivity so not doing anything");
                 }
             }
         }

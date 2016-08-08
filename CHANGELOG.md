@@ -1,10 +1,25 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
+	V2.0.6 - 25 July 2016
+	- Added main activity menu option to view log files (via web browser).
+	- Added options to switch off spectrum display on watch to save battery.
+	- Changed main screen graph to bar chart and highlights frequency
+	region of interest.
+	- Fixed problem with log files not showing on web interface.
+	- Added system log file to help with de-bugging start-up/shutdown issues.
+	- Improved handling of watch app settings to make sure
+	they are loaded correctly without having to re-start app (but I'd still recommend re-starting the watch app manually to be sure :) )
+	- Reduced ammount of bluetooth comms to the watch to save battery.
+	- Added support for future watch app features (such as raw mode and digital
+	filter mode).
+	- Added watch app to Android phone app package so watch app can be
+	installed directly from phone rather than using pebble store - to make sure that watch app and Android app are always compatible.
+
 	V2.0.3 - 23 April 2016
 		Further modification to beep code to avoid occasional crashes
 		if system tries to beep during a re-start.
-		Log faults to alarm log on SD Card.
+	        Log faults to alarm log on SD Card.
 	V2.0.2 - 13 April 2016
 		Modified 'beep' code to try to avoid crashes on some systems.
 

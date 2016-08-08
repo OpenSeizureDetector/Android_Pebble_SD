@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
@@ -32,14 +33,15 @@ public class SdDataSourceNetwork extends SdDataSource {
     private int ALARM_STATE_NETFAULT = 7;
 
 
-    public SdDataSourceNetwork(Context context, SdDataReceiver sdDataReceiver) {
-        super(context,sdDataReceiver);
+    public SdDataSourceNetwork(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
+        super(context, handler, sdDataReceiver);
         mName = "Network";
     }
 
     @Override public void start() {
         // Update preferences.
         Log.v(TAG,"start(): calling updatePrefs()");
+        mUtil.writeToSysLogFile("SdDataSourceNetwork().start()");
         updatePrefs();
 
         // Start timer to retrieve seizure detector data regularly.
@@ -62,6 +64,7 @@ public class SdDataSourceNetwork extends SdDataSource {
     }
 
     @Override public void stop() {
+        mUtil.writeToSysLogFile("SdDataSourceNetwork().stop()");
         // Stop the data update timer
         if (mDataUpdateTimer !=null) {
             Log.v(TAG,"stop(): cancelling status timer");
@@ -80,6 +83,7 @@ public class SdDataSourceNetwork extends SdDataSource {
      */
     public void updatePrefs() {
         Log.v(TAG, "updatePrefs()");
+        mUtil.writeToSysLogFile("SdDataSourceNetwork().updatePrefs()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(mContext);
         mServerIP = SP.getString("ServerIP","192.168.1.175");
@@ -90,14 +94,14 @@ public class SdDataSourceNetwork extends SdDataSource {
             Log.v(TAG,"updatePrefs() - mDataUpdatePeriod = "+mDataUpdatePeriod);
         } catch (Exception ex) {
             Log.v(TAG,"updatePrefs() - Problem parsing preferences!");
+            mUtil.writeToSysLogFile("SdDataSourceNetwork().updatePrefs() - " +ex.toString());
             showToast("Problem Parsing Preferences - Something won't work");
         }
-
     }
 
     /**
      * Retrive the current Seizure Detector Data from the server.
-     * Uses teh DownloadSdDataTask class to download the data in the
+     * Uses the DownloadSdDataTask class to download the data in the
      * background.  The data is processed in DownloadSdDataTask.onPostExecute().
      */
     public void downloadSdData() {

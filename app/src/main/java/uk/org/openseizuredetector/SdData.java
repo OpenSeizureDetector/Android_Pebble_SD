@@ -43,6 +43,15 @@ public class SdData implements Parcelable {
     /* Analysis settings */
     public boolean haveSettings = false;   // flag to say if we have received settings or not.
     public boolean haveData = false; // flag to say we have received data.
+    public short mDataUpdatePeriod;
+    public short mMutePeriod;
+    public short mManAlarmPeriod;
+    public boolean mFallActive;
+    public short mFallThreshMin;
+    public short mFallThreshMax;
+    public short mFallWindow;
+    public long mSdMode;
+    public long mSampleFreq;
     public long alarmFreqMin;
     public long alarmFreqMax;
     public long nMin;
@@ -141,6 +150,10 @@ public class SdData implements Parcelable {
             jsonObj.put("haveSettings", haveSettings);
             jsonObj.put("alarmState", alarmState);
             jsonObj.put("alarmPhrase", alarmPhrase);
+            jsonObj.put("sdMode",mSdMode);
+            jsonObj.put("sampleFreq",mSampleFreq);
+            jsonObj.put("alarmFreqMin",alarmFreqMin);
+            jsonObj.put("alarmFreqMax",alarmFreqMax);
             jsonObj.put("alarmThresh", alarmThresh);
             jsonObj.put("alarmRatioThresh", alarmRatioThresh);
             JSONArray arr = new JSONArray();

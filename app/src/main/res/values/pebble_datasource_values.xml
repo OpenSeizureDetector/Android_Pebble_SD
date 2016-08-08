@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Arrays used to produce list selections in pebble_datasource_prefs.xml -->
+<resources>
+    <string-array name="pebble_debug_list">
+        <item>"Debug OFF"</item>
+        <item>"Debug ON"</item>
+    </string-array>
+    <string-array name="pebble_debug_values">
+        <item>"0"</item>
+        <item>"1"</item>
+    </string-array>
+
+    <string-array name="pebble_display_spectrum_list">
+        <item>"Spectrum Display OFF"</item>
+        <item>"Spectrum Display ON"</item>
+    </string-array>
+    <string-array name="pebble_display_spectrum_values">
+        <item>"0"</item>
+        <item>"1"</item>
+    </string-array>
+
+    <string-array name="pebble_sd_mode_list">
+        <item>"Normal - OpenSeizureDetector FFT"</item>
+        <item>"Raw"</item>
+        <item>"Digital Filter"</item>
+    </string-array>
+    <string-array name="pebble_sd_mode_list_values">
+        <item>"0"</item>
+        <item>"1"</item>
+        <item>"2"</item>
+    </string-array>
+
+    <string-array name="pebble_sample_freq_list">
+        <item>"100 Hz"</item>
+        <item>"50 Hz"</item>
+        <item>"25 Hz"</item>
+        <item>"10 Hz"</item>
+    </string-array>
+    <string-array name="pebble_sample_freq_list_values">
+        <item>"100"</item>
+        <item>"50"</item>
+        <item>"25"</item>
+        <item>"10"</item>
+    </string-array>
+
+</resources>
