@@ -6,8 +6,8 @@
         <EditTextPreference
             android:defaultValue="5"
             android:key="PebbleUpdatePeriod"
-            android:summary="Time period at which data is sent to the phone (increase value to reduce battery consumption)"
-            android:title="Data Period (sec)" />
+            android:summary="Time period at which data is sent to the phone (does not affect analysis frequency - see Sample Period setting for that)"
+            android:title="Data Transfer Period (sec)" />
         <EditTextPreference
             android:defaultValue="300"
             android:key="MutePeriod"
@@ -44,7 +44,7 @@
             android:entryValues="@array/pebble_sample_freq_list_values"
             android:defaultValue="100"
             android:dialogTitle="Select Sample Frequency"
-            android:enabled="false"
+            android:enabled="true"
             />
 
         <EditTextPreference
@@ -57,6 +57,12 @@
             android:key="AlarmFreqMax"
             android:summary="Maximum Frequency of ROI (Hz) (Default = 10 Hz)"
             android:title="AlarmFreqMax (Hz)" />
+        <EditTextPreference
+            android:defaultValue="5"
+            android:key="SamplePeriod"
+            android:summary="Period (in seconds) between data analyses"
+            android:title="SamplePeriod (sec)" />
+
         <EditTextPreference
             android:defaultValue="5"
             android:key="WarnTime"
