@@ -412,17 +412,25 @@ public class SdDataSourcePebble extends SdDataSource {
                 if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
                         == DATA_TYPE_SETTINGS) {
                     Log.v(TAG, "DATA_TYPE = Settings");
-                    mSdData.analysisPeriod = data.getUnsignedIntegerAsLong(KEY_SAMPLE_PERIOD);
-                    mSdData.alarmFreqMin = data.getUnsignedIntegerAsLong(KEY_ALARM_FREQ_MIN);
-                    mSdData.alarmFreqMax = data.getUnsignedIntegerAsLong(KEY_ALARM_FREQ_MAX);
-                    mSdData.nMin = data.getUnsignedIntegerAsLong(KEY_NMIN);
-                    mSdData.nMax = data.getUnsignedIntegerAsLong(KEY_NMAX);
-                    mSdData.warnTime = data.getUnsignedIntegerAsLong(KEY_WARN_TIME);
-                    mSdData.alarmTime = data.getUnsignedIntegerAsLong(KEY_ALARM_TIME);
-                    mSdData.alarmThresh = data.getUnsignedIntegerAsLong(KEY_ALARM_THRESH);
-                    mSdData.alarmRatioThresh = data.getUnsignedIntegerAsLong(KEY_ALARM_RATIO_THRESH);
-                    mSdData.batteryPc = data.getUnsignedIntegerAsLong(KEY_BATTERY_PC);
-                    mSdData.haveSettings = true;
+                    try {
+                        mSdData.analysisPeriod = data.getUnsignedIntegerAsLong(KEY_SAMPLE_PERIOD);
+                        mSdData.alarmFreqMin = data.getUnsignedIntegerAsLong(KEY_ALARM_FREQ_MIN);
+                        mSdData.alarmFreqMax = data.getUnsignedIntegerAsLong(KEY_ALARM_FREQ_MAX);
+                        mSdData.nMin = data.getUnsignedIntegerAsLong(KEY_NMIN);
+                        mSdData.nMax = data.getUnsignedIntegerAsLong(KEY_NMAX);
+                        mSdData.warnTime = data.getUnsignedIntegerAsLong(KEY_WARN_TIME);
+                        mSdData.alarmTime = data.getUnsignedIntegerAsLong(KEY_ALARM_TIME);
+                        mSdData.alarmThresh = data.getUnsignedIntegerAsLong(KEY_ALARM_THRESH);
+                        mSdData.alarmRatioThresh = data.getUnsignedIntegerAsLong(KEY_ALARM_RATIO_THRESH);
+                        mSdData.batteryPc = data.getUnsignedIntegerAsLong(KEY_BATTERY_PC);
+                        mSdData.haveSettings = true;
+                    } catch (Exception ex) {
+                        mUtil.showToast("*** Error interpreting settings sent from watch - Please check you have "
+                                + "the latest version of the watch app installed by using the OpenSeizureDetector "
+                                + "menu to install the Watch App");
+                        mUtil.writeToSysLogFile("Error interpreting settings received from watch - wrong version "
+                                + "of watch app installed?");
+                    }
                 }
                 if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
                         == DATA_TYPE_RAW) {

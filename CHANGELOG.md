@@ -1,6 +1,10 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
+    V2.0.8 - 24 Aug 2016
+    - Added checks for correct version of pebble watch app for compatibility with this
+    Android App.
+
 	V2.0.7 - 18 Aug 2016
 	- Added AnalysisPeriod setting to Pebble Datasource to change
 	the period between data analyses (rather than the default 5 seconds
