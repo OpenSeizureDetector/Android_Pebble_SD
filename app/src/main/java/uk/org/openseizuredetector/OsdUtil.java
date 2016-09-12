@@ -29,15 +29,33 @@ import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.FeatureInfo;
+import android.content.pm.InstrumentationInfo;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.content.pm.PermissionGroupInfo;
+import android.content.pm.PermissionInfo;
+import android.content.pm.ProviderInfo;
+import android.content.pm.ResolveInfo;
+import android.content.pm.ServiceInfo;
+import android.content.res.Resources;
+import android.content.res.XmlResourceParser;
+import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.UserHandle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.text.format.Time;
 import android.util.Log;
 import android.view.MenuItem;
@@ -345,5 +363,31 @@ public class OsdUtil {
         return file;
     }
 
+    public String getPreferredPebbleAppPackageName() {
+        // returns the package name of the preferred Android Pebble App.
+        return "com.getpebble.android.basalt";
+    }
+
+    public String isPebbleAppInstalled() {
+        // Returns the package name of the installed pebble App or null if it is not installed
+        String pkgName;
+        pkgName = "com.getpebble.android";
+        if (isPackageInstalled(pkgName)) return pkgName;
+        pkgName = "com.getpebble.android.basalt";
+        if (isPackageInstalled(pkgName)) return pkgName;
+        return null;
+    }
+
+    private boolean isPackageInstalled(String packagename) {
+        PackageManager pm = mContext.getPackageManager();
+        try {
+            pm.getPackageInfo(packagename, PackageManager.GET_ACTIVITIES);
+            //showToast("found "+packagename);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+            //showToast(packagename + " not found");
+            return false;
+        }
+    }
 
 }

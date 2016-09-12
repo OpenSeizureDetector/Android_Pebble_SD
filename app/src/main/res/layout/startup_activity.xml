@@ -22,7 +22,7 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="OpenSeizureDetector"
-        android:id="@+id/textView"
+        android:id="@+id/appNameTv"
         android:layout_gravity="center_horizontal" />
 
     <TextView
@@ -32,6 +32,21 @@
         android:text="Starting......"
         android:id="@+id/dataSourceTextView"
         android:layout_gravity="center_horizontal" />
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Edit Settings"
+            android:id="@+id/settingsButton"
+            android:layout_gravity="center_horizontal" />
+
+    </LinearLayout>
+
+
 
     <LinearLayout
         android:orientation="vertical"
@@ -46,7 +61,7 @@
 
             <ProgressBar
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:id="@+id/progressBar1" />
 
             <TextView
@@ -55,8 +70,8 @@
                 android:gravity="center_vertical"
                 android:text="New Text"
                 android:id="@+id/textItem1" />
-
         </LinearLayout>
+
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
@@ -73,8 +88,33 @@
                 android:gravity="center_vertical"
                 android:text="New Text"
                 android:id="@+id/textItem2" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <ProgressBar
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/progressBar7" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:autoLink="web"
+                android:text="New Text"
+                android:id="@+id/textItem7" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Install Pebble App"
+                android:id="@+id/installPebbleAppButton"
+                />
 
         </LinearLayout>
+
+
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
@@ -86,13 +126,20 @@
                 android:id="@+id/progressBar3" />
 
             <TextView
-                android:layout_width="fill_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
                 android:text="New Text"
                 android:id="@+id/textItem3" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Configure Pebble"
+                android:id="@+id/pebbleButton"
+                android:layout_gravity="right" />
 
         </LinearLayout>
+<!--
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
@@ -102,13 +149,13 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/progressBar4" />
             <TextView
-                android:layout_width="fill_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
                 android:text="New Text"
                 android:id="@+id/textItem4" />
         </LinearLayout>
-
+-->
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
@@ -118,11 +165,16 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/progressBar5" />
             <TextView
-                android:layout_width="fill_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:text="New Text"
                 android:gravity="center_vertical"
                 android:id="@+id/textItem5" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Install Watch App"
+                android:id="@+id/installOsdAppButton" />
         </LinearLayout>
 
         <LinearLayout
@@ -138,45 +190,28 @@
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
                 android:text="New Text"
+                android:autoLink="web"
                 android:id="@+id/textItem6" />
         </LinearLayout>
 
-
+        <!--
         <LinearLayout
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <Button
+            <ProgressBar
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Edit Settings"
-                android:id="@+id/settingsButton"
-                android:layout_gravity="center_horizontal" />
-
-            <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal">
-
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Configure Pebble"
-                    android:id="@+id/pebbleButton"
-                    android:layout_gravity="center_horizontal" />
-
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Install Watch App"
-                    android:id="@+id/installOsdAppButton" />
-
-            </LinearLayout>
-
-
+                android:id="@+id/progressBar8" />
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:autoLink="web"
+                android:text="New Text"
+                android:id="@+id/textItem8" />
         </LinearLayout>
-
+        -->
 
     </LinearLayout>
 
