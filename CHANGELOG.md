@@ -1,6 +1,9 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
+    V2.3.0 - 14 Dec 2016
+    - Added auto start on phone boot feature (selectable from general settings)
+
     V2.0.8 - 24 Aug 2016
     - Added checks for correct version of pebble watch app for compatibility with this
     Android App.

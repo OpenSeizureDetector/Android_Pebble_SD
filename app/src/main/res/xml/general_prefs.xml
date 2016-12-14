@@ -30,6 +30,13 @@
         android:title="Display Update Period (ms)." />
     <CheckBoxPreference
         android:defaultValue="false"
+        android:key="AutoStart"
+        android:summary="Auto Start App on Boot"
+        android:title="Auto Start App on Boot"
+        android:enabled="true"
+        />
+    <CheckBoxPreference
+        android:defaultValue="false"
         android:key="UseIpCamera"
         android:summary="Use IP Camera to View Images"
         android:title="Enable IP Camera"
