@@ -36,7 +36,8 @@ dependencies {
     compile 'com.android.support:support-v4:22.2.1'
     //compile files('libs/JTransforms-3.1-with-dependencies.jar')
     compile 'org.apache.commons:commons-math3:3.6.1'
-
+    // google play services used for location finding for SMS alerts.
+    compile 'com.google.android.gms:play-services-location:10.0.0'
 }
 
 repositories {

@@ -26,6 +26,8 @@
 
 package uk.org.openseizuredetector;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.Map;
 
 import fi.iki.elonen.NanoHTTPD;
@@ -41,6 +43,7 @@ import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
+import android.location.Location;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.os.CountDownTimer;
@@ -55,6 +58,7 @@ import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
 import android.support.v7.app.NotificationCompat;
 import android.telephony.SmsManager;
+import android.location.Location;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -76,7 +80,7 @@ import org.json.JSONArray;
  * and
  * http://developer.android.com/guide/components/services.html#ExtendingService
  */
-public class SdServer extends Service implements SdDataReceiver {
+public class SdServer extends Service implements SdDataReceiver, SdLocationReceiver {
     // Notification ID
     private int NOTIFICATION_ID = 1;
 
@@ -94,6 +98,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
     private HandlerThread thread;
     private WakeLock mWakeLock = null;
+    private LocationFinder mLocationFinder;
     public SdDataSource mSdDataSource;
     public SdData mSdData = null;
     public String mSdDataSourceName = "undefined";  // The name of the data soruce specified in the preferences.
@@ -203,6 +208,11 @@ public class SdServer extends Service implements SdDataReceiver {
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - Datasource "+mSdDataSourceName+" not recognised - exiting");
                 mUtil.showToast("Datasource " + mSdDataSourceName + " not recognised - Exiting");
                 return 1;
+        }
+
+        if (mSMSAlarm) {
+            Log.v(TAG, "Creating LocationFinder");
+            mLocationFinder = new LocationFinder(getApplicationContext());
         }
         mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting SdDataSource");
         mSdDataSource.start();
@@ -572,9 +582,20 @@ public class SdServer extends Service implements SdDataReceiver {
 
     /**
      * Sends SMS Alarms to the telephone numbers specified in mSMSNumbers[]
+     * Attempts to find a better location, and sends a second SMS after location search
+     * complete (onLocationReceived()).
      */
     public void sendSMSAlarm() {
         if (mSMSAlarm) {
+            mLocationFinder.getLocation(this);
+            Location loc = mLocationFinder.getLastLocation();
+            if (loc!=null) {
+                mUtil.showToast("Send SMS - last location is "
+                        + loc.getLongitude() + ","
+                        + loc.getLatitude());
+            } else {
+                mUtil.showToast("ERROR - Last Location is Null");
+            }
             Log.v(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers.length + " Numbers");
             mUtil.writeToSysLogFile("SdServer.sendSMSAlarm()");
             Time tnow = new Time(Time.getCurrentTimezone());
@@ -594,6 +615,47 @@ public class SdServer extends Service implements SdDataReceiver {
         }
     }
 
+    /**
+     * onSdLocationReceived - called with the best estimate location after mLocationReceiver times out.
+     * @param ll - location (may be null if no location found)
+     */
+
+    @Override
+    public void onSdLocationReceived(Location ll) {
+        if (ll == null) {
+            mUtil.showToast("onSdLocationReceived() - NULL LOCATION RECEIVED");
+            Log.v(TAG, "onSdLocationReceived() - NULL LOCATION RECEIVED");
+        } else {
+            mUtil.showToast("onSdLocationReceived() - found location" + ll.toString());
+            Log.v(TAG, "onSdLocationReceived() - found location" + ll.toString());
+            if (mSMSAlarm) {
+                Log.v(TAG, "onSdLocationReceived() - Sending to " + mSMSNumbers.length + " Numbers");
+                mUtil.writeToSysLogFile("SdServer.sendSMSAlarm()");
+                Time tnow = new Time(Time.getCurrentTimezone());
+                tnow.setToNow();
+                String dateStr = tnow.format("%Y-%m-%d %H-%M-%S");
+                NumberFormat df = new DecimalFormat("#0.000");
+                String geoUri = "<a href='geo:"
+                        +df.format(ll.getLatitude())+","+df.format(ll.getLongitude())
+                        +";u="+df.format(ll.getAccuracy())+"'>here</a>";
+                SmsManager sm = SmsManager.getDefault();
+                for (int i = 0; i < mSMSNumbers.length; i++) {
+                    Log.v(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers[i]);
+                    sm.sendTextMessage(mSMSNumbers[i], null,
+                                    mSMSMsgStr + " - " +
+                                    dateStr + " - "+ geoUri,
+                            null, null);
+                }
+            } else {
+                Log.v(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
+                Toast toast = Toast.makeText(getApplicationContext(),
+                        "SMS Alarms Disabled - not doing anything!",
+                        Toast.LENGTH_SHORT);
+                toast.show();
+            }
+
+        }
+    }
 
     /**
      * set the alarm standing flags to false to allow alarm phase to reset to current value.
