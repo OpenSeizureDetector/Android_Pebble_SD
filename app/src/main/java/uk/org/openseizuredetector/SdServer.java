@@ -594,13 +594,13 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                         + loc.getLongitude() + ","
                         + loc.getLatitude());
             } else {
-                mUtil.showToast("ERROR - Last Location is Null");
+                Log.v(TAG,"sendSMSAlarm() - Last Location is Null so sending first SMS without location.");
             }
             Log.v(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers.length + " Numbers");
             mUtil.writeToSysLogFile("SdServer.sendSMSAlarm()");
             Time tnow = new Time(Time.getCurrentTimezone());
             tnow.setToNow();
-            String dateStr = tnow.format("%Y-%m-%d %H-%M-%S");
+            String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
             SmsManager sm = SmsManager.getDefault();
             for (int i = 0; i < mSMSNumbers.length; i++) {
                 Log.v(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers[i]);
@@ -626,24 +626,32 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             mUtil.showToast("onSdLocationReceived() - NULL LOCATION RECEIVED");
             Log.v(TAG, "onSdLocationReceived() - NULL LOCATION RECEIVED");
         } else {
-            mUtil.showToast("onSdLocationReceived() - found location" + ll.toString());
+            //mUtil.showToast("onSdLocationReceived() - found location" + ll.toString());
             Log.v(TAG, "onSdLocationReceived() - found location" + ll.toString());
             if (mSMSAlarm) {
                 Log.v(TAG, "onSdLocationReceived() - Sending to " + mSMSNumbers.length + " Numbers");
                 mUtil.writeToSysLogFile("SdServer.sendSMSAlarm()");
                 Time tnow = new Time(Time.getCurrentTimezone());
                 tnow.setToNow();
-                String dateStr = tnow.format("%Y-%m-%d %H-%M-%S");
+                String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
                 NumberFormat df = new DecimalFormat("#0.000");
                 String geoUri = "<a href='geo:"
                         +df.format(ll.getLatitude())+","+df.format(ll.getLongitude())
                         +";u="+df.format(ll.getAccuracy())+"'>here</a>";
+                //String googleUrl = "https://www.google.com/maps/place?q="
+                //        +ll.getLatitude()+"%2C"+ll.getLongitude()+
+                //        "&key=AIzaSyDf-nbkfz9TrhyVRoeS8Mwtq6K2nBpUAts";
+                String googleUrl = "https://www.google.com/maps/place?q="
+                        +ll.getLatitude()+"%2C"+ll.getLongitude();
+                String messageStr = mSMSMsgStr + " - " +
+                        dateStr + " - "+googleUrl;
+                Log.v(TAG, "onSdLocationReceived() - Message is "+messageStr);
+                mUtil.showToast(messageStr);
                 SmsManager sm = SmsManager.getDefault();
                 for (int i = 0; i < mSMSNumbers.length; i++) {
                     Log.v(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers[i]);
                     sm.sendTextMessage(mSMSNumbers[i], null,
-                                    mSMSMsgStr + " - " +
-                                    dateStr + " - "+ geoUri,
+                                    messageStr,
                             null, null);
                 }
             } else {

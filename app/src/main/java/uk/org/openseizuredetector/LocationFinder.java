@@ -29,7 +29,7 @@ public class LocationFinder implements LocationListener
     Timer mTimeoutTimer = null;
     LocationManager mLocationManager = null;
     LocationListener mLocationListener;
-    int mTimeoutPeriod = 30;   // Location search timeout period in seconds.
+    int mTimeoutPeriod = 60;   // Location search timeout period in seconds.
 
     String TAG="LocationFinder";
 
@@ -57,7 +57,7 @@ public class LocationFinder implements LocationListener
             @Override
             public void run() {
                 Log.v(TAG,"mTimeOutTimer expired - returning last location");
-                mUtil.showToast("mTimeOutTimer expired - returning last location");
+                //mUtil.showToast("mTimeOutTimer expired - returning last location");
                 mLocationManager.removeUpdates(mLocationListener);
                 mSdLocationReceiver.onSdLocationReceived(mLastLocation);
             }
