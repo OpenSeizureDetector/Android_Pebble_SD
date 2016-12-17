@@ -2,7 +2,8 @@
 	============================================
 
     V2.3.0 - 14 Dec 2016
-    - Added auto start on phone boot feature (selectable from general settings)
+	- Added auto start on phone boot feature (selectable from general settings)
+	- Added Location to SMS alarm notifications
 
     V2.0.8 - 24 Aug 2016
     - Added checks for correct version of pebble watch app for compatibility with this
