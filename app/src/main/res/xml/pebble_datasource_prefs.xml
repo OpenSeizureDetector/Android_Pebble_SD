@@ -18,8 +18,6 @@
             android:key="ManAlarmPeriod"
             android:summary="Time that manual alarms sound following a long press of the DOWN button"
             android:title="Manual Alarm Period (sec)" />
-    </PreferenceCategory>
-    <PreferenceCategory android:title="Seizure Detector Settings">
         <ListPreference
             android:key="PebbleDisplaySpectrum"
             android:title="Spectrum display Mode"
@@ -28,6 +26,46 @@
             android:entryValues="@array/pebble_display_spectrum_values"
             android:defaultValue="0"
             android:dialogTitle="Select Display Spectrum Mode" />
+
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Seizure Detector Settings">
+        <EditTextPreference
+            android:defaultValue="5"
+            android:key="WarnTime"
+            android:summary="Time to wait before initiating warning (Default = 5 sec)"
+            android:title="WarnTime (sec)" />
+        <EditTextPreference
+            android:defaultValue="10"
+            android:key="AlarmTime"
+            android:summary="Time to wait before initiating alarm (Default = 10 sec)"
+            android:title="AlarmTime (sec)" />
+        <EditTextPreference
+            android:defaultValue="100"
+            android:key="AlarmThresh"
+            android:summary="Alarm Threshold (Default = 100)"
+            android:title="AlarmThresh" />
+        <EditTextPreference
+            android:defaultValue="50"
+            android:key="AlarmRatioThresh"
+            android:summary="Alarm Ratio Threshold (Default = 50).  Increase this value to reduce sensitivity if false alarms are a problem."
+            android:title="AlarmRatioThresh" />
+
+        <EditTextPreference
+            android:defaultValue="3"
+            android:key="AlarmFreqMin"
+            android:summary="Minimum Frequency of ROI (Hz) (Default = 3 Hz)"
+            android:title="AlarmFreqMin (Hz)" />
+        <EditTextPreference
+            android:defaultValue="10"
+            android:key="AlarmFreqMax"
+            android:summary="Maximum Frequency of ROI (Hz) (Default = 10 Hz)"
+            android:title="AlarmFreqMax (Hz)" />
+
+        <EditTextPreference
+            android:defaultValue="5"
+            android:key="SamplePeriod"
+            android:summary="Period (in seconds) between data analyses"
+            android:title="SamplePeriod (sec)" />
         <ListPreference
             android:key="PebbleSdMode"
             android:title="Seizure Detector Mode"
@@ -47,42 +85,7 @@
             android:enabled="true"
             />
 
-        <EditTextPreference
-            android:defaultValue="3"
-            android:key="AlarmFreqMin"
-            android:summary="Minimum Frequency of ROI (Hz) (Default = 3 Hz)"
-            android:title="AlarmFreqMin (Hz)" />
-        <EditTextPreference
-            android:defaultValue="10"
-            android:key="AlarmFreqMax"
-            android:summary="Maximum Frequency of ROI (Hz) (Default = 10 Hz)"
-            android:title="AlarmFreqMax (Hz)" />
-        <EditTextPreference
-            android:defaultValue="5"
-            android:key="SamplePeriod"
-            android:summary="Period (in seconds) between data analyses"
-            android:title="SamplePeriod (sec)" />
 
-        <EditTextPreference
-            android:defaultValue="5"
-            android:key="WarnTime"
-            android:summary="Time to wait before initiating warning (Default = 5 sec)"
-            android:title="WarnTime (sec)" />
-        <EditTextPreference
-            android:defaultValue="10"
-            android:key="AlarmTime"
-            android:summary="Time to wait before initiating alarm (Default = 10 sec)"
-            android:title="AlarmTime (sec)" />
-        <EditTextPreference
-            android:defaultValue="100"
-            android:key="AlarmThresh"
-            android:summary="Alarm Threshold (Default = 100)"
-            android:title="AlarmThresh" />
-        <EditTextPreference
-            android:defaultValue="30"
-            android:key="AlarmRatioThresh"
-            android:summary="Alarm Ratio Threshold (Default = 30).  Increase this value to reduce sensitivity if false alarms are a problem."
-            android:title="AlarmRatioThresh" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Fall Detector Settings">
