@@ -72,8 +72,8 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         String dataSourceStr = SP.getString("DataSource", "Pebble");
         Log.v(TAG, "onBuildHeaders DataSource = " + dataSourceStr);
 
-        Boolean cameraEnabled = SP.getBoolean("UseIpCamera", false);
-        Log.v(TAG, "onBuildHeaders cameraEnabled = " + cameraEnabled);
+        //Boolean cameraEnabled = SP.getBoolean("UseIpCamera", false);
+        //Log.v(TAG, "onBuildHeaders cameraEnabled = " + cameraEnabled);
 
         for (int i = 0; i < target.size(); i++) {
             Header h = target.get(i);
@@ -94,14 +94,14 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                     i = i -1;
                 }
             }
-            if (h.title.toString().equals("Camera Settings")) {
-                Log.v(TAG, "found Camera Settings Header");
-                if (!cameraEnabled) {
-                    Log.v(TAG, "Removing camera settings header");
-                    target.remove(i);
-                    i = i-1;
-                }
-            }
+            //if (h.title.toString().equals("Camera Settings")) {
+            //    Log.v(TAG, "found Camera Settings Header");
+            //    if (!cameraEnabled) {
+            //        Log.v(TAG, "Removing camera settings header");
+            //        target.remove(i);
+            //        i = i-1;
+            //    }
+            //}
         }
 
     }
@@ -202,14 +202,14 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         }
     }
 
-    public static class CameraPrefsFragment extends PreferenceFragment {
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
+    //public static class CameraPrefsFragment extends PreferenceFragment {
+    //    @Override
+    //    public void onCreate(Bundle savedInstanceState) {
+    //        super.onCreate(savedInstanceState);
 
             // Load the preferences from an XML resource
-            addPreferencesFromResource(R.xml.camera_prefs);
-        }
-    }
+     //       addPreferencesFromResource(R.xml.camera_prefs);
+     //   }
+    //}
 
 }

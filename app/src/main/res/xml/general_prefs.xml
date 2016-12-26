@@ -35,6 +35,13 @@
         android:title="Auto Start App on Boot"
         android:enabled="true"
         />
+
+    <EditTextPreference
+        android:defaultValue=""
+        android:key="AppVersionName"
+        android:summary="App Version Number - used to decide whether to display the welcome message or not."
+        android:title="App Version Number" />
+<!--
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="UseIpCamera"
@@ -42,6 +49,7 @@
         android:title="Enable IP Camera"
         android:enabled="false"
         />
+        -->
 
 
 </PreferenceScreen>

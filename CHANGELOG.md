@@ -1,6 +1,9 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
+    V2.3.2 - 26 Dec 2016
+    - Added first run dialog with message to StartUpActivity.
+
     V2.3.1 - 19 Dec 2016
     - Changed auto-start feature to start the SDServer background service rather than the StartUpActvity so it will work
     when the phone screen is locked.

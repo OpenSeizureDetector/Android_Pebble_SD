@@ -22,12 +22,12 @@
         android:title="Network Datasource"
         android:summary="Network Datasource Preferences" />
 
-    <header android:fragment="uk.org.openseizuredetector.PrefActivity$CameraPrefsFragment"
+    <!--<header android:fragment="uk.org.openseizuredetector.PrefActivity$CameraPrefsFragment"
         android:icon="@drawable/icon_24x24"
         android:title="Camera Settings"
         android:summary="IP Camera Preferences"
         android:enabled="false"
-        />
+        />-->
 
 
 </preference-headers>

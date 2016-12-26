@@ -25,8 +25,13 @@
 package uk.org.openseizuredetector;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -34,6 +39,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.text.SpannableString;
+import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -50,7 +58,7 @@ import java.util.TimerTask;
  * starting the main activity.
  */
 public class StartupActivity extends Activity {
-    private String TAG = "StartupActivity";
+    private static String TAG = "StartupActivity";
     private int okColour = Color.BLUE;
     private int warnColour = Color.MAGENTA;
     private int alarmColour = Color.RED;
@@ -63,6 +71,7 @@ public class StartupActivity extends Activity {
     private Timer mUiTimer;
     private SdServiceConnection mConnection;
     private boolean mStartedMainActivity = false;
+    private boolean mDialogDisplayed = false;
     private Handler mHandler = new Handler();   // used to update ui from mUiTimer
     private boolean mUsingPebbleDataSource = true;
     private String mPebbleAppPackageName = null;
@@ -75,7 +84,7 @@ public class StartupActivity extends Activity {
         Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(StartupActivity.this));
 
         mHandler = new Handler();
-        mUtil = new OsdUtil(this,mHandler);
+        mUtil = new OsdUtil(this, mHandler);
         mUtil.writeToSysLogFile("");
         mUtil.writeToSysLogFile("*******************************");
         mUtil.writeToSysLogFile("* StartUpActivity Started     *");
@@ -96,7 +105,7 @@ public class StartupActivity extends Activity {
 
 
         Button b;
-        b = (Button)findViewById(R.id.installPebbleAppButton);
+        b = (Button) findViewById(R.id.installPebbleAppButton);
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -104,7 +113,7 @@ public class StartupActivity extends Activity {
                 try {
                     mUtil.writeToSysLogFile("Installing Pebble App");
                     Intent intent = new Intent(Intent.ACTION_VIEW)
-                            .setData(Uri.parse("market://details?id="+mUtil.getPreferredPebbleAppPackageName()));
+                            .setData(Uri.parse("market://details?id=" + mUtil.getPreferredPebbleAppPackageName()));
                     startActivity(intent);
                 } catch (Exception ex) {
                     Log.v(TAG, "exception starting play store activity " + ex.toString());
@@ -115,7 +124,7 @@ public class StartupActivity extends Activity {
             }
         });
 
-        b = (Button)findViewById(R.id.settingsButton);
+        b = (Button) findViewById(R.id.settingsButton);
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -134,7 +143,7 @@ public class StartupActivity extends Activity {
             }
         });
 
-        b = (Button)findViewById(R.id.pebbleButton);
+        b = (Button) findViewById(R.id.pebbleButton);
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -144,7 +153,7 @@ public class StartupActivity extends Activity {
             }
         });
 
-        b = (Button)findViewById(R.id.installOsdAppButton);
+        b = (Button) findViewById(R.id.installOsdAppButton);
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -163,15 +172,16 @@ public class StartupActivity extends Activity {
         TextView tv;
 
         String versionName = mUtil.getAppVersionName();
-        tv = (TextView)findViewById(R.id.appNameTv);
-        tv.setText("OpenSeizureDetector V"+versionName);
+        tv = (TextView) findViewById(R.id.appNameTv);
+        tv.setText("OpenSeizureDetector V" + versionName);
 
         // Display the DataSource name
         SharedPreferences SP = PreferenceManager
-                .getDefaultSharedPreferences(getBaseContext());;
-        String dataSourceName = SP.getString("DataSource","Pebble");
-        tv = (TextView)findViewById(R.id.dataSourceTextView);
-        tv.setText("DataSource = "+dataSourceName);
+                .getDefaultSharedPreferences(getBaseContext());
+        ;
+        String dataSourceName = SP.getString("DataSource", "Pebble");
+        tv = (TextView) findViewById(R.id.dataSourceTextView);
+        tv.setText("DataSource = " + dataSourceName);
 
         // disable pebble configuration buttons if we have not selected the pebble datasource
         if (!dataSourceName.equals("Pebble")) {
@@ -198,6 +208,9 @@ public class StartupActivity extends Activity {
         mConnection = new SdServiceConnection(this);
         mUtil.bindToServer(this, mConnection);
 
+        // Check to see if this is the first time the app has been run, and display welcome dialog if it is.
+        checkFirstRun();
+
         // start timer to refresh user interface every second.
         mUiTimer = new Timer();
         mUiTimer.schedule(new TimerTask() {
@@ -207,6 +220,7 @@ public class StartupActivity extends Activity {
                 //updateServerStatus();
             }
         }, 0, 1000);
+
 
     }
 
@@ -343,7 +357,7 @@ public class StartupActivity extends Activity {
             pb = (ProgressBar) findViewById(R.id.progressBar7);
             boolean pebbleAndroidAppInstalled;
             mPebbleAppPackageName = mUtil.isPebbleAppInstalled();
-            if (mPebbleAppPackageName!=null)
+            if (mPebbleAppPackageName != null)
                 pebbleAndroidAppInstalled = true;
             else
                 pebbleAndroidAppInstalled = false;
@@ -371,31 +385,141 @@ public class StartupActivity extends Activity {
             }
 
 
-
             // If all the parameters are ok, close this activity and open the main
             // user interface activity instead.
             if (allOk) {
-                if (!mStartedMainActivity) {
-                    Log.v(TAG, "starting main activity...");
-                    mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - all checks ok - starting main activity.");
-                    try {
-                        Intent intent = new Intent(
-                                getApplicationContext(),
-                                MainActivity.class);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                        startActivity(intent);
-                        mStartedMainActivity = true;
-                        finish();
-                    } catch (Exception ex) {
-                        mStartedMainActivity = false;
-                        Log.v(TAG, "exception starting main activity " + ex.toString());
-                        mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - exception starting main activity "+ex.toString());
+                if (!mDialogDisplayed) {
+                    if (!mStartedMainActivity) {
+                        Log.v(TAG, "starting main activity...");
+                        mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - all checks ok - starting main activity.");
+                        try {
+                            Intent intent = new Intent(
+                                    getApplicationContext(),
+                                    MainActivity.class);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                            startActivity(intent);
+                            mStartedMainActivity = true;
+                            finish();
+                        } catch (Exception ex) {
+                            mStartedMainActivity = false;
+                            Log.v(TAG, "exception starting main activity " + ex.toString());
+                            mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - exception starting main activity " + ex.toString());
+                        }
+                    } else {
+                        Log.v(TAG, "allOk, but already started MainActivity so not doing anything");
+                        mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - allOk, but already started MainActivity so not doing anything");
                     }
                 } else {
-                    Log.v(TAG,"allOk, but already started MainActivity so not doing anything");
-                    mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - allOk, but already started MainActivity so not doing anything");
+                    Log.v(TAG, "allok, but dialog displayted so not starting MainActivity");
                 }
             }
         }
     };
+
+    /**
+     * getVersionName - returns the version name (e.g. 2.3.2) for this application.
+     *
+     * @param context
+     * @param cls     - a class from which to determine the version mame.
+     * @return the string version name specified in AndroidManifest.xml
+     */
+    public static String getVersionName(Context context, Class cls) {
+        try {
+            ComponentName comp = new ComponentName(context, cls);
+            PackageInfo pinfo = context.getPackageManager().getPackageInfo(
+                    comp.getPackageName(), 0);
+            return "Version: " + pinfo.versionName;
+        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            Log.e(TAG, "getVersionName Exception - " + e.toString());
+            return null;
+        }
+    }
+
+    /**
+     * checkFirstRun - checks to see if this is the first run of the app after installation or upgrade.
+     * if it is, the relevant dialog message is displayed.  If not, the routine just exists so start-up can continue.
+     */
+    public void checkFirstRun() {
+        String storedVersionName = "";
+        String versionName;
+        AlertDialog UpdateDialog;
+        AlertDialog FirstRunDialog;
+        SharedPreferences prefs;
+        versionName = this.getVersionName(this, StartupActivity.class);
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        storedVersionName = (prefs.getString("AppVersionName", null));
+        Log.v(TAG,"storedVersionName="+storedVersionName+", versionName="+versionName);
+
+        // CHeck for new installation
+        if (storedVersionName == null || storedVersionName.length() == 0) {
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                    this);
+            final SpannableString s = new SpannableString(
+                    "OpenSeizureDetector does not collect any personal data. "
+                            + "This does mean that it is not possible for me to contact users if I find an "
+                            + "issue with the app that you should be aware of.   \nPlease subscribe to updates at "
+                            + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
+                            + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
+                            + "\n\nChanges in this version:"
+                            + "\n- Update to Detection Algorithm:  You will need to increase the AlarmRatioThresh setting from the previous "
+                            +    "default of around 30 to a value of 50-60 to avoid excessive false alarms"
+                            + "\n- Added GPS Location to SMS Alarms"
+                            + "\n- Added auto-start on boot capability"
+                );
+            // This makes the links display as links, but they do not respond to clicks for some reason...
+            Linkify.addLinks(s, Linkify.ALL);
+            alertDialogBuilder
+                    .setTitle("Welcome to OpenSeizureDetector")
+                    .setMessage(s)
+                    .setCancelable(false)
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                            //MainActivity.this.finish();
+                        }
+                    });
+            FirstRunDialog = alertDialogBuilder.create();
+            Log.v(TAG, "Displaying First Run Dialog");
+            FirstRunDialog.show();
+            mDialogDisplayed = true;
+        } else if (!storedVersionName.equals(versionName)) {
+            // Check for update of installed application
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                    this);
+            final SpannableString s = new SpannableString(
+                    "OpenSeizureDetector does not collect any personal data. "
+                            + "This does mean that it is not possible for me to contact users if I find an "
+                            + "issue with the app that you should be aware of.   \nPlease subscribe to updates at "
+                            + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
+                            + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
+                            + "\n\nChanges in this version:"
+                            + "\n- Update to Detection Algorithm:  You will need to increase the AlarmRatioThresh setting from the previous "
+                            +    "default of around 30 to a value of 50-60 to avoid excessive false alarms"
+                            + "\n- Added GPS Location to SMS Alarms"
+                            + "\n- Added auto-start on boot capability"
+            );
+            // This makes the links display as links, but they do not respond to clicks for some reason...
+            Linkify.addLinks(s, Linkify.ALL);
+            alertDialogBuilder
+                    .setTitle("Thank you for Updating OpenSeizureDetector")
+                    .setMessage(s)
+                    .setCancelable(false)
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                        }
+                    });
+            UpdateDialog = alertDialogBuilder.create();
+            Log.v(TAG, "Displaying Update Dialog");
+            UpdateDialog.show();
+            mDialogDisplayed = true;
+        } else {
+            Log.v(TAG, "App has already been run - not showing dialog.");
+        }
+        Log.v(TAG, "Setting AppVersionName to" + versionName);
+        prefs.edit().putString("AppVersionName", versionName).commit();
+    }
+
 }
