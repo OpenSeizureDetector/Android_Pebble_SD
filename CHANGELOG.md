@@ -1,6 +1,11 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
+    V2.5.1 - 07 May 2016
+	- Improved alarm annunciation for short duration seizures - setting
+	Latch Alarms will result in alarms sounding for at least Latch Alarm
+	Timer Duration seconds before resetting.
+
     V2.3.2 - 26 Dec 2016
     - Added first run dialog with message to StartUpActivity.
 
