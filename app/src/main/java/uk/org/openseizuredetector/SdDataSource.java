@@ -85,6 +85,8 @@ public abstract class SdDataSource {
 
     public void startPebbleApp() { Log.v(TAG,"startPebbleApp()"); }
 
+    public void acceptAlarm() { Log.v(TAG,"acceptAlarm()"); }
+
     /**
      * Display a Toast message on screen.
      * @param msg - message to display.

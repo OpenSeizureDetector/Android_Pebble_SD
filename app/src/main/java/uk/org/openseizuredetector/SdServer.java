@@ -713,6 +713,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         Log.v(TAG, "acceptAlarm()");
         mSdData.alarmStanding = false;
         mSdData.fallAlarmStanding = false;
+        mSdDataSource.acceptAlarm();
         stopLatchTimer();
     }
 

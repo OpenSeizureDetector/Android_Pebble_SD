@@ -155,6 +155,42 @@ public class SdDataSourceNetwork extends SdDataSource {
         }
     }
 
+    /**
+     * Retrive the current Seizure Detector Data from the server.
+     * Uses the DownloadSdDataTask class to download the data in the
+     * background.  The data is processed in DownloadSdDataTask.onPostExecute().
+     */
+    @Override
+    public void acceptAlarm() {
+        Log.v(TAG, "acceptAlarm()");
+        new AcceptAlarmTask().execute("http://" + mServerIP + ":8080/acceptalarm");
+    }
+
+    private class AcceptAlarmTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... urls) {
+            // params comes from the execute() call: params[0] is the url.
+            try {
+                String result = downloadUrl(urls[0]);
+                if (result.startsWith("Unable to retrieve web page")) {
+                    Log.v(TAG,"doInBackground() - Error accepting alarm");
+                } else {
+                    Log.v(TAG,"doInBackground(): Alarm Accepted");
+                }
+            } catch (IOException e) {
+                Log.v(TAG,"doInBackground(): IOException - "+e.toString());
+            }
+            return "Done";
+        }
+        // onPostExecute displays the results of the AsyncTask.
+        @Override
+        protected void onPostExecute(String s) {
+            Log.v(TAG,"onPostExecute() - s="+s);
+        }
+    }
+
+
+
     // Given a URL, establishes an HttpUrlConnection and retrieves
     // the web page content as a InputStream, which it returns as
     // a string.

@@ -461,10 +461,11 @@ public class StartupActivity extends Activity {
                             + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
-                            + "\n- Update to Detection Algorithm:  You will need to increase the AlarmRatioThresh setting from the previous "
-                            +    "default of around 30 to a value of 50-60 to avoid excessive false alarms"
-                            + "\n- Added GPS Location to SMS Alarms"
-                            + "\n- Added auto-start on boot capability"
+                            + "\n- Added an alarm latch automatic reset timer.   This means that if you enable 'Latch Alarms'"
+                            + "\n  in the alarms settings then an alarm will stay active for a period set by the Latch Alarm"
+                            + "\n  Time Duration setting before it re-sets, even if the watch only detects an alarm condition"
+                            + "\n  for a short period.   This is to make sure a carer is alerted to even a short duration alarm"
+                            + "\n  condition.   The alarm can be reset manually by pressing the 'Accept Alarm' button."
                 );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);
