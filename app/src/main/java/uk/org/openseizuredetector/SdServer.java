@@ -103,6 +103,8 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
     public SdData mSdData = null;
     public String mSdDataSourceName = "undefined";  // The name of the data soruce specified in the preferences.
     private boolean mLatchAlarms = false;
+    private int mLatchAlarmPeriod = 0;
+    private LatchAlarmTimer mLatchAlarmTimer = null;
     private boolean mCancelAudible = false;
     public boolean mAudibleAlarm = false;
     private boolean mAudibleWarning = false;
@@ -162,14 +164,13 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
     public void onCreate() {
         Log.v(TAG, "onCreate()");
         mHandler = new Handler();
-        mUtil = new OsdUtil(getApplicationContext(),mHandler);
+        mUtil = new OsdUtil(getApplicationContext(), mHandler);
         mUtil.writeToSysLogFile("SdServer.onCreate()");
 
         // Set our custom uncaught exception handler to report issues.
         Thread.setDefaultUncaughtExceptionHandler(
                 new OsdUncaughtExceptionHandler(SdServer.this));
         //int i = 5/0;  // Force exception to test handler.
-
 
 
         // Create a wake lock, but don't use it until the service is started.
@@ -205,7 +206,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 break;
             default:
                 Log.v(TAG, "Datasource " + mSdDataSourceName + " not recognised - Exiting");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - Datasource "+mSdDataSourceName+" not recognised - exiting");
+                mUtil.writeToSysLogFile("SdServer.onStartCommand() - Datasource " + mSdDataSourceName + " not recognised - exiting");
                 mUtil.showToast("Datasource " + mSdDataSourceName + " not recognised - Exiting");
                 return 1;
         }
@@ -300,6 +301,8 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             mCancelAudibleTimer = null;
         }
 
+        // Stop the Cancel Alarm Latch timer
+        stopLatchTimer();
 
         try {
             // Cancel the notification.
@@ -317,7 +320,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
 
         } catch (Exception e) {
             Log.v(TAG, "Error in onDestroy() - " + e.toString());
-            mUtil.writeToSysLogFile("SdServer.onDestroy() -error "+e.toString());
+            mUtil.writeToSysLogFile("SdServer.onDestroy() -error " + e.toString());
         }
 
         mUtil.writeToSysLogFile("SdServer.onDestroy() - releasing mToneGenerator");
@@ -373,10 +376,10 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         ComponentName componentInfo = runningTaskInfo.get(0).topActivity;
 
         if (componentInfo.getPackageName().equals("uk.org.openseizuredetector")) {
-            Log.v(TAG,"showMainActivity(): OpenSeizureDetector Activity is already shown on top - not doing anything");
+            Log.v(TAG, "showMainActivity(): OpenSeizureDetector Activity is already shown on top - not doing anything");
             mUtil.writeToSysLogFile("SdServer.showMainActivity - Activity is already shown on top, not doing anything");
         } else {
-            Log.v(TAG,"showMainActivity(): Showing Main Activity");
+            Log.v(TAG, "showMainActivity(): Showing Main Activity");
             Intent i = new Intent(getApplicationContext(), MainActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
             this.startActivity(i);
@@ -384,7 +387,8 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
     }
 
     /**
-     * Process the data received from the SdData source.
+     * Process the data received from the SdData source.  On exit, the mSdData structure is populated with
+     * the appropriate data.
      *
      * @param sdData
      */
@@ -393,23 +397,25 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         if (sdData.alarmState == 0) {
             if ((!mLatchAlarms) ||
                     (mLatchAlarms &&
-                            (!sdData.alarmStanding && !sdData.fallAlarmStanding))) {
+                            (!mSdData.alarmStanding && !mSdData.fallAlarmStanding))) {
                 sdData.alarmPhrase = "OK";
                 sdData.alarmStanding = false;
                 sdData.fallAlarmStanding = false;
                 showNotification(0);
             }
         }
-        if (sdData.alarmState == 6) {  // manual mute from watch buttons.
+        // Handle manual mute from watch buttons.
+        if (sdData.alarmState == 6) {
             sdData.alarmPhrase = "MUTE";
             sdData.alarmStanding = false;
             sdData.fallAlarmStanding = false;
             showNotification(0);
         }
+        // Handle warning alarm state
         if (sdData.alarmState == 1) {
             if ((!mLatchAlarms) ||
                     (mLatchAlarms &&
-                            (!sdData.alarmStanding && !sdData.fallAlarmStanding))) {
+                            (!mSdData.alarmStanding && !mSdData.fallAlarmStanding))) {
                 sdData.alarmPhrase = "WARNING";
                 sdData.alarmStanding = false;
                 sdData.fallAlarmStanding = false;
@@ -425,7 +431,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             showNotification(1);
         }
         // respond to normal alarms (2) and manual alarms (5)
-        if ((sdData.alarmState == 2) || (sdData.alarmState == 5) || (sdData.alarmStanding)) {
+        if ((sdData.alarmState == 2) || (sdData.alarmState == 5)) {
             sdData.alarmPhrase = "ALARM";
             sdData.alarmStanding = true;
             if (mLogAlarms) {
@@ -452,7 +458,9 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                     mSMSTime = tnow;
                 }
             }
+            startLatchTimer();
         }
+        // Handle fall alarm
         if ((sdData.alarmState == 3) || (sdData.fallAlarmStanding)) {
             sdData.alarmPhrase = "FALL";
             sdData.fallAlarmStanding = true;
@@ -511,7 +519,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
      * beep for duration milliseconds, but only if mAudibleAlarm is set.
      */
     private void beep(int duration) {
-        if (mToneGenerator!=null) {
+        if (mToneGenerator != null) {
             mToneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration);
             Log.v(TAG, "beep()");
         } else {
@@ -589,12 +597,12 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         if (mSMSAlarm) {
             mLocationFinder.getLocation(this);
             Location loc = mLocationFinder.getLastLocation();
-            if (loc!=null) {
+            if (loc != null) {
                 mUtil.showToast("Send SMS - last location is "
                         + loc.getLongitude() + ","
                         + loc.getLatitude());
             } else {
-                Log.v(TAG,"sendSMSAlarm() - Last Location is Null so sending first SMS without location.");
+                Log.v(TAG, "sendSMSAlarm() - Last Location is Null so sending first SMS without location.");
             }
             Log.v(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers.length + " Numbers");
             mUtil.writeToSysLogFile("SdServer.sendSMSAlarm()");
@@ -617,6 +625,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
 
     /**
      * onSdLocationReceived - called with the best estimate location after mLocationReceiver times out.
+     *
      * @param ll - location (may be null if no location found)
      */
 
@@ -636,22 +645,22 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
                 NumberFormat df = new DecimalFormat("#0.000");
                 String geoUri = "<a href='geo:"
-                        +df.format(ll.getLatitude())+","+df.format(ll.getLongitude())
-                        +";u="+df.format(ll.getAccuracy())+"'>here</a>";
+                        + df.format(ll.getLatitude()) + "," + df.format(ll.getLongitude())
+                        + ";u=" + df.format(ll.getAccuracy()) + "'>here</a>";
                 //String googleUrl = "https://www.google.com/maps/place?q="
                 //        +ll.getLatitude()+"%2C"+ll.getLongitude()+
                 //        "&key=AIzaSyDf-nbkfz9TrhyVRoeS8Mwtq6K2nBpUAts";
                 String googleUrl = "https://www.google.com/maps/place?q="
-                        +ll.getLatitude()+"%2C"+ll.getLongitude();
+                        + ll.getLatitude() + "%2C" + ll.getLongitude();
                 String messageStr = mSMSMsgStr + " - " +
-                        dateStr + " - "+googleUrl;
-                Log.v(TAG, "onSdLocationReceived() - Message is "+messageStr);
+                        dateStr + " - " + googleUrl;
+                Log.v(TAG, "onSdLocationReceived() - Message is " + messageStr);
                 mUtil.showToast(messageStr);
                 SmsManager sm = SmsManager.getDefault();
                 for (int i = 0; i < mSMSNumbers.length; i++) {
                     Log.v(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers[i]);
                     sm.sendTextMessage(mSMSNumbers[i], null,
-                                    messageStr,
+                            messageStr,
                             null, null);
                 }
             } else {
@@ -665,6 +674,38 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         }
     }
 
+
+    /*
+    * Start the timer that will automatically re-set a latched alarm after a given period.
+     */
+    private void startLatchTimer() {
+        if (mLatchAlarms) {
+            if (mLatchAlarmTimer != null) {
+                Log.v(TAG, "startLatchTimer -timer already running - cancelling it");
+                mLatchAlarmTimer.cancel();
+                mLatchAlarmTimer = null;
+            }
+            Log.v(TAG, "startLatchTimer() - starting alarm latch release timer to time out in " + mLatchAlarmPeriod + " sec");
+            // set timer to timeout after mLatchAlarmPeriod, and Tick() function to be called every second.
+            mLatchAlarmTimer =
+                    new LatchAlarmTimer(mLatchAlarmPeriod * 1000, 1000);
+            mLatchAlarmTimer.start();
+        } else {
+            Log.v(TAG, "startLatchTimer() - Latch Alarms disabled - not doing anything");
+        }
+    }
+
+    /*
+     * Cancel the automatic de-latch timer - called from onDestroy, or if the AcceptAlarm button is pressed.
+     */
+    private void stopLatchTimer() {
+        if (mLatchAlarmTimer != null) {
+            Log.v(TAG, "stopLatchTimer(): cancelling LatchAlarm timer");
+            mLatchAlarmTimer.cancel();
+            mLatchAlarmTimer = null;
+        }
+    }
+
     /**
      * set the alarm standing flags to false to allow alarm phase to reset to current value.
      */
@@ -672,6 +713,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         Log.v(TAG, "acceptAlarm()");
         mSdData.alarmStanding = false;
         mSdData.fallAlarmStanding = false;
+        stopLatchTimer();
     }
 
 
@@ -767,6 +809,16 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             Log.v(TAG, "updatePrefs() - DataSource = " + mSdDataSourceName);
             mLatchAlarms = SP.getBoolean("LatchAlarms", false);
             Log.v(TAG, "updatePrefs() - mLatchAlarms = " + mLatchAlarms);
+            // Parse the LatchAlarmPeriod setting.
+            try {
+                String latchAlarmPeriodStr = SP.getString("LatchAlarmTimerPeriod", "30");
+                mLatchAlarmPeriod = Integer.parseInt(latchAlarmPeriodStr);
+                Log.v(TAG, "updatePrefs() - mLatchAlarmTimerPeriod = " + mLatchAlarmPeriod);
+            } catch (Exception ex) {
+                Log.v(TAG, "updatePrefs() - Problem with LatchAlarmTimerPeriod preference!");
+                Toast toast = Toast.makeText(getApplicationContext(), "Problem Parsing LatchAlarmTimerPeriod Preference", Toast.LENGTH_SHORT);
+                toast.show();
+            }
             mAudibleFaultWarning = SP.getBoolean("AudibleFaultWarning", true);
             Log.v(TAG, "updatePrefs() - mAuidbleFaultWarning = " + mAudibleFaultWarning);
             // Parse the faultTimer period setting.
@@ -798,12 +850,11 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
 
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
-            mUtil.writeToSysLogFile("SdServer.updatePrefs() - Error "+ex.toString());
+            mUtil.writeToSysLogFile("SdServer.updatePrefs() - Error " + ex.toString());
             Toast toast = Toast.makeText(getApplicationContext(), "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
             toast.show();
         }
     }
-
 
 
     /**
@@ -853,6 +904,32 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             }
         } else {
             Log.e(TAG, "ERROR - Can not Write to External Folder");
+        }
+    }
+
+
+    /*
+    * Latch alarm in alarm state for a given period (mLatchAlarmPeriod seconds) after the alarm is raised.
+    * This is to ensure multiple Alarm annunciations even if only a single Alarm signal is received.
+    */
+    private class LatchAlarmTimer extends CountDownTimer {
+        public LatchAlarmTimer(long startTime, long interval) {
+            super(startTime, interval);
+        }
+
+        // called after startTime ms.
+        @Override
+        public void onFinish() {
+            Log.v(TAG, "LatchAlarmTimer.onFinish()");
+            // Do the equivalent of accept alarm push button.
+            acceptAlarm();
+        }
+
+        // Called every 'interval' ms.
+        @Override
+        public void onTick(long timeRemaining) {
+            Log.v(TAG, "LatchAlarmTimer.onTick() - time remaining = " + timeRemaining / 1000 + " sec");
+            alarmBeep();
         }
     }
 

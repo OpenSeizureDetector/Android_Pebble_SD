@@ -6,6 +6,13 @@
             android:key="LatchAlarms"
             android:summary="Require manual reset of alarms to reset them to silence them."
             android:title="Latch Alarms" />
+        <EditTextPreference
+            android:key="LatchAlarmTimerPeriod"
+            android:title="Latch Alarm Timer Duration (sec)"
+            android:summary="Duration in seconds that alarms will initiate for before being silenced automatically."
+            android:numeric="integer"
+            android:defaultValue="10" />
+
     </PreferenceCategory>
     <PreferenceCategory android:title="Audible Alarm Settings">
         <CheckBoxPreference
