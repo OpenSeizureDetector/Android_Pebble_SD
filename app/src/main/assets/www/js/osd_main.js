@@ -162,7 +162,11 @@ toggleMute = function() {
        sd_muted = 1;
        $("#muteButton").text("Un-mute Audible Alarm");
    }
-}
+};
+
+acceptAlarm = function() {
+   $.ajax({url:"/acceptalarm"});
+};
 
 $(document).ready(function() {  
    sd_muted = 0;
@@ -173,4 +177,5 @@ $(document).ready(function() {
    setInterval("get_settings();",10000);
    setInterval("get_spectrum();",5000);
    $("#muteButton").click(toggleMute);
+   $("#acceptButton").click(acceptAlarm);
 });

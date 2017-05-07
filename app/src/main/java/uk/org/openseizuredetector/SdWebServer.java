@@ -25,14 +25,16 @@ import fi.iki.elonen.NanoHTTPD;
 public class SdWebServer extends NanoHTTPD {
     private String TAG = "WebServer";
     private SdData mSdData;
+    private SdServer mSdServer;
     private Context mContext;
     private File mDataStorageDir = null;
 
-    public SdWebServer(Context context, File storageDir, SdData sdData) {
+    public SdWebServer(Context context, File storageDir, SdData sdData, SdServer sdServer) {
         // Set the port to listen on (8080)
         super(8080);
         mSdData = sdData;
         mContext = context;
+        mSdServer = sdServer;
         mDataStorageDir = storageDir;
     }
 
@@ -108,6 +110,12 @@ public class SdWebServer extends NanoHTTPD {
                     Log.v(TAG, "Error Creating Data Object - " + ex.toString());
                     answer = "Error Creating Data Object";
                 }
+                break;
+
+            case "/acceptalarm":
+                Log.v(TAG, "WebServer.serve() - Accepting alarm");
+                mSdServer.acceptAlarm();
+                answer = "Alarm Accepted";
                 break;
 
             default:

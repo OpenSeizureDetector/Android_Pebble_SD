@@ -755,7 +755,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         Log.v(TAG, "startWebServer()");
         mUtil.writeToSysLogFile("SdServer.Start Web Server.");
         if (webServer == null) {
-            webServer = new SdWebServer(getApplicationContext(), mUtil.getDataStorageDir(), mSdData);
+            webServer = new SdWebServer(getApplicationContext(), mUtil.getDataStorageDir(), mSdData, this);
             try {
                 webServer.start();
             } catch (IOException ioe) {
