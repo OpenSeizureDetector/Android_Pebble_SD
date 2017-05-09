@@ -1,6 +1,10 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
+	V2.5.2 - 09 May 2016
+	Added support for Pebble App V2.5 which includes a multi-ROI mode to improve sensitivity.
+	
+	
     V2.5.1 - 07 May 2016
 	- Improved alarm annunciation for short duration seizures - setting
 	Latch Alarms will result in alarms sounding for at least Latch Alarm
