@@ -23,11 +23,13 @@
         <item>"Normal - OpenSeizureDetector FFT"</item>
         <item>"Raw"</item>
         <item>"Digital Filter"</item>
+        <item>"Multi ROI FFT"</item>
     </string-array>
     <string-array name="pebble_sd_mode_list_values">
         <item>"0"</item>
         <item>"1"</item>
         <item>"2"</item>
+        <item>"3"</item>
     </string-array>
 
     <string-array name="pebble_sample_freq_list">
