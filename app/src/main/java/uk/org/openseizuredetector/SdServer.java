@@ -204,6 +204,11 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceNetwork");
                 mSdDataSource = new SdDataSourceNetwork(this.getApplicationContext(), mHandler, this);
                 break;
+            case "NetworkPassive":
+                Log.v(TAG, "Selecting Network (Passive) DataSource");
+                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceNetworkPassive");
+                mSdDataSource = new SdDataSourceNetworkPassive(this.getApplicationContext(), mHandler, this);
+                break;
             default:
                 Log.v(TAG, "Datasource " + mSdDataSourceName + " not recognised - Exiting");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - Datasource " + mSdDataSourceName + " not recognised - exiting");

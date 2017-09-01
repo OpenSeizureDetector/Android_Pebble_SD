@@ -461,11 +461,11 @@ public class StartupActivity extends Activity {
                             + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
-                            + "\n- Added an alarm latch automatic reset timer.   This means that if you enable 'Latch Alarms'"
-                            + "\n  in the alarms settings then an alarm will stay active for a period set by the Latch Alarm"
-                            + "\n  Time Duration setting before it re-sets, even if the watch only detects an alarm condition"
-                            + "\n  for a short period.   This is to make sure a carer is alerted to even a short duration alarm"
-                            + "\n  condition.   The alarm can be reset manually by pressing the 'Accept Alarm' button."
+                            + "\n- Added support for 'Wifi Datasources' - initially for the experimental ESP8266 based seizure detector."
+                            + "\n  "
+                            + "\n  "
+                            + "\n  "
+                            + "\n  ."
                 );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);

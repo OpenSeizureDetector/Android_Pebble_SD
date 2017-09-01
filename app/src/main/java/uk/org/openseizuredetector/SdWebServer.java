@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -39,15 +40,29 @@ public class SdWebServer extends NanoHTTPD {
     }
 
     public void setSdData(SdData sdData) {
-        Log.v(TAG,"setSdData()");
+        Log.v(TAG, "setSdData()");
         mSdData = sdData;
     }
 
     @Override
-    public Response serve(String uri, Method method,
-                          Map<String, String> header,
-                          Map<String, String> parameters,
-                          Map<String, String> files) {
+    public Response serve(IHTTPSession session) {
+        String uri;
+        Method method;
+        Map<String, String> header;
+        Map<String, String> parameters;
+        Map<String, String> files = new HashMap<String, String>();
+        try {
+            session.parseBody(files);
+        } catch (IOException ioe) {
+            return new Response(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage());
+        } catch (ResponseException re) {
+            return new Response(re.getStatus(), MIME_PLAINTEXT, re.getMessage());
+        }
+        uri = session.getUri();
+        method = session.getMethod();
+        header = session.getHeaders();
+        parameters = session.getParms();
+
         Log.v(TAG, "WebServer.serve() - uri=" + uri + " Method=" + method.toString());
         String answer = "Error - you should not see this message! - Something wrong in WebServer.serve()";
 
@@ -61,12 +76,25 @@ public class SdWebServer extends NanoHTTPD {
         if (uri.equals("/")) uri = "/index.html";
         switch (uri) {
             case "/data":
-                //Log.v(TAG,"WebServer.serve() - Returning data");
-                try {
-                    answer = mSdData.toString();
-                } catch (Exception ex) {
-                    Log.v(TAG, "Error Creating Data Object - " + ex.toString());
-                    answer = "Error Creating Data Object";
+                switch (method) {
+                    case GET:
+                        //Log.v(TAG,"WebServer.serve() - Returning data");
+                        try {
+                            answer = mSdData.toString();
+                        } catch (Exception ex) {
+                            Log.v(TAG, "Error Creating Data Object - " + ex.toString());
+                            answer = "Error Creating Data Object";
+                        }
+                        break;
+                    case POST:
+                        Log.v(TAG, "WebServer.serve() - POST /data - receiving data from device: parameters=" + parameters.toString());
+                        Log.v(TAG, "              header=" + header.toString());
+                        Log.v(TAG, "              files=" + files.toString());
+                        String postData = files.get("postData");
+                        Log.v(TAG, "              postData=" + postData);
+                        break;
+                    default:
+                        Log.v(TAG, "WebServer.serve() - Unrecognised method - " + method);
                 }
                 break;
 

@@ -3,10 +3,12 @@
     <string-array name="datasource_list">
         <item>"Pebble Watch"</item>
         <item>"Network"</item>
+        <item>"Network (passive)"</item>
     </string-array>
     <string-array name="datasource_list_values">
         <item>"Pebble"</item>
         <item>"Network"</item>
+        <item>"NetworkPassive"</item>
     </string-array>
 
 </resources>
