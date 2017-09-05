@@ -87,6 +87,13 @@ public abstract class SdDataSource {
 
     public void acceptAlarm() { Log.v(TAG,"acceptAlarm()"); }
 
+
+    // Force the data stored in this datasource to update in line with the JSON string encoded data provided.
+    // Used by webServer to update the NetworkPassiveDatasource
+    public void updateFromJSON(String jsonStr) {
+        Log.v(TAG,"updateFromJSON - "+jsonStr);
+    }
+
     /**
      * Display a Toast message on screen.
      * @param msg - message to display.
