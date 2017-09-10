@@ -461,11 +461,8 @@ public class StartupActivity extends Activity {
                             + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
-                            + "\n- Added an alarm latch automatic reset timer.   This means that if you enable 'Latch Alarms'"
-                            + "\n  in the alarms settings then an alarm will stay active for a period set by the Latch Alarm"
-                            + "\n  Time Duration setting before it re-sets, even if the watch only detects an alarm condition"
-                            + "\n  for a short period.   This is to make sure a carer is alerted to even a short duration alarm"
-                            + "\n  condition.   The alarm can be reset manually by pressing the 'Accept Alarm' button."
+                            + "\n- Upgraded Pebble watch app to V2.6, which improves alarm detection annunciation."
+                            + "\n-  Use the 'Install Watch App' menu option to upgrade the application on the watch."
                 );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);
