@@ -526,11 +526,11 @@ public class SdDataSourcePebble extends SdDataSource {
      * Will be received as a message by the receiveData handler
      */
     public void getPebbleSdSettings() {
-        Log.v(TAG, "getPebbleSdSettings() - sending required settings to pebble");
-        mUtil.writeToSysLogFile("SdDataSourcePebble.getPebbleSdSettings()");
+        Log.v(TAG, "getWatchSdSettings() - sending required settings to pebble");
+        mUtil.writeToSysLogFile("SdDataSourcePebble.getWatchSdSettings()");
         sendPebbleSdSettings();
-        //Log.v(TAG, "getPebbleSdSettings() - requesting settings from pebble");
-        //mUtil.writeToSysLogFile("SdDataSourcePebble.getPebbleSdSettings() - and request settings from pebble");
+        //Log.v(TAG, "getWatchSdSettings() - requesting settings from pebble");
+        //mUtil.writeToSysLogFile("SdDataSourcePebble.getWatchSdSettings() - and request settings from pebble");
         PebbleDictionary data = new PebbleDictionary();
         data.addUint8(KEY_SETTINGS, (byte) 1);
         PebbleKit.sendDataToPebble(
@@ -545,7 +545,7 @@ public class SdDataSourcePebble extends SdDataSource {
      */
     public void sendPebbleSdSettings() {
         Log.v(TAG, "sendPebblSdSettings() - preparing settings dictionary.. mSampleFreq=" + mSampleFreq);
-        mUtil.writeToSysLogFile("SdDataSourcePebble.sendPebbleSdSettings()");
+        mUtil.writeToSysLogFile("SdDataSourcePebble.sendWatchSdSettings()");
 
         // Watch Settings
         final PebbleDictionary setDict = new PebbleDictionary();
@@ -572,7 +572,7 @@ public class SdDataSourcePebble extends SdDataSource {
         setDict.addUint16(KEY_FALL_WINDOW, mFallWindow);
 
         // Send Watch Settings to Pebble
-        Log.v(TAG, "sendPebbleSdSettings() - setDict = " + setDict.toJsonString());
+        Log.v(TAG, "sendWatchSdSettings() - setDict = " + setDict.toJsonString());
         PebbleKit.sendDataToPebble(mContext, SD_UUID, setDict);
     }
 
@@ -688,7 +688,7 @@ public class SdDataSourcePebble extends SdDataSource {
             //mUtil.writeToSysLogFile("SdDataSourcePebble.getStatus() - Pebble App not Running - Attempting to Re-Start");
             //startWatchApp();
             //mPebbleStatusTime = tnow;  // set status time to now so we do not re-start app repeatedly.
-            //getPebbleSdSettings();
+            //getWatchSdSettings();
             // Only make audible warning beep if we have not received data for more than mFaultTimerPeriod seconds.
             if (tdiff > (mDataUpdatePeriod + mFaultTimerPeriod) * 1000) {
                 Log.v(TAG, "getStatus() - Pebble App Not Running - Attempting to Re-Start");

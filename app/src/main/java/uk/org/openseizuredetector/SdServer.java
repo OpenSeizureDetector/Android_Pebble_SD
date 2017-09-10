@@ -199,6 +199,11 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePebble");
                 mSdDataSource = new SdDataSourcePebble(this.getApplicationContext(), mHandler, this);
                 break;
+            case "AndroidWear":
+                Log.v(TAG, "Selecting Android Wear DataSource");
+                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceAw");
+                mSdDataSource = new SdDataSourceAw(this.getApplicationContext(), mHandler, this);
+                break;
             case "Network":
                 Log.v(TAG, "Selecting Network DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceNetwork");

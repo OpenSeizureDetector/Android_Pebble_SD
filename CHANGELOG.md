@@ -3,6 +3,7 @@
 
 	V2.6.0 - 01 Sep 2017
 	Added Support for Wifi data source (initially to be used for ESP8266_SD)
+	and Android Wear datasource
 
 	V2.5.2 - 09 May 2017
 	Added support for Pebble App V2.5 which includes a multi-ROI mode to improve sensitivity.
