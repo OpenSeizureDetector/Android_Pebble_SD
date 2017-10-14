@@ -90,10 +90,10 @@ public class SdWebServer extends NanoHTTPD {
                         Log.v(TAG, "WebServer.serve() - POST /data - receiving data from device: parameters=" + parameters.toString());
                         Log.v(TAG, "              header=" + header.toString());
                         Log.v(TAG, "              files=" + files.toString());
-                        String postData = files.get("postData");
-                        Log.v(TAG, "              postData=" + postData);
+                        //String postData = files.get("postData");
+                        //Log.v(TAG, "              postData=" + postData);
                         // Send the data to the SdDataSource so the app can pick it up.
-                        mSdServer.mSdDataSource.updateFromJSON(postData);
+                        mSdServer.mSdDataSource.updateFromJSON(parameters.toString());
                         break;
                     default:
                         Log.v(TAG, "WebServer.serve() - Unrecognised method - " + method);

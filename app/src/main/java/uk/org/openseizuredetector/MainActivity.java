@@ -275,7 +275,7 @@ public class MainActivity extends Activity {
         TextView tv;
         tv = (TextView) findViewById(R.id.versionTv);
         String versionName = mUtil.getAppVersionName();
-        tv.setText("OpenSeizureDetector Server Version " + versionName);
+        tv.setText("OpenSeizureDetector Android App Version " + versionName);
 
         mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
         mUtil.bindToServer(this, mConnection);

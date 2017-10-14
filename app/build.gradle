@@ -7,8 +7,8 @@ android {
 
     defaultConfig {
         applicationId "uk.org.openseizuredetector"
-        minSdkVersion 20
-        targetSdkVersion 24
+        minSdkVersion 14
+        targetSdkVersion 14
     }
 
     buildTypes {
