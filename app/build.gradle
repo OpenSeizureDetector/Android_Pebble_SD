@@ -39,6 +39,7 @@ dependencies {
     // google play services used for location finding for SMS alerts.
     compile 'com.google.android.gms:play-services-location:10.0.0'
     compile 'com.google.android.gms:play-services:10.0.1'
+    compile 'com.github.wendykierp:JTransforms:3.0'
 
 }
 
