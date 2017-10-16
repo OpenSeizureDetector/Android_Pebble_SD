@@ -94,6 +94,11 @@ public class SdWebServer extends NanoHTTPD {
                         //Log.v(TAG, "              postData=" + postData);
                         // Send the data to the SdDataSource so the app can pick it up.
                         mSdServer.mSdDataSource.updateFromJSON(parameters.toString());
+                        if (mSdData.haveSettings) {
+                            answer = "OK";
+                        } else {
+                            answer = "sendSettings";
+                        }
                         break;
                     default:
                         Log.v(TAG, "WebServer.serve() - Unrecognised method - " + method);
@@ -101,25 +106,35 @@ public class SdWebServer extends NanoHTTPD {
                 break;
 
             case "/settings":
-                //Log.v(TAG,"WebServer.serve() - Returning settings");
-                try {
-                    JSONObject jsonObj = new JSONObject();
-                    jsonObj.put("alarmFreqMin", mSdData.alarmFreqMin);
-                    jsonObj.put("alarmFreqMax", mSdData.alarmFreqMax);
-                    jsonObj.put("nMin", mSdData.nMin);
-                    jsonObj.put("nMax", mSdData.nMax);
-                    jsonObj.put("warnTime", mSdData.warnTime);
-                    jsonObj.put("alarmTime", mSdData.alarmTime);
-                    jsonObj.put("alarmThresh", mSdData.alarmThresh);
-                    jsonObj.put("alarmRatioThresh", mSdData.alarmRatioThresh);
-                    jsonObj.put("batteryPc", mSdData.batteryPc);
-                    answer = jsonObj.toString();
-                } catch (Exception ex) {
-                    Log.v(TAG, "Error Creating Data Object - " + ex.toString());
-                    answer = "Error Creating Data Object";
+                switch (method) {
+                    case GET:
+                        //Log.v(TAG,"WebServer.serve() - Returning settings");
+                        try {
+                            JSONObject jsonObj = new JSONObject();
+                            jsonObj.put("alarmFreqMin", mSdData.alarmFreqMin);
+                            jsonObj.put("alarmFreqMax", mSdData.alarmFreqMax);
+                            jsonObj.put("nMin", mSdData.nMin);
+                            jsonObj.put("nMax", mSdData.nMax);
+                            jsonObj.put("warnTime", mSdData.warnTime);
+                            jsonObj.put("alarmTime", mSdData.alarmTime);
+                            jsonObj.put("alarmThresh", mSdData.alarmThresh);
+                            jsonObj.put("alarmRatioThresh", mSdData.alarmRatioThresh);
+                            jsonObj.put("batteryPc", mSdData.batteryPc);
+                            answer = jsonObj.toString();
+                        } catch (Exception ex) {
+                            Log.v(TAG, "Error Creating Data Object - " + ex.toString());
+                            answer = "Error Creating Data Object";
+                        }
+                        break;
+                    case POST:
+                        Log.v(TAG, "WebServer.serve() - POST /settings - receiving data from device: parameters=" + parameters.toString());
+                        Log.v(TAG, "              header=" + header.toString());
+                        Log.v(TAG, "              files=" + files.toString());
+                        mSdServer.mSdDataSource.updateFromJSON(parameters.toString());
+                        break;
+                    default:
+                        Log.v(TAG, "WebServer.serve() - Unrecognised method - " + method);
                 }
-                break;
-
             case "/spectrum":
                 Log.v(TAG, "WebServer.serve() - Returning spectrum - 1");
                 try {

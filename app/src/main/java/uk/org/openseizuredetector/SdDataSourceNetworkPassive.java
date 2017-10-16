@@ -281,17 +281,23 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
             JSONObject dataObject = mainObject.getJSONObject("dataObj");
             String dataTypeStr = dataObject.getString("dataType");
             Log.v(TAG,"updateFromJSON - dataType="+dataTypeStr);
-            JSONArray accelVals = dataObject.getJSONArray("data");
-
-            Log.v(TAG,"Received " + accelVals.length() + " acceleration values");
-
-            int i;
-            for (i=0;i<accelVals.length();i++)
-            {
-                mAccData[i] = accelVals.getInt(i);
+            if (dataTypeStr.equals("raw")) {
+                Log.v(TAG,"updateFromJSON - processing raw data");
+                JSONArray accelVals = dataObject.getJSONArray("data");
+                Log.v(TAG, "Received " + accelVals.length() + " acceleration values");
+                int i;
+                for (i = 0; i < accelVals.length(); i++) {
+                    mAccData[i] = accelVals.getInt(i);
+                }
+                mNSamp = accelVals.length();
+                doAnalysis();
+            } else if (dataTypeStr.equals("settings")){
+                Log.v(TAG,"updateFromJSON - processing settings");
+                mSamplePeriod = (short)dataObject.getInt("analysisPeriod");
+                mSampleFreq = (short)dataObject.getInt("analysisPeriod");
+                mSdData.haveSettings = true;
+                mSdData.mSampleFreq = mSampleFreq;
             }
-            mNSamp = accelVals.length();
-            doAnalysis();
         } catch (Exception e) {
             Log.v(TAG,"Error Parsing JSON String - "+e.toString());
         }
