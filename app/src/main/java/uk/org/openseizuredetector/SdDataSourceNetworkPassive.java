@@ -48,6 +48,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
+import static java.lang.Math.sqrt;
+
 
 /**
  * Abstract class for a seizure detector data source.  Subclasses include a pebble smart watch data source and a
@@ -56,6 +58,7 @@ import java.util.UUID;
 public class SdDataSourceNetworkPassive extends SdDataSource {
     private Handler mHandler = new Handler();
     private Timer mStatusTimer;
+    private Timer mAlarmCheckTimer;
     private Time mDataStatusTime;
     private boolean mWatchAppRunningCheck = false;
     private int mAppRestartTimeout = 10;  // Timeout before re-starting watch app (sec) if we have not received
@@ -89,6 +92,8 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
     private short mFallThreshMin;
     private short mFallThreshMax;
     private short mFallWindow;
+
+    private int mAlarmCount;
 
     // raw data storage for SD_MODE_RAW
     private int MAX_RAW_DATA = 500;
@@ -131,6 +136,20 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
         } else {
             Log.v(TAG, "start(): status timer already running.");
             mUtil.writeToSysLogFile("SdDataSourceNetworkPassive.start() - status timer already running??");
+        }
+        if (mAlarmCheckTimer == null) {
+            Log.v(TAG, "start(): starting alarm check timer");
+            mUtil.writeToSysLogFile("SdDataSourceNetworkPassive.start() - starting alarm check timer");
+            mAlarmCheckTimer = new Timer();
+            mAlarmCheckTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    alarmCheck();
+                }
+            }, 0, 1000);
+        } else {
+            Log.v(TAG, "start(): alarm check timer already running.");
+            mUtil.writeToSysLogFile("SdDataSourceNetworkPassive.start() - alarm check timer already running??");
         }
     }
 
@@ -290,17 +309,31 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
                     mAccData[i] = accelVals.getInt(i);
                 }
                 mNSamp = accelVals.length();
+                mWatchAppRunningCheck = true;
                 doAnalysis();
             } else if (dataTypeStr.equals("settings")){
                 Log.v(TAG,"updateFromJSON - processing settings");
                 mSamplePeriod = (short)dataObject.getInt("analysisPeriod");
-                mSampleFreq = (short)dataObject.getInt("analysisPeriod");
+                mSampleFreq = (short)dataObject.getInt("sampleFreq");
+                Log.v(TAG,"updateFromJSON - mSamplePeriod="+mSamplePeriod+" mSampleFreq="+mSampleFreq);
                 mSdData.haveSettings = true;
                 mSdData.mSampleFreq = mSampleFreq;
             }
         } catch (Exception e) {
             Log.v(TAG,"Error Parsing JSON String - "+e.toString());
         }
+    }
+
+    /**
+     * Calculate the magnitude of entry i in the fft array fft
+     * @param fft
+     * @param i
+     * @return magnitude ( Re*Re + Im*Im )
+     */
+    private double getMagnitude(double[] fft, int i) {
+        double mag;
+        mag = sqrt(fft[2*i]*fft[2*i] + fft[2*i + 1] * fft[2*i +1]);
+        return mag;
     }
 
     /**
@@ -322,15 +355,14 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
         DoubleFFT_1D fftDo = new DoubleFFT_1D(mNSamp);
         double[] fft = new double[mNSamp * 2];
         System.arraycopy(mAccData, 0, fft, 0, mNSamp);
-        fftDo.realForwardFull(fft);
+        fftDo.realForward(fft);
 
         // Calculate the whole spectrum power (well a value equivalent to it that avoids suare root calculations
         // and zero any readings that are above the frequency cutoff.
         double specPower = 0;
         for (int i = 1; i < mNSamp / 2; i++) {
             if (i <= nFreqCutoff) {
-                specPower = specPower + fft[2 * i] + fft[2*i] + fft[2*i +1] * fft[2*i+1];
-
+                specPower = specPower + getMagnitude(fft,i);
             } else {
                 fft[2*i] = 0.;
                 fft[2*i+1] = 0.;
@@ -341,7 +373,7 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
         // Calculate the Region of Interest power and power ratio.
         double roiPower = 0;
         for (int i=nMin;i<nMax;i++) {
-            roiPower = roiPower + fft[2 * i] + fft[2*i] + fft[2*i +1] * fft[2*i+1];
+            roiPower = roiPower + getMagnitude(fft,i);
         }
         roiPower = roiPower/(nMax - nMin);
         double roiRatio = 10 * roiPower / specPower;
@@ -353,7 +385,7 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
             int binMax = (int)(1 + (ifreq+1)/freqRes);
             simpleSpec[ifreq]=0;
             for (int i=binMin;i<binMax;i++) {
-                simpleSpec[ifreq] = simpleSpec[ifreq] + fft[2 * i] + fft[2*i] + fft[2*i +1] * fft[2*i+1];
+                simpleSpec[ifreq] = simpleSpec[ifreq] + getMagnitude(fft,i);
             }
             simpleSpec[ifreq] = simpleSpec[ifreq] / (binMax-binMin);
         }
@@ -372,6 +404,8 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
         for(int i=0;i<SIMPLE_SPEC_FMAX;i++) {
             mSdData.simpleSpec[i] = (int)simpleSpec[i];
         }
+        // Because we have received data, set flag to show watch app running.
+        mWatchAppRunningCheck = true;
     }
 
 
@@ -420,6 +454,40 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
         }
     }
 
+    /**
+     * alarmCheck - determines alarm state based on seizure detector data SdData.   Called every second.
+     */
+    private void alarmCheck() {
+        boolean inAlarm;
+        Log.v(TAG,"alarmCheck()");
+        if ((mSdData.roiPower > mAlarmThresh) && (10*(mSdData.roiPower/mSdData.specPower) > mAlarmRatioThresh)) {
+            inAlarm = true;
+        } else {
+            inAlarm = false;
+        }
+
+        if (inAlarm) {
+            mAlarmCount+=mSamplePeriod;
+            if (mAlarmCount>mAlarmTime) {
+                mSdData.alarmState = 2;
+            } else if (mAlarmCount>mWarnTime) {
+                mSdData.alarmState = 1;
+            }
+        } else {
+            // If we are in an ALARM state, revert back to WARNING, otherwise
+            // revert back to OK.
+            if (mSdData.alarmState == 2) {
+                mSdData.alarmState = 1;
+            } else {
+                mSdData.alarmState = 0;
+                mAlarmCount = 0;
+            }
+        }
+        Log.v(TAG,"inAlarm="+inAlarm+", alarmState = "+mSdData.alarmState+" alarmCount="+mAlarmCount);
+
+
+
+    }
 
 }
 
