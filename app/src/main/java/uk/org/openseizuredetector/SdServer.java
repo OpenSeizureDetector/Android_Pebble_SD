@@ -541,7 +541,20 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 Log.v(TAG, "faultWarningBeep() - CancelAudible Active - silent beep...");
             } else {
                 if (mAudibleFaultWarning) {
-                    beep(10);
+                    if (mMp3Alarm) {
+                        Log.v(TAG,"making MP3 alarm beep");
+                        // From https://stackoverflow.com/questions/4441334/how-to-play-an-android-notification-sound
+                        // This plays an audio file as a notification, using the notification sound channel.
+                        NotificationManager notificationManager =
+                                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                        Uri soundUri = Uri.parse("android.resource://"+getPackageName()+"/raw/fault");
+                        NotificationCompat.Builder mBuilder =
+                                new NotificationCompat.Builder(getApplicationContext())
+                                        .setSound(soundUri); //This sets the sound to play
+                        notificationManager.notify(0, mBuilder.build());
+                    } else {
+                        beep(10);
+                    }
                     Log.v(TAG, "faultWarningBeep()");
                     mUtil.writeToSysLogFile("SdServer.faultWarningBeep() - beeping");
                 } else {
@@ -567,15 +580,13 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 if (mMp3Alarm) {
                     Log.v(TAG,"making MP3 alarm beep");
                     // From https://stackoverflow.com/questions/4441334/how-to-play-an-android-notification-sound
+                    // This plays an audio file as a notification, using the notification sound channel.
                     NotificationManager notificationManager =
                             (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                    //Define sound URI
-                    Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                    Uri soundUri = Uri.parse("android.resource://"+getPackageName()+"/raw/alarm");
                     NotificationCompat.Builder mBuilder =
                             new NotificationCompat.Builder(getApplicationContext())
                                 .setSound(soundUri); //This sets the sound to play
-
-//Display notification
                     notificationManager.notify(0, mBuilder.build());
                 } else {
                     beep(3000);
@@ -596,7 +607,20 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             Log.v(TAG, "warningBeep() - CancelAudible Active - silent beep...");
         } else {
             if (mAudibleWarning) {
-                beep(100);
+                if (mMp3Alarm) {
+                    Log.v(TAG,"making MP3 alarm beep");
+                    // From https://stackoverflow.com/questions/4441334/how-to-play-an-android-notification-sound
+                    // This plays an audio file as a notification, using the notification sound channel.
+                    NotificationManager notificationManager =
+                            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                    Uri soundUri = Uri.parse("android.resource://"+getPackageName()+"/raw/warning");
+                    NotificationCompat.Builder mBuilder =
+                            new NotificationCompat.Builder(getApplicationContext())
+                                    .setSound(soundUri); //This sets the sound to play
+                    notificationManager.notify(0, mBuilder.build());
+                } else {
+                    beep(100);
+                }
                 Log.v(TAG, "warningBeep()");
                 mUtil.writeToSysLogFile("SdServer.warningBeep() - beeping");
             } else {
