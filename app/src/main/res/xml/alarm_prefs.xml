@@ -36,6 +36,11 @@
             android:summary="Duration that fault alarms are muted before initiating."
             android:numeric="integer"
             android:defaultValue="30" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="UseMp3Alarm"
+            android:summary="Play an MP3 file to create the alarm beeps rather than using the default tone generator."
+            android:title="Use MP3 Alarm Sound" />
 
     </PreferenceCategory>
 
