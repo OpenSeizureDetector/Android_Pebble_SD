@@ -495,10 +495,7 @@ public class StartupActivity extends Activity {
                             + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
-                            + "\n- Update to Detection Algorithm:  You will need to increase the AlarmRatioThresh setting from the previous "
-                            +    "default of around 30 to a value of 50-60 to avoid excessive false alarms"
-                            + "\n- Added GPS Location to SMS Alarms"
-                            + "\n- Added auto-start on boot capability"
+                            + "\n- Added support for 'Wifi Datasources' - initially for the experimental ESP8266 based seizure detector."
             );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);

@@ -5,7 +5,9 @@
 	Added Support for Wifi data source (initially to be used for ESP8266_SD)
 	and Android Wear datasource
 
-	V2.5.3 - 10sep2017 - Added Pebble App V2.6 which provides better alarm reliability
+	V2.5.4 - 03dec2017 - Added option to use either tone generator or MP3 alarm sound, as a user reported problem with tone generator on high end samsung phone.
+
+	V2.5.3 - 10sep2017 - Added Pebble App V2.6 which provides better alarm reliability 
 	- no changes to Android App other than first run dialog.
 
 	V2.5.2 - 09 May 2017
