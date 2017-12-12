@@ -406,6 +406,7 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
         }
         // Because we have received data, set flag to show watch app running.
         mWatchAppRunningCheck = true;
+        mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
     }
 
 
@@ -434,6 +435,8 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
                 Log.v(TAG, "getStatus() - Watch App Not Running");
                 mUtil.writeToSysLogFile("SdDataSourceNetworkPassive.getStatus() - Watch App not Running");
                 //mDataStatusTime.setToNow();
+                mSdData.roiPower = -1;
+                mSdData.specPower = -1;
                 mSdDataReceiver.onSdDataFault(mSdData);
             } else {
                 Log.v(TAG, "getStatus() - Waiting for mFaultTimerPeriod before issuing audible warning...");
@@ -459,35 +462,44 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
      */
     private void alarmCheck() {
         boolean inAlarm;
-        Log.v(TAG,"alarmCheck()");
-        if ((mSdData.roiPower > mAlarmThresh) && (10*(mSdData.roiPower/mSdData.specPower) > mAlarmRatioThresh)) {
-            inAlarm = true;
-        } else {
-            inAlarm = false;
-        }
-
-        if (inAlarm) {
-            mAlarmCount+=mSamplePeriod;
-            if (mAlarmCount>mAlarmTime) {
-                mSdData.alarmState = 2;
-            } else if (mAlarmCount>mWarnTime) {
-                mSdData.alarmState = 1;
-            }
-        } else {
-            // If we are in an ALARM state, revert back to WARNING, otherwise
-            // revert back to OK.
-            if (mSdData.alarmState == 2) {
-                mSdData.alarmState = 1;
+        if (mWatchAppRunningCheck) {
+            Log.v(TAG, "alarmCheck()");
+            if ((mSdData.roiPower > mAlarmThresh) && (10 * (mSdData.roiPower / mSdData.specPower) > mAlarmRatioThresh)) {
+                inAlarm = true;
             } else {
-                mSdData.alarmState = 0;
-                mAlarmCount = 0;
+                inAlarm = false;
             }
+
+            if (inAlarm) {
+                mAlarmCount += mSamplePeriod;
+                if (mAlarmCount > mAlarmTime) {
+                    // full alarm
+                    mSdData.alarmState = 2;
+                } else if (mAlarmCount > mWarnTime) {
+                    // warning
+                    mSdData.alarmState = 1;
+                }
+            } else {
+                // If we are not in an ALARM state, revert back to WARNING, otherwise
+                // revert back to OK.
+                if (mSdData.alarmState == 2) {
+                    // revert to warning
+                    mSdData.alarmState = 1;
+                    mAlarmCount = mWarnTime + 1;  // pretend we have only just entered warning state.
+                } else {
+                    // revert to OK
+                    mSdData.alarmState = 0;
+                    mAlarmCount = 0;
+                }
+            }
+            Log.v(TAG, "inAlarm=" + inAlarm + ", alarmState = " + mSdData.alarmState + " alarmCount=" + mAlarmCount + " mAlarmTime=" + mAlarmTime);
+        } else {
+            Log.v(TAG,"alarmCheck() - watch app not running so not doing anything");
+            mAlarmCount = 0;
         }
-        Log.v(TAG,"inAlarm="+inAlarm+", alarmState = "+mSdData.alarmState+" alarmCount="+mAlarmCount);
-
-
-
     }
+
+    
 
 }
 

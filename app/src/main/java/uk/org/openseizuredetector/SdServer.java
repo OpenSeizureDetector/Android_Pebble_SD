@@ -520,6 +520,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         Log.v(TAG, "onSdDataFault()");
         mSdData = sdData;
         mSdData.alarmState = 4;  // set fault alarm state.
+        mSdData.alarmStanding = false;
         if (webServer != null) webServer.setSdData(mSdData);
         if (mAudibleFaultWarning) {
             faultWarningBeep();
