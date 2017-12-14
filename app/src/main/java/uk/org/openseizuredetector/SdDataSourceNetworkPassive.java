@@ -58,12 +58,15 @@ import static java.lang.Math.sqrt;
 public class SdDataSourceNetworkPassive extends SdDataSource {
     private Handler mHandler = new Handler();
     private Timer mStatusTimer;
+    private Timer mSettingsTimer;
     private Timer mAlarmCheckTimer;
     private Time mDataStatusTime;
     private boolean mWatchAppRunningCheck = false;
     private int mAppRestartTimeout = 10;  // Timeout before re-starting watch app (sec) if we have not received
                                             // data after mDataUpdatePeriod
     private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
+    private int mSettingsPeriod = 60;  // period between requesting settings in seconds.
+
 
     private String TAG = "SdDataSourceNetPassive";
 
@@ -151,6 +154,22 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
             Log.v(TAG, "start(): alarm check timer already running.");
             mUtil.writeToSysLogFile("SdDataSourceNetworkPassive.start() - alarm check timer already running??");
         }
+
+        if (mSettingsTimer == null) {
+            Log.v(TAG, "start(): starting settings timer");
+            mUtil.writeToSysLogFile("SdDataSourceNetworkPassive.start() - starting settings timer");
+            mSettingsTimer = new Timer();
+            mSettingsTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    mSdData.haveSettings = false;
+                }
+            }, 0, 1000 * mSettingsPeriod);  // ask for settings less frequently than we get data
+        } else {
+            Log.v(TAG, "start(): settings timer already running.");
+            mUtil.writeToSysLogFile("SdDataSourceNetworkPassive.start() - settings timer already running??");
+        }
+
     }
 
     /**
@@ -315,9 +334,11 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
                 Log.v(TAG,"updateFromJSON - processing settings");
                 mSamplePeriod = (short)dataObject.getInt("analysisPeriod");
                 mSampleFreq = (short)dataObject.getInt("sampleFreq");
+                mSdData.batteryPc = (short)dataObject.getInt("battery");
                 Log.v(TAG,"updateFromJSON - mSamplePeriod="+mSamplePeriod+" mSampleFreq="+mSampleFreq);
                 mSdData.haveSettings = true;
                 mSdData.mSampleFreq = mSampleFreq;
+                mWatchAppRunningCheck = true;
             }
         } catch (Exception e) {
             Log.v(TAG,"Error Parsing JSON String - "+e.toString());
@@ -332,7 +353,7 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
      */
     private double getMagnitude(double[] fft, int i) {
         double mag;
-        mag = sqrt(fft[2*i]*fft[2*i] + fft[2*i + 1] * fft[2*i +1]);
+        mag = (fft[2*i]*fft[2*i] + fft[2*i + 1] * fft[2*i +1]);
         return mag;
     }
 
@@ -341,6 +362,9 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
      * and populate the output data structure mSdData
      */
     private void doAnalysis() {
+        // ******* POPULATE WITH DUMMY DATA *****
+        //makeTestData();
+        // **************************************
         double freqRes = 1.0*mSampleFreq/mNSamp;
         Log.v(TAG,"doAnalysis(): mSampleFreq="+mSampleFreq+" mNSamp="+mNSamp+": freqRes="+freqRes);
         // Set the frequency bounds for the analysis in fft output bin numbers.
@@ -357,7 +381,7 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
         System.arraycopy(mAccData, 0, fft, 0, mNSamp);
         fftDo.realForward(fft);
 
-        // Calculate the whole spectrum power (well a value equivalent to it that avoids suare root calculations
+        // Calculate the whole spectrum power (well a value equivalent to it that avoids square root calculations
         // and zero any readings that are above the frequency cutoff.
         double specPower = 0;
         for (int i = 1; i < mNSamp / 2; i++) {
@@ -400,7 +424,7 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
         mSdData.haveData = true;
         mSdData.alarmThresh = mAlarmThresh;
         mSdData.alarmRatioThresh = mAlarmRatioThresh;
-        mSdData.batteryPc = 50;  // FIXME we should get the watch to send us battery status.
+        //mSdData.batteryPc = 50;  // FIXME we should get the watch to send us battery status.
         for(int i=0;i<SIMPLE_SPEC_FMAX;i++) {
             mSdData.simpleSpec[i] = (int)simpleSpec[i];
         }
@@ -421,6 +445,8 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
         // get time since the last data was received from the Pebble watch.
         tdiff = (tnow.toMillis(false) - mDataStatusTime.toMillis(false));
         Log.v(TAG, "getStatus() - mWatchAppRunningCheck=" + mWatchAppRunningCheck + " tdiff=" + tdiff);
+        Log.v(TAG,"getStatus() - tdiff="+tdiff+", mDataUpatePeriod="+mDataUpdatePeriod+", mAppRestartTimeout="+mAppRestartTimeout);
+
         mSdData.pebbleConnected = true;  // We can't check connection for passive network connection, so set it to true to avoid errors.
         // And is the watch app running?
         // set mWatchAppRunningCheck has been false for more than 10 seconds
@@ -462,7 +488,19 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
      */
     private void alarmCheck() {
         boolean inAlarm;
-        if (mWatchAppRunningCheck) {
+        Time tnow = new Time(Time.getCurrentTimezone());
+        long tdiff;
+        tnow.setToNow();
+
+        // get time since the last data was received from the watch.
+        tdiff = (tnow.toMillis(false) - mDataStatusTime.toMillis(false));
+        Log.v(TAG, "alarmCheck() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout
+                + ", combined = " + (mDataUpdatePeriod + mAppRestartTimeout) * 1000);
+        if (!mWatchAppRunningCheck &&
+                (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000)) {
+            Log.v(TAG, "alarmCheck() - watch app not running so not doing anything");
+            mAlarmCount = 0;
+        } else {
             Log.v(TAG, "alarmCheck()");
             if ((mSdData.roiPower > mAlarmThresh) && (10 * (mSdData.roiPower / mSdData.specPower) > mAlarmRatioThresh)) {
                 inAlarm = true;
@@ -493,13 +531,25 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
                 }
             }
             Log.v(TAG, "inAlarm=" + inAlarm + ", alarmState = " + mSdData.alarmState + " alarmCount=" + mAlarmCount + " mAlarmTime=" + mAlarmTime);
-        } else {
-            Log.v(TAG,"alarmCheck() - watch app not running so not doing anything");
-            mAlarmCount = 0;
         }
     }
 
-    
+    private void makeTestData() {
+        int sampleFreq = 25; // Hz
+        int samplePeriod = 5; // sec
+        int accDataPos = 0;
+
+        double signalFreq = 5; // Hz
+        double signalAmp = 500; // mG
+
+        for (int i = 0; i < samplePeriod * sampleFreq; i++) {
+            double t = 1.0*i / sampleFreq;
+            double r = 2.0*Math.PI*t*signalFreq;
+            mAccData[accDataPos] = (signalAmp*(Math.sin(r)));
+            Log.v(TAG, "i=" + i + ", t="+t+", r="+r+", a="+ mAccData[accDataPos]);
+            accDataPos++;
+        }
+    }
 
 }
 
