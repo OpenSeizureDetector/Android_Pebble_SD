@@ -23,10 +23,12 @@
 */
 package uk.org.openseizuredetector;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
 import android.os.BatteryManager;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -66,6 +68,7 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
                                             // data after mDataUpdatePeriod
     private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
     private int mSettingsPeriod = 60;  // period between requesting settings in seconds.
+    private SdDataBroadcastReceiver mSdDataBroadcastReceiver;
 
 
     private String TAG = "SdDataSourceNetPassive";
@@ -170,6 +173,11 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
             mUtil.writeToSysLogFile("SdDataSourceNetworkPassive.start() - settings timer already running??");
         }
 
+        mSdDataBroadcastReceiver = new SdDataBroadcastReceiver();
+        //uk.org.openseizuredetector.SdDataReceived
+        IntentFilter filter = new IntentFilter("uk.org.openseizuredetector.SdDataReceived");
+        mContext.registerReceiver(mSdDataBroadcastReceiver, filter);
+
     }
 
     /**
@@ -191,6 +199,7 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
             Log.v(TAG, "Error in stop() - " + e.toString());
             mUtil.writeToSysLogFile("SdDataSourceNetworkPassive.stop() - error - "+e.toString());
         }
+        mContext.unregisterReceiver(mSdDataBroadcastReceiver);
     }
 
     /**
@@ -316,7 +325,8 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
 
         try {
             JSONObject mainObject = new JSONObject(jsonStr);
-            JSONObject dataObject = mainObject.getJSONObject("dataObj");
+            //JSONObject dataObject = mainObject.getJSONObject("dataObj");
+            JSONObject dataObject = mainObject;
             String dataTypeStr = dataObject.getString("dataType");
             Log.v(TAG,"updateFromJSON - dataType="+dataTypeStr);
             if (dataTypeStr.equals("raw")) {
@@ -339,9 +349,12 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
                 mSdData.haveSettings = true;
                 mSdData.mSampleFreq = mSampleFreq;
                 mWatchAppRunningCheck = true;
+            } else {
+                Log.v(TAG,"updateFromJSON - unrecognised dataType "+dataTypeStr);
             }
         } catch (Exception e) {
-            Log.v(TAG,"Error Parsing JSON String - "+e.toString());
+            Log.v(TAG,"updateFromJSON - Error Parsing JSON String - "+e.toString());
+            e.printStackTrace();
         }
     }
 
@@ -548,6 +561,18 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
             mAccData[accDataPos] = (signalAmp*(Math.sin(r)));
             Log.v(TAG, "i=" + i + ", t="+t+", r="+r+", a="+ mAccData[accDataPos]);
             accDataPos++;
+        }
+    }
+
+    public class SdDataBroadcastReceiver extends BroadcastReceiver {
+        //private String TAG = "SdDataBroadcastReceiver";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.v(TAG,"SdDataBroadcastReceiver.onReceive()");
+            String jsonStr = intent.getStringExtra("data");
+            Log.v(TAG,"SdDataBroadcastReceiver.onReceive() - data="+jsonStr);
+            updateFromJSON(jsonStr);
         }
     }
 
