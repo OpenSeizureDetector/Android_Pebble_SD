@@ -43,6 +43,8 @@ Logo based on ["Star of life2" by Verdy p - Own work. Licensed under Public Doma
 
 Other icons crated using http://romannurik.github.io/AndroidAssetStudio.
 
+Audio Alarm sounds from freesound https://freesound.org/people/coltonmanz/sounds/381382/, https://freesound.org/people/NoiseCollector/sounds/4270/, https://freesound.org/people/pistak23/sounds/271632/
 
 
-Graham Jones, 01 March 2015.  (grahamjones139+sd@gmail.com)
+
+Graham Jones, 03 December 2017.  (grahamjones139+sd@gmail.com)

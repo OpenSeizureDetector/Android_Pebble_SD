@@ -45,7 +45,9 @@ import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.media.AudioManager;
+import android.media.RingtoneManager;
 import android.media.ToneGenerator;
+import android.net.Uri;
 import android.os.CountDownTimer;
 import android.os.Environment;
 import android.os.Handler;
@@ -56,7 +58,7 @@ import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
-import android.support.v7.app.NotificationCompat;
+import android.support.v4.app.NotificationCompat;
 import android.telephony.SmsManager;
 import android.location.Location;
 import android.util.Log;
@@ -106,9 +108,10 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
     private int mLatchAlarmPeriod = 0;
     private LatchAlarmTimer mLatchAlarmTimer = null;
     private boolean mCancelAudible = false;
-    public boolean mAudibleAlarm = false;
+    public boolean mAudibleAlarm = false;   // set to public because it is accessed by MainActivity
     private boolean mAudibleWarning = false;
     private boolean mAudibleFaultWarning = false;
+    private boolean mMp3Alarm = false;
     private boolean mSMSAlarm = false;
     private String[] mSMSNumbers;
     private String mSMSMsgStr = "default SMS Message";
@@ -516,7 +519,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
     /* from http://stackoverflow.com/questions/12154940/how-to-make-a-beep-in-android */
 
     /**
-     * beep for duration milliseconds, but only if mAudibleAlarm is set.
+     * beep for duration milliseconds, using tone generator
      */
     private void beep(int duration) {
         if (mToneGenerator != null) {
@@ -538,7 +541,20 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 Log.v(TAG, "faultWarningBeep() - CancelAudible Active - silent beep...");
             } else {
                 if (mAudibleFaultWarning) {
-                    beep(10);
+                    if (mMp3Alarm) {
+                        Log.v(TAG,"making MP3 alarm beep");
+                        // From https://stackoverflow.com/questions/4441334/how-to-play-an-android-notification-sound
+                        // This plays an audio file as a notification, using the notification sound channel.
+                        NotificationManager notificationManager =
+                                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                        Uri soundUri = Uri.parse("android.resource://"+getPackageName()+"/raw/fault");
+                        NotificationCompat.Builder mBuilder =
+                                new NotificationCompat.Builder(getApplicationContext())
+                                        .setSound(soundUri); //This sets the sound to play
+                        notificationManager.notify(0, mBuilder.build());
+                    } else {
+                        beep(10);
+                    }
                     Log.v(TAG, "faultWarningBeep()");
                     mUtil.writeToSysLogFile("SdServer.faultWarningBeep() - beeping");
                 } else {
@@ -561,7 +577,20 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             Log.v(TAG, "alarmBeep() - CancelAudible Active - silent beep...");
         } else {
             if (mAudibleAlarm) {
-                beep(3000);
+                if (mMp3Alarm) {
+                    Log.v(TAG,"making MP3 alarm beep");
+                    // From https://stackoverflow.com/questions/4441334/how-to-play-an-android-notification-sound
+                    // This plays an audio file as a notification, using the notification sound channel.
+                    NotificationManager notificationManager =
+                            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                    Uri soundUri = Uri.parse("android.resource://"+getPackageName()+"/raw/alarm");
+                    NotificationCompat.Builder mBuilder =
+                            new NotificationCompat.Builder(getApplicationContext())
+                                .setSound(soundUri); //This sets the sound to play
+                    notificationManager.notify(0, mBuilder.build());
+                } else {
+                    beep(3000);
+                }
                 Log.v(TAG, "alarmBeep()");
                 mUtil.writeToSysLogFile("SdServer.alarmBeep() - beeping");
             } else {
@@ -578,7 +607,20 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             Log.v(TAG, "warningBeep() - CancelAudible Active - silent beep...");
         } else {
             if (mAudibleWarning) {
-                beep(100);
+                if (mMp3Alarm) {
+                    Log.v(TAG,"making MP3 alarm beep");
+                    // From https://stackoverflow.com/questions/4441334/how-to-play-an-android-notification-sound
+                    // This plays an audio file as a notification, using the notification sound channel.
+                    NotificationManager notificationManager =
+                            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                    Uri soundUri = Uri.parse("android.resource://"+getPackageName()+"/raw/warning");
+                    NotificationCompat.Builder mBuilder =
+                            new NotificationCompat.Builder(getApplicationContext())
+                                    .setSound(soundUri); //This sets the sound to play
+                    notificationManager.notify(0, mBuilder.build());
+                } else {
+                    beep(100);
+                }
                 Log.v(TAG, "warningBeep()");
                 mUtil.writeToSysLogFile("SdServer.warningBeep() - beeping");
             } else {
@@ -837,6 +879,9 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             Log.v(TAG, "updatePrefs() - mAuidbleAlarm = " + mAudibleAlarm);
             mAudibleWarning = SP.getBoolean("AudibleWarning", true);
             Log.v(TAG, "updatePrefs() - mAuidbleWarning = " + mAudibleWarning);
+            mMp3Alarm = SP.getBoolean("UseMp3Alarm", false);
+            Log.v(TAG, "updatePrefs() - mMp3Alarm = " + mMp3Alarm);
+
             mSMSAlarm = SP.getBoolean("SMSAlarm", false);
             Log.v(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             String SMSNumberStr = SP.getString("SMSNumbers", "");

@@ -461,8 +461,8 @@ public class StartupActivity extends Activity {
                             + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
-                            + "\n- Upgraded Pebble watch app to V2.6, which improves alarm detection annunciation."
-                            + "\n-  Use the 'Install Watch App' menu option to upgrade the application on the watch."
+                            + "\n- Added option to use MP3 alarm notification sounds rather than the default."
+                            + "\n- as some users had reported the default sound not working."
                 );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);
@@ -492,10 +492,8 @@ public class StartupActivity extends Activity {
                             + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
-                            + "\n- Update to Detection Algorithm:  You will need to increase the AlarmRatioThresh setting from the previous "
-                            +    "default of around 30 to a value of 50-60 to avoid excessive false alarms"
-                            + "\n- Added GPS Location to SMS Alarms"
-                            + "\n- Added auto-start on boot capability"
+                            + "\n- Added option to use MP3 alarm notification sounds rather than the default."
+                            + "\n- as some users had reported the default sound not working."
             );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);
