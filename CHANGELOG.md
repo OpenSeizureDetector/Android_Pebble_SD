@@ -1,6 +1,10 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
+	V2.5.5 - 23feb2018 - Improved logging to help diagnose network problems
+	that result in 'net fault' warnings from network data source
+	('wifi-storms').
+
 	V2.5.4 - 03dec2017 - Added option to use either tone generator or MP3 alarm sound, as a user reported problem with tone generator on high end samsung phone.
 
 	V2.5.3 - 10sep2017 - Added Pebble App V2.6 which provides better alarm reliability 

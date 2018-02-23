@@ -245,7 +245,7 @@ public class SdDataSourcePebble extends SdDataSource {
      */
     public void updatePrefs() {
         Log.v(TAG, "updatePrefs()");
-        mUtil.writeToSysLogFile("SdDataSourcePebble.updatePrefs()");
+        //mUtil.writeToSysLogFile("SdDataSourcePebble.updatePrefs()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(mContext);
         try {
@@ -527,7 +527,7 @@ public class SdDataSourcePebble extends SdDataSource {
      */
     public void getPebbleSdSettings() {
         Log.v(TAG, "getPebbleSdSettings() - sending required settings to pebble");
-        mUtil.writeToSysLogFile("SdDataSourcePebble.getPebbleSdSettings()");
+        //mUtil.writeToSysLogFile("SdDataSourcePebble.getPebbleSdSettings()");
         sendPebbleSdSettings();
         //Log.v(TAG, "getPebbleSdSettings() - requesting settings from pebble");
         //mUtil.writeToSysLogFile("SdDataSourcePebble.getPebbleSdSettings() - and request settings from pebble");
@@ -545,7 +545,7 @@ public class SdDataSourcePebble extends SdDataSource {
      */
     public void sendPebbleSdSettings() {
         Log.v(TAG, "sendPebblSdSettings() - preparing settings dictionary.. mSampleFreq=" + mSampleFreq);
-        mUtil.writeToSysLogFile("SdDataSourcePebble.sendPebbleSdSettings()");
+        //mUtil.writeToSysLogFile("SdDataSourcePebble.sendPebbleSdSettings()");
 
         // Watch Settings
         final PebbleDictionary setDict = new PebbleDictionary();

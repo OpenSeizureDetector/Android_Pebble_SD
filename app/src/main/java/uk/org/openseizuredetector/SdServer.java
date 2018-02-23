@@ -37,9 +37,11 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.AssetManager;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
@@ -47,6 +49,8 @@ import android.location.Location;
 import android.media.AudioManager;
 import android.media.RingtoneManager;
 import android.media.ToneGenerator;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.CountDownTimer;
 import android.os.Environment;
@@ -122,6 +126,8 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
     private OsdUtil mUtil;
     private Handler mHandler;
     private ToneGenerator mToneGenerator;
+
+    private NetworkBroadcastReceiver mNetworkBroadcastReceiver;
 
     private final IBinder mBinder = new SdBinder();
 
@@ -764,7 +770,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         // Start timer to remove the cancel audible flag
         // after the required period.
         if (mCancelAudibleTimer != null) {
-            Log.v(TAG, "onCreate(): cancel audible timer already running - cancelling it.");
+            Log.v(TAG, "cancelAudible(): cancel audible timer already running - cancelling it.");
             mCancelAudibleTimer.cancel();
             mCancelAudibleTimer = null;
             mCancelAudible = false;
@@ -792,7 +798,8 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
 
 
     /**
-     * Start the web server (on port 8080)
+     * Start the web server (on port 8080), and register for network connectivity events so we can log
+     * problems.
      */
     protected void startWebServer() {
         Log.v(TAG, "startWebServer()");
@@ -808,10 +815,16 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         } else {
             Log.v(TAG, "startWebServer(): server already running???");
         }
+
+        mNetworkBroadcastReceiver = new NetworkBroadcastReceiver();
+        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        //filter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+        getApplicationContext().registerReceiver(mNetworkBroadcastReceiver,filter);
     }
 
     /**
      * Stop the web server - FIXME - doesn't seem to do anything!
+     * And de-register for network connectivity events.
      */
     protected void stopWebServer() {
         Log.v(TAG, "SdServer.stopWebServer()");
@@ -824,7 +837,49 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             }
             webServer = null;
         }
+        getApplicationContext().unregisterReceiver(mNetworkBroadcastReceiver);
     }
+
+    private class NetworkBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.v(TAG,"NetworkBroadCastReceiver.onReceive");
+            mUtil.writeToSysLogFile("Network State Changed" + intent.getAction());
+            //mUtil.showToast("Network State Changed" + intent.getAction());
+
+            ConnectivityManager cm =
+                    (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+            NetworkInfo activeNetwork = null;
+            try {
+                activeNetwork = cm.getActiveNetworkInfo();
+            } catch (Exception e) {
+                Log.v(TAG,"NetworkBroadcastReceiver - failed to retrieve active network info");
+                mUtil.writeToSysLogFile("NetworkBroadcastReceiver - failed to retrieve active network info");
+                Log.v(TAG,e.toString());
+            }
+            if (activeNetwork != null) {
+                boolean isConnected = activeNetwork != null &&
+                        activeNetwork.isConnectedOrConnecting();
+                boolean isWiFi = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
+                if (!isWiFi) {
+                    Log.v(TAG,"NetworkBroadcastReceiver - no Wifi Connection");
+                    mUtil.writeToSysLogFile("Network State Changed - no Wifi Connection");
+                    mUtil.showToast("Network State Changed - no Wifi Connection");
+                } else {
+                    Log.v(TAG,"NetworkBroadcastReceiver - Wifi Connected");
+                    mUtil.writeToSysLogFile("Network State Changed - Wifi Connected");
+                    mUtil.showToast("Network State Changed - Wifi Connected");
+                }
+
+            } else {
+                Log.v(TAG,"NetworkBroadcastReceiver - No Active Network");
+                mUtil.writeToSysLogFile("Network State Changed - No Active Network");
+                mUtil.showToast("Network State Changed - No Active Network");
+            }
+        }
+    }
+
 
     /**
      * Log data to SD card if mLogData is set in preferences.
