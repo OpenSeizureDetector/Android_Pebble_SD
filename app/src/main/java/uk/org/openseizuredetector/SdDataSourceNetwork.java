@@ -28,6 +28,8 @@ public class SdDataSourceNetwork extends SdDataSource {
     private Time mStatusTime;
     private Timer mDataUpdateTimer;
     private int mDataUpdatePeriod = 2000;
+    private int mConnnectTimeoutPeriod = 5000;
+    private int mReadTimeoutPeriod = 5000;
     private String mServerIP = "unknown";
 
     private int ALARM_STATE_NETFAULT = 7;
@@ -92,6 +94,12 @@ public class SdDataSourceNetwork extends SdDataSource {
             String dataUpdatePeriodStr = SP.getString("DataUpdatePeriod","2000");
             mDataUpdatePeriod = Integer.parseInt(dataUpdatePeriodStr);
             Log.v(TAG,"updatePrefs() - mDataUpdatePeriod = "+mDataUpdatePeriod);
+            String connectTimeoutPeriodStr = SP.getString("ConnectTimeoutPeriod","5000");
+            mConnnectTimeoutPeriod = Integer.parseInt(connectTimeoutPeriodStr);
+            Log.v(TAG,"updatePrefs() - mConnectTimeoutPeriod = "+mConnnectTimeoutPeriod);
+            String readTimeoutPeriodStr = SP.getString("ReadTimeoutPeriod","5000");
+            mReadTimeoutPeriod = Integer.parseInt(readTimeoutPeriodStr);
+            Log.v(TAG,"updatePrefs() - mReadTimeoutPeriod = "+mReadTimeoutPeriod);
         } catch (Exception ex) {
             Log.v(TAG,"updatePrefs() - Problem parsing preferences!");
             mUtil.writeToSysLogFile("SdDataSourceNetwork().updatePrefs() - " +ex.toString());
@@ -156,9 +164,7 @@ public class SdDataSourceNetwork extends SdDataSource {
     }
 
     /**
-     * Retrive the current Seizure Detector Data from the server.
-     * Uses the DownloadSdDataTask class to download the data in the
-     * background.  The data is processed in DownloadSdDataTask.onPostExecute().
+     * Accept an alarm remotely using a http GET request.
      */
     @Override
     public void acceptAlarm() {
@@ -203,8 +209,8 @@ public class SdDataSourceNetwork extends SdDataSource {
         try {
             URL url = new URL(myurl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setReadTimeout(5000 /* milliseconds */);
-            conn.setConnectTimeout(5000 /* milliseconds */);
+            conn.setReadTimeout(mReadTimeoutPeriod /* milliseconds */);
+            conn.setConnectTimeout(mConnnectTimeoutPeriod /* milliseconds */);
             conn.setRequestMethod("GET");
             conn.setDoInput(true);
             // Starts the query

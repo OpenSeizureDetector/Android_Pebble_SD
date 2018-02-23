@@ -12,15 +12,15 @@
         android:summary="Period between server data requests in miliseconds."
         android:title="Data Update Period (ms)" />
     <EditTextPreference
-        android:defaultValue="2000"
-        android:key="ConnTimeout"
+        android:defaultValue="5000"
+        android:key="ConnectTimeoutPeriod"
         android:numeric="integer"
         android:summary=""
-        android:title="Connection Timeout (ms)" />
+        android:title="Connection Timeout Period (ms)" />
     <EditTextPreference
-        android:defaultValue="2000"
-        android:key="SoTimeout"
+        android:defaultValue="5000"
+        android:key="ReadTimeoutPeriod"
         android:numeric="integer"
         android:summary=""
-        android:title="So Timeout (ms)" />
+        android:title="Read Timeout Period (ms)" />
 </PreferenceScreen>
