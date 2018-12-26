@@ -658,10 +658,19 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             Time tnow = new Time(Time.getCurrentTimezone());
             tnow.setToNow();
             String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
-            SmsManager sm = SmsManager.getDefault();
+            // SmsManager sm = SmsManager.getDefault();
             for (int i = 0; i < mSMSNumbers.length; i++) {
                 Log.v(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers[i]);
-                sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr + " - " + dateStr, null, null);
+                // sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr + " - " + dateStr, null, null);
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setDataAndType(Uri.parse("smsto:"), "vnd.android-dir/mms-sms");
+                intent.putExtra("sms_body", mSMSMsgStr + " - " + dateStr);
+                intent.putExtra("address", new String(mSMSNumbers[i]));
+                if (intent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(intent);
+                } else {
+                    Log.v(TAG, "sendSMSAlarm() - Failed to send SMS.");
+                }
             }
         } else {
             Log.v(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
