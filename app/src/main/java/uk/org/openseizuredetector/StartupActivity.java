@@ -461,8 +461,8 @@ public class StartupActivity extends Activity {
                             + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
-                            + "\n- Added option to use MP3 alarm notification sounds rather than the default."
-                            + "\n- as some users had reported the default sound not working."
+                            + "\n- Improved logging of network status to help debugging network data source issues."
+                            + "\n- "
                 );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);
@@ -492,8 +492,8 @@ public class StartupActivity extends Activity {
                             + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
-                            + "\n- Added option to use MP3 alarm notification sounds rather than the default."
-                            + "\n- as some users had reported the default sound not working."
+                            + "\n- Improved logging of network status to help debugging network data source issues."
+                            + "\n- "
             );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);
