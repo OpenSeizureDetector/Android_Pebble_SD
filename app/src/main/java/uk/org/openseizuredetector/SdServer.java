@@ -41,6 +41,7 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.AssetManager;
 import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
@@ -48,6 +49,8 @@ import android.location.Location;
 import android.media.AudioManager;
 import android.media.RingtoneManager;
 import android.media.ToneGenerator;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.CountDownTimer;
 import android.os.Environment;
@@ -123,6 +126,8 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
     private OsdUtil mUtil;
     private Handler mHandler;
     private ToneGenerator mToneGenerator;
+
+    private NetworkBroadcastReceiver mNetworkBroadcastReceiver;
 
     private final IBinder mBinder = new SdBinder();
 
@@ -554,12 +559,12 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             } else {
                 if (mAudibleFaultWarning) {
                     if (mMp3Alarm) {
-                        Log.v(TAG,"making MP3 alarm beep");
+                        Log.v(TAG, "making MP3 alarm beep");
                         // From https://stackoverflow.com/questions/4441334/how-to-play-an-android-notification-sound
                         // This plays an audio file as a notification, using the notification sound channel.
                         NotificationManager notificationManager =
                                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                        Uri soundUri = Uri.parse("android.resource://"+getPackageName()+"/raw/fault");
+                        Uri soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/fault");
                         NotificationCompat.Builder mBuilder =
                                 new NotificationCompat.Builder(getApplicationContext())
                                         .setSound(soundUri); //This sets the sound to play
@@ -576,6 +581,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         } else {
             startFaultTimer();
             Log.v(TAG, "faultWarningBeep() - starting Fault Timer");
+            mUtil.writeToSysLogFile("faultWarningBeep() - starting Fault Timer");
         }
 
     }
@@ -590,15 +596,15 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         } else {
             if (mAudibleAlarm) {
                 if (mMp3Alarm) {
-                    Log.v(TAG,"making MP3 alarm beep");
+                    Log.v(TAG, "making MP3 alarm beep");
                     // From https://stackoverflow.com/questions/4441334/how-to-play-an-android-notification-sound
                     // This plays an audio file as a notification, using the notification sound channel.
                     NotificationManager notificationManager =
                             (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                    Uri soundUri = Uri.parse("android.resource://"+getPackageName()+"/raw/alarm");
+                    Uri soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/alarm");
                     NotificationCompat.Builder mBuilder =
                             new NotificationCompat.Builder(getApplicationContext())
-                                .setSound(soundUri); //This sets the sound to play
+                                    .setSound(soundUri); //This sets the sound to play
                     notificationManager.notify(0, mBuilder.build());
                 } else {
                     beep(3000);
@@ -620,12 +626,12 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         } else {
             if (mAudibleWarning) {
                 if (mMp3Alarm) {
-                    Log.v(TAG,"making MP3 alarm beep");
+                    Log.v(TAG, "making MP3 alarm beep");
                     // From https://stackoverflow.com/questions/4441334/how-to-play-an-android-notification-sound
                     // This plays an audio file as a notification, using the notification sound channel.
                     NotificationManager notificationManager =
                             (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                    Uri soundUri = Uri.parse("android.resource://"+getPackageName()+"/raw/warning");
+                    Uri soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/warning");
                     NotificationCompat.Builder mBuilder =
                             new NotificationCompat.Builder(getApplicationContext())
                                     .setSound(soundUri); //This sets the sound to play
@@ -663,10 +669,19 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             Time tnow = new Time(Time.getCurrentTimezone());
             tnow.setToNow();
             String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
-            SmsManager sm = SmsManager.getDefault();
+            // SmsManager sm = SmsManager.getDefault();
             for (int i = 0; i < mSMSNumbers.length; i++) {
                 Log.v(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers[i]);
-                sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr + " - " + dateStr, null, null);
+                // sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr + " - " + dateStr, null, null);
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setDataAndType(Uri.parse("smsto:"), "vnd.android-dir/mms-sms");
+                intent.putExtra("sms_body", mSMSMsgStr + " - " + dateStr);
+                intent.putExtra("address", new String(mSMSNumbers[i]));
+                if (intent.resolveActivity(getPackageManager()) != null) {
+                    startActivity(intent);
+                } else {
+                    Log.v(TAG, "sendSMSAlarm() - Failed to send SMS.");
+                }
             }
         } else {
             Log.v(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
@@ -776,7 +791,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         // Start timer to remove the cancel audible flag
         // after the required period.
         if (mCancelAudibleTimer != null) {
-            Log.v(TAG, "onCreate(): cancel audible timer already running - cancelling it.");
+            Log.v(TAG, "cancelAudible(): cancel audible timer already running - cancelling it.");
             mCancelAudibleTimer.cancel();
             mCancelAudibleTimer = null;
             mCancelAudible = false;
@@ -804,7 +819,8 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
 
 
     /**
-     * Start the web server (on port 8080)
+     * Start the web server (on port 8080), and register for network connectivity events so we can log
+     * problems.
      */
     protected void startWebServer() {
         Log.v(TAG, "startWebServer()");
@@ -820,10 +836,16 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         } else {
             Log.v(TAG, "startWebServer(): server already running???");
         }
+
+        mNetworkBroadcastReceiver = new NetworkBroadcastReceiver();
+        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        //filter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+        getApplicationContext().registerReceiver(mNetworkBroadcastReceiver, filter);
     }
 
     /**
      * Stop the web server - FIXME - doesn't seem to do anything!
+     * And de-register for network connectivity events.
      */
     protected void stopWebServer() {
         Log.v(TAG, "SdServer.stopWebServer()");
@@ -836,7 +858,48 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             }
             webServer = null;
         }
+        getApplicationContext().unregisterReceiver(mNetworkBroadcastReceiver);
     }
+
+    private class NetworkBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.v(TAG, "NetworkBroadCastReceiver.onReceive");
+            //mUtil.writeToSysLogFile("Network State Changed" + intent.getAction());
+            //mUtil.showToast("Network State Changed" + intent.getAction());
+
+            ConnectivityManager cm =
+                    (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+            NetworkInfo activeNetwork = null;
+            try {
+                activeNetwork = cm.getActiveNetworkInfo();
+            } catch (Exception e) {
+                Log.v(TAG, "NetworkBroadcastReceiver - failed to retrieve active network info");
+                mUtil.writeToSysLogFile("NetworkBroadcastReceiver - failed to retrieve active network info");
+                Log.v(TAG, e.toString());
+            }
+            boolean isConnected = activeNetwork != null &&
+                    activeNetwork.isConnectedOrConnecting();
+            if (isConnected) {
+                boolean isWiFi = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
+                if (!isWiFi) {
+                    Log.v(TAG, "NetworkBroadcastReceiver - no Wifi Connection");
+                    mUtil.writeToSysLogFile("Network State Changed - no Wifi Connection");
+                    mUtil.showToast("Network State Changed - no Wifi Connection");
+                } else {
+                    Log.v(TAG, "NetworkBroadcastReceiver - Wifi Connected");
+                    mUtil.writeToSysLogFile("Network State Changed - Wifi Connected");
+                    mUtil.showToast("Network State Changed - Wifi Connected");
+                }
+            } else {
+                Log.v(TAG, "NetworkBroadcastReceiver - No Active Network");
+                mUtil.writeToSysLogFile("Network State Changed - No Active Network");
+                mUtil.showToast("Network State Changed - No Active Network");
+            }
+        }
+    }
+
 
     /**
      * Log data to SD card if mLogData is set in preferences.
@@ -1022,8 +1085,10 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
     public void startFaultTimer() {
         if (mFaultTimer != null) {
             Log.v(TAG, "startFaultTimer(): fault timer already running - not doing anything.");
+            mUtil.writeToSysLogFile("startFaultTimer() - fault timer already running");
         } else {
             Log.v(TAG, "startFaultTimer(): starting fault timer.");
+            mUtil.writeToSysLogFile("startFaultTimer() - starting fault timer");
             runOnUiThread(new Runnable() {
                 public void run() {
                     mFaultTimerCompleted = false;
@@ -1039,11 +1104,13 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
     public void stopFaultTimer() {
         if (mFaultTimer != null) {
             Log.v(TAG, "stopFaultTimer(): fault timer already running - cancelling it.");
+            mUtil.writeToSysLogFile("stopFaultTimer() - stopping fault timer");
             mFaultTimer.cancel();
             mFaultTimer = null;
             mFaultTimerCompleted = false;
         } else {
             Log.v(TAG, "stopFaultTimer(): fault timer not running - not doing anything.");
+            //mUtil.writeToSysLogFile("stopFaultTimer() - fault timer not running");
         }
     }
 

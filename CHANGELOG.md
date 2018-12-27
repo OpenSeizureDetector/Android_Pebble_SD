@@ -1,9 +1,13 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
-	V2.6.0 - 01 Sep 2017
-	Added Support for Wifi data source (initially to be used for ESP8266_SD)
-	and Android Wear datasource
+    V2.6.0 - 26dec2018
+        - Changed SMS code to comply with new Google Play Store requirements.
+	    - Added Support for Wifi data source (initially to be used for Garmin_SD)
+
+	V2.5.5 - 23feb2018 - Improved logging to help diagnose network problems
+	that result in 'net fault' warnings from network data source
+	('wifi-storms').
 
 	V2.5.4 - 03dec2017 - Added option to use either tone generator or MP3 alarm sound, as a user reported problem with tone generator on high end samsung phone.
 

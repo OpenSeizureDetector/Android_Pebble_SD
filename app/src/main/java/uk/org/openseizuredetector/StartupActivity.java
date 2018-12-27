@@ -496,6 +496,8 @@ public class StartupActivity extends Activity {
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
                             + "\n- Added support for 'Wifi Datasources' - initially for the experimental ESP8266 based seizure detector."
+                            + "\n- Improved logging of network status to help debugging network data source issues."
+                            + "\n- "
             );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);

@@ -1,0 +1,14 @@
+Graham's Development Notes
+==========================
+
+V2.6
+- We had a V2.6 started, but I can't remember what it did (but it does include
+  the NetworkPassive Datasource that I want).
+- Start V2.6_new to add in the changes needed for SMS.
+- Merge V2.6_new into V2.6, and resolve conflicts.
+- Change the gradle dependencies from 'compile' to 'implementation' to get rid
+  of build warnings.
+- clean project and re-build.
+- Suddenly got an error "com.android.builder.dexing.DexArchiveMergerException: Error while merging dex archives: <lots of .jar files listed>
+  The number of method references in a .dex file cannot exceed 64K."
+- Added multidex support library to build.gradle dependencies and it seemed to compile....

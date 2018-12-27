@@ -1,0 +1,62 @@
+OpenSeizureDetector Developer Guide (for V3.0 and higher)
+
+The OpenSeizureDetector main app is the alarm system.   It monitors one
+or more data sources which send it seizure detector data using broadcast
+itents.   If alarm conditions are experienced it will raise audible alarms
+and SMS alarms if configured in the settings.
+If seizure detector data is not received at the expected time, it will raise
+fault alarms to warn the user of a problem.
+
+The OpenSeizureDetector StartUpActivity does the following:
+- Start the SdServer background service that does the seizure detector
+  monitoring.
+- Monitors SdServer for a number of conditions to be met, which shows that it
+  is running correctly.
+- Once it is running correctly, StartUpActivity exits, and MainActivity starts
+  to provide user display of seizure detector data.
+
+The MainActivity does the following:
+- Monitor the status of the SdServer background service, and display data
+  relating to the server on the screen for the user.
+- Provide user interface to cancel audible alarms, accept alarms, and
+  open settings editing screens to configure OpenSeizureDetector.
+
+The SdServer background service does the following.
+- Reads configuration data from local stored preferences, including which
+  data sources are to be used.
+- Sends a broadcast intent to the required data sources asking them to start.
+- Monitors for broadcast intents from the data sources which contain seizure
+  detector data.
+- Checks the time since the last data was received from the data source, and
+  if it is longer than a specified period, attempts to re-start the data
+  source.   If data is still not received, raises a system fault alarm.
+- Checks the seizure detector data received from the data source, and raises
+  audible and SMS alarms if an alarm state is detected.
+- Provieds a web interface to allow users to monitor the seizure detector
+  status using a web browser or other http client.
+
+
+Indidual Data Source apps are separate .apk packages.  They provide:
+- A broadcast receiver that will receive start/stop requests from the
+  main OpenSeizureDetector SdServer process.
+- A background SdDataSourceService service that interfaces with the seizure
+  detector hardware (e.g. a smart watch) and receives data from the hardware.
+  It carries out the necessary processing to determine if an alarm condition
+  is present, and sends a broadcast intent to the OpenSeizureDetector SdServer
+  service with the data when it has been processed.
+- A configuration user interface to allow the data source to be configured.
+
+
+Version V3.0 will initially provide two data sources that will reproduce the
+functionality of V2.5.x:
+- SdDataSourcePebble - pebble watch data source
+- SdDataSourceNetwork - actively request data from the web interface of another
+                        OpenSeizureDetector instance.
+These will be packages uk.org.openseizuredetector.datasource.pebble and
+uk.org.openseizuredetector.datasource.network
+
+Future data sources will be:
+- SdDataSourceGarmin - uses a Garmin ConnectIQ smart watch.
+- SdDataSourceAndroidWear - Uses an Android Wear smart watch.
+- SdDataSourceAudio - uses the microphone on the phone to detect abnormal sounds.
+
