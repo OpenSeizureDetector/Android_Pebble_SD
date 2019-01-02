@@ -40,7 +40,7 @@ public class SdWebServer extends NanoHTTPD {
     }
 
     public void setSdData(SdData sdData) {
-        Log.v(TAG, "setSdData()");
+        // Log.v(TAG, "setSdData()");
         mSdData = sdData;
     }
 
@@ -90,10 +90,16 @@ public class SdWebServer extends NanoHTTPD {
                         Log.v(TAG, "WebServer.serve() - POST /data - receiving data from device: parameters=" + parameters.toString());
                         Log.v(TAG, "              header=" + header.toString());
                         Log.v(TAG, "              files=" + files.toString());
-                        //String postData = files.get("postData");
-                        //Log.v(TAG, "              postData=" + postData);
+                        String postData = files.get("postData");
+                        Log.v(TAG, "              postData=" + postData);
                         // Send the data to the SdDataSource so the app can pick it up.
-                        mSdServer.mSdDataSource.updateFromJSON(parameters.toString());
+                        if (parameters != null) {
+                            Log.v(TAG,"passing parameters to data source");
+                            mSdServer.mSdDataSource.updateFromJSON(parameters.get("dataObj").toString());
+                        } else {
+                            Log.v(TAG,"Passing postData to data source");
+                            mSdServer.mSdDataSource.updateFromJSON(files.get("postData"));
+                        }
                         if (mSdData.haveSettings) {
                             answer = "OK";
                         } else {

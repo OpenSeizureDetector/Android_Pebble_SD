@@ -54,8 +54,10 @@ import static java.lang.Math.sqrt;
 
 
 /**
- * Abstract class for a seizure detector data source.  Subclasses include a pebble smart watch data source and a
- * network data source.
+ * A Passive data source that expects a device to send it data periodically by sending a POST request.
+ * The POST network request is handled in the SDWebServer class, which calls the 'updateFrom JSON()'
+ * function to send the data to this datasource.
+ * SdWebServer expects POST requests to /data and /settings URLs to send data or watch settings.
  */
 public class SdDataSourceNetworkPassive extends SdDataSource {
     private Handler mHandler = new Handler();
@@ -378,6 +380,8 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
         // ******* POPULATE WITH DUMMY DATA *****
         //makeTestData();
         // **************************************
+        // FIXME - Use specified sampleFreq, not this hard coded one
+        mSampleFreq = 25;
         double freqRes = 1.0*mSampleFreq/mNSamp;
         Log.v(TAG,"doAnalysis(): mSampleFreq="+mSampleFreq+" mNSamp="+mNSamp+": freqRes="+freqRes);
         // Set the frequency bounds for the analysis in fft output bin numbers.
