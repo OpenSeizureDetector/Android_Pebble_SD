@@ -28,12 +28,10 @@ package uk.org.openseizuredetector;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.Map;
-
-import fi.iki.elonen.NanoHTTPD;
 
 import android.app.ActivityManager;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -42,29 +40,24 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.AssetManager;
 import android.content.SharedPreferences;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.media.AudioManager;
-import android.media.RingtoneManager;
 import android.media.ToneGenerator;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.CountDownTimer;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.SmsManager;
-import android.location.Location;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -72,12 +65,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.io.*;
 import java.util.*;
-import java.util.StringTokenizer;
 
 import android.text.format.Time;
-
-import org.json.JSONObject;
-import org.json.JSONArray;
 
 
 /**
@@ -89,9 +78,12 @@ import org.json.JSONArray;
 public class SdServer extends Service implements SdDataReceiver, SdLocationReceiver {
     // Notification ID
     private int NOTIFICATION_ID = 1;
+    private String mNotChId = "OSD Notification Channel";
+    private CharSequence mNotChName = "OSD Notification Chennel";
+    private String mNotChDesc = "OSD Notification Channel Description";
 
     private NotificationManager mNM;
-
+    private NotificationCompat.Builder mNotificationBuilder;
     private SdWebServer webServer = null;
     private final static String TAG = "SdServer";
     private Timer dataLogTimer = null;
@@ -150,7 +142,6 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         mSdData = new SdData();
         mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
     }
-
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -236,6 +227,18 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         }
         mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting SdDataSource");
         mSdDataSource.start();
+
+        // Initialise Notification channel for API level 26 and over
+        // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
+        mNM= (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationBuilder = new NotificationCompat.Builder(this,mNotChId);
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationChannel channel = new NotificationChannel(mNotChId,
+                    mNotChName,
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription(mNotChDesc);
+            mNM.createNotificationChannel(channel);
+        }
 
 
         // Display a notification icon in the status bar of the phone to
@@ -372,16 +375,16 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         PendingIntent contentIntent =
                 PendingIntent.getActivity(this,
                         0, i, PendingIntent.FLAG_UPDATE_CURRENT);
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        Notification notification = builder.setContentIntent(contentIntent)
+        Notification notification = mNotificationBuilder.setContentIntent(contentIntent)
                 .setSmallIcon(iconId)
+                .setColor(0xff000000)
                 .setTicker("OpenSeizureDetector")
                 .setAutoCancel(false)
                 .setContentTitle("OpenSeizureDetector")
                 .setContentText(mSdDataSourceName + " Data Source")
+                .setOnlyAlertOnce(true)
                 .build();
 
-        mNM = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         mNM.notify(NOTIFICATION_ID, notification);
     }
 

@@ -24,6 +24,7 @@
 
 
     <application
+        android:theme="@style/Theme.AppCompat"
         android:icon="@drawable/star_of_life_48x48"
         android:label="@string/app_name">
         <activity android:name=".StartupActivity">
