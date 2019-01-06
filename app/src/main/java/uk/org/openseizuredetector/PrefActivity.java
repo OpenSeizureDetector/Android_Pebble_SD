@@ -157,8 +157,19 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     }
 
     /**
-     * This fragment shows the preferences for the first header.
+     * FIXME - this just returns true so it is the same as for older versions of Android.
+     * We should really check that the fragmentName is one of the fragments defined below.
+     * @param fragmentName
+     * @return
      */
+    @Override
+    protected boolean isValidFragment(String fragmentName) {
+        return true;
+    }
+
+        /**
+         * This fragment shows the preferences for the first header.
+         */
     public static class GeneralPrefsFragment extends PreferenceFragment {
         @Override
         public void onCreate(Bundle savedInstanceState) {
