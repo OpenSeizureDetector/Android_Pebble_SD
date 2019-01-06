@@ -38,6 +38,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
 import android.preference.PreferenceManager;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -69,7 +70,7 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 import com.github.mikephil.charting.utils.LargeValueFormatter;
 import com.github.mikephil.charting.utils.ValueFormatter;
 
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity {
     static final String TAG = "MainActivity";
     private int okColour = Color.BLUE;
     private int warnColour = Color.MAGENTA;
@@ -109,12 +110,16 @@ public class MainActivity extends Activity {
      * "how to force use of..."
 	 */
         try {
+            Log.v(TAG, "trying menubar fiddle...");
             ViewConfiguration config = ViewConfiguration.get(this);
             Field menuKeyField =
                     ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
             if (menuKeyField != null) {
+                Log.v(TAG, "menuKeyField is not null - configuring....");
                 menuKeyField.setAccessible(true);
                 menuKeyField.setBoolean(config, false);
+            } else {
+                Log.v(TAG, "menuKeyField is null - doing nothing...");
             }
         } catch (Exception e) {
             Log.v(TAG, "menubar fiddle exception: " + e.toString());
@@ -162,6 +167,7 @@ public class MainActivity extends Activity {
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        Log.v(TAG, "onCreateOptionsMenue()");
         getMenuInflater().inflate(R.menu.main_activity_actions, menu);
         mOptionsMenu = menu;
         return true;
@@ -169,7 +175,7 @@ public class MainActivity extends Activity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Log.v(TAG, "Option " + item.getItemId() + " selected");
+        Log.v(TAG, "Menu Option " + item.getItemId() + " selected");
         switch (item.getItemId()) {
             case R.id.action_launch_pebble_app:
                 Log.v(TAG, "action_launch_pebble_app");
