@@ -25,10 +25,8 @@
 
 package uk.org.openseizuredetector;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -57,17 +55,11 @@ import java.util.TimerTask;
 
 //MPAndroidChart
 import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.utils.ColorTemplate;
-import com.github.mikephil.charting.utils.LargeValueFormatter;
 import com.github.mikephil.charting.utils.ValueFormatter;
 
 public class MainActivity extends AppCompatActivity {
@@ -86,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
 
     final Handler serverStatusHandler = new Handler();
     Messenger messenger = new Messenger(new ResponseHandler());
+    Timer mUiTimer;
 
     /**
      * Called when the activity is first created.
@@ -93,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.v(TAG,"onCreate()");
 
         // Set our custom uncaught exception handler to report issues.
         Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(MainActivity.this));
@@ -151,15 +145,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        // start timer to refresh user interface every second.
-        Timer uiTimer = new Timer();
-        uiTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                updateServerStatus();
-            }
-        }, 0, 1000);
-
     }
 
     /**
@@ -167,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        Log.v(TAG, "onCreateOptionsMenue()");
+        Log.v(TAG, "onCreateOptionsMenu()");
         getMenuInflater().inflate(R.menu.main_activity_actions, menu);
         mOptionsMenu = menu;
         return true;
@@ -175,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Log.v(TAG, "Menu Option " + item.getItemId() + " selected");
+        Log.v(TAG, "onOptionsItemSelected() :  " + item.getItemId() + " selected");
         switch (item.getItemId()) {
             case R.id.action_launch_pebble_app:
                 Log.v(TAG, "action_launch_pebble_app");
@@ -272,6 +257,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        Log.v(TAG,"onCStart()");
         mUtil.writeToSysLogFile("MainActivity.onStart()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
@@ -283,21 +269,35 @@ public class MainActivity extends AppCompatActivity {
         String versionName = mUtil.getAppVersionName();
         tv.setText("OpenSeizureDetector Android App Version " + versionName);
 
+        Log.v(TAG,"onStart() - binding to server");
         mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
         mUtil.bindToServer(this, mConnection);
+
+        // start timer to refresh user interface every second.
+        mUiTimer = new Timer();
+        mUiTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                updateServerStatus();
+            }
+        }, 0, 1000);
+
+
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        Log.v(TAG,"onStop() - unbinding from server");
         mUtil.writeToSysLogFile("MainActivity.onStop()");
         mUtil.unbindFromServer(this, mConnection);
+        mUiTimer.cancel();
     }
 
 
     private void startServer() {
         mUtil.writeToSysLogFile("MainActivity.startServer()");
-        Log.v(TAG, "starting Server...");
+        Log.v(TAG, "startServer(): starting Server...");
         mUtil.startServer();
         // Change the action bar icon to show the option to stop the service.
         if (mOptionsMenu != null) {
@@ -312,7 +312,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void stopServer() {
         mUtil.writeToSysLogFile("MainActivity.stopServer()");
-        Log.v(TAG, "stopping Server...");
+        Log.v(TAG, "stopServer(): stopping Server...");
         mUtil.stopServer();
         // Change the action bar icon to show the option to start the service.
         if (mOptionsMenu != null) {
@@ -326,7 +326,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     /*
-     * updateServerStatus - called by the uiTimer timer periodically.
+     * updateServerStatus - called by the mUiTimer timer periodically.
      * requests the ui to be updated by calling serverStatusRunnable.
      */
     private void updateServerStatus() {
@@ -339,6 +339,8 @@ public class MainActivity extends AppCompatActivity {
      */
     final Runnable serverStatusRunnable = new Runnable() {
         public void run() {
+            Log.v(TAG,"serverStatusRunnable()");
+
             TextView tv;
             if (mUtil.isServerRunning()) {
                 tv = (TextView) findViewById(R.id.serverStatusTv);
@@ -631,12 +633,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        Log.v(TAG,"onPause()");
         mUtil.writeToSysLogFile("MainActivity.onPause()");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        Log.v(TAG,"onResume()");
         mUtil.writeToSysLogFile("MainActivity.onResume()");
     }
 
