@@ -46,6 +46,7 @@ import org.jtransforms.fft.DoubleFFT_1D;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -442,9 +443,11 @@ public class SdDataSourceNetworkPassive extends SdDataSource {
         mSdData.alarmThresh = mAlarmThresh;
         mSdData.alarmRatioThresh = mAlarmRatioThresh;
         //mSdData.batteryPc = 50;  // FIXME we should get the watch to send us battery status.
+        // FIXME - I haven't worked out why dividing by 1000 seems necessary to get the graph on scale - we don't seem to do that with the Pebble.
         for(int i=0;i<SIMPLE_SPEC_FMAX;i++) {
-            mSdData.simpleSpec[i] = (int)simpleSpec[i];
+            mSdData.simpleSpec[i] = (int)simpleSpec[i]/1000;
         }
+        Log.v(TAG, "simpleSpec = " + Arrays.toString(mSdData.simpleSpec));
         // Because we have received data, set flag to show watch app running.
         mWatchAppRunningCheck = true;
         mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
