@@ -134,7 +134,8 @@ public class OsdUtil {
 
 
     public boolean isServerRunning() {
-        //Log.v(TAG,"isServerRunning()................");
+        int nServers = 0;
+        /* Log.v(TAG,"isServerRunning()...."); */
         ActivityManager manager =
                 (ActivityManager) mContext.getSystemService(mContext.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service :
@@ -142,12 +143,15 @@ public class OsdUtil {
             //Log.v(TAG,"Service: "+service.service.getClassName());
             if ("uk.org.openseizuredetector.SdServer"
                     .equals(service.service.getClassName())) {
-                //Log.v(TAG,"Yes!");
-                return true;
+                nServers = nServers + 1;
             }
         }
-        //Log.v(TAG,"No!");
-        return false;
+        if (nServers != 0) {
+            Log.v(TAG, "isServerRunning() - " + nServers + " instances are running");
+            return true;
+        }
+        else
+            return false;
     }
 
     /**
@@ -155,7 +159,7 @@ public class OsdUtil {
      */
     public void startServer() {
         // Start the server
-        Log.v(TAG,"startServer()");
+        Log.i(TAG,"OsdUtil.startServer()");
         writeToSysLogFile("startServer() - starting server");
         Intent sdServerIntent;
         sdServerIntent = new Intent(mContext, SdServer.class);
@@ -167,7 +171,7 @@ public class OsdUtil {
      * Stop the SdServer service
      */
     public void stopServer() {
-        Log.v(TAG, "stopping Server...");
+        Log.i(TAG, "OsdUtil.stopServer() - stopping Server...");
         writeToSysLogFile("stopserver() - stopping server");
 
         // then send an Intent to stop the service.
@@ -182,7 +186,7 @@ public class OsdUtil {
      * bind an activity to to an already running server.
      */
     public void bindToServer(Activity activity, SdServiceConnection sdServiceConnection) {
-        Log.v(TAG, "bindToServer() - binding to SdServer");
+        Log.i(TAG, "OsdUtil.bindToServer() - binding to SdServer");
         writeToSysLogFile("bindToServer() - binding to SdServer");
         Intent intent = new Intent(sdServiceConnection.mContext, SdServer.class);
         activity.bindService(intent, sdServiceConnection, Context.BIND_AUTO_CREATE);
@@ -194,7 +198,7 @@ public class OsdUtil {
     public void unbindFromServer(Activity activity, SdServiceConnection sdServiceConnection) {
         // unbind this activity from the service if it is bound.
         if (sdServiceConnection.mBound) {
-            Log.v(TAG, "unbindFromServer() - unbinding");
+            Log.i(TAG, "unbindFromServer() - unbinding");
             writeToSysLogFile("unbindFromServer() - unbinding");
             try {
                 activity.unbindService(sdServiceConnection);
@@ -204,7 +208,7 @@ public class OsdUtil {
                 writeToSysLogFile("unbindFromServer() - error unbinding service - " +ex.toString());
             }
         } else {
-            Log.v(TAG, "unbindFromServer() - not bound to server - ignoring");
+            Log.i(TAG, "unbindFromServer() - not bound to server - ignoring");
             writeToSysLogFile("unbindFromServer() - not bound to server - ignoring");
 
         }

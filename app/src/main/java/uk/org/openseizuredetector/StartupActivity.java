@@ -79,6 +79,7 @@ public class StartupActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i(TAG,"onCreate()");
 
         // Set our custom uncaught exception handler to report issues.
         Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(StartupActivity.this));
@@ -168,6 +169,7 @@ public class StartupActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
+        Log.i(TAG,"onStart()");
         mUtil.writeToSysLogFile("StartupActivity.onStart()");
         TextView tv;
 
@@ -227,7 +229,7 @@ public class StartupActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        Log.v(TAG, "onStop()");
+        Log.i(TAG, "onStop()");
         mUtil.writeToSysLogFile("StartupActivity.onStop() - unbinding from server");
         mUtil.unbindFromServer(this, mConnection);
         mUiTimer.cancel();
@@ -245,6 +247,8 @@ public class StartupActivity extends Activity {
             Boolean allOk = true;
             TextView tv;
             ProgressBar pb;
+
+            Log.v(TAG,"serverStatusRunnable()");
 
             // Service Running
             tv = (TextView) findViewById(R.id.textItem1);
@@ -390,7 +394,7 @@ public class StartupActivity extends Activity {
             if (allOk) {
                 if (!mDialogDisplayed) {
                     if (!mStartedMainActivity) {
-                        Log.v(TAG, "starting main activity...");
+                        Log.i(TAG, "serverStatusRunnable() - starting main activity...");
                         mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - all checks ok - starting main activity.");
                         try {
                             Intent intent = new Intent(
@@ -402,7 +406,7 @@ public class StartupActivity extends Activity {
                             finish();
                         } catch (Exception ex) {
                             mStartedMainActivity = false;
-                            Log.v(TAG, "exception starting main activity " + ex.toString());
+                            Log.e(TAG, "exception starting main activity " + ex.toString());
                             mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - exception starting main activity " + ex.toString());
                         }
                     } else {
@@ -445,6 +449,7 @@ public class StartupActivity extends Activity {
         AlertDialog UpdateDialog;
         AlertDialog FirstRunDialog;
         SharedPreferences prefs;
+        Log.i(TAG,"checkFirstRun()");
         versionName = this.getVersionName(this, StartupActivity.class);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         storedVersionName = (prefs.getString("AppVersionName", null));
@@ -481,7 +486,7 @@ public class StartupActivity extends Activity {
                         }
                     });
             FirstRunDialog = alertDialogBuilder.create();
-            Log.v(TAG, "Displaying First Run Dialog");
+            Log.i(TAG, "Displaying First Run Dialog");
             FirstRunDialog.show();
             mDialogDisplayed = true;
         } else if (!storedVersionName.equals(versionName)) {
@@ -512,13 +517,13 @@ public class StartupActivity extends Activity {
                         }
                     });
             UpdateDialog = alertDialogBuilder.create();
-            Log.v(TAG, "Displaying Update Dialog");
+            Log.i(TAG, "Displaying Update Dialog");
             UpdateDialog.show();
             mDialogDisplayed = true;
         } else {
             Log.v(TAG, "App has already been run - not showing dialog.");
         }
-        Log.v(TAG, "Setting AppVersionName to" + versionName);
+        Log.i(TAG, "Setting Stored AppVersionName to" + versionName);
         prefs.edit().putString("AppVersionName", versionName).commit();
     }
 

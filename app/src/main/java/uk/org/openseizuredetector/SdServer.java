@@ -390,7 +390,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
 
     // Show the main activity on the user's screen.
     private void showMainActivity() {
-        Log.v(TAG, "showMainActivity()");
+        Log.i(TAG, "showMainActivity()");
         mUtil.writeToSysLogFile("SdServer.showMainActivity()");
 
         ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
@@ -398,10 +398,10 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         ComponentName componentInfo = runningTaskInfo.get(0).topActivity;
 
         if (componentInfo.getPackageName().equals("uk.org.openseizuredetector")) {
-            Log.v(TAG, "showMainActivity(): OpenSeizureDetector Activity is already shown on top - not doing anything");
+            Log.i(TAG, "showMainActivity(): OpenSeizureDetector Activity is already shown on top - not doing anything");
             mUtil.writeToSysLogFile("SdServer.showMainActivity - Activity is already shown on top, not doing anything");
         } else {
-            Log.v(TAG, "showMainActivity(): Showing Main Activity");
+            Log.i(TAG, "showMainActivity(): Showing Main Activity");
             Intent i = new Intent(getApplicationContext(), MainActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
             this.startActivity(i);
@@ -526,7 +526,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
 
     // Called by SdDataSource when a fault condition is detected.
     public void onSdDataFault(SdData sdData) {
-        Log.v(TAG, "onSdDataFault()");
+        Log.i(TAG, "onSdDataFault()");
         mSdData = sdData;
         mSdData.alarmState = 4;  // set fault alarm state.
         mSdData.alarmStanding = false;
@@ -665,16 +665,16 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                         + loc.getLongitude() + ","
                         + loc.getLatitude());
             } else {
-                Log.v(TAG, "sendSMSAlarm() - Last Location is Null so sending first SMS without location.");
+                Log.i(TAG, "sendSMSAlarm() - Last Location is Null so sending first SMS without location.");
             }
-            Log.v(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers.length + " Numbers");
+            Log.i(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers.length + " Numbers");
             mUtil.writeToSysLogFile("SdServer.sendSMSAlarm()");
             Time tnow = new Time(Time.getCurrentTimezone());
             tnow.setToNow();
             String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
             // SmsManager sm = SmsManager.getDefault();
             for (int i = 0; i < mSMSNumbers.length; i++) {
-                Log.v(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers[i]);
+                Log.i(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers[i]);
                 // sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr + " - " + dateStr, null, null);
                 Intent intent = new Intent(Intent.ACTION_SEND);
                 intent.setDataAndType(Uri.parse("smsto:"), "vnd.android-dir/mms-sms");
@@ -683,11 +683,11 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 if (intent.resolveActivity(getPackageManager()) != null) {
                     startActivity(intent);
                 } else {
-                    Log.v(TAG, "sendSMSAlarm() - Failed to send SMS.");
+                    Log.e(TAG, "sendSMSAlarm() - Failed to send SMS.");
                 }
             }
         } else {
-            Log.v(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
+            Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
             Toast toast = Toast.makeText(getApplicationContext(),
                     "SMS Alarms Disabled - not doing anything!",
                     Toast.LENGTH_SHORT);
@@ -705,12 +705,12 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
     public void onSdLocationReceived(Location ll) {
         if (ll == null) {
             mUtil.showToast("onSdLocationReceived() - NULL LOCATION RECEIVED");
-            Log.v(TAG, "onSdLocationReceived() - NULL LOCATION RECEIVED");
+            Log.w(TAG, "onSdLocationReceived() - NULL LOCATION RECEIVED");
         } else {
             //mUtil.showToast("onSdLocationReceived() - found location" + ll.toString());
-            Log.v(TAG, "onSdLocationReceived() - found location" + ll.toString());
+            Log.i(TAG, "onSdLocationReceived() - found location" + ll.toString());
             if (mSMSAlarm) {
-                Log.v(TAG, "onSdLocationReceived() - Sending to " + mSMSNumbers.length + " Numbers");
+                Log.i(TAG, "onSdLocationReceived() - Sending to " + mSMSNumbers.length + " Numbers");
                 mUtil.writeToSysLogFile("SdServer.sendSMSAlarm()");
                 Time tnow = new Time(Time.getCurrentTimezone());
                 tnow.setToNow();
@@ -726,17 +726,17 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                         + ll.getLatitude() + "%2C" + ll.getLongitude();
                 String messageStr = mSMSMsgStr + " - " +
                         dateStr + " - " + googleUrl;
-                Log.v(TAG, "onSdLocationReceived() - Message is " + messageStr);
+                Log.i(TAG, "onSdLocationReceived() - Message is " + messageStr);
                 mUtil.showToast(messageStr);
                 SmsManager sm = SmsManager.getDefault();
                 for (int i = 0; i < mSMSNumbers.length; i++) {
-                    Log.v(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers[i]);
+                    Log.i(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers[i]);
                     sm.sendTextMessage(mSMSNumbers[i], null,
                             messageStr,
                             null, null);
                 }
             } else {
-                Log.v(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
+                Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
                 Toast toast = Toast.makeText(getApplicationContext(),
                         "SMS Alarms Disabled - not doing anything!",
                         Toast.LENGTH_SHORT);
@@ -782,7 +782,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
      * set the alarm standing flags to false to allow alarm phase to reset to current value.
      */
     public void acceptAlarm() {
-        Log.v(TAG, "acceptAlarm()");
+        Log.i(TAG, "acceptAlarm()");
         mSdData.alarmStanding = false;
         mSdData.fallAlarmStanding = false;
         mSdDataSource.acceptAlarm();
@@ -794,12 +794,12 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         // Start timer to remove the cancel audible flag
         // after the required period.
         if (mCancelAudibleTimer != null) {
-            Log.v(TAG, "cancelAudible(): cancel audible timer already running - cancelling it.");
+            Log.i(TAG, "cancelAudible(): cancel audible timer already running - cancelling it.");
             mCancelAudibleTimer.cancel();
             mCancelAudibleTimer = null;
             mCancelAudible = false;
         } else {
-            Log.v(TAG, "cancelAudible(): starting cancel audible timer");
+            Log.i(TAG, "cancelAudible(): starting cancel audible timer");
             mCancelAudible = true;
             mCancelAudibleTimer =
                     // conver to ms.
@@ -826,18 +826,18 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
      * problems.
      */
     protected void startWebServer() {
-        Log.v(TAG, "startWebServer()");
+        Log.i(TAG, "startWebServer()");
         mUtil.writeToSysLogFile("SdServer.Start Web Server.");
         if (webServer == null) {
             webServer = new SdWebServer(getApplicationContext(), mUtil.getDataStorageDir(), mSdData, this);
             try {
                 webServer.start();
             } catch (IOException ioe) {
-                Log.w(TAG, "startWebServer(): Error: " + ioe.toString());
+                Log.e(TAG, "startWebServer(): Error: " + ioe.toString());
             }
-            Log.w(TAG, "startWebServer(): Web server initialized.");
+            Log.i(TAG, "startWebServer(): Web server initialized.");
         } else {
-            Log.v(TAG, "startWebServer(): server already running???");
+            Log.i(TAG, "startWebServer(): server already running???");
         }
 
         mNetworkBroadcastReceiver = new NetworkBroadcastReceiver();
@@ -851,11 +851,11 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
      * And de-register for network connectivity events.
      */
     protected void stopWebServer() {
-        Log.v(TAG, "SdServer.stopWebServer()");
+        Log.i(TAG, "SdServer.stopWebServer()");
         if (webServer != null) {
             webServer.stop();
             if (webServer.isAlive()) {
-                Log.v(TAG, "stopWebServer() - server still alive???");
+                Log.w(TAG, "stopWebServer() - server still alive???");
             } else {
                 Log.v(TAG, "stopWebServer() - server died ok");
             }
@@ -878,9 +878,9 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             try {
                 activeNetwork = cm.getActiveNetworkInfo();
             } catch (Exception e) {
-                Log.v(TAG, "NetworkBroadcastReceiver - failed to retrieve active network info");
+                Log.e(TAG, "NetworkBroadcastReceiver - failed to retrieve active network info");
                 mUtil.writeToSysLogFile("NetworkBroadcastReceiver - failed to retrieve active network info");
-                Log.v(TAG, e.toString());
+                Log.e(TAG, e.toString());
             }
             boolean isConnected = activeNetwork != null &&
                     activeNetwork.isConnectedOrConnecting();
@@ -920,7 +920,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
      * - defined in res/xml/prefs.xml
      */
     public void updatePrefs() {
-        Log.v(TAG, "updatePrefs()");
+        Log.i(TAG, "updatePrefs()");
         mUtil.writeToSysLogFile("SdServer.updatePrefs()");
 
         SharedPreferences SP = PreferenceManager
