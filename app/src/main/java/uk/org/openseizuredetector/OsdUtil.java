@@ -357,8 +357,11 @@ public class OsdUtil {
         File file =
                 new File(Environment.getExternalStorageDirectory()
                         , "OpenSeizureDetector");
-        if (!file.mkdirs()) {
-            Log.e(TAG, "Directory not created");
+        if (!file.isDirectory()) {
+            Log.i(TAG,"getDataStorageDir() - creating directory");
+            if (!file.mkdirs()) {
+                Log.e(TAG, "Failed to create directory");
+            }
         }
         return file;
     }

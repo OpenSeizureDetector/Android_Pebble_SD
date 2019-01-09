@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        Log.v(TAG, "onCreateOptionsMenu()");
+        Log.i(TAG, "onCreateOptionsMenu()");
         getMenuInflater().inflate(R.menu.main_activity_actions, menu);
         mOptionsMenu = menu;
         return true;
@@ -160,31 +160,31 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Log.v(TAG, "onOptionsItemSelected() :  " + item.getItemId() + " selected");
+        Log.i(TAG, "onOptionsItemSelected() :  " + item.getItemId() + " selected");
         switch (item.getItemId()) {
             case R.id.action_launch_pebble_app:
-                Log.v(TAG, "action_launch_pebble_app");
+                Log.i(TAG, "action_launch_pebble_app");
                 mConnection.mSdServer.mSdDataSource.startPebbleApp();
                 return true;
             case R.id.action_instal_watch_app:
-                Log.v(TAG, "action_install_watch_app");
+                Log.i(TAG, "action_install_watch_app");
                 mConnection.mSdServer.mSdDataSource.installWatchApp();
 
             case R.id.action_accept_alarm:
-                Log.v(TAG, "action_accept_alarm");
+                Log.i(TAG, "action_accept_alarm");
                 if (mConnection.mBound) {
                     mConnection.mSdServer.acceptAlarm();
                 }
                 return true;
             case R.id.action_start_stop:
                 // Respond to the start/stop server menu item.
-                Log.v(TAG, "action_sart_stop");
+                Log.i(TAG, "action_sart_stop");
                 if (mConnection.mBound) {
-                    Log.v(TAG, "Stopping Server");
+                    Log.i(TAG, "Stopping Server");
                     mUtil.unbindFromServer(this, mConnection);
                     stopServer();
                 } else {
-                    Log.v(TAG, "Starting Server");
+                    Log.i(TAG, "Starting Server");
                     startServer();
                     // and bind to it so we can see its data
                     mUtil.bindToServer(this, mConnection);
@@ -192,32 +192,32 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             /* fault beep test does not work with fault timer, so disable test option.
             case R.id.action_test_fault_beep:
-                Log.v(TAG, "action_test_fault_beep");
+                Log.i(TAG, "action_test_fault_beep");
                 if (mConnection.mBound) {
                     mConnection.mSdServer.faultWarningBeep();
                 }
                 return true;
                 */
             case R.id.action_test_alarm_beep:
-                Log.v(TAG, "action_test_alarm_beep");
+                Log.i(TAG, "action_test_alarm_beep");
                 if (mConnection.mBound) {
                     mConnection.mSdServer.alarmBeep();
                 }
                 return true;
             case R.id.action_test_warning_beep:
-                Log.v(TAG, "action_test_warning_beep");
+                Log.i(TAG, "action_test_warning_beep");
                 if (mConnection.mBound) {
                     mConnection.mSdServer.warningBeep();
                 }
                 return true;
             case R.id.action_test_sms_alarm:
-                Log.v(TAG, "action_test_sms_alarm");
+                Log.i(TAG, "action_test_sms_alarm");
                 if (mConnection.mBound) {
                     mConnection.mSdServer.sendSMSAlarm();
                 }
                 return true;
             case R.id.action_logs:
-                Log.v(TAG, "action_logs");
+                Log.i(TAG, "action_logs");
                 try {
                     String url = "http://"
                             + mUtil.getLocalIpAddress()
@@ -230,22 +230,22 @@ public class MainActivity extends AppCompatActivity {
                     //        LogManagerActivity.class);
                     //this.startActivity(prefsIntent);
                 } catch (Exception ex) {
-                    Log.v(TAG, "exception starting log manager activity " + ex.toString());
+                    Log.i(TAG, "exception starting log manager activity " + ex.toString());
                 }
                 return true;
             case R.id.action_settings:
-                Log.v(TAG, "action_settings");
+                Log.i(TAG, "action_settings");
                 try {
                     Intent prefsIntent = new Intent(
                             MainActivity.this,
                             PrefActivity.class);
                     this.startActivity(prefsIntent);
                 } catch (Exception ex) {
-                    Log.v(TAG, "exception starting settings activity " + ex.toString());
+                    Log.i(TAG, "exception starting settings activity " + ex.toString());
                 }
                 return true;
             case R.id.action_about:
-                Log.v(TAG, "action_about");
+                Log.i(TAG, "action_about");
                 showAbout();
                 return true;
 
@@ -257,7 +257,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Log.v(TAG,"onCStart()");
+        Log.i(TAG,"onStart()");
         mUtil.writeToSysLogFile("MainActivity.onStart()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
@@ -288,7 +288,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        Log.v(TAG,"onStop() - unbinding from server");
+        Log.i(TAG,"onStop() - unbinding from server");
         mUtil.writeToSysLogFile("MainActivity.onStop()");
         mUtil.unbindFromServer(this, mConnection);
         mUiTimer.cancel();
@@ -297,7 +297,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void startServer() {
         mUtil.writeToSysLogFile("MainActivity.startServer()");
-        Log.v(TAG, "startServer(): starting Server...");
+        Log.i(TAG, "startServer(): starting Server...");
         mUtil.startServer();
         // Change the action bar icon to show the option to stop the service.
         if (mOptionsMenu != null) {
@@ -312,7 +312,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void stopServer() {
         mUtil.writeToSysLogFile("MainActivity.stopServer()");
-        Log.v(TAG, "stopServer(): stopping Server...");
+        Log.i(TAG, "stopServer(): stopping Server...");
         mUtil.stopServer();
         // Change the action bar icon to show the option to start the service.
         if (mOptionsMenu != null) {
@@ -511,7 +511,7 @@ public class MainActivity extends AppCompatActivity {
 
                 }
             } catch (Exception e) {
-                Log.v(TAG, "ServerStatusRunnable: Exception - ");
+                Log.e(TAG, "ServerStatusRunnable: Exception - ");
                 e.printStackTrace();
             }
 
@@ -577,7 +577,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 barDataSet.setColors(barColours);
             } catch (NullPointerException e){
-                Log.v(TAG,"Null pointer exception setting bar colours");
+                Log.e(TAG,"Null pointer exception setting bar colours");
             }
             barDataSet.setBarSpacePercent(20f);
             barDataSet.setBarShadowColor(Color.WHITE);
@@ -622,7 +622,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 mChart.getLegend().setEnabled(false);
             } catch (NullPointerException e) {
-                Log.v(TAG,"Null Pointer Exception setting legend");
+                Log.e(TAG,"Null Pointer Exception setting legend");
             }
 
             mChart.invalidate();
@@ -633,14 +633,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        Log.v(TAG,"onPause()");
+        Log.i(TAG,"onPause()");
         mUtil.writeToSysLogFile("MainActivity.onPause()");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Log.v(TAG,"onResume()");
+        Log.i(TAG,"onResume()");
         mUtil.writeToSysLogFile("MainActivity.onResume()");
     }
 
@@ -649,7 +649,7 @@ public class MainActivity extends AppCompatActivity {
         mUtil.writeToSysLogFile("MainActivity.showAbout()");
         View aboutView = getLayoutInflater().inflate(R.layout.about_layout, null, false);
         String versionName = mUtil.getAppVersionName();
-        Log.v(TAG, "showAbout() - version name = " + versionName);
+        Log.i(TAG, "showAbout() - version name = " + versionName);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setIcon(R.drawable.icon_24x24);
         builder.setTitle("OpenSeizureDetector V" + versionName);
@@ -661,7 +661,7 @@ public class MainActivity extends AppCompatActivity {
     static class ResponseHandler extends Handler {
         @Override
         public void handleMessage(Message message) {
-            Log.v(TAG, "Message=" + message.toString());
+            Log.i(TAG, "Message=" + message.toString());
         }
      }
 
