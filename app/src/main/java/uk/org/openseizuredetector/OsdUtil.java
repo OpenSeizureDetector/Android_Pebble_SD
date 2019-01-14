@@ -49,6 +49,7 @@ import android.content.res.XmlResourceParser;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
@@ -164,7 +165,13 @@ public class OsdUtil {
         Intent sdServerIntent;
         sdServerIntent = new Intent(mContext, SdServer.class);
         sdServerIntent.setData(Uri.parse("Start"));
-        mContext.startService(sdServerIntent);
+        if (Build.VERSION.SDK_INT >= 26) {
+            Log.i(TAG,"Starting Foreground Service (Android 8 and above)");
+            mContext.startForegroundService(sdServerIntent);
+        } else {
+            Log.i(TAG,"Starting Normal Service (Pre-Android 8)");
+            mContext.startService(sdServerIntent);
+        }
     }
 
     /**

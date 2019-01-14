@@ -84,6 +84,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
 
     private NotificationManager mNM;
     private NotificationCompat.Builder mNotificationBuilder;
+    private Notification mNotification;
     private SdWebServer webServer = null;
     private final static String TAG = "SdServer";
     private Timer dataLogTimer = null;
@@ -243,10 +244,16 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
 
         // Display a notification icon in the status bar of the phone to
         // show the service is running.
-        Log.v(TAG, "showing Notification");
-        mUtil.writeToSysLogFile("SdServer.onStartCommand() - showing Notification");
-        showNotification(0);
-
+        if (Build.VERSION.SDK_INT >= 26) {
+            Log.v(TAG, "showing Notification and calling startForeground (Android 8 and higher)");
+            mUtil.writeToSysLogFile("SdServer.onStartCommand() - showing Notification and calling startForeground (Android 8 and higher)");
+            showNotification(0);
+            startForeground(NOTIFICATION_ID,mNotification);
+        } else {
+            Log.v(TAG, "showing Notification");
+            mUtil.writeToSysLogFile("SdServer.onStartCommand() - showing Notification");
+            showNotification(0);
+        }
         // Record last time we sent an SMS so we can limit rate of SMS
         // sending to one per minute.
         mSMSTime = new Time(Time.getCurrentTimezone());
@@ -375,7 +382,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         PendingIntent contentIntent =
                 PendingIntent.getActivity(this,
                         0, i, PendingIntent.FLAG_UPDATE_CURRENT);
-        Notification notification = mNotificationBuilder.setContentIntent(contentIntent)
+        mNotification = mNotificationBuilder.setContentIntent(contentIntent)
                 .setSmallIcon(iconId)
                 .setColor(0xff000000)
                 .setTicker("OpenSeizureDetector")
@@ -385,7 +392,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 .setOnlyAlertOnce(true)
                 .build();
 
-        mNM.notify(NOTIFICATION_ID, notification);
+        mNM.notify(NOTIFICATION_ID, mNotification);
     }
 
     // Show the main activity on the user's screen.
