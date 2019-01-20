@@ -658,6 +658,22 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
     }
 
 
+    private void sendSMS(String phoneNo, String msgStr) {
+        Log.i(TAG, "sendSMS() - Sending to " + phoneNo);
+        // sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr + " - " + dateStr, null, null);
+        Intent intent = new Intent(Intent.ACTION_SENDTO);
+        intent.setData(Uri.parse("smsto:")); //, HTTP.PLAIN_TEXT_TYPE);
+        intent.putExtra("sms_body", msgStr);
+        intent.putExtra("address", phoneNo);
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            Log.i(TAG, "sendSMS() - Starting Activity to send SMS....");
+            startActivity(intent);
+        } else {
+            Log.e(TAG, "sendSMS() - Failed to send SMS - can not find activity do do it");
+        }
+
+    }
+
     /**
      * Sends SMS Alarms to the telephone numbers specified in mSMSNumbers[]
      * Attempts to find a better location, and sends a second SMS after location search
@@ -682,16 +698,17 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             // SmsManager sm = SmsManager.getDefault();
             for (int i = 0; i < mSMSNumbers.length; i++) {
                 Log.i(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers[i]);
+                sendSMS(new String(mSMSNumbers[i]),mSMSMsgStr + " - " + dateStr);
                 // sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr + " - " + dateStr, null, null);
-                Intent intent = new Intent(Intent.ACTION_SEND);
-                intent.setDataAndType(Uri.parse("smsto:"), "vnd.android-dir/mms-sms");
-                intent.putExtra("sms_body", mSMSMsgStr + " - " + dateStr);
-                intent.putExtra("address", new String(mSMSNumbers[i]));
-                if (intent.resolveActivity(getPackageManager()) != null) {
-                    startActivity(intent);
-                } else {
-                    Log.e(TAG, "sendSMSAlarm() - Failed to send SMS.");
-                }
+                //Intent intent = new Intent(Intent.ACTION_SEND);
+                //intent.setDataAndType(Uri.parse("smsto:"), "text/plain");
+                //intent.putExtra("sms_body", mSMSMsgStr + " - " + dateStr);
+                //intent.putExtra("address", new String(mSMSNumbers[i]));
+                //if (intent.resolveActivity(getPackageManager()) != null) {
+                //    startActivity(intent);
+                //} else {
+                //    Log.e(TAG, "sendSMSAlarm() - Failed to send SMS - can not find activity do do it");
+                //}
             }
         } else {
             Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
@@ -735,12 +752,20 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                         dateStr + " - " + googleUrl;
                 Log.i(TAG, "onSdLocationReceived() - Message is " + messageStr);
                 mUtil.showToast(messageStr);
-                SmsManager sm = SmsManager.getDefault();
                 for (int i = 0; i < mSMSNumbers.length; i++) {
-                    Log.i(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers[i]);
-                    sm.sendTextMessage(mSMSNumbers[i], null,
-                            messageStr,
-                            null, null);
+                    Log.i(TAG, "onSdLocationReceived() - Sending to " + mSMSNumbers[i]);
+                    sendSMS(new String(mSMSNumbers[i]), messageStr);
+                    // sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr + " - " + dateStr, null, null);
+                    //Intent intent = new Intent(Intent.ACTION_SEND);
+                    //intent.setDataAndType(Uri.parse("smsto:"), "vnd.android-dir/mms-sms");
+                    //intent.putExtra("sms_body", messageStr);
+                    //intent.putExtra("address", new String(mSMSNumbers[i]));
+                    //if (intent.resolveActivity(getPackageManager()) != null) {
+                    //    Log.e(TAG, "onSdLocationReceived() - sending SMS.");
+                    //    startActivity(intent);
+                    //} else {
+                    //    Log.e(TAG, "onSdLocationReceived() - Failed to send SMS - can not find activity to do it.");
+                    //}
                 }
             } else {
                 Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
