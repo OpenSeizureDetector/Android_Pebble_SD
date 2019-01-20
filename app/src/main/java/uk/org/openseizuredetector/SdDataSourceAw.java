@@ -147,7 +147,7 @@ public class SdDataSourceAw extends SdDataSource {
         mName = "Android Wear";
         // Set default settings from XML files (mContext is set by super().
         PreferenceManager.setDefaultValues(mContext,
-                R.xml.pebble_datasource_prefs, true);
+                R.xml.seizure_detector_prefs, true);
     }
 
 

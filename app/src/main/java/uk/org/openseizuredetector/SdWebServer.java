@@ -95,15 +95,10 @@ public class SdWebServer extends NanoHTTPD {
                         // Send the data to the SdDataSource so the app can pick it up.
                         if (parameters != null) {
                             Log.v(TAG,"passing parameters to data source");
-                            mSdServer.mSdDataSource.updateFromJSON(parameters.get("dataObj").toString());
+                            answer = mSdServer.mSdDataSource.updateFromJSON(parameters.get("dataObj").toString());
                         } else {
                             Log.v(TAG,"Passing postData to data source");
-                            mSdServer.mSdDataSource.updateFromJSON(files.get("postData"));
-                        }
-                        if (mSdData.haveSettings) {
-                            answer = "OK";
-                        } else {
-                            answer = "sendSettings";
+                            answer = mSdServer.mSdDataSource.updateFromJSON(files.get("postData"));
                         }
                         break;
                     default:
@@ -136,7 +131,15 @@ public class SdWebServer extends NanoHTTPD {
                         Log.v(TAG, "WebServer.serve() - POST /settings - receiving data from device: parameters=" + parameters.toString());
                         Log.v(TAG, "              header=" + header.toString());
                         Log.v(TAG, "              files=" + files.toString());
-                        mSdServer.mSdDataSource.updateFromJSON(parameters.toString());
+                        // Send the data to the SdDataSource so the app can pick it up.
+                        if (parameters != null) {
+                            Log.v(TAG,"passing parameters to data source");
+                            answer = mSdServer.mSdDataSource.updateFromJSON(parameters.get("dataObj").toString());
+                        } else {
+                            Log.v(TAG,"Passing postData to data source");
+                            answer = mSdServer.mSdDataSource.updateFromJSON(files.get("postData"));
+                        }
+                        //mSdServer.mSdDataSource.updateFromJSON(parameters.toString());
                         break;
                     default:
                         Log.v(TAG, "WebServer.serve() - Unrecognised method - " + method);
@@ -189,7 +192,7 @@ public class SdWebServer extends NanoHTTPD {
                     answer = "Unknown URI: ";
                 }
         }
-
+        Log.v(TAG,"WebServer.serve() - returning "+answer);
         return new NanoHTTPD.Response(answer);
     }
 

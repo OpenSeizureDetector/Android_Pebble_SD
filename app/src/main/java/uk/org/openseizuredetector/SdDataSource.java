@@ -90,8 +90,9 @@ public abstract class SdDataSource {
 
     // Force the data stored in this datasource to update in line with the JSON string encoded data provided.
     // Used by webServer to update the NetworkPassiveDatasource
-    public void updateFromJSON(String jsonStr) {
+    public String updateFromJSON(String jsonStr) {
         Log.v(TAG,"updateFromJSON - "+jsonStr);
+        return("OK");
     }
 
     /**

@@ -78,10 +78,10 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         for (int i = 0; i < target.size(); i++) {
             Header h = target.get(i);
             Log.v(TAG,"found - "+h.title.toString());
-            if (h.title.toString().equals("Pebble Datasource")) {
-                Log.v(TAG, "found Pebble Datasource Header");
-                if (!dataSourceStr.equals("Pebble")) {
-                    Log.v(TAG, "Removing pebble settings header");
+            if (h.title.toString().equals("Seizure Detector")) {
+                Log.v(TAG, "found Seizure Detector Header");
+                if (dataSourceStr.equals("Network")) {
+                    Log.v(TAG, "Removing seizure detector settings header");
                     target.remove(i);
                     i = i-1;
                 }
@@ -94,14 +94,14 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                     i = i -1;
                 }
             }
-            //if (h.title.toString().equals("Camera Settings")) {
-            //    Log.v(TAG, "found Camera Settings Header");
-            //    if (!cameraEnabled) {
-            //        Log.v(TAG, "Removing camera settings header");
-            //        target.remove(i);
-            //        i = i-1;
-            //    }
-            //}
+            if (h.title.toString().equals("Pebble Datasource")) {
+                Log.v(TAG, "found Pebble Datasource Header");
+                if (!dataSourceStr.equals("Pebble")) {
+                    Log.v(TAG, "Removing Pebble settings header");
+                    target.remove(i);
+                    i = i -1;
+                }
+            }
         }
 
     }
@@ -193,6 +193,16 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         }
     }
 
+    public static class SeizureDetectorPrefsFragment extends PreferenceFragment {
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            // Load the preferences from an XML resource
+            addPreferencesFromResource(R.xml.seizure_detector_prefs);
+        }
+    }
+
     public static class PebbleDatasourcePrefsFragment extends PreferenceFragment {
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -213,14 +223,5 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         }
     }
 
-    //public static class CameraPrefsFragment extends PreferenceFragment {
-    //    @Override
-    //    public void onCreate(Bundle savedInstanceState) {
-    //        super.onCreate(savedInstanceState);
-
-            // Load the preferences from an XML resource
-     //       addPreferencesFromResource(R.xml.camera_prefs);
-     //   }
-    //}
 
 }

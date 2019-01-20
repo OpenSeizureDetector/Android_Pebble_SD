@@ -413,17 +413,28 @@ public class MainActivity extends AppCompatActivity {
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
 
-                    // Pebble Connected Phrase
+                    // Pebble Connected Phrase - use for HR if active instead.
                     tv = (TextView) findViewById(R.id.pebbleTv);
-                    if (mConnection.mSdServer.mSdData.pebbleConnected) {
-                        tv.setText("Watch Connected OK");
-                        tv.setBackgroundColor(okColour);
-                        tv.setTextColor(okTextColour);
-
+                    if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
+                        tv.setText("HR = "+mConnection.mSdServer.mSdData.mHR);
+                        if (!mConnection.mSdServer.mSdData.mHRAlarmStanding) {
+                            tv.setBackgroundColor(okColour);
+                            tv.setTextColor(okTextColour);
+                        } else {
+                            tv.setBackgroundColor(warnColour);
+                            tv.setTextColor(warnTextColour);
+                        }
                     } else {
-                        tv.setText("Watch NOT Connected");
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
+                        if (mConnection.mSdServer.mSdData.pebbleConnected) {
+                            tv.setText("Watch Connected OK");
+                            tv.setBackgroundColor(okColour);
+                            tv.setTextColor(okTextColour);
+
+                        } else {
+                            tv.setText("Watch NOT Connected");
+                            tv.setBackgroundColor(warnColour);
+                            tv.setTextColor(warnTextColour);
+                        }
                     }
                     tv = (TextView) findViewById(R.id.appTv);
                     if (mConnection.mSdServer.mSdData.pebbleAppRunning) {
@@ -436,7 +447,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(warnTextColour);
                     }
                     tv = (TextView) findViewById(R.id.battTv);
-                    tv.setText("Pebble Battery = " + String.valueOf(mConnection.mSdServer.mSdData.batteryPc) + "%");
+                    tv.setText("Watch Battery = " + String.valueOf(mConnection.mSdServer.mSdData.batteryPc) + "%");
                     if (mConnection.mSdServer.mSdData.batteryPc <= 20) {
                         tv.setBackgroundColor(alarmColour);
                         tv.setTextColor(alarmTextColour);

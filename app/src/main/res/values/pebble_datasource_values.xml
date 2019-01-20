@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Arrays used to produce list selections in pebble_datasource_prefs.xml -->
+<!-- Arrays used to produce list selections in seizure_detector_prefsxml -->
 <resources>
     <string-array name="pebble_debug_list">
         <item>"Debug OFF"</item>

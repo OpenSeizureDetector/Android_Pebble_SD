@@ -12,22 +12,20 @@
         android:title="Alarms"
         android:summary="Alarms Preferences" />
 
+    <header android:fragment="uk.org.openseizuredetector.PrefActivity$SeizureDetectorPrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="Seizure Detector"
+        android:summary="Seizure Detector Preferences" />
+
     <header android:fragment="uk.org.openseizuredetector.PrefActivity$PebbleDatasourcePrefsFragment"
         android:icon="@drawable/icon_24x24"
-        android:title="Pebble Datasource"
-        android:summary="Pebble Datasource Preferences" />
+        android:title="Network Datasource"
+        android:summary="Network Datasource Preferences" />
 
     <header android:fragment="uk.org.openseizuredetector.PrefActivity$NetworkDatasourcePrefsFragment"
         android:icon="@drawable/icon_24x24"
         android:title="Network Datasource"
         android:summary="Network Datasource Preferences" />
-
-    <!--<header android:fragment="uk.org.openseizuredetector.PrefActivity$CameraPrefsFragment"
-        android:icon="@drawable/icon_24x24"
-        android:title="Camera Settings"
-        android:summary="IP Camera Preferences"
-        android:enabled="false"
-        />-->
 
 
 </preference-headers>

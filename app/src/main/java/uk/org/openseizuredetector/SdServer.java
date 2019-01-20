@@ -210,10 +210,10 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceNetwork");
                 mSdDataSource = new SdDataSourceNetwork(this.getApplicationContext(), mHandler, this);
                 break;
-            case "NetworkPassive":
-                Log.v(TAG, "Selecting Network (Passive) DataSource");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceNetworkPassive");
-                mSdDataSource = new SdDataSourceNetworkPassive(this.getApplicationContext(), mHandler, this);
+            case "Garmin":
+                Log.v(TAG, "Selecting Garmin DataSource");
+                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceGarmin");
+                mSdDataSource = new SdDataSourceGarmin(this.getApplicationContext(), mHandler, this);
                 break;
             default:
                 Log.v(TAG, "Datasource " + mSdDataSourceName + " not recognised - Exiting");
@@ -333,6 +333,17 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         // Stop the Cancel Alarm Latch timer
         stopLatchTimer();
 
+        // Stop the status timer
+        if (dataLogTimer != null) {
+            Log.v(TAG, "stop(): cancelling Data logger timer");
+            mUtil.writeToSysLogFile("onDestroy() - cancelling data log timer");
+            dataLogTimer.cancel();
+            dataLogTimer.purge();
+            dataLogTimer = null;
+        }
+
+
+
         try {
             // Cancel the notification.
             Log.v(TAG, "onDestroy(): cancelling notification");
@@ -342,6 +353,11 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             Log.v(TAG, "onDestroy(): stopping web server");
             mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping Web Server");
             stopWebServer();
+
+            mUtil.writeToSysLogFile("SdServer.onDestroy() - releasing mToneGenerator");
+            mToneGenerator.release();
+            mToneGenerator = null;
+
             // stop this service.
             Log.v(TAG, "onDestroy(): calling stopSelf()");
             mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping self");
@@ -352,9 +368,6 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             mUtil.writeToSysLogFile("SdServer.onDestroy() -error " + e.toString());
         }
 
-        mUtil.writeToSysLogFile("SdServer.onDestroy() - releasing mToneGenerator");
-        mToneGenerator.release();
-        mToneGenerator = null;
     }
 
 
@@ -516,8 +529,36 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                     mSMSTime = tnow;
                 }
             }
+        }
+        // Handle heart rate alarm
+        if ((sdData.mHRAlarmActive) && (sdData.mHRAlarmStanding)) {
+            sdData.alarmPhrase = "HR ABNORMAL";
+            if (mLogAlarms) {
+                Log.v(TAG, "***HEART RATE*** - Logging to SD Card");
+                writeAlarmToSD();
+                logData();
+            } else {
+                Log.v(TAG, "***HEART RATE***");
+            }
+            // Make alarm beep tone
+            alarmBeep();
+            // Display MainActvity
+            showMainActivity();
+            // Send SMS Alarm.
+            if (mSMSAlarm) {
+                Time tnow = new Time(Time.getCurrentTimezone());
+                tnow.setToNow();
+                // limit SMS alarms to one per minute
+                if ((tnow.toMillis(false)
+                        - mSMSTime.toMillis(false))
+                        > 60000) {
+                    sendSMSAlarm();
+                    mSMSTime = tnow;
+                }
+            }
 
         }
+
         // Fault
         if ((sdData.alarmState) == 4 || (sdData.alarmState == 7)) {
             sdData.alarmPhrase = "FAULT";
@@ -553,7 +594,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             mToneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration);
             Log.v(TAG, "beep()");
         } else {
-            mUtil.showToast("Warming mToneGenerator is null - not beeping!!!");
+            mUtil.showToast("Warning mToneGenerator is null - not beeping!!!");
             Log.v(TAG, "beep() - Warming mToneGenerator is null - not beeping!!!");
             mUtil.writeToSysLogFile("SdServer.beep() - mToneGenerator is null???");
         }
@@ -660,16 +701,30 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
 
     private void sendSMS(String phoneNo, String msgStr) {
         Log.i(TAG, "sendSMS() - Sending to " + phoneNo);
+        try {
+            SmsManager sm = SmsManager.getDefault();
+            sm.sendTextMessage(phoneNo, null, msgStr,
+                    null, null);
+        } catch (Exception e) {
+            Log.e(TAG, "sendSMS - Failed to send SMS Message");
+            mUtil.writeToSysLogFile("sendSMS - Failed to send SMS Message");
+            Log.e(TAG, e.toString());
+            mUtil.showToast("ERROR: FAILED TO SEND SMS MESSAGE");
+        }
+    }
+
+    private void sendSMSIntent(String phoneNo, String msgStr) {
+        Log.i(TAG, "sendSMSIntent() - Sending to " + phoneNo);
         // sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr + " - " + dateStr, null, null);
         Intent intent = new Intent(Intent.ACTION_SENDTO);
         intent.setData(Uri.parse("smsto:")); //, HTTP.PLAIN_TEXT_TYPE);
         intent.putExtra("sms_body", msgStr);
         intent.putExtra("address", phoneNo);
         if (intent.resolveActivity(getPackageManager()) != null) {
-            Log.i(TAG, "sendSMS() - Starting Activity to send SMS....");
+            Log.i(TAG, "sendSMSIntent() - Starting Activity to send SMS....");
             startActivity(intent);
         } else {
-            Log.e(TAG, "sendSMS() - Failed to send SMS - can not find activity do do it");
+            Log.e(TAG, "sendSMSIntent() - Failed to send SMS - can not find activity do do it");
         }
 
     }

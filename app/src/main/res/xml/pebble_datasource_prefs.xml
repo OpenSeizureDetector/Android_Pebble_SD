@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The ListPreference data is defined in pebble_datasource_values.xml -->
-<PreferenceScreen
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="User Interface Settings">
         <EditTextPreference
             android:defaultValue="5"
@@ -28,44 +26,8 @@
             android:dialogTitle="Select Display Spectrum Mode" />
 
     </PreferenceCategory>
-    <PreferenceCategory android:title="Seizure Detector Settings">
-        <EditTextPreference
-            android:defaultValue="5"
-            android:key="WarnTime"
-            android:summary="Time to wait before initiating warning (Default = 5 sec)"
-            android:title="WarnTime (sec)" />
-        <EditTextPreference
-            android:defaultValue="10"
-            android:key="AlarmTime"
-            android:summary="Time to wait before initiating alarm (Default = 10 sec)"
-            android:title="AlarmTime (sec)" />
-        <EditTextPreference
-            android:defaultValue="100"
-            android:key="AlarmThresh"
-            android:summary="Alarm Threshold (Default = 100)"
-            android:title="AlarmThresh" />
-        <EditTextPreference
-            android:defaultValue="50"
-            android:key="AlarmRatioThresh"
-            android:summary="Alarm Ratio Threshold (Default = 50).  Increase this value to reduce sensitivity if false alarms are a problem."
-            android:title="AlarmRatioThresh" />
 
-        <EditTextPreference
-            android:defaultValue="3"
-            android:key="AlarmFreqMin"
-            android:summary="Minimum Frequency of ROI (Hz) (Default = 3 Hz)"
-            android:title="AlarmFreqMin (Hz)" />
-        <EditTextPreference
-            android:defaultValue="10"
-            android:key="AlarmFreqMax"
-            android:summary="Maximum Frequency of ROI (Hz) (Default = 10 Hz)"
-            android:title="AlarmFreqMax (Hz)" />
-
-        <EditTextPreference
-            android:defaultValue="5"
-            android:key="SamplePeriod"
-            android:summary="Period (in seconds) between data analyses"
-            android:title="SamplePeriod (sec)" />
+    <PreferenceCategory android:title="Analysis">
         <ListPreference
             android:key="PebbleSdMode"
             android:title="Seizure Detector Mode"
@@ -85,9 +47,7 @@
             android:enabled="true"
             />
 
-
     </PreferenceCategory>
-
     <PreferenceCategory android:title="Fall Detector Settings">
         <CheckBoxPreference
             android:defaultValue="false"
@@ -128,4 +88,5 @@
             android:summary="Period (seconds) that we wait for data from the watch before assuming the watch app is not running and re-starting it."
             android:title="Period (sec) we wait for data before restarting watch app." />
     </PreferenceCategory>
+
 </PreferenceScreen>

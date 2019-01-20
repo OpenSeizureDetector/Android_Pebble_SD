@@ -4,13 +4,13 @@
         <item>"Pebble Watch"</item>
         <item>"Android Wear"</item>
         <item>"Network"</item>
-        <item>"Network (passive)"</item>
+        <item>"Garmin"</item>
     </string-array>
     <string-array name="datasource_list_values">
         <item>"Pebble"</item>
         <item>"AndroidWear"</item>
         <item>"Network"</item>
-        <item>"NetworkPassive"</item>
+        <item>"Garmin"</item>
     </string-array>
 
 </resources>

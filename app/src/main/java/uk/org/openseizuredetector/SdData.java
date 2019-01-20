@@ -63,6 +63,11 @@ public class SdData implements Parcelable {
     public long alarmRatioThresh;
     public long batteryPc;
 
+    /* Heart Rate Alarm Settings */
+    public boolean mHRAlarmActive = false;
+    public double mHRThreshMin = 40.0;
+    public double mHRTreshMax = 150.0;
+
     /* Analysis results */
     public Time dataTime = null;
     public long alarmState;
@@ -77,6 +82,9 @@ public class SdData implements Parcelable {
     public boolean pebbleConnected = false;
     public boolean pebbleAppRunning = false;
     public boolean serverOK = false;
+
+    public boolean mHRAlarmStanding = false;
+    public double mHR = 0;
 
     public SdData() {
         simpleSpec = new int[10];
