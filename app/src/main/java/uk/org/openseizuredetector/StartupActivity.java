@@ -164,6 +164,7 @@ public class StartupActivity extends Activity {
             }
         });
 
+        mConnection = new SdServiceConnection(this);
     }
 
     @Override
@@ -198,16 +199,17 @@ public class StartupActivity extends Activity {
         }
 
         if (mUtil.isServerRunning()) {
-            Log.v(TAG, "onStart() - server running - stopping it");
+            Log.i(TAG, "onStart() - server running - stopping it");
             mUtil.writeToSysLogFile("StartupActivity.onStart() - server already running - stopping it.");
             mUtil.stopServer();
         }
         mUtil.writeToSysLogFile("StartupActivity.onStart() - starting server");
+        Log.i(TAG,"onStart() - starting server");
         mUtil.startServer();
 
         // Bind to the service.
+        Log.i(TAG,"onStart() - binding to server");
         mUtil.writeToSysLogFile("StartupActivity.onStart() - binding to server");
-        mConnection = new SdServiceConnection(this);
         mUtil.bindToServer(this, mConnection);
 
         // Check to see if this is the first time the app has been run, and display welcome dialog if it is.
@@ -229,7 +231,7 @@ public class StartupActivity extends Activity {
     @Override
     protected void onStop() {
         super.onStop();
-        Log.i(TAG, "onStop()");
+        Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("StartupActivity.onStop() - unbinding from server");
         mUtil.unbindFromServer(this, mConnection);
         mUiTimer.cancel();
@@ -250,21 +252,22 @@ public class StartupActivity extends Activity {
 
             Log.v(TAG,"serverStatusRunnable()");
 
-            // Service Running
+            // Settings ok
             tv = (TextView) findViewById(R.id.textItem1);
             pb = (ProgressBar) findViewById(R.id.progressBar1);
-            if (mUtil.isServerRunning()) {
-                tv.setText("Background Service Running OK");
+            if (mUtil.arePermissionsOK()) {
+                tv.setText("App Permissions OK");
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
-                tv.setText("Waiting for Background Service...");
+                tv.setText("Problem with App Permissions");
                 tv.setBackgroundColor(alarmColour);
                 tv.setTextColor(alarmTextColour);
                 pb.setIndeterminate(true);
                 allOk = false;
+                mUtil.requestPermissions(StartupActivity.this);
             }
 
             // Are we Bound to the Service

@@ -139,14 +139,14 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
      */
     public SdServer() {
         super();
-        Log.v(TAG, "SdServer Created");
+        Log.i(TAG, "SdServer Created");
         mSdData = new SdData();
         mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-        Log.v(TAG, "sdServer.onBind()");
+        Log.i(TAG, "sdServer.onBind()");
         return mBinder;
     }
 
@@ -163,7 +163,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
      */
     @Override
     public void onCreate() {
-        Log.v(TAG, "onCreate()");
+        Log.i(TAG, "onCreate()");
         mHandler = new Handler();
         mUtil = new OsdUtil(getApplicationContext(), mHandler);
         mUtil.writeToSysLogFile("SdServer.onCreate()");
@@ -186,7 +186,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.v(TAG, "onStartCommand() - SdServer service starting");
+        Log.i(TAG, "onStartCommand() - SdServer service starting");
         mUtil.writeToSysLogFile("SdServer.onStartCommand()");
 
         // Update preferences.
@@ -216,10 +216,11 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 mSdDataSource = new SdDataSourceGarmin(this.getApplicationContext(), mHandler, this);
                 break;
             default:
-                Log.v(TAG, "Datasource " + mSdDataSourceName + " not recognised - Exiting");
+                Log.e(TAG, "Datasource " + mSdDataSourceName + " not recognised - Defaulting to Pebble");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - Datasource " + mSdDataSourceName + " not recognised - exiting");
-                mUtil.showToast("Datasource " + mSdDataSourceName + " not recognised - Exiting");
-                return 1;
+                mUtil.showToast("Datasource " + mSdDataSourceName + " not recognised - Defaulting to Pebble");
+                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePebble");
+                mSdDataSource = new SdDataSourcePebble(this.getApplicationContext(), mHandler, this);
         }
 
         if (mSMSAlarm) {
@@ -295,7 +296,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
 
     @Override
     public void onDestroy() {
-        Log.v(TAG, "onDestroy(): SdServer Service stopping");
+        Log.i(TAG, "onDestroy(): SdServer Service stopping");
         mUtil.writeToSysLogFile("SdServer.onDestroy() - releasing wakelock");
         // release the wake lock to allow CPU to sleep and reduce
         // battery drain.
@@ -314,7 +315,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         }
 
         if (mSdDataSource != null) {
-            Log.v(TAG, "stopping mSdDataSource");
+            Log.i(TAG, "stopping mSdDataSource");
             mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping mSdDataSource");
             mSdDataSource.stop();
         } else {
@@ -574,7 +575,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
 
     // Called by SdDataSource when a fault condition is detected.
     public void onSdDataFault(SdData sdData) {
-        Log.i(TAG, "onSdDataFault()");
+        Log.v(TAG, "onSdDataFault()");
         mSdData = sdData;
         mSdData.alarmState = 4;  // set fault alarm state.
         mSdData.alarmStanding = false;

@@ -171,7 +171,7 @@ public class SdDataSourcePebble extends SdDataSource {
         // use a timer to check the status of the pebble app on the same frequency
         // as we get app data.
         if (mStatusTimer == null) {
-            Log.v(TAG, "start(): starting status timer");
+            Log.v(TAG, "start(): starting status timer with period "+mDataUpdatePeriod*1000 + " ms");
             mUtil.writeToSysLogFile("SdDataSourcePebble.start() - starting status timer");
             mStatusTimer = new Timer();
             mStatusTimer.schedule(new TimerTask() {
@@ -190,7 +190,7 @@ public class SdDataSourcePebble extends SdDataSource {
         getPebbleSdSettings();
         if (mSettingsTimer == null) {
             Log.v(TAG, "start(): starting settings timer");
-            mUtil.writeToSysLogFile("SdDataSourcePebble.start() - starting settings timer");
+            mUtil.writeToSysLogFile("SdDataSourcePebble.start() - starting settings timer with period "+1000*mSettingsPeriod);
             mSettingsTimer = new Timer();
             mSettingsTimer.schedule(new TimerTask() {
                 @Override
@@ -244,6 +244,8 @@ public class SdDataSourcePebble extends SdDataSource {
      * - defined in res/xml/SdDataSourcePebblePrefs.xml
      */
     public void updatePrefs() {
+        String prefStr = "null";
+
         Log.v(TAG, "updatePrefs()");
         //mUtil.writeToSysLogFile("SdDataSourcePebble.updatePrefs()");
         SharedPreferences SP = PreferenceManager
@@ -273,7 +275,6 @@ public class SdDataSourcePebble extends SdDataSource {
 
 
             // Watch Settings
-            String prefStr;
 
             prefStr = SP.getString("PebbleDebug", "SET_FROM_XML");
             mDebug = (short) Integer.parseInt(prefStr);
@@ -347,7 +348,7 @@ public class SdDataSourcePebble extends SdDataSource {
             Log.v(TAG, "updatePrefs() FallWindow = " + mFallWindow);
 
         } catch (Exception ex) {
-            Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
+            Log.v(TAG, "updatePrefs() - Problem parsing preferences! - prefStr="+prefStr);
             mUtil.writeToSysLogFile("SdDataSourcePebble.updatePrefs() - ERROR "+ex.toString());
             Toast toast = Toast.makeText(mContext, "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
             toast.show();

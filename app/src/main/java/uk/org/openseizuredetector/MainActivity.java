@@ -86,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.v(TAG,"onCreate()");
+        Log.i(TAG,"onCreate()");
 
         // Set our custom uncaught exception handler to report issues.
         Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(MainActivity.this));
@@ -187,6 +187,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "Starting Server");
                     startServer();
                     // and bind to it so we can see its data
+                    Log.i(TAG, "Binding to Server");
                     mUtil.bindToServer(this, mConnection);
                 }
                 return true;
@@ -269,7 +270,7 @@ public class MainActivity extends AppCompatActivity {
         String versionName = mUtil.getAppVersionName();
         tv.setText("OpenSeizureDetector Android App Version " + versionName);
 
-        Log.v(TAG,"onStart() - binding to server");
+        Log.i(TAG,"onStart() - binding to server");
         mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
         mUtil.bindToServer(this, mConnection);
 

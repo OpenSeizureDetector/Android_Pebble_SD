@@ -70,7 +70,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(this.getApplicationContext());
         String dataSourceStr = SP.getString("DataSource", "Pebble");
-        Log.v(TAG, "onBuildHeaders DataSource = " + dataSourceStr);
+        Log.i(TAG, "onBuildHeaders DataSource = " + dataSourceStr);
 
         //Boolean cameraEnabled = SP.getBoolean("UseIpCamera", false);
         //Log.v(TAG, "onBuildHeaders cameraEnabled = " + cameraEnabled);
@@ -111,12 +111,12 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         super.onStart();
         mUtil.writeToSysLogFile("PrefActvity.onStart()");
         invalidateHeaders();
-        Log.v(TAG, "onStart()");
+        Log.i(TAG, "onStart()");
     }
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        Log.v(TAG, "SharedPreference " + s + " Changed.");
+        Log.i(TAG, "SharedPreference " + s + " Changed.");
         //mUtil.showToast("Shared Preference " + s + " Changed.");
         mPrefChanged = true;
     }
@@ -126,7 +126,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     public void onResume() {
         super.onResume();
         mUtil.writeToSysLogFile("PrefActvity.onResume()");
-        Log.v(TAG, "onResume()");
+        Log.i(TAG, "onResume()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
         SP.registerOnSharedPreferenceChangeListener(this);
@@ -135,6 +135,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     @Override
     protected void onPause() {
         super.onPause();
+        Log.i(TAG, "onPause()");
         mUtil.writeToSysLogFile("PrefActvity.onPause()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
@@ -142,12 +143,13 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mUtil.writeToSysLogFile("PrefActvity.onDestroy()");
-        Log.v(TAG, "onDestroy.  mPrefChanged=" + mPrefChanged);
+    protected void onStop() {
+        super.onStop();
+        mUtil.writeToSysLogFile("PrefActvity.onStop()");
+        Log.i(TAG, "onStop.  mPrefChanged=" + mPrefChanged);
         if (mPrefChanged) {
-            mUtil.writeToSysLogFile("PrefActvity.onDestroy() - settings changed - re-starting....");
+            Log.i(TAG,"PrefActivity.onStop() - settings changed - restarting server");
+            mUtil.writeToSysLogFile("PrefActvity.onStop() - settings changed - re-starting server....");
             mUtil.showToast("Settings Changed - re-starting OpenSeizureDetector....");
             Intent intent = new Intent(getApplicationContext(), StartupActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);

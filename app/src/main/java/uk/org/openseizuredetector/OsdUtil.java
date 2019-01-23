@@ -24,6 +24,7 @@
 */
 package uk.org.openseizuredetector;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.ComponentName;
@@ -57,6 +58,8 @@ import android.os.UserHandle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.text.format.Time;
 import android.util.Log;
 import android.view.MenuItem;
@@ -80,10 +83,15 @@ import java.util.concurrent.RunnableFuture;
  * OsdUtil - OpenSeizureDetector Utilities
  * Deals with starting and stopping the background service and binding to it to receive data.
  */
-public class OsdUtil {
+public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallback {
     private final String SYSLOG = "SysLog";
     private final String ALARMLOG = "AlarmLog";
     private final String DATALOG = "DataLog";
+
+    private final String[] REQUIRED_PERMISSIONS = {
+            Manifest.permission.SEND_SMS,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+    };
 
     /**
      * Based on http://stackoverflow.com/questions/7440473/android-how-to-check-if-the-intent-service-is-still-running-or-has-stopped-running
@@ -94,6 +102,7 @@ public class OsdUtil {
     private boolean mLogAlarms = true;
     private boolean mLogSystem = true;
     private boolean mLogData = true;
+    private boolean mPermissionsRequested = false;
 
     public OsdUtil(Context context, Handler handler) {
         mContext = context;
@@ -404,4 +413,42 @@ public class OsdUtil {
         }
     }
 
+    public boolean arePermissionsOK() {
+        boolean allOk = true;
+        Log.v(TAG,"arePermissionsOK");
+        for (int i = 0; i< REQUIRED_PERMISSIONS.length; i++) {
+            if (ContextCompat.checkSelfPermission(mContext, REQUIRED_PERMISSIONS[i])
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, REQUIRED_PERMISSIONS[i] + " Permission Not Granted");
+                allOk = false;
+            }
+        }
+        return allOk;
+    }
+
+    public void requestPermissions(Activity activity) {
+        if (mPermissionsRequested) {
+            Log.i(TAG,"requestPermissions() - request already sent - not doing anything");
+        } else {
+            Log.i(TAG, "requestPermissions() - requesting permissions");
+            for (int i = 0; i < REQUIRED_PERMISSIONS.length; i++) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
+                        REQUIRED_PERMISSIONS[i])) {
+                    Log.i(TAG, "shouldShowRationale for permission" + REQUIRED_PERMISSIONS[i]);
+                }
+            }
+            ActivityCompat.requestPermissions(activity,
+                    REQUIRED_PERMISSIONS,
+                    42);
+            mPermissionsRequested = true;
+        }
+
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        Log.i(TAG,"onequestPermissionsResult - Permission" + permissions + " = " + grantResults);
+    }
 }

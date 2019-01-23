@@ -114,7 +114,7 @@ public class SdDataSourceGarmin extends SdDataSource {
     public SdDataSourceGarmin(Context context, Handler handler,
                               SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
-        mName = "NetworkPassive";
+        mName = "Garmin";
         // Set default settings from XML files (mContext is set by super().
         PreferenceManager.setDefaultValues(mContext,
                 R.xml.network_passive_datasource_prefs, true);
@@ -126,7 +126,7 @@ public class SdDataSourceGarmin extends SdDataSource {
      * make sure any changes to preferences are taken into account.
      */
     public void start() {
-        Log.v(TAG, "start()");
+        Log.i(TAG, "start()");
         mUtil.writeToSysLogFile("SdDataSourceGarmin.start()");
         updatePrefs();
         // Start timer to check status of watch regularly.
@@ -188,7 +188,7 @@ public class SdDataSourceGarmin extends SdDataSource {
      * Stop the datasource from updating
      */
     public void stop() {
-        Log.v(TAG, "stop()");
+        Log.i(TAG, "stop()");
         mUtil.writeToSysLogFile("SdDataSourceGarmin.stop()");
         try {
             // Stop the status timer
