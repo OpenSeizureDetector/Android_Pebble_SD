@@ -169,7 +169,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
      */
     public void startServer() {
         // Start the server
-        Log.i(TAG,"OsdUtil.startServer()");
+        Log.d(TAG,"OsdUtil.startServer()");
         writeToSysLogFile("startServer() - starting server");
         Intent sdServerIntent;
         sdServerIntent = new Intent(mContext, SdServer.class);
@@ -187,7 +187,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
      * Stop the SdServer service
      */
     public void stopServer() {
-        Log.i(TAG, "OsdUtil.stopServer() - stopping Server...");
+        Log.d(TAG, "OsdUtil.stopServer() - stopping Server...");
         writeToSysLogFile("stopserver() - stopping server");
 
         // then send an Intent to stop the service.
