@@ -91,6 +91,9 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
     private final String[] REQUIRED_PERMISSIONS = {
             Manifest.permission.SEND_SMS,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            //Manifest.permission.SYSTEM_ALERT_WINDOW,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.WAKE_LOCK,
     };
 
     /**
@@ -342,24 +345,30 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
 
         fname = fname + "_" + dateStr + ".txt";
         // Open output directory on SD Card.
-        if (isExternalStorageWritable()) {
-            try {
-                FileWriter of = new FileWriter(getDataStorageDir().toString()
-                        + "/" + fname, true);
-                if (msgStr != null) {
-                    String dateTimeStr = tnow.format("%Y-%m-%d %H:%M:%S");
-                    Log.v(TAG, "writing msgStr");
-                    of.append(dateTimeStr+", "
-                            +tnow.toMillis(true)+", "
-                            +msgStr+"<br/>\n");
-                }
-                of.close();
-            } catch (Exception ex) {
-                Log.e(TAG, "writeToLogFile - error " + ex.toString());
-                showToast("ERROR Writing to Log File");
-            }
+        if (ContextCompat.checkSelfPermission(mContext,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            Log.e(TAG,"ERROR: We do not have permission to write to external storage");
         } else {
-            Log.e(TAG, "ERROR - Can not Write to External Folder");
+            if (isExternalStorageWritable()) {
+                try {
+                    FileWriter of = new FileWriter(getDataStorageDir().toString()
+                            + "/" + fname, true);
+                    if (msgStr != null) {
+                        String dateTimeStr = tnow.format("%Y-%m-%d %H:%M:%S");
+                        Log.v(TAG, "writing msgStr");
+                        of.append(dateTimeStr + ", "
+                                + tnow.toMillis(true) + ", "
+                                + msgStr + "<br/>\n");
+                    }
+                    of.close();
+                } catch (Exception ex) {
+                    Log.e(TAG, "writeToLogFile - error " + ex.toString());
+                    showToast("ERROR Writing to Log File");
+                }
+            } else {
+                Log.e(TAG, "ERROR - Can not Write to External Folder");
+            }
         }
     }
 

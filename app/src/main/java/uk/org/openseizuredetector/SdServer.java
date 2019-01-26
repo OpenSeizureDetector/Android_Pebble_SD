@@ -68,6 +68,8 @@ import java.util.*;
 
 import android.text.format.Time;
 
+import com.rohitss.uceh.UCEHandler;
+
 
 /**
  * Based on example at:
@@ -169,15 +171,18 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         mUtil.writeToSysLogFile("SdServer.onCreate()");
 
         // Set our custom uncaught exception handler to report issues.
-        Thread.setDefaultUncaughtExceptionHandler(
-                new OsdUncaughtExceptionHandler(SdServer.this));
+        //Thread.setDefaultUncaughtExceptionHandler(
+        //        new OsdUncaughtExceptionHandler(SdServer.this));
+        new UCEHandler.Builder(this)
+                .addCommaSeparatedEmailAddresses("crashreports@openseizuredetector.org.uk,")
+                .build();
         //int i = 5/0;  // Force exception to test handler.
 
 
         // Create a wake lock, but don't use it until the service is started.
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         mWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
-                "MyWakelockTag");
+                "OSD:WakeLock");
     }
 
     /**

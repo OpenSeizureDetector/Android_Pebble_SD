@@ -61,6 +61,7 @@ import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.utils.ValueFormatter;
+import com.rohitss.uceh.UCEHandler;
 
 public class MainActivity extends AppCompatActivity {
     static final String TAG = "MainActivity";
@@ -89,7 +90,11 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG,"onCreate()");
 
         // Set our custom uncaught exception handler to report issues.
-        Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(MainActivity.this));
+        //Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(MainActivity.this));
+        new UCEHandler.Builder(this)
+                .addCommaSeparatedEmailAddresses("crashreports@openseizuredetector.org.uk,")
+                .build();
+
         //int i = 5/0;  // Force exception to test handler.
         mUtil = new OsdUtil(this,serverStatusHandler);
         mConnection = new SdServiceConnection(this);

@@ -40,6 +40,7 @@ import com.getpebble.android.kit.PebbleKit;
 import com.getpebble.android.kit.util.PebbleDictionary;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.jtransforms.fft.DoubleFFT_1D;
 
@@ -373,7 +374,12 @@ public class SdDataSourceGarmin extends SdDataSource {
             Log.v(TAG,"updateFromJSON - dataType="+dataTypeStr);
             if (dataTypeStr.equals("raw")) {
                 Log.v(TAG,"updateFromJSON - processing raw data");
-                mSdData.mHR = dataObject.getDouble("HR");
+                try {
+                    mSdData.mHR = dataObject.getDouble("HR");
+                } catch (JSONException e) {
+                    // if we get 'null' HR (For example if the heart rate is not working)
+                    mSdData.mHR = -1;
+                }
                 JSONArray accelVals = dataObject.getJSONArray("data");
                 Log.v(TAG, "Received " + accelVals.length() + " acceleration values");
                 int i;

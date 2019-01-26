@@ -44,6 +44,9 @@
         <activity
             android:name=".PrefActivity"
             android:label="OpenSeizureDetector Preferences"></activity>
+        <activity
+        android:name="com.rohitss.uceh.UCEDefaultActivity"
+        android:process=":error_activity"></activity>
 
         <service
             android:name=".SdServer"

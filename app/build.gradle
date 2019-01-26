@@ -41,6 +41,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services:10.0.1'
     implementation 'com.github.wendykierp:JTransforms:3.0'
     implementation 'com.google.android.gms:play-services-location:10.0.0'
+    //implementation 'com.github.RohitSurwase.UCE-Handler:uce_handler:1.3'
 
 }
 

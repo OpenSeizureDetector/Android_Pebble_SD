@@ -163,8 +163,8 @@ public class OsdUncaughtExceptionHandler implements Thread.UncaughtExceptionHand
                         "You can review the information being sent in the next screen:"+
                         "\n"+errorContent.toString());
                 Dialog dialog = builder.create();
-                dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
-                //dialog.show();
+                //dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+                dialog.show();
                 Looper.loop();
             }
         }.start();

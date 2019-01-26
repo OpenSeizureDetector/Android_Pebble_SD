@@ -49,6 +49,8 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.rohitss.uceh.UCEHandler;
+
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -82,7 +84,11 @@ public class StartupActivity extends Activity {
         Log.i(TAG,"onCreate()");
 
         // Set our custom uncaught exception handler to report issues.
-        Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(StartupActivity.this));
+        //Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(StartupActivity.this));
+        new UCEHandler.Builder(this)
+                .addCommaSeparatedEmailAddresses("crashreports@openseizuredetector.org.uk,")
+                .build();
+
 
         mHandler = new Handler();
         mUtil = new OsdUtil(this, mHandler);
@@ -103,6 +109,10 @@ public class StartupActivity extends Activity {
         PreferenceManager.setDefaultValues(this, R.xml.camera_prefs, true);
         PreferenceManager.setDefaultValues(this, R.xml.general_prefs, true);
         PreferenceManager.setDefaultValues(this, R.xml.network_datasource_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.pebble_datasource_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.garmin_datasource_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.seizure_detector_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.network_passive_datasource_prefs, true);
 
 
         Button b;
@@ -174,6 +184,14 @@ public class StartupActivity extends Activity {
         mUtil.writeToSysLogFile("StartupActivity.onStart()");
         TextView tv;
 
+        if (mUtil.arePermissionsOK()) {
+            Log.i(TAG,"onStart() - Permissions OK");
+        } else {
+            Log.i(TAG,"onStart() - Permissions Not OK - requesting them");
+            mUtil.requestPermissions(this);
+        }
+
+
         String versionName = mUtil.getAppVersionName();
         tv = (TextView) findViewById(R.id.appNameTv);
         tv.setText("OpenSeizureDetector V" + versionName);
@@ -197,6 +215,8 @@ public class StartupActivity extends Activity {
         } else {
             mUsingPebbleDataSource = true;
         }
+
+
 
         if (mUtil.isServerRunning()) {
             Log.i(TAG, "onStart() - server running - stopping it");
