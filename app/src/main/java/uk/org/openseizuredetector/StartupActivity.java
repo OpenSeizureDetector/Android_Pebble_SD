@@ -489,10 +489,10 @@ public class StartupActivity extends Activity {
                             + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
-                            + "\n- Added support for 'Wifi Datasources' - initially for the experimental ESP8266 based seizure detector."
+                            + "\n- Upgraded to be compatible with Android Version 8 (a requirement of Google Play Store)"
+                            + "\n- Added support for an experimental Gramin based seizure detector with Heart Rate alarm  "
                             + "\n  "
-                            + "\n  "
-                            + "\n  "
+                            + "\n  PLEASE NOTE - THIS IS A BETA TEST VERSION SO MAY NOT WORK!"
                             + "\n  ."
                 );
             // This makes the links display as links, but they do not respond to clicks for some reason...
@@ -523,8 +523,10 @@ public class StartupActivity extends Activity {
                             + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
-                            + "\n- Added support for 'Wifi Datasources' - initially for the experimental ESP8266 based seizure detector."
-                            + "\n- Improved logging of network status to help debugging network data source issues."
+                            + "\n- Upgraded to be compatible with Android Version 8 (a requirement of Google Play Store)"
+                            + "\n- Added support for an experimental Gramin based seizure detector with Heart Rate alarm  "
+                            + "\n  "
+                            + "\n  PLEASE NOTE - THIS IS A BETA TEST VERSION SO MAY NOT WORK!"
                             + "\n- "
             );
             // This makes the links display as links, but they do not respond to clicks for some reason...
