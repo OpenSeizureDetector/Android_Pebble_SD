@@ -427,12 +427,12 @@ public class MainActivity extends AppCompatActivity {
                             tv.setBackgroundColor(okColour);
                             tv.setTextColor(okTextColour);
                         } else {
-                            tv.setBackgroundColor(warnColour);
-                            tv.setTextColor(warnTextColour);
+                            tv.setBackgroundColor(alarmColour);
+                            tv.setTextColor(alarmTextColour);
                         }
                     } else {
                         if (mConnection.mSdServer.mSdData.pebbleConnected) {
-                            tv.setText("Watch Connected OK");
+                            tv.setText("HR Alarm OFF");
                             tv.setBackgroundColor(okColour);
                             tv.setTextColor(okTextColour);
 
