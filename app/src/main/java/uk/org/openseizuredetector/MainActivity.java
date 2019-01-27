@@ -160,6 +160,12 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "onCreateOptionsMenu()");
         getMenuInflater().inflate(R.menu.main_activity_actions, menu);
         mOptionsMenu = menu;
+        if (mConnection.mSdServer.mSdDataSourceName != "Pebble") {
+            Log.v(TAG,"Disabling Pebble Specific Menu Items");
+            menu.findItem(R.id.action_instal_watch_app).setEnabled(false);
+            menu.findItem(R.id.action_launch_pebble_app).setEnabled(false);
+
+        }
         return true;
     }
 
@@ -454,15 +460,15 @@ public class MainActivity extends AppCompatActivity {
                     }
                     tv = (TextView) findViewById(R.id.battTv);
                     tv.setText("Watch Battery = " + String.valueOf(mConnection.mSdServer.mSdData.batteryPc) + "%");
-                    if (mConnection.mSdServer.mSdData.batteryPc <= 20) {
+                    if (mConnection.mSdServer.mSdData.batteryPc <= 10) {
                         tv.setBackgroundColor(alarmColour);
                         tv.setTextColor(alarmTextColour);
                     }
-                    if (mConnection.mSdServer.mSdData.batteryPc > 20) {
+                    if (mConnection.mSdServer.mSdData.batteryPc > 10) {
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
                     }
-                    if (mConnection.mSdServer.mSdData.batteryPc >= 40) {
+                    if (mConnection.mSdServer.mSdData.batteryPc >= 20) {
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
                     }

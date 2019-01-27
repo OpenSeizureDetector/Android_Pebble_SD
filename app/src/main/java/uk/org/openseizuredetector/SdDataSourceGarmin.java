@@ -84,6 +84,8 @@ public class SdDataSourceGarmin extends SdDataSource {
     private int SD_MODE_FILTER = 2;  // Use digital filter rather than FFT.
     private int SIMPLE_SPEC_FMAX = 10;
 
+    private int ACCEL_SCALE_FACTOR = 1000;  // Amount by which to reduce analysis results to scale to be comparable to analysis on Pebble.
+
     private short mDebug;
     private short mFreqCutoff = 12;
     private short mDisplaySpectrum;
@@ -433,9 +435,6 @@ public class SdDataSourceGarmin extends SdDataSource {
      * and populate the output data structure mSdData
      */
     private void doAnalysis() {
-        // ******* POPULATE WITH DUMMY DATA *****
-        //makeTestData();
-        // **************************************
         // FIXME - Use specified sampleFreq, not this hard coded one
         mSampleFreq = 25;
         double freqRes = 1.0*mSampleFreq/mNSamp;
@@ -489,18 +488,20 @@ public class SdDataSourceGarmin extends SdDataSource {
 
         // Populate the mSdData structure to communicate with the main SdServer service.
         mDataStatusTime.setToNow();
-        mSdData.specPower = (long)specPower;
-        mSdData.roiPower = (long)roiPower;
+        mSdData.specPower = (long)specPower / ACCEL_SCALE_FACTOR;
+        mSdData.roiPower = (long)roiPower / ACCEL_SCALE_FACTOR;
         mSdData.dataTime.setToNow();
         mSdData.maxVal = 0;   // not used
         mSdData.maxFreq = 0;  // not used
         mSdData.haveData = true;
         mSdData.alarmThresh = mAlarmThresh;
         mSdData.alarmRatioThresh = mAlarmRatioThresh;
-        //mSdData.batteryPc = 50;  // FIXME we should get the watch to send us battery status.
+        mSdData.alarmFreqMin = mAlarmFreqMin;
+        mSdData.alarmFreqMax = mAlarmFreqMax;
+        // note mSdData.batteryPc is set from settings data in updateFromJSON()
         // FIXME - I haven't worked out why dividing by 1000 seems necessary to get the graph on scale - we don't seem to do that with the Pebble.
         for(int i=0;i<SIMPLE_SPEC_FMAX;i++) {
-            mSdData.simpleSpec[i] = (int)simpleSpec[i]/1000;
+            mSdData.simpleSpec[i] = (int)simpleSpec[i]/ACCEL_SCALE_FACTOR;
         }
         Log.v(TAG, "simpleSpec = " + Arrays.toString(mSdData.simpleSpec));
 
