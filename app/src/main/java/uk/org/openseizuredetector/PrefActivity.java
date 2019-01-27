@@ -117,6 +117,19 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         Log.i(TAG, "SharedPreference " + s + " Changed.");
+
+        if (s.equals("SMSAlarm")) {
+            if (sharedPreferences.getBoolean("SMSAlarm",false)==true) {
+                if (mUtil.areSMSPermissionsOK()==false) {
+                    Log.i(TAG,"onSharedPreferenceChanged(): SMS Alarm Enabled - Requesting Permissions");
+                    mUtil.requestSMSPermissions(this);
+                } else {
+                    Log.i(TAG,"OnSharedPreferenceCHanged(): SMS Permissions already granted, doing nothing");
+                }
+            } else {
+                Log.i(TAG,"OnSharedPreferenceChanged(): SMS Alarm disabled so do not need permissions");
+            }
+        }
         mUtil.showToast("Setting " + s + " Changed - restarting server");
         mPrefChanged = true;
         mUtil.stopServer();

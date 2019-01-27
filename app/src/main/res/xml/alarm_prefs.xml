@@ -48,7 +48,7 @@
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="SMSAlarm"
-            android:summary="Issue a SMS (Text Message) alarm if the seizure detector enters an alarm condition."
+            android:summary="Issue a SMS (Text Message) alarm if the seizure detector enters an alarm condition.  NOTE: THE MESSAGE WILL INCLUDE THE USER's LOCATION.  Disable this option if sharing your location is a concern."
             android:title="Enable SMS Alarm" />
         <EditTextPreference
             android:defaultValue=""

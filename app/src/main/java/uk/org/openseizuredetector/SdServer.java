@@ -401,13 +401,18 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         PendingIntent contentIntent =
                 PendingIntent.getActivity(this,
                         0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+        String smsStr;
+        if (mSMSAlarm) {
+            smsStr = "WARNING: SMS Location Alarm Active";
+        } else {
+            smsStr = "SMS Location Alarm Disabled";
+        }
         mNotification = mNotificationBuilder.setContentIntent(contentIntent)
                 .setSmallIcon(iconId)
-                .setColor(0xff000000)
-                .setTicker("OpenSeizureDetector")
+                .setColor(0x00ffffff)
                 .setAutoCancel(false)
-                .setContentTitle("OpenSeizureDetector")
-                .setContentText(mSdDataSourceName + " Data Source")
+                .setContentTitle("OpenSeizureDetector:"+mSdDataSourceName + " Data Source")
+                .setContentText(smsStr)
                 .setOnlyAlertOnce(true)
                 .build();
 

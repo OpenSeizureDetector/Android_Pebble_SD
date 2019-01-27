@@ -89,12 +89,15 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
     private final String DATALOG = "DataLog";
 
     private final String[] REQUIRED_PERMISSIONS = {
-            Manifest.permission.SEND_SMS,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            //Manifest.permission.SYSTEM_ALERT_WINDOW,
-            Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.WAKE_LOCK,
     };
+
+    private final String[] SMS_PERMISSIONS = {
+            Manifest.permission.SEND_SMS,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+    };
+
 
     /**
      * Based on http://stackoverflow.com/questions/7440473/android-how-to-check-if-the-intent-service-is-still-running-or-has-stopped-running
@@ -106,6 +109,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
     private boolean mLogSystem = true;
     private boolean mLogData = true;
     private boolean mPermissionsRequested = false;
+    private boolean mSMSPermissionsRequested = false;
 
     private static int mNbound = 0;
 
@@ -442,6 +446,21 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
         return allOk;
     }
 
+    public boolean areSMSPermissionsOK() {
+        boolean allOk = true;
+        Log.v(TAG,"areSMSPermissionsOK()");
+        for (int i = 0; i< SMS_PERMISSIONS.length; i++) {
+            if (ContextCompat.checkSelfPermission(mContext, SMS_PERMISSIONS[i])
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, SMS_PERMISSIONS[i] + " Permission Not Granted");
+                allOk = false;
+            }
+        }
+        return allOk;
+    }
+
+
+
     public void requestPermissions(Activity activity) {
         if (mPermissionsRequested) {
             Log.i(TAG,"requestPermissions() - request already sent - not doing anything");
@@ -458,9 +477,26 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
                     42);
             mPermissionsRequested = true;
         }
-
-
     }
+
+    public void requestSMSPermissions(Activity activity) {
+        if (mSMSPermissionsRequested) {
+            Log.i(TAG,"requestSMSPermissions() - request already sent - not doing anything");
+        } else {
+            Log.i(TAG, "requestSMSPermissions() - requesting permissions");
+            for (int i = 0; i < SMS_PERMISSIONS.length; i++) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
+                        SMS_PERMISSIONS[i])) {
+                    Log.i(TAG, "shouldShowRationale for permission" + SMS_PERMISSIONS[i]);
+                }
+            }
+            ActivityCompat.requestPermissions(activity,
+                    SMS_PERMISSIONS,
+                    43);
+            mSMSPermissionsRequested = true;
+        }
+    }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
