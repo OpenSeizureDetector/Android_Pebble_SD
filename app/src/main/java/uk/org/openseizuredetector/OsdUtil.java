@@ -107,6 +107,8 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
     private boolean mLogData = true;
     private boolean mPermissionsRequested = false;
 
+    private static int mNbound = 0;
+
     public OsdUtil(Context context, Handler handler) {
         mContext = context;
         mHandler = handler;
@@ -190,7 +192,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
      * Stop the SdServer service
      */
     public void stopServer() {
-        Log.d(TAG, "OsdUtil.stopServer() - stopping Server...");
+        Log.d(TAG, "OsdUtil.stopServer() - stopping Server... - mNbound=" + mNbound);
         writeToSysLogFile("stopserver() - stopping server");
 
         // then send an Intent to stop the service.
@@ -209,6 +211,8 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
         writeToSysLogFile("bindToServer() - binding to SdServer");
         Intent intent = new Intent(sdServiceConnection.mContext, SdServer.class);
         activity.bindService(intent, sdServiceConnection, Context.BIND_AUTO_CREATE);
+        mNbound = mNbound + 1;
+        Log.i(TAG,"OsdUtil.bindToServer() - mNbound = "+mNbound);
     }
 
     /**
@@ -222,14 +226,17 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
             try {
                 activity.unbindService(sdServiceConnection);
                 sdServiceConnection.mBound = false;
+                mNbound = mNbound - 1;
+                Log.i(TAG,"OsdUtil.unBindFromServer() - mNbound = "+mNbound);
             } catch (Exception ex) {
                 Log.e(TAG, "unbindFromServer() - error unbinding service - " + ex.toString());
                 writeToSysLogFile("unbindFromServer() - error unbinding service - " +ex.toString());
+                Log.i(TAG,"OsdUtil.unBindFromServer() - mNbound = "+mNbound);
             }
         } else {
             Log.i(TAG, "unbindFromServer() - not bound to server - ignoring");
             writeToSysLogFile("unbindFromServer() - not bound to server - ignoring");
-
+            Log.i(TAG,"OsdUtil.unBindFromServer() - mNbound = "+mNbound);
         }
     }
 
@@ -337,7 +344,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
      * in which case writes to alarm log file.
      */
     public void writeToLogFile(String fname, String msgStr) {
-        Log.v(TAG, "writeToLogFile(" + fname + "," + msgStr + ")");
+        //Log.v(TAG, "writeToLogFile(" + fname + "," + msgStr + ")");
         //showToast("Logging " + msgStr);
         Time tnow = new Time(Time.getCurrentTimezone());
         tnow.setToNow();
@@ -356,7 +363,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
                             + "/" + fname, true);
                     if (msgStr != null) {
                         String dateTimeStr = tnow.format("%Y-%m-%d %H:%M:%S");
-                        Log.v(TAG, "writing msgStr");
+                        //Log.v(TAG, "writing msgStr");
                         of.append(dateTimeStr + ", "
                                 + tnow.toMillis(true) + ", "
                                 + msgStr + "<br/>\n");

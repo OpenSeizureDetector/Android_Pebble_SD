@@ -986,7 +986,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 } else {
                     Log.v(TAG, "NetworkBroadcastReceiver - Wifi Connected");
                     mUtil.writeToSysLogFile("Network State Changed - Wifi Connected");
-                    mUtil.showToast("Network State Changed - Wifi Connected");
+                    //mUtil.showToast("Network State Changed - Wifi Connected");
                 }
             } else {
                 Log.v(TAG, "NetworkBroadcastReceiver - No Active Network");

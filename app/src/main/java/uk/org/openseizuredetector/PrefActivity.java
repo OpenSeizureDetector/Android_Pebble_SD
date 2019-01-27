@@ -117,8 +117,16 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         Log.i(TAG, "SharedPreference " + s + " Changed.");
-        //mUtil.showToast("Shared Preference " + s + " Changed.");
+        mUtil.showToast("Setting " + s + " Changed - restarting server");
         mPrefChanged = true;
+        mUtil.stopServer();
+        // Wait 0.1 second to give the server chance to shutdown, then re-start it
+        mHandler.postDelayed(new Runnable() {
+            public void run() {
+                mUtil.startServer();
+            }
+        }, 100);
+
     }
 
 
@@ -146,16 +154,24 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     protected void onStop() {
         super.onStop();
         mUtil.writeToSysLogFile("PrefActvity.onStop()");
-        Log.i(TAG, "onStop.  mPrefChanged=" + mPrefChanged);
+        /*Log.i(TAG, "onStop.  mPrefChanged=" + mPrefChanged);
         if (mPrefChanged) {
             Log.i(TAG,"PrefActivity.onStop() - settings changed - restarting server");
             mUtil.writeToSysLogFile("PrefActvity.onStop() - settings changed - re-starting server....");
             mUtil.showToast("Settings Changed - re-starting OpenSeizureDetector....");
-            Intent intent = new Intent(getApplicationContext(), StartupActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-            finish();
+            mUtil.stopServer();
+            // Wait 5 seconds to give the server chance to shutdown.
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    Intent intent = new Intent(getApplicationContext(), StartupActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    finish();
+                }
+            }, 5000);
+
         }
+        */
     }
 
     /**
