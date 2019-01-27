@@ -19,8 +19,8 @@
 
     <header android:fragment="uk.org.openseizuredetector.PrefActivity$PebbleDatasourcePrefsFragment"
         android:icon="@drawable/icon_24x24"
-        android:title="Network Datasource"
-        android:summary="Network Datasource Preferences" />
+        android:title="Pebble Datasource"
+        android:summary="Pebble Datasource Preferences" />
 
     <header android:fragment="uk.org.openseizuredetector.PrefActivity$NetworkDatasourcePrefsFragment"
         android:icon="@drawable/icon_24x24"

@@ -140,6 +140,12 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
             }
         }, 100);
 
+        if (s.equals("DataSource")) {
+            Log.i(TAG,"DataSource Changed - re-starting PrefActivity to refresh list");
+            finish();
+            startActivity(getIntent());
+        }
+
     }
 
 

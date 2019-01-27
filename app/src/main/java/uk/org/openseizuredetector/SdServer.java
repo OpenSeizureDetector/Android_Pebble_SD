@@ -747,34 +747,39 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
      */
     public void sendSMSAlarm() {
         if (mSMSAlarm) {
-            mLocationFinder.getLocation(this);
-            Location loc = mLocationFinder.getLastLocation();
-            if (loc != null) {
-                mUtil.showToast("Send SMS - last location is "
-                        + loc.getLongitude() + ","
-                        + loc.getLatitude());
+            if (!mUtil.areSMSPermissionsOK()) {
+                mUtil.showToast("ERROR - Permission for SMS or Location Denied - Not Sending SMS");
+                Log.e(TAG,"ERROR - Permission for SMS or Location Denied - Not Sending SMS");
             } else {
-                Log.i(TAG, "sendSMSAlarm() - Last Location is Null so sending first SMS without location.");
-            }
-            Log.i(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers.length + " Numbers");
-            mUtil.writeToSysLogFile("SdServer.sendSMSAlarm()");
-            Time tnow = new Time(Time.getCurrentTimezone());
-            tnow.setToNow();
-            String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
-            // SmsManager sm = SmsManager.getDefault();
-            for (int i = 0; i < mSMSNumbers.length; i++) {
-                Log.i(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers[i]);
-                sendSMS(new String(mSMSNumbers[i]),mSMSMsgStr + " - " + dateStr);
-                // sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr + " - " + dateStr, null, null);
-                //Intent intent = new Intent(Intent.ACTION_SEND);
-                //intent.setDataAndType(Uri.parse("smsto:"), "text/plain");
-                //intent.putExtra("sms_body", mSMSMsgStr + " - " + dateStr);
-                //intent.putExtra("address", new String(mSMSNumbers[i]));
-                //if (intent.resolveActivity(getPackageManager()) != null) {
-                //    startActivity(intent);
-                //} else {
-                //    Log.e(TAG, "sendSMSAlarm() - Failed to send SMS - can not find activity do do it");
-                //}
+                mLocationFinder.getLocation(this);
+                Location loc = mLocationFinder.getLastLocation();
+                if (loc != null) {
+                    mUtil.showToast("Send SMS - last location is "
+                            + loc.getLongitude() + ","
+                            + loc.getLatitude());
+                } else {
+                    Log.i(TAG, "sendSMSAlarm() - Last Location is Null so sending first SMS without location.");
+                }
+                Log.i(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers.length + " Numbers");
+                mUtil.writeToSysLogFile("SdServer.sendSMSAlarm()");
+                Time tnow = new Time(Time.getCurrentTimezone());
+                tnow.setToNow();
+                String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
+                // SmsManager sm = SmsManager.getDefault();
+                for (int i = 0; i < mSMSNumbers.length; i++) {
+                    Log.i(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers[i]);
+                    sendSMS(new String(mSMSNumbers[i]), mSMSMsgStr + " - " + dateStr);
+                    // sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr + " - " + dateStr, null, null);
+                    //Intent intent = new Intent(Intent.ACTION_SEND);
+                    //intent.setDataAndType(Uri.parse("smsto:"), "text/plain");
+                    //intent.putExtra("sms_body", mSMSMsgStr + " - " + dateStr);
+                    //intent.putExtra("address", new String(mSMSNumbers[i]));
+                    //if (intent.resolveActivity(getPackageManager()) != null) {
+                    //    startActivity(intent);
+                    //} else {
+                    //    Log.e(TAG, "sendSMSAlarm() - Failed to send SMS - can not find activity do do it");
+                    //}
+                }
             }
         } else {
             Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
