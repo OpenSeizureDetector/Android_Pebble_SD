@@ -491,6 +491,8 @@ public class StartupActivity extends Activity {
                             + "\n\nChanges in this version:"
                             + "\n- Upgraded to be compatible with Android Version 8 (a requirement of Google Play Store)"
                             + "\n- Added support for an experimental Gramin based seizure detector with Heart Rate alarm  "
+                            + "\n  Fixed problem with app not restarting properly when settings were changed"
+                            + "\n- Explicitly asks for SMS permission, and displays warning in notification if SMS alarms are active"
                             + "\n  "
                             + "\n  PLEASE NOTE - THIS IS A BETA TEST VERSION SO MAY NOT WORK!"
                             + "\n  ."
@@ -525,9 +527,11 @@ public class StartupActivity extends Activity {
                             + "\n\nChanges in this version:"
                             + "\n- Upgraded to be compatible with Android Version 8 (a requirement of Google Play Store)"
                             + "\n- Added support for an experimental Gramin based seizure detector with Heart Rate alarm  "
+                            + "\n- Fixed problem with app not restarting properly when settings were changed"
+                            + "\n- Explicitly asks for SMS permission, and displays warning in notification if SMS alarms are active"
                             + "\n  "
                             + "\n  PLEASE NOTE - THIS IS A BETA TEST VERSION SO MAY NOT WORK!"
-                            + "\n- "
+                            + "\n "
             );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);
