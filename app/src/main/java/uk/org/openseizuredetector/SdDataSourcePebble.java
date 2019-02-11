@@ -441,11 +441,15 @@ public class SdDataSourcePebble extends SdDataSource {
                     Log.v(TAG, "numSamples = " + numSamples);
                     byte[] rawDataBytes = data.getBytes(KEY_RAW_DATA);
                     for (int i = 0; i < rawDataBytes.length - 4; i += 4) { // 4 bytes per sample
-                        int x = (rawDataBytes[i]);
+                        int b0 = rawDataBytes[i];
+                        int b1 = rawDataBytes[i+1] & 0xff;
+                        int b2 = rawDataBytes[i+2] & 0xff;
+                        int b3 = rawDataBytes[i+3] & 0xff;
+                        int x = (b3 | b2 << 8 | b1 << 16 | b0 << 24);
                         //int y = (rawDataBytes[i+2] & 0xff) | (rawDataBytes[i+3] << 8);
                         //int z = (rawDataBytes[i+4] & 0xff) | (rawDataBytes[i+5] << 8);
                         //Log.v(TAG,"x="+x+", y="+y+", z="+z);
-                        Log.v(TAG,"x="+x);
+                        Log.v(TAG,"b0="+b0+", b1="+b1+", b2="+b2+", b3="+b3+", x="+x);
                         if (nRawData < MAX_RAW_DATA) {
                             rawData[nRawData] = (int)Math.sqrt(x);
                         } else {

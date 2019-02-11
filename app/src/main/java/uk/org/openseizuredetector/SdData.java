@@ -40,6 +40,7 @@ import org.json.JSONArray;
 
 public class SdData implements Parcelable {
     private final static String TAG = "SdData";
+    private final static int N_RAW_DATA = 500;  // 5 seconds at 100 Hz.
     /* Analysis settings */
     public boolean haveSettings = false;   // flag to say if we have received settings or not.
     public boolean haveData = false; // flag to say we have received data.
@@ -67,6 +68,7 @@ public class SdData implements Parcelable {
     public boolean mHRAlarmActive = false;
     public double mHRThreshMin = 40.0;
     public double mHRTreshMax = 150.0;
+    public int rawData[];
 
     /* Analysis results */
     public Time dataTime = null;
@@ -88,6 +90,7 @@ public class SdData implements Parcelable {
 
     public SdData() {
         simpleSpec = new int[10];
+        rawData = new int[N_RAW_DATA];
         dataTime = new Time(Time.getCurrentTimezone());
     }
 
@@ -118,6 +121,7 @@ public class SdData implements Parcelable {
             alarmPhrase = jo.optString("alarmPhrase");
             alarmThresh = jo.optInt("alarmThresh");
             alarmRatioThresh = jo.optInt("alarmRatioThresh");
+            mHR = jo.optDouble("hr");
             JSONArray specArr = jo.optJSONArray("simpleSpec");
             for (int i = 0; i < specArr.length(); i++) {
                 simpleSpec[i] = specArr.optInt(i);
@@ -131,12 +135,12 @@ public class SdData implements Parcelable {
         }
     }
 
-
+    @Override
     public String toString() {
-        return toDataString();
+        return toDataString(false);
     }
 
-    public String toDataString() {
+    public String toDataString(boolean includeRawData) {
         String retval;
         retval = "SdData.toDataString() Output";
         try {
@@ -166,12 +170,18 @@ public class SdData implements Parcelable {
             jsonObj.put("alarmFreqMax",alarmFreqMax);
             jsonObj.put("alarmThresh", alarmThresh);
             jsonObj.put("alarmRatioThresh", alarmRatioThresh);
+            jsonObj.put("hr",mHR);
             JSONArray arr = new JSONArray();
             for (int i = 0; i < simpleSpec.length; i++) {
                 arr.put(simpleSpec[i]);
             }
-
             jsonObj.put("simpleSpec", arr);
+            if (includeRawData) {
+                JSONArray rawArr = new JSONArray();
+                for (int i = 0; i< rawData.length;i++) {
+                    rawArr.put(rawData[i]);
+                }
+            }
 
             retval = jsonObj.toString();
         } catch (Exception ex) {
