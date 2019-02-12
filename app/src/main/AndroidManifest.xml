@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="uk.org.openseizuredetector"
-    android:versionCode="45"
-    android:versionName="2.6.3"
+    android:versionCode="46"
+    android:versionName="2.6.4"
     android:allowBackup="false"
     >
 
@@ -61,7 +61,9 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="false" />
 
     </application>
 
