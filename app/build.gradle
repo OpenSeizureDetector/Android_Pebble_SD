@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "uk.org.openseizuredetector"
-        minSdkVersion 19
+        minSdkVersion 14
         targetSdkVersion 28
         multiDexEnabled true
     }
