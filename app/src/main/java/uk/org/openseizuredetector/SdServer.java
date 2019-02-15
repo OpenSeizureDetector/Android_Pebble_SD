@@ -786,16 +786,6 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 for (int i = 0; i < mSMSNumbers.length; i++) {
                     Log.i(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers[i]);
                     sendSMS(new String(mSMSNumbers[i]), mSMSMsgStr + " - " + dateStr);
-                    // sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr + " - " + dateStr, null, null);
-                    //Intent intent = new Intent(Intent.ACTION_SEND);
-                    //intent.setDataAndType(Uri.parse("smsto:"), "text/plain");
-                    //intent.putExtra("sms_body", mSMSMsgStr + " - " + dateStr);
-                    //intent.putExtra("address", new String(mSMSNumbers[i]));
-                    //if (intent.resolveActivity(getPackageManager()) != null) {
-                    //    startActivity(intent);
-                    //} else {
-                    //    Log.e(TAG, "sendSMSAlarm() - Failed to send SMS - can not find activity do do it");
-                    //}
                 }
             }
         } else {
@@ -822,7 +812,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             //mUtil.showToast("onSdLocationReceived() - found location" + ll.toString());
             Log.i(TAG, "onSdLocationReceived() - found location" + ll.toString());
             if (mSMSAlarm) {
-                Log.i(TAG, "onSdLocationReceived() - Sending to " + mSMSNumbers.length + " Numbers");
+                Log.i(TAG, "onSdLocationReceived() - Sending SMS to " + mSMSNumbers.length + " Numbers");
                 mUtil.writeToSysLogFile("SdServer.sendSMSAlarm()");
                 Time tnow = new Time(Time.getCurrentTimezone());
                 tnow.setToNow();
@@ -831,9 +821,6 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 String geoUri = "<a href='geo:"
                         + df.format(ll.getLatitude()) + "," + df.format(ll.getLongitude())
                         + ";u=" + df.format(ll.getAccuracy()) + "'>here</a>";
-                //String googleUrl = "https://www.google.com/maps/place?q="
-                //        +ll.getLatitude()+"%2C"+ll.getLongitude()+
-                //        "&key=AIzaSyDf-nbkfz9TrhyVRoeS8Mwtq6K2nBpUAts";
                 String googleUrl = "https://www.google.com/maps/place?q="
                         + ll.getLatitude() + "%2C" + ll.getLongitude();
                 String messageStr = mSMSMsgStr + " - " +
@@ -843,17 +830,6 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 for (int i = 0; i < mSMSNumbers.length; i++) {
                     Log.i(TAG, "onSdLocationReceived() - Sending to " + mSMSNumbers[i]);
                     sendSMS(new String(mSMSNumbers[i]), messageStr);
-                    // sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr + " - " + dateStr, null, null);
-                    //Intent intent = new Intent(Intent.ACTION_SEND);
-                    //intent.setDataAndType(Uri.parse("smsto:"), "vnd.android-dir/mms-sms");
-                    //intent.putExtra("sms_body", messageStr);
-                    //intent.putExtra("address", new String(mSMSNumbers[i]));
-                    //if (intent.resolveActivity(getPackageManager()) != null) {
-                    //    Log.e(TAG, "onSdLocationReceived() - sending SMS.");
-                    //    startActivity(intent);
-                    //} else {
-                    //    Log.e(TAG, "onSdLocationReceived() - Failed to send SMS - can not find activity to do it.");
-                    //}
                 }
             } else {
                 Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
