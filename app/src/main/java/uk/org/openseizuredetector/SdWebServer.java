@@ -93,7 +93,7 @@ public class SdWebServer extends NanoHTTPD {
                         String postData = files.get("postData");
                         Log.v(TAG, "              postData=" + postData);
                         // Send the data to the SdDataSource so the app can pick it up.
-                        if (parameters != null) {
+                        if (parameters.get("dataObj") != null) {
                             Log.v(TAG,"passing parameters to data source");
                             answer = mSdServer.mSdDataSource.updateFromJSON(parameters.get("dataObj").toString());
                         } else {
