@@ -2,15 +2,13 @@
 <resources>
     <string-array name="datasource_list">
         <item>"Pebble Watch"</item>
-        <item>"Android Wear"</item>
+        <item>"Garmin Watch"</item>
         <item>"Network"</item>
-        <item>"Garmin"</item>
     </string-array>
     <string-array name="datasource_list_values">
         <item>"Pebble"</item>
-        <item>"AndroidWear"</item>
-        <item>"Network"</item>
         <item>"Garmin"</item>
+        <item>"Network"</item>
     </string-array>
 
 </resources>

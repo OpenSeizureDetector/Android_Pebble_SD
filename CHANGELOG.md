@@ -1,6 +1,12 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
+    V3.0.0 - 15feb2019
+        - Updated for Android V9
+        - Added explicity statement of use of SMS permission in notification
+        - Updated to use dynamic permissions
+        - Added support for Garmin Data Source, with Heart Rate alarm (and other network based data sources)
+
     V2.6.0 - 26dec2018
         - Changed SMS code to comply with new Google Play Store requirements.
 	    - Added Support for Wifi data source (initially to be used for Garmin_SD)
