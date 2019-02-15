@@ -381,20 +381,29 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
      * Show a notification while this service is running.
      */
     private void showNotification(int alarmLevel) {
-        Log.v(TAG, "showNotification()");
+        Log.v(TAG, "showNotification() - alarmLevel="+alarmLevel);
         int iconId;
+        String titleStr;
         switch (alarmLevel) {
             case 0:
                 iconId = R.drawable.star_of_life_24x24;
+                titleStr = "OK";
                 break;
             case 1:
                 iconId = R.drawable.star_of_life_yellow_24x24;
+                titleStr = "WARNING";
                 break;
             case 2:
                 iconId = R.drawable.star_of_life_red_24x24;
+                titleStr = "ALARM";
+                break;
+            case -1:
+                iconId = R.drawable.star_of_life_fault_24x24;
+                titleStr = "FAULT";
                 break;
             default:
                 iconId = R.drawable.star_of_life_24x24;
+                titleStr = "OK";
         }
         Intent i = new Intent(getApplicationContext(), MainActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
@@ -407,16 +416,20 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         } else {
             smsStr = "SMS Location Alarm Disabled";
         }
-        mNotification = mNotificationBuilder.setContentIntent(contentIntent)
-                .setSmallIcon(iconId)
-                .setColor(0x00ffffff)
-                .setAutoCancel(false)
-                .setContentTitle("OpenSeizureDetector:"+mSdDataSourceName + " Data Source")
-                .setContentText(smsStr)
-                .setOnlyAlertOnce(true)
-                .build();
+        if (mNotificationBuilder != null) {
+            mNotification = mNotificationBuilder.setContentIntent(contentIntent)
+                    .setSmallIcon(iconId)
+                    .setColor(0x00ffffff)
+                    .setAutoCancel(false)
+                    .setContentTitle(titleStr)
+                    .setContentText(smsStr)
+                    .setOnlyAlertOnce(true)
+                    .build();
 
-        mNM.notify(NOTIFICATION_ID, mNotification);
+            mNM.notify(NOTIFICATION_ID, mNotification);
+        } else {
+            Log.i(TAG, "showNotification() - notification builder is null, so not showing notification.");
+        }
     }
 
     // Show the main activity on the user's screen.
@@ -521,6 +534,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 Log.v(TAG, "***FALL*** - Logging to SD Card");
                 writeAlarmToSD();
                 logData();
+                showNotification(2);
             } else {
                 Log.v(TAG, "***FALL***");
             }
@@ -553,6 +567,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             }
             // Make alarm beep tone
             alarmBeep();
+            showNotification(2);
             // Display MainActvity
             showMainActivity();
             // Send SMS Alarm.
@@ -575,6 +590,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             sdData.alarmPhrase = "FAULT";
             writeAlarmToSD();
             faultWarningBeep();
+            showNotification(-1);
         } else {
             stopFaultTimer();
         }
@@ -593,6 +609,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         if (mAudibleFaultWarning) {
             faultWarningBeep();
         }
+        showNotification(-1);
     }
 
     /* from http://stackoverflow.com/questions/12154940/how-to-make-a-beep-in-android */

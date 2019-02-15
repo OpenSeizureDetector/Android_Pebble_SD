@@ -268,18 +268,31 @@ public class StartupActivity extends Activity {
             Boolean allOk = true;
             TextView tv;
             ProgressBar pb;
+            boolean smsAlarmsActive = true;
 
             Log.v(TAG,"serverStatusRunnable()");
+            SharedPreferences SP = PreferenceManager
+                    .getDefaultSharedPreferences(getBaseContext());
+            smsAlarmsActive = SP.getBoolean("SMSAlarm", false);
 
             // Settings ok
             tv = (TextView) findViewById(R.id.textItem1);
             pb = (ProgressBar) findViewById(R.id.progressBar1);
             if (mUtil.arePermissionsOK()) {
-                tv.setText("App Permissions OK");
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
-                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                if (smsAlarmsActive && !mUtil.areSMSPermissionsOK()) {
+                    tv.setText("Problem with SMS Permissions");
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+                    pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
+                    pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                    mUtil.requestSMSPermissions(StartupActivity.this);
+                } else {
+                    tv.setText("App Permissions OK");
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+                    pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
+                    pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                }
             } else {
                 tv.setText("Problem with App Permissions");
                 tv.setBackgroundColor(alarmColour);
@@ -488,14 +501,10 @@ public class StartupActivity extends Activity {
                             + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
-                            + "\n- Upgraded to be compatible with Android Version 8 (a requirement of Google Play Store)"
-                            + "\n- Added support for an experimental Gramin based seizure detector with Heart Rate alarm  "
+                            + "\n- Upgraded to be compatible with Android Version 9"
+                            + "\n- Added support a Garmin based seizure detector with Heart Rate alarm  "
                             + "\n  Fixed problem with app not restarting properly when settings were changed"
                             + "\n- Explicitly asks for SMS permission, and displays warning in notification if SMS alarms are active"
-                            + "\n  Added FOREGROUND_SERVICE permission, which seems to be necessary for Android V9."
-                            + "\n  Restored support for Android 4.0.x"
-                            + "\n  "
-                            + "\n  PLEASE NOTE - THIS IS A BETA TEST VERSION SO MAY NOT WORK!"
                             + "\n  ."
                 );
             // This makes the links display as links, but they do not respond to clicks for some reason...
@@ -526,14 +535,12 @@ public class StartupActivity extends Activity {
                             + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
-                            + "\n- Upgraded to be compatible with Android Version 8 (a requirement of Google Play Store)"
-                            + "\n- Added support for an experimental Gramin based seizure detector with Heart Rate alarm  "
+                            + "\n- Upgraded to be compatible with Android Version 9"
+                            + "\n- Added support for a Garmin based seizure detector with Heart Rate alarm  "
                             + "\n- Fixed problem with app not restarting properly when settings were changed"
                             + "\n- Explicitly asks for SMS permission, and displays warning in notification if SMS alarms are active"
-                            + "\n  Added FOREGROUND_SERVICE permission, which seems to be necessary for Android V9."
-                            + "\n  Restored support for Android V4.0.x"
                             + "\n  "
-                            + "\n  PLEASE NOTE - THIS IS A BETA TEST VERSION SO MAY NOT WORK!"
+                            + "\n  "
                             + "\n "
             );
             // This makes the links display as links, but they do not respond to clicks for some reason...
