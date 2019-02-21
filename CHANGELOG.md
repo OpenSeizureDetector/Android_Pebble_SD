@@ -1,7 +1,10 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
-    V3.0.0 - 15feb2019
+	V3.0.1 - 21feb201
+		- Simplified data log output to CSV format for easier processing, and had it log every update rather than one point per minute.
+
+	V3.0.0 - 15feb2019
         - Updated for Android V9
         - Added explicity statement of use of SMS permission in notification
         - Updated to use dynamic permissions

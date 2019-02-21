@@ -269,13 +269,15 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         if (dataLogTimer == null) {
             Log.v(TAG, "onStartCommand(): starting dataLog timer");
             mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting dataLog timer");
-            dataLogTimer = new Timer();
+            /*dataLogTimer = new Timer();
             dataLogTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
+                    Log.v(TAG,"dataLogTimer.run()");
                     logData();
                 }
             }, 0, 1000 * 60);
+            */
         } else {
             Log.v(TAG, "onStartCommand(): dataLog timer already running.");
             mUtil.writeToSysLogFile("SdServer.onStartCommand() - dataLog timer already running???");
@@ -340,14 +342,14 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         stopLatchTimer();
 
         // Stop the status timer
-        if (dataLogTimer != null) {
+        /*if (dataLogTimer != null) {
             Log.v(TAG, "stop(): cancelling Data logger timer");
             mUtil.writeToSysLogFile("onDestroy() - cancelling data log timer");
             dataLogTimer.cancel();
             dataLogTimer.purge();
             dataLogTimer = null;
         }
-
+        */
 
 
         try {
@@ -489,7 +491,6 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             if (mLogAlarms) {
                 Log.v(TAG, "WARNING - Logging to SD Card");
                 writeAlarmToSD();
-                logData();
             } else {
                 Log.v(TAG, "WARNING");
             }
@@ -503,7 +504,6 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             if (mLogAlarms) {
                 Log.v(TAG, "***ALARM*** - Logging to SD Card");
                 writeAlarmToSD();
-                logData();
             } else {
                 Log.v(TAG, "***ALARM***");
             }
@@ -533,7 +533,6 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             if (mLogAlarms) {
                 Log.v(TAG, "***FALL*** - Logging to SD Card");
                 writeAlarmToSD();
-                logData();
                 showNotification(2);
             } else {
                 Log.v(TAG, "***FALL***");
@@ -561,7 +560,6 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             if (mLogAlarms) {
                 Log.v(TAG, "***HEART RATE*** - Logging to SD Card");
                 writeAlarmToSD();
-                logData();
             } else {
                 Log.v(TAG, "***HEART RATE***");
             }
@@ -597,6 +595,8 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         mSdData = sdData;
         if (webServer != null) webServer.setSdData(mSdData);
         Log.v(TAG, "onSdDataReceived() - setting mSdData to " + mSdData.toString());
+
+        logData();
     }
 
     // Called by SdDataSource when a fault condition is detected.
@@ -1096,7 +1096,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
      * in which case writes to alarm log file.
      */
     public void writeToSD(boolean alarm) {
-        Log.v(TAG, "writeToSD(" + alarm + ")");
+        //Log.v(TAG, "writeToSD(" + alarm + ")");
         Time tnow = new Time(Time.getCurrentTimezone());
         tnow.setToNow();
         String dateStr = tnow.format("%Y-%m-%d");
@@ -1115,8 +1115,13 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                 FileWriter of = new FileWriter(mUtil.getDataStorageDir().toString()
                         + "/" + fname, true);
                 if (mSdData != null) {
-                    Log.v(TAG, "writing mSdData.toString()");
-                    of.append(mSdData.toString() + "\n");
+                    if (alarm) {
+                        //Log.v(TAG, "writeToSD() - logging mSdData.toString()");
+                        of.append(mSdData.toString() + "\n");
+                    } else {
+                        //Log.v(TAG, "writeToSD() - logging mSdData.toCSVString()");
+                        of.append(mSdData.toCSVString(true) + "\n");
+                    }
                 }
                 of.close();
             } catch (Exception ex) {

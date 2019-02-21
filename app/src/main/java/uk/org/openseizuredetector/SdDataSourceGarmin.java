@@ -108,12 +108,6 @@ public class SdDataSourceGarmin extends SdDataSource {
 
     private int mAlarmCount;
 
-    // raw data storage for SD_MODE_RAW
-    private int MAX_RAW_DATA = 500;
-    public double[] mAccData = new double[MAX_RAW_DATA];
-    int mNSamp = 0;
-
-
     public SdDataSourceGarmin(Context context, Handler handler,
                               SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
@@ -386,9 +380,10 @@ public class SdDataSourceGarmin extends SdDataSource {
                 Log.v(TAG, "Received " + accelVals.length() + " acceleration values");
                 int i;
                 for (i = 0; i < accelVals.length(); i++) {
-                    mAccData[i] = accelVals.getInt(i);
+                    mSdData.rawData[i] = accelVals.getInt(i);
                 }
-                mNSamp = accelVals.length();
+                mSdData.mNsamp = accelVals.length();
+                //mNSamp = accelVals.length();
                 mWatchAppRunningCheck = true;
                 doAnalysis();
                 if (mSdData.haveSettings == false) {
@@ -437,8 +432,8 @@ public class SdDataSourceGarmin extends SdDataSource {
     private void doAnalysis() {
         // FIXME - Use specified sampleFreq, not this hard coded one
         mSampleFreq = 25;
-        double freqRes = 1.0*mSampleFreq/mNSamp;
-        Log.v(TAG,"doAnalysis(): mSampleFreq="+mSampleFreq+" mNSamp="+mNSamp+": freqRes="+freqRes);
+        double freqRes = 1.0*mSampleFreq/mSdData.mNsamp;
+        Log.v(TAG,"doAnalysis(): mSampleFreq="+mSampleFreq+" mNSamp="+mSdData.mNsamp+": freqRes="+freqRes);
         // Set the frequency bounds for the analysis in fft output bin numbers.
         int nMin = (int)(mAlarmFreqMin/freqRes);
         int nMax = (int)(mAlarmFreqMax /freqRes);
@@ -448,15 +443,16 @@ public class SdDataSourceGarmin extends SdDataSource {
         int nFreqCutoff = (int)(mFreqCutoff /freqRes);
         Log.v(TAG,"mFreqCutoff = "+mFreqCutoff+", nFreqCutoff="+nFreqCutoff);
 
-        DoubleFFT_1D fftDo = new DoubleFFT_1D(mNSamp);
-        double[] fft = new double[mNSamp * 2];
-        System.arraycopy(mAccData, 0, fft, 0, mNSamp);
+        DoubleFFT_1D fftDo = new DoubleFFT_1D(mSdData.mNsamp);
+        double[] fft = new double[mSdData.mNsamp * 2];
+        ///System.arraycopy(mAccData, 0, fft, 0, mNsamp);
+        System.arraycopy(mSdData.rawData, 0, fft, 0, mSdData.mNsamp);
         fftDo.realForward(fft);
 
         // Calculate the whole spectrum power (well a value equivalent to it that avoids square root calculations
         // and zero any readings that are above the frequency cutoff.
         double specPower = 0;
-        for (int i = 1; i < mNSamp / 2; i++) {
+        for (int i = 1; i < mSdData.mNsamp / 2; i++) {
             if (i <= nFreqCutoff) {
                 specPower = specPower + getMagnitude(fft,i);
             } else {
@@ -464,7 +460,7 @@ public class SdDataSourceGarmin extends SdDataSource {
                 fft[2*i+1] = 0.;
             }
         }
-        specPower = specPower/mNSamp/2;
+        specPower = specPower/mSdData.mNsamp/2;
 
         // Calculate the Region of Interest power and power ratio.
         double roiPower = 0;
@@ -622,22 +618,6 @@ public class SdDataSourceGarmin extends SdDataSource {
         }
     }
 
-    private void makeTestData() {
-        int sampleFreq = 25; // Hz
-        int samplePeriod = 5; // sec
-        int accDataPos = 0;
-
-        double signalFreq = 5; // Hz
-        double signalAmp = 500; // mG
-
-        for (int i = 0; i < samplePeriod * sampleFreq; i++) {
-            double t = 1.0*i / sampleFreq;
-            double r = 2.0*Math.PI*t*signalFreq;
-            mAccData[accDataPos] = (signalAmp*(Math.sin(r)));
-            Log.v(TAG, "i=" + i + ", t="+t+", r="+r+", a="+ mAccData[accDataPos]);
-            accDataPos++;
-        }
-    }
 
     public class SdDataBroadcastReceiver extends BroadcastReceiver {
         //private String TAG = "SdDataBroadcastReceiver";

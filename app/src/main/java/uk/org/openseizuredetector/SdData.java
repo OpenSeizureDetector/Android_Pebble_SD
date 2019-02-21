@@ -68,7 +68,8 @@ public class SdData implements Parcelable {
     public boolean mHRAlarmActive = false;
     public double mHRThreshMin = 40.0;
     public double mHRTreshMax = 150.0;
-    public int rawData[];
+    public double rawData[];
+    int mNsamp = 0;
 
     /* Analysis results */
     public Time dataTime = null;
@@ -90,7 +91,7 @@ public class SdData implements Parcelable {
 
     public SdData() {
         simpleSpec = new int[10];
-        rawData = new int[N_RAW_DATA];
+        rawData = new double[N_RAW_DATA];
         dataTime = new Time(Time.getCurrentTimezone());
     }
 
@@ -190,6 +191,30 @@ public class SdData implements Parcelable {
         }
 
         return (retval);
+    }
+
+
+    public String toCSVString(boolean includeRawData) {
+        String retval;
+        retval = "";
+        if (dataTime != null) {
+            retval = dataTime.format("%d-%m-%Y %H:%M:%S");
+        }else{
+            retval = "00-00-00 00:00:00";
+        }
+        for (int i = 0; i < simpleSpec.length; i++) {
+            retval = retval + ", " + simpleSpec[i];
+        }
+        retval = retval + ", " + specPower;
+        retval = retval + ", " + roiPower;
+        retval = retval + ", " + mSampleFreq;
+        retval = retval + ", " + alarmPhrase;
+        if (includeRawData) {
+            for (int i = 0; i< mNsamp;i++) {
+                retval = retval + ", " + rawData[i];
+            }
+        }
+        return(retval);
     }
 
     public int describeContents() {
