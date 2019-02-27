@@ -1,7 +1,11 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
-	V3.0.1 - 21feb201
+    V3.0.2 - 27feb2019
+        - Corrected issue with app not re-starting properly when run-time permissions changed
+        (e.g. send_sms permission)
+        - Fixed crash when using MP3 alarms (issue with new android notification system)
+	V3.0.1 - 21feb2019
 		- Simplified data log output to CSV format for easier processing, and had it log every update rather than one point per minute.
 
 	V3.0.0 - 15feb2019

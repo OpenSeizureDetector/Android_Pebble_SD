@@ -9,6 +9,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import java.util.Timer;
@@ -49,9 +50,18 @@ public class LocationFinder implements LocationListener
         // Acquire a reference to the system Location Manager
         mLocationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
         // Register with the Location Manager to receive location updates using both network and GPS
-        mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, this);
-        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, this);
+        try {
+            mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                    0, 0, this, Looper.getMainLooper());
+            mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                    0, 0, this, Looper.getMainLooper());
+        } catch (SecurityException e) {
+            Log.e(TAG, "LocationFinder - Failed to get Location - Security Exception");
+            mUtil.writeToSysLogFile("LocationFinder - Failed to get Location - Security Exception");
+            Log.e(TAG, e.toString());
+            mUtil.showToast("Failed to get Location for SMS Message - Permissions Denied?");
 
+        }
         mTimeoutTimer = new Timer();
         mTimeoutTimer.schedule(new TimerTask() {
             @Override
