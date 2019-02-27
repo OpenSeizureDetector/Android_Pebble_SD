@@ -148,6 +148,20 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
 
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        Log.i(TAG,"onRequestPermissionsResult - Permission" + permissions + " = " + grantResults);
+        mUtil.showToast("Permissions Changed - restarting server");
+        mUtil.stopServer();
+        // Wait 0.1 second to give the server chance to shutdown, then re-start it
+        mHandler.postDelayed(new Runnable() {
+            public void run() {
+                mUtil.startServer();
+            }
+        }, 100);
+
+    }
 
     @Override
     public void onResume() {

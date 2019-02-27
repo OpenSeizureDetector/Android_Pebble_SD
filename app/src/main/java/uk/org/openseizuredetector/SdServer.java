@@ -386,27 +386,42 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         Log.v(TAG, "showNotification() - alarmLevel="+alarmLevel);
         int iconId;
         String titleStr;
+        Uri soundUri = null;
         switch (alarmLevel) {
             case 0:
                 iconId = R.drawable.star_of_life_24x24;
                 titleStr = "OK";
+                soundUri = null;
                 break;
             case 1:
                 iconId = R.drawable.star_of_life_yellow_24x24;
                 titleStr = "WARNING";
+                if (mAudibleWarning)
+                    soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/warning");
                 break;
             case 2:
                 iconId = R.drawable.star_of_life_red_24x24;
                 titleStr = "ALARM";
+                if (mAudibleAlarm)
+                    soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/alarm");
                 break;
             case -1:
                 iconId = R.drawable.star_of_life_fault_24x24;
                 titleStr = "FAULT";
+                if (mAudibleFaultWarning)
+                    soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/fault");
                 break;
             default:
                 iconId = R.drawable.star_of_life_24x24;
+                soundUri = null;
                 titleStr = "OK";
         }
+
+        if (mCancelAudible) {
+            Log.v(TAG,"ShowNotification - Not beeping because mCancelAudible set");
+            soundUri = null;
+        }
+
         Intent i = new Intent(getApplicationContext(), MainActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         PendingIntent contentIntent =
@@ -427,7 +442,12 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
                     .setContentText(smsStr)
                     .setOnlyAlertOnce(true)
                     .build();
-
+            if (mMp3Alarm) {
+                if (soundUri != null) {
+                    Log.v(TAG, "showNotification - setting Notification Sound to "+soundUri.toString());
+                    mNotificationBuilder.setSound(soundUri);
+                }
+            }
             mNM.notify(NOTIFICATION_ID, mNotification);
         } else {
             Log.i(TAG, "showNotification() - notification builder is null, so not showing notification.");
@@ -638,16 +658,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
             } else {
                 if (mAudibleFaultWarning) {
                     if (mMp3Alarm) {
-                        Log.v(TAG, "making MP3 alarm beep");
-                        // From https://stackoverflow.com/questions/4441334/how-to-play-an-android-notification-sound
-                        // This plays an audio file as a notification, using the notification sound channel.
-                        NotificationManager notificationManager =
-                                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                        Uri soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/fault");
-                        NotificationCompat.Builder mBuilder =
-                                new NotificationCompat.Builder(getApplicationContext())
-                                        .setSound(soundUri); //This sets the sound to play
-                        notificationManager.notify(0, mBuilder.build());
+                        Log.v(TAG, "Not making MP3 fault beep - handled by notification");
                     } else {
                         beep(10);
                     }
@@ -675,16 +686,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         } else {
             if (mAudibleAlarm) {
                 if (mMp3Alarm) {
-                    Log.v(TAG, "making MP3 alarm beep");
-                    // From https://stackoverflow.com/questions/4441334/how-to-play-an-android-notification-sound
-                    // This plays an audio file as a notification, using the notification sound channel.
-                    NotificationManager notificationManager =
-                            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                    Uri soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/alarm");
-                    NotificationCompat.Builder mBuilder =
-                            new NotificationCompat.Builder(getApplicationContext())
-                                    .setSound(soundUri); //This sets the sound to play
-                    notificationManager.notify(0, mBuilder.build());
+                    Log.v(TAG, "Not making MP3 alarm beep - handled by ShowNotification");
                 } else {
                     beep(3000);
                 }
@@ -705,16 +707,7 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         } else {
             if (mAudibleWarning) {
                 if (mMp3Alarm) {
-                    Log.v(TAG, "making MP3 alarm beep");
-                    // From https://stackoverflow.com/questions/4441334/how-to-play-an-android-notification-sound
-                    // This plays an audio file as a notification, using the notification sound channel.
-                    NotificationManager notificationManager =
-                            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                    Uri soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/warning");
-                    NotificationCompat.Builder mBuilder =
-                            new NotificationCompat.Builder(getApplicationContext())
-                                    .setSound(soundUri); //This sets the sound to play
-                    notificationManager.notify(0, mBuilder.build());
+                    Log.v(TAG, "not making MP3 alarm beep - handled by showNotification");
                 } else {
                     beep(100);
                 }

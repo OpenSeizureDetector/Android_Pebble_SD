@@ -501,6 +501,15 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
-        Log.i(TAG,"onequestPermissionsResult - Permission" + permissions + " = " + grantResults);
+        Log.i(TAG,"onRequestPermissionsResult - Permission" + permissions + " = " + grantResults);
+        showToast("Permissions Changed - restarting server");
+        stopServer();
+        // Wait 0.1 second to give the server chance to shutdown, then re-start it
+        mHandler.postDelayed(new Runnable() {
+            public void run() {
+                startServer();
+            }
+        }, 100);
+
     }
 }
