@@ -9,7 +9,7 @@
         android:id="@+id/action_start_stop"
         android:icon="@drawable/stop_server"
         android:showAsAction="never|withText"
-        android:title="Stop Server" />
+        android:title="Start/Stop Server" />
 
   <!-- fault beep test does not work because of fault timer so don't show menu option
     <item
@@ -18,13 +18,13 @@
         android:showAsAction="never|withText"
         android:title="Test Fault Beep" />
 -->
-    <item
+<!--    <item
         android:id="@+id/action_launch_pebble_app"
         android:showAsAction="never|withText"
         android:title="Launch Pebble App" />
-
+-->
     <item
-        android:id="@+id/action_instal_watch_app"
+        android:id="@+id/action_install_watch_app"
         android:showAsAction="never|withText"
         android:title="Install Watch App" />
 

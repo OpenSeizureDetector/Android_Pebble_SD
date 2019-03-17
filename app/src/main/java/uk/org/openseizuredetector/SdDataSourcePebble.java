@@ -739,52 +739,6 @@ public class SdDataSourcePebble extends SdDataSource {
         nRawData = 0;
     }
 
-    /**
-     * Install the wach app that is bundled in the 'assets' folder of this
-     * phone app.
-     * from https://github.com/pebble-examples/pebblekit-android-example/blob/master/android/Eclipse/src/com/getpebble/pebblekitexample/MainActivity.java#L148
-     */
-    @Override
-    public void installWatchApp() {
-        Log.v(TAG, "SdDataSourcePebble.installWatchApp()");
-        mUtil.writeToSysLogFile("SdDataSourcePebble.installWatchApp()");
-        final String WATCHAPP_FILENAME = "pebble_sd.pbw";
-
-        try {
-            // Read .pbw from assets/
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            File file = new File(mContext.getExternalFilesDir(null), WATCHAPP_FILENAME);
-            InputStream is = mContext.getResources().getAssets().open(WATCHAPP_FILENAME);
-            OutputStream os = new FileOutputStream(file);
-            byte[] pbw = new byte[is.available()];
-            is.read(pbw);
-            os.write(pbw);
-            is.close();
-            os.close();
-
-            // Install via Pebble Android app
-            intent.setDataAndType(Uri.fromFile(file), "application/pbw");
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(intent);
-        } catch (IOException e) {
-            mUtil.writeToSysLogFile("SdDataSourcePebble.installWatchApp() - app install failed"+e.toString());
-            Toast.makeText(mContext, "App install failed: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
-        }
-
-    }
-
-    /**
-     * Install the OpenSeizureDetector watch app onto the watch from Pebble AppStore
-     * based on https://forums.getpebble.com/discussion/13128/install-watch-app-pebble-store-from-android-companion-app
-     */
-    public void installWatchAppFromPebbleAppStore() {
-        Intent myIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("pebble://appstore/54d28a43e4d94c043f000008"));
-        myIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(myIntent);
-    }
-
-
-
 
     /**
      * Open Pebble or Pebble Time app.  If it is not installed, open Play store so the user can install it.

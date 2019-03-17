@@ -24,6 +24,8 @@
 package uk.org.openseizuredetector;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Toast;
@@ -81,7 +83,17 @@ public abstract class SdDataSource {
     /**
      * Install the watch app on the watch.
      */
-    public void installWatchApp() { Log.v(TAG,"installWatchApp"); }
+    public void installWatchApp() {
+        Log.v(TAG,"installWatchApp");
+        try {
+            String url = "http://www.openseizuredetector.org.uk/?page_id=1207";
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setData(Uri.parse(url));
+            mContext.startActivity(i);
+        } catch (Exception ex) {
+            Log.i(TAG, "exception starting install watch app activity " + ex.toString());
+        }
+    }
 
     public void startPebbleApp() { Log.v(TAG,"startPebbleApp()"); }
 
