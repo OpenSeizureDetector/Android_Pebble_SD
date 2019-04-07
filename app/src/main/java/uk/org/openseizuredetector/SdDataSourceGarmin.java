@@ -482,6 +482,8 @@ public class SdDataSourceGarmin extends SdDataSource {
             simpleSpec[ifreq] = simpleSpec[ifreq] / (binMax-binMin);
         }
 
+        checkFall();
+
         // Populate the mSdData structure to communicate with the main SdServer service.
         mDataStatusTime.setToNow();
         mSdData.specPower = (long)specPower / ACCEL_SCALE_FACTOR;
@@ -505,6 +507,44 @@ public class SdDataSourceGarmin extends SdDataSource {
         mWatchAppRunningCheck = true;
         mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
     }
+
+
+    /****************************************************************
+     * Simple threshold analysis to chech for fall.
+     * Called from clock_tick_handler()
+     */
+    public void checkFall() {
+        int i,j;
+        double minAcc, maxAcc;
+
+        long fallWindowSamp = (mFallWindow*mSdData.mSampleFreq)/1000; // Convert ms to samples.
+        Log.v(TAG, "check_fall() - fallWindowSamp=" +fallWindowSamp);
+        // Move window through sample buffer, checking for fall.
+        mSdData.fallAlarmStanding = false;
+        if (mFallActive) {
+            for (i = 0; i < mSdData.mNsamp - fallWindowSamp; i++) {  // i = window start point
+                // Find max and min acceleration within window.
+                minAcc = mSdData.rawData[i];
+                maxAcc = mSdData.rawData[i];
+                for (j = 0; j < fallWindowSamp; j++) {  // j = position within window
+                    if (mSdData.rawData[i + j] < minAcc) minAcc = mSdData.rawData[i + j];
+                    if (mSdData.rawData[i + j] > maxAcc) maxAcc = mSdData.rawData[i + j];
+                }
+                if ((minAcc < mFallThreshMin) && (maxAcc > mFallThreshMax)) {
+                    Log.d(TAG, "check_fall() - minAcc=" + minAcc + ", maxAcc=" + maxAcc);
+                    Log.d(TAG, "check_fall() - ****FALL DETECTED****");
+                    mSdData.fallAlarmStanding = true;
+                    return;
+                }
+            }
+        } else {
+            Log.v(TAG,"check_fall - mFallActive is false - doing nothing");
+        }
+        //if (debug) APP_LOG(APP_LOG_LEVEL_DEBUG,"check_fall() - minAcc=%d, maxAcc=%d",
+        //	  minAcc,maxAcc);
+
+    }
+
 
 
     /**

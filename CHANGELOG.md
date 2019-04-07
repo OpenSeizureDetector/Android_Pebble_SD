@@ -1,6 +1,13 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
+    V3.1.0 - 07apr2019
+        - Added fall detection algorithm to Garmin/Fitbit data source.
+
+    V3.0.4 - Fixed issues with install watch app, and stopping server resulting in crashes
+
+    V3.0.3- Fixed problem with crash on phone boot if Auto Start on Boot option selected
+
     V3.0.2 - 27feb2019
         - Corrected issue with app not re-starting properly when run-time permissions changed
         (e.g. send_sms permission)

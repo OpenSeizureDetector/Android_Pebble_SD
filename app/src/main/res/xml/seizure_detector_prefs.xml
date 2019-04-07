@@ -60,6 +60,29 @@
             android:title="Heart Rate Max Threshold (bpm)" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="Fall Detector Settings">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="FallActive"
+            android:summary=""
+            android:title="Activate Fall Detection Function" />
+        <EditTextPreference
+            android:defaultValue="200"
+            android:key="FallThreshMin"
+            android:summary=""
+            android:title="Fall Detection Lower Threshold (milli-g)" />
+        <EditTextPreference
+            android:defaultValue="1200"
+            android:key="FallThreshMax"
+            android:summary=""
+            android:title="Fall Detection Upper Threshold (milli-g)" />
+        <EditTextPreference
+            android:defaultValue="1500"
+            android:key="FallWindow"
+            android:summary=""
+            android:title="Fall Detection Window (milli-seconds)" />
+    </PreferenceCategory>
+
 
 
 </PreferenceScreen>

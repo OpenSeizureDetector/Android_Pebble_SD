@@ -501,12 +501,7 @@ public class StartupActivity extends Activity {
                             + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
-                            + "\n- V3.0.4 - Fixed issues with install watch app, and stopping server resulting in crashes"
-                            + "\n- V3.0.3 - Fixed problem with crash on phone boot if Auto Start on Boot option selected"
-                            + "\n- Upgraded to be compatible with Android Version 9"
-                            + "\n- Added support a Garmin based seizure detector with Heart Rate alarm  "
-                            + "\n  Fixed problem with app not restarting properly when settings were changed"
-                            + "\n- Explicitly asks for SMS permission, and displays warning in notification if SMS alarms are active"
+                            + "\n- V3.1.0 - Added fall detection algorithm into Garmin/Fitbit Data Source "
                             + "\n  ."
                 );
             // This makes the links display as links, but they do not respond to clicks for some reason...
@@ -537,13 +532,7 @@ public class StartupActivity extends Activity {
                             + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
-                            + "\n- V3.0.4 - Fixed issues with install watch app, and stopping server resulting in crashes"
-                            + "\n- V3.0.3 - Fixed problem with crash on phone boot if Auto Start on Boot option selected"
-                            + "\n- Upgraded to be compatible with Android Version 9"
-                            + "\n- Added support for a Garmin based seizure detector with Heart Rate alarm  "
-                            + "\n- Fixed problem with app not restarting properly when settings were changed"
-                            + "\n- Explicitly asks for SMS permission, and displays warning in notification if SMS alarms are active"
-                            + "\n  "
+                            + "\n- V3.1.0 - Added fall detection algorithm into Garmin/Fitbit Data Source "
                             + "\n  "
                             + "\n "
             );
