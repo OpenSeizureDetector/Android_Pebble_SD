@@ -30,6 +30,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
 import android.app.ActivityManager;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -38,6 +39,7 @@ import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -59,6 +61,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.SmsManager;
 import android.util.Log;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import java.util.Timer;
@@ -77,7 +80,7 @@ import com.rohitss.uceh.UCEHandler;
  * and
  * http://developer.android.com/guide/components/services.html#ExtendingService
  */
-public class SdServer extends Service implements SdDataReceiver, SdLocationReceiver {
+public class SdServer extends Service implements SdDataReceiver {
     // Notification ID
     private int NOTIFICATION_ID = 1;
     private String mNotChId = "OSD Notification Channel";
@@ -115,6 +118,8 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
     private String[] mSMSNumbers;
     private String mSMSMsgStr = "default SMS Message";
     public Time mSMSTime = null;  // last time we sent an SMS Alarm (limited to one per minute)
+    public SmsTimer mSmsTimer = null;  // Timer to wait 10 seconds before sending an alert to give the user chance to cancel it.
+    private AlertDialog.Builder mSMSAlertDialog;   // Dialog shown during countdown to sending SMS.
     private boolean mLogAlarms = true;
     private boolean mLogData = false;
     private File mOutFile;
@@ -720,66 +725,24 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
     }
 
 
-    private void sendSMS(String phoneNo, String msgStr) {
-        Log.i(TAG, "sendSMS() - Sending to " + phoneNo);
-        try {
-            SmsManager sm = SmsManager.getDefault();
-            sm.sendTextMessage(phoneNo, null, msgStr,
-                    null, null);
-        } catch (Exception e) {
-            Log.e(TAG, "sendSMS - Failed to send SMS Message");
-            mUtil.writeToSysLogFile("sendSMS - Failed to send SMS Message");
-            Log.e(TAG, e.toString());
-            mUtil.showToast("ERROR: FAILED TO SEND SMS MESSAGE");
-        }
-    }
-
-    private void sendSMSIntent(String phoneNo, String msgStr) {
-        Log.i(TAG, "sendSMSIntent() - Sending to " + phoneNo);
-        // sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr + " - " + dateStr, null, null);
-        Intent intent = new Intent(Intent.ACTION_SENDTO);
-        intent.setData(Uri.parse("smsto:")); //, HTTP.PLAIN_TEXT_TYPE);
-        intent.putExtra("sms_body", msgStr);
-        intent.putExtra("address", phoneNo);
-        if (intent.resolveActivity(getPackageManager()) != null) {
-            Log.i(TAG, "sendSMSIntent() - Starting Activity to send SMS....");
-            startActivity(intent);
-        } else {
-            Log.e(TAG, "sendSMSIntent() - Failed to send SMS - can not find activity do do it");
-        }
-
-    }
-
     /**
      * Sends SMS Alarms to the telephone numbers specified in mSMSNumbers[]
      * Attempts to find a better location, and sends a second SMS after location search
      * complete (onLocationReceived()).
      */
     public void sendSMSAlarm() {
+        AlertDialog ad;
         if (mSMSAlarm) {
             if (!mUtil.areSMSPermissionsOK()) {
                 mUtil.showToast("ERROR - Permission for SMS or Location Denied - Not Sending SMS");
                 Log.e(TAG,"ERROR - Permission for SMS or Location Denied - Not Sending SMS");
             } else {
-                mLocationFinder.getLocation(this);
-                Location loc = mLocationFinder.getLastLocation();
-                if (loc != null) {
-                    mUtil.showToast("Send SMS - last location is "
-                            + loc.getLongitude() + ","
-                            + loc.getLatitude());
-                } else {
-                    Log.i(TAG, "sendSMSAlarm() - Last Location is Null so sending first SMS without location.");
-                }
-                Log.i(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers.length + " Numbers");
-                mUtil.writeToSysLogFile("SdServer.sendSMSAlarm()");
-                Time tnow = new Time(Time.getCurrentTimezone());
-                tnow.setToNow();
-                String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
-                // SmsManager sm = SmsManager.getDefault();
-                for (int i = 0; i < mSMSNumbers.length; i++) {
-                    Log.i(TAG, "sendSMSAlarm() - Sending to " + mSMSNumbers[i]);
-                    sendSMS(new String(mSMSNumbers[i]), mSMSMsgStr + " - " + dateStr);
-                }
+                //mSMSAlertDialog = new AlertDialog.Builder(this);
+                //mSMSAlertDialog.setMessage("SMS Will be Sent in 10 Seconds, unless you press the Cancel Button")
+                //        .setPositiveButton("Send", smsCancelClickListener)
+                //        .setNegativeButton("Cancel", smsCancelClickListener);
+                //ad = mSMSAlertDialog.show();
+                startSmsTimer();
             }
         } else {
             Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
@@ -790,50 +753,57 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         }
     }
 
+
     /**
-     * onSdLocationReceived - called with the best estimate location after mLocationReceiver times out.
-     *
-     * @param ll - location (may be null if no location found)
+     * smsCanelClickListener - onClickListener for the SMS cancel dialog box.   If the
+     * negative button is pressed, it cancels the SMS timer to prevent the SMS being sent.
      */
+    DialogInterface.OnClickListener smsCancelClickListener = new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            switch (which){
+                case DialogInterface.BUTTON_POSITIVE:
+                    Log.v(TAG,"smsCancelClickListener - Positive button");
+                    //Yes button clicked
+                    break;
 
-    @Override
-    public void onSdLocationReceived(Location ll) {
-        if (ll == null) {
-            mUtil.showToast("onSdLocationReceived() - NULL LOCATION RECEIVED");
-            Log.w(TAG, "onSdLocationReceived() - NULL LOCATION RECEIVED");
-        } else {
-            //mUtil.showToast("onSdLocationReceived() - found location" + ll.toString());
-            Log.i(TAG, "onSdLocationReceived() - found location" + ll.toString());
-            if (mSMSAlarm) {
-                Log.i(TAG, "onSdLocationReceived() - Sending SMS to " + mSMSNumbers.length + " Numbers");
-                mUtil.writeToSysLogFile("SdServer.sendSMSAlarm()");
-                Time tnow = new Time(Time.getCurrentTimezone());
-                tnow.setToNow();
-                String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
-                NumberFormat df = new DecimalFormat("#0.000");
-                String geoUri = "<a href='geo:"
-                        + df.format(ll.getLatitude()) + "," + df.format(ll.getLongitude())
-                        + ";u=" + df.format(ll.getAccuracy()) + "'>here</a>";
-                String googleUrl = "https://www.google.com/maps/place?q="
-                        + ll.getLatitude() + "%2C" + ll.getLongitude();
-                String messageStr = mSMSMsgStr + " - " +
-                        dateStr + " - " + googleUrl;
-                Log.i(TAG, "onSdLocationReceived() - Message is " + messageStr);
-                mUtil.showToast(messageStr);
-                for (int i = 0; i < mSMSNumbers.length; i++) {
-                    Log.i(TAG, "onSdLocationReceived() - Sending to " + mSMSNumbers[i]);
-                    sendSMS(new String(mSMSNumbers[i]), messageStr);
-                }
-            } else {
-                Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
-                Toast toast = Toast.makeText(getApplicationContext(),
-                        "SMS Alarms Disabled - not doing anything!",
-                        Toast.LENGTH_SHORT);
-                toast.show();
+                case DialogInterface.BUTTON_NEGATIVE:
+                    Log.v(TAG,"smsCancelClickListener - Negative button");
+                    //No button clicked
+                    break;
             }
+        }
+    };
 
+
+
+    /*
+     * Start the timer that will send and SMS alert after a given period.
+     */
+    private void startSmsTimer() {
+        if (mSmsTimer != null) {
+            Log.v(TAG, "startSmsTimer -timer already running - cancelling it");
+            mSmsTimer.cancel();
+            mSmsTimer = null;
+        }
+        Log.v(TAG, "startSmsTimer() - starting SmsTimer");
+        mSmsTimer =
+                new SmsTimer(10 * 1000, 1000);
+        mSmsTimer.start();
+    }
+
+    /*
+     * Cancel the SMS timer to prevent the SMS message being sent..
+     */
+    public void stopSmsTimer() {
+        if (mSmsTimer != null) {
+            Log.v(TAG, "stopSmsTimer(): cancelling Sms timer");
+            mSmsTimer.cancel();
+            mSmsTimer = null;
         }
     }
+
+
 
 
     /*
@@ -1123,6 +1093,130 @@ public class SdServer extends Service implements SdDataReceiver, SdLocationRecei
         } else {
             Log.e(TAG, "ERROR - Can not Write to External Folder");
         }
+    }
+
+
+    /*
+     * Wait a given time, then send an SMS alert - the idea is to give the user time to cancel the
+     * alert if necessary.
+     */
+    public class SmsTimer extends CountDownTimer implements SdLocationReceiver {
+        public long mTimeLeft = -1;
+        public SmsTimer(long startTime, long interval) {
+            super(startTime, interval);
+        }
+
+        // called after startTime ms.
+        @Override
+        public void onFinish() {
+            Log.v(TAG, "SmsTimer.onFinish()");
+            mTimeLeft = 0;
+            mLocationFinder.getLocation(this);
+            Location loc = mLocationFinder.getLastLocation();
+            if (loc != null) {
+                mUtil.showToast("Send SMS - last location is "
+                        + loc.getLongitude() + ","
+                        + loc.getLatitude());
+            } else {
+                Log.i(TAG, "SmsTimer.onFinish() - Last Location is Null so sending first SMS without location.");
+            }
+            Log.i(TAG, "SmsTimer.onFinish() - Sending to " + mSMSNumbers.length + " Numbers");
+            mUtil.writeToSysLogFile("SdServer.SmsTimer.onFinish()");
+            Time tnow = new Time(Time.getCurrentTimezone());
+            tnow.setToNow();
+            String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
+            // SmsManager sm = SmsManager.getDefault();
+            for (int i = 0; i < mSMSNumbers.length; i++) {
+                Log.i(TAG, "SmsTimer.onFinish() - Sending to " + mSMSNumbers[i]);
+                sendSMS(new String(mSMSNumbers[i]), mSMSMsgStr + " - " + dateStr);
+            }
+        }
+
+        // Called every 'interval' ms.
+        @Override
+        public void onTick(long timeRemaining) {
+            Log.v(TAG, "SmsTimer.onTick() - time remaining = " + timeRemaining / 1000 + " sec");
+            // FIXME - Update the alert dialog to show the time remaining, and beep.
+            // alertDialog.setMessage("SMS Will be sent in "+ (timeRemaining/1000)+" s unless Cancel Button is Pressed First.");
+            mTimeLeft = timeRemaining;
+        }
+
+        /**
+         * onSdLocationReceived - called with the best estimate location after mLocationReceiver times out.
+         *
+         * @param ll - location (may be null if no location found)
+         */
+        private void sendSMS(String phoneNo, String msgStr) {
+            Log.i(TAG, "sendSMS() - Sending to " + phoneNo);
+            try {
+                SmsManager sm = SmsManager.getDefault();
+                sm.sendTextMessage(phoneNo, null, msgStr,
+                        null, null);
+            } catch (Exception e) {
+                Log.e(TAG, "sendSMS - Failed to send SMS Message");
+                mUtil.writeToSysLogFile("sendSMS - Failed to send SMS Message");
+                Log.e(TAG, e.toString());
+                mUtil.showToast("ERROR: FAILED TO SEND SMS MESSAGE");
+            }
+        }
+
+        private void sendSMSIntent(String phoneNo, String msgStr) {
+            Log.i(TAG, "sendSMSIntent() - Sending to " + phoneNo);
+            // sm.sendTextMessage(mSMSNumbers[i], null, mSMSMsgStr + " - " + dateStr, null, null);
+            Intent intent = new Intent(Intent.ACTION_SENDTO);
+            intent.setData(Uri.parse("smsto:")); //, HTTP.PLAIN_TEXT_TYPE);
+            intent.putExtra("sms_body", msgStr);
+            intent.putExtra("address", phoneNo);
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                Log.i(TAG, "sendSMSIntent() - Starting Activity to send SMS....");
+                startActivity(intent);
+            } else {
+                Log.e(TAG, "sendSMSIntent() - Failed to send SMS - can not find activity do do it");
+            }
+
+        }
+
+        @Override
+        public void onSdLocationReceived(Location ll) {
+            if (ll == null) {
+                mUtil.showToast("onSdLocationReceived() - NULL LOCATION RECEIVED");
+                Log.w(TAG, "onSdLocationReceived() - NULL LOCATION RECEIVED");
+            } else {
+                //mUtil.showToast("onSdLocationReceived() - found location" + ll.toString());
+                Log.i(TAG, "onSdLocationReceived() - found location" + ll.toString());
+                if (mSMSAlarm) {
+                    Log.i(TAG, "onSdLocationReceived() - Sending SMS to " + mSMSNumbers.length + " Numbers");
+                    mUtil.writeToSysLogFile("SdServer.sendSMSAlarm()");
+                    Time tnow = new Time(Time.getCurrentTimezone());
+                    tnow.setToNow();
+                    String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
+                    NumberFormat df = new DecimalFormat("#0.000");
+                    String geoUri = "<a href='geo:"
+                            + df.format(ll.getLatitude()) + "," + df.format(ll.getLongitude())
+                            + ";u=" + df.format(ll.getAccuracy()) + "'>here</a>";
+                    String googleUrl = "https://www.google.com/maps/place?q="
+                            + ll.getLatitude() + "%2C" + ll.getLongitude();
+                    String messageStr = mSMSMsgStr + " - " +
+                            dateStr + " - " + googleUrl;
+                    Log.i(TAG, "onSdLocationReceived() - Message is " + messageStr);
+                    mUtil.showToast(messageStr);
+                    for (int i = 0; i < mSMSNumbers.length; i++) {
+                        Log.i(TAG, "onSdLocationReceived() - Sending to " + mSMSNumbers[i]);
+                        sendSMS(new String(mSMSNumbers[i]), messageStr);
+                    }
+                } else {
+                    Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
+                    Toast toast = Toast.makeText(getApplicationContext(),
+                            "SMS Alarms Disabled - not doing anything!",
+                            Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+
+            }
+        }
+
+
+
     }
 
 

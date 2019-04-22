@@ -209,6 +209,7 @@ public class SdData implements Parcelable {
         retval = retval + ", " + roiPower;
         retval = retval + ", " + mSampleFreq;
         retval = retval + ", " + alarmPhrase;
+        retval = retval + ", " + mHR;
         if (includeRawData) {
             for (int i = 0; i< mNsamp;i++) {
                 retval = retval + ", " + rawData[i];

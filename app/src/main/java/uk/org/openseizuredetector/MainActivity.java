@@ -63,6 +63,8 @@ import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.utils.ValueFormatter;
 import com.rohitss.uceh.UCEHandler;
 
+import static java.util.Objects.isNull;
+
 public class MainActivity extends AppCompatActivity {
     static final String TAG = "MainActivity";
     private int okColour = Color.BLUE;
@@ -133,7 +135,16 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Log.v(TAG, "acceptAlarmButton.onClick()");
                 if (mConnection.mBound) {
-                    mConnection.mSdServer.acceptAlarm();
+                    if ((mConnection.mSdServer.mSmsTimer != null)
+                            && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0 )){
+                        Log.v(TAG, "acceptAlarmButton.onClick() - Stopping SMS Timer");
+                        mUtil.showToast("SMS Alarm Cancelled");
+                        mConnection.mSdServer.stopSmsTimer();
+                    }
+                    else {
+                        Log.v(TAG, "acceptAlarmButton.onClick() - Accepting Alarm");
+                        mConnection.mSdServer.acceptAlarm();
+                        }
                 }
             }
         });
@@ -602,12 +613,25 @@ public class MainActivity extends AppCompatActivity {
 
             // deal with latch alarms button
             Button acceptAlarmButton = (Button) findViewById(R.id.acceptAlarmButton);
-            if (mConnection.mBound)
-                if (mConnection.mSdServer.isLatchAlarms()) {
-                    acceptAlarmButton.setEnabled(true);
-                } else {
-                    acceptAlarmButton.setEnabled(false);
-                }
+
+            if ((mConnection.mSdServer.mSmsTimer != null)
+                && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0 )){
+                acceptAlarmButton.setText("SMS Will Be Sent in "+
+                        mConnection.mSdServer.mSmsTimer.mTimeLeft/1000 +
+                        " s - CANCEL?");
+                acceptAlarmButton.setBackgroundColor(alarmColour);
+                acceptAlarmButton.setEnabled(true);
+
+            } else {
+                acceptAlarmButton.setText("Accept Alarm");
+                acceptAlarmButton.setBackgroundColor(Color.DKGRAY);
+                if (mConnection.mBound)
+                    if (mConnection.mSdServer.isLatchAlarms()) {
+                        acceptAlarmButton.setEnabled(true);
+                    } else {
+                        acceptAlarmButton.setEnabled(false);
+                    }
+            }
 
             // Deal with Cancel Audible button
             Button cancelAudibleButton =

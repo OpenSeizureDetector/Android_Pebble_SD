@@ -1,6 +1,13 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
+    V3.2.0 - (NEXT VERSION!)
+        - Added neural network based data analysis.
+
+    V3.1.1 - 22apr2019
+        - Added heart rate to data log.
+		- Added Timer to give user opportunity to cancel SMS alarm before it is sent.
+
     V3.1.0 - 07apr2019
         - Added fall detection algorithm to Garmin/Fitbit data source.
 
