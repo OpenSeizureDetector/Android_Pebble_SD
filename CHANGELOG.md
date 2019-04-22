@@ -4,7 +4,11 @@
     V3.2.0 - (NEXT VERSION!)
         - Added neural network based data analysis.
 
-    V3.1.1 - 22apr2019
+	V3.1.2 - 22apr2019
+		- Made fall alarms latch irrespective of the 'latch alarms' setting
+		because they are transitory alarms they have to latch to be useful.
+
+	V3.1.1 - 22apr2019
         - Added heart rate to data log.
 		- Added Timer to give user opportunity to cancel SMS alarm before it is sent.
 

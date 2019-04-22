@@ -626,7 +626,8 @@ public class MainActivity extends AppCompatActivity {
                 acceptAlarmButton.setText("Accept Alarm");
                 acceptAlarmButton.setBackgroundColor(Color.DKGRAY);
                 if (mConnection.mBound)
-                    if (mConnection.mSdServer.isLatchAlarms()) {
+                    if ((mConnection.mSdServer.isLatchAlarms())
+                            || mConnection.mSdServer.mSdData.mFallActive) {
                         acceptAlarmButton.setEnabled(true);
                     } else {
                         acceptAlarmButton.setEnabled(false);

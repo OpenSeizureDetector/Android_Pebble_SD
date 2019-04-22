@@ -520,8 +520,11 @@ public class SdDataSourceGarmin extends SdDataSource {
         long fallWindowSamp = (mFallWindow*mSdData.mSampleFreq)/1000; // Convert ms to samples.
         Log.v(TAG, "check_fall() - fallWindowSamp=" +fallWindowSamp);
         // Move window through sample buffer, checking for fall.
-        mSdData.fallAlarmStanding = false;
+        // Note - not resetting fallAlarmStanding means that fall alarms will always latch until the 'Accept Alarm' button
+        // is pressed.
+        //mSdData.fallAlarmStanding = false;
         if (mFallActive) {
+            mSdData.mFallActive = true;
             for (i = 0; i < mSdData.mNsamp - fallWindowSamp; i++) {  // i = window start point
                 // Find max and min acceleration within window.
                 minAcc = mSdData.rawData[i];
@@ -538,6 +541,7 @@ public class SdDataSourceGarmin extends SdDataSource {
                 }
             }
         } else {
+            mSdData.mFallActive = false;
             Log.v(TAG,"check_fall - mFallActive is false - doing nothing");
         }
         //if (debug) APP_LOG(APP_LOG_LEVEL_DEBUG,"check_fall() - minAcc=%d, maxAcc=%d",
