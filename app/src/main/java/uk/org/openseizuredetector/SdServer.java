@@ -787,10 +787,15 @@ public class SdServer extends Service implements SdDataReceiver {
             mSmsTimer = null;
         }
         Log.v(TAG, "startSmsTimer() - starting SmsTimer");
-        mSmsTimer =
-                new SmsTimer(10 * 1000, 1000);
-        mSmsTimer.start();
+        runOnUiThread(new Runnable() {
+            public void run() {
+                mSmsTimer =
+                        new SmsTimer(10 * 1000, 1000);
+                mSmsTimer.start();
+            }
+        });
     }
+
 
     /*
      * Cancel the SMS timer to prevent the SMS message being sent..

@@ -4,6 +4,9 @@
     V3.2.0 - (NEXT VERSION!)
         - Added neural network based data analysis.
 
+    V3.1.3 - 22apr2019
+        - Moved the SmsTimer creation to the UI thread to avoid a ...looper.prepare() error.
+
 	V3.1.2 - 22apr2019
 		- Made fall alarms latch irrespective of the 'latch alarms' setting
 		because they are transitory alarms they have to latch to be useful.
