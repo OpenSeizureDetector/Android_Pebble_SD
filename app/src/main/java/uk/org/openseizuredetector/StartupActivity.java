@@ -502,7 +502,8 @@ public class StartupActivity extends Activity {
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
                             + "\n- V3.1.0 - Added fall detection algorithm into Garmin/Fitbit Data Source "
-                            + "\n  ."
+                            + "\n  V3.1.3 - Added delay to SMS sending to give the user chance to cancel a false alarm."
+                            + "\n  V3.1.4 - Added repeat alarm beeps during SMS delay to alert user.."
                 );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);
@@ -533,7 +534,8 @@ public class StartupActivity extends Activity {
                             + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
                             + "\n\nChanges in this version:"
                             + "\n- V3.1.0 - Added fall detection algorithm into Garmin/Fitbit Data Source "
-                            + "\n  "
+                            + "\n  V3.1.3 - Added delay to SMS sending to give the user chance to cancel a false alarm."
+                            + "\n  V3.1.4 - Added repeat alarm beeps during SMS delay to alert user.."
                             + "\n "
             );
             // This makes the links display as links, but they do not respond to clicks for some reason...

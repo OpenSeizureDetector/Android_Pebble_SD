@@ -1141,9 +1141,9 @@ public class SdServer extends Service implements SdDataReceiver {
         @Override
         public void onTick(long timeRemaining) {
             Log.v(TAG, "SmsTimer.onTick() - time remaining = " + timeRemaining / 1000 + " sec");
-            // FIXME - Update the alert dialog to show the time remaining, and beep.
-            // alertDialog.setMessage("SMS Will be sent in "+ (timeRemaining/1000)+" s unless Cancel Button is Pressed First.");
+            // The MainActivity screen picks up mTimeLeft to update the screen.
             mTimeLeft = timeRemaining;
+            alarmBeep();
         }
 
         /**
