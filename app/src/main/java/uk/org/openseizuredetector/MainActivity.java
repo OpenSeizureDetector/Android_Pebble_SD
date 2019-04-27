@@ -366,7 +366,7 @@ public class MainActivity extends AppCompatActivity {
      */
     final Runnable serverStatusRunnable = new Runnable() {
         public void run() {
-            Log.v(TAG,"serverStatusRunnable()");
+            Log.v(TAG, "serverStatusRunnable()");
 
             TextView tv;
             if (mUtil.isServerRunning()) {
@@ -434,7 +434,7 @@ public class MainActivity extends AppCompatActivity {
                     // Pebble Connected Phrase - use for HR if active instead.
                     tv = (TextView) findViewById(R.id.pebbleTv);
                     if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
-                        tv.setText("HR = "+mConnection.mSdServer.mSdData.mHR);
+                        tv.setText("HR = " + mConnection.mSdServer.mSdData.mHR);
                         if (!mConnection.mSdServer.mSdData.mHRAlarmStanding) {
                             tv.setBackgroundColor(okColour);
                             tv.setTextColor(okTextColour);
@@ -534,7 +534,6 @@ public class MainActivity extends AppCompatActivity {
                     pb.setProgressDrawable(pbDrawable);
 
 
-
                     // Fault Conditions - We override the values in the UI because we do not know
                     // if the stored ones are correct or not with a fault present.
                     if ((mConnection.mSdServer.mSdData.alarmState == 4) ||
@@ -614,24 +613,29 @@ public class MainActivity extends AppCompatActivity {
             // deal with latch alarms button
             Button acceptAlarmButton = (Button) findViewById(R.id.acceptAlarmButton);
 
-            if ((mConnection.mSdServer.mSmsTimer != null)
-                && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0 )){
-                acceptAlarmButton.setText("SMS Will Be Sent in "+
-                        mConnection.mSdServer.mSmsTimer.mTimeLeft/1000 +
-                        " s - CANCEL?");
-                acceptAlarmButton.setBackgroundColor(alarmColour);
-                acceptAlarmButton.setEnabled(true);
-
+            if (mConnection.mBound) {
+                if ((mConnection.mSdServer.mSmsTimer != null)
+                        && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0)) {
+                    acceptAlarmButton.setText("SMS Will Be Sent in " +
+                            mConnection.mSdServer.mSmsTimer.mTimeLeft / 1000 +
+                            " s - CANCEL?");
+                    acceptAlarmButton.setBackgroundColor(alarmColour);
+                    acceptAlarmButton.setEnabled(true);
+                } else {
+                    acceptAlarmButton.setText("Accept Alarm");
+                    acceptAlarmButton.setBackgroundColor(Color.DKGRAY);
+                    if (mConnection.mBound)
+                        if ((mConnection.mSdServer.isLatchAlarms())
+                                || mConnection.mSdServer.mSdData.mFallActive) {
+                            acceptAlarmButton.setEnabled(true);
+                        } else {
+                            acceptAlarmButton.setEnabled(false);
+                        }
+                }
             } else {
                 acceptAlarmButton.setText("Accept Alarm");
                 acceptAlarmButton.setBackgroundColor(Color.DKGRAY);
-                if (mConnection.mBound)
-                    if ((mConnection.mSdServer.isLatchAlarms())
-                            || mConnection.mSdServer.mSdData.mFallActive) {
-                        acceptAlarmButton.setEnabled(true);
-                    } else {
-                        acceptAlarmButton.setEnabled(false);
-                    }
+                acceptAlarmButton.setEnabled(false);
             }
 
             // Deal with Cancel Audible button

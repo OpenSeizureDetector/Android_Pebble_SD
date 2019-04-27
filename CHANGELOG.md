@@ -4,6 +4,9 @@
     V3.2.0 - (NEXT VERSION!)
         - Added neural network based data analysis.
 
+    V3.1.5 - 27apr2919
+        - Fixed crash of MainActivity when server shutdown.
+
     V3.1.4 - 25apr2019
         - Added a periodic 'Beep' during the SMS timer to alert the user that an SMS is about to be sent.
 
