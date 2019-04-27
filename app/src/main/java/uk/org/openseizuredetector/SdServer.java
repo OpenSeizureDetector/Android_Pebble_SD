@@ -547,8 +547,15 @@ public class SdServer extends Service implements SdDataReceiver {
                         > 60000) {
                     sendSMSAlarm();
                     mSMSTime = tnow;
+                } else {
+                    mUtil.showToast("SMS Alarm already sent - not re-sending");
+                    Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
+            } else {
+                mUtil.showToast("mSMSAlarm is false - not sending");
+                Log.v(TAG, "mSMSAlarm is false - not sending");
             }
+
             startLatchTimer();
         }
         // Handle fall alarm
@@ -576,8 +583,15 @@ public class SdServer extends Service implements SdDataReceiver {
                         > 60000) {
                     sendSMSAlarm();
                     mSMSTime = tnow;
+                } else {
+                    mUtil.showToast("SMS Alarm already sent - not re-sending");
+                    Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
+            } else {
+                mUtil.showToast("mSMSAlarm is false - not sending");
+                Log.v(TAG, "mSMSAlarm is false - not sending");
             }
+
         }
         // Handle heart rate alarm
         if ((sdData.mHRAlarmActive) && (sdData.mHRAlarmStanding)) {
@@ -603,7 +617,13 @@ public class SdServer extends Service implements SdDataReceiver {
                         > 60000) {
                     sendSMSAlarm();
                     mSMSTime = tnow;
+                } else {
+                    mUtil.showToast("SMS Alarm already sent - not re-sending");
+                    Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
+            } else {
+                mUtil.showToast("mSMSAlarm is false - not sending");
+                Log.v(TAG, "mSMSAlarm is false - not sending");
             }
 
         }
@@ -733,16 +753,24 @@ public class SdServer extends Service implements SdDataReceiver {
     public void sendSMSAlarm() {
         AlertDialog ad;
         if (mSMSAlarm) {
-            if (!mUtil.areSMSPermissionsOK()) {
-                mUtil.showToast("ERROR - Permission for SMS or Location Denied - Not Sending SMS");
-                Log.e(TAG,"ERROR - Permission for SMS or Location Denied - Not Sending SMS");
+            if (!mCancelAudible) {
+                if (!mUtil.areSMSPermissionsOK()) {
+                    mUtil.showToast("ERROR - Permission for SMS or Location Denied - Not Sending SMS");
+                    Log.e(TAG, "ERROR - Permission for SMS or Location Denied - Not Sending SMS");
+                } else {
+                    //mSMSAlertDialog = new AlertDialog.Builder(this);
+                    //mSMSAlertDialog.setMessage("SMS Will be Sent in 10 Seconds, unless you press the Cancel Button")
+                    //        .setPositiveButton("Send", smsCancelClickListener)
+                    //        .setNegativeButton("Cancel", smsCancelClickListener);
+                    //ad = mSMSAlertDialog.show();
+                    startSmsTimer();
+                }
             } else {
-                //mSMSAlertDialog = new AlertDialog.Builder(this);
-                //mSMSAlertDialog.setMessage("SMS Will be Sent in 10 Seconds, unless you press the Cancel Button")
-                //        .setPositiveButton("Send", smsCancelClickListener)
-                //        .setNegativeButton("Cancel", smsCancelClickListener);
-                //ad = mSMSAlertDialog.show();
-                startSmsTimer();
+                Log.i(TAG, "sendSMSAlarm() - Cancel Audible Active - not sending SMS");
+                Toast toast = Toast.makeText(getApplicationContext(),
+                        "Cancel Audible Active - not sending SMS",
+                        Toast.LENGTH_SHORT);
+                toast.show();
             }
         } else {
             Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");

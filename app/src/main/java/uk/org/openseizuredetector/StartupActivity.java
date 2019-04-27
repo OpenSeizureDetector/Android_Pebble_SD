@@ -504,6 +504,7 @@ public class StartupActivity extends Activity {
                             + "\n- V3.1.0 - Added fall detection algorithm into Garmin/Fitbit Data Source "
                             + "\n  V3.1.3 - Added delay to SMS sending to give the user chance to cancel a false alarm."
                             + "\n  V3.1.5 - Added repeat alarm beeps during SMS delay to alert user.."
+                            + "\n  V3.1.6 - Made Cancel Audible button inhibit sending SMS alarms as well as audible beeps"
                 );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);
@@ -536,6 +537,7 @@ public class StartupActivity extends Activity {
                             + "\n- V3.1.0 - Added fall detection algorithm into Garmin/Fitbit Data Source "
                             + "\n  V3.1.3 - Added delay to SMS sending to give the user chance to cancel a false alarm."
                             + "\n  V3.1.5 - Added repeat alarm beeps during SMS delay to alert user.."
+                            + "\n  V3.1.6 - Made Cancel Audible button inhibit sending SMS alarms as well as audible beeps"
                             + "\n "
             );
             // This makes the links display as links, but they do not respond to clicks for some reason...
