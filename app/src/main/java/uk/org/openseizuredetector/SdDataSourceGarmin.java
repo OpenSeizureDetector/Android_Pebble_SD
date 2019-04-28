@@ -105,6 +105,7 @@ public class SdDataSourceGarmin extends SdDataSource {
     private short mFallThreshMin;
     private short mFallThreshMax;
     private short mFallWindow;
+    private int mMute;  // !=0 means muted by keypress on watch.
 
     private int mAlarmCount;
 
@@ -376,6 +377,12 @@ public class SdDataSourceGarmin extends SdDataSource {
                     // if we get 'null' HR (For example if the heart rate is not working)
                     mSdData.mHR = -1;
                 }
+                try {
+                    mMute = dataObject.getInt("Mute");
+                } catch (JSONException e) {
+                    // if we get 'null' HR (For example if the heart rate is not working)
+                    mMute = 0;
+                }
                 JSONArray accelVals = dataObject.getJSONArray("data");
                 Log.v(TAG, "Received " + accelVals.length() + " acceleration values");
                 int i;
@@ -539,6 +546,10 @@ public class SdDataSourceGarmin extends SdDataSource {
                     mSdData.fallAlarmStanding = true;
                     return;
                 }
+                if (mMute != 0) {
+                    Log.v(TAG,"Mute Active - setting fall alarm to mute");
+                    mSdData.fallAlarmStanding = false;
+                }
             }
         } else {
             mSdData.mFallActive = false;
@@ -647,6 +658,7 @@ public class SdDataSourceGarmin extends SdDataSource {
                     mAlarmCount = 0;
                 }
             }
+
             Log.v(TAG, "inAlarm=" + inAlarm + ", alarmState = " + mSdData.alarmState + " alarmCount=" + mAlarmCount + " mAlarmTime=" + mAlarmTime);
 
             /* Check Heart Rate against alarm settings */
@@ -658,6 +670,12 @@ public class SdDataSourceGarmin extends SdDataSource {
                 } else {
                     mSdData.mHRAlarmStanding = false;
                 }
+            }
+            if (mMute != 0) {
+                Log.v(TAG,"Mute Active - setting alarms to mute");
+                mSdData.alarmState = 6;
+                mSdData.alarmPhrase = "MUTE";
+                mSdData.mHRAlarmStanding = false;
             }
         }
     }

@@ -4,6 +4,9 @@
     V3.2.0 - (NEXT VERSION!)
         - Added neural network based data analysis.
 
+    V3.1.7 - 28apr2919
+        - Added Mute function from watch Menu button.
+
     V3.1.6 - 27apr2919
         - Made the Cancel Audible button inhibit SMS alarms as well as audible beeps.
 
