@@ -4,6 +4,9 @@
     V3.2.0 - (NEXT VERSION!)
         - Added neural network based data analysis.
 
+    V3.1.8 - 06jun2019
+        - Added READ_PHONE_STATE permission which seems to be needed for some phones to send SMS (but not many).
+
     V3.1.7 - 28apr2919
         - Added Mute function from watch Menu button.
 
