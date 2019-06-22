@@ -683,8 +683,8 @@ public class SdDataSourceAw extends SdDataSource {
         tdiff = (tnow.toMillis(false) - mStatusTime.toMillis(false));
         Log.v(TAG, "getStatus() - mWatchAppRunningCheck=" + mWatchAppRunningCheck + " tdiff=" + tdiff);
         // Check we are actually connected to the pebble.
-        mSdData.pebbleConnected = PebbleKit.isWatchConnected(mContext);
-        if (!mSdData.pebbleConnected) mWatchAppRunningCheck = false;
+        mSdData.watchConnected = PebbleKit.isWatchConnected(mContext);
+        if (!mSdData.watchConnected) mWatchAppRunningCheck = false;
         // And is the pebble_sd app running?
         // set mWatchAppRunningCheck has been false for more than 10 seconds
         // the app is not talking to us
@@ -692,7 +692,7 @@ public class SdDataSourceAw extends SdDataSource {
         if (!mWatchAppRunningCheck &&
                 (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000)) {
             Log.v(TAG, "getStatus() - tdiff = " + tdiff);
-            mSdData.pebbleAppRunning = false;
+            mSdData.watchAppRunning = false;
             //Log.v(TAG, "getStatus() - Pebble App Not Running - Attempting to Re-Start");
             //mUtil.writeToSysLogFile("SdDataSourceAw.getStatus() - Pebble App not Running - Attempting to Re-Start");
             //startWatchApp();
@@ -709,7 +709,7 @@ public class SdDataSourceAw extends SdDataSource {
                 Log.v(TAG, "getStatus() - Waiting for mFaultTimerPeriod before issuing audible warning...");
             }
         } else {
-            mSdData.pebbleAppRunning = true;
+            mSdData.watchAppRunning = true;
         }
 
         // if we have confirmation that the app is running, reset the

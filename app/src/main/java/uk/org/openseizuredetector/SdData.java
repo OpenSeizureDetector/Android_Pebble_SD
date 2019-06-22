@@ -29,10 +29,6 @@ import android.os.Parcel;
 import android.text.format.Time;
 import android.util.Log;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Locale;
-
 import org.json.JSONObject;
 import org.json.JSONArray;
 
@@ -82,11 +78,12 @@ public class SdData implements Parcelable {
     public long roiPower;
     public String alarmPhrase;
     public int simpleSpec[];
-    public boolean pebbleConnected = false;
-    public boolean pebbleAppRunning = false;
+    public boolean watchConnected = false;
+    public boolean watchAppRunning = false;
     public boolean serverOK = false;
 
     public boolean mHRAlarmStanding = false;
+    public boolean mHRFaultStanding = false;
     public double mHR = 0;
 
     public SdData() {
@@ -116,8 +113,8 @@ public class SdData implements Parcelable {
             specPower = jo.optInt("specPower");
             roiPower = jo.optInt("roiPower");
             batteryPc = jo.optInt("batteryPc");
-            pebbleConnected = jo.optBoolean("pebbleConnected");
-            pebbleAppRunning = jo.optBoolean("pebbleAppRunning");
+            watchConnected = jo.optBoolean("watchConnected");
+            watchAppRunning = jo.optBoolean("watchAppRunning");
             alarmState = jo.optInt("alarmState");
             alarmPhrase = jo.optString("alarmPhrase");
             alarmThresh = jo.optInt("alarmThresh");
@@ -159,8 +156,8 @@ public class SdData implements Parcelable {
             jsonObj.put("specPower", specPower);
             jsonObj.put("roiPower", roiPower);
             jsonObj.put("batteryPc", batteryPc);
-            jsonObj.put("pebbleConnected", pebbleConnected);
-            jsonObj.put("pebbleAppRunning", pebbleAppRunning);
+            jsonObj.put("watchConnected", watchConnected);
+            jsonObj.put("watchAppRunning", watchAppRunning);
             jsonObj.put("haveSettings", haveSettings);
             jsonObj.put("alarmState", alarmState);
             jsonObj.put("alarmPhrase", alarmPhrase);

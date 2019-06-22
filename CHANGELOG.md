@@ -4,6 +4,11 @@
     V3.2.0 - (NEXT VERSION!)
         - Added neural network based data analysis.
 
+    V3.1.9 - 14jun2019
+        - Now requests READ_PHONE_STATE along with SMS permissions (required for some phones to send SMS messages)
+        - Fixed issue with Garmin Seizure Detector not producing warnings.
+        - Added faut pips for missing heart rate data if heart rate alarm active
+
     V3.1.8 - 06jun2019
         - Added READ_PHONE_STATE permission which seems to be needed for some phones to send SMS (but not many).
 

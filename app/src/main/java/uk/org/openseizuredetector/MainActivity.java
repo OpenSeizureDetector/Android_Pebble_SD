@@ -63,8 +63,6 @@ import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.utils.ValueFormatter;
 import com.rohitss.uceh.UCEHandler;
 
-import static java.util.Objects.isNull;
-
 public class MainActivity extends AppCompatActivity {
     static final String TAG = "MainActivity";
     private int okColour = Color.BLUE;
@@ -435,15 +433,18 @@ public class MainActivity extends AppCompatActivity {
                     tv = (TextView) findViewById(R.id.pebbleTv);
                     if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
                         tv.setText("HR = " + mConnection.mSdServer.mSdData.mHR);
-                        if (!mConnection.mSdServer.mSdData.mHRAlarmStanding) {
-                            tv.setBackgroundColor(okColour);
-                            tv.setTextColor(okTextColour);
-                        } else {
+                        if (mConnection.mSdServer.mSdData.mHRAlarmStanding) {
                             tv.setBackgroundColor(alarmColour);
                             tv.setTextColor(alarmTextColour);
+                        } else if (mConnection.mSdServer.mSdData.mHRFaultStanding) {
+                            tv.setBackgroundColor(warnColour);
+                            tv.setTextColor(warnTextColour);
+                        } else {
+                            tv.setBackgroundColor(okColour);
+                            tv.setTextColor(okTextColour);
                         }
                     } else {
-                        if (mConnection.mSdServer.mSdData.pebbleConnected) {
+                        if (mConnection.mSdServer.mSdData.watchConnected) {
                             tv.setText("HR Alarm OFF");
                             tv.setBackgroundColor(okColour);
                             tv.setTextColor(okTextColour);
@@ -455,7 +456,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                     tv = (TextView) findViewById(R.id.appTv);
-                    if (mConnection.mSdServer.mSdData.pebbleAppRunning) {
+                    if (mConnection.mSdServer.mSdData.watchAppRunning) {
                         tv.setText("Watch App OK");
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);

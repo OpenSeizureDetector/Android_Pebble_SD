@@ -2,8 +2,6 @@ package uk.org.openseizuredetector;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -128,8 +126,8 @@ public class SdDataSourceNetwork extends SdDataSource {
                 if (result.startsWith("Unable to retrieve web page")) {
                     Log.v(TAG,"doInBackground() - Unable to retrieve data");
                     sdData.serverOK = false;
-                    sdData.pebbleConnected = false;
-                    sdData.pebbleAppRunning = false;
+                    sdData.watchConnected = false;
+                    sdData.watchAppRunning = false;
                     sdData.alarmState = ALARM_STATE_NETFAULT;
                     sdData.alarmPhrase = "Warning - No Connection to Server";
                     Log.v(TAG,"doInBackground(): No Connection to Server - sdData = "+sdData.toString());
@@ -147,8 +145,8 @@ public class SdDataSourceNetwork extends SdDataSource {
 
             } catch (IOException e) {
                 sdData.serverOK = false;
-                sdData.pebbleConnected = false;
-                sdData.pebbleAppRunning = false;
+                sdData.watchConnected = false;
+                sdData.watchAppRunning = false;
                 sdData.alarmState = ALARM_STATE_NETFAULT;
                 sdData.alarmPhrase = "Warning - No Connection to Server";
                 Log.v(TAG,"doInBackground(): IOException - "+e.toString());

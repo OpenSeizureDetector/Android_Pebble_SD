@@ -37,11 +37,6 @@ import android.widget.Toast;
 import com.getpebble.android.kit.PebbleKit;
 import com.getpebble.android.kit.util.PebbleDictionary;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -679,8 +674,8 @@ public class SdDataSourcePebble extends SdDataSource {
         tdiff = (tnow.toMillis(false) - mPebbleStatusTime.toMillis(false));
         Log.v(TAG, "getStatus() - mPebbleAppRunningCheck=" + mPebbleAppRunningCheck + " tdiff=" + tdiff);
         // Check we are actually connected to the pebble.
-        mSdData.pebbleConnected = PebbleKit.isWatchConnected(mContext);
-        if (!mSdData.pebbleConnected) mPebbleAppRunningCheck = false;
+        mSdData.watchConnected = PebbleKit.isWatchConnected(mContext);
+        if (!mSdData.watchConnected) mPebbleAppRunningCheck = false;
         // And is the pebble_sd app running?
         // set mPebbleAppRunningCheck has been false for more than 10 seconds
         // the app is not talking to us
@@ -688,7 +683,7 @@ public class SdDataSourcePebble extends SdDataSource {
         if (!mPebbleAppRunningCheck &&
                 (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000)) {
             Log.v(TAG, "getStatus() - tdiff = " + tdiff);
-            mSdData.pebbleAppRunning = false;
+            mSdData.watchAppRunning = false;
             //Log.v(TAG, "getStatus() - Pebble App Not Running - Attempting to Re-Start");
             //mUtil.writeToSysLogFile("SdDataSourcePebble.getStatus() - Pebble App not Running - Attempting to Re-Start");
             //startWatchApp();
@@ -705,7 +700,7 @@ public class SdDataSourcePebble extends SdDataSource {
                 Log.v(TAG, "getStatus() - Waiting for mFaultTimerPeriod before issuing audible warning...");
             }
         } else {
-            mSdData.pebbleAppRunning = true;
+            mSdData.watchAppRunning = true;
         }
 
         // if we have confirmation that the app is running, reset the

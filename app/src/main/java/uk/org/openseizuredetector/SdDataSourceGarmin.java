@@ -28,32 +28,22 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.net.ConnectivityManager;
-import android.os.BatteryManager;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.getpebble.android.kit.PebbleKit;
-import com.getpebble.android.kit.util.PebbleDictionary;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jtransforms.fft.DoubleFFT_1D;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.UUID;
 
 import static java.lang.Long.parseLong;
-import static java.lang.Math.sqrt;
 
 
 /**
@@ -66,7 +56,7 @@ public class SdDataSourceGarmin extends SdDataSource {
     private Handler mHandler = new Handler();
     private Timer mStatusTimer;
     private Timer mSettingsTimer;
-    private Timer mAlarmCheckTimer;
+    private Timer mFaultCheckTimer;
     private Time mDataStatusTime;
     private boolean mWatchAppRunningCheck = false;
     private int mAppRestartTimeout = 10;  // Timeout before re-starting watch app (sec) if we have not received
@@ -145,14 +135,14 @@ public class SdDataSourceGarmin extends SdDataSource {
             Log.v(TAG, "start(): status timer already running.");
             mUtil.writeToSysLogFile("SdDataSourceGarmin.start() - status timer already running??");
         }
-        if (mAlarmCheckTimer == null) {
+        if (mFaultCheckTimer == null) {
             Log.v(TAG, "start(): starting alarm check timer");
             mUtil.writeToSysLogFile("SdDataSourceGarmin.start() - starting alarm check timer");
-            mAlarmCheckTimer = new Timer();
-            mAlarmCheckTimer.schedule(new TimerTask() {
+            mFaultCheckTimer = new Timer();
+            mFaultCheckTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    alarmCheck();
+                    faultCheck();
                 }
             }, 0, 1000);
         } else {
@@ -206,12 +196,12 @@ public class SdDataSourceGarmin extends SdDataSource {
                 mSettingsTimer = null;
             }
             // Stop the alarm check timer
-            if (mAlarmCheckTimer != null) {
+            if (mFaultCheckTimer != null) {
                 Log.v(TAG, "stop(): cancelling alarm check timer");
                 mUtil.writeToSysLogFile("SdDataSourceGarmin.stop() - cancelling alarm check timer");
-                mAlarmCheckTimer.cancel();
-                mAlarmCheckTimer.purge();
-                mAlarmCheckTimer = null;
+                mFaultCheckTimer.cancel();
+                mFaultCheckTimer.purge();
+                mFaultCheckTimer = null;
             }
 
         } catch (Exception e) {
@@ -467,7 +457,10 @@ public class SdDataSourceGarmin extends SdDataSource {
                 fft[2*i+1] = 0.;
             }
         }
+        //Log.v(TAG,"specPower = "+specPower);
+        //specPower = specPower/(mSdData.mNsamp/2);
         specPower = specPower/mSdData.mNsamp/2;
+        //Log.v(TAG,"specPower = "+specPower);
 
         // Calculate the Region of Interest power and power ratio.
         double roiPower = 0;
@@ -488,8 +481,6 @@ public class SdDataSourceGarmin extends SdDataSource {
             }
             simpleSpec[ifreq] = simpleSpec[ifreq] / (binMax-binMin);
         }
-
-        checkFall();
 
         // Populate the mSdData structure to communicate with the main SdServer service.
         mDataStatusTime.setToNow();
@@ -512,15 +503,102 @@ public class SdDataSourceGarmin extends SdDataSource {
 
         // Because we have received data, set flag to show watch app running.
         mWatchAppRunningCheck = true;
+
+        // Check this data to see if it represents an alarm state.
+        alarmCheck();
+        hrCheck();
+        fallCheck();
+        muteCheck();
+
         mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
     }
 
 
     /****************************************************************
+     * checkAlarm() - checks the current accelerometer data and uses
+     * historical data to determine if we are in a fault, warning or ok
+     * state.
+     * Sets mSdData.alarmState and mSdData.hrAlarmStanding
+     */
+    private void alarmCheck() {
+        boolean inAlarm;
+        Log.v(TAG, "alarmCheck()");
+        // Is the current set of data representing an alarm state?
+        if ((mSdData.roiPower > mAlarmThresh) && (10 * (mSdData.roiPower / mSdData.specPower) > mAlarmRatioThresh)) {
+            inAlarm = true;
+        } else {
+            inAlarm = false;
+        }
+
+        // set the alarmState to Alarm, Warning or OK, depending on the current state and previous ones.
+        if (inAlarm) {
+            mAlarmCount += mSamplePeriod;
+            if (mAlarmCount > mAlarmTime) {
+                // full alarm
+                mSdData.alarmState = 2;
+            } else if (mAlarmCount > mWarnTime) {
+                // warning
+                mSdData.alarmState = 1;
+            }
+        } else {
+            // If we are not in an ALARM state, revert back to WARNING, otherwise
+            // revert back to OK.
+            if (mSdData.alarmState == 2) {
+                // revert to warning
+                mSdData.alarmState = 1;
+                mAlarmCount = mWarnTime + 1;  // pretend we have only just entered warning state.
+            } else {
+                // revert to OK
+                mSdData.alarmState = 0;
+                mAlarmCount = 0;
+            }
+        }
+
+        Log.v(TAG, "alarmCheck(): inAlarm=" + inAlarm + ", alarmState = " + mSdData.alarmState + " alarmCount=" + mAlarmCount + " mAlarmTime=" + mAlarmTime);
+
+    }
+
+    public void muteCheck() {
+        if (mMute != 0) {
+            Log.v(TAG, "Mute Active - setting alarms to mute");
+            mSdData.alarmState = 6;
+            mSdData.alarmPhrase = "MUTE";
+            mSdData.mHRAlarmStanding = false;
+        }
+
+    }
+
+    /**
+     * hrCheck - check the Heart rate data in mSdData to see if it represents an alarm condition.
+     * Sets mSdData.mHRAlarmStanding
+     */
+    public void hrCheck() {
+        Log.v(TAG, "hrCheck()");
+        /* Check Heart Rate against alarm settings */
+        if (mSdData.mHRAlarmActive) {
+            if (mSdData.mHR < 0) {
+                Log.i(TAG,"Heart Rate Fault (HR<0)");
+                mSdData.mHRFaultStanding = true;
+                mSdData.mHRAlarmStanding = false;
+            }
+            else if ((mSdData.mHR > mSdData.mHRTreshMax) || (mSdData.mHR < mSdData.mHRThreshMin)) {
+                Log.i(TAG, "Heart Rate Abnormal - " + mSdData.mHR + " bpm");
+                mSdData.mHRFaultStanding = false;
+                mSdData.mHRAlarmStanding = true;
+            }
+            else {
+                mSdData.mHRFaultStanding = false;
+                mSdData.mHRAlarmStanding = false;
+            }
+        }
+
+    }
+
+    /****************************************************************
      * Simple threshold analysis to chech for fall.
      * Called from clock_tick_handler()
      */
-    public void checkFall() {
+    public void fallCheck() {
         int i,j;
         double minAcc, maxAcc;
 
@@ -575,7 +653,7 @@ public class SdDataSourceGarmin extends SdDataSource {
         Log.v(TAG, "getStatus() - mWatchAppRunningCheck=" + mWatchAppRunningCheck + " tdiff=" + tdiff);
         Log.v(TAG,"getStatus() - tdiff="+tdiff+", mDataUpatePeriod="+mDataUpdatePeriod+", mAppRestartTimeout="+mAppRestartTimeout);
 
-        mSdData.pebbleConnected = true;  // We can't check connection for passive network connection, so set it to true to avoid errors.
+        mSdData.watchConnected = true;  // We can't check connection for passive network connection, so set it to true to avoid errors.
         // And is the watch app running?
         // set mWatchAppRunningCheck has been false for more than 10 seconds
         // the app is not talking to us
@@ -583,7 +661,7 @@ public class SdDataSourceGarmin extends SdDataSource {
         if (!mWatchAppRunningCheck &&
                 (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000)) {
             Log.v(TAG, "getStatus() - tdiff = " + tdiff);
-            mSdData.pebbleAppRunning = false;
+            mSdData.watchAppRunning = false;
             // Only make audible warning beep if we have not received data for more than mFaultTimerPeriod seconds.
             if (tdiff > (mDataUpdatePeriod + mFaultTimerPeriod) * 1000) {
                 Log.v(TAG, "getStatus() - Watch App Not Running");
@@ -596,7 +674,7 @@ public class SdDataSourceGarmin extends SdDataSource {
                 Log.v(TAG, "getStatus() - Waiting for mFaultTimerPeriod before issuing audible warning...");
             }
         } else {
-            mSdData.pebbleAppRunning = true;
+            mSdData.watchAppRunning = true;
         }
 
         // if we have confirmation that the app is running, reset the
@@ -612,71 +690,21 @@ public class SdDataSourceGarmin extends SdDataSource {
     }
 
     /**
-     * alarmCheck - determines alarm state based on seizure detector data SdData.   Called every second.
+     * faultCheck - determines alarm state based on seizure detector data SdData.   Called every second.
      */
-    private void alarmCheck() {
-        boolean inAlarm;
+    private void faultCheck() {
         Time tnow = new Time(Time.getCurrentTimezone());
         long tdiff;
         tnow.setToNow();
 
         // get time since the last data was received from the watch.
         tdiff = (tnow.toMillis(false) - mDataStatusTime.toMillis(false));
-        Log.v(TAG, "alarmCheck() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout
+        Log.v(TAG, "faultCheck() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout
                 + ", combined = " + (mDataUpdatePeriod + mAppRestartTimeout) * 1000);
         if (!mWatchAppRunningCheck &&
                 (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000)) {
-            Log.v(TAG, "alarmCheck() - watch app not running so not doing anything");
+            Log.v(TAG, "faultCheck() - watch app not running so not doing anything");
             mAlarmCount = 0;
-        } else {
-            Log.v(TAG, "alarmCheck()");
-            if ((mSdData.roiPower > mAlarmThresh) && (10 * (mSdData.roiPower / mSdData.specPower) > mAlarmRatioThresh)) {
-                inAlarm = true;
-            } else {
-                inAlarm = false;
-            }
-
-            if (inAlarm) {
-                mAlarmCount += mSamplePeriod;
-                if (mAlarmCount > mAlarmTime) {
-                    // full alarm
-                    mSdData.alarmState = 2;
-                } else if (mAlarmCount > mWarnTime) {
-                    // warning
-                    mSdData.alarmState = 1;
-                }
-            } else {
-                // If we are not in an ALARM state, revert back to WARNING, otherwise
-                // revert back to OK.
-                if (mSdData.alarmState == 2) {
-                    // revert to warning
-                    mSdData.alarmState = 1;
-                    mAlarmCount = mWarnTime + 1;  // pretend we have only just entered warning state.
-                } else {
-                    // revert to OK
-                    mSdData.alarmState = 0;
-                    mAlarmCount = 0;
-                }
-            }
-
-            Log.v(TAG, "inAlarm=" + inAlarm + ", alarmState = " + mSdData.alarmState + " alarmCount=" + mAlarmCount + " mAlarmTime=" + mAlarmTime);
-
-            /* Check Heart Rate against alarm settings */
-            if (mSdData.mHRAlarmActive) {
-                Log.v(TAG,"Checking HR Alarm");
-                if ((mSdData.mHR > mSdData.mHRTreshMax) || (mSdData.mHR < mSdData.mHRThreshMin)) {
-                    Log.i(TAG, "Heart Rate Abnormal - " + mSdData.mHR + " bpm");
-                    mSdData.mHRAlarmStanding = true;
-                } else {
-                    mSdData.mHRAlarmStanding = false;
-                }
-            }
-            if (mMute != 0) {
-                Log.v(TAG,"Mute Active - setting alarms to mute");
-                mSdData.alarmState = 6;
-                mSdData.alarmPhrase = "MUTE";
-                mSdData.mHRAlarmStanding = false;
-            }
         }
     }
 

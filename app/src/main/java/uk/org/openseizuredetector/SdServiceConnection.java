@@ -101,7 +101,7 @@ public class SdServiceConnection implements ServiceConnection {
     public boolean pebbleConnected() {
         if (mSdServer!=null) {
             if (mSdServer.mSdData!=null) {
-                if (mSdServer.mSdData.pebbleConnected) {
+                if (mSdServer.mSdData.watchConnected) {
                     return true;
                 }
             }
@@ -116,7 +116,7 @@ public class SdServiceConnection implements ServiceConnection {
     public boolean pebbleAppRunning() {
         if (mSdServer!=null) {
             if (mSdServer.mSdData!=null) {
-                if (mSdServer.mSdData.pebbleAppRunning) {
+                if (mSdServer.mSdData.watchAppRunning) {
                     return true;
                 }
             }
