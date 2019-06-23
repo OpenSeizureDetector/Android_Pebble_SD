@@ -43,7 +43,7 @@ public class SdAnalyser {
     private double mWarnTime;
     private double mAlarmTime;
     private double mAlarmThresh;
-    private double mAlarmRatioThresh;
+    double mAlarmRatioThresh;
     private double mFreqRes;
     private int mAlarmCount;
     private double mFreqCutoff;
@@ -79,13 +79,10 @@ public class SdAnalyser {
     }
 
     /**
-     * doAnalysis() - analyse the data if the accelerometer data array mAccData
-     * and populate the output data structure mSdData
+     * getSpecPower(rawData):  Calculate the average bin power in the spectrum of rawData
+     * between 0 and freqCutoff Hz, excluding the DC component
      */
-    void calculateSpectralPowers(double[] rawData) {
-        // Set the frequency bounds for the analysis in fft output bin numbers.
-        int nMin = freq2fftBin(mAlarmFreqMin);
-        int nMax = freq2fftBin(mAlarmFreqMax);
+    double getSpecPower(double[] rawData) {
         int nFreqCutoff = freq2fftBin(mFreqCutoff);
 
         DoubleFFT_1D fftDo = new DoubleFFT_1D(mNSamp);
@@ -104,7 +101,24 @@ public class SdAnalyser {
                 fft[2 * i + 1] = 0.;
             }
         }
-        specPower = specPower / (mNSamp / 2);
+        specPower = specPower / mNSamp / 2;
+        return(specPower);
+    }
+
+    /**
+     * getRoiPower(rawData):  Calculate the average bin power in the spectrum of rawData
+     * between alarmFreqMin and alarmFreqMax Hz.
+     */
+    double getRoiPower(double[] rawData) {
+        // Set the frequency bounds for the analysis in fft output bin numbers.
+        int nMin = freq2fftBin(mAlarmFreqMin);
+        int nMax = freq2fftBin(mAlarmFreqMax);
+        int nFreqCutoff = freq2fftBin(mFreqCutoff);
+
+        DoubleFFT_1D fftDo = new DoubleFFT_1D(mNSamp);
+        double[] fft = new double[mNSamp * 2];
+        System.arraycopy(rawData, 0, fft, 0, mNSamp);
+        fftDo.realForward(fft);
 
         // Calculate the Region of Interest power and power ratio.
         double roiPower = 0;
@@ -112,9 +126,48 @@ public class SdAnalyser {
             roiPower = roiPower + getMagnitude(fft, i);
         }
         roiPower = roiPower / (nMax - nMin);
-        double roiRatio = 10 * roiPower / specPower;
-
+        return(roiPower);
     }
+
+    /**
+     * getSpectrumRatio(rawData) - return the ratio of the ROI power to the whole spectrum power.
+     * @param rawData
+     * @return
+     */
+    double getSpectrumRatio(double rawData[]) {
+        double specPower;
+        double roiPower;
+        double specRatio;
+
+        specPower = getSpecPower(rawData);
+        roiPower = getRoiPower(rawData);
+
+        if (specPower > mAlarmThresh) {
+            specRatio = 10.0 * roiPower / specPower;
+        } else {
+            specRatio = 0.0;
+        }
+        return(specRatio);
+    }
+
+    /**
+     * getAlarmState(rawData) - determines the alarm state associated with the snapshot of raw
+     * acceleration data rawData[]
+     * @return the alarm state (0=ok, 1 = alarm)
+     */
+    int getAlarmState(double rawData[]) {
+        int alarmState;
+
+        double alarmRatio = getSpectrumRatio(rawData);
+
+        if (alarmRatio <= mAlarmRatioThresh) {
+            alarmState = 0;
+        } else {
+            alarmState = 1;
+        }
+        return(alarmState);
+    }
+
 
     /**
      * Calculate the magnitude of entry i in the fft array fft
@@ -129,67 +182,34 @@ public class SdAnalyser {
         return mag;
     }
 
-    // Force the data stored in this datasource to update in line with the JSON string encoded data provided.
-    // Used by webServer to update the GarminDatasource.
-    // Returns a message string that is passed back to the watch.
-    public String updateFromJSON(String jsonStr) {
+    double[] getAccelDataFromJSON(String jsonStr) {
         String retVal = "undefined";
-        Log.v(TAG,"updateFromJSON - "+jsonStr);
+        double[] rawData = new double[mNSamp];
+        Log.v(TAG,"getAccelDataFromJSON - "+jsonStr);
 
         try {
-            JSONObject mainObject = new JSONObject(jsonStr);
-            //JSONObject dataObject = mainObject.getJSONObject("dataObj");
+            JSONObject mainObject = null;
+            mainObject = new JSONObject(jsonStr);
             JSONObject dataObject = mainObject;
             String dataTypeStr = dataObject.getString("dataType");
-            Log.v(TAG,"updateFromJSON - dataType="+dataTypeStr);
+            Log.v(TAG,"getAccelDataFromJSON - dataType="+dataTypeStr);
             if (dataTypeStr.equals("raw")) {
-                Log.v(TAG,"updateFromJSON - processing raw data");
-                try {
-                    mSdData.mHR = dataObject.getDouble("HR");
-                } catch (JSONException e) {
-                    // if we get 'null' HR (For example if the heart rate is not working)
-                    mSdData.mHR = -1;
-                }
-                try {
-                    mMute = dataObject.getInt("Mute");
-                } catch (JSONException e) {
-                    // if we get 'null' HR (For example if the heart rate is not working)
-                    mMute = 0;
-                }
+                Log.v(TAG, "getAccelDataFromJSON - processing raw data");
                 JSONArray accelVals = dataObject.getJSONArray("data");
                 Log.v(TAG, "Received " + accelVals.length() + " acceleration values");
                 int i;
                 for (i = 0; i < accelVals.length(); i++) {
-                    mSdData.rawData[i] = accelVals.getInt(i);
+                    rawData[i] = accelVals.getInt(i);
                 }
-                mSdData.mNsamp = accelVals.length();
-                //mNSamp = accelVals.length();
-                mWatchAppRunningCheck = true;
-                doAnalysis();
-                if (mSdData.haveSettings == false) {
-                    retVal = "sendSettings";
-                } else {
-                    retVal = "OK";
-                }
-            } else if (dataTypeStr.equals("settings")){
-                Log.v(TAG,"updateFromJSON - processing settings");
-                mSamplePeriod = (short)dataObject.getInt("analysisPeriod");
-                mSampleFreq = (short)dataObject.getInt("sampleFreq");
-                mSdData.batteryPc = (short)dataObject.getInt("battery");
-                Log.v(TAG,"updateFromJSON - mSamplePeriod="+mSamplePeriod+" mSampleFreq="+mSampleFreq);
-                mSdData.haveSettings = true;
-                mSdData.mSampleFreq = mSampleFreq;
-                mWatchAppRunningCheck = true;
-                retVal = "OK";
             } else {
-                Log.e(TAG,"updateFromJSON - unrecognised dataType "+dataTypeStr);
+                Log.e(TAG,"getAccelDataFromJSON - unrecognised dataType "+dataTypeStr);
                 retVal = "ERROR";
             }
         } catch (Exception e) {
-            Log.e(TAG,"updateFromJSON - Error Parsing JSON String - "+e.toString());
+            Log.e(TAG,"getAccelDataFromJSON - Error Parsing JSON String - "+e.toString());
             e.printStackTrace();
             retVal = "ERROR";
         }
-        return(retVal);
+        return(rawData);
     }
 }

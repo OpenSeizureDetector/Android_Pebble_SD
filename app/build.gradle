@@ -20,6 +20,9 @@ android {
 
     testOptions {
         unitTests.returnDefaultValues = true
+        unitTests {
+            includeAndroidResources = true
+        }
     }
 }
 
@@ -42,6 +45,7 @@ dependencies {
     implementation 'com.github.wendykierp:JTransforms:3.0'
     implementation 'com.google.android.gms:play-services-location:10.0.0'
     //implementation 'com.github.RohitSurwase.UCE-Handler:uce_handler:1.3'
+    testImplementation 'org.robolectric:robolectric:4.3'
 
 }
 
