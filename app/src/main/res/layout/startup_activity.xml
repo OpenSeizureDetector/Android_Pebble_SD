@@ -90,30 +90,6 @@
                 android:id="@+id/textItem2" />
         </LinearLayout>
 
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <ProgressBar
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/progressBar7" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:autoLink="web"
-                android:text="New Text"
-                android:id="@+id/textItem7" />
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Install Pebble App"
-                android:id="@+id/installPebbleAppButton"
-                />
-
-        </LinearLayout>
-
 
         <LinearLayout
             android:orientation="horizontal"
@@ -131,31 +107,9 @@
                 android:gravity="center_vertical"
                 android:text="New Text"
                 android:id="@+id/textItem3" />
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Configure Pebble"
-                android:id="@+id/pebbleButton"
-                android:layout_gravity="right" />
 
         </LinearLayout>
-<!--
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <ProgressBar
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/progressBar4" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:text="New Text"
-                android:id="@+id/textItem4" />
-        </LinearLayout>
--->
+
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
@@ -194,24 +148,6 @@
                 android:id="@+id/textItem6" />
         </LinearLayout>
 
-        <!--
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <ProgressBar
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/progressBar8" />
-            <TextView
-                android:layout_width="fill_parent"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:autoLink="web"
-                android:text="New Text"
-                android:id="@+id/textItem8" />
-        </LinearLayout>
-        -->
 
     </LinearLayout>
 

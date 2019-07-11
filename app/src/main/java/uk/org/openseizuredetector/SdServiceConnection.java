@@ -98,7 +98,7 @@ public class SdServiceConnection implements ServiceConnection {
      * Check if the pebble watch is connected to the server device via bluetooth.
      * @return true if watch connected.
      */
-    public boolean pebbleConnected() {
+    public boolean watchConnected() {
         if (mSdServer!=null) {
             if (mSdServer.mSdData!=null) {
                 if (mSdServer.mSdData.watchConnected) {

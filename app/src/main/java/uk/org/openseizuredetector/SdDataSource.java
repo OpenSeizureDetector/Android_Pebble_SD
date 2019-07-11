@@ -89,9 +89,11 @@ public abstract class SdDataSource {
             String url = "http://www.openseizuredetector.org.uk/?page_id=1207";
             Intent i = new Intent(Intent.ACTION_VIEW);
             i.setData(Uri.parse(url));
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             mContext.startActivity(i);
         } catch (Exception ex) {
             Log.i(TAG, "exception starting install watch app activity " + ex.toString());
+            showToast("Error Displaying Installation Instructions - try http://www.openseizuredetector.org.uk/?page_id=1207 instead");
         }
     }
 

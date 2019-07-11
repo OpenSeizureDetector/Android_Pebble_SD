@@ -32,15 +32,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.SpannableString;
-import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
 import android.util.Log;
 import android.view.View;
@@ -115,24 +111,6 @@ public class StartupActivity extends Activity {
 
 
         Button b;
-        b = (Button) findViewById(R.id.installPebbleAppButton);
-        b.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.v(TAG, "install Pebble app button clicked");
-                try {
-                    mUtil.writeToSysLogFile("Installing Pebble App");
-                    Intent intent = new Intent(Intent.ACTION_VIEW)
-                            .setData(Uri.parse("market://details?id=" + mUtil.getPreferredPebbleAppPackageName()));
-                    startActivity(intent);
-                } catch (Exception ex) {
-                    Log.v(TAG, "exception starting play store activity " + ex.toString());
-                    mUtil.writeToSysLogFile("ERROR Starting play store Activity");
-                    mUtil.showToast("Error Starting Google Play Store to Install App - is Play Store instaled?");
-                }
-
-            }
-        });
 
         b = (Button) findViewById(R.id.settingsButton);
         b.setOnClickListener(new View.OnClickListener() {
@@ -153,15 +131,6 @@ public class StartupActivity extends Activity {
             }
         });
 
-        b = (Button) findViewById(R.id.pebbleButton);
-        b.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.v(TAG, "pebble button clicked");
-                mUtil.writeToSysLogFile("Starting Pebble Phone App");
-                mConnection.mSdServer.mSdDataSource.startPebbleApp();
-            }
-        });
 
         b = (Button) findViewById(R.id.installOsdAppButton);
         b.setOnClickListener(new View.OnClickListener() {
@@ -202,19 +171,6 @@ public class StartupActivity extends Activity {
         String dataSourceName = SP.getString("DataSource", "Pebble");
         tv = (TextView) findViewById(R.id.dataSourceTextView);
         tv.setText("DataSource = " + dataSourceName);
-
-        // disable pebble configuration buttons if we have not selected the pebble datasource
-        if (!dataSourceName.equals("Pebble")) {
-            Log.v(TAG, "Not Pebble Datasource - deactivating Pebble Button");
-            mUsingPebbleDataSource = false;
-            Button b = (Button) findViewById(R.id.pebbleButton);
-            b.setEnabled(false);
-            b = (Button) findViewById(R.id.installOsdAppButton);
-            b.setEnabled(false);
-        } else {
-            mUsingPebbleDataSource = true;
-        }
-
 
 
         if (mUtil.isServerRunning()) {
@@ -319,11 +275,11 @@ public class StartupActivity extends Activity {
                 allOk = false;
             }
 
-            // Is Pebble Watch Connected?
+            // Is Watch Connected?
             tv = (TextView) findViewById(R.id.textItem3);
             pb = (ProgressBar) findViewById(R.id.progressBar3);
-            if (mConnection.pebbleConnected()) {
-                tv.setText("Pebble Watch Connected OK");
+            if (mConnection.watchConnected()) {
+                tv.setText("Watch Connected OK");
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
@@ -336,24 +292,6 @@ public class StartupActivity extends Activity {
                 allOk = false;
             }
 
-            /*
-            // Is Pebble Watch App Running?
-            tv = (TextView) findViewById(R.id.textItem4);
-            pb = (ProgressBar) findViewById(R.id.progressBar4);
-            if (mConnection.watchAppRunning()) {
-                tv.setText("Watch App Running OK");
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
-                //pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
-            } else {
-                tv.setText("Watch App Not Running");
-                tv.setBackgroundColor(alarmColour);
-                tv.setTextColor(alarmTextColour);
-                pb.setIndeterminate(true);
-                allOk = false;
-            }
-            */
 
 
             // Do we have seizure detector data?
@@ -391,37 +329,6 @@ public class StartupActivity extends Activity {
                 allOk = false;
             }
 
-            // Is Pebble Watch App Installed?
-            tv = (TextView) findViewById(R.id.textItem7);
-            pb = (ProgressBar) findViewById(R.id.progressBar7);
-            boolean pebbleAndroidAppInstalled;
-            mPebbleAppPackageName = mUtil.isPebbleAppInstalled();
-            if (mPebbleAppPackageName != null)
-                pebbleAndroidAppInstalled = true;
-            else
-                pebbleAndroidAppInstalled = false;
-
-            if (mUsingPebbleDataSource) {
-                if (pebbleAndroidAppInstalled) {
-                    tv.setText("Pebble Android App Installed");
-                    tv.setBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
-                    pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                    pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
-                } else {
-                    tv.setText("Pebble App NOT Installed: ");
-                    tv.setBackgroundColor(alarmColour);
-                    tv.setTextColor(alarmTextColour);
-                    pb.setIndeterminate(true);
-                    allOk = false;
-                }
-            } else {
-                tv.setText("Pebble Android App Not Required");
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
-                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
-            }
 
 
             // If all the parameters are ok, close this activity and open the main
