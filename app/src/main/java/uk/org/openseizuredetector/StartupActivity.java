@@ -413,7 +413,8 @@ public class StartupActivity extends Activity {
                             + "\n  V3.1.5 - Added repeat alarm beeps during SMS delay to alert user.."
                             + "\n  V3.1.6 - Made Cancel Audible button inhibit sending SMS alarms as well as audible beeps"
                             + "\n  V3.1.8 - Added READ_PHONE_STATE permission, which seems to be needed for some phones"
-                            + "\n  V3.1.9 - Fixed issue with Garmin Seizure Detector not producing warnings.  Added faut pips for missing heart rate data if heart rate alarm active"
+                            + "\n  V3.1.9 - Fixed issue with Garmin Seizure Detector not producing warnings.  Added fault pips for missing heart rate data if heart rate alarm active"
+                            + "\n  V3.1.10 - Provided a user option to treat a null heart rate as a fault or an alarm condition"
                 );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);
@@ -449,6 +450,7 @@ public class StartupActivity extends Activity {
                             + "\n  V3.1.6 - Made Cancel Audible button inhibit sending SMS alarms as well as audible beeps"
                             + "\n  V3.1.8 - Added READ_PHONE_STATE permission, which seems to be needed for some phones"
                             + "\n  V3.1.9 - Fixed issue with Garmin Seizure Detector not producing warnings.  Added faut pips for missing heart rate data if heart rate alarm active"
+                            + "\n  V3.1.10 - Provided a user option to treat a null heart rate as a fault or an alarm condition"
                             + "\n "
             );
             // This makes the links display as links, but they do not respond to clicks for some reason...

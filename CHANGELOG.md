@@ -4,6 +4,9 @@
     V3.2.0 - (NEXT VERSION!)
         - Added neural network based data analysis.
 
+    V3.1.10 - 20oct2019
+        - Added option to make a 'null' heart rate reading an alarm rather than fault condition.
+
     V3.1.9 - 14jun2019
         - Now requests READ_PHONE_STATE along with SMS permissions (required for some phones to send SMS messages)
         - Fixed issue with Garmin Seizure Detector not producing warnings.

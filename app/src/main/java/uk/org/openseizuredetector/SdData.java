@@ -62,6 +62,7 @@ public class SdData implements Parcelable {
 
     /* Heart Rate Alarm Settings */
     public boolean mHRAlarmActive = false;
+    public boolean mHRNullAsAlarm = false;
     public double mHRThreshMin = 40.0;
     public double mHRTreshMax = 150.0;
     public double rawData[];

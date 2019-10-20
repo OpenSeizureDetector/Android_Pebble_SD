@@ -322,6 +322,9 @@ public class SdDataSourceGarmin extends SdDataSource {
                 mSdData.mHRAlarmActive = SP.getBoolean("HRAlarmActive", false);
                 Log.v(TAG, "updatePrefs() HRAlarmActive = " + mSdData.mHRAlarmActive);
 
+                mSdData.mHRNullAsAlarm = SP.getBoolean("HRNullAsAlarm", false);
+                Log.v(TAG, "updatePrefs() HRNullAsAlarm = " + mSdData.mHRNullAsAlarm);
+
                 prefStr = SP.getString("HRThreshMin", "SET_FROM_XML");
                 mSdData.mHRThreshMin = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() HRThreshMin = " + mSdData.mHRThreshMin);
@@ -577,9 +580,15 @@ public class SdDataSourceGarmin extends SdDataSource {
         /* Check Heart Rate against alarm settings */
         if (mSdData.mHRAlarmActive) {
             if (mSdData.mHR < 0) {
-                Log.i(TAG,"Heart Rate Fault (HR<0)");
-                mSdData.mHRFaultStanding = true;
-                mSdData.mHRAlarmStanding = false;
+                if (mSdData.mHRNullAsAlarm) {
+                    Log.i(TAG, "Heart Rate Null - Alarming");
+                    mSdData.mHRFaultStanding = false;
+                    mSdData.mHRAlarmStanding = true;
+                } else {
+                    Log.i(TAG, "Heart Rate Fault (HR<0)");
+                    mSdData.mHRFaultStanding = true;
+                    mSdData.mHRAlarmStanding = false;
+                }
             }
             else if ((mSdData.mHR > mSdData.mHRTreshMax) || (mSdData.mHR < mSdData.mHRThreshMin)) {
                 Log.i(TAG, "Heart Rate Abnormal - " + mSdData.mHR + " bpm");
