@@ -330,8 +330,8 @@ public class SdDataSourceGarmin extends SdDataSource {
                 Log.v(TAG, "updatePrefs() HRThreshMin = " + mSdData.mHRThreshMin);
 
                 prefStr = SP.getString("HRThreshMax", "SET_FROM_XML");
-                mSdData.mHRTreshMax = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() HRThreshMax = " + mSdData.mHRTreshMax);
+                mSdData.mHRThreshMax = (short) Integer.parseInt(prefStr);
+                Log.v(TAG, "updatePrefs() HRThreshMax = " + mSdData.mHRThreshMax);
 
             } else {
                 Log.v(TAG, "updatePrefs() - prefStr is null - WHY????");
@@ -590,7 +590,7 @@ public class SdDataSourceGarmin extends SdDataSource {
                     mSdData.mHRAlarmStanding = false;
                 }
             }
-            else if ((mSdData.mHR > mSdData.mHRTreshMax) || (mSdData.mHR < mSdData.mHRThreshMin)) {
+            else if ((mSdData.mHR > mSdData.mHRThreshMax) || (mSdData.mHR < mSdData.mHRThreshMin)) {
                 Log.i(TAG, "Heart Rate Abnormal - " + mSdData.mHR + " bpm");
                 mSdData.mHRFaultStanding = false;
                 mSdData.mHRAlarmStanding = true;

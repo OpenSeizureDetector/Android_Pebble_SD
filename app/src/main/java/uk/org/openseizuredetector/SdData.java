@@ -64,7 +64,7 @@ public class SdData implements Parcelable {
     public boolean mHRAlarmActive = false;
     public boolean mHRNullAsAlarm = false;
     public double mHRThreshMin = 40.0;
-    public double mHRTreshMax = 150.0;
+    public double mHRThreshMax = 150.0;
     public double rawData[];
     int mNsamp = 0;
 
@@ -120,7 +120,13 @@ public class SdData implements Parcelable {
             alarmPhrase = jo.optString("alarmPhrase");
             alarmThresh = jo.optInt("alarmThresh");
             alarmRatioThresh = jo.optInt("alarmRatioThresh");
+            mHRAlarmActive=jo.optBoolean("hrAlarmActive");
+            mHRThreshMin = jo.optDouble("hrThreshMin");
+            mHRThreshMax = jo.optDouble("hrThreshMax");
             mHR = jo.optDouble("hr");
+            if (mHR>=0.0) {
+                mHRAlarmActive = true;
+            }
             JSONArray specArr = jo.optJSONArray("simpleSpec");
             for (int i = 0; i < specArr.length(); i++) {
                 simpleSpec[i] = specArr.optInt(i);
@@ -169,6 +175,9 @@ public class SdData implements Parcelable {
             jsonObj.put("alarmFreqMax",alarmFreqMax);
             jsonObj.put("alarmThresh", alarmThresh);
             jsonObj.put("alarmRatioThresh", alarmRatioThresh);
+            jsonObj.put("hrAlarmActive", mHRAlarmActive);
+            jsonObj.put("hrThreshMin",mHRThreshMin);
+            jsonObj.put("hrThreshMax", mHRThreshMax);
             jsonObj.put("hr",mHR);
             JSONArray arr = new JSONArray();
             for (int i = 0; i < simpleSpec.length; i++) {

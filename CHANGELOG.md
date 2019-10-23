@@ -4,6 +4,9 @@
     V3.2.0 - (NEXT VERSION!)
         - Added neural network based data analysis.
 
+    V3.1.11 - 23oct2019
+        - Updated network data source so it displays heart rate data if it is available.
+
     V3.1.10 - 20oct2019
         - Added option to make a 'null' heart rate reading an alarm rather than fault condition.
 
