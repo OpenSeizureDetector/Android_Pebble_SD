@@ -225,6 +225,27 @@ public class SdData implements Parcelable {
         return(retval);
     }
 
+    /** Return the average acceleration value in the dataset */
+    public double getAvAcc() {
+        double sumAcc = 0.0;
+        for (int i = 0; i< mNsamp;i++) {
+            sumAcc += rawData[i];
+        }
+        return(sumAcc/mNsamp);
+    }
+
+    /** Return the standard deviation of the acceleration values */
+    public double getSdAcc() {
+        double avAcc = 0.0;
+        double varAcc = 0.0;
+        avAcc = getAvAcc();
+        for (int i = 0; i< mNsamp;i++) {
+            varAcc += Math.pow(rawData[i]-avAcc,2);
+        }
+        return(Math.sqrt(varAcc/(mNsamp-1)));
+    }
+
+
     public int describeContents() {
         return 0;
     }

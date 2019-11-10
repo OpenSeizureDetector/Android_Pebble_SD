@@ -43,6 +43,10 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
@@ -61,18 +65,15 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.SmsManager;
 import android.util.Log;
-import android.view.WindowManager;
-import android.widget.Toast;
 
 import java.util.Timer;
-import java.util.TimerTask;
 import java.io.*;
 import java.util.*;
 
 import android.text.format.Time;
 
 import com.rohitss.uceh.UCEHandler;
-
+import uk.org.openseizuredetector.LogManager;
 
 /**
  * Based on example at:
@@ -120,9 +121,17 @@ public class SdServer extends Service implements SdDataReceiver {
     public Time mSMSTime = null;  // last time we sent an SMS Alarm (limited to one per minute)
     public SmsTimer mSmsTimer = null;  // Timer to wait 10 seconds before sending an alert to give the user chance to cancel it.
     private AlertDialog.Builder mSMSAlertDialog;   // Dialog shown during countdown to sending SMS.
+
+    // Data Logging Parameters
     private boolean mLogAlarms = true;
     private boolean mLogData = false;
-    private File mOutFile;
+    private boolean mLogDataRemote = false;
+    private boolean mLogDataRemoteMobile = false;
+    private String mOSDUname = "";
+    private String mOSDPasswd = "";
+    private int mOSDWearerId = 0;
+    private String mOSDUrl = "";
+
     private OsdUtil mUtil;
     private Handler mHandler;
     private ToneGenerator mToneGenerator;
@@ -130,6 +139,8 @@ public class SdServer extends Service implements SdDataReceiver {
     private NetworkBroadcastReceiver mNetworkBroadcastReceiver;
 
     private final IBinder mBinder = new SdBinder();
+
+    private LogManager mLm;
 
     /**
      * class to handle binding the MainApp activity to this service
@@ -202,6 +213,10 @@ public class SdServer extends Service implements SdDataReceiver {
         // Update preferences.
         Log.v(TAG, "onStartCommand() - calling updatePrefs()");
         updatePrefs();
+
+        // Create our log manager.
+        mLm = new LogManager(mLogDataRemote, mLogDataRemoteMobile,
+                mOSDUname, mOSDPasswd, mOSDWearerId, mOSDUrl, this);
 
         Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName);
         switch (mSdDataSourceName) {
@@ -370,6 +385,9 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.writeToSysLogFile("SdServer.onDestroy() - releasing mToneGenerator");
             mToneGenerator.release();
             mToneGenerator = null;
+
+            // Stop the log Manager
+            mLm.close();
 
             // stop this service.
             Log.v(TAG, "onDestroy(): calling stopSelf()");
@@ -997,6 +1015,7 @@ public class SdServer extends Service implements SdDataReceiver {
         if (mLogData) {
             Log.v(TAG, "logData() - writing data to SD Card");
             writeToSD();
+            mLm.writeToLocalDb(mSdData);
         }
     }
 
@@ -1053,9 +1072,20 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "updatePrefs() - mSMSNumbers = " + mSMSNumbers);
             mLogAlarms = SP.getBoolean("LogAlarms", true);
             Log.v(TAG, "updatePrefs() - mLogAlarms = " + mLogAlarms);
-            mLogData = SP.getBoolean("LogData", false);
+            mLogData = SP.getBoolean("LogData", true);
             Log.v(TAG, "updatePrefs() - mLogData = " + mLogData);
-
+            mLogDataRemote = SP.getBoolean("LogDataRemote", false);
+            Log.v(TAG, "updatePrefs() - mLogDataRemote = " + mLogDataRemote);
+            mLogDataRemoteMobile = SP.getBoolean("LogDataRemoteMobile", false);
+            Log.v(TAG, "updatePrefs() - mLogDataRemoteMobile = " + mLogDataRemoteMobile);
+            mOSDUname = SP.getString("OSDUname", "<username>");
+            Log.v(TAG, "updatePrefs() - mOSDUname = " + mOSDUname);
+            mOSDPasswd = SP.getString("OSDPasswd", "<passwd>");
+            Log.v(TAG, "updatePrefs() - mOSDPasswd = " + mOSDPasswd);
+            mOSDWearerId = Integer.parseInt(SP.getString("OSDWearerId", "0"));
+            Log.v(TAG, "updatePrefs() - mOSDWearerId = " + mOSDWearerId);
+            mOSDUrl = SP.getString("OSDUrl", "http://openseizuredetector.org.uk/webApi");
+            Log.v(TAG, "updatePrefs() - mOSDUrl = " + mOSDUrl);
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
             mUtil.writeToSysLogFile("SdServer.updatePrefs() - Error " + ex.toString());
@@ -1118,6 +1148,9 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.e(TAG, "ERROR - Can not Write to External Folder");
         }
     }
+
+
+
 
 
     /*

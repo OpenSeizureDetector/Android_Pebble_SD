@@ -14,10 +14,41 @@
         android:summary="Log Alarm events to SD Card"
         android:title="Log Alarm events to SD Card" />
     <CheckBoxPreference
-        android:defaultValue="false"
+        android:defaultValue="true"
         android:key="LogData"
         android:summary="Log Data to SD Card Regularly"
         android:title="Log Data to SD Card" />
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="LogDataRemote"
+        android:summary="Log Data to Central OpenSeizureDetector Database"
+        android:title="Log Data Remotely" />
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="LogDataRemoteMobile"
+        android:summary="Use mobile internet to log remote data"
+        android:title="Use Mobile Internet" />
+    <EditTextPreference
+        android:defaultValue="user_name"
+        android:key="OSDUname"
+        android:summary="Username for remote data logging."
+        android:title="Remote Username" />
+    <EditTextPreference
+        android:defaultValue="password"
+        android:key="OSDPasswd"
+        android:summary="Password for remote data logging."
+        android:title="Remote Password" />
+    <EditTextPreference
+        android:defaultValue="0"
+        android:key="OSDWearerId"
+        android:summary="Wearer ID"
+        android:title="Wearer ID of the person wearing the watch (from OSD Web API)" />
+
+    <EditTextPreference
+        android:defaultValue="http://openseizuredetector.org.uk/webApi/"
+        android:key="OSDUrl"
+        android:summary="URL for remote data logging."
+        android:title="Remote URL" />
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="PreventSleep"
