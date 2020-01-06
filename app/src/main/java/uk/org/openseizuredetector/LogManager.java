@@ -28,8 +28,24 @@ import android.database.DatabaseUtils;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.AsyncTask;
+import android.os.CountDownTimer;
+import android.os.Handler;
 import android.text.format.Time;
 import android.util.Log;
+
+import org.apache.commons.codec.binary.Base64;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 import static android.database.sqlite.SQLiteDatabase.openOrCreateDatabase;
 
@@ -47,7 +63,10 @@ public class LogManager {
     private int mOSDWearerId;
     private String mOSDUrl;
     private OsdDbHelper mOSDDb;
+    private RemoteLogTimer mRemoteLogTimer;
     private Context mContext;
+    private OsdUtil mUtil;
+
 
     public LogManager(boolean logRemote,
                       boolean logRemoteMobile,
@@ -64,6 +83,9 @@ public class LogManager {
         mOSDUrl = OSDUrl;
         mContext = context;
 
+        Handler handler = new Handler();
+        mUtil = new OsdUtil(mContext, handler);
+
         try {
                 mOSDDb = new OsdDbHelper(mDbTableName, mContext);
                 if (!checkTableExists(mOSDDb, mDbTableName)) {
@@ -72,7 +94,10 @@ public class LogManager {
         } catch (SQLException e) {
             Log.e(TAG, "Failed to open Database: " + e.toString());
         }
+
+        startRemoteLogTimer();
     }
+
 
 
     private boolean checkTableExists(OsdDbHelper osdDb, String osdTableName) {
@@ -126,8 +151,142 @@ public class LogManager {
 
     }
 
+    public void writeToRemoteServer() {
+        Log.v(TAG,"writeToRemoteServer()");
+        if (!mLogRemote) {
+            Log.v(TAG,"mLogRemote not set, not doing anything");
+            return;
+        }
+
+        if (!mLogRemoteMobile) {
+            // Check network state - are we using mobile data?
+            if (mUtil.isMobileDataActive()) {
+                Log.v(TAG,"Using mobile data, so not doing anything");
+                return;
+            }
+        }
+
+        if (!mUtil.isNetworkConnected()) {
+            Log.v(TAG,"No network connection - doing nothing");
+            return;
+        }
+
+        Log.v(TAG,"Requirements for remote logging met!");
+        uploadSdData();
+    }
+
+    /**
+     * Upload a batch of seizure detector data records to the server..
+     * Uses the UploadSdDataTask class to upload the data in the
+     * background.  DownloadSdDataTask.onPostExecute() is called on completion.
+     */
+    public void uploadSdData() {
+        Log.v(TAG, "uploadSdData()");
+        String dataStr = "data string to upload";
+        //new PostDataTask().execute("http://" + mOSDUrl + ":8080/data", dataStr, mOSDUname, mOSDPasswd);
+        new PostDataTask().execute("http://192.168.43.175:8765/datapoints/add", dataStr, mOSDUname, mOSDPasswd);
+    }
+
+    private class PostDataTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... params) {
+            // params comes from the execute() call:
+            // params[0] is the url,
+            // params[1] is the data to send.
+            // params[2] is the user name
+            // params[3] is the password
+            int MAXLEN = 500;  // Maximum length of response that we will accept (bytes)
+            InputStream is = null;
+            String urlStr = params[0];
+            String dataStr = params[1];
+            String uname = params[2];
+            String passwd = params[3];
+            String resultStr = "Not Initialised";
+            Log.v(TAG,"doInBackgound(): url="+urlStr+" data="+dataStr+" uname="+uname+" passwd="+passwd);
+            try {
+                URL url = new URL(urlStr);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setReadTimeout(2000 /* milliseconds */);
+                conn.setConnectTimeout(5000 /* milliseconds */);
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json; utf-8");
+                conn.setRequestProperty("Accept", "application/json");
+                String auth = uname + ":" + passwd;
+                byte[] encodedAuth = Base64.encodeBase64(auth.getBytes("utf-8"));
+                String authHeaderValue = "Basic " + new String(encodedAuth);
+                conn.setRequestProperty("Authorization", authHeaderValue);
+                conn.setDoInput(true);
+
+                // Put our data into the outputstream associated with the connection.
+                OutputStream os = conn.getOutputStream();
+                byte[] input = dataStr.getBytes("utf-8");
+                os.write(input, 0, input.length);
+
+                // Starts the query
+                conn.connect();
+                int response = conn.getResponseCode();
+                Log.d(TAG, "The response code is: " + response);
+                is = conn.getInputStream();
+
+                // Convert the InputStream into a string
+                Reader reader = new InputStreamReader(is, "UTF-8");
+                char[] buffer = new char[MAXLEN];
+                reader.read(buffer);
+                resultStr = new String(buffer);
+
+            } catch (IOException e) {
+                Log.v(TAG,"doInBackground(): IOException - "+e.toString());
+                resultStr = "Error"+e.toString();
+
+                // Makes sure that the InputStream is closed after the app is
+                // finished using it.
+            } finally {
+                if (is != null) {
+                    try {
+                        is.close();
+                    } catch (IOException e) {
+                        Log.v(TAG,"doInBackground(): IOException - "+e.toString());
+                        resultStr = "Error"+e.toString();
+                    }
+                }
+            }
+
+            if (resultStr.startsWith("Unable to retrieve web page")) {
+                Log.v(TAG,"doInBackground() - Unable to retrieve data");
+            } else {
+                Log.v(TAG,"doInBackground(): result = "+resultStr);
+            }
+            return (resultStr);
+
+        }
+        // onPostExecute displays the results of the AsyncTask.
+        @Override
+        protected void onPostExecute(String result) {
+            Log.v(TAG,"onPostExecute() - result = "+result);
+        }
+    }
+
+
+
+
     public void close() {
         mOSDDb.close();
+        stopRemoteLogTimer();
+    }
+
+
+    public JSONObject queryDatapoints(String endDateStr, Double duration) {
+        Log.d(TAG,"queryDatapoints() - endDateStr="+endDateStr);
+        Cursor c = null;
+        try {
+            c = mOSDDb.getWritableDatabase().query(mDbTableName, null,
+                    null, null, null, null, null);
+            //c.query("Select * from ? where DataTime < ?", mDbTableName, endDateStr);
+        }
+        catch (Exception e) {
+            Log.d(TAG, mDbTableName+" doesn't exist :(((");
+        }
+        return(null);
     }
 
     public class OsdDbHelper extends SQLiteOpenHelper {
@@ -170,4 +329,54 @@ public class LogManager {
             onUpgrade(db, oldVersion, newVersion);
         }
     }
+
+    /*
+     * Start the timer that will send and SMS alert after a given period.
+     */
+    private void startRemoteLogTimer() {
+        if (mRemoteLogTimer != null) {
+            Log.v(TAG, "startRemoteLogTimer -timer already running - cancelling it");
+            mRemoteLogTimer.cancel();
+            mRemoteLogTimer = null;
+        }
+        Log.v(TAG, "startRemoteLogTimer() - starting RemoteLogTimer");
+        mRemoteLogTimer =
+                new RemoteLogTimer(10 * 1000, 1000);
+        mRemoteLogTimer.start();
+    }
+
+
+    /*
+     * Cancel the SMS timer to prevent the SMS message being sent..
+     */
+    public void stopRemoteLogTimer() {
+        if (mRemoteLogTimer != null) {
+            Log.v(TAG, "stopRemoteLogTimer(): cancelling Remote Log timer");
+            mRemoteLogTimer.cancel();
+            mRemoteLogTimer = null;
+        }
+    }
+    /**
+     * Inhibit fault alarm initiation for a period to avoid spurious warning
+     * beeps caused by short term network interruptions.
+     */
+    private class RemoteLogTimer extends CountDownTimer {
+        public RemoteLogTimer(long startTime, long interval) {
+            super(startTime, interval);
+        }
+
+        @Override
+        public void onTick(long l) {
+            // Do Nothing
+        }
+
+        @Override
+        public void onFinish() {
+            Log.v(TAG, "mRemoteLogTimer - onFinish");
+            writeToRemoteServer();
+            start();
+        }
+
+    }
+
 }

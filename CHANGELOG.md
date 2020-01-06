@@ -1,8 +1,13 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
-    V3.2.0 - (NEXT VERSION!)
-        - Added neural network based data analysis.
+    V3.2.0 - jan2020
+        - Modified data logging to use sqlite database rather than text files.
+        - Added facility to upload data to remote server.
+        - Added support for additional GarminSD settings data fields to record the watch app version number etc and
+          log that info to the SysLog file.
+
+
 
     V3.1.11 - 23oct2019
         - Updated network data source so it displays heart rate data if it is available.

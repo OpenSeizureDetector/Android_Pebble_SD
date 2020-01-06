@@ -238,6 +238,17 @@ public class MainActivity extends AppCompatActivity {
                     mConnection.mSdServer.sendSMSAlarm();
                 }
                 return true;
+            case R.id.action_export:
+                Log.i(TAG, "action_export");
+                try {
+                    Intent i = new Intent(
+                            MainActivity.this,
+                            DBQueryActivity.class);
+                    this.startActivity(i);
+                } catch (Exception ex) {
+                    Log.i(TAG, "exception starting export activity " + ex.toString());
+                }
+                return true;
             case R.id.action_logs:
                 Log.i(TAG, "action_logs");
                 try {

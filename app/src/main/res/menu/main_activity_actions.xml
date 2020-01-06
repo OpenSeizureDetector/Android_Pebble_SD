@@ -56,6 +56,14 @@
         />
 
     <item
+        android:id="@+id/action_export"
+        android:icon="@drawable/ic_action_settings"
+        android:showAsAction="never|withText"
+        android:title="Export Data"
+        android:enabled="true"
+        />
+
+    <item
         android:id="@+id/action_settings"
         android:icon="@drawable/ic_action_settings"
         android:showAsAction="never|withText"

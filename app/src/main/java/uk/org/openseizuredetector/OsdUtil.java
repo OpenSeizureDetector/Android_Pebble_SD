@@ -49,6 +49,8 @@ import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -293,6 +295,24 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
             Log.e("IP Address", ex.toString());
         }
         return null;
+    }
+
+    public boolean isMobileDataActive() {
+        // return true if we are using mobile data, otherwise return false
+        ConnectivityManager cm = (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isNetworkConnected() {
+        // return true if we have a network connection, otherwise false.
+        ConnectivityManager cm = (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return (activeNetwork.isConnected());
     }
 
     /**

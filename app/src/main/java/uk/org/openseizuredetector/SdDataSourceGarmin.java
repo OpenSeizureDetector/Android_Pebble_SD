@@ -354,6 +354,10 @@ public class SdDataSourceGarmin extends SdDataSource {
     // Returns a message string that is passed back to the watch.
     public String updateFromJSON(String jsonStr) {
         String retVal = "undefined";
+        String watchPartNo;
+        String watchFwVersion;
+        String sdVersion;
+        String sdName;
         Log.v(TAG,"updateFromJSON - "+jsonStr);
 
         try {
@@ -397,6 +401,23 @@ public class SdDataSourceGarmin extends SdDataSource {
                 mSampleFreq = (short)dataObject.getInt("sampleFreq");
                 mSdData.batteryPc = (short)dataObject.getInt("battery");
                 Log.v(TAG,"updateFromJSON - mSamplePeriod="+mSamplePeriod+" mSampleFreq="+mSampleFreq);
+                mUtil.writeToSysLogFile("SdDataSourceGarmin.updateFromJSON - Settings Received");
+                mUtil.writeToSysLogFile("    * mSamplePeriod="+mSamplePeriod+" mSampleFreq="+mSampleFreq);
+                mUtil.writeToSysLogFile("    * batteryPc = "+mSdData.batteryPc);
+
+                try {
+                    watchPartNo = dataObject.getString("watchPartNo");
+                    watchFwVersion = dataObject.getString("watchFwVersion");
+                    sdVersion = dataObject.getString("sdVersion");
+                    sdName = dataObject.getString("sdName");
+                    mUtil.writeToSysLogFile("    * sdName = "+sdName+" version "+sdVersion);
+                    mUtil.writeToSysLogFile("    * watchPartNo = "+watchPartNo+" fwVersion "+watchFwVersion);
+                } catch (Exception e) {
+                    Log.e(TAG,"updateFromJSON - Error Parsing V3.2 JSON String - "+e.toString());
+                    mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - "+e.toString());
+                    mUtil.writeToSysLogFile("          This is probably because of an out of date watch app - please upgrade!");
+                    e.printStackTrace();
+                }
                 mSdData.haveSettings = true;
                 mSdData.mSampleFreq = mSampleFreq;
                 mWatchAppRunningCheck = true;
@@ -407,6 +428,7 @@ public class SdDataSourceGarmin extends SdDataSource {
             }
         } catch (Exception e) {
             Log.e(TAG,"updateFromJSON - Error Parsing JSON String - "+e.toString());
+            mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - "+e.toString());
             e.printStackTrace();
             retVal = "ERROR";
         }
