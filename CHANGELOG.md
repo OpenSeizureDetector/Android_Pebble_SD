@@ -4,6 +4,12 @@
     V3.2.0 - (NEXT VERSION!)
         - Added neural network based data analysis.
 
+    V3.1.12 - 15feb2019
+        - Updated web server to return correct application/json mime type to get rid of -400
+          errors on garmin watch.   Made error messages json strings too.
+          Added hrAlarmStanding value to /data json string, which should get remove
+          heart rate alarms working with network datasource.
+
     V3.1.11 - 23oct2019
         - Updated network data source so it displays heart rate data if it is available.
 
