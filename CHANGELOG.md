@@ -1,10 +1,10 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
-    V3.2.0 - (NEXT VERSION!)
-        - Added neural network based data analysis.
+	V3.1.13 - 16feb2020
+	    - Fixed problem with NetworkDataSource not responding to FAULT conditions properly.
 
-    V3.1.12 - 15feb2019
+    V3.1.12 - 15feb2020
         - Updated web server to return correct application/json mime type to get rid of -400
           errors on garmin watch.   Made error messages json strings too.
           Added hrAlarmStanding value to /data json string, which should get remove

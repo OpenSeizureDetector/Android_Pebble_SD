@@ -133,9 +133,10 @@ public class SdData implements Parcelable {
                 simpleSpec[i] = specArr.optInt(i);
             }
             haveData = true;
+            Log.v(TAG, "fromJSON(): sdData = " + this.toString());
             return true;
         } catch (Exception e) {
-            Log.v(TAG, "fromJSON() - error parsing result");
+            Log.v(TAG, "fromJSON() - error parsing result"+e.toString());
             haveData = false;
             return false;
         }

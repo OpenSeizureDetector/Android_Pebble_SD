@@ -132,6 +132,7 @@ public class SdDataSourceNetwork extends SdDataSource {
                     sdData.alarmPhrase = "Warning - No Connection to Server";
                     Log.v(TAG,"doInBackground(): No Connection to Server - sdData = "+sdData.toString());
                 } else {
+                    Log.v(TAG,"doInBackground - result = "+result);
                     sdData.fromJSON(result);
                     // Populate mSdData using the received data.
                     sdData.serverOK = true;
@@ -200,9 +201,9 @@ public class SdDataSourceNetwork extends SdDataSource {
     // a string.
     private String downloadUrl(String myurl) throws IOException {
         InputStream is = null;
-        // Only display the first 500 characters of the retrieved
+        // Only retrieve the first 2048 characters of the retrieved
         // web page content.
-        int len = 500;
+        int len = 2048;
 
         try {
             URL url = new URL(myurl);
@@ -214,7 +215,7 @@ public class SdDataSourceNetwork extends SdDataSource {
             // Starts the query
             conn.connect();
             int response = conn.getResponseCode();
-            Log.d(TAG, "The response is: " + response);
+            Log.d(TAG, "downloadUrl(): The response is: " + response);
             is = conn.getInputStream();
 
             // Convert the InputStream into a string
