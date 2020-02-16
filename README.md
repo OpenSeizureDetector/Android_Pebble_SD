@@ -1,5 +1,5 @@
-OpenSeizureDetector - Pebble Version
-====================================
+OpenSeizureDetector - Android App
+=================================
 
 This seizure detector uses a Garmin smart watch.
 The watch has an accelerometer, heart rate sensor and a bluetooth radio to talk to another computer.  
