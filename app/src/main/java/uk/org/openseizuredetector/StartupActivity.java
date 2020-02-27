@@ -170,7 +170,7 @@ public class StartupActivity extends Activity {
         ;
         String dataSourceName = SP.getString("DataSource", "Pebble");
         tv = (TextView) findViewById(R.id.dataSourceTextView);
-        tv.setText("DataSource = " + dataSourceName);
+        tv.setText(String.format("%s = %s", getString(R.string.DataSource), dataSourceName));
 
 
         if (mUtil.isServerRunning()) {
@@ -236,21 +236,21 @@ public class StartupActivity extends Activity {
             pb = (ProgressBar) findViewById(R.id.progressBar1);
             if (mUtil.arePermissionsOK()) {
                 if (smsAlarmsActive && !mUtil.areSMSPermissionsOK()) {
-                    tv.setText("Problem with SMS Permissions");
+                    tv.setText(getString(R.string.SmsPermissionWarning));
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
                     pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                     pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
                     mUtil.requestSMSPermissions(StartupActivity.this);
                 } else {
-                    tv.setText("App Permissions OK");
+                    tv.setText(getString(R.string.AppPermissionsOk));
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
                     pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                     pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
                 }
             } else {
-                tv.setText("Problem with App Permissions");
+                tv.setText(getString(R.string.AppPermissionsWarning));
                 tv.setBackgroundColor(alarmColour);
                 tv.setTextColor(alarmTextColour);
                 pb.setIndeterminate(true);
@@ -262,13 +262,13 @@ public class StartupActivity extends Activity {
             tv = (TextView) findViewById(R.id.textItem2);
             pb = (ProgressBar) findViewById(R.id.progressBar2);
             if (mConnection.mBound) {
-                tv.setText("Bound to Service OK");
+                tv.setText(getString(R.string.BoundToServiceOk));
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
-                tv.setText("Binding to Background Service...");
+                tv.setText(getString(R.string.BindingToService));
                 tv.setBackgroundColor(alarmColour);
                 tv.setTextColor(alarmTextColour);
                 pb.setIndeterminate(true);
@@ -279,13 +279,13 @@ public class StartupActivity extends Activity {
             tv = (TextView) findViewById(R.id.textItem3);
             pb = (ProgressBar) findViewById(R.id.progressBar3);
             if (mConnection.watchConnected()) {
-                tv.setText("Watch Connected OK");
+                tv.setText(getString(R.string.WatchConnectedOk));
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
-                tv.setText("Watch Not Connected");
+                tv.setText(getString(R.string.WatchNotConnected));
                 tv.setBackgroundColor(alarmColour);
                 tv.setTextColor(alarmTextColour);
                 pb.setIndeterminate(true);
@@ -298,13 +298,13 @@ public class StartupActivity extends Activity {
             tv = (TextView) findViewById(R.id.textItem5);
             pb = (ProgressBar) findViewById(R.id.progressBar5);
             if (mConnection.hasSdData()) {
-                tv.setText("Seizure Detector Data Received OK");
+                tv.setText(getString(R.string.SeizureDetectorDataReceived));
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
-                tv.setText("Waiting for Seizure Detector Data...");
+                tv.setText(getString(R.string.WaitingForSeizureDetectorData));
                 tv.setBackgroundColor(alarmColour);
                 tv.setTextColor(alarmTextColour);
                 pb.setIndeterminate(true);
@@ -316,13 +316,13 @@ public class StartupActivity extends Activity {
             tv = (TextView) findViewById(R.id.textItem6);
             pb = (ProgressBar) findViewById(R.id.progressBar6);
             if (mConnection.hasSdSettings()) {
-                tv.setText("Seizure Detector Settings Received OK");
+                tv.setText(getString(R.string.SeizureDetectorSettingsReceived));
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
-                tv.setText("Waiting for Seizure Detector Settings...");
+                tv.setText(getString(R.string.WaitingForSeizureDetectorSettings));
                 tv.setBackgroundColor(alarmColour);
                 tv.setTextColor(alarmTextColour);
                 pb.setIndeterminate(true);
@@ -402,24 +402,15 @@ public class StartupActivity extends Activity {
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
                     this);
             final SpannableString s = new SpannableString(
-                    "OpenSeizureDetector does not collect any personal data. "
-                            + "This does mean that it is not possible for me to contact users if I find an "
-                            + "issue with the app that you should be aware of.   \nPlease subscribe to updates at "
-                            + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
-                            + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
-                            + "\n\nChanges in this version:"
-                            + "\n  V3.1.13 - Fixed ERR-400 display on garmin watch and associated problem with network datasource fault alerting."
-                            + "\n  V3.1.11 - Fixed issue that Nework data source did not display heart rate data"
-                            + "\n  V3.1.10 - Provided a user option to treat a null heart rate as a fault or an alarm condition"
-                            + "\n  V3.1.9 - Fixed issue with Garmin Seizure Detector not producing warnings.  Added fault pips for missing heart rate data if heart rate alarm active"
+                    getString(R.string.FirstRunDlgMsg)
                 );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);
             alertDialogBuilder
-                    .setTitle("Welcome to OpenSeizureDetector")
+                    .setTitle(getString(R.string.FirstRunDlgTitle))
                     .setMessage(s)
                     .setCancelable(false)
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.cancel();
                             mDialogDisplayed = false;
@@ -435,25 +426,15 @@ public class StartupActivity extends Activity {
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
                     this);
             final SpannableString s = new SpannableString(
-                    "OpenSeizureDetector does not collect any personal data. "
-                            + "This does mean that it is not possible for me to contact users if I find an "
-                            + "issue with the app that you should be aware of.   \nPlease subscribe to updates at "
-                            + "http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector. "
-                            + "so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk "
-                            + "\n\nChanges in this version:"
-                            + "\n  V3.1.13 - Fixed ERR-400 display on garmin watch and associated problem with network datasource fault alerting."
-                            + "\n  V3.1.11 - Fixed issue that Nework data source did not display heart rate data"
-                            + "\n  V3.1.10 - Provided a user option to treat a null heart rate as a fault or an alarm condition"
-                            + "\n  V3.1.9 - Fixed issue with Garmin Seizure Detector not producing warnings.  Added fault pips for missing heart rate data if heart rate alarm active"
-                            + "\n "
+                    getString(R.string.UpgradeMsg)
             );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);
             alertDialogBuilder
-                    .setTitle("Thank you for Updating OpenSeizureDetector")
+                    .setTitle(getString(R.string.UpdateDialogTitleTxt))
                     .setMessage(s)
                     .setCancelable(false)
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.cancel();
                             mDialogDisplayed = false;

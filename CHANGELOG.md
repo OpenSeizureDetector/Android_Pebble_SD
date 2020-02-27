@@ -1,5 +1,13 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V3.1.14 - 27feb2020
+        - Fixed the web interface, which stopped working in V3.1.13
+        - Separated the user interface text into separate strings.xml file so we can
+          have multi-lingual versions of the app (if people offer to do the translations
+          for me, because I can't do it myself!)
+        - Note that I think Google has forced me to drop support for Android 4.x in a recent
+          update - I could only get it to compoile if I increased the minimum android version
+          to Android 5.0.   This is a shame because I am one of the 3 Android 4 users....
 
 	V3.1.13 - 16feb2020
 	    - Fixed problem with NetworkDataSource not responding to FAULT conditions properly.

@@ -4,8 +4,8 @@ function get_settings() {
 };
 
 
-function populate_settings(dataStr) {
-   var dataObj = JSON.parse(dataStr);
+function populate_settings(dataObj) {
+   //var dataObj = JSON.parse(dataStr);
    //alert (dataStr);
    var alarmFreqMin = dataObj['alarmFreqMin'];
    var alarmFreqMax = dataObj['alarmFreqMax'];
@@ -40,8 +40,8 @@ function get_data() {
    $.ajax({url:"/data",success:process_data});
 };
 
-function process_data(dataStr) {
-   var dataObj = JSON.parse(dataStr);
+function process_data(dataObj) {
+   //var dataObj = JSON.parse(dataStr);
    //alert (dataStr);
    var timeStr = dataObj['Time'];
    var maxFreq = dataObj['maxFreq'];
@@ -109,8 +109,8 @@ function get_spectrum() {
    $.ajax({url:"/spectrum",success:process_spectrum});
 };
 
-function process_spectrum(dataStr) {
-   var dataObj = JSON.parse(dataStr);
+function process_spectrum(dataObj) {
+   //var dataObj = JSON.parse(dataStr);
 
    var chartData = {
        labels:["1","2","3","4","5","6","7","8","9","10"],

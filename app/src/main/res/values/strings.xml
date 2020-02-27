@@ -4,4 +4,71 @@
     <string name="ask_for_error_log">Sorry, OpenSeizureDetector Has Crashed.  Please Email this log file to us so we can work out what happened and fix it.\nThanks, Graham.</string>
     <string name="email_welcome_note">Dear OpenSeizureDetector,\n\nApplication is just crashed, please check following error log for more details.\n\n\n</string>
     <string name="copyright_info">OpenSeizureDetector (Using UCE Handler\nCopyright © 2018 Rohit Sahebrao Surwase.)</string>
+    <string name="UpgradeMsg">
+        OpenSeizureDetector does not collect any personal data.
+        This does mean that it is not possible for me to contact users if I find an
+        issue with the app that you should be aware of.   \nPlease subscribe to updates at
+        http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector.
+        so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk
+        \n\nChanges in this version:
+        \n  V3.1.13 - Fixed ERR-400 display on garmin watch and associated problem with network datasource fault alerting.
+        \n  V3.1.11 - Fixed issue that Nework data source did not display heart rate data
+        \n  V3.1.10 - Provided a user option to treat a null heart rate as a fault or an alarm condition
+        \n  V3.1.9 - Fixed issue with Garmin Seizure Detector not producing warnings.  Added fault pips for missing heart rate data if heart rate alarm active
+        \n
+    </string>
+    <string name="okBtnTxt">OK</string>
+    <string name="UpdateDialogTitleTxt">Thank you for Updating OpenSeizureDetector</string>
+    <string name="FirstRunDlgTitle">Welcome to OpenSeizureDetector</string>
+    <string name="FirstRunDlgMsg">
+        OpenSeizureDetector does not collect any personal data.
+        This does mean that it is not possible for me to contact users if I find an
+        issue with the app that you should be aware of.   \nPlease subscribe to updates at
+        http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector.
+        so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk
+        \n\nChanges in this version:
+        \n  V3.1.13 - Fixed ERR-400 display on garmin watch and associated problem with network datasource fault alerting.
+        \n  V3.1.11 - Fixed issue that Nework data source did not display heart rate data
+        \n  V3.1.10 - Provided a user option to treat a null heart rate as a fault or an alarm condition
+        \n  V3.1.9 - Fixed issue with Garmin Seizure Detector not producing warnings.  Added fault pips for missing heart rate data if heart rate alarm active
+    </string>
+    <string name="SmsPermissionWarning">Problem with SMS Permissions</string>
+    <string name="AppPermissionsOk">App Permissions OK</string>
+    <string name="AppPermissionsWarning">Problem with App Permissions</string>
+    <string name="BoundToServiceOk">Bound to Service OK</string>
+    <string name="BindingToService">Binding to Background Service...</string>
+    <string name="WatchConnectedOk">Watch Connected OK</string>
+    <string name="WatchNotConnected">Watch Not Connected</string>
+    <string name="SeizureDetectorDataReceived">Seizure Detector Data Received OK</string>
+    <string name="WaitingForSeizureDetectorData">Waiting for Seizure Detector Data...</string>
+    <string name="SeizureDetectorSettingsReceived">Seizure Detector Settings Received OK</string>
+    <string name="WaitingForSeizureDetectorSettings">Waiting for Seizure Detector Settings...</string>
+    <string name="DataSource">DataSource</string>
+    <string name="AppTitleText">OpenSeizureDetector Android App Version </string>
+    <string name="ServerRunningOK">Server Running OK\n</string>
+    <string name="AccessServerAt">Access Server at </string>
+    <string name="ServerStopped">Server Stopped</string>
+    <string name="Warning">WARNING</string>
+    <string name="Mute">MUTE</string>
+    <string name="Alarm">**ALARM**</string>
+    <string name="Fall">**FALL**</string>
+    <string name="HR_Equals">\"HR = \"</string>
+    <string name="HRAlarmOff">HR Alarm OFF</string>
+    <string name="WatchAppOK">Watch App OK</string>
+    <string name="WatchAppNotRunning">Watch App NOT Running</string>
+    <string name="WatchBatteryEquals">Watch Battery = </string>
+    <string name="PowerEquals">\"Power = \"</string>
+    <string name="SpectrumRatioEquals">Spectrum Ratio = </string>
+    <string name="ThresholdEquals"> (threshold = </string>
+    <string name="NetFault">NET FAULT</string>
+    <string name="WatchApp">Watch App -----</string>
+    <string name="Dashes">------</string>
+    <string name="SMSWillBeSentIn">SMS Will Be Sent in </string>
+    <string name="Cancel">CANCEL?</string>
+    <string name="AcceptAlarm">Accept Alarm</string>
+    <string name="AudibleAlarmsCancelledFor">Audible Alarms Cancelled for </string>
+    <string name="PressToReEnable"> Press to re-enable</string>
+    <string name="CancelAudibleAlarms">Cancel Audible Alarms (temporarily)</string>
+    <string name="AudibleAlarmsOff">Audible Alarms OFF</string>
+    <string name="Fault">FAULT</string>
 </resources>
