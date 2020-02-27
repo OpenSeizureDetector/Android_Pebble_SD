@@ -1,13 +1,9 @@
-OpenSeizureDetector - Pebble Version
-====================================
+OpenSeizureDetector - Android App
+=================================
 
-This seizure detector uses a (Pebble)[http://getpebble.com] smart watch.
-The watch has an accelerometer and vibrator motor and a bluetooth radio
-to talk to another computer.  Most importantly, it comes with instructions to
-write code for it on the manufacturers (web site)[http://developer.getpebble.com].   
-
-So it sounds like an ideal platform for an accelerometer based seizure detector
-similar to the Arduino based one I made in 2013.
+This seizure detector uses a Garmin smart watch.
+The watch has an accelerometer, heart rate sensor and a bluetooth radio to talk to another computer.  
+See (the OpenSeizureDetector Web Site)[https://www.openseizuredetector.org.uk/] for more details.
 
 Principle of Operation
 ======================
@@ -47,4 +43,4 @@ Audio Alarm sounds from freesound https://freesound.org/people/coltonmanz/sounds
 
 
 
-Graham Jones, 03 December 2017.  (grahamjones139+sd@gmail.com)
+Graham Jones, 03 December 2017.  (graham@openseizuredetector.org.uk)
