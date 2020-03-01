@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+  <string name="app_name">OpenSeizureDetector</string>
+  <string name="UpgradeMsg"> OpenSeizureDetector sammelt keine persoenlichen Daten.
+    Das bedeutet, dass ich Benutzer nicht kontaktieren kann, wenn ich ein Problem
+    in der  App finde, die man kennen sollten \n
+    Bitte abonnieren Sie updates unter http://OpenSeizureDetector.org.uk,
+    oder der App Facebook Seite unter https://www.facebook.com/OpenSeizureDetector.
+    Damit ich sie notfalls erreichen kann.\n
+    Vielen Dank!  Graham \n
+    graham@OpenSeizureDetector.org.uk \n\n
+    Aenderungen in dieser Version:
+        \n  V3.1.15 - Added German Language Support to main and start-up screens
+        \n  V3.1.14 - Repaired OpenSeizureDetector Web Interface, that was broken by V3.1.13
+    \n  V3.1.13 - Die ERROR-400-Anzeige auf der Garmin-Uhr und das damit verbundene Problem mit der Fehlerwarnung für Netzwerkdatenquellen wurden behoben.
+    \n  V3.1.11 - Problem behoben, bei dem in der Netzwerk-Datenquelle keine Herzfrequenzdaten angezeigt wurden
+    \n  V3.1.10 - Benutzeroption zur Behandlung einer Nullherzfrequenz als Fehler oder Alarmbedingung bereitgestellt
+    \n  V3.1.9 - Problem behoben, bei dem der Garmin-Anfallsdetektor keine Warnungen ausgab. Fehler-Alarm für fehlende Herzfrequenzdaten wurde hinzugefügt, wenn der Herzfrequenzalarm aktiv ist
+    \n
+  </string>
+  <string name="FirstRunDlgMsg"> OpenSeizureDetector sammelt keine persoenlichen Daten.
+    Das bedeutet, dass ich Benutzer nicht kontaktieren kann, wenn ich ein Problem
+    in der  App finde, die man kennen sollten \n
+    Bitte abonnieren Sie updates unter https://www.facebook.com/OpenSeizureDetector.        
+    Damit ich mit Ihnen Kontakt aufnehmen kann.\n
+    Vielen Dank!  Graham \n
+    graham@OpenSeizureDetector.org.uk        
+    \n\nAenderungen in dieser Version:        
+        \n  V3.1.15 - Added German Language Support to main and start-up screens
+        \n  V3.1.14 - Repaired OpenSeizureDetector Web Interface, that was broken by V3.1.13
+    \n  V3.1.13 - Die ERROR-400-Anzeige auf der Garmin-Uhr und das damit verbundene Problem mit der Fehlerwarnung für Netzwerkdatenquellen wurden behoben.        
+    \n  V3.1.11 - Problem behoben, bei dem in der Netzwerk-Datenquelle keine Herzfrequenzdaten angezeigt wurden        
+    \n  V3.1.10 - Benutzeroption zur Behandlung einer Nullherzfrequenz als Fehler oder Alarmbedingung bereitgestellt        
+    \n  V3.1.9 - Problem behoben, bei dem der Garmin-Anfallsdetektor keine Warnungen ausgab.  Fehler-Alarm für fehlende Herzfrequenzdaten wurde hinzugefügt, wenn der Herzfrequenzalarm aktiv ist    
+  </string>
+  <string name="okBtnTxt">OK</string>
+  <string name="UpdateDialogTitleTxt">Vielen Dank für die Nutzung des Updates von OpenSeizureDetector</string>
+  <string name="FirstRunDlgTitle">Willkommen bei OpenSeizureDetector</string>
+  <string name="ask_for_error_log">Entschuldigung, OpenSeizureDetector ist abgestuertzt.  Bitte senden Sie diese Log-Datei an uns, damit wir herausfinden koennen was passiert ist und es reparieren können.\nVielen Dank, Graham.</string>
+  <string name="email_welcome_note">Lieber OpenSeizureDetector-Nutzer,\n\nDie Anwendung ist gerade abgestuerzt, bitte prüfe den folgenden error log für mehr Informationen.\n\n\n</string>
+  <string name="copyright_info">OpenSeizureDetector (Using UCE Handler\nCopyright Â© 2018 Rohit Sahebrao Surwase.)</string>
+  <string name="SmsPermissionWarning">Problem mit SMS-Berechtigungen</string>
+  <string name="AppPermissionsOk">App Berechtigung OK</string>
+  <string name="AppPermissionsWarning">Problem mit App Berechtigung</string>
+  <string name="BoundToServiceOk">Mit Service verbunden, OK</string>
+  <string name="BindingToService">Verbindung mit Hintergrund-Service...</string>
+  <string name="WatchConnectedOk">Smartwatch verbunden OK</string>
+  <string name="WatchNotConnected">Smartwatch NICHT verbunden</string>
+  <string name="SeizureDetectorDataReceived">Anfall-Detector Daten empfangen OK</string>
+  <string name="WaitingForSeizureDetectorData">Warten auf Anfall-Detector Daten...</string>
+  <string name="SeizureDetectorSettingsReceived">Anfall-Detector Einstellungen empfangen OK</string>
+  <string name="WaitingForSeizureDetectorSettings">Warte auf Anfall-Detector Einstellungen...</string>
+  <string name="DataSource">Daten-Quelle</string>
+  <string name="AppTitleText">OpenSeizureDetector Android App Version </string>
+  <string name="ServerRunningOK">Server laeuft OK\n</string>
+  <string name="AccessServerAt">Server-Zugriff bei </string>    <string name="ServerStopped">Server gestoppt</string>
+  <string name="Warning">WARNUNG</string>
+  <string name="Mute">PAUSE</string>
+  <string name="Alarm">**ALARM**</string>
+  <string name="Fall">**FALL-ALARM**</string>
+  <string name="HR_Equals">PULS = </string>
+  <string name="HRAlarmOff">PULS-Alarm AUS</string>
+  <string name="WatchAppOK">Smartwatch App OK</string>
+  <string name="WatchAppNotRunning">Smartwatch-App abgeschaltet</string>
+  <string name="WatchBatteryEquals">Smartwatch Batterie = </string>
+  <string name="PowerEquals">Power = </string>
+  <string name="SpectrumRatioEquals">Spektrum-Verhaeltnis = </string>
+  <string name="ThresholdEquals"> (Schwelle = </string>
+  <string name="NetFault">NETZWERK-FEHLER</string>
+  <string name="WatchApp">Smartwatch App -----</string>
+  <string name="Dashes">------</string>
+  <string name="SMSWillBeSentIn">SMS wird versendet in </string>
+  <string name="Cancel">ABBRUCH?</string>
+  <string name="AcceptAlarm">Alarm annehmen</string>
+  <string name="AudibleAlarmsCancelledFor">Akustische Alarme abgeschaltet fuer </string>
+  <string name="PressToReEnable"> Drücken um Funktion wieder zu aktivieren</string>
+  <string name="CancelAudibleAlarms">Akustische Alarme abschalten (voruebergehend)</string>
+  <string name="AudibleAlarmsOff"> Akustische Alarme AUS</string>
+  <string name="Fault">FEHLER</string>
+</resources>
+

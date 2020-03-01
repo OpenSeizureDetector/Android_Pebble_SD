@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
-    <string name="ask_for_error_log">Sorry, OpenSeizureDetector Has Crashed.  Please Email this log file to us so we can work out what happened and fix it.\nThanks, Graham.</string>
-    <string name="email_welcome_note">Dear OpenSeizureDetector,\n\nApplication is just crashed, please check following error log for more details.\n\n\n</string>
-    <string name="copyright_info">OpenSeizureDetector (Using UCE Handler\nCopyright © 2018 Rohit Sahebrao Surwase.)</string>
     <string name="UpgradeMsg">
         OpenSeizureDetector does not collect any personal data.
         This does mean that it is not possible for me to contact users if I find an
@@ -11,15 +8,14 @@
         http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector.
         so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk
         \n\nChanges in this version:
+        \n  V3.1.15 - Added German Language Support to main and start-up screens
+        \n  V3.1.14 - Repaired OpenSeizureDetector Web Interface, that was broken by V3.1.13
         \n  V3.1.13 - Fixed ERR-400 display on garmin watch and associated problem with network datasource fault alerting.
         \n  V3.1.11 - Fixed issue that Nework data source did not display heart rate data
         \n  V3.1.10 - Provided a user option to treat a null heart rate as a fault or an alarm condition
         \n  V3.1.9 - Fixed issue with Garmin Seizure Detector not producing warnings.  Added fault pips for missing heart rate data if heart rate alarm active
         \n
     </string>
-    <string name="okBtnTxt">OK</string>
-    <string name="UpdateDialogTitleTxt">Thank you for Updating OpenSeizureDetector</string>
-    <string name="FirstRunDlgTitle">Welcome to OpenSeizureDetector</string>
     <string name="FirstRunDlgMsg">
         OpenSeizureDetector does not collect any personal data.
         This does mean that it is not possible for me to contact users if I find an
@@ -27,11 +23,19 @@
         http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector.
         so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk
         \n\nChanges in this version:
+        \n  V3.1.15 - Added German Language Support to main and start-up screens
+        \n  V3.1.14 - Repaired OpenSeizureDetector Web Interface, that was broken by V3.1.13
         \n  V3.1.13 - Fixed ERR-400 display on garmin watch and associated problem with network datasource fault alerting.
         \n  V3.1.11 - Fixed issue that Nework data source did not display heart rate data
         \n  V3.1.10 - Provided a user option to treat a null heart rate as a fault or an alarm condition
         \n  V3.1.9 - Fixed issue with Garmin Seizure Detector not producing warnings.  Added fault pips for missing heart rate data if heart rate alarm active
     </string>
+    <string name="ask_for_error_log">Sorry, OpenSeizureDetector Has Crashed.  Please Email this log file to us so we can work out what happened and fix it.\nThanks, Graham.</string>
+    <string name="email_welcome_note">Dear OpenSeizureDetector,\n\nApplication is just crashed, please check following error log for more details.\n\n\n</string>
+    <string name="copyright_info">OpenSeizureDetector (Using UCE Handler\nCopyright © 2018 Rohit Sahebrao Surwase.)</string>
+    <string name="okBtnTxt">OK</string>
+    <string name="UpdateDialogTitleTxt">Thank you for Updating OpenSeizureDetector</string>
+    <string name="FirstRunDlgTitle">Welcome to OpenSeizureDetector</string>
     <string name="SmsPermissionWarning">Problem with SMS Permissions</string>
     <string name="AppPermissionsOk">App Permissions OK</string>
     <string name="AppPermissionsWarning">Problem with App Permissions</string>

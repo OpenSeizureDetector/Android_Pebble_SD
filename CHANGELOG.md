@@ -1,5 +1,7 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V3.1.15 - 01mar2020
+        - Added German Language support for main and startup app screens.
     V3.1.14 - 27feb2020
         - Fixed the web interface, which stopped working in V3.1.13
         - Separated the user interface text into separate strings.xml file so we can
