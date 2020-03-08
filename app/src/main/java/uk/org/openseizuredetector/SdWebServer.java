@@ -51,12 +51,20 @@ public class SdWebServer extends NanoHTTPD {
         Map<String, String> header;
         Map<String, String> parameters;
         Map<String, String> files = new HashMap<String, String>();
-        try {
-            session.parseBody(files);
-        } catch (IOException ioe) {
-            return new Response(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage());
-        } catch (ResponseException re) {
-            return new Response(re.getStatus(), MIME_PLAINTEXT, re.getMessage());
+        NanoHTTPD.Response res = null;
+        String responseMimeType = "application/json";
+
+        if (session.getMethod() == Method.POST) {
+            // We try to parse the 'files' part of POST requests to get the data
+            try {
+                session.parseBody(files);
+            } catch (IOException ioe) {
+                Log.e(TAG, "IOError parsing body of request");
+                return new Response(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage());
+            } catch (ResponseException re) {
+                Log.e(TAG, "ResponseException parsing body of request" + re.getMessage());
+                return new Response(re.getStatus(), MIME_PLAINTEXT, re.getMessage());
+            }
         }
         uri = session.getUri();
         method = session.getMethod();
@@ -64,7 +72,7 @@ public class SdWebServer extends NanoHTTPD {
         parameters = session.getParms();
 
         Log.v(TAG, "WebServer.serve() - uri=" + uri + " Method=" + method.toString());
-        String answer = "Error - you should not see this message! - Something wrong in WebServer.serve()";
+        String answer = "{'msg': 'Error - you should not see this message! - Something wrong in WebServer.serve()'}";
 
         Iterator it = parameters.keySet().iterator();
         while (it.hasNext()) {
@@ -80,10 +88,11 @@ public class SdWebServer extends NanoHTTPD {
                     case GET:
                         //Log.v(TAG,"WebServer.serve() - Returning data");
                         try {
+                            Log.v(TAG, "WebServer.serve() - GET /data - sending " + mSdData.toString());
                             answer = mSdData.toString();
                         } catch (Exception ex) {
                             Log.v(TAG, "Error Creating Data Object - " + ex.toString());
-                            answer = "Error Creating Data Object";
+                            answer = "{'msg': 'Error Creating Data Object'}";
                         }
                         break;
                     case POST:
@@ -124,7 +133,7 @@ public class SdWebServer extends NanoHTTPD {
                             answer = jsonObj.toString();
                         } catch (Exception ex) {
                             Log.v(TAG, "Error Creating Data Object - " + ex.toString());
-                            answer = "Error Creating Data Object";
+                            answer = "{'msg': 'Error Creating Data Object'}";
                         }
                         break;
                     case POST:
@@ -144,6 +153,7 @@ public class SdWebServer extends NanoHTTPD {
                     default:
                         Log.v(TAG, "WebServer.serve() - Unrecognised method - " + method);
                 }
+                break;
             case "/spectrum":
                 Log.v(TAG, "WebServer.serve() - Returning spectrum - 1");
                 try {
@@ -162,14 +172,14 @@ public class SdWebServer extends NanoHTTPD {
                     Log.v(TAG, "WebServer.serve() - Returning spectrum - 5" + answer);
                 } catch (Exception ex) {
                     Log.v(TAG, "Error Creating Data Object - " + ex.toString());
-                    answer = "Error Creating Data Object";
+                    answer = "{'msg' : 'Error Creating Data Object'}";
                 }
                 break;
 
             case "/acceptalarm":
                 Log.v(TAG, "WebServer.serve() - Accepting alarm");
                 mSdServer.acceptAlarm();
-                answer = "Alarm Accepted";
+                answer = "{'msg' : 'Alarm Accepted'}";
                 break;
 
             default:
@@ -189,11 +199,13 @@ public class SdWebServer extends NanoHTTPD {
                 } else {
                     Log.v(TAG, "WebServer.serve() - Unknown uri -" +
                             uri);
-                    answer = "Unknown URI: ";
+                    answer = "{'msg' : 'Unknown URI: '}";
                 }
         }
-        Log.v(TAG,"WebServer.serve() - returning "+answer);
-        return new NanoHTTPD.Response(answer);
+        res = new NanoHTTPD.Response(answer);
+        res.setMimeType(responseMimeType);
+        Log.v(TAG,"WebServer.serve() - returning "+res.getData()+", mime="+res.getMimeType()+", status="+res.getStatus());
+        return (res);
     }
 
 

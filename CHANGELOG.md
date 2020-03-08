@@ -1,13 +1,30 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
-
-    V3.2.0 - jan2020
+    V3.2.0 - mar2020
         - Modified data logging to use sqlite database rather than text files.
         - Added facility to upload data to remote server.
         - Added support for additional GarminSD settings data fields to record the watch app version number etc and
           log that info to the SysLog file.
+    V3.1.15 - 01mar2020
+        - Added German Language support for main and startup app screens.
+    V3.1.14 - 27feb2020
+        - Fixed the web interface, which stopped working in V3.1.13
+        - Separated the user interface text into separate strings.xml file so we can
+          have multi-lingual versions of the app (if people offer to do the translations
+          for me, because I can't do it myself!)
+        - Note that I think Google has forced me to drop support for Android 4.x in a recent
+          update - I could only get it to compoile if I increased the minimum android version
+          to Android 5.0.   This is a shame because I am one of the 3 Android 4 users....
 
+	V3.1.13 - 16feb2020
+	    - Fixed problem with NetworkDataSource not responding to FAULT conditions properly.
 
+    V3.1.12 - 15feb2020
+        - Updated web server to return correct application/json mime type to get rid of -400
+          errors on garmin watch.   Made error messages json strings too.
+          Added hrAlarmStanding value to /data json string, which should get remove
+          heart rate alarms working with network datasource.
+>>>>>>> master
 
     V3.1.11 - 23oct2019
         - Updated network data source so it displays heart rate data if it is available.

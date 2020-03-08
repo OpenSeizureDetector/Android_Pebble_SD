@@ -662,11 +662,13 @@ public class SdServer extends Service implements SdDataReceiver {
         logData();
     }
 
+
     // Called by SdDataSource when a fault condition is detected.
     public void onSdDataFault(SdData sdData) {
         Log.v(TAG, "onSdDataFault()");
         mSdData = sdData;
         mSdData.alarmState = 4;  // set fault alarm state.
+        mSdData.alarmPhrase = "FAULT";
         mSdData.alarmStanding = false;
         if (webServer != null) webServer.setSdData(mSdData);
         if (mAudibleFaultWarning) {

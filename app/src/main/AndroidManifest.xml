@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="uk.org.openseizuredetector"
-    android:versionCode="66"
+    android:versionCode="70"
     android:versionName="3.2.0">
     <!-- android:allowBackup="false" -->
     <uses-permission android:name="android.permission.INTERNET" />
