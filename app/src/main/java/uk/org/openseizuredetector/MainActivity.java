@@ -266,6 +266,17 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "exception starting log manager activity " + ex.toString());
                 }
                 return true;
+            case R.id.action_logmanager:
+                Log.i(TAG, "action_logmanager");
+                try {
+                    Intent intent = new Intent(
+                            MainActivity.this,
+                            LogManagerActivity.class);
+                    this.startActivity(intent);
+                } catch (Exception ex) {
+                    Log.i(TAG, "exception starting log manager activity " + ex.toString());
+                }
+                return true;
             case R.id.action_settings:
                 Log.i(TAG, "action_settings");
                 try {

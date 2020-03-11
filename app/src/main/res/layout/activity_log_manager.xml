@@ -9,18 +9,37 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="uk.org.openseizuredetector.LogManager">
 
+
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:text="Large Text"
-        android:id="@+id/textView2"
+        android:text="@string/not_authenticated"
+        android:id="@+id/authStatusTv"
         />
+    <Button
+        android:id="@+id/authenticate_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/authenticate" />
 
+<!--
     <ListView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/eventLogListView"
         android:layout_marginTop="97dp" />
+
+    <EditText
+        android:id="@+id/editText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:text="Name" />
+-->
 
 </LinearLayout>

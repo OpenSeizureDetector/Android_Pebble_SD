@@ -175,6 +175,21 @@ public class LogManager {
         uploadSdData();
     }
 
+
+    /**
+     * Authenticate using the WebAPI to obtain a token for future API requests.
+     * @param uname - user name
+     * @param passwd - password
+     */
+    public void authenticate(String uname, String passwd) {
+        Log.v(TAG, "authenticate()");
+        // FIXME - this does not work!!!!
+        String dataStr = "data string to upload";
+        //new PostDataTask().execute("http://" + mOSDUrl + ":8080/data", dataStr, mOSDUname, mOSDPasswd);
+        new PostDataTask().execute("http://192.168.43.175:8765/datapoints/add", dataStr, mOSDUname, mOSDPasswd);
+
+    }
+
     /**
      * Upload a batch of seizure detector data records to the server..
      * Uses the UploadSdDataTask class to upload the data in the

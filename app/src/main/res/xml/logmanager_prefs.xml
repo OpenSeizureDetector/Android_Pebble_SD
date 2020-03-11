@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference
+        android:defaultValue="https://osd.dynu.net/"
+        android:key="serverUrl"
+        android:title="Server URL"
+        android:summary="URL of OpenSeizureDetector Data Log Server"
+        />
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="LogToServer"
+        android:summary="Log Data to OpenSeizureDetector Server"
+        android:title="Log to Server" />
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="UploadOverMobileNetwork"
+        android:summary="Upload Data when using Mobile Network"
+        android:title="Use Mobile Network" />
+    <EditTextPreference
+        android:defaultValue="password"
+        android:key="OSDPasswd"
+        android:summary="Password for remote data logging."
+        android:title="Remote Password" />
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="PreventSleep"
+        android:summary="Prevent the screen from blanking while the application is running."
+        android:title="Prevent the screen from blanking." />
+    <EditTextPreference
+        android:defaultValue="1000"
+        android:key="UpdatePeriod"
+        android:summary="Display update period in miliseconds."
+        android:title="Display Update Period (ms)." />
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="AutoStart"
+        android:summary="Auto Start App on Boot"
+        android:title="Auto Start App on Boot"
+        android:enabled="true"
+        />
+
+    <EditTextPreference
+        android:defaultValue=""
+        android:key="AppVersionName"
+        android:summary="App Version Number - used to decide whether to display the welcome message or not."
+        android:title="App Version Number" />
+<!--
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="UseIpCamera"
+        android:summary="Use IP Camera to View Images"
+        android:title="Enable IP Camera"
+        android:enabled="false"
+        />
+        -->
+
+
+</PreferenceScreen>

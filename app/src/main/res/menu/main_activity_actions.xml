@@ -46,6 +46,13 @@
         android:showAsAction="never|withText"
         android:title="Test SMS Alarm Notification" />
 
+    <item
+        android:id="@+id/action_logmanager"
+        android:icon="@drawable/ic_action_settings"
+        android:showAsAction="never|withText"
+        android:title="Data Log Manager"
+        android:enabled="true"
+        />
 
     <item
         android:id="@+id/action_logs"
