@@ -58,47 +58,40 @@ public class LogManager {
     private String mDbTableName = "datapoints";
     private boolean mLogRemote;
     private boolean mLogRemoteMobile;
-    private String mOSDUname;
-    private String mOSDPasswd;
-    private int mOSDWearerId;
-    private String mOSDUrl;
+    private String mOSDUrl = "https://https://osd.dynu.net/";
+    private String mApiToken;
     private OsdDbHelper mOSDDb;
     private RemoteLogTimer mRemoteLogTimer;
     private Context mContext;
     private OsdUtil mUtil;
 
 
-    public LogManager(boolean logRemote,
-                      boolean logRemoteMobile,
-                      String OSDUname,
-                      String OSDPasswd,
-                      int OSDWearerId,
-                      String OSDUrl,
-                      Context context) {
-        mLogRemote = logRemote;
-        mLogRemoteMobile = logRemoteMobile;
-        mOSDUname = OSDUname;
-        mOSDPasswd = OSDPasswd;
-        mOSDWearerId = OSDWearerId;
-        mOSDUrl = OSDUrl;
+    public LogManager(Context context) {
+        mLogRemote = false;
+        mLogRemoteMobile = false;
+        mOSDUrl = null;
         mContext = context;
 
         Handler handler = new Handler();
         mUtil = new OsdUtil(mContext, handler);
 
-        try {
-                mOSDDb = new OsdDbHelper(mDbTableName, mContext);
-                if (!checkTableExists(mOSDDb, mDbTableName)) {
-                    Log.e(TAG,"ERROR - Table does not exist");
-             }
-        } catch (SQLException e) {
-            Log.e(TAG, "Failed to open Database: " + e.toString());
-        }
-
         startRemoteLogTimer();
     }
 
-
+    private boolean openDb() {
+        try {
+            mOSDDb = new OsdDbHelper(mDbTableName, mContext);
+            if (!checkTableExists(mOSDDb, mDbTableName)) {
+                Log.e(TAG,"ERROR - Table does not exist");
+                return false;
+            }
+            return true;
+        } catch (SQLException e) {
+            Log.e(TAG, "Failed to open Database: " + e.toString());
+            mOSDDb = null;
+            return false;
+        }
+    }
 
     private boolean checkTableExists(OsdDbHelper osdDb, String osdTableName) {
         Cursor c = null;
@@ -131,7 +124,7 @@ public class LogManager {
                     + "(dataTime, wearer_id, BattPC, specPow, roiRatio, avAcc, sdAcc, hr, status, dataJSON, uploaded)"
                     + " VALUES("
                     +"CURRENT_TIMESTAMP,"
-                    + mOSDWearerId + ","
+                    + -1 + ","
                     + sdData.batteryPc + ","
                     + sdData.specPower + ","
                     + 10. * sdData.roiPower / sdData.specPower + ","
@@ -184,10 +177,12 @@ public class LogManager {
     public void authenticate(String uname, String passwd) {
         Log.v(TAG, "authenticate()");
         // FIXME - this does not work!!!!
-        String dataStr = "data string to upload";
+        String dataStr = "{'login':"+uname+", 'password':"+passwd+"}";
         //new PostDataTask().execute("http://" + mOSDUrl + ":8080/data", dataStr, mOSDUname, mOSDPasswd);
-        new PostDataTask().execute("http://192.168.43.175:8765/datapoints/add", dataStr, mOSDUname, mOSDPasswd);
-
+        String urlStr = mOSDUrl+"/api/accounts/login/";
+        Log.v(TAG,"authenticate: url="+urlStr+", data="+dataStr);
+        new PostDataTask().execute(
+                urlStr, dataStr);
     }
 
     /**
@@ -199,7 +194,7 @@ public class LogManager {
         Log.v(TAG, "uploadSdData()");
         String dataStr = "data string to upload";
         //new PostDataTask().execute("http://" + mOSDUrl + ":8080/data", dataStr, mOSDUname, mOSDPasswd);
-        new PostDataTask().execute("http://192.168.43.175:8765/datapoints/add", dataStr, mOSDUname, mOSDPasswd);
+        //new PostDataTask().execute("http://192.168.43.175:8765/datapoints/add", dataStr, mOSDUname, mOSDPasswd);
     }
 
     private class PostDataTask extends AsyncTask<String, Void, String> {
@@ -208,16 +203,14 @@ public class LogManager {
             // params comes from the execute() call:
             // params[0] is the url,
             // params[1] is the data to send.
-            // params[2] is the user name
-            // params[3] is the password
+            // params[2] is the user name (not used)
+            // params[3] is the password (not used)
             int MAXLEN = 500;  // Maximum length of response that we will accept (bytes)
             InputStream is = null;
             String urlStr = params[0];
             String dataStr = params[1];
-            String uname = params[2];
-            String passwd = params[3];
             String resultStr = "Not Initialised";
-            Log.v(TAG,"doInBackgound(): url="+urlStr+" data="+dataStr+" uname="+uname+" passwd="+passwd);
+            Log.v(TAG,"doInBackgound(): url="+urlStr+" data="+dataStr);
             try {
                 URL url = new URL(urlStr);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -226,10 +219,10 @@ public class LogManager {
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json; utf-8");
                 conn.setRequestProperty("Accept", "application/json");
-                String auth = uname + ":" + passwd;
-                byte[] encodedAuth = Base64.encodeBase64(auth.getBytes("utf-8"));
-                String authHeaderValue = "Basic " + new String(encodedAuth);
-                conn.setRequestProperty("Authorization", authHeaderValue);
+                //String auth = uname + ":" + passwd;
+                //byte[] encodedAuth = Base64.encodeBase64(auth.getBytes("utf-8"));
+                //String authHeaderValue = "Basic " + new String(encodedAuth);
+                //conn.setRequestProperty("Authorization", authHeaderValue);
                 conn.setDoInput(true);
 
                 // Put our data into the outputstream associated with the connection.
@@ -387,8 +380,9 @@ public class LogManager {
 
         @Override
         public void onFinish() {
-            Log.v(TAG, "mRemoteLogTimer - onFinish");
-            writeToRemoteServer();
+            //FIXME - make this do something!
+            //Log.v(TAG, "mRemoteLogTimer - onFinish");
+            //writeToRemoteServer();
             start();
         }
 

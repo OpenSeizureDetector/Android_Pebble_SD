@@ -56,7 +56,11 @@ implements AuthDialogInterface {
     }
 
     public void onDialogDone(boolean State) {
-        Log.v(TAG,"onDialogDOne()");
+
+        Log.v(TAG,"onDialogDone()");
+        LogManager lm = new LogManager(this);
+        lm.authenticate("test", "testpw");
+
     }
 
 }

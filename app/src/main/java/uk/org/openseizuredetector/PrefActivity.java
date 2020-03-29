@@ -56,7 +56,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         mHandler = new Handler();
         mContext = getApplicationContext();
 
-        mUtil = new OsdUtil(mContext,mHandler);
+        mUtil = new OsdUtil(mContext, mHandler);
         mUtil.writeToSysLogFile("PrefActvity.onCreate()");
     }
 
@@ -71,37 +71,51 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                 .getDefaultSharedPreferences(this.getApplicationContext());
         String dataSourceStr = SP.getString("DataSource", "Pebble");
         Log.i(TAG, "onBuildHeaders DataSource = " + dataSourceStr);
+        Boolean advancedMode = SP.getBoolean("advancedMode", false);
+        Log.i(TAG, "onBuildHeaders advancedMode = " + advancedMode);
 
-        //Boolean cameraEnabled = SP.getBoolean("UseIpCamera", false);
-        //Log.v(TAG, "onBuildHeaders cameraEnabled = " + cameraEnabled);
+        if (advancedMode) {
+            for (int i = 0; i < target.size(); i++) {
+                Header h = target.get(i);
+                Log.v(TAG, "found - " + h.title.toString());
+                if (h.title.toString().equals("Seizure Detector")) {
+                    Log.v(TAG, "found Seizure Detector Header");
+                    if (dataSourceStr.equals("Network")) {
+                        Log.v(TAG, "Removing seizure detector settings header");
+                        target.remove(i);
+                        i = i - 1;
+                    }
+                }
+                if (h.title.toString().equals("Network Datasource")) {
+                    Log.v(TAG, "found Network Datasource Header");
+                    if (!dataSourceStr.equals("Network")) {
+                        Log.v(TAG, "Removing network settings header");
+                        target.remove(i);
+                        i = i - 1;
+                    }
+                }
+                if (h.title.toString().equals("Pebble Datasource")) {
+                    Log.v(TAG, "found Pebble Datasource Header");
+                    if (!dataSourceStr.equals("Pebble")) {
+                        Log.v(TAG, "Removing Pebble settings header");
+                        target.remove(i);
+                        i = i - 1;
+                    }
+                }
+            }
+        } else {
+            for (int i = 0; i < target.size(); i++) {
+                Header h = target.get(i);
+                Log.v(TAG, "found - " + h.title.toString());
+                if (!h.title.toString().equals("Basic")) {
+                    if (!advancedMode) {
+                        Log.v(TAG, "an Advanced Mode Header");
+                        target.remove(i);
+                        i = i - 1;
+                    }
+                }
+            }
 
-        for (int i = 0; i < target.size(); i++) {
-            Header h = target.get(i);
-            Log.v(TAG,"found - "+h.title.toString());
-            if (h.title.toString().equals("Seizure Detector")) {
-                Log.v(TAG, "found Seizure Detector Header");
-                if (dataSourceStr.equals("Network")) {
-                    Log.v(TAG, "Removing seizure detector settings header");
-                    target.remove(i);
-                    i = i-1;
-                }
-            }
-            if (h.title.toString().equals("Network Datasource")) {
-                Log.v(TAG, "found Network Datasource Header");
-                if (!dataSourceStr.equals("Network")) {
-                    Log.v(TAG, "Removing network settings header");
-                    target.remove(i);
-                    i = i -1;
-                }
-            }
-            if (h.title.toString().equals("Pebble Datasource")) {
-                Log.v(TAG, "found Pebble Datasource Header");
-                if (!dataSourceStr.equals("Pebble")) {
-                    Log.v(TAG, "Removing Pebble settings header");
-                    target.remove(i);
-                    i = i -1;
-                }
-            }
         }
 
     }
@@ -110,7 +124,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     public void onStart() {
         super.onStart();
         mUtil.writeToSysLogFile("PrefActvity.onStart()");
-        invalidateHeaders();
+        //invalidateHeaders();
         Log.i(TAG, "onStart()");
     }
 
@@ -119,15 +133,15 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         Log.i(TAG, "SharedPreference " + s + " Changed.");
 
         if (s.equals("SMSAlarm")) {
-            if (sharedPreferences.getBoolean("SMSAlarm",false)==true) {
-                if (mUtil.areSMSPermissionsOK()==false) {
-                    Log.i(TAG,"onSharedPreferenceChanged(): SMS Alarm Enabled - Requesting Permissions");
+            if (sharedPreferences.getBoolean("SMSAlarm", false) == true) {
+                if (mUtil.areSMSPermissionsOK() == false) {
+                    Log.i(TAG, "onSharedPreferenceChanged(): SMS Alarm Enabled - Requesting Permissions");
                     mUtil.requestSMSPermissions(this);
                 } else {
-                    Log.i(TAG,"OnSharedPreferenceCHanged(): SMS Permissions already granted, doing nothing");
+                    Log.i(TAG, "OnSharedPreferenceCHanged(): SMS Permissions already granted, doing nothing");
                 }
             } else {
-                Log.i(TAG,"OnSharedPreferenceChanged(): SMS Alarm disabled so do not need permissions");
+                Log.i(TAG, "OnSharedPreferenceChanged(): SMS Alarm disabled so do not need permissions");
             }
         }
         mUtil.showToast("Setting " + s + " Changed - restarting server");
@@ -140,8 +154,8 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
             }
         }, 100);
 
-        if (s.equals("DataSource")) {
-            Log.i(TAG,"DataSource Changed - re-starting PrefActivity to refresh list");
+        if (s.equals("DataSource") || s.equals("advancedMode")) {
+            Log.i(TAG, "Re-starting PrefActivity to refresh list");
             finish();
             startActivity(getIntent());
         }
@@ -151,7 +165,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
-        Log.i(TAG,"onRequestPermissionsResult - Permission" + permissions + " = " + grantResults);
+        Log.i(TAG, "onRequestPermissionsResult - Permission" + permissions + " = " + grantResults);
         mUtil.showToast("Permissions Changed - restarting server");
         mUtil.stopServer();
         // Wait 0.1 second to give the server chance to shutdown, then re-start it
@@ -171,6 +185,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
         SP.registerOnSharedPreferenceChangeListener(this);
+        invalidateHeaders();
     }
 
     @Override
@@ -187,29 +202,12 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     protected void onStop() {
         super.onStop();
         mUtil.writeToSysLogFile("PrefActvity.onStop()");
-        /*Log.i(TAG, "onStop.  mPrefChanged=" + mPrefChanged);
-        if (mPrefChanged) {
-            Log.i(TAG,"PrefActivity.onStop() - settings changed - restarting server");
-            mUtil.writeToSysLogFile("PrefActvity.onStop() - settings changed - re-starting server....");
-            mUtil.showToast("Settings Changed - re-starting OpenSeizureDetector....");
-            mUtil.stopServer();
-            // Wait 5 seconds to give the server chance to shutdown.
-            mHandler.postDelayed(new Runnable() {
-                public void run() {
-                    Intent intent = new Intent(getApplicationContext(), StartupActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-                    finish();
-                }
-            }, 5000);
-
-        }
-        */
     }
 
     /**
      * FIXME - this just returns true so it is the same as for older versions of Android.
      * We should really check that the fragmentName is one of the fragments defined below.
+     *
      * @param fragmentName
      * @return
      */
@@ -218,9 +216,18 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         return true;
     }
 
-        /**
-         * This fragment shows the preferences for the first header.
-         */
+    /**
+     * This fragment shows the preferences for the first header.
+     */
+    public static class BasicPrefsFragment extends PreferenceFragment {
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            // Load the preferences from an XML resource
+            addPreferencesFromResource(R.xml.basic_prefs);
+        }
+    }
+
     public static class GeneralPrefsFragment extends PreferenceFragment {
         @Override
         public void onCreate(Bundle savedInstanceState) {

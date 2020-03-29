@@ -215,8 +215,9 @@ public class SdServer extends Service implements SdDataReceiver {
         updatePrefs();
 
         // Create our log manager.
-        mLm = new LogManager(mLogDataRemote, mLogDataRemoteMobile,
-                mOSDUname, mOSDPasswd, mOSDWearerId, mOSDUrl, this);
+        //mLm = new LogManager(mLogDataRemote, mLogDataRemoteMobile,
+        //        mOSDUname, mOSDPasswd, mOSDWearerId, mOSDUrl, this);
+        mLm = new LogManager(this);
 
         Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName);
         switch (mSdDataSourceName) {
@@ -372,7 +373,7 @@ public class SdServer extends Service implements SdDataReceiver {
         */
 
         // Stop the log Manager
-        mLm.close();
+        //mLm.close();
 
 
         try {

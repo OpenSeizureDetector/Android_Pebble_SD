@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:enabled="true"
+        android:key="advancedMode"
+        android:summary="Enable Advanced Settings (exposes a lot more things you can change....)"
+        android:title="Advanced Mode" />
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:enabled="true"
+        android:key="AutoStart"
+        android:summary="Auto Start App on Boot"
+        android:title="Auto Start App on Boot" />
+
+    <ListPreference
+        android:defaultValue="Garmin"
+        android:dialogTitle="Select Data Source"
+        android:entries="@array/datasource_list"
+        android:entryValues="@array/datasource_list_values"
+        android:key="DataSource"
+        android:summary="Select whether to use a Garmin Watch, Pebble Watch or network connection as the seizure detector data source."
+        android:title="Select Data Source" />
+
+    <PreferenceCategory android:title="Data Logging Settings">
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="LogDataRemote"
+        android:summary="Log Data to Central OpenSeizureDetector Database"
+        android:title="Log Data Remotely" />
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="LogDataRemoteMobile"
+        android:summary="Use mobile internet to log remote data"
+        android:title="Use Mobile Internet" />
+    </PreferenceCategory>
+
+
+    <PreferenceCategory android:title="Seizure Detector Settings">
+
+    <EditTextPreference
+        android:defaultValue="100"
+        android:key="AlarmThresh"
+        android:summary="Alarm Threshold (Default = 100)"
+        android:title="AlarmThresh" />
+    <EditTextPreference
+        android:defaultValue="50"
+        android:key="AlarmRatioThresh"
+        android:summary="Alarm Ratio Threshold (Default = 50).  Increase to reduce sensitivity."
+        android:title="AlarmRatioThresh" />
+
+    <EditTextPreference
+        android:defaultValue="3"
+        android:key="AlarmFreqMin"
+        android:summary="Minimum Frequency of ROI (Hz) (Default = 3 Hz)"
+        android:title="AlarmFreqMin (Hz)" />
+    <EditTextPreference
+        android:defaultValue="8"
+        android:key="AlarmFreqMax"
+        android:summary="Maximum Frequency of ROI (Hz) (Default = 8 Hz)"
+        android:title="AlarmFreqMax (Hz)" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Heart Rate Alarm Settings">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="HRAlarmActive"
+            android:summary=""
+            android:title="Heart Rate Alarm Enabled" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="HRNullAsAlarm"
+            android:summary=""
+            android:title="Treat a Null heart rate as an alarm condition" />
+        <EditTextPreference
+            android:defaultValue="40"
+            android:key="HRThreshMin"
+            android:summary=""
+            android:title="Heart Rate Min Threshold (bpm)" />
+        <EditTextPreference
+            android:defaultValue="150"
+            android:key="HRThreshMax"
+            android:summary=""
+            android:title="Heart Rate Max Threshold (bpm)" />
+    </PreferenceCategory>
+
+
+</PreferenceScreen>
