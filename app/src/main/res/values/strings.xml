@@ -13,6 +13,7 @@
         \n    - Added facility to upload data to remote server.
         \n    - Added support for additional GarminSD settings data fields to record the watch app version number etc and
           log that info to the SysLog file.
+        \n    - Made only a subset of settings visible by default unless the user enables Advanced Mode
         \n  V3.1.15 - Added German Language Support to main and start-up screens
         \n  V3.1.14 - Repaired OpenSeizureDetector Web Interface, that was broken by V3.1.13
         \n  V3.1.13 - Fixed ERR-400 display on garmin watch and associated problem with network datasource fault alerting.
@@ -30,6 +31,7 @@
         \n    - Added facility to upload data to remote server.
         \n    - Added support for additional GarminSD settings data fields to record the watch app version number etc and
           log that info to the SysLog file.
+        \n    - Made only a subset of settings visible by default unless the user enables Advanced Mode
         \n  V3.1.15 - Added German Language Support to main and start-up screens
         \n  V3.1.14 - Repaired OpenSeizureDetector Web Interface, that was broken by V3.1.13
         \n  V3.1.13 - Fixed ERR-400 display on garmin watch and associated problem with network datasource fault alerting.
@@ -91,4 +93,32 @@
     <string name="invalid_username">Not a valid username</string>
     <string name="invalid_password">Password must be >5 characters</string>
     <string name="login_failed">"Login failed"</string>
+    <string name="AdvancedModeTitle">Advanced Mode</string>
+    <string name="AdvancedModeSummary">Enable Advanced Settings (exposes a lot more things you can change....)</string>
+    <string name="AutoStartTitle">Auto Start</string>
+    <string name="AutoStartSummary">Auto start OpenSeizureDetector when phone is started</string>
+    <string name="DataSourceTitle">Select Data Source</string>
+    <string name="DataSourceSummary">Select whether to use a Garmin Watch, Pebble Watch or network connection as the seizure detector data source.</string>
+    <string name="LogRemoteTitle">Log Data Remotely</string>
+    <string name="LogRemoteSummary">Log Data to Central OpenSeizureDetector Database</string>
+    <string name="UseMobileTitle">Use Mobile Internet</string>
+    <string name="UseMobileSummary">Use mobile internet to log remote data</string>
+    <string name="SeizureDetectorSettingsTitle">Seizure Detector Settings</string>
+    <string name="AlarmThreshTitle">Alarm Threshold</string>
+    <string name="AlarmThreshSummary">Alarm Threshold (Default = 100)</string>
+    <string name="AlarmRatioThreshTitle">Alarm Ratio Threshold</string>
+    <string name="AlarmRatioThreshSummary">Alarm Ratio Threshold (Default = 50). Increase to reduce sensitivity.</string>
+    <string name="AlarmFreqMaxTitle">AlarmFreqMax (Hz)</string>
+    <string name="AlarmFreqMaxSummary">Maximum Frequency of ROI (Hz) (Default = 8 Hz)</string>
+    <string name="AlarmFreqMinTitle">AlarmFreqMin (Hz)</string>
+    <string name="AlarmFreqMinSummary">Minimum Frequency of ROI (Hz) (Default = 3 Hz)</string>
+    <string name="HRAlarmEnabledTitle">Heart Rate Alarm Enabled</string>
+    <string name="HRAlarmEnabledSummary" />
+    <string name="HRNullAlarmTitle">Treat a Null heart rate as an alarm condition</string>
+    <string name="HRNullAlarmSummary" />
+    <string name="HRThreshMinTitle">Heart Rate Min Threshold (bpm)</string>
+    <string name="HRThreshMinSummary" />
+    <string name="HRThreshMaxTitle">Heart Rate Max Threshold (bpm)</string>
+    <string name="HRThreshMaxSummary" />
+
 </resources>

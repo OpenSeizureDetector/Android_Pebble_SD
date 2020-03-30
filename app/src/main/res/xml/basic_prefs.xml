@@ -4,14 +4,14 @@
         android:defaultValue="false"
         android:enabled="true"
         android:key="advancedMode"
-        android:summary="Enable Advanced Settings (exposes a lot more things you can change....)"
-        android:title="Advanced Mode" />
+        android:summary="@string/AdvancedModeSummary"
+        android:title="@string/AdvancedModeTitle" />
     <CheckBoxPreference
         android:defaultValue="false"
         android:enabled="true"
         android:key="AutoStart"
-        android:summary="Auto Start App on Boot"
-        android:title="Auto Start App on Boot" />
+        android:summary="@string/AutoStartSummary"
+        android:title="@string/AutoStartTitle" />
 
     <ListPreference
         android:defaultValue="Garmin"
@@ -19,69 +19,69 @@
         android:entries="@array/datasource_list"
         android:entryValues="@array/datasource_list_values"
         android:key="DataSource"
-        android:summary="Select whether to use a Garmin Watch, Pebble Watch or network connection as the seizure detector data source."
-        android:title="Select Data Source" />
+        android:summary="@string/DataSourceSummary"
+        android:title="@string/DataSourceTitle" />
 
     <PreferenceCategory android:title="Data Logging Settings">
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="LogDataRemote"
-        android:summary="Log Data to Central OpenSeizureDetector Database"
-        android:title="Log Data Remotely" />
+        android:summary="@string/LogRemoteSummary"
+        android:title="@string/LogRemoteTitle" />
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="LogDataRemoteMobile"
-        android:summary="Use mobile internet to log remote data"
-        android:title="Use Mobile Internet" />
+        android:summary="@string/UseMobileSummary"
+        android:title="@string/UseMobileTitle" />
     </PreferenceCategory>
 
 
-    <PreferenceCategory android:title="Seizure Detector Settings">
+    <PreferenceCategory android:title="@string/SeizureDetectorSettingsTitle">
 
     <EditTextPreference
         android:defaultValue="100"
         android:key="AlarmThresh"
-        android:summary="Alarm Threshold (Default = 100)"
-        android:title="AlarmThresh" />
+        android:summary="@string/AlarmThreshSummary"
+        android:title="@string/AlarmThreshTitle" />
     <EditTextPreference
         android:defaultValue="50"
         android:key="AlarmRatioThresh"
-        android:summary="Alarm Ratio Threshold (Default = 50).  Increase to reduce sensitivity."
-        android:title="AlarmRatioThresh" />
+        android:summary="@string/AlarmRatioThreshSummary"
+        android:title="@string/AlarmRatioThreshTitle" />
 
     <EditTextPreference
         android:defaultValue="3"
         android:key="AlarmFreqMin"
-        android:summary="Minimum Frequency of ROI (Hz) (Default = 3 Hz)"
-        android:title="AlarmFreqMin (Hz)" />
+        android:summary="@string/AlarmFreqMinSummary"
+        android:title="@string/AlarmFreqMinTitle" />
     <EditTextPreference
         android:defaultValue="8"
         android:key="AlarmFreqMax"
-        android:summary="Maximum Frequency of ROI (Hz) (Default = 8 Hz)"
-        android:title="AlarmFreqMax (Hz)" />
+        android:summary="@string/AlarmFreqMaxSummary"
+        android:title="@string/AlarmFreqMaxTitle" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Heart Rate Alarm Settings">
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="HRAlarmActive"
-            android:summary=""
-            android:title="Heart Rate Alarm Enabled" />
+            android:summary="@string/HRAlarmEnabledSummary"
+            android:title="@string/HRAlarmEnabledTitle" />
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="HRNullAsAlarm"
-            android:summary=""
-            android:title="Treat a Null heart rate as an alarm condition" />
+            android:summary="@string/HRNullAlarmSummary"
+            android:title="@string/HRNullAlarmTitle" />
         <EditTextPreference
             android:defaultValue="40"
             android:key="HRThreshMin"
-            android:summary=""
-            android:title="Heart Rate Min Threshold (bpm)" />
+            android:summary="@string/HRThreshMinSummary"
+            android:title="@string/HRThreshMinTitle" />
         <EditTextPreference
             android:defaultValue="150"
             android:key="HRThreshMax"
-            android:summary=""
-            android:title="Heart Rate Max Threshold (bpm)" />
+            android:summary="@string/HRThreshMaxSummary"
+            android:title="@string/HRThreshMaxTitle" />
     </PreferenceCategory>
 
 

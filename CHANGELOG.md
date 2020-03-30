@@ -5,6 +5,7 @@
         - Added facility to upload data to remote server.
         - Added support for additional GarminSD settings data fields to record the watch app version number etc and
           log that info to the SysLog file.
+        - Made only a subset of settings available by default, unless the user enables 'advanced mode' to make them all visible.
     V3.1.15 - 01mar2020
         - Added German Language support for main and startup app screens.
     V3.1.14 - 27feb2020

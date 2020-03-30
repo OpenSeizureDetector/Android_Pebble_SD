@@ -79,7 +79,29 @@
   <string name="AudibleAlarmsCancelledFor">Akustische Alarme abgeschaltet fuer </string>
   <string name="PressToReEnable"> Drücken um Funktion wieder zu aktivieren</string>
   <string name="CancelAudibleAlarms">Akustische Alarme abschalten (voruebergehend)</string>
-  <string name="AudibleAlarmsOff"> Akustische Alarme AUS</string>
+  <string name="AudibleAlarmsOff">Heart Rate Max Threshold (bpm)</string>
   <string name="Fault">FEHLER</string>
+    <string name="AdvancedModeTitle">Advanced Mode</string>
+  <string name="AdvancedModeSummary">Enable Advanced Settings (exposes a lot more things you can change....)</string>
+    <string name="AutoStartTitle">Auto Start</string>
+  <string name="AutoStartSummary">Auto start OpenSeizureDetector when phone is started</string>
+  <string name="DataSourceSummary">Select whether to use a Garmin Watch, Pebble Watch or network connection as the seizure detector data source.</string>
+  <string name="LogRemoteTitle">Log Data Remotely</string>
+  <string name="UseMobileSummary">Use mobile internet to log remote data</string>
+  <string name="SeizureDetectorSettingsTitle">Seizure Detector Settings</string>
+  <string name="AlarmThreshTitle">Alarm Threshold</string>
+  <string name="AlarmThreshSummary">Alarm Threshold (Default = 100)</string>
+  <string name="AlarmRatioThreshTitle">Alarm Ratio Threshold</string>
+  <string name="AlarmRatioThreshSummary">Alarm Ratio Threshold (Default = 50). Increase to reduce sensitivity.</string>
+  <string name="AlarmFreqMaxTitle">AlarmFreqMax (Hz)</string>
+  <string name="AlarmFreqMaxSummary">Maximum Frequency of ROI (Hz) (Default = 8 Hz)</string>
+  <string name="AlarmFreqMinTitle">AlarmFreqMin (Hz)</string>
+  <string name="AlarmFreqMinSummary">Minimum Frequency of ROI (Hz) (Default = 3 Hz)</string>
+  <string name="HRAlarmEnabledTitle">Heart Rate Alarm Enabled</string>
+  <string name="HRAlarmEnabledSummary" />
+  <string name="HRNullAlarmTitle">Treat a Null heart rate as an alarm condition</string>
+  <string name="HRNullAlarmSummary" />
+  <string name="HRThreshMinTitle">Heart Rate Min Threshold (bpm)</string>
+  <string name="HRThreshMaxTitle" >Heart Rate Min Threshold (bpm)</string>
 </resources>
 
