@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OpenSeizureDetector</string>
+    <string name="UpgradeMsg">
+        OpenSeizureDetector не собирает персональные данные.
+        Это означает, что я не могу связаться с пользователями, если я найду
+        проблему с приложением, о котором вы должны знать.   \nПожалуйста, подпишитесь на обновления на
+        http://openseizuredetector.org.uk, или на Facebook странице https://www.facebook.com/openseizuredetector.
+        тогда я буду на связи по необходимости.\nСпасибо!  Грэхем \ngraham@openseizuredetector.org.uk
+        \n\nИзменения в версии:
+        \n V3.2.0 - mar2020
+        \n    - Изменено ведение журнала базой данных sqlite, а не текстовых файлов..
+        \n    - Добавлена ??возможность загрузки данных на удаленный сервер.
+        \n    - Добавлена ??поддержка полей настроек GarminSD для записи номера версии приложения для часов и т. д.
+          и записи этой информации в файл SysLog.
+        \n    - Сделано только подмножество настроек, видимых по умолчанию, если пользователь не включит расширенный режим
+        \n  V3.1.15 - Добавлена ??поддержка немецкого языка на главном и начальном экранах
+        \n  V3.1.14 - Исправлен OpenSeizureDetector веб интерфейс, который не работал в V3.1.13
+        \n  V3.1.13 - Исправлена ERR-400 ошибка на garmin часах и связанная проблема с предупреждением о сбое источника данных сети.
+        \n
+    </string>
+    <string name="FirstRunDlgMsg">
+        OpenSeizureDetector не собирает персональные данные.
+        Это означает, что я не могу связаться с пользователями, если я найду
+        проблему с приложением, о котором вы должны знать.   \nПожалуйста, подпишитесь на обновления на
+        http://openseizuredetector.org.uk, или на Facebook странице https://www.facebook.com/openseizuredetector.
+        тогда я буду на связи по необходимости.\nСпасибо!  Грэхем \ngraham@openseizuredetector.org.uk
+        \n\nИзменения в версии:
+        \n V3.2.0 - mar2020
+        \n    - Изменено ведение журнала базой данных sqlite, а не текстовых файлов..
+        \n    - Добавлена ??возможность загрузки данных на удаленный сервер.
+        \n    - Добавлена ??поддержка полей настроек GarminSD для записи номера версии приложения для часов и т. д.
+          и записи этой информации в файл SysLog.
+        \n    - Сделано только подмножество настроек, видимых по умолчанию, если пользователь не включит расширенный режим
+        \n  V3.1.15 - Добавлена ??поддержка немецкого языка на главном и начальном экранах
+        \n  V3.1.14 - Исправлен OpenSeizureDetector веб интерфейс, который не работал в V3.1.13
+        \n  V3.1.13 - Исправлена ERR-400 ошибка на garmin часах и связанная проблема с предупреждением о сбое источника данных сети.
+    </string>
+    <string name="ask_for_error_log">Извините, OpenSeizureDetector остановлен.  Пожалуйста, отправьте нам этот файл журнала, чтобы мы могли разобраться в том, что произошло, и исправить это.\nСпасибо, Грэхем.</string>
+    <string name="email_welcome_note">Дорогой(ая) OpenSeizureDetector,\n\nПриложение только что упало, пожалуйста, проверьте следующий журнал ошибок для более подробной информации.\n\n\n</string>
+    <string name="copyright_info">OpenSeizureDetector (Using UCE Handler\nCopyright © 2018 Rohit Sahebrao Surwase.)</string>
+    <string name="okBtnTxt">OK</string>
+    <string name="UpdateDialogTitleTxt">Спасибо за обновление OpenSeizureDetector</string>
+    <string name="FirstRunDlgTitle">Добро пожаловать в OpenSeizureDetector</string>
+    <string name="SmsPermissionWarning">Проблема с SMS доступом</string>
+    <string name="AppPermissionsOk">Доступ OK</string>
+    <string name="AppPermissionsWarning">Проблема с разрешениями приложения</string>
+    <string name="BoundToServiceOk">Привязан к сервису ОК</string>
+    <string name="BindingToService">Привязка к фоновому сервису...</string>
+    <string name="WatchConnectedOk">Часы подключены OK</string>
+    <string name="WatchNotConnected">Часы не подключены</string>
+    <string name="SeizureDetectorDataReceived">Получены данные детектора приступов OK</string>
+    <string name="WaitingForSeizureDetectorData">Ожидание данных детектора приступов...</string>
+    <string name="SeizureDetectorSettingsReceived">Получены настройки детектора приступов OK</string>
+    <string name="WaitingForSeizureDetectorSettings">В ожидании настроек детектора припадков...</string>
+    <string name="DataSource">Источник данных</string>
+    <string name="AppTitleText">OpenSeizureDetector Андроид версия приложения </string>
+    <string name="ServerRunningOK">Сервер работает OK\n</string>
+    <string name="AccessServerAt">Доступ к серверу на</string>
+    <string name="ServerStopped">Сервер остановлен</string>
+    <string name="Warning">ПРЕДУПРЕЖДЕНИЕ</string>
+    <string name="Mute">ЗВУК ОТКЛЮЧЕН</string>
+    <string name="Alarm">**ТРЕВОГА**</string>
+    <string name="Fall">**ПАДЕНИЕ**</string>
+    <string name="HR_Equals">\"HR = \"</string>
+    <string name="HRAlarmOff">HR Тревога отключена</string>
+    <string name="WatchAppOK">Приложение OK</string>
+    <string name="WatchAppNotRunning">Приложение не запущено</string>
+    <string name="WatchBatteryEquals">Батарея часов = </string>
+    <string name="PowerEquals">\"Питание = \"</string>
+    <string name="SpectrumRatioEquals">Соотношение спектра = </string>
+    <string name="ThresholdEquals"> (threshold = </string>
+    <string name="NetFault">Ошибка сети</string>
+    <string name="WatchApp">Приложение часов -----</string>
+    <string name="Dashes">------</string>
+    <string name="SMSWillBeSentIn">SMS будет выслано в </string>
+    <string name="Cancel">ОТМЕНА?</string>
+    <string name="AcceptAlarm">Одобрить тревогу</string>
+    <string name="AudibleAlarmsCancelledFor">Звуковая тревога отменена для</string>
+    <string name="PressToReEnable"> Нажмите, чтобы снова включить</string>
+    <string name="CancelAudibleAlarms">Отмена звуковой тревоги (временно)</string>
+    <string name="AudibleAlarmsOff">Звуковая тревога выключена</string>
+    <string name="Fault">ОШИБКА</string>
+    <string name="authenticate">Авторизация</string>
+    <string name="not_authenticated">Не авторизован</string>
+    <string name="cancel">Отмена</string>
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Вход или регистрация</string>
+    <string name="action_sign_in_short">Вход</string>
+    <string name="welcome">"Добро пожаловать!"</string>
+    <string name="invalid_username">Неверное имя пользователя</string>
+    <string name="invalid_password">Пароль должен быть >5 символов</string>
+    <string name="login_failed">"Ошибка входа"</string>
+    <string name="AdvancedModeTitle">Расширенный режим</string>
+    <string name="AdvancedModeSummary">Включить расширенные настройки (предоставляет гораздо больше возможностей для изменения ....)</string>
+    <string name="AutoStartTitle">Авто старт</string>
+    <string name="AutoStartSummary">Авто старт OpenSeizureDetector когда телефон включен</string>
+    <string name="DataSourceTitle">Выбрать источник данных</string>
+    <string name="DataSourceSummary">Выберите, использовать ли часы Garmin Watch, Pebble Watch или сетевое подключение в качестве источника данных детектора судорог.</string>
+    <string name="LogRemoteTitle">Журнал данных удаленно</string>
+    <string name="LogRemoteSummary">Записывать данные в центральную базу данных OpenSeizureDetector</string>
+    <string name="UseMobileTitle">Использовать мобильный интернет</string>
+    <string name="UseMobileSummary">Используйте мобильный интернет для регистрации удаленных данных</string>
+    <string name="SeizureDetectorSettingsTitle">Настройки детектора приступов</string>
+    <string name="AlarmThreshTitle">Порог (чувствительность) тревоги</string>
+    <string name="AlarmThreshSummary">Порог тревоги (По умолчанию = 100)</string>
+    <string name="AlarmRatioThreshTitle">Соотношение порога тревоги</string>
+    <string name="AlarmRatioThreshSummary">Соотношение порога тревоги (По умолчанию = 50). Увеличить порог для уменьшения чувствительности.</string>
+    <string name="AlarmFreqMaxTitle">МаксЧастТревоги (Гц)</string>
+    <string name="AlarmFreqMaxSummary">Макс. Частота ROI (Гц) (По умолчанию = 8 Гц)</string>
+    <string name="AlarmFreqMinTitle">МинЧастТревоги (Гц)</string>
+    <string name="AlarmFreqMinSummary">Минимальная частота ROI (Гц) (По умолчанию = 3 Гц)</string>
+    <string name="HRAlarmEnabledTitle">Сигнализация сердечного ритма включена</string>
+    <string name="HRAlarmEnabledSummary" />
+    <string name="HRNullAlarmTitle">Учитывать нулевой сердечный ритм как состояние тревоги</string>
+    <string name="HRNullAlarmSummary" />
+    <string name="HRThreshMinTitle">Минимальный порог сердечного ритма (ударов в минуту)</string>
+    <string name="HRThreshMinSummary" />
+    <string name="HRThreshMaxTitle">Максимальный порог сердечного ритма (ударов в минуту)</string>
+    <string name="HRThreshMaxSummary" />
+
+</resources>
