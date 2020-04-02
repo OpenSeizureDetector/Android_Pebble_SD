@@ -414,31 +414,31 @@ public class SdServer extends Service implements SdDataReceiver {
         switch (alarmLevel) {
             case 0:
                 iconId = R.drawable.star_of_life_24x24;
-                titleStr = "OK";
+                titleStr = getString(R.string.okBtnTxt);
                 soundUri = null;
                 break;
             case 1:
                 iconId = R.drawable.star_of_life_yellow_24x24;
-                titleStr = "WARNING";
+                titleStr = getString(R.string.Warning);
                 if (mAudibleWarning)
                     soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/warning");
                 break;
             case 2:
                 iconId = R.drawable.star_of_life_red_24x24;
-                titleStr = "ALARM";
+                titleStr = getString(R.string.Alarm);
                 if (mAudibleAlarm)
                     soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/alarm");
                 break;
             case -1:
                 iconId = R.drawable.star_of_life_fault_24x24;
-                titleStr = "FAULT";
+                titleStr = getString(R.string.Fault);
                 if (mAudibleFaultWarning)
                     soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/fault");
                 break;
             default:
                 iconId = R.drawable.star_of_life_24x24;
                 soundUri = null;
-                titleStr = "OK";
+                titleStr = getString(R.string.okBtnTxt);
         }
 
         if (mCancelAudible) {
@@ -453,9 +453,9 @@ public class SdServer extends Service implements SdDataReceiver {
                         0, i, PendingIntent.FLAG_UPDATE_CURRENT);
         String smsStr;
         if (mSMSAlarm) {
-            smsStr = "WARNING: SMS Location Alarm Active";
+            smsStr = getString(R.string.sms_location_alarm_active);
         } else {
-            smsStr = "SMS Location Alarm Disabled";
+            smsStr = getString(R.string.sms_location_alarm_disabled);
         }
         if (mNotificationBuilder != null) {
             mNotification = mNotificationBuilder.setContentIntent(contentIntent)
@@ -788,11 +788,11 @@ public class SdServer extends Service implements SdDataReceiver {
                 }
             } else {
                 Log.i(TAG, "sendSMSAlarm() - Cancel Audible Active - not sending SMS");
-                mUtil.showToast("Cancel Audible Active - not sending SMS");
+                mUtil.showToast(getString(R.string.cancel_audible_not_sending_sms));
             }
         } else {
             Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
-            mUtil.showToast("SMS Alarms Disabled - not doing anything!");
+            mUtil.showToast(getString(R.string.sms_alarm_disabled));
         }
     }
 
@@ -996,7 +996,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 if (!isWiFi) {
                     Log.v(TAG, "NetworkBroadcastReceiver - no Wifi Connection");
                     mUtil.writeToSysLogFile("Network State Changed - no Wifi Connection");
-                    mUtil.showToast("Network State Changed - no Wifi Connection");
+                    mUtil.showToast(getString(R.string.no_wifi_connection));
                 } else {
                     Log.v(TAG, "NetworkBroadcastReceiver - Wifi Connected");
                     mUtil.writeToSysLogFile("Network State Changed - Wifi Connected");
@@ -1005,7 +1005,7 @@ public class SdServer extends Service implements SdDataReceiver {
             } else {
                 Log.v(TAG, "NetworkBroadcastReceiver - No Active Network");
                 mUtil.writeToSysLogFile("Network State Changed - No Active Network");
-                mUtil.showToast("Network State Changed - No Active Network");
+                mUtil.showToast(getString(R.string.no_active_network));
             }
         }
     }
@@ -1092,7 +1092,7 @@ public class SdServer extends Service implements SdDataReceiver {
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
             mUtil.writeToSysLogFile("SdServer.updatePrefs() - Error " + ex.toString());
-            mUtil.showToast("Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!");
+            mUtil.showToast(getString(R.string.problem_parsing_preferences));
         }
     }
 
@@ -1174,7 +1174,7 @@ public class SdServer extends Service implements SdDataReceiver {
             mLocationFinder.getLocation(this);
             Location loc = mLocationFinder.getLastLocation();
             if (loc != null) {
-                mUtil.showToast("Send SMS - last location is "
+                mUtil.showToast(getString(R.string.send_sms_last_location)
                         + loc.getLongitude() + ","
                         + loc.getLatitude());
             } else {
@@ -1216,7 +1216,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 Log.e(TAG, "sendSMS - Failed to send SMS Message");
                 mUtil.writeToSysLogFile("sendSMS - Failed to send SMS Message");
                 Log.e(TAG, e.toString());
-                mUtil.showToast("ERROR: FAILED TO SEND SMS MESSAGE");
+                mUtil.showToast(getString(R.string.failed_to_send_sms));
             }
         }
 
@@ -1239,7 +1239,7 @@ public class SdServer extends Service implements SdDataReceiver {
         @Override
         public void onSdLocationReceived(Location ll) {
             if (ll == null) {
-                mUtil.showToast("onSdLocationReceived() - NULL LOCATION RECEIVED");
+                //mUtil.showToast("onSdLocationReceived() - NULL LOCATION RECEIVED");
                 Log.w(TAG, "onSdLocationReceived() - NULL LOCATION RECEIVED");
             } else {
                 //mUtil.showToast("onSdLocationReceived() - found location" + ll.toString());
@@ -1266,7 +1266,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     }
                 } else {
                     Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
-                    mUtil.showToast("SMS Alarms Disabled - not doing anything!");
+                    mUtil.showToast(getString(R.string.sms_alarms_disabled));
                 }
 
             }

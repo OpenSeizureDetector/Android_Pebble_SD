@@ -40,7 +40,7 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Edit Settings"
+            android:text="@string/edit_settings"
             android:id="@+id/settingsButton"
             android:layout_gravity="center_horizontal" />
 
@@ -127,7 +127,7 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Install Watch App"
+                android:text="@string/install_watch_app"
                 android:id="@+id/installOsdAppButton" />
         </LinearLayout>
 

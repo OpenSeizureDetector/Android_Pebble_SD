@@ -2,14 +2,14 @@
     <item
         android:id="@+id/action_accept_alarm"
         android:showAsAction="never|withText"
-        android:title="Accept Alarm" />
+        android:title="@string/accept_alarm" />
 
 
     <item
         android:id="@+id/action_start_stop"
         android:icon="@drawable/stop_server"
         android:showAsAction="never|withText"
-        android:title="Start/Stop Server" />
+        android:title="@string/start_stop_server" />
 
   <!-- fault beep test does not work because of fault timer so don't show menu option
     <item
@@ -26,31 +26,31 @@
     <item
         android:id="@+id/action_install_watch_app"
         android:showAsAction="never|withText"
-        android:title="Install Watch App" />
+        android:title="@string/install_watch_app" />
 
     <item
         android:id="@+id/action_test_alarm_beep"
         android:icon="@drawable/stop_server"
         android:showAsAction="never|withText"
-        android:title="Test Alarm Beep" />
+        android:title="@string/test_alarm_beep" />
 
     <item
         android:id="@+id/action_test_warning_beep"
         android:icon="@drawable/stop_server"
         android:showAsAction="never|withText"
-        android:title="Test Warning Beep" />
+        android:title="@string/test_warning_beep" />
 
     <item
         android:id="@+id/action_test_sms_alarm"
         android:icon="@drawable/stop_server"
         android:showAsAction="never|withText"
-        android:title="Test SMS Alarm Notification" />
+        android:title="@string/test_sms_alarm_notification" />
 
     <item
         android:id="@+id/action_logmanager"
         android:icon="@drawable/ic_action_settings"
         android:showAsAction="never|withText"
-        android:title="Data Log Manager"
+        android:title="@string/data_log_manager"
         android:enabled="true"
         />
 
@@ -58,7 +58,7 @@
         android:id="@+id/action_logs"
         android:icon="@drawable/ic_action_settings"
         android:showAsAction="never|withText"
-        android:title="View Log Entries"
+        android:title="@string/view_log_entries"
         android:enabled="true"
         />
 
@@ -66,7 +66,7 @@
         android:id="@+id/action_export"
         android:icon="@drawable/ic_action_settings"
         android:showAsAction="never|withText"
-        android:title="Export Data"
+        android:title="@string/export_data"
         android:enabled="true"
         />
 
@@ -74,12 +74,12 @@
         android:id="@+id/action_settings"
         android:icon="@drawable/ic_action_settings"
         android:showAsAction="never|withText"
-        android:title="Settings"
+        android:title="@string/settings"
         />
 
     <item
         android:id="@+id/action_about"
         android:showAsAction="never|withText"
-        android:title="About..." />
+        android:title="@string/about" />
 
  </menu>

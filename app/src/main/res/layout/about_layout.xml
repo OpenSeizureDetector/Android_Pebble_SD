@@ -18,18 +18,7 @@
         android:layout_height="wrap_content"
         android:textSize="16sp"
         android:autoLink="web"
-        android:text="OpenSeizureDetector epileptic\n
-(tonic-clonic) seizure detector and \n
-alarm system.  Uses a Pebble Smart\n
-watch to detect the shaking \n
-associated with a seizure, \n
-then raises audible and text\n
-message (SMS) alerts for carers.\n
-The system is free and open source - see \n
-http://openseizuredetector.org.uk for details.
-Please report any issues to graham@openseizuredetector.org.uk\n
-or raise an issue on the project github source code \n
-repository - https://github.com/OpenSeizureDetector"
+        android:text="@string/about_text"
         />
 
     <TextView
@@ -38,21 +27,7 @@ repository - https://github.com/OpenSeizureDetector"
         android:layout_height="wrap_content"
         android:paddingTop="20dip"
         android:textSize="16sp"
-        android:text="Main Watch App and Android App \n
-copyright Graham Jones, 2015.\n
-The following libraries are used:\n
-- SYLT-FFT - https://github.com/stg/SYLT-FFT by D. Taylor.\n
-- NanoHTTPD - https://github.com/NanoHttpd/nanohttpd\n
-- jQuery - http://jquery.org\n
-- jBeep - http://www.ultraduz.com.br\n
-- Chartjs - http://www.chartjs.org\n
-- MPAndroidChart - https://github.com/PhilJay/MPAndroidChart\n
-- UCE-Handler - https://github.com/RohitSurwase/UCE-Handler\n
-\n
-The Logo is based on Star of life2 by Verdy P, \n
-Licensed under Public Domain via\n
-Wikimedia Commons (http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).
-"
+        android:text="@string/credits_text"
         android:autoLink="web"
         />
 
