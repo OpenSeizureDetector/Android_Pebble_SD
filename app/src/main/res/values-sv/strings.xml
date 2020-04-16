@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="UpgradeMsg">
@@ -43,42 +43,42 @@
     <string name="FirstRunDlgTitle">Välkommen till OpenSeizureDetector</string>
     <string name="SmsPermissionWarning">Problem med SMS-behörighet</string>
     <string name="AppPermissionsOk">App-behörighet OK</string>
-    <string name="AppPermissionsWarning">Problem med App-behörighet</string>
+    <string name="AppPermissionsWarning">Problem med app-behörighet</string>
     <string name="BoundToServiceOk">Anslutning till tjänst OK</string>
-    <string name="BindingToService">Kopplar till Bakgrundstjänst...</string>
+    <string name="BindingToService">Kopplar till bakgrundstjänst...</string>
     <string name="WatchConnectedOk">Anslutning till klocka OK</string>
     <string name="WatchNotConnected">Klocka ej ansluten</string>
-    <string name="SeizureDetectorDataReceived">Mottagning av Seizure Detector Data OK</string>
-    <string name="WaitingForSeizureDetectorData">Väntar på Seizure Detector Data...</string>
+    <string name="SeizureDetectorDataReceived">Mottagning av Seizure Detector data OK</string>
+    <string name="WaitingForSeizureDetectorData">Väntar på Seizure Detector data...</string>
     <string name="SeizureDetectorSettingsReceived">Mottagning av Seizure Detector inställningar OK</string>
     <string name="WaitingForSeizureDetectorSettings">Väntar på Seizure Detector inställningar...</string>
     <string name="DataSource">Datakälla</string>
-    <string name="AppTitleText">OpenSeizureDetector Android App Version </string>
+    <string name="AppTitleText">OpenSeizureDetector Android app version </string>
     <string name="ServerRunningOK">Server status OK\n</string>
     <string name="AccessServerAt">Anslut till server på </string>
     <string name="ServerStopped">Server stoppad</string>
     <string name="Warning">VARNING</string>
     <string name="Mute">Stäng av</string>
-    <string name="Alarm">**ALARM**</string>
+    <string name="Alarm">**LARM**</string>
     <string name="Fall">**FALL**</string>
     <string name="HR_Equals">\"Puls = \"</string>
     <string name="HRAlarmOff">Pulslarm Av</string>
-    <string name="WatchAppOK">Smartklocka App OK</string>
-    <string name="WatchAppNotRunning">Smartklocka App AV</string>
+    <string name="WatchAppOK">Smartklocka app OK</string>
+    <string name="WatchAppNotRunning">Smartklocka app AV</string>
     <string name="WatchBatteryEquals">Klockbatteri = </string>
     <string name="PowerEquals">"Styrka = "</string>
     <string name="SpectrumRatioEquals">Kvotvärde = </string>
     <string name="ThresholdEquals"> (gräns = </string>
     <string name="NetFault">NÄTFEL</string>
-    <string name="WatchApp">Klocka App -----</string>
+    <string name="WatchApp">Klock-app -----</string>
     <string name="Dashes">------</string>
     <string name="SMSWillBeSentIn">SMS skickas om </string>
     <string name="Cancel">AVBRYT?</string>
-    <string name="AcceptAlarm">Acceptera Alarm</string>
-    <string name="AudibleAlarmsCancelledFor">Ljudalarm avstängda i </string>
+    <string name="AcceptAlarm">Acceptera larm</string>
+    <string name="AudibleAlarmsCancelledFor">Ljudlarm avstängda i </string>
     <string name="PressToReEnable">Tryck för att återaktivera</string>
-    <string name="CancelAudibleAlarms">Stäng av ljudalarm (temporärt)</string>
-    <string name="AudibleAlarmsOff">Ljudalarm AV</string>
+    <string name="CancelAudibleAlarms">Stäng av ljudlarm (temporärt)</string>
+    <string name="AudibleAlarmsOff">Ljudlarm AV</string>
     <string name="Fault">Fel</string>
     <string name="authenticate">Godkänn</string>
     <string name="not_authenticated">Ej godkänt</string>
@@ -99,14 +99,14 @@
     <string name="DataSourceTitle">Välj datakälla</string>
     <string name="DataSourceSummary">Välj om du använder en Garminklocka, Pebbleklocka eller nätverksanslutning som OpenSeizureDetectors datakälla.</string>
     <string name="LogRemoteTitle">Logga data via nätverk</string>
-    <string name="LogRemoteSummary">Logga data till OpenSeizureDetector databas</string>
+    <string name="LogRemoteSummary">Logga data till OpenSeizureDetectors databas</string>
     <string name="UseMobileTitle">Använd mobilnät</string>
     <string name="UseMobileSummary">Använd mobilnät för att logga data</string>
     <string name="SeizureDetectorSettingsTitle">Seizure Detector inställningar</string>
-    <string name="AlarmThreshTitle">Alarmgräns</string>
-    <string name="AlarmThreshSummary">Alarmgräns (förval = 100)</string>
-    <string name="AlarmRatioThreshTitle">Alarm kvotgräns</string>
-    <string name="AlarmRatioThreshSummary">Alarm kvotgräns (förval = 50). Öka för att minska känsligheten.</string>
+    <string name="AlarmThreshTitle">Larmgräns</string>
+    <string name="AlarmThreshSummary">Larmgräns (förval = 100)</string>
+    <string name="AlarmRatioThreshTitle">Larm kvotgräns</string>
+    <string name="AlarmRatioThreshSummary">Larm kvotgräns (förval = 50). Öka för att minska känsligheten.</string>
     <string name="AlarmFreqMaxTitle">Maxvärde frekvens (Hz)</string>
     <string name="AlarmFreqMaxSummary">Maxvärde frekvens ROI (Hz) (förval = 8 Hz)</string>
     <string name="AlarmFreqMinTitle">Minvärde frekvens (Hz)</string>
@@ -119,32 +119,31 @@
     <string name="HRThreshMinSummary" />
     <string name="HRThreshMaxTitle">Puls maxgräns (bpm)</string>
     <string name="HRThreshMaxSummary" />
-    <string name="BasicPrefTitle">Basic</string>
-    <string name="BasicPrefSummary">Basic Preferences</string>
-    <string name="accept_alarm">Accept Alarm</string>
-    <string name="start_stop_server">Start/Stop Server</string>
-    <string name="install_watch_app">Install Watch App</string>
-    <string name="test_alarm_beep">Test Alarm Beep</string>
-    <string name="test_warning_beep">Test Warning Beep</string>
-    <string name="test_sms_alarm_notification">Test SMS Alarm Notification</string>
-    <string name="data_log_manager">Data Log Manager</string>
-    <string name="view_log_entries">View Log Entries</string>
-    <string name="export_data">Export Data</string>
-    <string name="settings">Settings</string>
-    <string name="about">About...</string>
-    <string name="about_text">OpenSeizureDetector epileptic\n (tonic-clonic) seizure detector and \n alarm system. Uses a Pebble Smart\n watch to detect the shaking \n associated with a seizure, \n then raises audible and text\n message (SMS) alerts for carers.\n The system is free and open source - see \n http://openseizuredetector.org.uk for details. Please report any issues to graham@openseizuredetector.org.uk\n or raise an issue on the project github source code \n repository - https://github.com/OpenSeizureDetector</string>
-    <string name="credits_text">Main Watch App and Android App \n copyright Graham Jones, 2015.\n The following libraries are used:\n - SYLT-FFT - https://github.com/stg/SYLT-FFT by D. Taylor.\n - NanoHTTPD - https://github.com/NanoHttpd/nanohttpd\n - jQuery - http://jquery.org\n - jBeep - http://www.ultraduz.com.br\n - Chartjs - http://www.chartjs.org\n - MPAndroidChart - https://github.com/PhilJay/MPAndroidChart\n - UCE-Handler - https://github.com/RohitSurwase/UCE-Handler\n \n The Logo is based on Star of life2 by Verdy P, \n Licensed under Public Domain via\n Wikimedia Commons (http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).</string>
-    <string name="edit_settings">Edit Settings</string>
-    <string name="sms_location_alarm_active">SMS Location Alarm Active</string>
-    <string name="sms_location_alarm_disabled">SMS Location Alarm Disabled</string>
-    <string name="cancel_audible_not_sending_sms">Cancel Audible Active - not sending SMS</string>
-    <string name="sms_alarm_disabled">SMS Alarms Disabled - not doing anything!</string>
-    <string name="no_wifi_connection">Network State Changed - no Wifi Connection</string>
-    <string name="no_active_network">Network State Changed - No Active Network</string>
-    <string name="problem_parsing_preferences">Problem Parsing Preferences - Something won\'t work - Please go back to Settings and correct it!</string>
-    <string name="send_sms_last_location">\"Send SMS - last location is \"</string>
-    <string name="failed_to_send_sms">ERROR: FAILED TO SEND SMS MESSAGE</string>
-    <string name="sms_alarms_disabled">SMS Alarms Disabled - not doing anything!</string>
+    <string name="BasicPrefTitle">Allmänt</string>
+    <string name="BasicPrefSummary">Grundinställningar</string>
+    <string name="accept_alarm">Acceptera larm</string>
+    <string name="start_stop_server">Starta/Stoppa server</string>
+    <string name="install_watch_app">Installera app på klocka</string>
+    <string name="test_alarm_beep">Test larmsignal</string>
+    <string name="test_warning_beep">Test varningssignal</string>
+    <string name="test_sms_alarm_notification">Test SMS-larmmeddelande</string>
+    <string name="data_log_manager">Dataloggshanterare</string>
+    <string name="view_log_entries">Visa loggfiler</string>
+    <string name="export_data">Exportera data</string>
+    <string name="settings">Inställningar</string>
+    <string name="about">Om...</string>
+    <string name="about_text">OpenSeizureDetector - Epilepsi-\n detektor (tonisk-klonisk) och \n larmsystem. Använder en smart-\nklocka för att upptäcka rörelser \n som tyder på ett anfall, \n och larmar med ljud och text-\nmeddelande(SMS) till vårdare.\n Detta system är gratis och open source - se \n http://openseizuredetector.org.uk för mer info. Felrapportera till graham@openseizuredetector.org.uk\n eller lägg upp ett ärende i projektet på GitHub \n https://github.com/OpenSeizureDetector</string>
+    <string name="credits_text">Smartklockans OS och Android OS \n copyright Graham Jones, 2015.\n Vi har använt oss av följande:\n - SYLT-FFT - https://github.com/stg/SYLT-FFT by D. Taylor.\n - NanoHTTPD - https://github.com/NanoHttpd/nanohttpd\n - jQuery - http://jquery.org\n - jBeep - http://www.ultraduz.com.br\n - Chartjs - http://www.chartjs.org\n - MPAndroidChart - https://github.com/PhilJay/MPAndroidChart\n - UCE-Handler - https://github.com/RohitSurwase/UCE-Handler\n \n Logotypen är baserad på Star of life2 by Verdy P, \n Licensierad hos Public Domain via\n Wikimedia Commons (http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).</string>
+    <string name="edit_settings">Ändra inställningar</string>
+    <string name="sms_location_alarm_active">SMS positionslarm PÅ</string>
+    <string name="sms_location_alarm_disabled">SMS positionslarm AV</string>
+    <string name="cancel_audible_not_sending_sms">Stäng av ljudlarm - skicka inte SMS</string>
+    <string name="sms_alarm_disabled">SMS-larm avstängt- ingen åtgärd</string>
+    <string name="no_wifi_connection">Nätverksstatus ändrad - ingen uppkoppling</string>
+    <string name="no_active_network">Nätverksstatus ändrad - inga aktiva nätverk</string>
+    <string name="problem_parsing_preferences">Något gick fel! Problem med inställningarna - justera dessa.</string>
+    <string name="send_sms_last_location">\"Sänd SMS - senast kända plats är \"</string>
+    <string name="failed_to_send_sms">ERROR: SMS ej sänt</string>
+    <string name="sms_alarms_disabled">SMS-larm avstängt- ingen åtgärd!</string>
 
 </resources>
-
