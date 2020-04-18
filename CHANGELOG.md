@@ -1,8 +1,7 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
     V3.2.0 - mar2020
-        - Modified data logging to use sqlite database rather than text files.
-        - Added facility to upload data to remote server.
+        - Added support for additional languages - Sweedish, German and Russian included in this release
         - Added support for additional GarminSD settings data fields to record the watch app version number etc and
           log that info to the SysLog file.
         - Made only a subset of settings available by default, unless the user enables 'advanced mode' to make them all visible.

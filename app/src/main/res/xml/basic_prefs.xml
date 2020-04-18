@@ -23,7 +23,7 @@
         android:title="@string/DataSourceTitle" />
 
     <PreferenceCategory android:title="Data Logging Settings">
-    <CheckBoxPreference
+<!--    <CheckBoxPreference
         android:defaultValue="false"
         android:key="LogDataRemote"
         android:summary="@string/LogRemoteSummary"
@@ -33,6 +33,7 @@
         android:key="LogDataRemoteMobile"
         android:summary="@string/UseMobileSummary"
         android:title="@string/UseMobileTitle" />
+-->
     </PreferenceCategory>
 
 

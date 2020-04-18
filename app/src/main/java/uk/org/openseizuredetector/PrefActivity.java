@@ -66,7 +66,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     @Override
     public void onBuildHeaders(List<Header> target) {
         loadHeadersFromResource(R.xml.preference_headers, target);
-
+        Log.v(TAG,"onBuildHeaders - target.size="+target.size());
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(this.getApplicationContext());
         String dataSourceStr = SP.getString("DataSource", "Pebble");
@@ -106,7 +106,8 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         } else {
             for (int i = 0; i < target.size(); i++) {
                 Header h = target.get(i);
-                Log.v(TAG, "found - " + h.title.toString());
+                Log.v(TAG,"i="+i+", h="+h.toString());
+                Log.v(TAG, "found - " + h.title);
                 if (!h.title.toString().equals("Basic")) {
                     if (!advancedMode) {
                         Log.v(TAG, "an Advanced Mode Header");

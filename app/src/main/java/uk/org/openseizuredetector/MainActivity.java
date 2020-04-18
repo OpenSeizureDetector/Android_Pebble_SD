@@ -311,7 +311,7 @@ public class MainActivity extends AppCompatActivity {
         TextView tv;
         tv = (TextView) findViewById(R.id.versionTv);
         String versionName = mUtil.getAppVersionName();
-        tv.setText(getString(R.string.AppTitleText) + versionName);
+        tv.setText(getString(R.string.AppTitleText) + " " + versionName);
 
         if (mUtil.isServerRunning()) {
             mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");

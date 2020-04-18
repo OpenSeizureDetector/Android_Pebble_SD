@@ -4,8 +4,8 @@
 
     <header android:fragment="uk.org.openseizuredetector.PrefActivity$BasicPrefsFragment"
         android:icon="@drawable/icon_24x24"
-        android:title="@string/BasicPrefTitle"
-        android:summary="@string/BasicPrefSummary" />
+        android:title="Basic"
+        android:summary="Basic Settings" />
 
     <header android:fragment="uk.org.openseizuredetector.PrefActivity$GeneralPrefsFragment"
         android:icon="@drawable/icon_24x24"
