@@ -41,7 +41,7 @@
   <string name="UpdateDialogTitleTxt">Vielen Dank für die Nutzung des Updates von OpenSeizureDetector</string>
   <string name="FirstRunDlgTitle">Willkommen bei OpenSeizureDetector</string>
   <string name="ask_for_error_log">Entschuldigung, OpenSeizureDetector ist abgestuertzt.  Bitte senden Sie diese Log-Datei an uns, damit wir herausfinden koennen was passiert ist und es reparieren können.\nVielen Dank, Graham.</string>
-  <string name="email_welcome_note">Lieber OpenSeizureDetector-Nutzer,\n\nDie Anwendung ist gerade abgestuerzt, bitte prüfe den folgenden error log für mehr Informationen.\n\n\n</string>
+  <string name="email_welcome_note">Lieber Nutzer von OpenseizureDetector, die Anwendung ist gerade abgestürzt. Das anhängende Fehler-Protokoll enthält gegebenfalls detailliertere Informationen.\n\n\n</string>
   <string name="copyright_info">OpenSeizureDetector (Using UCE Handler\nCopyright Â© 2018 Rohit Sahebrao Surwase.)</string>
   <string name="SmsPermissionWarning">Problem mit SMS-Berechtigungen</string>
   <string name="AppPermissionsOk">App Berechtigung OK</string>

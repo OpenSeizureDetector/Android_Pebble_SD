@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OpenSeizureDetector</string>
+    <string name="UpgradeMsg">
+        OpenSeizureDetector (el Detector de Convulsiones Abierto) no almacena ningún dato personal.
+        Esto significa,  que no me es posible contactar con los usuarios si encuentro un problema
+ 	del cual debes estar enterado. \nPor favor suscríbete para recibir actualizaciones en 
+	http://openseizuredetector.org.uk, o en la página de Facebook de la app en https://www.facebook.com/openseizuredetector.
+        para que pueda contactarte en caso necesario.\nGracias!  Graham \ngraham@openseizuredetector.org.uk
+        \n\nCambios en esta versión:
+        \n V3.2.0 - mar2020
+        \n    - Se modificó el registro de datos para usar sqlite en lugar de archivos de texto.
+        \n    - Se añadieron facilidades para cargar datos al servidor remoto.
+        \n    - Se añadió soporte para campos de ajustes adicionales de Garmin para registrar el número de versión de la aplicación del reloj etc y cargar 	esa información en el archivo de Syslog.
+        \n    - Se muestra solamente un subconjunto de los ajustes a menos que el usuario habilite el Modo Avanzado
+        \n  V3.1.15 - Se añadió Soporte para Idioma Alemán en la pantalla principal y en la pantalla de arranque
+        \n  V3.1.14 - Se reparó la Interfase Web del Detector de Convulsiones Abierto, que se había descompuesto con la versión V3.1.13
+        \n  V3.1.13 - Se corrigió la pantalla de ERR_400 en el reloj garmin y los problemas asociados con la alerta de fallas de la fuente de datos de 	red.
+        \n
+    </string>
+    <string name="FirstRunDlgMsg">
+        OpenSeizureDetector (el Detector de Convulsiones Abierto) no almacena ningún dato personal.
+        Esto significa,  que no me es posible contactar con los usuarios si encuentro un problema
+ 	del cual debes estar enterado. \nPor favor suscríbete para recibir actualizaciones en 
+	http://openseizuredetector.org.uk, o en la página de Facebook de la app en https://www.facebook.com/openseizuredetector.
+        para que pueda contactarte en caso necesario.\nGracias!  Graham \ngraham@openseizuredetector.org.uk
+        \n\nCambios en esta versión:
+        \n V3.2.0 - mar2020
+        \n    - Se modificó el registro de datos para usar sqlite en lugar de archivos de texto.
+        \n    - Se añadieron facilidades para cargar datos al servidor remoto.
+        \n    - Se añadió soporte para campos de ajustes adicionales de Garmin para registrar el número de versión de la aplicación del reloj etc y cargar 		esa información en el archivo de Syslog.
+        \n    - Se muestra solamente un subconjunto de los ajustes a menos que el usuario habilite el Modo Avanzado
+        \n  V3.1.15 - Se añadió Soporte para Idioma Alemán en la pantalla principal y en la pantalla de arranque
+        \n  V3.1.14 - Se reparó la Interfase Web del Detector de Convulsiones Abierto, que se había descompuesto con la versión V3.1.13
+        \n  V3.1.13 - Se corrigió la pantalla de ERR_400 en el reloj garmin y los problemas asociados con la alerta de fallas de la fuente de datos de 	red.
+    </string>
+    <string name="ask_for_error_log">Lo sentimos, OpenSeizureDetector se ha detenido. Por favor envíenos este archivo de registro por corréo 	electrónico de manera que podamos saber que pasó y solucionarlo. \nGracias, Graham.</string>
+    <string name="email_welcome_note">Estimado OpenSeizureDetector,\n\nLa aplicación se acaba de detener, por favor revise el siguiente 	registro de error para más detalles.\n\n\n</string>
+    <string name="copyright_info">OpenSeizureDetector (Usando el Manejador UCE\nDerechos de Autor © 2018 Rohit Sahebrao Surwase.)</string>
+    <string name="okBtnTxt">OK</string>
+    <string name="UpdateDialogTitleTxt">Gracias por actualizar OpenSeizureDetector</string>
+    <string name="FirstRunDlgTitle">Bienvenido al OpenSeizureDetector</string>
+    <string name="SmsPermissionWarning">Problemas con permisos de SMS</string>
+    <string name="AppPermissionsOk">App de Permisos OK</string>
+    <string name="AppPermissionsWarning">Problemas con la App de Permisos</string>
+    <string name="BoundToServiceOk">Vinculación al Servicio OK</string>
+    <string name="BindingToService">Vinculándose al Servicio en Segundo Plano...</string>
+    <string name="WatchConnectedOk">Reloj Conectado OK</string>
+    <string name="WatchNotConnected">Reloj sin Conectar</string>
+    <string name="SeizureDetectorDataReceived">Datos del Detector de Convulsiones Recibidos OK</string>
+    <string name="WaitingForSeizureDetectorData">Esperando por los Datos del Detector de Convulsiones...</string>
+    <string name="SeizureDetectorSettingsReceived">Configuración del Detector de Convulsiones Recibida OK</string>
+    <string name="WaitingForSeizureDetectorSettings">Esperando por la Configuración del Detector de Convulsiones...</string>
+    <string name="DataSource">Fuente de los Datos</string>
+    <string name="AppTitleText">Detector de Convulsiones Abierto para Android App Versión </string>
+    <string name="ServerRunningOK">Servidor Funcionando OK\n</string>
+    <string name="AccessServerAt">Accese al Servidor en </string>
+    <string name="ServerStopped">El Servidor se detuvo</string>
+    <string name="Warning">ALERTA</string>
+    <string name="Mute">SILENCIO</string>
+    <string name="Alarm">**ALARMA**</string>
+    <string name="Fall">**CAIDA**</string>
+    <string name="HR_Equals">HR = </string>
+    <string name="HRAlarmOff">Alarma de HR APAGADA</string>
+    <string name="WatchAppOK">App de Reloj OK</string>
+    <string name="WatchAppNotRunning">La App deL Reloj NO está funcionando</string>
+    <string name="WatchBatteryEquals">Batería del Reloj = </string>
+    <string name="PowerEquals">Energía = </string>
+    <string name="SpectrumRatioEquals">Razón de Espectro = </string>
+    <string name="ThresholdEquals"> (límite = </string>
+    <string name="NetFault">FALLA DE LA RED</string>
+    <string name="WatchApp">App de Reloj -----</string>
+    <string name="Dashes">------</string>
+    <string name="SMSWillBeSentIn">El Mensaje de SMS Será Enviado en </string>
+    <string name="Cancel">CANCELAR?</string>
+    <string name="AcceptAlarm">Aceptar Alarma</string>
+    <string name="AudibleAlarmsCancelledFor">Alarma Audible Cancelada por </string>
+    <string name="PressToReEnable"> Presione para reestablecer</string>
+    <string name="CancelAudibleAlarms">Cancele Alarmas Audibles (temporalmente)</string>
+    <string name="AudibleAlarmsOff">alarmas Audibles APAGADAS</string>
+    <string name="Fault">FALLA</string>
+    <string name="authenticate">Autenticado</string>
+    <string name="not_authenticated">No Autenticado</string>
+    <string name="cancel">Cancelar</string>
+    <!-- Strings related to login -->
+    <string name="prompt_email">Correo Electrónico</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Inicie Sesión o Regístrese</string>
+    <string name="action_sign_in_short">Inicie Sesión</string>
+    <string name="welcome">"Bienvenido!"</string>
+    <string name="invalid_username">Nombre de Usuario Inválido</string>
+    <string name="invalid_password">El Password debe ser mayor a 5 caracteres</string>
+    <string name="login_failed">"Fallo en el Acceso"</string>
+    <string name="AdvancedModeTitle">Modo Avanzado</string>
+    <string name="AdvancedModeSummary">Permita Ajustes Avanzados (muestra muchas más cosas que puedes cambiar....)</string>
+    <string name="AutoStartTitle">Inicio Automático</string>
+    <string name="AutoStartSummary">Inice el Detector de Convulsiones cuando inicie el teléfono</string>
+    <string name="DataSourceTitle">Seleccione la Fuente de Datos</string>
+    <string name="DataSourceSummary">Seleccione el uso del Reloj Garmin, el Reloj Pebble o una conexión de red, como la fuente de datos del detector de 	convulsiones.</string>
+    <string name="LogRemoteTitle">Registre los Datos de forma Remota</string>
+    <string name="LogRemoteSummary">Registre los Datos en la Base de Datos Central del Detector de Convulsiones Abierto</string>
+    <string name="UseMobileTitle">Use Internet Móvil</string>
+    <string name="UseMobileSummary">Use Internet Móvil para registrar datos remotos</string>
+    <string name="SeizureDetectorSettingsTitle">Ajustes del Detector de Convulsiones</string>
+    <string name="AlarmThreshTitle">Límite de Alarma</string>
+    <string name="AlarmThreshSummary">Límite de Alarma (Default = 100)</string>
+    <string name="AlarmRatioThreshTitle">Límite de Razón de Alarma</string>
+    <string name="AlarmRatioThreshSummary">Límite de Razón de Alarma (Default = 50). Incremente para reducir la sensibilidad.</string>
+    <string name="AlarmFreqMaxTitle">FrecMaxDeAlarma (Hz)</string>
+    <string name="AlarmFreqMaxSummary">Frecuencia Máxima de ROI (Hz) (Default = 8 Hz)</string>
+    <string name="AlarmFreqMinTitle">FrecMinDeAlarma (Hz)</string>
+    <string name="AlarmFreqMinSummary">Frecuencia Mínima de ROI (Hz) (Default = 3 Hz)</string>
+    <string name="HRAlarmEnabledTitle">Alarma de Pulso Cardíaco Habilitada</string>
+    <string name="HRAlarmEnabledSummary" />
+    <string name="HRNullAlarmTitle">Interprete un Pulso Cardíaco NULO como una condición de alarma</string>
+    <string name="HRNullAlarmSummary" />
+    <string name="HRThreshMinTitle">Límite Mínimo de Pulso Cardíaco (bpm)</string>
+    <string name="HRThreshMinSummary" />
+    <string name="HRThreshMaxTitle">Límite máximo de Pulso Cardíaco (bpm)</string>
+    <string name="HRThreshMaxSummary" />
+    <string name="BasicPrefTitle">Básico</string>
+    <string name="BasicPrefSummary">Preferencias Básicas</string>
+    <string name="accept_alarm">Acepte Alarma</string>
+    <string name="start_stop_server">Arranque/Detenga el Servidor</string>
+    <string name="install_watch_app">Instale la App del Reloj</string>
+    <string name="test_alarm_beep">Pruebe el Tono de Alarma</string>
+    <string name="test_warning_beep">Pruebe el Tono de Alerta</string>
+    <string name="test_sms_alarm_notification">Pruebe la Notificación de Alarma de SMS</string>
+    <string name="data_log_manager">Administrador de Registro de Datos.</string>
+    <string name="view_log_entries">Revise las Entradas del Registro</string>
+    <string name="export_data">Exporte los Datos</string>
+    <string name="settings">Ajustes</string>
+    <string name="about">Sobre...</string>
+    <string name="about_text">OpenSeizureDetector\n Detector de convulsiones tónico/clónicas y \n sistema de alarma. Usa un Reloj Inteligente Pebble\n para detectar las sacudidas \n asociadas con una convulsión, \n después envia un mensaje audible y de texto \n vía (SMS) para alertar a las personas que cuidan al paciente.\n El sistema es gratis y de código abierto - vea \n http://openseizuredetector.org.uk para más detalles. Por favor reporte cualquier problema a graham@openseizuredetector.org.uk\n o levante un registro de problema en el proyecto github source code \n repository - https://github.com/OpenSeizureDetector</string>
+    <string name="credits_text">Aplicación de Reloj y Aplicación de Android \n derecho de autor Graham Jones, 2015.\n Las siguientes bibliotecas se usan :\n - SYLT-FFT - https://github.com/stg/SYLT-FFT by D. Taylor.\n - NanoHTTPD - https://github.com/NanoHttpd/nanohttpd\n - jQuery - http://jquery.org\n - jBeep - http://www.ultraduz.com.br\n - Chartjs - http://www.chartjs.org\n - MPAndroidChart - https://github.com/PhilJay/MPAndroidChart\n - UCE-Handler - https://github.com/RohitSurwase/UCE-Handler\n \n El Logo está basado en la Estrella de la Vida2 por Verdy P, \n Licensed under Public Domain via\n Wikimedia Commons (http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).</string>
+    <string name="edit_settings">Edite Ajustes</string>
+    <string name="sms_location_alarm_active">Alarma de Localización de SMS Activa</string>
+    <string name="sms_location_alarm_disabled">Alarma de Localización de SMS Inactiva</string>
+    <string name="cancel_audible_not_sending_sms">Cancele Alarma Audible - no enviando SMS</string>
+    <string name="sms_alarm_disabled">Alarmas de SMS Incativas - No está haciendo nada ! </string>
+    <string name="no_wifi_connection">Cambio en el Estado de Red - Sin Conexión de Wifi</string>
+    <string name="no_active_network">Cambio en el Estado de Red - Sin Red Activa</string>
+    <string name="problem_parsing_preferences">Problema al Interpretar las Preferencias - Algo no está Trabajando - Por favor regrese a Ajustes y corríjalo !</string>
+    <string name="send_sms_last_location">Envíe SMS - La última ubicación es  </string>
+    <string name="failed_to_send_sms">ERROR : FALLA EL ENVIAR MENSAJE DE SMS</string>
+    <string name="sms_alarms_disabled">Alarmas de SMS Inactivas - no está haciendo nada !</string>
+
+</resources>

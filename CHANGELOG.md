@@ -1,6 +1,8 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
-    V3.2.0 - mar2020
+	V3.2.1 - Aug2020
+		- Addition of Spanish Translation, and correction of crash report wording in German.
+	V3.2.0 - mar2020
         - Added support for additional languages - Sweedish, German and Russian included in this release
         - Added support for additional GarminSD settings data fields to record the watch app version number etc and
           log that info to the SysLog file.
