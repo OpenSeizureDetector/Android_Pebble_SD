@@ -62,12 +62,12 @@
     <string name="Mute">MUTE</string>
     <string name="Alarm">**ALARM**</string>
     <string name="Fall">**FALL**</string>
-    <string name="HR_Equals">\"HR = \"</string>
+    <string name="HR_Equals">HR = </string>
     <string name="HRAlarmOff">HR Alarm OFF</string>
     <string name="WatchAppOK">Watch App OK</string>
     <string name="WatchAppNotRunning">Watch App NOT Running</string>
     <string name="WatchBatteryEquals">Watch Battery = </string>
-    <string name="PowerEquals">\"Power = \"</string>
+    <string name="PowerEquals">Power = </string>
     <string name="SpectrumRatioEquals">Spectrum Ratio = </string>
     <string name="ThresholdEquals"> (threshold = </string>
     <string name="NetFault">NET FAULT</string>
@@ -143,7 +143,7 @@
     <string name="no_wifi_connection">Network State Changed - no Wifi Connection</string>
     <string name="no_active_network">Network State Changed - No Active Network</string>
     <string name="problem_parsing_preferences">Problem Parsing Preferences - Something won\'t work - Please go back to Settings and correct it!</string>
-    <string name="send_sms_last_location">\"Send SMS - last location is \"</string>
+    <string name="send_sms_last_location">Send SMS - last location is </string>
     <string name="failed_to_send_sms">ERROR: FAILED TO SEND SMS MESSAGE</string>
     <string name="sms_alarms_disabled">SMS Alarms Disabled - not doing anything!</string>
 
