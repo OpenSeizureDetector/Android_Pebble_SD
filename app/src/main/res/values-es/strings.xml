@@ -8,15 +8,6 @@
 	http://openseizuredetector.org.uk, o en la página de Facebook de la app en https://www.facebook.com/openseizuredetector.
         para que pueda contactarte en caso necesario.\nGracias!  Graham \ngraham@openseizuredetector.org.uk
         \n\nCambios en esta versión:
-        \n V3.2.0 - mar2020
-        \n    - Se modificó el registro de datos para usar sqlite en lugar de archivos de texto.
-        \n    - Se añadieron facilidades para cargar datos al servidor remoto.
-        \n    - Se añadió soporte para campos de ajustes adicionales de Garmin para registrar el número de versión de la aplicación del reloj etc y cargar 	esa información en el archivo de Syslog.
-        \n    - Se muestra solamente un subconjunto de los ajustes a menos que el usuario habilite el Modo Avanzado
-        \n  V3.1.15 - Se añadió Soporte para Idioma Alemán en la pantalla principal y en la pantalla de arranque
-        \n  V3.1.14 - Se reparó la Interfase Web del Detector de Convulsiones Abierto, que se había descompuesto con la versión V3.1.13
-        \n  V3.1.13 - Se corrigió la pantalla de ERR_400 en el reloj garmin y los problemas asociados con la alerta de fallas de la fuente de datos de 	red.
-        \n
     </string>
     <string name="FirstRunDlgMsg">
         OpenSeizureDetector (el Detector de Convulsiones Abierto) no almacena ningún dato personal.
@@ -25,14 +16,6 @@
 	http://openseizuredetector.org.uk, o en la página de Facebook de la app en https://www.facebook.com/openseizuredetector.
         para que pueda contactarte en caso necesario.\nGracias!  Graham \ngraham@openseizuredetector.org.uk
         \n\nCambios en esta versión:
-        \n V3.2.0 - mar2020
-        \n    - Se modificó el registro de datos para usar sqlite en lugar de archivos de texto.
-        \n    - Se añadieron facilidades para cargar datos al servidor remoto.
-        \n    - Se añadió soporte para campos de ajustes adicionales de Garmin para registrar el número de versión de la aplicación del reloj etc y cargar 		esa información en el archivo de Syslog.
-        \n    - Se muestra solamente un subconjunto de los ajustes a menos que el usuario habilite el Modo Avanzado
-        \n  V3.1.15 - Se añadió Soporte para Idioma Alemán en la pantalla principal y en la pantalla de arranque
-        \n  V3.1.14 - Se reparó la Interfase Web del Detector de Convulsiones Abierto, que se había descompuesto con la versión V3.1.13
-        \n  V3.1.13 - Se corrigió la pantalla de ERR_400 en el reloj garmin y los problemas asociados con la alerta de fallas de la fuente de datos de 	red.
     </string>
     <string name="ask_for_error_log">Lo sentimos, OpenSeizureDetector se ha detenido. Por favor envíenos este archivo de registro por corréo 	electrónico de manera que podamos saber que pasó y solucionarlo. \nGracias, Graham.</string>
     <string name="email_welcome_note">Estimado OpenSeizureDetector,\n\nLa aplicación se acaba de detener, por favor revise el siguiente 	registro de error para más detalles.\n\n\n</string>

@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
+    <string name="changelog">
+        \n V3.2.1 - Aug 2020
+        \n    - Added Spanish Translation
+        \n V3.2.0 - mar2020
+        \n    - Added multiple language support (German, Russian, Swedish)
+        \n    - Modified data logging to use sqlite database rather than text files.
+        \n    - Added facility to upload data to remote server.
+        \n    - Added support for additional GarminSD settings data fields to record the watch app version number etc and
+          log that info to the SysLog file.
+        \n    - Made only a subset of settings visible by default unless the user enables Advanced Mode
+    </string>
     <string name="UpgradeMsg">
         OpenSeizureDetector does not collect any personal data.
         This does mean that it is not possible for me to contact users if I find an
@@ -8,15 +19,6 @@
         http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector.
         so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk
         \n\nChanges in this version:
-        \n V3.2.0 - mar2020
-        \n    - Modified data logging to use sqlite database rather than text files.
-        \n    - Added facility to upload data to remote server.
-        \n    - Added support for additional GarminSD settings data fields to record the watch app version number etc and
-          log that info to the SysLog file.
-        \n    - Made only a subset of settings visible by default unless the user enables Advanced Mode
-        \n  V3.1.15 - Added German Language Support to main and start-up screens
-        \n  V3.1.14 - Repaired OpenSeizureDetector Web Interface, that was broken by V3.1.13
-        \n  V3.1.13 - Fixed ERR-400 display on garmin watch and associated problem with network datasource fault alerting.
         \n
     </string>
     <string name="FirstRunDlgMsg">
@@ -26,15 +28,6 @@
         http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector.
         so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk
         \n\nChanges in this version:
-        \n V3.2.0 - mar2020
-        \n    - Modified data logging to use sqlite database rather than text files.
-        \n    - Added facility to upload data to remote server.
-        \n    - Added support for additional GarminSD settings data fields to record the watch app version number etc and
-          log that info to the SysLog file.
-        \n    - Made only a subset of settings visible by default unless the user enables Advanced Mode
-        \n  V3.1.15 - Added German Language Support to main and start-up screens
-        \n  V3.1.14 - Repaired OpenSeizureDetector Web Interface, that was broken by V3.1.13
-        \n  V3.1.13 - Fixed ERR-400 display on garmin watch and associated problem with network datasource fault alerting.
     </string>
     <string name="ask_for_error_log">Sorry, OpenSeizureDetector Has Crashed.  Please Email this log file to us so we can work out what happened and fix it.\nThanks, Graham.</string>
     <string name="email_welcome_note">Dear OpenSeizureDetector,\n\nApplication is just crashed, please check following error log for more details.\n\n\n</string>
