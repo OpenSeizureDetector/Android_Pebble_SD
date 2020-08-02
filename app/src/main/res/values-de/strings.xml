@@ -10,15 +10,6 @@
     Vielen Dank!  Graham \n
     graham@OpenSeizureDetector.org.uk \n\n
     Aenderungen in dieser Version:
-        \n V3.2.0 - mar2020
-        \n    - Modified data logging to use sqlite database rather than text files.
-        \n    - Added facility to upload data to remote server.
-        \n    - Added support for additional GarminSD settings data fields to record the watch app version number etc and
-          log that info to the SysLog file.
-        \n  V3.1.15 - Added German Language Support to main and start-up screens
-        \n  V3.1.14 - Repaired OpenSeizureDetector Web Interface, that was broken by V3.1.13
-    \n  V3.1.13 - Die ERROR-400-Anzeige auf der Garmin-Uhr und das damit verbundene Problem mit der Fehlerwarnung für Netzwerkdatenquellen wurden behoben.
-    \n
   </string>
   <string name="FirstRunDlgMsg"> OpenSeizureDetector sammelt keine persoenlichen Daten.
     Das bedeutet, dass ich Benutzer nicht kontaktieren kann, wenn ich ein Problem
@@ -28,14 +19,6 @@
     Vielen Dank!  Graham \n
     graham@OpenSeizureDetector.org.uk        
     \n\nAenderungen in dieser Version:        
-        \n V3.2.0 - mar2020
-        \n    - Modified data logging to use sqlite database rather than text files.
-        \n    - Added facility to upload data to remote server.
-        \n    - Added support for additional GarminSD settings data fields to record the watch app version number etc and
-          log that info to the SysLog file.
-        \n  V3.1.15 - Added German Language Support to main and start-up screens
-        \n  V3.1.14 - Repaired OpenSeizureDetector Web Interface, that was broken by V3.1.13
-    \n  V3.1.13 - Die ERROR-400-Anzeige auf der Garmin-Uhr und das damit verbundene Problem mit der Fehlerwarnung für Netzwerkdatenquellen wurden behoben.        
   </string>
   <string name="okBtnTxt">OK</string>
   <string name="UpdateDialogTitleTxt">Vielen Dank für die Nutzung des Updates von OpenSeizureDetector</string>
@@ -69,7 +52,7 @@
   <string name="WatchBatteryEquals">Smartwatch Batterie = </string>
   <string name="PowerEquals">Power = </string>
   <string name="SpectrumRatioEquals">Spektrum-Verhaeltnis = </string>
-  <string name="ThresholdEquals"> (Schwelle = </string>
+  <string name="Threshold">Schwelle</string>
   <string name="NetFault">NETZWERK-FEHLER</string>
   <string name="WatchApp">Smartwatch App -----</string>
   <string name="Dashes">------</string>

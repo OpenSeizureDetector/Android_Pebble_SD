@@ -526,9 +526,9 @@ public class MainActivity extends AppCompatActivity {
                         specRatio = 0;
 
                     ((TextView) findViewById(R.id.powerTv)).setText(getString(R.string.PowerEquals) + mConnection.mSdServer.mSdData.roiPower +
-                            getString(R.string.ThresholdEquals) + mConnection.mSdServer.mSdData.alarmThresh + ")");
+                            " ("+ getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
                     ((TextView) findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
-                            getString(R.string.ThresholdEquals) + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
+                            " ("+ getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
 
                     ProgressBar pb;
                     Drawable pbDrawable;

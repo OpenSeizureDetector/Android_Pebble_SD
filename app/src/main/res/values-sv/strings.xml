@@ -7,16 +7,6 @@
         problem med appen som kan uppstå.   \nVänligen prenumerera på uppdateringar via
         http://openseizuredetector.org.uk eller appens Facebooksida https://www.facebook.com/openseizuredetector.   \nTack! Graham \ngraham@openseizuredetector.org.uk
         \n\nChanges in this version:
-        \n V3.2.0 - mar2020
-        \n    - Modified data logging to use sqlite database rather than text files.
-        \n    - Added facility to upload data to remote server.
-        \n    - Added support for additional GarminSD settings data fields to record the watch app version number etc and
-          log that info to the SysLog file.
-        \n    - Made only a subset of settings visible by default unless the user enables Advanced Mode
-        \n  V3.1.15 - Added German Language Support to main and start-up screens
-        \n  V3.1.14 - Repaired OpenSeizureDetector Web Interface, that was broken by V3.1.13
-        \n  V3.1.13 - Fixed ERR-400 display on Garmin watch and associated problem with network datasource fault alerting.
-        \n
     </string>
     <string name="FirstRunDlgMsg">
         OpenSeizureDetector samlar inga personliga data.
@@ -25,15 +15,6 @@
    \nVänligen prenumerera på uppdateringar via
         http://openseizuredetector.org.uk eller appens Facebooksida https://www.facebook.com/openseizuredetector.\nTack! Graham \ngraham@openseizuredetector.org.uk
         \n\nChanges in this version:
-        \n V3.2.0 - mar2020
-        \n    - Modified data logging to use sqlite database rather than text files.
-        \n    - Added facility to upload data to remote server.
-        \n    - Added support for additional GarminSD settings data fields to record the watch app version number etc and
-          log that info to the SysLog file.
-        \n    - Made only a subset of settings visible by default unless the user enables Advanced Mode
-        \n  V3.1.15 - Added German Language Support to main and start-up screens
-        \n  V3.1.14 - Repaired OpenSeizureDetector Web Interface, that was broken by V3.1.13
-        \n  V3.1.13 - Fixed ERR-400 display on Garmin watch and associated problem with network datasource fault alerting.
     </string>
     <string name="ask_for_error_log">OpenSeizureDetector har tyvärr kraschat. Vänligen eposta loggfilen till oss, så att vi kan undersöka vad som hänt och åtgärda problemet.\nTack! Graham.</string>
     <string name="email_welcome_note">Hej OpenSeizureDetector!\n\nAppen har precis kraschat, vänligen kontrollera loggen för fler detaljer.\n\n\n</string>
@@ -68,7 +49,7 @@
     <string name="WatchBatteryEquals">Klockbatteri = </string>
     <string name="PowerEquals">"Styrka = "</string>
     <string name="SpectrumRatioEquals">Kvotvärde = </string>
-    <string name="ThresholdEquals"> (gräns = </string>
+    <string name="Threshold">gräns</string>
     <string name="NetFault">NÄTFEL</string>
     <string name="WatchApp">Klock-app -----</string>
     <string name="Dashes">------</string>
