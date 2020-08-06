@@ -1,5 +1,7 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+	V3.4.0 - Aug2020
+	    - Added support for BLE data source
 	V3.2.1 - Aug2020
 		- Addition of Spanish Translation, and correction of crash report wording in German.
 	V3.2.0 - mar2020

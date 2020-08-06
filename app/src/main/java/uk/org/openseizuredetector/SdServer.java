@@ -241,6 +241,11 @@ public class SdServer extends Service implements SdDataReceiver {
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceGarmin");
                 mSdDataSource = new SdDataSourceGarmin(this.getApplicationContext(), mHandler, this);
                 break;
+            case "BLE":
+                Log.v(TAG, "Selecting BLE DataSource");
+                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceBLE");
+                mSdDataSource = new SdDataSourceBLE(this.getApplicationContext(), mHandler, this);
+                break;
             default:
                 Log.e(TAG, "Datasource " + mSdDataSourceName + " not recognised - Defaulting to Pebble");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - Datasource " + mSdDataSourceName + " not recognised - exiting");

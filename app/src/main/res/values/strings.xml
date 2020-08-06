@@ -2,6 +2,8 @@
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
+        \n V3.4.0 - Aug 2020
+        \n    - Added support for BLE Data Source
         \n V3.2.1 - Aug 2020
         \n    - Added Spanish Translation
         \n V3.2.0 - mar2020
