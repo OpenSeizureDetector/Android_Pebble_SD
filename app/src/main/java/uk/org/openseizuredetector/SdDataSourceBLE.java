@@ -71,12 +71,7 @@ public class SdDataSourceBLE extends SdDataSource {
     public void start() {
         Log.i(TAG, "start()");
         mUtil.writeToSysLogFile("SdDataSourceBLE.start()");
-
-        mSdDataBroadcastReceiver = new SdDataBroadcastReceiver();
-        //uk.org.openseizuredetector.SdDataReceived
-        IntentFilter filter = new IntentFilter("uk.org.openseizuredetector.SdDataReceived");
-        mContext.registerReceiver(mSdDataBroadcastReceiver, filter);
-
+        super.start();
     }
 
     /**
@@ -85,7 +80,7 @@ public class SdDataSourceBLE extends SdDataSource {
     public void stop() {
         Log.i(TAG, "stop()");
         mUtil.writeToSysLogFile("SDDataSourceBLE.stop()");
-        mContext.unregisterReceiver(mSdDataBroadcastReceiver);
+        super.stop();
     }
 
 

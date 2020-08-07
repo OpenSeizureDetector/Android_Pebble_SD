@@ -23,6 +23,7 @@
 */
 package uk.org.openseizuredetector;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -770,6 +771,20 @@ public abstract class SdDataSource {
     public void showToast(String msg) {
         Toast.makeText(mContext, msg,
                 Toast.LENGTH_LONG).show();
+    }
+
+
+
+    public class SdDataBroadcastReceiver extends BroadcastReceiver {
+        //private String TAG = "SdDataBroadcastReceiver";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.v(TAG,"SdDataBroadcastReceiver.onReceive()");
+            String jsonStr = intent.getStringExtra("data");
+            Log.v(TAG,"SdDataBroadcastReceiver.onReceive() - data="+jsonStr);
+            updateFromJSON(jsonStr);
+        }
     }
 
 
