@@ -141,5 +141,13 @@
     <string name="send_sms_last_location">Send SMS - last location is </string>
     <string name="failed_to_send_sms">ERROR: FAILED TO SEND SMS MESSAGE</string>
     <string name="sms_alarms_disabled">SMS Alarms Disabled - not doing anything!</string>
+    <string name="title_devices">BLE Devices</string>
+    <string name="ble_not_supported">BLE Not Supported</string>
+    <string name="error_bluetooth_not_supported">Bluetooth Not Supported</string>
+    <string name="menu_stop">STOP</string>
+    <string name="menu_scan">SCAN</string>
+    <string name="unknown_device">Unknown Device</string>
+    <string name="select_ble_device_title">Select BLE Device</string>
+    <string name="select_ble_device_desc">Select Bluetooth Low Energy (BLE) Device to provide seizure (acceleration and heart rate) data).</string>
 
 </resources>

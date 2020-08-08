@@ -70,8 +70,15 @@ public class SdDataSourceBLE extends SdDataSource {
      */
     public void start() {
         Log.i(TAG, "start()");
-        mUtil.writeToSysLogFile("SdDataSourceBLE.start()");
         super.start();
+        mUtil.writeToSysLogFile("SdDataSourceBLE.start() - mBleDeviceAddr="+mBleDeviceAddr);
+
+        if (mBleDeviceAddr == "" || mBleDeviceAddr == null) {
+            final Intent intent = new Intent(this.mContext, BLEScanActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(intent);
+        }
+        Log.i(TAG,"mBLEDevice is "+mBleDeviceName+", Addr="+mBleDeviceAddr);
     }
 
     /**

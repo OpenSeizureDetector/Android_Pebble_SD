@@ -99,8 +99,8 @@ public abstract class SdDataSource {
 
 
     private int mAlarmCount;
-
-
+    protected String mBleDeviceAddr;
+    protected String mBleDeviceName;
 
 
     public SdDataSource(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
@@ -660,6 +660,12 @@ public abstract class SdDataSource {
 
             // Watch Settings
             String prefStr;
+            prefStr = SP.getString("BLE_Device_Addr", "SET_FROM_XML");
+            mBleDeviceAddr = prefStr;
+            Log.v(TAG,"mBLEDeviceAddr="+mBleDeviceAddr);
+            prefStr = SP.getString("BLE_Device_Name", "SET_FROM_XML");
+            mBleDeviceName = prefStr;
+            Log.v(TAG,"mBLEDeviceName="+mBleDeviceName);
 
             prefStr = SP.getString("PebbleDebug", "SET_FROM_XML");
             if (prefStr != null) {

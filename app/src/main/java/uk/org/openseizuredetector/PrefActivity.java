@@ -34,16 +34,19 @@ import android.os.Bundle;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import java.util.List;
 
-public class PrefActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class PrefActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener {
     private String TAG = "PreferenceActivity";
     private OsdUtil mUtil;
     private boolean mPrefChanged = false;
     private Context mContext;
     private Handler mHandler;
+    private Button mSelectBLEButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,6 +121,8 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
             }
 
         }
+        //mSelectBLEButton = findViewById(R.id.selectBLEDeviceButton);
+        //mSelectBLEButton.setOnClickListener(this);
 
     }
 
@@ -215,6 +220,20 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     @Override
     protected boolean isValidFragment(String fragmentName) {
         return true;
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.selectBLEDeviceButton:
+                Log.v(TAG,"onClick - SelectBLEDeviceButton");
+                final Intent intent = new Intent(this.mContext, BLEScanActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                mContext.startActivity(intent);
+                break;
+            default:
+                Log.e(TAG,"onClick - unrecognised button");
+        }
     }
 
     /**
