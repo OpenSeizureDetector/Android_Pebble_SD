@@ -32,35 +32,25 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
-import android.os.Binder;
 import android.os.Handler;
-import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.text.format.Time;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.jtransforms.fft.DoubleFFT_1D;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 
 
 /**
  * A data source that registers for BLE GATT notifications from a device and
- * waits to be notified of data being available. */
+ * waits to be notified of data being available.
+ */
 public class SdDataSourceBLE extends SdDataSource {
     private String TAG = "SdDataSourceBLE";
     private BluetoothManager mBluetoothManager;
@@ -84,9 +74,17 @@ public class SdDataSourceBLE extends SdDataSource {
     public final static String EXTRA_DATA =
             "com.example.bluetooth.le.EXTRA_DATA";
 
-    public final static UUID UUID_HEART_RATE_MEASUREMENT =
-            UUID.fromString(GattAttributes.HEART_RATE_MEASUREMENT);
 
+    public static String SERV_DEV_INFO = "0000180a-0000-1000-8000-00805f9b34fb";
+    public static String SERV_HEART_RATE = "0000180d-0000-1000-8000-00805f9b34fb";
+    public static String SERV_OSD = "xxxxxxxxxxxxxxxxxxxx";
+    public static String CHAR_HEART_RATE_MEASUREMENT = "00002a37-0000-1000-8000-00805f9b34fb";
+    public static String CHAR_MANUF_NAME = "00002a29-0000-1000-8000-00805f9b34fb";
+    public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
+    public static String CHAR_OSD_ACC_DATA = "xxxxxxxxxxxxxxxxxx";
+
+
+    public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID.fromString(CHAR_HEART_RATE_MEASUREMENT);
 
 
     public SdDataSourceBLE(Context context, Handler handler,
@@ -106,16 +104,20 @@ public class SdDataSourceBLE extends SdDataSource {
     public void start() {
         Log.i(TAG, "start()");
         super.start();
-        mUtil.writeToSysLogFile("SdDataSourceBLE.start() - mBleDeviceAddr="+mBleDeviceAddr);
+        mUtil.writeToSysLogFile("SdDataSourceBLE.start() - mBleDeviceAddr=" + mBleDeviceAddr);
 
         if (mBleDeviceAddr == "" || mBleDeviceAddr == null) {
             final Intent intent = new Intent(this.mContext, BLEScanActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             mContext.startActivity(intent);
         }
-        Log.i(TAG,"mBLEDevice is "+mBleDeviceName+", Addr="+mBleDeviceAddr);
+        Log.i(TAG, "mBLEDevice is " + mBleDeviceName + ", Addr=" + mBleDeviceAddr);
 
+        bleConnect();
 
+    }
+
+    private void bleConnect() {
         // Now we have selected a BLE Device, open the bluetooth adapter and connect to it.
         if (mBluetoothManager == null) {
             mBluetoothManager = (BluetoothManager) mContext.getSystemService(Context.BLUETOOTH_SERVICE);
@@ -146,13 +148,7 @@ public class SdDataSourceBLE extends SdDataSource {
 
     }
 
-    /**
-     * Stop the datasource from updating
-     */
-    public void stop() {
-        Log.i(TAG, "stop()");
-        mUtil.writeToSysLogFile("SDDataSourceBLE.stop()");
-
+    private void bleDisconnect() {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
@@ -164,11 +160,18 @@ public class SdDataSourceBLE extends SdDataSource {
         mBluetoothGatt.close();
         mBluetoothGatt = null;
 
-        super.stop();
     }
 
+    /**
+     * Stop the datasource from updating
+     */
+    public void stop() {
+        Log.i(TAG, "stop()");
+        mUtil.writeToSysLogFile("SDDataSourceBLE.stop()");
 
-
+        bleDisconnect();
+        super.stop();
+    }
 
 
     // Implements callback methods for GATT events that the app cares about.  For example,
@@ -176,39 +179,76 @@ public class SdDataSourceBLE extends SdDataSource {
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            String intentAction;
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                intentAction = ACTION_GATT_CONNECTED;
                 mConnectionState = STATE_CONNECTED;
-                broadcastUpdate(intentAction);
+                mSdData.watchConnected = true;
                 Log.i(TAG, "Connected to GATT server.");
                 // Attempts to discover services after successful connection.
-                Log.i(TAG, "Attempting to start service discovery:" +
-                        mBluetoothGatt.discoverServices());
-
+                Log.i(TAG, "Attempting to start service discovery:");
+                mBluetoothGatt.discoverServices();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                intentAction = ACTION_GATT_DISCONNECTED;
                 mConnectionState = STATE_DISCONNECTED;
-                Log.i(TAG, "Disconnected from GATT server.");
-                broadcastUpdate(intentAction);
+                mSdData.watchConnected = false;
+                Log.i(TAG, "Disconnected from GATT server - retrying...");
+                bleDisconnect();  // Tidy up connections
+                bleConnect();
             }
         }
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.v(TAG,"Services discovered");
+                Log.v(TAG, "Services discovered");
                 List<BluetoothGattService> serviceList = mBluetoothGatt.getServices();
-                for (int i=0; i<serviceList.size(); i++) {
+                for (int i = 0; i < serviceList.size(); i++) {
                     String uuidStr = serviceList.get(i).getUuid().toString();
-                    Log.v(TAG,"Service "+ uuidStr);
-                    if (!GattAttributes.lookup(uuidStr,"None").equals( "None")) {
-                        Log.v(TAG,"Service Name="+GattAttributes.lookup(uuidStr,"None"));
+                    Log.v(TAG, "Service " + uuidStr);
+                    List<BluetoothGattCharacteristic> gattCharacteristics =
+                            serviceList.get(i).getCharacteristics();
+                    if (uuidStr.equals(SERV_DEV_INFO)) {
+                        Log.v(TAG, "Device Info Service Discovered");
+                    } else if (uuidStr.equals(SERV_HEART_RATE)) {
+                        Log.v(TAG, "Heart Rate Service Discovered");
+                        for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
+                            String charUuidStr = gattCharacteristic.getUuid().toString();
+                            if (charUuidStr.equals(CHAR_HEART_RATE_MEASUREMENT)) {
+                                Log.v(TAG, "Subscribing to Heart Rate Measurement Change Notifications");
+                                setCharacteristicNotification(gattCharacteristic, true);
+                            }
+                        }
+                    } else if (uuidStr.equals(SERV_OSD)) {
+                        Log.v(TAG, "OpenSeizureDetector Service Discovered");
+                        for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
+                            String charUuidStr = gattCharacteristic.getUuid().toString();
+                            if (charUuidStr.equals(CHAR_OSD_ACC_DATA)) {
+                                Log.v(TAG, "Subscribing to Acceleration Data Change Notifications");
+                                setCharacteristicNotification(gattCharacteristic,true);
+                            }
+                        }
                     }
                 }
-                broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
+            }
+        }
+
+        public void onDataReceived(BluetoothGattCharacteristic characteristic) {
+            // FIXME - collect data until we have enough to do analysis, then use onDataReceived to process it.
+            if (characteristic.getUuid().toString().equals(CHAR_HEART_RATE_MEASUREMENT)) {
+                int flag = characteristic.getProperties();
+                int format = -1;
+                if ((flag & 0x01) != 0) {
+                    format = BluetoothGattCharacteristic.FORMAT_UINT16;
+                    //Log.d(TAG, "Heart rate format UINT16.");
+                } else {
+                    format = BluetoothGattCharacteristic.FORMAT_UINT8;
+                    //Log.d(TAG, "Heart rate format UINT8.");
+                }
+                final int heartRate = characteristic.getIntValue(format, 1);
+                Log.d(TAG, String.format("Received heart rate: %d", heartRate));
+            }
+            if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_DATA)) {
+                Log.v(TAG,"Received OSD ACC DATA");
             }
         }
 
@@ -216,78 +256,26 @@ public class SdDataSourceBLE extends SdDataSource {
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic characteristic,
                                          int status) {
+            Log.v(TAG,"onCharacteristicRead");
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+                onDataReceived(characteristic);
             }
         }
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
-            broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+            Log.v(TAG,"Characteristic "+characteristic.getUuid()+" changed");
+            onDataReceived(characteristic);
         }
     };
 
-    private void broadcastUpdate(final String action) {
-        final Intent intent = new Intent(action);
-        mContext.sendBroadcast(intent);
-    }
-
-    private void broadcastUpdate(final String action,
-                                 final BluetoothGattCharacteristic characteristic) {
-        final Intent intent = new Intent(action);
-
-        // This is special handling for the Heart Rate Measurement profile.  Data parsing is
-        // carried out as per profile specifications:
-        // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
-        if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
-            int flag = characteristic.getProperties();
-            int format = -1;
-            if ((flag & 0x01) != 0) {
-                format = BluetoothGattCharacteristic.FORMAT_UINT16;
-                Log.d(TAG, "Heart rate format UINT16.");
-            } else {
-                format = BluetoothGattCharacteristic.FORMAT_UINT8;
-                Log.d(TAG, "Heart rate format UINT8.");
-            }
-            final int heartRate = characteristic.getIntValue(format, 1);
-            Log.d(TAG, String.format("Received heart rate: %d", heartRate));
-            intent.putExtra(EXTRA_DATA, String.valueOf(heartRate));
-        } else {
-            // For all other profiles, writes the data formatted in HEX.
-            final byte[] data = characteristic.getValue();
-            if (data != null && data.length > 0) {
-                final StringBuilder stringBuilder = new StringBuilder(data.length);
-                for(byte byteChar : data)
-                    stringBuilder.append(String.format("%02X ", byteChar));
-                intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
-            }
-        }
-        mContext.sendBroadcast(intent);
-    }
-
-
-
-    /**
-     * Request a read on a given {@code BluetoothGattCharacteristic}. The read result is reported
-     * asynchronously through the {@code BluetoothGattCallback#onCharacteristicRead(android.bluetooth.BluetoothGatt, android.bluetooth.BluetoothGattCharacteristic, int)}
-     * callback.
-     *
-     * @param characteristic The characteristic to read from.
-     */
-    public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
-        mBluetoothGatt.readCharacteristic(characteristic);
-    }
 
     /**
      * Enables or disables notification on a give characteristic.
      *
      * @param characteristic Characteristic to act on.
-     * @param enabled If true, enable notification.  False otherwise.
+     * @param enabled        If true, enable notification.  False otherwise.
      */
     public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
                                               boolean enabled) {
@@ -295,10 +283,12 @@ public class SdDataSourceBLE extends SdDataSource {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
+        Log.v(TAG,"setCharacteristicNotification - Requesting notifications");
         mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
 
         // This is specific to Heart Rate Measurement.
         if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
+            Log.v(TAG,"setCharacteristicNotification - running extra code for heart rate");
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
                     UUID.fromString(GattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
