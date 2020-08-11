@@ -57,8 +57,8 @@ public abstract class SdDataSource {
     private Timer mStatusTimer;
     private Timer mSettingsTimer;
     private Timer mFaultCheckTimer;
-    private Time mDataStatusTime;
-    private boolean mWatchAppRunningCheck = false;
+    protected Time mDataStatusTime;
+    protected boolean mWatchAppRunningCheck = false;
     private int mAppRestartTimeout = 10;  // Timeout before re-starting watch app (sec) if we have not received
     // data after mDataUpdatePeriod
     private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
@@ -339,7 +339,7 @@ public abstract class SdDataSource {
      * doAnalysis() - analyse the data if the accelerometer data array mAccData
      * and populate the output data structure mSdData
      */
-    private void doAnalysis() {
+    protected void doAnalysis() {
         // FIXME - Use specified sampleFreq, not this hard coded one
         mSampleFreq = 25;
         double freqRes = 1.0*mSampleFreq/mSdData.mNsamp;

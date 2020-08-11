@@ -36,6 +36,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.text.format.Time;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -52,12 +53,16 @@ import java.util.UUID;
  * waits to be notified of data being available.
  */
 public class SdDataSourceBLE extends SdDataSource {
+    private int MAX_RAW_DATA = 125;  // 5 seconds at 25 Hz.
     private String TAG = "SdDataSourceBLE";
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
     private String mBluetoothDeviceAddress;
     private BluetoothGatt mBluetoothGatt;
     private int mConnectionState = STATE_DISCONNECTED;
+
+    private int nRawData = 0;
+    private double[] rawData = new double[MAX_RAW_DATA];
 
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
@@ -77,11 +82,11 @@ public class SdDataSourceBLE extends SdDataSource {
 
     public static String SERV_DEV_INFO = "0000180a-0000-1000-8000-00805f9b34fb";
     public static String SERV_HEART_RATE = "0000180d-0000-1000-8000-00805f9b34fb";
-    public static String SERV_OSD = "xxxxxxxxxxxxxxxxxxxx";
+    public static String SERV_OSD = "a19585e9-0001-39d0-015f-b3e2b9a0c854";
     public static String CHAR_HEART_RATE_MEASUREMENT = "00002a37-0000-1000-8000-00805f9b34fb";
     public static String CHAR_MANUF_NAME = "00002a29-0000-1000-8000-00805f9b34fb";
     public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
-    public static String CHAR_OSD_ACC_DATA = "xxxxxxxxxxxxxxxxxx";
+    public static String CHAR_OSD_ACC_DATA = "a19585e9-0002-39d0-015f-b3e2b9a0c854";
 
 
     public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID.fromString(CHAR_HEART_RATE_MEASUREMENT);
@@ -234,6 +239,7 @@ public class SdDataSourceBLE extends SdDataSource {
 
         public void onDataReceived(BluetoothGattCharacteristic characteristic) {
             // FIXME - collect data until we have enough to do analysis, then use onDataReceived to process it.
+            //Log.v(TAG,"onDataReceived: Characteristic="+characteristic.getUuid().toString());
             if (characteristic.getUuid().toString().equals(CHAR_HEART_RATE_MEASUREMENT)) {
                 int flag = characteristic.getProperties();
                 int format = -1;
@@ -247,8 +253,38 @@ public class SdDataSourceBLE extends SdDataSource {
                 final int heartRate = characteristic.getIntValue(format, 1);
                 Log.d(TAG, String.format("Received heart rate: %d", heartRate));
             }
-            if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_DATA)) {
-                Log.v(TAG,"Received OSD ACC DATA");
+            else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_DATA)) {
+                //Log.v(TAG,"Received OSD ACC DATA"+characteristic.getValue());
+                byte[] rawDataBytes = characteristic.getValue();
+                Log.v(TAG, "CHAR_OSD_ACC_DATA: numSamples = " + rawDataBytes.length+" nRawData="+nRawData);
+                for (int i = 0; i < rawDataBytes.length;i++) {
+                    if (nRawData < MAX_RAW_DATA) {
+                        rawData[nRawData] = 1000 * rawDataBytes[i] / 64;   // Scale to mg
+                        nRawData++;
+                    } else {
+                        Log.i(TAG, "RawData Buffer Full - processing data");
+                        // FIXME - Create JSON object to send to the SdDataSource analysis routine onDataReceived().
+                        // Re-start collecting raw data.
+                        mSdData.watchAppRunning = true;
+                        for (i = 0; i < rawData.length; i++) {
+                            mSdData.rawData[i] = rawData[i];
+                        }
+                        mSdData.mNsamp = rawData.length;
+                        //mNSamp = accelVals.length();
+                        mWatchAppRunningCheck = true;
+                        mDataStatusTime = new Time(Time.getCurrentTimezone());
+                        // FIXME - A fiddle to make the startup activity close - really need to send battery percentage every now and then.
+                        mSdData.haveSettings = true;
+                        doAnalysis();
+
+                        nRawData = 0;
+                    }
+                }
+            }
+
+            else {
+                Log.v(TAG,"Unrecognised Characteristic Updated "+
+                        characteristic.getUuid().toString());
             }
         }
 
@@ -265,7 +301,7 @@ public class SdDataSourceBLE extends SdDataSource {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
-            Log.v(TAG,"Characteristic "+characteristic.getUuid()+" changed");
+            Log.v(TAG,"onCharacteristicChanged(): Characteristic "+characteristic.getUuid()+" changed");
             onDataReceived(characteristic);
         }
     };
@@ -286,14 +322,12 @@ public class SdDataSourceBLE extends SdDataSource {
         Log.v(TAG,"setCharacteristicNotification - Requesting notifications");
         mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
 
-        // This is specific to Heart Rate Measurement.
-        if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
-            Log.v(TAG,"setCharacteristicNotification - running extra code for heart rate");
+        // Tell the device we want notifications?   The sample from Google said we only need this for Heart Rate, but the
+        // BangleJS widget did not work without it so do it for everything.
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
                     UUID.fromString(GattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             mBluetoothGatt.writeDescriptor(descriptor);
-        }
     }
 
     /**
