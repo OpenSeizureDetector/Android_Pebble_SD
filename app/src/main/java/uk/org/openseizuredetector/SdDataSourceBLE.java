@@ -87,9 +87,12 @@ public class SdDataSourceBLE extends SdDataSource {
     public static String CHAR_MANUF_NAME = "00002a29-0000-1000-8000-00805f9b34fb";
     public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
     public static String CHAR_OSD_ACC_DATA = "a19585e9-0002-39d0-015f-b3e2b9a0c854";
+    public static String CHAR_OSD_BATT_DATA = "a19585e9-0004-39d0-015f-b3e2b9a0c854";
 
 
     public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID.fromString(CHAR_HEART_RATE_MEASUREMENT);
+    private BluetoothGatt mGatt;
+    private BluetoothGattCharacteristic mBattChar;
 
 
     public SdDataSourceBLE(Context context, Handler handler,
@@ -229,9 +232,14 @@ public class SdDataSourceBLE extends SdDataSource {
                                 Log.v(TAG, "Subscribing to Acceleration Data Change Notifications");
                                 setCharacteristicNotification(gattCharacteristic,true);
                             }
+                            else if (charUuidStr.equals(CHAR_OSD_BATT_DATA)) {
+                                Log.v(TAG,"Saving battery characteristic for later");
+                                mBattChar = gattCharacteristic;
+                            }
                         }
                     }
                 }
+                mGatt = gatt;
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
             }
@@ -263,7 +271,6 @@ public class SdDataSourceBLE extends SdDataSource {
                         nRawData++;
                     } else {
                         Log.i(TAG, "RawData Buffer Full - processing data");
-                        // FIXME - Create JSON object to send to the SdDataSource analysis routine onDataReceived().
                         // Re-start collecting raw data.
                         mSdData.watchAppRunning = true;
                         for (i = 0; i < rawData.length; i++) {
@@ -273,15 +280,23 @@ public class SdDataSourceBLE extends SdDataSource {
                         //mNSamp = accelVals.length();
                         mWatchAppRunningCheck = true;
                         mDataStatusTime = new Time(Time.getCurrentTimezone());
-                        // FIXME - A fiddle to make the startup activity close - really need to send battery percentage every now and then.
-                        mSdData.haveSettings = true;
+
+                        if (mSdData.haveSettings == false) {
+                            Log.v(TAG,"Requesting Battery Data");
+                            mGatt.readCharacteristic(mBattChar);
+                        }
+
                         doAnalysis();
 
                         nRawData = 0;
                     }
                 }
             }
-
+            else if (characteristic.getUuid().toString().equals(CHAR_OSD_BATT_DATA)) {
+                mSdData.batteryPc = characteristic.getValue()[0];
+                Log.v(TAG,"Received Battery Data");
+                mSdData.haveSettings = true;
+            }
             else {
                 Log.v(TAG,"Unrecognised Characteristic Updated "+
                         characteristic.getUuid().toString());
