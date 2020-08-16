@@ -126,34 +126,41 @@ public class SdDataSourceBLE extends SdDataSource {
     }
 
     private void bleConnect() {
-        // Now we have selected a BLE Device, open the bluetooth adapter and connect to it.
+        mSdData.watchConnected = false;
+        mSdData.watchAppRunning = false;
+        mBluetoothGatt = null;
+        mConnectionState = STATE_DISCONNECTED;
         if (mBluetoothManager == null) {
             mBluetoothManager = (BluetoothManager) mContext.getSystemService(Context.BLUETOOTH_SERVICE);
             if (mBluetoothManager == null) {
-                Log.e(TAG, "Unable to initialize BluetoothManager.");
+                Log.e(TAG, "bleConnect(): Unable to initialize BluetoothManager.");
+                return;
             }
         }
 
         mBluetoothAdapter = mBluetoothManager.getAdapter();
         if (mBluetoothAdapter == null) {
-            Log.e(TAG, "Unable to obtain a BluetoothAdapter.");
+            Log.e(TAG, "bleConnect(): Unable to obtain a BluetoothAdapter.");
+            return;
         }
 
         if (mBluetoothAdapter == null || mBleDeviceAddr == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized or unspecified address.");
+            Log.w(TAG, "bleConnect(): BluetoothAdapter not initialized or unspecified address.");
+            return;
         }
 
         final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(mBleDeviceAddr);
         if (device == null) {
-            Log.w(TAG, "Device not found.  Unable to connect.");
+            Log.w(TAG, "bleConnect(): Device not found.  Unable to connect.");
+            return;
+        } else {
+            // We want to directly connect to the device, so we are setting the autoConnect
+            // parameter to false.
+            mBluetoothGatt = device.connectGatt(mContext, true, mGattCallback);
+            Log.d(TAG, "bleConnect(): Trying to create a new connection.");
+            mBluetoothDeviceAddress = mBleDeviceAddr;
+            mConnectionState = STATE_CONNECTING;
         }
-        // We want to directly connect to the device, so we are setting the autoConnect
-        // parameter to false.
-        mBluetoothGatt = device.connectGatt(mContext, false, mGattCallback);
-        Log.d(TAG, "Trying to create a new connection.");
-        mBluetoothDeviceAddress = mBleDeviceAddr;
-        mConnectionState = STATE_CONNECTING;
-
     }
 
     private void bleDisconnect() {
@@ -167,6 +174,9 @@ public class SdDataSourceBLE extends SdDataSource {
         }
         mBluetoothGatt.close();
         mBluetoothGatt = null;
+        mSdData.watchAppRunning = false;
+        mSdData.watchConnected = false;
+        mConnectionState = STATE_DISCONNECTED;
 
     }
 
@@ -190,21 +200,27 @@ public class SdDataSourceBLE extends SdDataSource {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 mConnectionState = STATE_CONNECTED;
                 mSdData.watchConnected = true;
-                Log.i(TAG, "Connected to GATT server.");
+                Log.i(TAG, "onConnectionStateChange(): Connected to GATT server.");
                 // Attempts to discover services after successful connection.
-                Log.i(TAG, "Attempting to start service discovery:");
+                Log.i(TAG, "onConnectionStateChange(): Attempting to start service discovery:");
                 mBluetoothGatt.discoverServices();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 mConnectionState = STATE_DISCONNECTED;
                 mSdData.watchConnected = false;
-                Log.i(TAG, "Disconnected from GATT server - retrying...");
-                bleDisconnect();  // Tidy up connections
-                bleConnect();
+                Log.i(TAG, "onConnectionStateChange(): Disconnected from GATT server - reconnecting after delay...");
+                //bleDisconnect();  // Tidy up connections
+                // Wait 2 seconds to give the server chance to shutdown, then re-start it
+                mHandler.postDelayed(new Runnable() {
+                    public void run() {
+                        bleConnect();
+                    }
+                }, 2000);
             }
         }
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            boolean foundOsdService = false;
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 Log.v(TAG, "Services discovered");
                 List<BluetoothGattService> serviceList = mBluetoothGatt.getServices();
@@ -226,6 +242,7 @@ public class SdDataSourceBLE extends SdDataSource {
                         }
                     } else if (uuidStr.equals(SERV_OSD)) {
                         Log.v(TAG, "OpenSeizureDetector Service Discovered");
+                        foundOsdService = true;
                         for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
                             String charUuidStr = gattCharacteristic.getUuid().toString();
                             if (charUuidStr.equals(CHAR_OSD_ACC_DATA)) {
@@ -239,7 +256,18 @@ public class SdDataSourceBLE extends SdDataSource {
                         }
                     }
                 }
-                mGatt = gatt;
+                if (foundOsdService) {
+                    mGatt = gatt;
+                } else {
+                    Log.v(TAG, "device is not offering the OSD Gatt Service - re-trying connection");
+                    bleDisconnect();
+                    // Wait 1 second to give the server chance to shutdown, then re-start it
+                    mHandler.postDelayed(new Runnable() {
+                        public void run() {
+                            bleConnect();
+                        }
+                    }, 1000);
+                }
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
             }

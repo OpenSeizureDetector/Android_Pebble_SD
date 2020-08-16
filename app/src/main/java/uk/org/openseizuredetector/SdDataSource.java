@@ -53,7 +53,7 @@ interface SdDataReceiver {
  * network data source.
  */
 public abstract class SdDataSource {
-    private Handler mHandler = new Handler();
+    protected Handler mHandler = new Handler();
     private Timer mStatusTimer;
     private Timer mSettingsTimer;
     private Timer mFaultCheckTimer;
