@@ -1,5 +1,7 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+	V3.5.0 - Aug 2020 Added broadcast to request phone call dial alert (handled by separate app OpenSeizureDetector Dialler).
+
 	V3.2.1 - Aug2020
 		- Addition of Spanish Translation, and correction of crash report wording in German.
 	V3.2.0 - mar2020

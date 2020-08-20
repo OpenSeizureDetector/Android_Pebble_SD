@@ -37,6 +37,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.SpannableString;
+import android.text.SpannedString;
 import android.text.util.Linkify;
 import android.util.Log;
 import android.view.View;
@@ -225,11 +226,13 @@ public class StartupActivity extends Activity {
             TextView tv;
             ProgressBar pb;
             boolean smsAlarmsActive = true;
+            boolean phoneAlarmsActive = true;
 
             Log.v(TAG,"serverStatusRunnable()");
             SharedPreferences SP = PreferenceManager
                     .getDefaultSharedPreferences(getBaseContext());
             smsAlarmsActive = SP.getBoolean("SMSAlarm", false);
+            phoneAlarmsActive = SP.getBoolean("PhoneCallAlarm", false);
 
             // Settings ok
             tv = (TextView) findViewById(R.id.textItem1);
@@ -256,6 +259,16 @@ public class StartupActivity extends Activity {
                 pb.setIndeterminate(true);
                 allOk = false;
                 mUtil.requestPermissions(StartupActivity.this);
+            }
+
+            // If phone alarms are selected, we need to have the uk.org.openseizuredetector.dialler package installed to do the actual dialling.
+            if (phoneAlarmsActive && !mUtil.isPackageInstalled("uk.org.openseizuredetector.dialler")) {
+                tv.setText(getText(R.string.DiallerNotInstalledWarning));
+                tv.setBackgroundColor(alarmColour);
+                tv.setTextColor(alarmTextColour);
+                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
+                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                allOk = false;
             }
 
             // Are we Bound to the Service

@@ -139,5 +139,8 @@
     <string name="send_sms_last_location">Send SMS - last location is </string>
     <string name="failed_to_send_sms">ERROR: FAILED TO SEND SMS MESSAGE</string>
     <string name="sms_alarms_disabled">SMS Alarms Disabled - not doing anything!</string>
+    <string name="phone_alarm_disabled">Phone Alarm Disabled</string>
+    <string name="test_phone_alarm_notification">Test Phone Alarm</string>
+    <string name="DiallerNotInstalledWarning"><a href="https://github.com/OpenSeizureDetector/Dialler/tree/master/app/release/app-release.apk">OpenSeizureDetector Dialer App</a> Not installed - Required for Phone Call Alerts.</string>
 
 </resources>

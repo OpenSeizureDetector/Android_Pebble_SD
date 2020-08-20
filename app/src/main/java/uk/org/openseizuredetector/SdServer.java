@@ -115,6 +115,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private boolean mAudibleWarning = false;
     private boolean mAudibleFaultWarning = false;
     private boolean mMp3Alarm = false;
+    private boolean mPhoneAlarm = false;
     private boolean mSMSAlarm = false;
     private String[] mSMSNumbers;
     private String mSMSMsgStr = "default SMS Message";
@@ -457,6 +458,9 @@ public class SdServer extends Service implements SdDataReceiver {
         } else {
             smsStr = getString(R.string.sms_location_alarm_disabled);
         }
+        if (mPhoneAlarm) {
+            smsStr = "Phone Call Alarm Active";
+        }
         if (mNotificationBuilder != null) {
             mNotification = mNotificationBuilder.setContentIntent(contentIntent)
                     .setSmallIcon(iconId)
@@ -565,6 +569,7 @@ public class SdServer extends Service implements SdDataReceiver {
                         - mSMSTime.toMillis(false))
                         > 60000) {
                     sendSMSAlarm();
+                    sendPhoneAlarm();
                     mSMSTime = tnow;
                 } else {
                     mUtil.showToast("SMS Alarm already sent - not re-sending");
@@ -793,6 +798,18 @@ public class SdServer extends Service implements SdDataReceiver {
         } else {
             Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
             mUtil.showToast(getString(R.string.sms_alarm_disabled));
+        }
+        if (mPhoneAlarm) {
+            if (!mCancelAudible) {
+                Log.i(TAG, "sendSMSAlarm() - Sending Phone Alarm Broadcast");
+                sendPhoneAlarm();
+            } else {
+                Log.i(TAG, "sendSMSAlarm() - Cancel Audible Active - not making Phone Call");
+                mUtil.showToast(getString(R.string.cancel_audible_not_sending_sms));
+            }
+        } else {
+            Log.i(TAG, "sendSMSAlarm() - Phone Alarms Disabled - not doing anything!");
+            mUtil.showToast(getString(R.string.phone_alarm_disabled));
         }
     }
 
@@ -1068,6 +1085,8 @@ public class SdServer extends Service implements SdDataReceiver {
 
             mSMSAlarm = SP.getBoolean("SMSAlarm", false);
             Log.v(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
+            mPhoneAlarm = SP.getBoolean("PhoneCallAlarm", false);
+            Log.v(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             String SMSNumberStr = SP.getString("SMSNumbers", "");
             mSMSNumbers = SMSNumberStr.split(",");
             mSMSMsgStr = SP.getString("SMSMsg", "Seizure Detected!!!");
@@ -1153,7 +1172,16 @@ public class SdServer extends Service implements SdDataReceiver {
     }
 
 
-
+    public void sendPhoneAlarm() {
+        /**
+         * Use the separate OpenSeizureDetector Dialler app to generate a phone call alarm to the numbers selected for SMS Alarms.
+         */
+        Log.v(TAG,"sendPhoneAlarm() - sending broadcast intent");
+        Intent intent = new Intent();
+        intent.setAction("uk.org.openseizuredetector.dialler.ALARM");
+        intent.putExtra("NUMBERS",mSMSNumbers);
+        sendBroadcast(intent);
+    }
 
 
     /*

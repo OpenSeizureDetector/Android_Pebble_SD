@@ -238,6 +238,12 @@ public class MainActivity extends AppCompatActivity {
                     mConnection.mSdServer.sendSMSAlarm();
                 }
                 return true;
+            case R.id.action_test_phone_alarm:
+                Log.i(TAG, "action_test_phone_alarm");
+                if (mConnection.mBound) {
+                    mConnection.mSdServer.sendPhoneAlarm();
+                }
+                return true;
             case R.id.action_export:
                 Log.i(TAG, "action_export");
                 try {

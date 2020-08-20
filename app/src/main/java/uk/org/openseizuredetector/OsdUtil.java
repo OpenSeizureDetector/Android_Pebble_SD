@@ -442,7 +442,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
         return null;
     }
 
-    private boolean isPackageInstalled(String packagename) {
+    public boolean isPackageInstalled(String packagename) {
         PackageManager pm = mContext.getPackageManager();
         try {
             pm.getPackageInfo(packagename, PackageManager.GET_ACTIVITIES);
