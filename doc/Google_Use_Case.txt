@@ -1,0 +1,77 @@
+Provide advance notice to the Google Play App Review team
+The Google Play App Review team accepts advance notice about your upcoming app or store listing publishing event.
+
+We only accept advance notice in the following scenario(s):
+
+You have written documentation proving that you have permission to use a 3rd party's intellectual property in your app or store listing (e.g. Brand names and logos, graphic assets, audio, etc.).
+You have gambling or casino-style elements in your game, and need to provide your Korean Game Rating and Administrative Committee (GRAC) rating certificate to Google so your game can be distributed in Korea. Learn More
+Your app uses an accessibility service and you need to provide an explanation documenting how the app uses the system capabilities that the service requests. 
+Your app uses the SYSTEM_ALERT_WINDOW permission and you want to have the permission granted automatically when your app is installed from Play. This is only approved for very limited use-cases. In most circumstances you will have to ask the user to grant permission.
+You have a new use case for accessing SMS/Call Log permissions.
+Please Note: If you submit a request that's not covered by the above scenario(s), you may not receive a response. For other questions, contact our support team.
+
+ 
+
+First name
+Graham
+Last name
+Jones
+Email address?
+grahamjones139@gmail.com
+Email address you use to sign in to the Developer Console
+Application package name?
+uk.org.openseizuredetector
+Add additional
+Choose the appropriate advance notice scenario *
+See above for additional information on supported scenarios.
+Use case *
+Alert Caregiver to Medical Emergency
+In one sentence please describe the core purpose of your app.
+Required permissions *
+READ_SMS
+SEND_SMS
+WRITE_SMS
+RECEIVE_SMS
+RECEIVE_WAP_PUSH
+RECEIVE_MMS
+READ_CALL_LOG
+WRITE_CALL_LOG
+PROCESS_OUTGOING_CALLS
+Describe why the use of sensitive permissions is necessary for this use case. *
+
+The purpose of the app is to detect when the user suffers a medical emergency (epileptic seizure), and alert caregivers (that the user has specified) of the emergency, including the user's location so that they can provide assistance.
+When the user is outside, we rely on the mobile network to provide notifications to the caregivers - this is done using SMS text messages that are sent automatically by the app.   The SMS needs to be sent automatically without the user intervening to press 'Send' as the user is likely to be unconscious (hence the need for assistance).   Therefore the use of SEND_SMS permission is essential for the app to meet its core functionality of alerting caregivers to a medical emergency.
+Several users have confirmed to me that SMS functionality is essential for their use of the app - I provide some quotes below.
+Note that it is Version 3.0.0 of the app that meets the play store requirements (including dynamic permissions). 
+Is your app’s use of Call Log or SMS permissions to provide functionality required by law or regulation?
+
+Yes
+
+No
+If portions of your app are restricted to logged in users, memberships, or geography, please provide information on how to trigger and verify the functionalities and use cases you've declared above. For instance, please provide a test account username and password if one is required for us to review the core functionality. *
+
+It is not restricted, but you might have some trouble finding the functionality.  To test it, do the following:
+- Start the App - you are likely to get stuck on a start-up screen because you do not have the smart-watch connected and running the seizure detection app.
+- Select the OpenSeizureDetector notification - this will open the app main screen.
+- In the menu, select the 'Test SMS Alarm Notification' menu item - you should see a Toast message saying that SMS alarms are not enabled.
+- Select the settings menu item, click on the 'Alarms' heading, then scroll down to the 'Enable SMS Alarm' entry and select it.  You should see the system dialogs asking for SEND_SMS and FINE_LOCATION permissions - Allow them.
+- Select the 'SMS Alarm numbers', item and enter a valid phone number (the number of the phone being used for testing works.
+- Press back to get back to main screen - the notification text changes to warn the user that SMS alarms are active.
+- Select the 'Test SMS Alarm...' menu
+If portions of your app are restricted, please upload link(s) to any screenshots or videos of your app to help verify the functionalities and use cases declared above. *
+
+None of it is restricted.   
+
+It is open source - you can review the code at https://github.com/OpenSeizureDetector/Android_Pebble_SD/tree/V3.0.   The SMS code is in SDServer.java
+
+Quotes from Users:  
+"Would you please note that I rely exclusively on the SMS being sent independently of any interaction with the Openseizuredetctor app.  This is because I am normally having a tonic clonic seizure by then and unable to communicate with anyone for several hours, I'm banking on the automatic SMS to get me help."
+"We find SMS notifications to be one of the most important features of this app"
+
+Google Play's review of new use cases may be subject to extended review time. Do not submit updates to your app while your new use case review is pending. You will be notified via the email address provided if your requested use case is eligible or denied.
+
+
+In order to be published on the Store, your app is still subject to Google Play review and approval for all other Play Developer Program Policies. Deceptive and non-declared uses of these permissions may result in a suspension of your app and/or termination of your developer account.
+
+* Required field
+Some account and system information will be sent to Google. We will use the information you give us to help address technical issues and to improve our services, subject to our Privacy Policy and Terms of Service.

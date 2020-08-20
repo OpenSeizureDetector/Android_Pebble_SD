@@ -2,15 +2,7 @@
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
-        \n V3.2.1 - Aug 2020
-        \n    - Added Spanish Translation
-        \n V3.2.0 - mar2020
-        \n    - Added multiple language support (German, Russian, Swedish)
-        \n    - Modified data logging to use sqlite database rather than text files.
-        \n    - Added facility to upload data to remote server.
-        \n    - Added support for additional GarminSD settings data fields to record the watch app version number etc and
-          log that info to the SysLog file.
-        \n    - Made only a subset of settings visible by default unless the user enables Advanced Mode
+        \n V3.5 - Added support for Phone Call Alerts, using separate OpenSeizureDetector Dialler App
     </string>
     <string name="UpgradeMsg">
         OpenSeizureDetector does not collect any personal data.

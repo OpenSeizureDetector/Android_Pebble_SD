@@ -1,0 +1,23 @@
+Test Cases to be Implemented in Manual or Automated Testing
+===========================================================
+
+Note:  These tests are primarily for the Garmin Seizure Detector
+- there are some additional things needed for the Pebble version to start up
+but those are fairly obvious if they are broken.
+
+
+1.  App starts and displays main activity provided watch sends one sample
+    of data, and responds to request for watch settings when asked.
+
+2  Sending one set of seizure like data, followed by a normal set results
+   in a warning.
+
+3  Sending two sets of seizure like data in succession followed by two normal
+   sets results in Warning -> Alarm -> Warning -> OK
+
+4  Sending one abnormal heart rate followed by OK results in Warning -> OK
+
+5  Sending two abnormal heart rate followed by 2 OK results in Warning ->
+   Alarm-> Warning -> Ok.
+
+
