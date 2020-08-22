@@ -149,7 +149,13 @@ public class SdDataSourceBLE extends SdDataSource {
             return;
         }
 
-        final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(mBleDeviceAddr);
+        BluetoothDevice device;
+        try {
+            device = mBluetoothAdapter.getRemoteDevice(mBleDeviceAddr);
+        } catch (Exception e) {
+            Log.w(TAG, "bleConnect(): Error connecting to device address "+mBleDeviceAddr+".");
+            device = null;
+        }
         if (device == null) {
             Log.w(TAG, "bleConnect(): Device not found.  Unable to connect.");
             return;

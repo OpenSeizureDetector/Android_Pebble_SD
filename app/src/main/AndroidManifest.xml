@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="uk.org.openseizuredetector"
     android:versionCode="72"
-    android:versionName="3.5.0">
+    android:versionName="3.5.0a">
     <!-- android:allowBackup="false" -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
