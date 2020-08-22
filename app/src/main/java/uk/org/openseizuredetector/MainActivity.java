@@ -645,7 +645,7 @@ public class MainActivity extends AppCompatActivity {
             if (mConnection.mBound) {
                 if ((mConnection.mSdServer.mSmsTimer != null)
                         && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0)) {
-                    acceptAlarmButton.setText(getString(R.string.SMSWillBeSentIn) +
+                    acceptAlarmButton.setText(getString(R.string.SMSWillBeSentIn) + " " +
                             mConnection.mSdServer.mSmsTimer.mTimeLeft / 1000 +
                             " s - "+getString(R.string.Cancel));
                     acceptAlarmButton.setBackgroundColor(alarmColour);

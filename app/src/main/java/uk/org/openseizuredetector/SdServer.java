@@ -82,6 +82,8 @@ import uk.org.openseizuredetector.LogManager;
  * http://developer.android.com/guide/components/services.html#ExtendingService
  */
 public class SdServer extends Service implements SdDataReceiver {
+    private String mUuidStr = "0f675b21-5a36-4fe7-9761-fd0c691651f3";  // UUID to Identify OSD.
+
     // Notification ID
     private int NOTIFICATION_ID = 1;
     private String mNotChId = "OSD Notification Channel";
@@ -1213,10 +1215,12 @@ public class SdServer extends Service implements SdDataReceiver {
             Time tnow = new Time(Time.getCurrentTimezone());
             tnow.setToNow();
             String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
+            String shortUuidStr = mUuidStr.substring(mUuidStr.length()-6);
+
             // SmsManager sm = SmsManager.getDefault();
             for (int i = 0; i < mSMSNumbers.length; i++) {
                 Log.i(TAG, "SmsTimer.onFinish() - Sending to " + mSMSNumbers[i]);
-                sendSMS(new String(mSMSNumbers[i]), mSMSMsgStr + " - " + dateStr);
+                sendSMS(new String(mSMSNumbers[i]), mSMSMsgStr + " - " + dateStr + " " + shortUuidStr);
             }
         }
 
@@ -1284,8 +1288,10 @@ public class SdServer extends Service implements SdDataReceiver {
                             + ";u=" + df.format(ll.getAccuracy()) + "'>here</a>";
                     String googleUrl = "https://www.google.com/maps/place?q="
                             + ll.getLatitude() + "%2C" + ll.getLongitude();
+                    String shortUuidStr = mUuidStr.substring(mUuidStr.length()-6);
+
                     String messageStr = mSMSMsgStr + " - " +
-                            dateStr + " - " + googleUrl;
+                            dateStr + " - " + googleUrl + " " + shortUuidStr;
                     Log.i(TAG, "onSdLocationReceived() - Message is " + messageStr);
                     mUtil.showToast(messageStr);
                     for (int i = 0; i < mSMSNumbers.length; i++) {
