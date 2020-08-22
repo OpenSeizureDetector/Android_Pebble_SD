@@ -4,6 +4,8 @@
     <string name="changelog">
         \n V3.5 - Added support for Phone Call Alerts, using separate OpenSeizureDetector Dialler App
         \n      - Added Unique Identifier (UUID) to SMS alerts so they can be detected as OpenSeizureDetector SMS messages on client phone.
+        \n V3.4.0 - Aug 2020
+        \n    - Added support for BLE Data Source
     </string>
     <string name="UpgradeMsg">
         OpenSeizureDetector does not collect any personal data.
@@ -135,5 +137,12 @@
     <string name="phone_alarm_disabled">Phone Alarm Disabled</string>
     <string name="test_phone_alarm_notification">Test Phone Alarm</string>
     <string name="DiallerNotInstalledWarning"><a href="https://github.com/OpenSeizureDetector/Dialler/tree/master/app/release/app-release.apk">OpenSeizureDetector Dialer App</a> Not installed - Required for Phone Call Alerts.</string>
-
+    <string name="title_devices">BLE Devices</string>
+    <string name="ble_not_supported">BLE Not Supported</string>
+    <string name="error_bluetooth_not_supported">Bluetooth Not Supported</string>
+    <string name="menu_stop">STOP</string>
+    <string name="menu_scan">SCAN</string>
+    <string name="unknown_device">Unknown Device</string>
+    <string name="select_ble_device_title">Select BLE Device</string>
+    <string name="select_ble_device_desc">Select Bluetooth Low Energy (BLE) Device to provide seizure (acceleration and heart rate) data).</string>
 </resources>

@@ -4,11 +4,13 @@
         <item>"Pebble Watch"</item>
         <item>"Garmin Watch"</item>
         <item>"Network"</item>
+        <item>"Bluetooth Device"</item>
     </string-array>
     <string-array name="datasource_list_values">
         <item>"Pebble"</item>
         <item>"Garmin"</item>
         <item>"Network"</item>
+        <item>"BLE"</item>
     </string-array>
 
 </resources>

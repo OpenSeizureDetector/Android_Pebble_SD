@@ -244,6 +244,11 @@ public class SdServer extends Service implements SdDataReceiver {
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceGarmin");
                 mSdDataSource = new SdDataSourceGarmin(this.getApplicationContext(), mHandler, this);
                 break;
+            case "BLE":
+                Log.v(TAG, "Selecting BLE DataSource");
+                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceBLE");
+                mSdDataSource = new SdDataSourceBLE(this.getApplicationContext(), mHandler, this);
+                break;
             default:
                 Log.e(TAG, "Datasource " + mSdDataSourceName + " not recognised - Defaulting to Pebble");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - Datasource " + mSdDataSourceName + " not recognised - exiting");
@@ -679,10 +684,24 @@ public class SdServer extends Service implements SdDataReceiver {
         mSdData.alarmPhrase = "FAULT";
         mSdData.alarmStanding = false;
         if (webServer != null) webServer.setSdData(mSdData);
-        if (mAudibleFaultWarning) {
+        // We only take action to warn the user and re-start the data source to attempt to fix it
+        // ourselves if we have been in a fault condition for a while - signified by the mFaultTimerCompleted
+        // flag.
+        if (mFaultTimerCompleted) {
             faultWarningBeep();
+            //mSdDataSource.stop();
+            //mHandler.postDelayed(new Runnable() {
+            //    public void run() {
+            //        mSdDataSource.start();
+            //    }
+            //}, 190);
+        } else {
+            startFaultTimer();
+            Log.v(TAG, "onSdDataFault() - starting Fault Timer");
+            mUtil.writeToSysLogFile("onSdDataFault() - starting Fault Timer");
         }
-        showNotification(-1);
+
+    showNotification(-1);
     }
 
     /* from http://stackoverflow.com/questions/12154940/how-to-make-a-beep-in-android */
@@ -705,26 +724,20 @@ public class SdServer extends Service implements SdDataReceiver {
      * beep, provided mAudibleAlarm is set
      */
     public void faultWarningBeep() {
-        if (mFaultTimerCompleted) {
-            if (mCancelAudible) {
+        if (mCancelAudible) {
                 Log.v(TAG, "faultWarningBeep() - CancelAudible Active - silent beep...");
             } else {
-                if (mAudibleFaultWarning) {
-                    if (mMp3Alarm) {
-                        Log.v(TAG, "Not making MP3 fault beep - handled by notification");
-                    } else {
-                        beep(10);
-                    }
-                    Log.v(TAG, "faultWarningBeep()");
-                    mUtil.writeToSysLogFile("SdServer.faultWarningBeep() - beeping");
+            if (mAudibleFaultWarning) {
+                if (mMp3Alarm) {
+                    Log.v(TAG, "Not making MP3 fault beep - handled by notification");
                 } else {
-                    Log.v(TAG, "faultWarningBeep() - silent...");
+                    beep(10);
                 }
+                Log.v(TAG, "faultWarningBeep()");
+                mUtil.writeToSysLogFile("SdServer.faultWarningBeep() - beeping");
+            } else {
+                Log.v(TAG, "faultWarningBeep() - silent...");
             }
-        } else {
-            startFaultTimer();
-            Log.v(TAG, "faultWarningBeep() - starting Fault Timer");
-            mUtil.writeToSysLogFile("faultWarningBeep() - starting Fault Timer");
         }
 
     }
