@@ -47,17 +47,18 @@
         android:title="@string/test_sms_alarm_notification" />
 
     <item
+        android:enabled="false"
         android:id="@+id/action_test_phone_alarm"
         android:icon="@drawable/stop_server"
         android:showAsAction="never|withText"
         android:title="@string/test_phone_alarm_notification" />
 
     <item
+        android:enabled="false"
         android:id="@+id/action_logmanager"
         android:icon="@drawable/ic_action_settings"
         android:showAsAction="never|withText"
         android:title="@string/data_log_manager"
-        android:enabled="true"
         />
 
     <item
@@ -69,11 +70,11 @@
         />
 
     <item
+        android:enabled="false"
         android:id="@+id/action_export"
         android:icon="@drawable/ic_action_settings"
         android:showAsAction="never|withText"
         android:title="@string/export_data"
-        android:enabled="true"
         />
 
     <item

@@ -93,6 +93,7 @@ public class SdDataSourceBLE extends SdDataSource {
     public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID.fromString(CHAR_HEART_RATE_MEASUREMENT);
     private BluetoothGatt mGatt;
     private BluetoothGattCharacteristic mBattChar;
+    private BluetoothGattCharacteristic mOsdChar;
 
 
     public SdDataSourceBLE(Context context, Handler handler,
@@ -174,6 +175,9 @@ public class SdDataSourceBLE extends SdDataSource {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
+        // Un-register for BLE Notifications.
+        setCharacteristicNotification(mOsdChar, false);
+
         mBluetoothGatt.disconnect();
         if (mBluetoothGatt == null) {
             return;
@@ -253,6 +257,7 @@ public class SdDataSourceBLE extends SdDataSource {
                             String charUuidStr = gattCharacteristic.getUuid().toString();
                             if (charUuidStr.equals(CHAR_OSD_ACC_DATA)) {
                                 Log.v(TAG, "Subscribing to Acceleration Data Change Notifications");
+                                mOsdChar = gattCharacteristic;
                                 setCharacteristicNotification(gattCharacteristic,true);
                             }
                             else if (charUuidStr.equals(CHAR_OSD_BATT_DATA)) {
@@ -368,15 +373,28 @@ public class SdDataSourceBLE extends SdDataSource {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
-        Log.v(TAG,"setCharacteristicNotification - Requesting notifications");
-        mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
+        if (enabled) {
+            Log.v(TAG, "setCharacteristicNotification - Requesting notifications");
+            mBluetoothGatt.setCharacteristicNotification(characteristic, true);
 
-        // Tell the device we want notifications?   The sample from Google said we only need this for Heart Rate, but the
-        // BangleJS widget did not work without it so do it for everything.
+            // Tell the device we want notifications?   The sample from Google said we only need this for Heart Rate, but the
+            // BangleJS widget did not work without it so do it for everything.
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
                     UUID.fromString(GattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             mBluetoothGatt.writeDescriptor(descriptor);
+        } else {
+            Log.v(TAG, "setCharacteristicNotification - De-registering notifications");
+            mBluetoothGatt.setCharacteristicNotification(characteristic, false);
+
+            // Tell the device we want notifications?   The sample from Google said we only need this for Heart Rate, but the
+            // BangleJS widget did not work without it so do it for everything.
+            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
+                    UUID.fromString(GattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
+            descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+            mBluetoothGatt.writeDescriptor(descriptor);
+
+        }
     }
 
     /**

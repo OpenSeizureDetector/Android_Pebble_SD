@@ -161,8 +161,6 @@ public class SdServer extends Service implements SdDataReceiver {
     public SdServer() {
         super();
         Log.i(TAG, "SdServer Created");
-        mSdData = new SdData();
-        mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
     }
 
     @Override
@@ -186,6 +184,9 @@ public class SdServer extends Service implements SdDataReceiver {
     public void onCreate() {
         Log.i(TAG, "onCreate()");
         mHandler = new Handler();
+        mSdData = new SdData();
+        mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+
         mUtil = new OsdUtil(getApplicationContext(), mHandler);
         mUtil.writeToSysLogFile("SdServer.onCreate()");
 
@@ -824,7 +825,7 @@ public class SdServer extends Service implements SdDataReceiver {
             }
         } else {
             Log.i(TAG, "sendSMSAlarm() - Phone Alarms Disabled - not doing anything!");
-            mUtil.showToast(getString(R.string.phone_alarm_disabled));
+            //mUtil.showToast(getString(R.string.phone_alarm_disabled));
         }
     }
 
