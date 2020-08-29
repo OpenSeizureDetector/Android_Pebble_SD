@@ -37,6 +37,8 @@ The following libraries are used:
 
 Logo based on ["Star of life2" by Verdy p - Own work. Licensed under Public Domain via Wikimedia Commons](http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).
 
+Alarm Bell Icon by <a href="https://icon54.com/" title="Pixel perfect">Pixel perfect</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a>
+
 Other icons crated using http://romannurik.github.io/AndroidAssetStudio.
 
 Audio Alarm sounds from freesound https://freesound.org/people/coltonmanz/sounds/381382/, https://freesound.org/people/NoiseCollector/sounds/4270/, https://freesound.org/people/pistak23/sounds/271632/
