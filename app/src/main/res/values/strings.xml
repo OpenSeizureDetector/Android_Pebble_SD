@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
+        \n V3.6 - Added phone sensor data source for testing without a watchs
         \n V3.5 - Added support for Phone Call Alerts, using separate OpenSeizureDetector Dialler App
         \n      - Added Unique Identifier (UUID) to SMS alerts so they can be detected as OpenSeizureDetector SMS messages on client phone.
         \n V3.4.0 - Aug 2020
@@ -143,6 +144,6 @@
     <string name="menu_stop">STOP</string>
     <string name="menu_scan">SCAN</string>
     <string name="unknown_device">Unknown Device</string>
-    <string name="select_ble_device_title">Select BLE Device</string>
-    <string name="select_ble_device_desc">Select Bluetooth Low Energy (BLE) Device to provide seizure (acceleration and heart rate) data).</string>
+    <string name="select_ble_device_title">Select BLE Device (for Buetooth Data Source Only)</string>
+    <string name="select_ble_device_desc">Select Bluetooth Low Energy (BLE) Device to provide seizure (acceleration and heart rate) data) when using the Bluetooth Device data source.</string>
 </resources>

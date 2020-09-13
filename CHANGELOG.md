@@ -1,5 +1,7 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+	V3.6.0 - Sep 2020
+	    - Added a phone sensor datasource, primarily for people to use for testing without needing a watch.
 	V3.5.0 - Aug 2020
 	     - Added broadcast to request phone call dial alert (handled by separate app OpenSeizureDetector Dialler).
 	     - Added UUID string to SMS alerts so they can be detected by a custom SMS receiver on the carer's phone.

@@ -250,6 +250,11 @@ public class SdServer extends Service implements SdDataReceiver {
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceBLE");
                 mSdDataSource = new SdDataSourceBLE(this.getApplicationContext(), mHandler, this);
                 break;
+            case "Phone":
+                Log.v(TAG, "Selecting Phone Sensor DataSource");
+                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePhone");
+                mSdDataSource = new SdDataSourcePhone(this.getApplicationContext(), mHandler, this);
+                break;
             default:
                 Log.e(TAG, "Datasource " + mSdDataSourceName + " not recognised - Defaulting to Pebble");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - Datasource " + mSdDataSourceName + " not recognised - exiting");

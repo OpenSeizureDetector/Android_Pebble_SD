@@ -3,7 +3,7 @@
     <ListPreference
         android:key="DataSource"
         android:title="Select Data Source"
-        android:summary="Select whether to use a Pebble Watch or network connection as the seizure detector data source."
+        android:summary="Select the seizure detector data source to use."
         android:entries="@array/datasource_list"
         android:entryValues="@array/datasource_list_values"
         android:defaultValue="Garmin"

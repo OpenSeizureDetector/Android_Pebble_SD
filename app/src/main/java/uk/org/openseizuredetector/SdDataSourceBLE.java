@@ -176,7 +176,9 @@ public class SdDataSourceBLE extends SdDataSource {
             return;
         }
         // Un-register for BLE Notifications.
-        setCharacteristicNotification(mOsdChar, false);
+        if (mOsdChar != null) {
+            setCharacteristicNotification(mOsdChar, false);
+        }
 
         mBluetoothGatt.disconnect();
         if (mBluetoothGatt == null) {
@@ -314,6 +316,7 @@ public class SdDataSourceBLE extends SdDataSource {
                         mSdData.watchAppRunning = true;
                         for (i = 0; i < rawData.length; i++) {
                             mSdData.rawData[i] = rawData[i];
+                            //Log.v(TAG,"onDataReceived() i="+i+", "+rawData[i]);
                         }
                         mSdData.mNsamp = rawData.length;
                         //mNSamp = accelVals.length();
