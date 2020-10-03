@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OpenSeizureDetector</string>
+    <string name="changelog">
+        \n V3.6 - Dodano obsługę czujników telefonu w celu wykrywania drgawek bez zegarka
+        \n V3.5 - Dodano obsługę alarmowego telefonowania używając osobnej apki OpenSeizureDetector Dialler App
+        \n      - Dodano Uniwersalny Unikalny Identyfikator (UUID) do alarmów SMS tak że mogą być widoczne u odbiorcy jako przysłane od OpenSeizureDetector.
+        \n V3.4.0 - Sie 2020
+        \n    - Dodano obsługę źródeł danych BLE
+    </string>
+    <string name="UpgradeMsg">
+        OpenSeizureDetector nie zbiera żadnych danych osobowych.
+        Oznacza to że nie mam możliwości kontaktu z użytkownikami jeśli znajdę w
+		apce błąd o którym powinni wiedzieć.   \nProszę zasubskrybuj newsletter na
+        http://openseizuredetector.org.uk, lub profil apki na Facebooku https://www.facebook.com/openseizuredetector.
+        abym w razie potrzeby mógł się skontaktować.\nDziękuję!  Graham \ngraham@openseizuredetector.org.uk
+        \n\nZmiany w tej wersji:
+        \n
+    </string>
+    <string name="FirstRunDlgMsg">
+        OpenSeizureDetector nie zbiera żadnych danych osobowych.
+        Oznacza to że nie mam możliwości kontaktu z użytkownikami jeśli znajdę w
+		apce błąd o którym powinni wiedzieć.   \nProszę zasubskrybuj newsletter na
+        http://openseizuredetector.org.uk, lub profil apki na Facebooku https://www.facebook.com/openseizuredetector.
+        abym w razie potrzeby mógł się skontaktować.\nDziękuję!  Graham \ngraham@openseizuredetector.org.uk
+        \n\nZmiany w tej wersji:
+    </string>
+    <string name="ask_for_error_log">Przykro mi, OpenSeizureDetector zepsuł się.  Proszę prześlij nam emailem ten plik abyśmy mogli zobaczyć co się stało i go naprawić.\nDzięki, Graham.</string>
+    <string name="email_welcome_note">Drogi OpenSeizureDetector,\n\nAplikacja jest zepsuta, proszę zapoznać się z poniższym logiem w celu poznania szczegółów.\n\n\n</string>
+    <string name="copyright_info">OpenSeizureDetector (Używa UCE Handler\nCopyright © 2018 Rohit Sahebrao Surwase.)</string>
+    <string name="okBtnTxt">OK</string>
+    <string name="UpdateDialogTitleTxt">Dziękujemy za zaktualizowanie OpenSeizureDetector</string>
+    <string name="FirstRunDlgTitle">Witaj w OpenSeizureDetector</string>
+    <string name="SmsPermissionWarning">Problem z uprawnieniami SMS</string>
+    <string name="AppPermissionsOk">Uprawnienia apki OK</string>
+    <string name="AppPermissionsWarning">Problem z uprawnieniami apki</string>
+    <string name="BoundToServiceOk">Połączenie z usługą OK</string>
+    <string name="BindingToService">Łączę z usługą w tle...</string>
+    <string name="WatchConnectedOk">Połączenie z zegarkiem OK</string>
+    <string name="WatchNotConnected">Brak połączenia z zegarkiem</string>
+    <string name="SeizureDetectorDataReceived">Odbiór danych czujnika drgawek OK</string>
+    <string name="WaitingForSeizureDetectorData">Czekam na dane czujnika drgawek...</string>
+    <string name="SeizureDetectorSettingsReceived">Odbiór ustawień czujnika drgawek OK</string>
+    <string name="WaitingForSeizureDetectorSettings">Czekam na ustawienia czujnika drgawek...</string>
+    <string name="DataSource">Źródło danych</string>
+    <string name="AppTitleText">OpenSeizureDetector Android wersja </string>
+    <string name="ServerRunningOK">Serwer działa OK\n</string>
+    <string name="AccessServerAt">Dostęp do serwera: </string>
+    <string name="ServerStopped">Serwer zatrzymany</string>
+    <string name="Warning">UWAGA</string>
+    <string name="Mute">WYCISZ</string>
+    <string name="Alarm">**ALARM**</string>
+    <string name="Fall">**UPADEK**</string>
+    <string name="HR_Equals">Puls = </string>
+    <string name="HRAlarmOff">Alarm tętna WYŁĄCZONY</string>
+    <string name="WatchAppOK">Apka zegarka OK</string>
+    <string name="WatchAppNotRunning">Apka zegarka WYŁĄCZONA</string>
+    <string name="WatchBatteryEquals">Bateria zegarka = </string>
+    <string name="PowerEquals">Moc = </string>
+    <string name="SpectrumRatioEquals">Współczynnik spektrum = </string>
+    <string name="Threshold">próg</string>
+    <string name="NetFault">BŁĄD SIECI</string>
+    <string name="WatchApp">Apka zegarka -----</string>
+    <string name="Dashes">------</string>
+    <string name="SMSWillBeSentIn">SMS zostanie wysłany za </string>
+    <string name="Cancel">ANULOWAĆ?</string>
+    <string name="AcceptAlarm">Akceptuję alarm</string>
+    <string name="AudibleAlarmsCancelledFor">Alarmy dźwiękowe wyciszone na </string>
+    <string name="PressToReEnable"> Naciśnij by włączyć ponownie</string>
+    <string name="CancelAudibleAlarms">Wycisz alarmy dźwiękowe (tymczasowo)</string>
+    <string name="AudibleAlarmsOff">Alarmy dźwiękowe WYŁĄCZONE</string>
+    <string name="Fault">BŁĄD</string>
+    <string name="authenticate">Uwierzytelnienie</string>
+    <string name="not_authenticated">Nieuwierzytelniony</string>
+    <string name="cancel">Anuluj</string>
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Hasło</string>
+    <string name="action_sign_in">Zaloguj się lub zarejestruj</string>
+    <string name="action_sign_in_short">Logowanie</string>
+    <string name="welcome">"Witaj!"</string>
+    <string name="invalid_username">Nieprawidłowa nazwa użytkownika</string>
+    <string name="invalid_password">Hasło musi mieć więcej niż 5 znaków</string>
+    <string name="login_failed">"Nieudane logowanie"</string>
+    <string name="AdvancedModeTitle">Tryb zaawansowany</string>
+    <string name="AdvancedModeSummary">Włącza zaawansowane opcje (możesz ustawić wiele więcej rzeczy....)</string>
+    <string name="AutoStartTitle">Autostart</string>
+    <string name="AutoStartSummary">Automatycznie włącza OpenSeizureDetector gdy włączasz telefon</string>
+    <string name="DataSourceTitle">Wybór źródła danych</string>
+    <string name="DataSourceSummary">Wybierz czy jako źródło danych czujnika drgawek chcesz używać zegarka Garmin, Pebble, czy połączenia sieciowego.</string>
+    <string name="LogRemoteTitle">Zdalny zapis danych</string>
+    <string name="LogRemoteSummary">Zapisuje dane w centralnej bazie danych OpenSeizureDetector</string>
+    <string name="UseMobileTitle">Używaj internetu mobilnego</string>
+    <string name="UseMobileSummary">Używa internetu mobilnego do zdalnego zapisu danych</string>
+    <string name="SeizureDetectorSettingsTitle">Ustawienia czujnika drgawek</string>
+    <string name="AlarmThreshTitle">Próg alarmu</string>
+    <string name="AlarmThreshSummary">Próg alarmu (domyślnie = 100)</string>
+    <string name="AlarmRatioThreshTitle">Próg współczynnika alarmu</string>
+    <string name="AlarmRatioThreshSummary">Próg współczynnika alarmu (domyślnie = 50). Zwiększ aby zmniejszyć czułość.</string>
+    <string name="AlarmFreqMaxTitle">AlarmFreqMax (Hz)</string>
+    <string name="AlarmFreqMaxSummary">Maksymalna częstotliwość ROI (Hz) (domyślnie = 8 Hz)</string>
+    <string name="AlarmFreqMinTitle">AlarmFreqMin (Hz)</string>
+    <string name="AlarmFreqMinSummary">Minimalna częstotliwość ROI (Hz) (domyślnie = 3 Hz)</string>
+    <string name="HRAlarmEnabledTitle">Włącz alarm tętna</string>
+    <string name="HRAlarmEnabledSummary" />
+    <string name="HRNullAlarmTitle">Alarmuj przy braku tętna</string>
+    <string name="HRNullAlarmSummary" />
+    <string name="HRThreshMinTitle">Minimalna wartość tętna (uderzeń/min)</string>
+    <string name="HRThreshMinSummary" />
+    <string name="HRThreshMaxTitle">Maksymalna wartość tętna (uderzeń/min)</string>
+    <string name="HRThreshMaxSummary" />
+    <string name="BasicPrefTitle">Podstawowe</string>
+    <string name="BasicPrefSummary">Ustawienia podstawowe</string>
+    <string name="accept_alarm">Zaakceptuj alarm</string>
+    <string name="start_stop_server">Włącz/wyłącz serwer</string>
+    <string name="install_watch_app">Zainstaluj apkę na zegarek</string>
+    <string name="test_alarm_beep">Test alarmu dźwiękowego</string>
+    <string name="test_warning_beep">Test dźwięku ostrzeżeń</string>
+    <string name="test_sms_alarm_notification">Wyślij próbny alarm SMS</string>
+    <string name="data_log_manager">Menadżer dziennika danych</string>
+    <string name="view_log_entries">Wyświetl dziennik danych</string>
+    <string name="export_data">Eksport danych</string>
+    <string name="settings">Ustawienia</string>
+    <string name="about">O apce...</string>
+    <string name="about_text">OpenSeizureDetector system\n alarmowania i wykrywania drgawek epileptycznych (toniczno-klonicznych) \n Używa zegarka Pebble Smart\n do wykrywania drgawek związanych z atakiem \n informując opiekunów za pomocą\n alarmów dźwiękowych oraz SMS.\n System jest darmowy oraz otwarty - odwiedź \n http://openseizuredetector.org.uk aby dowiedzieć się więcej. Wszelkie uwagi proszę zgłaszać do graham@openseizuredetector.org.uk\n lub na repozytorium github projektu \n - https://github.com/OpenSeizureDetector</string>
+    <string name="credits_text">Apka Android i na zegarek \n copyright Graham Jones, 2015.\n Używa następujących bibliotek:\n - SYLT-FFT - https://github.com/stg/SYLT-FFT by D. Taylor.\n - NanoHTTPD - https://github.com/NanoHttpd/nanohttpd\n - jQuery - http://jquery.org\n - jBeep - http://www.ultraduz.com.br\n - Chartjs - http://www.chartjs.org\n - MPAndroidChart - https://github.com/PhilJay/MPAndroidChart\n - UCE-Handler - https://github.com/RohitSurwase/UCE-Handler\n \n Logo wzorowane jest na Star of life2 by Verdy P, \n Licencja Public Domain via\n Wikimedia Commons (http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).</string>
+    <string name="edit_settings">Zmień ustawienia</string>
+    <string name="sms_location_alarm_active">Wysyłaj lokalizację w SMS</string>
+    <string name="sms_location_alarm_disabled">Nie wysyłaj lokalizacji w SMS</string>
+    <string name="cancel_audible_not_sending_sms">Wyłączono alarmy dźwiękowe - nie wysyłam SMS</string>
+    <string name="sms_alarm_disabled">Wyłączono alarmy SMS - nic nie zrobię!</string>
+    <string name="no_wifi_connection">Stan sieci zmieniony - brak połączenia Wifi</string>
+    <string name="no_active_network">Stan sieci zmieniony - brak aktywnych sieci</string>
+    <string name="problem_parsing_preferences">Problem z ustawieniami - to nie zadziała - proszę wrócić do ustawień i poprawić to!</string>
+    <string name="send_sms_last_location">Wysyłka SMS - ostatnia lokalizacja to </string>
+    <string name="failed_to_send_sms">BŁĄD: NIE UDAŁO SIĘ WYSŁAĆ SMSa</string>
+    <string name="sms_alarms_disabled">Wyłączono alarmy SMS - nic nie zrobię!</string>
+    <string name="phone_alarm_disabled">Alarmy telefoniczne wyłączone</string>
+    <string name="test_phone_alarm_notification">Sprawdź alarm telefoniczny</string>
+    <string name="DiallerNotInstalledWarning"><a href="https://github.com/OpenSeizureDetector/Dialler/tree/master/app/release/app-release.apk">OpenSeizureDetector Dialer App</a> niezainstalowana - wymagana dla alarmów telefonicznych.</string>
+    <string name="title_devices">Urządzenia BLE</string>
+    <string name="ble_not_supported">BLE nieobsługiwane</string>
+    <string name="error_bluetooth_not_supported">Bluetooth nieobsługiwane</string>
+    <string name="menu_stop">STOP</string>
+    <string name="menu_scan">SKANUJ</string>
+    <string name="unknown_device">Nieznane urządzenie</string>
+    <string name="select_ble_device_title">Wybierz urządzenie BLE (tylko dla źródeł danych Bluetooth)</string>
+    <string name="select_ble_device_desc">Wybierz urządzenie Bluetooth Low Energy (BLE) gdy używasz Bluetooth jako źródła danych wykrywania ataków (akcelerometr i tętno).</string>
+</resources>
