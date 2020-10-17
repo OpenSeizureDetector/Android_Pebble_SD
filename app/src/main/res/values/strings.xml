@@ -146,4 +146,16 @@
     <string name="unknown_device">Unknown Device</string>
     <string name="select_ble_device_title">Select BLE Device (for Buetooth Data Source Only)</string>
     <string name="select_ble_device_desc">Select Bluetooth Low Energy (BLE) Device to provide seizure (acceleration and heart rate) data) when using the Bluetooth Device data source.</string>
+    <string name="basic_settings_title">Basic</string>
+    <string name="basic_settings_summary">Basic Settings</string>
+    <string name="general_settings_title">General</string>
+    <string name="general_settings_summary">General Preferences</string>
+    <string name="alarms_settings_title">Alarms</string>
+    <string name="alarms_settings_summary">Alarms Preferences</string>
+    <string name="seizure_detector_settings_title">Seizure Detector</string>
+    <string name="seizure_detector_settings_summary">Seizure Detector Preferences</string>
+    <string name="pebble_datasource_summary">Pebble Datasource Preferences</string>
+    <string name="network_datasource_title">Network Datasource</string>
+    <string name="network_datasource_summary">Network Datasource Preferences</string>
+    <string name="pebble_datasource_title">Pebble Datasource</string>
 </resources>

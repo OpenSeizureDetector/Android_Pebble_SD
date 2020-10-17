@@ -146,4 +146,16 @@
     <string name="unknown_device">Nieznane urządzenie</string>
     <string name="select_ble_device_title">Wybierz urządzenie BLE (tylko dla źródeł danych Bluetooth)</string>
     <string name="select_ble_device_desc">Wybierz urządzenie Bluetooth Low Energy (BLE) gdy używasz Bluetooth jako źródła danych wykrywania ataków (akcelerometr i tętno).</string>
+    <string name="basic_settings_title">Basic</string>
+    <string name="general_settings_summary">General Preferences</string>
+    <string name="alarms_settings_title">Alarms</string>
+    <string name="alarms_settings_summary">Alarms Preferences</string>
+    <string name="seizure_detector_settings_title">Seizure Detector</string>
+    <string name="seizure_detector_settings_summary">Seizure Detector Preferences</string>
+    <string name="network_datasource_title">Network Datasource</string>
+    <string name="network_datasource_summary">Network Datasource Preferences</string>
+    <string name="pebble_datasource_title">Pebble Datasource</string>
+    <string name="pebble_datasource_summary">Pebble Datasource Preferences</string>
+    <string name="basic_settings_summary">Basic Settings</string>
+    <string name="general_settings_title">General</string>
 </resources>
