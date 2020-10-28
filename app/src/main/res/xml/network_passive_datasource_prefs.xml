@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?><!-- The ListPreference data is defined in pebble_datasource_values.xml -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="BLE Device Settings">
+    <PreferenceCategory android:title="@string/ble_device_settings_title">
         <EditTextPreference
             android:defaultValue=""
             android:key="BLE_Device_Addr"
-            android:summary="MAC Address of BLE Data Source Device"
-            android:title="Device Address" />
+            android:summary="@string/ble_mac_addr_summary"
+            android:title="@string/ble_mac_addr_title" />
         <EditTextPreference
             android:defaultValue=""
             android:key="BLE_Device_Name"
-            android:summary="Name of BLE Data Source Device"
-            android:title="Device Address" />
+            android:summary="@string/ble_device_name_summary"
+            android:title="@string/ble_device_name_title" />
     </PreferenceCategory>
-    <PreferenceCategory android:title="User Interface Settings">
+    <PreferenceCategory android:title="@string/user_interface_settings_title">
         <EditTextPreference
             android:defaultValue="5"
             android:key="PebbleUpdatePeriod"

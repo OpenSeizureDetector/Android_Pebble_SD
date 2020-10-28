@@ -4,12 +4,12 @@
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="LatchAlarms"
-            android:summary="Require manual reset of alarms to reset them to silence them."
-            android:title="Latch Alarms" />
+            android:summary="@string/latch_alarms_summary"
+            android:title="@string/latch_alarms_title" />
         <EditTextPreference
             android:key="LatchAlarmTimerPeriod"
-            android:title="Latch Alarm Timer Duration (sec)"
-            android:summary="Duration in seconds that alarms will initiate for before being silenced automatically."
+            android:title="@string/latch_timer_period_title"
+            android:summary="@string/latch_timer_period_summary"
             android:numeric="integer"
             android:defaultValue="10" />
 
@@ -18,29 +18,29 @@
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="AudibleAlarm"
-            android:summary="Issue an audible alarm if the seizure detector enters an alarm condition."
-            android:title="Enable Audible Alarm" />
+            android:summary="@string/enable_audible_alarm_summary"
+            android:title="@string/enable_audible_alarm_title" />
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="AudibleWarning"
-            android:summary="Issue an audible alarm if the seizure detector enters a warning (pre-alarm) condition."
-            android:title="Enable Audible Warnings" />
+            android:summary="@string/enable_audible_warning_summary"
+            android:title="@string/enable_audible_warning_title" />
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="AudibleFaultWarning"
-            android:summary="Issue an audible alarm if the system detects a fault (e.g. can not talk to Pebble)."
-            android:title="Enable Audible System FaultWarnings" />
+            android:summary="@string/enable_audible_fault_summary"
+            android:title="@string/enable_audible_fault_title" />
         <EditTextPreference
             android:key="FaultTimerPeriod"
-            android:title="Fault Timer Duration (sec)"
-            android:summary="Duration that fault alarms are muted before initiating."
+            android:title="@string/fault_timer_period_title"
+            android:summary="@string/fault_timer_period_summary"
             android:numeric="integer"
             android:defaultValue="30" />
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="UseMp3Alarm"
-            android:summary="Play an MP3 file to create the alarm beeps rather than using the default tone generator."
-            android:title="Use MP3 Alarm Sound" />
+            android:summary="@string/use_mp3_alarm_summary"
+            android:title="@string/use_mp3_alarm_title" />
 
     </PreferenceCategory>
 
@@ -48,20 +48,20 @@
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="SMSAlarm"
-            android:summary="Issue a SMS (Text Message) alarm if the seizure detector enters an alarm condition.  NOTE: THE MESSAGE WILL INCLUDE THE USER's LOCATION.  Disable this option if sharing your location is a concern."
-            android:title="Enable SMS Alarm" />
+            android:summary="@string/enable_sms_alarm_summary"
+            android:title="@string/enable_sms_alarm_title" />
         <EditTextPreference
             android:defaultValue=""
             android:key="SMSNumbers"
-            android:summary="Telephone number(s) to notify by SMS of Alarm (comma separated)."
-            android:title="SMS Alarm numbers" />
+            android:summary="@string/sms_numbers_summary"
+            android:title="@string/sms_numbers_title" />
         <EditTextPreference
             android:defaultValue="**SEIZURE DETECTED**"
             android:key="SMSMsg"
-            android:summary="Message to be Sent by SMS when a Seizure is Detected."
-            android:title="SMS Message" />
+            android:summary="@string/sms_message_summary"
+            android:title="@string/sms_message_title" />
     </PreferenceCategory>
-
+<!--
     <PreferenceCategory android:title="Phone Call Alarm Settings">
         <CheckBoxPreference
             android:defaultValue="false"
@@ -69,17 +69,17 @@
             android:summary="Dial the Carer(s) phone number(s) as well as sending SMS alerts.   It requests an external application (OpenSeizureDetector Dialler) to make the phone calls to the same numbers as are set for SMS alerts above"
             android:title="Enable Phone Call Alarm" />
     </PreferenceCategory>
-
+-->
     <PreferenceCategory android:title="Alarm Logging">
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="LogAlarms"
-            android:summary="Log Alarm events to SD Card"
-            android:title="Log Alarm events to SD Card" />
+            android:summary="@string/log_alarms_summary"
+            android:title="@string/log_alarms_title" />
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="LogData"
-            android:summary="Log Data to SD Card Regularly"
-            android:title="Log Data to SD Card" />
+            android:summary="@string/log_data_summary"
+            android:title="@string/log_data_title"/>
     </PreferenceCategory>
 </PreferenceScreen>

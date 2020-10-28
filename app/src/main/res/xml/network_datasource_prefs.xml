@@ -3,24 +3,24 @@
     <EditTextPreference
         android:defaultValue="192.168.1.175"
         android:key="ServerIP"
-        android:summary="IP Address of OpenSeizureDetector Server (e.g. 192.168.1.175)."
-        android:title="Server IP Address." />
+        android:summary="@string/server_ip_summary"
+        android:title="@string/server_ip_title" />
     <EditTextPreference
         android:defaultValue="2000"
         android:key="DataUpdatePeriod"
         android:numeric="integer"
-        android:summary="Period between server data requests in miliseconds."
-        android:title="Data Update Period (ms)" />
+        android:summary="@string/network_update_period_summary"
+        android:title="@string/network_update_period_title" />
     <EditTextPreference
         android:defaultValue="5000"
         android:key="ConnectTimeoutPeriod"
         android:numeric="integer"
-        android:summary=""
-        android:title="Connection Timeout Period (ms)" />
+        android:summary="@string/connection_timeout_summary"
+        android:title="@string/connection_timeout_title" />
     <EditTextPreference
         android:defaultValue="5000"
         android:key="ReadTimeoutPeriod"
         android:numeric="integer"
-        android:summary=""
-        android:title="Read Timeout Period (ms)" />
+        android:summary="@string/read_timeout_summary"
+        android:title="@string/read_timeout_title" />
 </PreferenceScreen>
