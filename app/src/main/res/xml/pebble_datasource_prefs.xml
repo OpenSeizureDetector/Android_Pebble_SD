@@ -4,66 +4,66 @@
         <EditTextPreference
             android:defaultValue="5"
             android:key="PebbleUpdatePeriod"
-            android:summary="Time period at which data is sent to the phone (does not affect analysis frequency - see Sample Period setting for that)"
-            android:title="Data Transfer Period (sec)" />
+            android:summary="@string/pebble_update_period_summary"
+            android:title="@string/pebble_update_period_title" />
         <EditTextPreference
             android:defaultValue="300"
             android:key="MutePeriod"
-            android:summary="Time that alarms are muted following a long press of the UP button"
-            android:title="Mute Period (sec)" />
+            android:summary="@string/mute_period_summary"
+            android:title="@string/mute_period_title" />
         <EditTextPreference
             android:defaultValue="30"
             android:key="ManAlarmPeriod"
-            android:summary="Time that manual alarms sound following a long press of the DOWN button"
-            android:title="Manual Alarm Period (sec)" />
+            android:summary="@string/manual_alarm_period_summary"
+            android:title="@string/manual_alarm_period_title" />
         <ListPreference
             android:key="PebbleDisplaySpectrum"
-            android:title="Spectrum display Mode"
-            android:summary="Set Display Spectrum mode on or off."
+            android:title="@string/display_spectrum_mode_title"
+            android:summary="@string/display_spectrum_mode_summary"
             android:entries="@array/pebble_display_spectrum_list"
             android:entryValues="@array/pebble_display_spectrum_values"
             android:defaultValue="0"
-            android:dialogTitle="Select Display Spectrum Mode" />
+            android:dialogTitle="@string/display_spectrum_mode_title" />
 
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Analysis">
+    <PreferenceCategory android:title="@string/analysis_prefs_title">
         <ListPreference
             android:key="PebbleSdMode"
-            android:title="Seizure Detector Mode"
-            android:summary="Select one of the three available modes of operation."
+            android:title="@string/seizure_detect_mode_title"
+            android:summary="@string/seizure_detect_mode_summary"
             android:entries="@array/pebble_sd_mode_list"
             android:entryValues="@array/pebble_sd_mode_list_values"
             android:defaultValue="0"
-            android:dialogTitle="Select Seizure Detector Mode" />
+            android:dialogTitle="@string/seizure_detect_mode_title" />
         <ListPreference
             android:key="SampleFreq"
-            android:title="Select Sample Frequency"
-            android:summary="Higher Frequency is more Accurate, but uses more battery power."
+            android:title="@string/sample_freq_title"
+            android:summary="@string/sample_freq_summary"
             android:entries="@array/pebble_sample_freq_list"
             android:entryValues="@array/pebble_sample_freq_list_values"
             android:defaultValue="100"
-            android:dialogTitle="Select Sample Frequency"
+            android:dialogTitle="@string/sample_freq_title"
             android:enabled="true"
             />
 
     </PreferenceCategory>
     <PreferenceCategory
-        android:title="Watch Communications Settings">
+        android:title="@string/watch_comms_settings_title">
         <ListPreference
             android:key="PebbleDebug"
-            android:title="Seizure Detector Debug Mode"
-            android:summary="Set Debug mode on or off."
+            android:title="@string/debug_mode_title"
+            android:summary="@string/debug_mode_summary"
             android:entries="@array/pebble_debug_list"
             android:entryValues="@array/pebble_debug_values"
             android:defaultValue="0"
-            android:dialogTitle="Select Debug Mode" />
+            android:dialogTitle="@string/debug_mode_title" />
         <EditTextPreference
             android:defaultValue="10"
             android:key="AppRestartTimeout"
             android:numeric="integer"
-            android:summary="Period (seconds) that we wait for data from the watch before assuming the watch app is not running and re-starting it."
-            android:title="Period (sec) we wait for data before restarting watch app." />
+            android:summary="@string/app_restart_timeout_summary"
+            android:title="@string/app_restart_timeout_title" />
     </PreferenceCategory>
 
 </PreferenceScreen>

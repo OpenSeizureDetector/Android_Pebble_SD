@@ -213,4 +213,47 @@
     <string name="ble_device_name_summary">Name of BLE Data Source Device</string>
     <string name="ble_device_name_title">Device Address</string>
     <string name="user_interface_settings_title">User Interface Settings</string>
+    <string name="pebble_update_period_summary">Time period at which data is sent to the phone (does not affect analysis frequency - see Sample Period setting for that)</string>
+    <string name="mute_period_summary">Time that alarms are muted following a long press of the UP button</string>
+    <string name="pebble_update_period_title">Data Transfer Period (sec)</string>
+    <string name="mute_period_title">Mute Period (sec)</string>
+    <string name="manual_alarm_period_summary">Time that manual alarms sound following a long press of the DOWN button</string>
+    <string name="manual_alarm_period_title">Manual Alarm Period (sec)</string>
+    <string name="warn_time_summary">Time to wait before initiating warning (Default = 5 sec)</string>
+    <string name="warn_time_title">WarnTime (sec)</string>
+    <string name="alarm_time_summary">Time to wait before initiating alarm (Default = 10 sec)</string>
+    <string name="alarm_time_title">AlarmTime (sec)</string>
+    <string name="alarm_threshold_title">AlarmThresh</string>
+    <string name="alarm_ratio_thresh_summary">Alarm Ratio Threshold (Default = 50). Increase this value to reduce sensitivity if false alarms are a problem.</string>
+    <string name="alarm_ratio_thresh_title">AlarmRatioThresh</string>
+    <string name="alarm_feq_min_summary">Minimum Frequency of ROI (Hz) (Default = 3 Hz)</string>
+    <string name="alarm_freq_min_title">AlarmFreqMin (Hz)</string>
+    <string name="alarm_freq_max_summary">Maximum Frequency of ROI (Hz) (Default = 10 Hz)</string>
+    <string name="alarm_frequency_max_title">AlarmFreqMax (Hz)</string>
+    <string name="sample_period_summary">Period (in seconds) between data analyses</string>
+    <string name="sample_period_title">SamplePeriod (sec)</string>
+    <string name="seizure_detect_mode_summary">Select one of the three available modes of operation.</string>
+    <string name="seizure_detect_mode_title">Seizure Detector Mode</string>
+    <string name="sample_freq_summary">Higher Frequency is more Accurate, but uses more battery power.</string>
+    <string name="fall_detect_title">Fall Detector Settings</string>
+    <string name="fall_detect_active_title">Activate Fall Detection Function</string>
+    <string name="fall_thresh_min_title">Fall Detection Lower Threshold (milli-g)</string>
+    <string name="fall_window_title">Fall Detection Window (milli-seconds)</string>
+    <string name="watch_comms_title">Watch Communications Settings</string>
+    <string name="debug_mode_summary">Set Debug mode on or off.</string>
+    <string name="app_restart_timeout_summary">Period (seconds) that we wait for data from the watch before assuming the watch app is not running and re-starting it.</string>
+    <string name="app_restart_timeout_title">Period (sec) we wait for data before restarting watch app.</string>
+    <string name="display_spectrum_mode_title">Select Display Spectrum Mode</string>
+    <string name="display_spectrum_mode_summary">Set Display Spectrum mode on or off.</string>
+    <string name="analysis_prefs_title">Analysis</string>
+    <string name="watch_comms_settings_title">Watch Communications Settings</string>
+    <string name="alarm_freq_min_summary">alarm_freq_min_summary</string>
+    <string name="debug_mode_title">Seizure Detector Debug Mode</string>
+    <string name="fall_thresh_max_title">Fall Detection Upper Threshold (milli-g)</string>
+    <string name="sample_freq_title">Select Sample Frequency</string>
+    <string name="alarm_threshold_summary">Alarm Threshold (Default = 100)</string>
+    <string name="ble_mac_addr_summary">MAC Address of BLE Data Source Device</string>
+    <string name="data_update_period_summary">Display update period in miliseconds.</string>
+    <string name="select_datasource_title">Select Data Source</string>
+    <string name="select_datasource_summary">Select the seizure detector data source to use.</string>
 </resources>

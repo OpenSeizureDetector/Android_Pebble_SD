@@ -16,65 +16,65 @@
         <EditTextPreference
             android:defaultValue="5"
             android:key="PebbleUpdatePeriod"
-            android:summary="Time period at which data is sent to the phone (does not affect analysis frequency - see Sample Period setting for that)"
-            android:title="Data Transfer Period (sec)" />
+            android:summary="@string/pebble_update_period_summary"
+            android:title="@string/pebble_update_period_title" />
         <EditTextPreference
             android:defaultValue="300"
             android:key="MutePeriod"
-            android:summary="Time that alarms are muted following a long press of the UP button"
-            android:title="Mute Period (sec)" />
+            android:summary="@string/mute_period_summary"
+            android:title="@string/mute_period_title" />
         <EditTextPreference
             android:defaultValue="30"
             android:key="ManAlarmPeriod"
-            android:summary="Time that manual alarms sound following a long press of the DOWN button"
-            android:title="Manual Alarm Period (sec)" />
+            android:summary="@string/manual_alarm_period_summary"
+            android:title="@string/manual_alarm_period_title" />
     </PreferenceCategory>
-    <PreferenceCategory android:title="Seizure Detector Settings">
+    <PreferenceCategory android:title="@string/seizure_detector_settings_title">
         <EditTextPreference
             android:defaultValue="5"
             android:key="WarnTime"
-            android:summary="Time to wait before initiating warning (Default = 5 sec)"
-            android:title="WarnTime (sec)" />
+            android:summary="@string/warn_time_summary"
+            android:title="@string/warn_time_title" />
         <EditTextPreference
             android:defaultValue="10"
             android:key="AlarmTime"
-            android:summary="Time to wait before initiating alarm (Default = 10 sec)"
-            android:title="AlarmTime (sec)" />
+            android:summary="@string/alarm_time_summary"
+            android:title="@string/alarm_time_title" />
         <EditTextPreference
             android:defaultValue="100"
             android:key="AlarmThresh"
-            android:summary="Alarm Threshold (Default = 100)"
-            android:title="AlarmThresh" />
+            android:summary="@string/alarm_threshold_summary"
+            android:title="@string/alarm_threshold_title" />
         <EditTextPreference
             android:defaultValue="50"
             android:key="AlarmRatioThresh"
-            android:summary="Alarm Ratio Threshold (Default = 50).  Increase this value to reduce sensitivity if false alarms are a problem."
-            android:title="AlarmRatioThresh" />
+            android:summary="@string/alarm_ratio_thresh_summary"
+            android:title="@string/alarm_ratio_thresh_title" />
 
         <EditTextPreference
             android:defaultValue="3"
             android:key="AlarmFreqMin"
-            android:summary="Minimum Frequency of ROI (Hz) (Default = 3 Hz)"
-            android:title="AlarmFreqMin (Hz)" />
+            android:summary="@string/alarm_feq_min_summary"
+            android:title="@string/alarm_freq_min_title" />
         <EditTextPreference
             android:defaultValue="10"
             android:key="AlarmFreqMax"
-            android:summary="Maximum Frequency of ROI (Hz) (Default = 10 Hz)"
-            android:title="AlarmFreqMax (Hz)" />
+            android:summary="@string/alarm_freq_max_summary"
+            android:title="@string/alarm_frequency_max_title" />
 
         <EditTextPreference
             android:defaultValue="5"
             android:key="SamplePeriod"
-            android:summary="Period (in seconds) between data analyses"
-            android:title="SamplePeriod (sec)" />
+            android:summary="@string/sample_period_summary"
+            android:title="@string/sample_period_title" />
         <ListPreference
             android:defaultValue="0"
             android:dialogTitle="Select Seizure Detector Mode"
             android:entries="@array/pebble_sd_mode_list"
             android:entryValues="@array/pebble_sd_mode_list_values"
             android:key="PebbleSdMode"
-            android:summary="Select one of the three available modes of operation."
-            android:title="Seizure Detector Mode" />
+            android:summary="@string/seizure_detect_mode_summary"
+            android:title="@string/seizure_detect_mode_title" />
         <ListPreference
             android:defaultValue="100"
             android:dialogTitle="Select Sample Frequency"
@@ -82,49 +82,49 @@
             android:entries="@array/pebble_sample_freq_list"
             android:entryValues="@array/pebble_sample_freq_list_values"
             android:key="SampleFreq"
-            android:summary="Higher Frequency is more Accurate, but uses more battery power."
-            android:title="Select Sample Frequency" />
+            android:summary="@string/sample_freq_summary"
+            android:title="@string/sample_freq_title" />
 
 
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Fall Detector Settings">
+    <PreferenceCategory android:title="@string/fall_detect_title">
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="FallActive"
             android:summary=""
-            android:title="Activate Fall Detection Function" />
+            android:title="@string/fall_detect_active_title" />
         <EditTextPreference
             android:defaultValue="200"
             android:key="FallThreshMin"
             android:summary=""
-            android:title="Fall Detection Lower Threshold (milli-g)" />
+            android:title="@string/fall_thresh_min_title" />
         <EditTextPreference
             android:defaultValue="1200"
             android:key="FallThreshMax"
             android:summary=""
-            android:title="Fall Detection Upper Threshold (milli-g)" />
+            android:title="@string/fall_thresh_max_title" />
         <EditTextPreference
             android:defaultValue="1500"
             android:key="FallWindow"
             android:summary=""
-            android:title="Fall Detection Window (milli-seconds)" />
+            android:title="@string/fall_window_title" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Watch Communications Settings">
+    <PreferenceCategory android:title="@string/watch_comms_title">
         <ListPreference
             android:defaultValue="0"
             android:dialogTitle="Select Debug Mode"
             android:entries="@array/pebble_debug_list"
             android:entryValues="@array/pebble_debug_values"
             android:key="PebbleDebug"
-            android:summary="Set Debug mode on or off."
-            android:title="Seizure Detector Debug Mode" />
+            android:summary="@string/debug_mode_summary"
+            android:title="@string/debug_mode_title" />
         <EditTextPreference
             android:defaultValue="10"
             android:key="AppRestartTimeout"
             android:numeric="integer"
-            android:summary="Period (seconds) that we wait for data from the watch before assuming the watch app is not running and re-starting it."
-            android:title="Period (sec) we wait for data before restarting watch app." />
+            android:summary="@string/app_restart_timeout_summary"
+            android:title="@string/app_restart_timeout_title" />
     </PreferenceCategory>
 </PreferenceScreen>
