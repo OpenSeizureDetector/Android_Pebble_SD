@@ -54,13 +54,13 @@
         <EditTextPreference
             android:defaultValue="3"
             android:key="AlarmFreqMin"
-            android:summary="@string/alarm_feq_min_summary"
+            android:summary="@string/alarm_freq_min_summary"
             android:title="@string/alarm_freq_min_title" />
         <EditTextPreference
             android:defaultValue="10"
             android:key="AlarmFreqMax"
             android:summary="@string/alarm_freq_max_summary"
-            android:title="@string/alarm_frequency_max_title" />
+            android:title="@string/alarm_freq_max_title" />
 
         <EditTextPreference
             android:defaultValue="5"

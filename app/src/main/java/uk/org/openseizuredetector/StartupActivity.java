@@ -103,7 +103,6 @@ public class StartupActivity extends Activity {
         // Read the default settings from the xml preferences files, so we do
         // not have to use the hard coded ones in the java files.
         PreferenceManager.setDefaultValues(this, R.xml.alarm_prefs, true);
-        PreferenceManager.setDefaultValues(this, R.xml.camera_prefs, true);
         PreferenceManager.setDefaultValues(this, R.xml.general_prefs, true);
         PreferenceManager.setDefaultValues(this, R.xml.network_datasource_prefs, true);
         PreferenceManager.setDefaultValues(this, R.xml.pebble_datasource_prefs, true);

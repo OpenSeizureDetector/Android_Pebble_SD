@@ -66,7 +66,7 @@
         android:defaultValue="5" />
     <EditTextPreference
         android:key="AlarmFreqMax"
-        android:title="@string/alarm_frequency_max_title"
+        android:title="@string/alarm_freq_max_title"
         android:summary="@string/alarm_freq_max_summary"
         android:defaultValue="10" />
     <EditTextPreference

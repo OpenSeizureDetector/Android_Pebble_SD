@@ -232,10 +232,10 @@
     <string name="alarm_threshold_title">AlarmThresh</string>
     <string name="alarm_ratio_thresh_summary">Alarm Ratio Threshold (Default = 50). Increase this value to reduce sensitivity if false alarms are a problem.</string>
     <string name="alarm_ratio_thresh_title">AlarmRatioThresh</string>
-    <string name="alarm_feq_min_summary">Minimum Frequency of ROI (Hz) (Default = 3 Hz)</string>
+    <string name="alarm_freq_min_summary">Minimum Frequency of ROI (Hz) (Default = 3 Hz)</string>
     <string name="alarm_freq_min_title">AlarmFreqMin (Hz)</string>
     <string name="alarm_freq_max_summary">Maximum Frequency of ROI (Hz) (Default = 10 Hz)</string>
-    <string name="alarm_frequency_max_title">AlarmFreqMax (Hz)</string>
+    <string name="alarm_freq_max_title">AlarmFreqMax (Hz)</string>
     <string name="sample_period_summary">Period (in seconds) between data analyses</string>
     <string name="sample_period_title">SamplePeriod (sec)</string>
     <string name="seizure_detect_mode_summary">Select one of the three available modes of operation.</string>
@@ -256,5 +256,4 @@
     <string name="display_spectrum_mode_summary">Set Display Spectrum mode on or off.</string>
     <string name="analysis_prefs_title">Analysis</string>
     <string name="watch_comms_settings_title">Watch Communications Settings</string>
-    <string name="alarm_freq_min_summary">alarm_freq_min_summary</string>
 </resources>
