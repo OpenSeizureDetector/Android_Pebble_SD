@@ -68,8 +68,9 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
      */
     @Override
     public void onBuildHeaders(List<Header> target) {
+        String titleStr;
         loadHeadersFromResource(R.xml.preference_headers, target);
-        Log.v(TAG,"onBuildHeaders - target.size="+target.size());
+        Log.v(TAG, "onBuildHeaders - target.size=" + target.size());
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(this.getApplicationContext());
         String dataSourceStr = SP.getString("DataSource", "Pebble");
@@ -80,8 +81,13 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         if (advancedMode) {
             for (int i = 0; i < target.size(); i++) {
                 Header h = target.get(i);
-                Log.v(TAG, "found - " + h.title.toString());
-                if (h.title.toString().equals("Seizure Detector")) {
+                if (h.title != null) {
+                    titleStr = h.title.toString();
+                } else {
+                    titleStr = getResources().getString(h.titleRes);
+                }
+                Log.v(TAG, "found - " + titleStr);
+                if (titleStr.equals("Seizure Detector")) {
                     Log.v(TAG, "found Seizure Detector Header");
                     if (dataSourceStr.equals("Network")) {
                         Log.v(TAG, "Removing seizure detector settings header");
@@ -89,7 +95,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                         i = i - 1;
                     }
                 }
-                if (h.title.toString().equals("Network Datasource")) {
+                if (titleStr.equals("Network Datasource")) {
                     Log.v(TAG, "found Network Datasource Header");
                     if (!dataSourceStr.equals("Network")) {
                         Log.v(TAG, "Removing network settings header");
@@ -97,7 +103,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                         i = i - 1;
                     }
                 }
-                if (h.title.toString().equals("Pebble Datasource")) {
+                if (titleStr.equals("Pebble Datasource")) {
                     Log.v(TAG, "found Pebble Datasource Header");
                     if (!dataSourceStr.equals("Pebble")) {
                         Log.v(TAG, "Removing Pebble settings header");
@@ -109,21 +115,23 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         } else {
             for (int i = 0; i < target.size(); i++) {
                 Header h = target.get(i);
-                Log.v(TAG,"i="+i+", h="+h.toString());
-                Log.v(TAG, "found - " + h.title);
-                if (!h.title.toString().equals("Basic")) {
+                if (h.title != null) {
+                    titleStr = h.title.toString();
+                } else {
+                    titleStr = getResources().getString(h.titleRes);
+                }
+                Log.v(TAG, "i=" + i + ", h=" + h.toString());
+                Log.v(TAG, "found - " + titleStr);
+                if (!titleStr.equals("Basic")) {
                     if (!advancedMode) {
                         Log.v(TAG, "an Advanced Mode Header");
                         target.remove(i);
                         i = i - 1;
                     }
                 }
+
             }
-
         }
-        //mSelectBLEButton = findViewById(R.id.selectBLEDeviceButton);
-        //mSelectBLEButton.setOnClickListener(this);
-
     }
 
     @Override
@@ -226,13 +234,13 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.selectBLEDeviceButton:
-                Log.v(TAG,"onClick - SelectBLEDeviceButton");
+                Log.v(TAG, "onClick - SelectBLEDeviceButton");
                 final Intent intent = new Intent(this.mContext, BLEScanActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 mContext.startActivity(intent);
                 break;
             default:
-                Log.e(TAG,"onClick - unrecognised button");
+                Log.e(TAG, "onClick - unrecognised button");
         }
     }
 
