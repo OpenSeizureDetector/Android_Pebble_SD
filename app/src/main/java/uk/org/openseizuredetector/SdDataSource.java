@@ -134,7 +134,7 @@ public abstract class SdDataSource {
         // as we get app data.
         if (mStatusTimer == null) {
             Log.v(TAG, "start(): starting status timer");
-            mUtil.writeToSysLogFile("SdDataSourceBLE.start() - starting status timer");
+            mUtil.writeToSysLogFile("SdDataSource.start() - starting status timer");
             mStatusTimer = new Timer();
             mStatusTimer.schedule(new TimerTask() {
                 @Override
@@ -144,11 +144,11 @@ public abstract class SdDataSource {
             }, 0, mDataUpdatePeriod * 1000);
         } else {
             Log.v(TAG, "start(): status timer already running.");
-            mUtil.writeToSysLogFile("SdDataSourceBLE.start() - status timer already running??");
+            mUtil.writeToSysLogFile("SdDataSource.start() - status timer already running??");
         }
         if (mFaultCheckTimer == null) {
             Log.v(TAG, "start(): starting alarm check timer");
-            mUtil.writeToSysLogFile("SdDataSourceBLE.start() - starting alarm check timer");
+            mUtil.writeToSysLogFile("SdDataSource.start() - starting alarm check timer");
             mFaultCheckTimer = new Timer();
             mFaultCheckTimer.schedule(new TimerTask() {
                 @Override
@@ -158,12 +158,12 @@ public abstract class SdDataSource {
             }, 0, 1000);
         } else {
             Log.v(TAG, "start(): alarm check timer already running.");
-            mUtil.writeToSysLogFile("SDDataSourceBLE.start() - alarm check timer already running??");
+            mUtil.writeToSysLogFile("SDDataSource.start() - alarm check timer already running??");
         }
 
         if (mSettingsTimer == null) {
             Log.v(TAG, "start(): starting settings timer");
-            mUtil.writeToSysLogFile("SDDataSourceBLE.start() - starting settings timer");
+            mUtil.writeToSysLogFile("SDDataSource.start() - starting settings timer");
             mSettingsTimer = new Timer();
             mSettingsTimer.schedule(new TimerTask() {
                 @Override
@@ -173,7 +173,7 @@ public abstract class SdDataSource {
             }, 0, 1000 * mSettingsPeriod);  // ask for settings less frequently than we get data
         } else {
             Log.v(TAG, "start(): settings timer already running.");
-            mUtil.writeToSysLogFile("SDDataSourceBLE.start() - settings timer already running??");
+            mUtil.writeToSysLogFile("SDDataSource.start() - settings timer already running??");
         }
 
     }
@@ -187,7 +187,7 @@ public abstract class SdDataSource {
             // Stop the status timer
             if (mStatusTimer != null) {
                 Log.v(TAG, "stop(): cancelling status timer");
-                mUtil.writeToSysLogFile("SDDataSourceBLE.stop() - cancelling status timer");
+                mUtil.writeToSysLogFile("SDDataSource.stop() - cancelling status timer");
                 mStatusTimer.cancel();
                 mStatusTimer.purge();
                 mStatusTimer = null;
@@ -195,7 +195,7 @@ public abstract class SdDataSource {
             // Stop the settings timer
             if (mSettingsTimer != null) {
                 Log.v(TAG, "stop(): cancelling settings timer");
-                mUtil.writeToSysLogFile("SDDataSourceBLE.stop() - cancelling settings timer");
+                mUtil.writeToSysLogFile("SDDataSource.stop() - cancelling settings timer");
                 mSettingsTimer.cancel();
                 mSettingsTimer.purge();
                 mSettingsTimer = null;
@@ -203,7 +203,7 @@ public abstract class SdDataSource {
             // Stop the alarm check timer
             if (mFaultCheckTimer != null) {
                 Log.v(TAG, "stop(): cancelling alarm check timer");
-                mUtil.writeToSysLogFile("SDDataSourceBLE.stop() - cancelling alarm check timer");
+                mUtil.writeToSysLogFile("SDDataSource.stop() - cancelling alarm check timer");
                 mFaultCheckTimer.cancel();
                 mFaultCheckTimer.purge();
                 mFaultCheckTimer = null;
@@ -211,7 +211,7 @@ public abstract class SdDataSource {
 
         } catch (Exception e) {
             Log.v(TAG, "Error in stop() - " + e.toString());
-            mUtil.writeToSysLogFile("SDDataSourceBLE.stop() - error - "+e.toString());
+            mUtil.writeToSysLogFile("SDDataSource.stop() - error - "+e.toString());
         }
 
     }
@@ -289,7 +289,7 @@ public abstract class SdDataSource {
                 mSampleFreq = (short)dataObject.getInt("sampleFreq");
                 mSdData.batteryPc = (short)dataObject.getInt("battery");
                 Log.v(TAG,"updateFromJSON - mSamplePeriod="+mSamplePeriod+" mSampleFreq="+mSampleFreq);
-                mUtil.writeToSysLogFile("SDDataSourceBLE.updateFromJSON - Settings Received");
+                mUtil.writeToSysLogFile("SDDataSource.updateFromJSON - Settings Received");
                 mUtil.writeToSysLogFile("    * mSamplePeriod="+mSamplePeriod+" mSampleFreq="+mSampleFreq);
                 mUtil.writeToSysLogFile("    * batteryPc = "+mSdData.batteryPc);
 
@@ -315,7 +315,7 @@ public abstract class SdDataSource {
                 retVal = "ERROR";
             }
         } catch (Exception e) {
-            Log.e(TAG,"updateFromJSON - Error Parsing JSON String - "+e.toString());
+            Log.e(TAG,"updateFromJSON - Error Parsing JSON String - "+ jsonStr+" - "+e.toString());
             mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - "+e.toString());
             e.printStackTrace();
             retVal = "ERROR";
