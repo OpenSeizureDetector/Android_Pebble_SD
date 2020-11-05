@@ -302,7 +302,7 @@ public abstract class SdDataSource {
                     mUtil.writeToSysLogFile("    * watchPartNo = "+watchPartNo+" fwVersion "+watchFwVersion);
                 } catch (Exception e) {
                     Log.e(TAG,"updateFromJSON - Error Parsing V3.2 JSON String - "+e.toString());
-                    mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - "+e.toString());
+                    mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - "+ jsonStr + " - " +e.toString());
                     mUtil.writeToSysLogFile("          This is probably because of an out of date watch app - please upgrade!");
                     e.printStackTrace();
                 }
@@ -316,7 +316,7 @@ public abstract class SdDataSource {
             }
         } catch (Exception e) {
             Log.e(TAG,"updateFromJSON - Error Parsing JSON String - "+ jsonStr+" - "+e.toString());
-            mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - "+e.toString());
+            mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - "+ jsonStr + " - "+e.toString());
             e.printStackTrace();
             retVal = "ERROR";
         }
