@@ -317,6 +317,7 @@ public abstract class SdDataSource {
         } catch (Exception e) {
             Log.e(TAG,"updateFromJSON - Error Parsing JSON String - "+ jsonStr+" - "+e.toString());
             mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - "+ jsonStr + " - "+e.toString());
+            mUtil.writeToSysLogFile("updateFromJSON: Exception at Line Number: "+e.getCause().getStackTrace()[0].getLineNumber()+", "+e.getCause().getStackTrace()[0].toString());
             e.printStackTrace();
             retVal = "ERROR";
         }
