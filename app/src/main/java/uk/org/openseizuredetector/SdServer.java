@@ -105,7 +105,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
     private HandlerThread thread;
     private WakeLock mWakeLock = null;
-    private LocationFinder mLocationFinder;
+    private LocationFinder mLocationFinder = null;
     public SdDataSource mSdDataSource;
     public SdData mSdData = null;
     public String mSdDataSourceName = "undefined";  // The name of the data soruce specified in the preferences.
@@ -376,18 +376,11 @@ public class SdServer extends Service implements SdDataReceiver {
         // Stop the Cancel Alarm Latch timer
         stopLatchTimer();
 
-        // Stop the status timer
-        /*if (dataLogTimer != null) {
-            Log.v(TAG, "stop(): cancelling Data logger timer");
-            mUtil.writeToSysLogFile("onDestroy() - cancelling data log timer");
-            dataLogTimer.cancel();
-            dataLogTimer.purge();
-            dataLogTimer = null;
-        }
-        */
 
-        // Stop the log Manager
-        //mLm.close();
+        // Stop the location finder.
+        if (mLocationFinder != null) {
+            mLocationFinder.destroy();
+        }
 
 
         try {
@@ -413,6 +406,8 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "Error in onDestroy() - " + e.toString());
             mUtil.writeToSysLogFile("SdServer.onDestroy() -error " + e.toString());
         }
+
+        super.onDestroy();
 
     }
 
@@ -999,13 +994,21 @@ public class SdServer extends Service implements SdDataReceiver {
         Log.i(TAG, "SdServer.stopWebServer()");
         if (webServer != null) {
             webServer.stop();
-            if (webServer.isAlive()) {
-                Log.w(TAG, "stopWebServer() - server still alive???");
+            if (webServer == null) {
+                mUtil.writeToSysLogFile("stopWebServer() - server null - server died ok");
+                Log.v(TAG, "stopWebServer() - server null - server died ok");
             } else {
-                Log.v(TAG, "stopWebServer() - server died ok");
+                if (webServer.isAlive()) {
+                    Log.w(TAG, "stopWebServer() - server still alive???");
+                } else {
+                    mUtil.writeToSysLogFile("stopWebServer() - server died ok");
+                    Log.v(TAG, "stopWebServer() - server died ok");
+                }
             }
-            webServer = null;
+            //webServer = null;
         }
+        mUtil.writeToSysLogFile("unregisterig network broadcast receiver");
+        Log.v(TAG, "unregistering network broadcast receiver");
         getApplicationContext().unregisterReceiver(mNetworkBroadcastReceiver);
     }
 

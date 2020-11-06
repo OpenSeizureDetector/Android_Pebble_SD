@@ -41,6 +41,20 @@ public class LocationFinder implements LocationListener
         mLocationListener = this;
     }
 
+    public void destroy() {
+        // Cancel location updates
+        mLocationManager.removeUpdates(this);
+
+        // cancel the timeout timer
+        if (mTimeoutTimer != null) {
+            mTimeoutTimer.cancel();
+            mTimeoutTimer.purge();
+            mTimeoutTimer = null;
+        }
+    }
+
+
+
     public Location getLastLocation() {
         return mLastLocation;
     }
@@ -105,5 +119,6 @@ public class LocationFinder implements LocationListener
     public void onProviderDisabled(String s) {
 
     }
+
 }
 
