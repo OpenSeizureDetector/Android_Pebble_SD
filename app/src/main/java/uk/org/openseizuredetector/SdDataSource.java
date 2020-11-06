@@ -45,6 +45,7 @@ import java.util.TimerTask;
 
 interface SdDataReceiver {
     public void onSdDataReceived(SdData sdData);
+
     public void onSdDataFault(SdData sdData);
 }
 
@@ -97,7 +98,6 @@ public abstract class SdDataSource {
     private int ACCEL_SCALE_FACTOR = 1000;  // Amount by which to reduce analysis results to scale to be comparable to analysis on Pebble.
 
 
-
     private int mAlarmCount;
     protected String mBleDeviceAddr;
     protected String mBleDeviceName;
@@ -114,6 +114,7 @@ public abstract class SdDataSource {
 
     /**
      * Returns the SdData object stored by this class.
+     *
      * @return
      */
     public SdData getSdData() {
@@ -211,7 +212,7 @@ public abstract class SdDataSource {
 
         } catch (Exception e) {
             Log.v(TAG, "Error in stop() - " + e.toString());
-            mUtil.writeToSysLogFile("SDDataSource.stop() - error - "+e.toString());
+            mUtil.writeToSysLogFile("SDDataSource.stop() - error - " + e.toString());
         }
 
     }
@@ -220,7 +221,7 @@ public abstract class SdDataSource {
      * Install the watch app on the watch.
      */
     public void installWatchApp() {
-        Log.v(TAG,"installWatchApp");
+        Log.v(TAG, "installWatchApp");
         try {
             String url = "http://www.openseizuredetector.org.uk/?page_id=1207";
             Intent i = new Intent(Intent.ACTION_VIEW);
@@ -233,9 +234,13 @@ public abstract class SdDataSource {
         }
     }
 
-    public void startPebbleApp() { Log.v(TAG,"startPebbleApp()"); }
+    public void startPebbleApp() {
+        Log.v(TAG, "startPebbleApp()");
+    }
 
-    public void acceptAlarm() { Log.v(TAG,"acceptAlarm()"); }
+    public void acceptAlarm() {
+        Log.v(TAG, "acceptAlarm()");
+    }
 
     // Force the data stored in this datasource to update in line with the JSON string encoded data provided.
     // Used by webServer to update the GarminDatasource.
@@ -246,16 +251,17 @@ public abstract class SdDataSource {
         String watchFwVersion;
         String sdVersion;
         String sdName;
-        Log.v(TAG,"updateFromJSON - "+jsonStr);
+        JSONArray accelVals = null;
+        Log.v(TAG, "updateFromJSON - " + jsonStr);
 
         try {
             JSONObject mainObject = new JSONObject(jsonStr);
             //JSONObject dataObject = mainObject.getJSONObject("dataObj");
             JSONObject dataObject = mainObject;
             String dataTypeStr = dataObject.getString("dataType");
-            Log.v(TAG,"updateFromJSON - dataType="+dataTypeStr);
+            Log.v(TAG, "updateFromJSON - dataType=" + dataTypeStr);
             if (dataTypeStr.equals("raw")) {
-                Log.v(TAG,"updateFromJSON - processing raw data");
+                Log.v(TAG, "updateFromJSON - processing raw data");
                 try {
                     mSdData.mHR = dataObject.getDouble("HR");
                 } catch (JSONException e) {
@@ -268,8 +274,12 @@ public abstract class SdDataSource {
                     // if we get 'null' HR (For example if the heart rate is not working)
                     mMute = 0;
                 }
-                JSONArray accelVals = dataObject.getJSONArray("data");
-                Log.v(TAG, "Received " + accelVals.length() + " acceleration values");
+                accelVals = dataObject.getJSONArray("data");
+                Log.v(TAG, "Received " + accelVals.length() + " acceleration values, rawData Length is " + mSdData.rawData.length);
+                if (accelVals.length() > mSdData.rawData.length) {
+                    mUtil.writeToSysLogFile("ERROR:  Received " + accelVals.length() + " acceleration values, but rawData storage length is "
+                            + mSdData.rawData.length);
+                }
                 int i;
                 for (i = 0; i < accelVals.length(); i++) {
                     mSdData.rawData[i] = accelVals.getInt(i);
@@ -283,26 +293,26 @@ public abstract class SdDataSource {
                 } else {
                     retVal = "OK";
                 }
-            } else if (dataTypeStr.equals("settings")){
-                Log.v(TAG,"updateFromJSON - processing settings");
-                mSamplePeriod = (short)dataObject.getInt("analysisPeriod");
-                mSampleFreq = (short)dataObject.getInt("sampleFreq");
-                mSdData.batteryPc = (short)dataObject.getInt("battery");
-                Log.v(TAG,"updateFromJSON - mSamplePeriod="+mSamplePeriod+" mSampleFreq="+mSampleFreq);
+            } else if (dataTypeStr.equals("settings")) {
+                Log.v(TAG, "updateFromJSON - processing settings");
+                mSamplePeriod = (short) dataObject.getInt("analysisPeriod");
+                mSampleFreq = (short) dataObject.getInt("sampleFreq");
+                mSdData.batteryPc = (short) dataObject.getInt("battery");
+                Log.v(TAG, "updateFromJSON - mSamplePeriod=" + mSamplePeriod + " mSampleFreq=" + mSampleFreq);
                 mUtil.writeToSysLogFile("SDDataSource.updateFromJSON - Settings Received");
-                mUtil.writeToSysLogFile("    * mSamplePeriod="+mSamplePeriod+" mSampleFreq="+mSampleFreq);
-                mUtil.writeToSysLogFile("    * batteryPc = "+mSdData.batteryPc);
+                mUtil.writeToSysLogFile("    * mSamplePeriod=" + mSamplePeriod + " mSampleFreq=" + mSampleFreq);
+                mUtil.writeToSysLogFile("    * batteryPc = " + mSdData.batteryPc);
 
                 try {
                     watchPartNo = dataObject.getString("watchPartNo");
                     watchFwVersion = dataObject.getString("watchFwVersion");
                     sdVersion = dataObject.getString("sdVersion");
                     sdName = dataObject.getString("sdName");
-                    mUtil.writeToSysLogFile("    * sdName = "+sdName+" version "+sdVersion);
-                    mUtil.writeToSysLogFile("    * watchPartNo = "+watchPartNo+" fwVersion "+watchFwVersion);
+                    mUtil.writeToSysLogFile("    * sdName = " + sdName + " version " + sdVersion);
+                    mUtil.writeToSysLogFile("    * watchPartNo = " + watchPartNo + " fwVersion " + watchFwVersion);
                 } catch (Exception e) {
-                    Log.e(TAG,"updateFromJSON - Error Parsing V3.2 JSON String - "+e.toString());
-                    mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - "+ jsonStr + " - " +e.toString());
+                    Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString());
+                    mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - " + jsonStr + " - " + e.toString());
                     mUtil.writeToSysLogFile("          This is probably because of an out of date watch app - please upgrade!");
                     e.printStackTrace();
                 }
@@ -311,28 +321,34 @@ public abstract class SdDataSource {
                 mWatchAppRunningCheck = true;
                 retVal = "OK";
             } else {
-                Log.e(TAG,"updateFromJSON - unrecognised dataType "+dataTypeStr);
+                Log.e(TAG, "updateFromJSON - unrecognised dataType " + dataTypeStr);
                 retVal = "ERROR";
             }
         } catch (Exception e) {
-            Log.e(TAG,"updateFromJSON - Error Parsing JSON String - "+ jsonStr+" - "+e.toString());
-            mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - "+ jsonStr + " - "+e.toString());
-            mUtil.writeToSysLogFile("updateFromJSON: Exception at Line Number: "+e.getCause().getStackTrace()[0].getLineNumber()+", "+e.getCause().getStackTrace()[0].toString());
+            Log.e(TAG, "updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.toString());
+            mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.toString());
+            mUtil.writeToSysLogFile("updateFromJSON: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
+            if (accelVals == null) {
+                mUtil.writeToSysLogFile("updateFromJSON: accelVals is null when exception thrown");
+            } else {
+                mUtil.writeToSysLogFile("updateFromJSON: Received " + accelVals.length() + " acceleration values");
+            }
             e.printStackTrace();
             retVal = "ERROR";
         }
-        return(retVal);
+        return (retVal);
     }
 
     /**
      * Calculate the magnitude of entry i in the fft array fft
+     *
      * @param fft
      * @param i
      * @return magnitude ( Re*Re + Im*Im )
      */
     private double getMagnitude(double[] fft, int i) {
         double mag;
-        mag = (fft[2*i]*fft[2*i] + fft[2*i + 1] * fft[2*i +1]);
+        mag = (fft[2 * i] * fft[2 * i] + fft[2 * i + 1] * fft[2 * i + 1]);
         return mag;
     }
 
@@ -341,82 +357,98 @@ public abstract class SdDataSource {
      * and populate the output data structure mSdData
      */
     protected void doAnalysis() {
-        // FIXME - Use specified sampleFreq, not this hard coded one
-        mSampleFreq = 25;
-        double freqRes = 1.0*mSampleFreq/mSdData.mNsamp;
-        Log.v(TAG,"doAnalysis(): mSampleFreq="+mSampleFreq+" mNSamp="+mSdData.mNsamp+": freqRes="+freqRes);
-        // Set the frequency bounds for the analysis in fft output bin numbers.
-        int nMin = (int)(mAlarmFreqMin/freqRes);
-        int nMax = (int)(mAlarmFreqMax /freqRes);
-        Log.v(TAG,"doAnalysis(): mAlarmFreqMin="+mAlarmFreqMin+", nMin="+nMin
-                +", mAlarmFreqMax="+mAlarmFreqMax+", nMax="+nMax);
-        // Calculate the bin number of the cutoff frequency
-        int nFreqCutoff = (int)(mFreqCutoff /freqRes);
-        Log.v(TAG,"mFreqCutoff = "+mFreqCutoff+", nFreqCutoff="+nFreqCutoff);
+        int nMin = 0;
+        int nMax = 0;
+        int nFreqCutoff = 0;
+        double[] fft = null;
+        try {
+            // FIXME - Use specified sampleFreq, not this hard coded one
+            mSampleFreq = 25;
+            double freqRes = 1.0 * mSampleFreq / mSdData.mNsamp;
+            Log.v(TAG, "doAnalysis(): mSampleFreq=" + mSampleFreq + " mNSamp=" + mSdData.mNsamp + ": freqRes=" + freqRes);
+            // Set the frequency bounds for the analysis in fft output bin numbers.
+            nMin = (int) (mAlarmFreqMin / freqRes);
+            nMax = (int) (mAlarmFreqMax / freqRes);
+            Log.v(TAG, "doAnalysis(): mAlarmFreqMin=" + mAlarmFreqMin + ", nMin=" + nMin
+                    + ", mAlarmFreqMax=" + mAlarmFreqMax + ", nMax=" + nMax);
+            // Calculate the bin number of the cutoff frequency
+            nFreqCutoff = (int) (mFreqCutoff / freqRes);
+            Log.v(TAG, "mFreqCutoff = " + mFreqCutoff + ", nFreqCutoff=" + nFreqCutoff);
 
-        DoubleFFT_1D fftDo = new DoubleFFT_1D(mSdData.mNsamp);
-        double[] fft = new double[mSdData.mNsamp * 2];
-        ///System.arraycopy(mAccData, 0, fft, 0, mNsamp);
-        System.arraycopy(mSdData.rawData, 0, fft, 0, mSdData.mNsamp);
-        fftDo.realForward(fft);
+            DoubleFFT_1D fftDo = new DoubleFFT_1D(mSdData.mNsamp);
+            fft = new double[mSdData.mNsamp * 2];
+            ///System.arraycopy(mAccData, 0, fft, 0, mNsamp);
+            System.arraycopy(mSdData.rawData, 0, fft, 0, mSdData.mNsamp);
+            fftDo.realForward(fft);
 
-        // Calculate the whole spectrum power (well a value equivalent to it that avoids square root calculations
-        // and zero any readings that are above the frequency cutoff.
-        double specPower = 0;
-        for (int i = 1; i < mSdData.mNsamp / 2; i++) {
-            if (i <= nFreqCutoff) {
-                specPower = specPower + getMagnitude(fft,i);
-            } else {
-                fft[2*i] = 0.;
-                fft[2*i+1] = 0.;
+            // Calculate the whole spectrum power (well a value equivalent to it that avoids square root calculations
+            // and zero any readings that are above the frequency cutoff.
+            double specPower = 0;
+            for (int i = 1; i < mSdData.mNsamp / 2; i++) {
+                if (i <= nFreqCutoff) {
+                    specPower = specPower + getMagnitude(fft, i);
+                } else {
+                    fft[2 * i] = 0.;
+                    fft[2 * i + 1] = 0.;
+                }
             }
-        }
-        //Log.v(TAG,"specPower = "+specPower);
-        //specPower = specPower/(mSdData.mNsamp/2);
-        specPower = specPower/mSdData.mNsamp/2;
-        //Log.v(TAG,"specPower = "+specPower);
+            //Log.v(TAG,"specPower = "+specPower);
+            //specPower = specPower/(mSdData.mNsamp/2);
+            specPower = specPower / mSdData.mNsamp / 2;
+            //Log.v(TAG,"specPower = "+specPower);
 
-        // Calculate the Region of Interest power and power ratio.
-        double roiPower = 0;
-        for (int i=nMin;i<nMax;i++) {
-            roiPower = roiPower + getMagnitude(fft,i);
-        }
-        roiPower = roiPower/(nMax - nMin);
-        double roiRatio = 10 * roiPower / specPower;
-
-        // Calculate the simplified spectrum - power in 1Hz bins.
-        double[] simpleSpec = new double[SIMPLE_SPEC_FMAX+1];
-        for (int ifreq=0;ifreq<SIMPLE_SPEC_FMAX;ifreq++) {
-            int binMin = (int)(1 + ifreq/freqRes);    // add 1 to loose dc component
-            int binMax = (int)(1 + (ifreq+1)/freqRes);
-            simpleSpec[ifreq]=0;
-            for (int i=binMin;i<binMax;i++) {
-                simpleSpec[ifreq] = simpleSpec[ifreq] + getMagnitude(fft,i);
+            // Calculate the Region of Interest power and power ratio.
+            double roiPower = 0;
+            for (int i = nMin; i < nMax; i++) {
+                roiPower = roiPower + getMagnitude(fft, i);
             }
-            simpleSpec[ifreq] = simpleSpec[ifreq] / (binMax-binMin);
-        }
+            roiPower = roiPower / (nMax - nMin);
+            double roiRatio = 10 * roiPower / specPower;
 
-        // Populate the mSdData structure to communicate with the main SdServer service.
-        mDataStatusTime.setToNow();
-        mSdData.specPower = (long)specPower / ACCEL_SCALE_FACTOR;
-        mSdData.roiPower = (long)roiPower / ACCEL_SCALE_FACTOR;
-        mSdData.dataTime.setToNow();
-        mSdData.maxVal = 0;   // not used
-        mSdData.maxFreq = 0;  // not used
-        mSdData.haveData = true;
-        mSdData.alarmThresh = mAlarmThresh;
-        mSdData.alarmRatioThresh = mAlarmRatioThresh;
-        mSdData.alarmFreqMin = mAlarmFreqMin;
-        mSdData.alarmFreqMax = mAlarmFreqMax;
-        // note mSdData.batteryPc is set from settings data in updateFromJSON()
-        // FIXME - I haven't worked out why dividing by 1000 seems necessary to get the graph on scale - we don't seem to do that with the Pebble.
-        for(int i=0;i<SIMPLE_SPEC_FMAX;i++) {
-            mSdData.simpleSpec[i] = (int)simpleSpec[i]/ACCEL_SCALE_FACTOR;
-        }
-        Log.v(TAG, "simpleSpec = " + Arrays.toString(mSdData.simpleSpec));
+            // Calculate the simplified spectrum - power in 1Hz bins.
+            double[] simpleSpec = new double[SIMPLE_SPEC_FMAX + 1];
+            for (int ifreq = 0; ifreq < SIMPLE_SPEC_FMAX; ifreq++) {
+                int binMin = (int) (1 + ifreq / freqRes);    // add 1 to loose dc component
+                int binMax = (int) (1 + (ifreq + 1) / freqRes);
+                simpleSpec[ifreq] = 0;
+                for (int i = binMin; i < binMax; i++) {
+                    simpleSpec[ifreq] = simpleSpec[ifreq] + getMagnitude(fft, i);
+                }
+                simpleSpec[ifreq] = simpleSpec[ifreq] / (binMax - binMin);
+            }
 
-        // Because we have received data, set flag to show watch app running.
-        mWatchAppRunningCheck = true;
+            // Populate the mSdData structure to communicate with the main SdServer service.
+            mDataStatusTime.setToNow();
+            mSdData.specPower = (long) specPower / ACCEL_SCALE_FACTOR;
+            mSdData.roiPower = (long) roiPower / ACCEL_SCALE_FACTOR;
+            mSdData.dataTime.setToNow();
+            mSdData.maxVal = 0;   // not used
+            mSdData.maxFreq = 0;  // not used
+            mSdData.haveData = true;
+            mSdData.alarmThresh = mAlarmThresh;
+            mSdData.alarmRatioThresh = mAlarmRatioThresh;
+            mSdData.alarmFreqMin = mAlarmFreqMin;
+            mSdData.alarmFreqMax = mAlarmFreqMax;
+            // note mSdData.batteryPc is set from settings data in updateFromJSON()
+            // FIXME - I haven't worked out why dividing by 1000 seems necessary to get the graph on scale - we don't seem to do that with the Pebble.
+            for (int i = 0; i < SIMPLE_SPEC_FMAX; i++) {
+                mSdData.simpleSpec[i] = (int) simpleSpec[i] / ACCEL_SCALE_FACTOR;
+            }
+            Log.v(TAG, "simpleSpec = " + Arrays.toString(mSdData.simpleSpec));
+
+            // Because we have received data, set flag to show watch app running.
+            mWatchAppRunningCheck = true;
+        } catch (Exception e) {
+            Log.e(TAG, "doAnalysis - Exception during Analysis");
+            mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e.toString());
+            mUtil.writeToSysLogFile("doAnalysis: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
+            mUtil.writeToSysLogFile("doAnalysis: mSdData.mNsamp="+mSdData.mNsamp);
+            mUtil.writeToSysLogFile("doAnalysis: alarmFreqMin="+mAlarmFreqMin+" nMin="+nMin);
+            mUtil.writeToSysLogFile("doAnalysis: alarmFreqMax="+mAlarmFreqMax+" nMax="+nMax);
+            mUtil.writeToSysLogFile("doAnalysis: nFreqCutoff.="+nFreqCutoff);
+            mUtil.writeToSysLogFile("doAnalysis: fft.length="+fft.length);
+            mWatchAppRunningCheck = false;
+        }
 
         // Check this data to see if it represents an alarm state.
         alarmCheck();
@@ -500,13 +532,11 @@ public abstract class SdDataSource {
                     mSdData.mHRFaultStanding = true;
                     mSdData.mHRAlarmStanding = false;
                 }
-            }
-            else if ((mSdData.mHR > mSdData.mHRThreshMax) || (mSdData.mHR < mSdData.mHRThreshMin)) {
+            } else if ((mSdData.mHR > mSdData.mHRThreshMax) || (mSdData.mHR < mSdData.mHRThreshMin)) {
                 Log.i(TAG, "Heart Rate Abnormal - " + mSdData.mHR + " bpm");
                 mSdData.mHRFaultStanding = false;
                 mSdData.mHRAlarmStanding = true;
-            }
-            else {
+            } else {
                 mSdData.mHRFaultStanding = false;
                 mSdData.mHRAlarmStanding = false;
             }
@@ -519,11 +549,11 @@ public abstract class SdDataSource {
      * Called from clock_tick_handler()
      */
     public void fallCheck() {
-        int i,j;
+        int i, j;
         double minAcc, maxAcc;
 
-        long fallWindowSamp = (mFallWindow*mSdData.mSampleFreq)/1000; // Convert ms to samples.
-        Log.v(TAG, "check_fall() - fallWindowSamp=" +fallWindowSamp);
+        long fallWindowSamp = (mFallWindow * mSdData.mSampleFreq) / 1000; // Convert ms to samples.
+        Log.v(TAG, "check_fall() - fallWindowSamp=" + fallWindowSamp);
         // Move window through sample buffer, checking for fall.
         // Note - not resetting fallAlarmStanding means that fall alarms will always latch until the 'Accept Alarm' button
         // is pressed.
@@ -545,13 +575,13 @@ public abstract class SdDataSource {
                     return;
                 }
                 if (mMute != 0) {
-                    Log.v(TAG,"Mute Active - setting fall alarm to mute");
+                    Log.v(TAG, "Mute Active - setting fall alarm to mute");
                     mSdData.fallAlarmStanding = false;
                 }
             }
         } else {
             mSdData.mFallActive = false;
-            Log.v(TAG,"check_fall - mFallActive is false - doing nothing");
+            Log.v(TAG, "check_fall - mFallActive is false - doing nothing");
         }
         //if (debug) APP_LOG(APP_LOG_LEVEL_DEBUG,"check_fall() - minAcc=%d, maxAcc=%d",
         //	  minAcc,maxAcc);
@@ -569,7 +599,7 @@ public abstract class SdDataSource {
         // get time since the last data was received from the Pebble watch.
         tdiff = (tnow.toMillis(false) - mDataStatusTime.toMillis(false));
         Log.v(TAG, "getStatus() - mWatchAppRunningCheck=" + mWatchAppRunningCheck + " tdiff=" + tdiff);
-        Log.v(TAG,"getStatus() - tdiff="+tdiff+", mDataUpatePeriod="+mDataUpdatePeriod+", mAppRestartTimeout="+mAppRestartTimeout);
+        Log.v(TAG, "getStatus() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout);
 
         mSdData.watchConnected = true;  // We can't check connection for passive network connection, so set it to true to avoid errors.
         // And is the watch app running?
@@ -663,10 +693,10 @@ public abstract class SdDataSource {
             String prefStr;
             prefStr = SP.getString("BLE_Device_Addr", "SET_FROM_XML");
             mBleDeviceAddr = prefStr;
-            Log.v(TAG,"mBLEDeviceAddr="+mBleDeviceAddr);
+            Log.v(TAG, "mBLEDeviceAddr=" + mBleDeviceAddr);
             prefStr = SP.getString("BLE_Device_Name", "SET_FROM_XML");
             mBleDeviceName = prefStr;
-            Log.v(TAG,"mBLEDeviceName="+mBleDeviceName);
+            Log.v(TAG, "mBLEDeviceName=" + mBleDeviceName);
 
             prefStr = SP.getString("PebbleDebug", "SET_FROM_XML");
             if (prefStr != null) {
@@ -763,16 +793,16 @@ public abstract class SdDataSource {
 
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
-            mUtil.writeToSysLogFile("SDDataSourceBLE.updatePrefs() - ERROR "+ex.toString());
+            mUtil.writeToSysLogFile("SDDataSourceBLE.updatePrefs() - ERROR " + ex.toString());
             Toast toast = Toast.makeText(mContext, "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
             toast.show();
         }
     }
 
 
-
     /**
      * Display a Toast message on screen.
+     *
      * @param msg - message to display.
      */
     public void showToast(String msg) {
@@ -781,15 +811,14 @@ public abstract class SdDataSource {
     }
 
 
-
     public class SdDataBroadcastReceiver extends BroadcastReceiver {
         //private String TAG = "SdDataBroadcastReceiver";
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.v(TAG,"SdDataBroadcastReceiver.onReceive()");
+            Log.v(TAG, "SdDataBroadcastReceiver.onReceive()");
             String jsonStr = intent.getStringExtra("data");
-            Log.v(TAG,"SdDataBroadcastReceiver.onReceive() - data="+jsonStr);
+            Log.v(TAG, "SdDataBroadcastReceiver.onReceive() - data=" + jsonStr);
             updateFromJSON(jsonStr);
         }
     }
