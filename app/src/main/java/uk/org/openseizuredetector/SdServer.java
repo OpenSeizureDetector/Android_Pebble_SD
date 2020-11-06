@@ -373,6 +373,14 @@ public class SdServer extends Service implements SdDataReceiver {
             mCancelAudibleTimer = null;
         }
 
+
+        // Stop the Fault timer
+        if (mFaultTimer != null) {
+            Log.v(TAG, "onDestroy(): cancelling fault timer");
+            mFaultTimer.cancel();
+            mFaultTimer = null;
+        }
+
         // Stop the Cancel Alarm Latch timer
         stopLatchTimer();
 
