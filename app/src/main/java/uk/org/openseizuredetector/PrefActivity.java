@@ -87,7 +87,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                     titleStr = getResources().getString(h.titleRes);
                 }
                 Log.v(TAG, "found - " + titleStr);
-                if (titleStr.equals("Seizure Detector")) {
+                if (titleStr.equals(getString(R.string.seizure_detector_settings_title))) {
                     Log.v(TAG, "found Seizure Detector Header");
                     if (dataSourceStr.equals("Network")) {
                         Log.v(TAG, "Removing seizure detector settings header");
@@ -95,7 +95,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                         i = i - 1;
                     }
                 }
-                if (titleStr.equals("Network Datasource")) {
+                if (titleStr.equals(getString(R.string.network_datasource_title))) {
                     Log.v(TAG, "found Network Datasource Header");
                     if (!dataSourceStr.equals("Network")) {
                         Log.v(TAG, "Removing network settings header");
@@ -103,7 +103,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                         i = i - 1;
                     }
                 }
-                if (titleStr.equals("Pebble Datasource")) {
+                if (titleStr.equals(getString(R.string.pebble_datasource_title))) {
                     Log.v(TAG, "found Pebble Datasource Header");
                     if (!dataSourceStr.equals("Pebble")) {
                         Log.v(TAG, "Removing Pebble settings header");
@@ -120,14 +120,11 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                 } else {
                     titleStr = getResources().getString(h.titleRes);
                 }
-                Log.v(TAG, "i=" + i + ", h=" + h.toString());
-                Log.v(TAG, "found - " + titleStr);
-                if (!titleStr.equals("Basic")) {
-                    if (!advancedMode) {
-                        Log.v(TAG, "an Advanced Mode Header");
-                        target.remove(i);
-                        i = i - 1;
-                    }
+                Log.v(TAG, "i=" + i + ": found - " + titleStr + " looking for "+ getString(R.string.basic_settings_title));
+                if (!titleStr.equals(getString(R.string.basic_settings_title))) {
+                    Log.v(TAG, "an Advanced Mode Header, so removing it....");
+                    target.remove(i);
+                    i = i - 1;
                 }
 
             }
@@ -158,7 +155,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                 Log.i(TAG, "OnSharedPreferenceChanged(): SMS Alarm disabled so do not need permissions");
             }
         }
-        mUtil.showToast("Setting " + s + " Changed - restarting server");
+        //mUtil.showToast("Setting " + s + " Changed - restarting server");
         mPrefChanged = true;
         mUtil.stopServer();
         // Wait 0.1 second to give the server chance to shutdown, then re-start it
@@ -180,7 +177,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
         Log.i(TAG, "onRequestPermissionsResult - Permission" + permissions + " = " + grantResults);
-        mUtil.showToast("Permissions Changed - restarting server");
+        //mUtil.showToast("Permissions Changed - restarting server");
         mUtil.stopServer();
         // Wait 0.1 second to give the server chance to shutdown, then re-start it
         mHandler.postDelayed(new Runnable() {
