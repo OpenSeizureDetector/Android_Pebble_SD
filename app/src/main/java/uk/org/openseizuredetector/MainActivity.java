@@ -594,7 +594,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(warnTextColour);
 
                         tv = (TextView) findViewById(R.id.appTv);
-                        tv.setText(R.string.WatchApp+" ----");
+                        tv.setText(getString(R.string.WatchApp)+" ----");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
 

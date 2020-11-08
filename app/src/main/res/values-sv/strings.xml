@@ -42,7 +42,7 @@
     <string name="Mute">Stäng av</string>
     <string name="Alarm">**LARM**</string>
     <string name="Fall">**FALL**</string>
-    <string name="HR_Equals">\"Puls = \"</string>
+    <string name="HR_Equals">"Puls = "</string>
     <string name="HRAlarmOff">Pulslarm Av</string>
     <string name="WatchAppOK">Smartklocka app OK</string>
     <string name="WatchAppNotRunning">Smartklocka app AV</string>
@@ -123,7 +123,7 @@
     <string name="no_wifi_connection">Nätverksstatus ändrad - ingen uppkoppling</string>
     <string name="no_active_network">Nätverksstatus ändrad - inga aktiva nätverk</string>
     <string name="problem_parsing_preferences">Något gick fel! Problem med inställningarna - justera dessa.</string>
-    <string name="send_sms_last_location">\"Sänd SMS - senast kända plats är \"</string>
+    <string name="send_sms_last_location">"Sänd SMS - senast kända plats är "</string>
     <string name="failed_to_send_sms">ERROR: SMS ej sänt</string>
     <string name="sms_alarms_disabled">SMS-larm avstängt- ingen åtgärd!</string>
 

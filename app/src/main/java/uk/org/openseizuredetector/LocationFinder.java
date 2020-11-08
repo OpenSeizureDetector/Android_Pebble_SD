@@ -1,5 +1,6 @@
 package uk.org.openseizuredetector;
 
+
 /**
  */
 
@@ -43,8 +44,9 @@ public class LocationFinder implements LocationListener
 
     public void destroy() {
         // Cancel location updates
-        mLocationManager.removeUpdates(this);
-
+        if (mLocationManager != null) {
+            mLocationManager.removeUpdates(this);
+        }
         // cancel the timeout timer
         if (mTimeoutTimer != null) {
             mTimeoutTimer.cancel();

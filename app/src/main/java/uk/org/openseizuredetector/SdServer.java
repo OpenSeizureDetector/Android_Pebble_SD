@@ -388,6 +388,7 @@ public class SdServer extends Service implements SdDataReceiver {
         // Stop the location finder.
         if (mLocationFinder != null) {
             mLocationFinder.destroy();
+            mLocationFinder = null;
         }
 
 
