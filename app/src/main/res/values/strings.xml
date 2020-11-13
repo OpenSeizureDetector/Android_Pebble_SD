@@ -2,11 +2,10 @@
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
+        \n V3.6.1 - Possible fix for issue with shutting down system and expanded Polish translation to all settings screens.
         \n V3.6 - Added phone sensor data source for testing without a watchs
-        \n V3.5 - Added support for Phone Call Alerts, using separate OpenSeizureDetector Dialler App
-        \n      - Added Unique Identifier (UUID) to SMS alerts so they can be detected as OpenSeizureDetector SMS messages on client phone.
-        \n V3.4.0 - Aug 2020
-        \n    - Added support for BLE Data Source
+        \n V3.5 - Added support for SMS Annunciator App
+        \n V3.4 - Added support for BLE Data Source
     </string>
     <string name="UpgradeMsg">
         OpenSeizureDetector does not collect any personal data.

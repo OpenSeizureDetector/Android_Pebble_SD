@@ -1,5 +1,8 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V3.6.1 - Nov 2020
+        - Extended polish translation to all settings screens.
+        - Possible fix for issue with failing to shutdown system sometimes.
 	V3.6.0 - Sep 2020
 	    - Added a phone sensor datasource, primarily for people to use for testing without needing a watch.
 	V3.5.0 - Aug 2020
