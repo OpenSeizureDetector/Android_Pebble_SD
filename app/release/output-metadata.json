@@ -1,19 +1,17 @@
 {
-  "version": 1,
+  "version": 2,
   "artifactType": {
     "type": "APK",
     "kind": "Directory"
   },
   "applicationId": "uk.org.openseizuredetector",
-  "variantName": "release",
+  "variantName": "processReleaseResources",
   "elements": [
     {
       "type": "SINGLE",
       "filters": [],
-      "properties": [],
       "versionCode": 83,
       "versionName": "3.6.1",
-      "enabled": true,
       "outputFile": "app-release.apk"
     }
   ]
