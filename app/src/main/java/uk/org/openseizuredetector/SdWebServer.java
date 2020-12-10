@@ -2,6 +2,7 @@ package uk.org.openseizuredetector;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.os.Handler;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -28,15 +29,17 @@ public class SdWebServer extends NanoHTTPD {
     private SdData mSdData;
     private SdServer mSdServer;
     private Context mContext;
-    private File mDataStorageDir = null;
+    private Handler mHandler;
+    private OsdUtil mUtil;
 
-    public SdWebServer(Context context, File storageDir, SdData sdData, SdServer sdServer) {
+    public SdWebServer(Context context, SdData sdData, SdServer sdServer) {
         // Set the port to listen on (8080)
         super(8080);
         mSdData = sdData;
         mContext = context;
         mSdServer = sdServer;
-        mDataStorageDir = storageDir;
+        mHandler = new Handler();
+        mUtil = new OsdUtil(mContext, mHandler);
     }
 
     public void setSdData(SdData sdData) {
@@ -235,16 +238,16 @@ public class SdWebServer extends NanoHTTPD {
             if (uriParts.countTokens() == 1) {
                 Log.v(TAG, "Returning list of files");
 
-                File dirs = mDataStorageDir;
                 try {
                     JSONObject jsonObj = new JSONObject();
-                    if (dirs.exists()) {
-                        String[] fileList = dirs.list();
-                        JSONArray arr = new JSONArray();
-                        for (int i = 0; i < fileList.length; i++)
-                            arr.put(fileList[i]);
+                    File[] fileList = mUtil.getDataFilesList();
+                    Log.v(TAG, "serveLogFile(): fileList=" + fileList.toString()+", length="+fileList.length);
+                    JSONArray arr = new JSONArray();
+                        for (int i = 0; i < fileList.length; i++) {
+                            Log.v(TAG, "serveLogFile(): file[" + i + "]=" + fileList[i]);
+                            arr.put(fileList[i].getName());
+                        }
                         jsonObj.put("logFileList", arr);
-                    }
                     res = new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK,
                             "text/html", jsonObj.toString());
                 } catch (Exception ex) {
@@ -256,7 +259,7 @@ public class SdWebServer extends NanoHTTPD {
 
             uripart = uriParts.nextToken();  // This will just be /logs
             uripart = uriParts.nextToken();  // this is the requested file.
-            String fname = mDataStorageDir.toString() + "/" + uripart;
+            String fname = mUtil.getDataStorageDir().toString() + "/" + uripart;
             Log.v(TAG, "serveLogFile - uri=" + uri + ", fname=" + fname);
             ip = new FileInputStream(fname);
             String mimeStr = "text/html";

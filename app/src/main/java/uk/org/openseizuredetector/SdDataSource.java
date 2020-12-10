@@ -128,6 +128,7 @@ public abstract class SdDataSource {
     public void start() {
 
         Log.v(TAG, "start()");
+        mUtil.writeToSysLogFile("SdDataSource.start()");
         updatePrefs();
         // Start timer to check status of watch regularly.
         mDataStatusTime = new Time(Time.getCurrentTimezone());
@@ -184,6 +185,7 @@ public abstract class SdDataSource {
      */
     public void stop() {
         Log.v(TAG, "stop()");
+        mUtil.writeToSysLogFile("SDDataSource.stop()");
         try {
             // Stop the status timer
             if (mStatusTimer != null) {
@@ -613,7 +615,7 @@ public abstract class SdDataSource {
             // Only make audible warning beep if we have not received data for more than mFaultTimerPeriod seconds.
             if (tdiff > (mDataUpdatePeriod + mFaultTimerPeriod) * 1000) {
                 Log.v(TAG, "getStatus() - Watch App Not Running");
-                mUtil.writeToSysLogFile("SDDataSourceBLE.getStatus() - Watch App not Running");
+                mUtil.writeToSysLogFile("SDDataSource.getStatus() - Watch App not Running");
                 //mDataStatusTime.setToNow();
                 mSdData.roiPower = -1;
                 mSdData.specPower = -1;
@@ -662,7 +664,7 @@ public abstract class SdDataSource {
      */
     public void updatePrefs() {
         Log.v(TAG, "updatePrefs()");
-        mUtil.writeToSysLogFile("SDDataSourceBLE.updatePrefs()");
+        mUtil.writeToSysLogFile("SDDataSource.updatePrefs()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(mContext);
         try {
@@ -671,8 +673,10 @@ public abstract class SdDataSource {
                 String appRestartTimeoutStr = SP.getString("AppRestartTimeout", "10");
                 mAppRestartTimeout = Integer.parseInt(appRestartTimeoutStr);
                 Log.v(TAG, "updatePrefs() - mAppRestartTimeout = " + mAppRestartTimeout);
+                mUtil.writeToSysLogFile( "updatePrefs() - mAppRestartTimeout = " + mAppRestartTimeout);
             } catch (Exception ex) {
                 Log.v(TAG, "updatePrefs() - Problem with AppRestartTimeout preference!");
+                mUtil.writeToSysLogFile( "updatePrefs() - Problem with AppRestartTimeout preference!");
                 Toast toast = Toast.makeText(mContext, "Problem Parsing AppRestartTimeout Preference", Toast.LENGTH_SHORT);
                 toast.show();
             }
@@ -682,8 +686,10 @@ public abstract class SdDataSource {
                 String faultTimerPeriodStr = SP.getString("FaultTimerPeriod", "30");
                 mFaultTimerPeriod = Integer.parseInt(faultTimerPeriodStr);
                 Log.v(TAG, "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
+                mUtil.writeToSysLogFile( "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
             } catch (Exception ex) {
                 Log.v(TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!");
+                mUtil.writeToSysLogFile( "updatePrefs() - Problem with FaultTimerPeriod preference!");
                 Toast toast = Toast.makeText(mContext, "Problem Parsing FaultTimerPeriod Preference", Toast.LENGTH_SHORT);
                 toast.show();
             }
@@ -694,106 +700,130 @@ public abstract class SdDataSource {
             prefStr = SP.getString("BLE_Device_Addr", "SET_FROM_XML");
             mBleDeviceAddr = prefStr;
             Log.v(TAG, "mBLEDeviceAddr=" + mBleDeviceAddr);
+            mUtil.writeToSysLogFile( "mBLEDeviceAddr=" + mBleDeviceAddr);
             prefStr = SP.getString("BLE_Device_Name", "SET_FROM_XML");
             mBleDeviceName = prefStr;
             Log.v(TAG, "mBLEDeviceName=" + mBleDeviceName);
+            mUtil.writeToSysLogFile( "mBLEDeviceName=" + mBleDeviceName);
 
             prefStr = SP.getString("PebbleDebug", "SET_FROM_XML");
             if (prefStr != null) {
                 mDebug = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() Debug = " + mDebug);
+                mUtil.writeToSysLogFile( "updatePrefs() Debug = " + mDebug);
 
                 prefStr = SP.getString("PebbleDisplaySpectrum", "SET_FROM_XML");
                 mDisplaySpectrum = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() DisplaySpectrum = " + mDisplaySpectrum);
+                mUtil.writeToSysLogFile( "updatePrefs() DisplaySpectrum = " + mDisplaySpectrum);
 
                 prefStr = SP.getString("PebbleUpdatePeriod", "SET_FROM_XML");
                 mDataUpdatePeriod = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() DataUpdatePeriod = " + mDataUpdatePeriod);
+                mUtil.writeToSysLogFile( "updatePrefs() DataUpdatePeriod = " + mDataUpdatePeriod);
 
                 prefStr = SP.getString("MutePeriod", "SET_FROM_XML");
                 mMutePeriod = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() MutePeriod = " + mMutePeriod);
+                mUtil.writeToSysLogFile( "updatePrefs() MutePeriod = " + mMutePeriod);
 
                 prefStr = SP.getString("ManAlarmPeriod", "SET_FROM_XML");
                 mManAlarmPeriod = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() ManAlarmPeriod = " + mManAlarmPeriod);
+                mUtil.writeToSysLogFile( "updatePrefs() ManAlarmPeriod = " + mManAlarmPeriod);
 
                 prefStr = SP.getString("PebbleSdMode", "SET_FROM_XML");
                 mPebbleSdMode = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() PebbleSdMode = " + mPebbleSdMode);
+                mUtil.writeToSysLogFile( "updatePrefs() PebbleSdMode = " + mPebbleSdMode);
 
                 prefStr = SP.getString("SampleFreq", "SET_FROM_XML");
                 mSampleFreq = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() SampleFreq = " + mSampleFreq);
+                mUtil.writeToSysLogFile( "updatePrefs() SampleFreq = " + mSampleFreq);
 
                 prefStr = SP.getString("SamplePeriod", "SET_FROM_XML");
                 mSamplePeriod = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() AnalysisPeriod = " + mSamplePeriod);
+                mUtil.writeToSysLogFile( "updatePrefs() AnalysisPeriod = " + mSamplePeriod);
 
                 prefStr = SP.getString("AlarmFreqMin", "SET_FROM_XML");
                 mAlarmFreqMin = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() AlarmFreqMin = " + mAlarmFreqMin);
+                mUtil.writeToSysLogFile( "updatePrefs() AlarmFreqMin = " + mAlarmFreqMin);
 
                 prefStr = SP.getString("AlarmFreqMax", "SET_FROM_XML");
                 mAlarmFreqMax = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() AlarmFreqMax = " + mAlarmFreqMax);
+                mUtil.writeToSysLogFile("updatePrefs() AlarmFreqMax = " + mAlarmFreqMax);
 
                 prefStr = SP.getString("WarnTime", "SET_FROM_XML");
                 mWarnTime = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() WarnTime = " + mWarnTime);
+                mUtil.writeToSysLogFile( "updatePrefs() WarnTime = " + mWarnTime);
 
                 prefStr = SP.getString("AlarmTime", "SET_FROM_XML");
                 mAlarmTime = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() AlarmTime = " + mAlarmTime);
+                mUtil.writeToSysLogFile( "updatePrefs() AlarmTime = " + mAlarmTime);
 
                 prefStr = SP.getString("AlarmThresh", "SET_FROM_XML");
                 mAlarmThresh = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() AlarmThresh = " + mAlarmThresh);
+                mUtil.writeToSysLogFile( "updatePrefs() AlarmThresh = " + mAlarmThresh);
 
                 prefStr = SP.getString("AlarmRatioThresh", "SET_FROM_XML");
                 mAlarmRatioThresh = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() AlarmRatioThresh = " + mAlarmRatioThresh);
+                mUtil.writeToSysLogFile( "updatePrefs() AlarmRatioThresh = " + mAlarmRatioThresh);
 
                 mFallActive = SP.getBoolean("FallActive", false);
                 Log.v(TAG, "updatePrefs() FallActive = " + mFallActive);
+                mUtil.writeToSysLogFile( "updatePrefs() FallActive = " + mFallActive);
 
                 prefStr = SP.getString("FallThreshMin", "SET_FROM_XML");
                 mFallThreshMin = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() FallThreshMin = " + mFallThreshMin);
+                mUtil.writeToSysLogFile( "updatePrefs() FallThreshMin = " + mFallThreshMin);
 
                 prefStr = SP.getString("FallThreshMax", "SET_FROM_XML");
                 mFallThreshMax = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() FallThreshMax = " + mFallThreshMax);
+                mUtil.writeToSysLogFile( "updatePrefs() FallThreshMax = " + mFallThreshMax);
 
                 prefStr = SP.getString("FallWindow", "SET_FROM_XML");
                 mFallWindow = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() FallWindow = " + mFallWindow);
+                mUtil.writeToSysLogFile( "updatePrefs() FallWindow = " + mFallWindow);
 
                 mSdData.mHRAlarmActive = SP.getBoolean("HRAlarmActive", false);
                 Log.v(TAG, "updatePrefs() HRAlarmActive = " + mSdData.mHRAlarmActive);
+                mUtil.writeToSysLogFile( "updatePrefs() HRAlarmActive = " + mSdData.mHRAlarmActive);
 
                 mSdData.mHRNullAsAlarm = SP.getBoolean("HRNullAsAlarm", false);
                 Log.v(TAG, "updatePrefs() HRNullAsAlarm = " + mSdData.mHRNullAsAlarm);
+                mUtil.writeToSysLogFile( "updatePrefs() HRNullAsAlarm = " + mSdData.mHRNullAsAlarm);
 
                 prefStr = SP.getString("HRThreshMin", "SET_FROM_XML");
                 mSdData.mHRThreshMin = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() HRThreshMin = " + mSdData.mHRThreshMin);
+                mUtil.writeToSysLogFile( "updatePrefs() HRThreshMin = " + mSdData.mHRThreshMin);
 
                 prefStr = SP.getString("HRThreshMax", "SET_FROM_XML");
                 mSdData.mHRThreshMax = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() HRThreshMax = " + mSdData.mHRThreshMax);
+                mUtil.writeToSysLogFile( "updatePrefs() HRThreshMax = " + mSdData.mHRThreshMax);
 
             } else {
                 Log.v(TAG, "updatePrefs() - prefStr is null - WHY????");
-                mUtil.writeToSysLogFile("SDDataSourceBLE.updatePrefs() - prefStr is null - WHY??");
+                mUtil.writeToSysLogFile("SDDataSource.updatePrefs() - prefStr is null - WHY??");
                 Toast toast = Toast.makeText(mContext, "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
                 toast.show();
             }
 
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
-            mUtil.writeToSysLogFile("SDDataSourceBLE.updatePrefs() - ERROR " + ex.toString());
+            mUtil.writeToSysLogFile("SDDataSource.updatePrefs() - ERROR " + ex.toString());
             Toast toast = Toast.makeText(mContext, "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
             toast.show();
         }

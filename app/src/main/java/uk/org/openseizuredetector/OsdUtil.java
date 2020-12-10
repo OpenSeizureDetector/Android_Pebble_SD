@@ -71,6 +71,7 @@ import org.apache.http.conn.util.InetAddressUtils;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.AbstractList;
@@ -171,8 +172,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
         if (nServers != 0) {
             Log.v(TAG, "isServerRunning() - " + nServers + " instances are running");
             return true;
-        }
-        else
+        } else
             return false;
     }
 
@@ -181,16 +181,16 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
      */
     public void startServer() {
         // Start the server
-        Log.d(TAG,"OsdUtil.startServer()");
+        Log.d(TAG, "OsdUtil.startServer()");
         writeToSysLogFile("startServer() - starting server");
         Intent sdServerIntent;
         sdServerIntent = new Intent(mContext, SdServer.class);
         sdServerIntent.setData(Uri.parse("Start"));
         if (Build.VERSION.SDK_INT >= 26) {
-            Log.i(TAG,"Starting Foreground Service (Android 8 and above)");
+            Log.i(TAG, "Starting Foreground Service (Android 8 and above)");
             mContext.startForegroundService(sdServerIntent);
         } else {
-            Log.i(TAG,"Starting Normal Service (Pre-Android 8)");
+            Log.i(TAG, "Starting Normal Service (Pre-Android 8)");
             mContext.startService(sdServerIntent);
         }
     }
@@ -219,7 +219,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
         Intent intent = new Intent(sdServiceConnection.mContext, SdServer.class);
         activity.bindService(intent, sdServiceConnection, Context.BIND_AUTO_CREATE);
         mNbound = mNbound + 1;
-        Log.i(TAG,"OsdUtil.bindToServer() - mNbound = "+mNbound);
+        Log.i(TAG, "OsdUtil.bindToServer() - mNbound = " + mNbound);
     }
 
     /**
@@ -234,16 +234,16 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
                 activity.unbindService(sdServiceConnection);
                 sdServiceConnection.mBound = false;
                 mNbound = mNbound - 1;
-                Log.i(TAG,"OsdUtil.unBindFromServer() - mNbound = "+mNbound);
+                Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
             } catch (Exception ex) {
                 Log.e(TAG, "unbindFromServer() - error unbinding service - " + ex.toString());
-                writeToSysLogFile("unbindFromServer() - error unbinding service - " +ex.toString());
-                Log.i(TAG,"OsdUtil.unBindFromServer() - mNbound = "+mNbound);
+                writeToSysLogFile("unbindFromServer() - error unbinding service - " + ex.toString());
+                Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
             }
         } else {
             Log.i(TAG, "unbindFromServer() - not bound to server - ignoring");
             writeToSysLogFile("unbindFromServer() - not bound to server - ignoring");
-            Log.i(TAG,"OsdUtil.unBindFromServer() - mNbound = "+mNbound);
+            Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
         }
     }
 
@@ -299,7 +299,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
 
     public boolean isMobileDataActive() {
         // return true if we are using mobile data, otherwise return false
-        ConnectivityManager cm = (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
             return true;
@@ -310,7 +310,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
 
     public boolean isNetworkConnected() {
         // return true if we have a network connection, otherwise false.
-        ConnectivityManager cm = (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         return (activeNetwork.isConnected());
     }
@@ -332,35 +332,38 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
 
     /**
      * Write a message to the system log file, provided mLogSystem is true.
+     *
      * @param msgStr
      */
     public void writeToSysLogFile(String msgStr) {
         if (mLogSystem)
-            writeToLogFile(SYSLOG,msgStr);
+            writeToLogFile(SYSLOG, msgStr);
         else
-            Log.v(TAG,"writeToSysLogFile - mLogSystem False so not writing");
+            Log.v(TAG, "writeToSysLogFile - mLogSystem False so not writing");
     }
 
     /**
      * Write a message to the alarm log file, provided mLogAlarms is true.
+     *
      * @param msgStr
      */
     public void writeToAlarmLogFile(String msgStr) {
         if (mLogAlarms)
-            writeToLogFile(ALARMLOG,msgStr);
+            writeToLogFile(ALARMLOG, msgStr);
         else
-            Log.v(TAG,"writeToAlarmLogFile - mLogAlarms False so not writing");
+            Log.v(TAG, "writeToAlarmLogFile - mLogAlarms False so not writing");
     }
 
     /**
      * Write a message to the data log file, provided mLogData is true.
+     *
      * @param msgStr
      */
     public void writeToDataLogFile(String msgStr) {
         if (mLogData)
-            writeToLogFile(DATALOG,msgStr);
+            writeToLogFile(DATALOG, msgStr);
         else
-            Log.v(TAG,"writeToDataLogFile - mLogData False so not writing");
+            Log.v(TAG, "writeToDataLogFile - mLogData False so not writing");
     }
 
 
@@ -380,12 +383,11 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
         if (ContextCompat.checkSelfPermission(mContext,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
-            Log.e(TAG,"ERROR: We do not have permission to write to external storage");
+            Log.e(TAG, "ERROR: We do not have permission to write to external storage");
         } else {
             if (isExternalStorageWritable()) {
                 try {
-                    FileWriter of = new FileWriter(getDataStorageDir().toString()
-                            + "/" + fname, true);
+                    FileWriter of = new FileWriter(getDataStorageDir() + "/" + fname, true);
                     if (msgStr != null) {
                         String dateTimeStr = tnow.format("%Y-%m-%d %H:%M:%S");
                         //Log.v(TAG, "writing msgStr");
@@ -396,12 +398,25 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
                     of.close();
                 } catch (Exception ex) {
                     Log.e(TAG, "writeToLogFile - error " + ex.toString());
-                    showToast("ERROR Writing to Log File");
+                    for (int i = 0; i < (ex.getStackTrace().length); i++) {
+                        Log.e(TAG, "writeToLogFile - error " + ex.getStackTrace()[i]);
+                    }
+                    showToast("ERROR Writing to Log File" + ex.toString());
                 }
             } else {
                 Log.e(TAG, "ERROR - Can not Write to External Folder");
             }
         }
+    }
+
+    public File[] getDataFilesList() {
+        File[] files = getDataStorageDir().listFiles();
+        Log.d("Files", "Size: "+ files.length);
+        for (int i = 0; i < files.length; i++)
+        {
+            Log.d("Files", "FileName:" + files[i].getName());
+        }
+        return(files);
     }
 
     /* Checks if external storage is available for read and write */
@@ -419,13 +434,14 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
                 new File(Environment.getExternalStorageDirectory()
                         , "OpenSeizureDetector");
         if (!file.isDirectory()) {
-            Log.i(TAG,"getDataStorageDir() - creating directory");
-            if (!file.mkdirs()) {
+            Log.i(TAG, "getDataStorageDir() - creating directory");
+            if(!file.mkdirs()) {
                 Log.e(TAG, "Failed to create directory");
             }
         }
         return file;
     }
+
 
     public String getPreferredPebbleAppPackageName() {
         // returns the package name of the preferred Android Pebble App.
@@ -456,8 +472,8 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
 
     public boolean arePermissionsOK() {
         boolean allOk = true;
-        Log.v(TAG,"arePermissionsOK");
-        for (int i = 0; i< REQUIRED_PERMISSIONS.length; i++) {
+        Log.v(TAG, "arePermissionsOK");
+        for (int i = 0; i < REQUIRED_PERMISSIONS.length; i++) {
             if (ContextCompat.checkSelfPermission(mContext, REQUIRED_PERMISSIONS[i])
                     != PackageManager.PERMISSION_GRANTED) {
                 Log.i(TAG, REQUIRED_PERMISSIONS[i] + " Permission Not Granted");
@@ -469,8 +485,8 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
 
     public boolean areSMSPermissionsOK() {
         boolean allOk = true;
-        Log.v(TAG,"areSMSPermissionsOK()");
-        for (int i = 0; i< SMS_PERMISSIONS.length; i++) {
+        Log.v(TAG, "areSMSPermissionsOK()");
+        for (int i = 0; i < SMS_PERMISSIONS.length; i++) {
             if (ContextCompat.checkSelfPermission(mContext, SMS_PERMISSIONS[i])
                     != PackageManager.PERMISSION_GRANTED) {
                 Log.i(TAG, SMS_PERMISSIONS[i] + " Permission Not Granted");
@@ -481,10 +497,9 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
     }
 
 
-
     public void requestPermissions(Activity activity) {
         if (mPermissionsRequested) {
-            Log.i(TAG,"requestPermissions() - request already sent - not doing anything");
+            Log.i(TAG, "requestPermissions() - request already sent - not doing anything");
         } else {
             Log.i(TAG, "requestPermissions() - requesting permissions");
             for (int i = 0; i < REQUIRED_PERMISSIONS.length; i++) {
@@ -502,7 +517,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
 
     public void requestSMSPermissions(Activity activity) {
         if (mSMSPermissionsRequested) {
-            Log.i(TAG,"requestSMSPermissions() - request already sent - not doing anything");
+            Log.i(TAG, "requestSMSPermissions() - request already sent - not doing anything");
         } else {
             Log.i(TAG, "requestSMSPermissions() - requesting permissions");
             for (int i = 0; i < SMS_PERMISSIONS.length; i++) {
@@ -522,7 +537,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
-        Log.i(TAG,"onRequestPermissionsResult - Permission" + permissions + " = " + grantResults);
+        Log.i(TAG, "onRequestPermissionsResult - Permission" + permissions + " = " + grantResults);
         showToast("Permissions Changed - restarting server");
         stopServer();
         // Wait 0.1 second to give the server chance to shutdown, then re-start it
