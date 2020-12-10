@@ -430,15 +430,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
 
     public File getDataStorageDir() {
         // Get the directory for the user's public directory.
-        File file =
-                new File(Environment.getExternalStorageDirectory()
-                        , "OpenSeizureDetector");
-        if (!file.isDirectory()) {
-            Log.i(TAG, "getDataStorageDir() - creating directory");
-            if(!file.mkdirs()) {
-                Log.e(TAG, "Failed to create directory");
-            }
-        }
+        File file = mContext.getExternalFilesDir(null);
         return file;
     }
 

@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
+        \n V3.6.2 - Fix of issue with log file permissions on some Android 10 devices.
         \n V3.6.1 - Possible fix for issue with shutting down system and expanded Polish translation to all settings screens.
         \n V3.6 - Added phone sensor data source for testing without a watchs
         \n V3.5 - Added support for SMS Annunciator App
