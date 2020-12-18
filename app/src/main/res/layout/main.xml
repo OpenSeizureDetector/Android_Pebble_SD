@@ -122,13 +122,13 @@
             android:id="@+id/acceptAlarmButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Accept Alarm" />
+            android:text="@string/AcceptAlarmBtnTxt" />
 
         <Button
             android:id="@+id/cancelAudibleButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Cancel Audible (temporarily)" />
+            android:text="@string/CancelAudibleButtonTxt" />
     </LinearLayout>
 
     <com.github.mikephil.charting.charts.BarChart

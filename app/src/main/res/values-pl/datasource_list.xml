@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="datasource_list">
+        <item>"Garmin Watch"</item>
+        <item>"Bluetooth Device"</item>
+        <item>"Pebble Watch"</item>
+        <item>"Phone Sensor (for testing)"</item>
+        <item>"Network (for Wifi Alerts)"</item>
+    </string-array>
+</resources>

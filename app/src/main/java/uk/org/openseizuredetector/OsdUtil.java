@@ -143,7 +143,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
 
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
-            showToast("Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!");
+            showToast(mContext.getString(R.string.ParsePreferenceWarning));
         }
     }
 
@@ -401,7 +401,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
                     for (int i = 0; i < (ex.getStackTrace().length); i++) {
                         Log.e(TAG, "writeToLogFile - error " + ex.getStackTrace()[i]);
                     }
-                    showToast("ERROR Writing to Log File" + ex.toString());
+                    showToast(mContext.getString(R.string.ErrorWritingLogFileWarning) + ex.toString());
                 }
             } else {
                 Log.e(TAG, "ERROR - Can not Write to External Folder");
@@ -530,7 +530,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
         Log.i(TAG, "onRequestPermissionsResult - Permission" + permissions + " = " + grantResults);
-        showToast("Permissions Changed - restarting server");
+        showToast(mContext.getString(R.string.RestartingServerMsg));
         stopServer();
         // Wait 0.1 second to give the server chance to shutdown, then re-start it
         mHandler.postDelayed(new Runnable() {

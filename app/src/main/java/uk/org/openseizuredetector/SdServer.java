@@ -256,11 +256,11 @@ public class SdServer extends Service implements SdDataReceiver {
                 mSdDataSource = new SdDataSourcePhone(this.getApplicationContext(), mHandler, this);
                 break;
             default:
-                Log.e(TAG, "Datasource " + mSdDataSourceName + " not recognised - Defaulting to Pebble");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - Datasource " + mSdDataSourceName + " not recognised - exiting");
-                mUtil.showToast("Datasource " + mSdDataSourceName + " not recognised - Defaulting to Pebble");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePebble");
-                mSdDataSource = new SdDataSourcePebble(this.getApplicationContext(), mHandler, this);
+                Log.e(TAG, "Datasource " + mSdDataSourceName + " not recognised - Defaulting to Phone");
+                //mUtil.writeToSysLogFile("SdServer.onStartCommand() - Datasource " + mSdDataSourceName + " not recognised - exiting");
+                mUtil.showToast(getString(R.string.DatasourceTitle) + " " + mSdDataSourceName + getString(R.string.DefaultingToPhoneMsg));
+                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePhone");
+                mSdDataSource = new SdDataSourcePhone(this.getApplicationContext(), mHandler, this);
         }
 
         if (mSMSAlarm) {
@@ -349,7 +349,7 @@ public class SdServer extends Service implements SdDataReceiver {
             } catch (Exception e) {
                 Log.e(TAG, "Error Releasing Wakelock - " + e.toString());
                 mUtil.writeToSysLogFile("SdServer.onDestroy() - Error releasing wakelock.");
-                mUtil.showToast("Error Releasing Wakelock");
+                mUtil.showToast(getString(R.string.ErrorReleasingWakelockMsg));
             }
         } else {
             Log.d(TAG, "mmm...mWakeLock is null, so not releasing lock.  This shouldn't happen!");
@@ -589,11 +589,11 @@ public class SdServer extends Service implements SdDataReceiver {
                     sendPhoneAlarm();
                     mSMSTime = tnow;
                 } else {
-                    mUtil.showToast("SMS Alarm already sent - not re-sending");
+                    mUtil.showToast(getString(R.string.SMSAlarmAlreadySentMsg));
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
-                mUtil.showToast("mSMSAlarm is false - not sending");
+                mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
                 Log.v(TAG, "mSMSAlarm is false - not sending");
             }
 
@@ -625,7 +625,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     sendSMSAlarm();
                     mSMSTime = tnow;
                 } else {
-                    mUtil.showToast("SMS Alarm already sent - not re-sending");
+                    mUtil.showToast(getString(R.string.SMSAlarmAlreadySentMsg));
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
@@ -663,7 +663,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
-                mUtil.showToast("mSMSAlarm is false - not sending");
+                mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
                 Log.v(TAG, "mSMSAlarm is false - not sending");
             }
 
@@ -724,7 +724,7 @@ public class SdServer extends Service implements SdDataReceiver {
             mToneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration);
             Log.v(TAG, "beep()");
         } else {
-            mUtil.showToast("Warning mToneGenerator is null - not beeping!!!");
+            mUtil.showToast(getString(R.string.PleaseForceStopOSDorRebootMsg));
             Log.v(TAG, "beep() - Warming mToneGenerator is null - not beeping!!!");
             mUtil.writeToSysLogFile("SdServer.beep() - mToneGenerator is null???");
         }
@@ -806,7 +806,7 @@ public class SdServer extends Service implements SdDataReceiver {
         if (mSMSAlarm) {
             if (!mCancelAudible) {
                 if (!mUtil.areSMSPermissionsOK()) {
-                    mUtil.showToast("ERROR - Permission for SMS or Location Denied - Not Sending SMS");
+                    mUtil.showToast(getString(R.string.SMSPermissionsDeniedMsg));
                     Log.e(TAG, "ERROR - Permission for SMS or Location Denied - Not Sending SMS");
                 } else {
                     //mSMSAlertDialog = new AlertDialog.Builder(this);
@@ -1100,7 +1100,7 @@ public class SdServer extends Service implements SdDataReceiver {
             } catch (Exception ex) {
                 Log.v(TAG, "updatePrefs() - Problem with LatchAlarmTimerPeriod preference!");
                 mUtil.writeToSysLogFile( "updatePrefs() - Problem with LatchAlarmTimerPeriod preference!");
-                mUtil.showToast("Problem Parsing LatchAlarmTimerPeriod Preference");
+                mUtil.showToast(getString(R.string.problem_parsing_preferences));
             }
             mAudibleFaultWarning = SP.getBoolean("AudibleFaultWarning", true);
             Log.v(TAG, "updatePrefs() - mAuidbleFaultWarning = " + mAudibleFaultWarning);
@@ -1114,7 +1114,7 @@ public class SdServer extends Service implements SdDataReceiver {
             } catch (Exception ex) {
                 Log.v(TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!");
                 mUtil.writeToSysLogFile("updatePrefs() - Problem with FaultTimerPeriod preference!");
-                mUtil.showToast("Problem Parsing FaultTimerPeriod Preference");
+                mUtil.showToast(getString(R.string.problem_parsing_preferences));
             }
 
             mAudibleAlarm = SP.getBoolean("AudibleAlarm", true);

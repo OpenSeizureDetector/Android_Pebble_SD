@@ -23,27 +23,10 @@
 */
 package uk.org.openseizuredetector;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.text.format.Time;
 import android.util.Log;
-import android.widget.Toast;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.jtransforms.fft.DoubleFFT_1D;
-
-import java.util.Arrays;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import static java.lang.Long.parseLong;
 
 
 /**

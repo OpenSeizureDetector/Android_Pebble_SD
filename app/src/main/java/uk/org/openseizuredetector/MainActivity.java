@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
                     if ((mConnection.mSdServer.mSmsTimer != null)
                             && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0 )){
                         Log.v(TAG, "acceptAlarmButton.onClick() - Stopping SMS Timer");
-                        mUtil.showToast("SMS Alarm Cancelled");
+                        mUtil.showToast(getString(R.string.SMSAlarmCancelledMsg));
                         mConnection.mSdServer.stopSmsTimer();
                     }
                     else {
@@ -357,7 +357,7 @@ public class MainActivity extends AppCompatActivity {
             Log.v(TAG, "Changing menu icons");
             MenuItem menuItem = mOptionsMenu.findItem(R.id.action_start_stop);
             menuItem.setIcon(R.drawable.stop_server);
-            menuItem.setTitle("Stop Server");
+            menuItem.setTitle(R.string.StopServerTitle);
         } else {
             Log.v(TAG, "mOptionsMenu is null - not changing icons!");
         }
@@ -371,7 +371,7 @@ public class MainActivity extends AppCompatActivity {
         if (mOptionsMenu != null) {
             Log.v(TAG, "Changing action bar icons");
             mOptionsMenu.findItem(R.id.action_start_stop).setIcon(R.drawable.start_server);
-            mOptionsMenu.findItem(R.id.action_start_stop).setTitle("Start Server");
+            mOptionsMenu.findItem(R.id.action_start_stop).setTitle(R.string.StartServerTitle);
         } else {
             Log.v(TAG, "mOptionsMenu is null, not changing icons!");
         }

@@ -255,4 +255,20 @@
     <string name="data_update_period_summary">Częstość wyświetlania informacji w milisekundach</string>
     <string name="select_datasource_title">Wybierz źródło danych</string>
     <string name="select_datasource_summary">Wybierz które źródło danych wykrywania ataków chcesz używać</string>
+    <string name="ParsePreferenceWarning">Problem Parsing Preferences - Something won\'t work - Please go back to Settings and correct it!</string>
+    <string name="ErrorWritingLogFileWarning">ERROR Writing to Log File</string>
+    <string name="RestartingServerMsg">Permissions Changed - restarting server</string>
+    <string name="ErrorReleasingWakelockMsg">Error Releasing Wakelock</string>
+    <string name="SMSAlarmAlreadySentMsg">SMS Alarm already sent - not re-sending</string>
+    <string name="SMSAlarmDisabledNotSendingMsg">SMS Alarms Disabled - not sending SMS Alert</string>
+    <string name="PleaseForceStopOSDorRebootMsg">ERROR - OpenSizureDetector did not restart properly - please Force Stop OpenSeizureDetector or re-boot phone.</string>
+    <string name="SMSPermissionsDeniedMsg">ERROR - Permission for SMS or Location Denied - Not Sending SMS</string>
+    <string name="DatasourceTitle">\"Datasource\"</string>
+    <string name="DefaultingToPhoneMsg">\" not recognised - Defaulting to Phone\"</string>
+    <string name="SMSAlarmCancelledMsg">SMS Alarm Cancelled</string>
+    <string name="StopServerTitle">Stop Server</string>
+    <string name="StartServerTitle">Start Server</string>
+    <string name="StartingTitle">Starting......</string>
+    <string name="AcceptAlarmBtnTxt">Accept Alarm</string>
+    <string name="CancelAudibleButtonTxt">Cancel Audible (temporarily)</string>
 </resources>
