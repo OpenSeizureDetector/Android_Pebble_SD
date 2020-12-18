@@ -393,10 +393,6 @@ public class SdServer extends Service implements SdDataReceiver {
 
 
         try {
-            // Cancel the notification.
-            Log.v(TAG, "onDestroy(): cancelling notification");
-            mUtil.writeToSysLogFile("SdServer.onDestroy - cancelling notification");
-            mNM.cancel(NOTIFICATION_ID);
             // Stop web server
             Log.v(TAG, "onDestroy(): stopping web server");
             mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping Web Server");
@@ -405,6 +401,12 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.writeToSysLogFile("SdServer.onDestroy() - releasing mToneGenerator");
             mToneGenerator.release();
             mToneGenerator = null;
+
+            this.stopForeground(true);
+            // Cancel the notification.
+            Log.v(TAG, "onDestroy(): cancelling notification");
+            mUtil.writeToSysLogFile("SdServer.onDestroy - cancelling notification");
+            mNM.cancel(NOTIFICATION_ID);
 
             // stop this service.
             Log.v(TAG, "onDestroy(): calling stopSelf()");
