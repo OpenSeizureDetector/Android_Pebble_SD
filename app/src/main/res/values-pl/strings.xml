@@ -271,15 +271,15 @@
     <string name="StartingTitle">Uruchamiam...</string>
     <string name="AcceptAlarmBtnTxt">Zaakceptuj alarm</string>
     <string name="CancelAudibleButtonTxt">Wycisz (tymczasowo)</string>
-    <string name="DataLoggingSettingsTitle">Data Logging Settings</string>
-    <string name="HeartRateAlarmSettingsTitle">Heart Rate Alarm Settings</string>
-    <string name="AlarmFunctionalitySettingsTitle">Alarm Functionality Settings</string>
-    <string name="AudibleAlarmSettingsTitle">Audible Alarm Settings</string>
-    <string name="SMSAlarmSettingsTitle">SMS Alarm Settings</string>
-    <string name="DefaultSMSMsgText">**SEIZURE DETECTED**</string>
-    <string name="AlarmLoggingTitle">Alarm Logging</string>
-    <string name="WarnTimeSummary">Time to wait before initiating warning (Default = 5 sec)</string>
-    <string name="WarnTimeTitle">WarnTime (sec)</string>
-    <string name="AlarmTimeSummary">Time to wait before initiating alarm (Default = 10 sec)</string>
-    <string name="AlarmTimeTitle">AlarmTime (sec)</string>
+    <string name="DataLoggingSettingsTitle">Ustawienia dziennika danych</string>
+    <string name="HeartRateAlarmSettingsTitle">Ustawienia tętna</string>
+    <string name="AlarmFunctionalitySettingsTitle">Ustawienia alarmów</string>
+    <string name="AudibleAlarmSettingsTitle">Ustawienia alarmów dźwiękowych</string>
+    <string name="SMSAlarmSettingsTitle">Ustawienia alarmów SMS</string>
+    <string name="DefaultSMSMsgText">**WYKRYTO DRGAWKI**</string>
+    <string name="AlarmLoggingTitle">Dziennik alarmów</string>
+    <string name="WarnTimeSummary">Czas oczekiwania przed włączeniem ostrzeżenia (domyślnie = 5 sek)</string>
+    <string name="WarnTimeTitle">Opóźnienie ostrzeżenia (sek)</string>
+    <string name="AlarmTimeSummary">Czas oczekiwania przed włączeniem alarmu (domyślnie = 10 sek)</string>
+    <string name="AlarmTimeTitle">Opóźnienie alarmu (sek)</string>
 </resources>
