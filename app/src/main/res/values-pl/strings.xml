@@ -258,11 +258,11 @@
     <string name="ParsePreferenceWarning">Problem z ustawieniami - coś nie będzie działać - proszę wrócić do Ustawień i poprawić!</string>
     <string name="ErrorWritingLogFileWarning">BŁĄD zapisu pliku dziennika</string>
     <string name="RestartingServerMsg">Zmieniono uprawnienia - restartuję serwer</string>
-    <string name="ErrorReleasingWakelockMsg">Problem ze zwolnieniem Wakelock'a</string>
+    <string name="ErrorReleasingWakelockMsg">Problem ze zwolnieniem Wakelock\'a</string>
     <string name="SMSAlarmAlreadySentMsg">Alarm SMS już wysłany - nie wysyłam ponownie</string>
     <string name="SMSAlarmDisabledNotSendingMsg">Alarmy SMS wyłączone - nie wysyłam alarmu SMS</string>
     <string name="PleaseForceStopOSDorRebootMsg">BŁĄD - OpenSizureDetector nie uruchomił się poprawnie - proszę wyłączyć go na siłę lub uruchomić ponownie telefon.</string>
-    <string name="SMSPermissionsDeniedMsg">BŁĄD - odmówiono uprawnień do SMS'ów lub lokalizacji - nie wysyłam SMS'ów</string>
+    <string name="SMSPermissionsDeniedMsg">BŁĄD - odmówiono uprawnień do SMS\'ów lub lokalizacji - nie wysyłam SMS\'ów</string>
     <string name="DatasourceTitle">\"Źródło danych: \"</string>
     <string name="DefaultingToPhoneMsg">\" nie rozpoznano - używam czujnika w telefonie\"</string>
     <string name="SMSAlarmCancelledMsg">Anulowano alarmy SMS</string>
