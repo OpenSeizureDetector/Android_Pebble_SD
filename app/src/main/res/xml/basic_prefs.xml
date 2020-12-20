@@ -22,7 +22,7 @@
         android:summary="@string/DataSourceSummary"
         android:title="@string/DataSourceTitle" />
 
-    <PreferenceCategory android:title="Data Logging Settings">
+    <PreferenceCategory android:title="@string/DataLoggingSettingsTitle">
 <!--    <CheckBoxPreference
         android:defaultValue="false"
         android:key="LogDataRemote"
@@ -62,7 +62,7 @@
         android:title="@string/AlarmFreqMaxTitle" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Heart Rate Alarm Settings">
+    <PreferenceCategory android:title="@string/HeartRateAlarmSettingsTitle">
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="HRAlarmActive"

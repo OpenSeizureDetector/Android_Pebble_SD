@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="Alarm Functionality Settings">
+    <PreferenceCategory android:title="@string/AlarmFunctionalitySettingsTitle">
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="LatchAlarms"
@@ -14,7 +14,7 @@
             android:defaultValue="10" />
 
     </PreferenceCategory>
-    <PreferenceCategory android:title="Audible Alarm Settings">
+    <PreferenceCategory android:title="@string/AudibleAlarmSettingsTitle">
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="AudibleAlarm"
@@ -44,7 +44,7 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="SMS Alarm Settings">
+    <PreferenceCategory android:title="@string/SMSAlarmSettingsTitle">
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="SMSAlarm"
@@ -56,7 +56,7 @@
             android:summary="@string/sms_numbers_summary"
             android:title="@string/sms_numbers_title" />
         <EditTextPreference
-            android:defaultValue="**SEIZURE DETECTED**"
+            android:defaultValue="@string/DefaultSMSMsgText"
             android:key="SMSMsg"
             android:summary="@string/sms_message_summary"
             android:title="@string/sms_message_title" />
@@ -70,7 +70,7 @@
             android:title="Enable Phone Call Alarm" />
     </PreferenceCategory>
 -->
-    <PreferenceCategory android:title="Alarm Logging">
+    <PreferenceCategory android:title="@string/AlarmLoggingTitle">
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="LogAlarms"

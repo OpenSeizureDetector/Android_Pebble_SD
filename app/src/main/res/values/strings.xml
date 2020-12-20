@@ -272,4 +272,15 @@
     <string name="StartingTitle">Starting......</string>
     <string name="AcceptAlarmBtnTxt">Accept Alarm</string>
     <string name="CancelAudibleButtonTxt">Cancel Audible (temporarily)</string>
+    <string name="DataLoggingSettingsTitle">Data Logging Settings</string>
+    <string name="HeartRateAlarmSettingsTitle">Heart Rate Alarm Settings</string>
+    <string name="AlarmFunctionalitySettingsTitle">Alarm Functionality Settings</string>
+    <string name="AudibleAlarmSettingsTitle">Audible Alarm Settings</string>
+    <string name="SMSAlarmSettingsTitle">SMS Alarm Settings</string>
+    <string name="DefaultSMSMsgText">**SEIZURE DETECTED**</string>
+    <string name="AlarmLoggingTitle">Alarm Logging</string>
+    <string name="WarnTimeSummary">Time to wait before initiating warning (Default = 5 sec)</string>
+    <string name="WarnTimeTitle">WarnTime (sec)</string>
+    <string name="AlarmTimeSummary">Time to wait before initiating alarm (Default = 10 sec)</string>
+    <string name="AlarmTimeTitle">AlarmTime (sec)</string>
 </resources>
