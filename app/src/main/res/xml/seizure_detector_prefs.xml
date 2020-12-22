@@ -2,7 +2,7 @@
 <!-- The ListPreference data is defined in pebble_datasource_values.xml -->
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="Seizure Detector Settings">
+    <PreferenceCategory android:title="@string/SeizureDetectorSettingsTitle">
         <EditTextPreference
             android:defaultValue="5"
             android:key="WarnTime"

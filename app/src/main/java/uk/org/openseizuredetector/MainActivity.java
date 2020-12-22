@@ -398,7 +398,7 @@ public class MainActivity extends AppCompatActivity {
             if (mUtil.isServerRunning()) {
                 tv = (TextView) findViewById(R.id.serverStatusTv);
                 if (mConnection.mBound)
-                    tv.setText(getString(R.string.ServerRunningOK) + mConnection.mSdServer.mSdDataSourceName + " " +getString(R.string.DataSource));
+                    tv.setText(getString(R.string.ServerRunningOK) +" : " +getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
                 tv = (TextView) findViewById(R.id.serverIpTv);
