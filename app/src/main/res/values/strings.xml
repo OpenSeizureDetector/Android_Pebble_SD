@@ -2,11 +2,11 @@
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
-        \n V3.6.1 - Possible fix for issue with shutting down system and expanded Polish translation to all settings screens.
-        \n V3.6 - Added phone sensor data source for testing without a watchs
-        \n V3.5 - Added support for SMS Annunciator App
-        \n V3.4 - Added support for BLE Data Source
-    </string>
+        "V3.6.2 - Fix of issue with log file permissions on some Android 10 devices and added more translatable strings with polish translation.
+        \nV3.6.1 - Possible fix for issue with shutting down system and expanded Polish translation to all settings screens.
+        \nV3.6 - Added phone sensor data source for testing without a watches
+        \nV3.5 - Added support for SMS Annunciator App
+        \nV3.4 - Added support for BLE Data Source     "</string>
     <string name="UpgradeMsg">
         OpenSeizureDetector does not collect any personal data.
         This does mean that it is not possible for me to contact users if I find an
@@ -255,4 +255,31 @@
     <string name="display_spectrum_mode_summary">Set Display Spectrum mode on or off.</string>
     <string name="analysis_prefs_title">Analysis</string>
     <string name="watch_comms_settings_title">Watch Communications Settings</string>
+    <string name="ParsePreferenceWarning">Problem Parsing Preferences - Something won\'t work - Please go back to Settings and correct it!</string>
+    <string name="ErrorWritingLogFileWarning">ERROR Writing to Log File</string>
+    <string name="RestartingServerMsg">Permissions Changed - restarting server</string>
+    <string name="ErrorReleasingWakelockMsg">Error Releasing Wakelock</string>
+    <string name="SMSAlarmAlreadySentMsg">SMS Alarm already sent - not re-sending</string>
+    <string name="SMSAlarmDisabledNotSendingMsg">SMS Alarms Disabled - not sending SMS Alert</string>
+    <string name="PleaseForceStopOSDorRebootMsg">ERROR - OpenSizureDetector did not restart properly - please Force Stop OpenSeizureDetector or re-boot phone.</string>
+    <string name="SMSPermissionsDeniedMsg">ERROR - Permission for SMS or Location Denied - Not Sending SMS</string>
+    <string name="DatasourceTitle">\"Datasource\"</string>
+    <string name="DefaultingToPhoneMsg">\" not recognised - Defaulting to Phone\"</string>
+    <string name="SMSAlarmCancelledMsg">SMS Alarm Cancelled</string>
+    <string name="StopServerTitle">Stop Server</string>
+    <string name="StartServerTitle">Start Server</string>
+    <string name="StartingTitle">Starting......</string>
+    <string name="AcceptAlarmBtnTxt">Accept Alarm</string>
+    <string name="CancelAudibleButtonTxt">Cancel Audible (temporarily)</string>
+    <string name="DataLoggingSettingsTitle">Data Logging Settings</string>
+    <string name="HeartRateAlarmSettingsTitle">Heart Rate Alarm Settings</string>
+    <string name="AlarmFunctionalitySettingsTitle">Alarm Functionality Settings</string>
+    <string name="AudibleAlarmSettingsTitle">Audible Alarm Settings</string>
+    <string name="SMSAlarmSettingsTitle">SMS Alarm Settings</string>
+    <string name="DefaultSMSMsgText">**SEIZURE DETECTED**</string>
+    <string name="AlarmLoggingTitle">Alarm Logging</string>
+    <string name="WarnTimeSummary">Time to wait before initiating warning (Default = 5 sec)</string>
+    <string name="WarnTimeTitle">WarnTime (sec)</string>
+    <string name="AlarmTimeSummary">Time to wait before initiating alarm (Default = 10 sec)</string>
+    <string name="AlarmTimeTitle">AlarmTime (sec)</string>
 </resources>

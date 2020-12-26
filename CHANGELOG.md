@@ -1,5 +1,8 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V3.6.2 - Nov 2020
+        - Extended Polish translation further
+        - Improved system log output to help with answering queries from users.
     V3.6.1 - Nov 2020
         - Extended polish translation to all settings screens.
         - Possible fix for issue with failing to shutdown system sometimes.

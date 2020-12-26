@@ -2,90 +2,90 @@
 <!-- The ListPreference data is defined in pebble_datasource_values.xml -->
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="Seizure Detector Settings">
+    <PreferenceCategory android:title="@string/SeizureDetectorSettingsTitle">
         <EditTextPreference
             android:defaultValue="5"
             android:key="WarnTime"
-            android:summary="Time to wait before initiating warning (Default = 5 sec)"
-            android:title="WarnTime (sec)" />
+            android:summary="@string/WarnTimeSummary"
+            android:title="@string/WarnTimeTitle" />
         <EditTextPreference
             android:defaultValue="10"
             android:key="AlarmTime"
-            android:summary="Time to wait before initiating alarm (Default = 10 sec)"
-            android:title="AlarmTime (sec)" />
+            android:summary="@string/AlarmTimeSummary"
+            android:title="@string/AlarmTimeTitle" />
         <EditTextPreference
             android:defaultValue="100"
             android:key="AlarmThresh"
-            android:summary="Alarm Threshold (Default = 100)"
-            android:title="AlarmThresh" />
+            android:summary="@string/AlarmThreshSummary"
+            android:title="@string/AlarmThreshTitle" />
         <EditTextPreference
             android:defaultValue="50"
             android:key="AlarmRatioThresh"
-            android:summary="Alarm Ratio Threshold (Default = 50).  Increase this value to reduce sensitivity if false alarms are a problem."
-            android:title="AlarmRatioThresh" />
+            android:summary="@string/AlarmRatioThreshSummary"
+            android:title="@string/AlarmRatioThreshTitle" />
 
         <EditTextPreference
             android:defaultValue="3"
             android:key="AlarmFreqMin"
-            android:summary="Minimum Frequency of ROI (Hz) (Default = 3 Hz)"
-            android:title="AlarmFreqMin (Hz)" />
+            android:summary="@string/AlarmFreqMinSummary"
+            android:title="@string/AlarmFreqMinTitle" />
         <EditTextPreference
             android:defaultValue="10"
             android:key="AlarmFreqMax"
-            android:summary="Maximum Frequency of ROI (Hz) (Default = 10 Hz)"
-            android:title="AlarmFreqMax (Hz)" />
+            android:summary="@string/AlarmFreqMaxSummary"
+            android:title="@string/AlarmFreqMaxTitle" />
 
         <EditTextPreference
             android:defaultValue="5"
             android:key="SamplePeriod"
-            android:summary="Period (in seconds) between data analyses"
-            android:title="SamplePeriod (sec)" />
+            android:summary="@string/sample_period_summary"
+            android:title="@string/sample_period_title" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Heart Rate Alarm Settings">
+    <PreferenceCategory android:title="@string/HeartRateAlarmSettingsTitle">
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="HRAlarmActive"
-            android:summary=""
-            android:title="Heart Rate Alarm Enabled" />
+            android:summary="@string/HRAlarmEnabledSummary"
+            android:title="@string/HRAlarmEnabledTitle" />
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="HRNullAsAlarm"
-            android:summary=""
-            android:title="Treat a Null heart rate as an alarm condition" />
+            android:summary="@string/HRNullAlarmSummary"
+            android:title="@string/HRNullAlarmTitle" />
         <EditTextPreference
             android:defaultValue="40"
             android:key="HRThreshMin"
-            android:summary=""
-            android:title="Heart Rate Min Threshold (bpm)" />
+            android:summary="@string/HRThreshMinSummary"
+            android:title="@string/HRThreshMinTitle" />
         <EditTextPreference
             android:defaultValue="150"
             android:key="HRThreshMax"
-            android:summary=""
-            android:title="Heart Rate Max Threshold (bpm)" />
+            android:summary="@string/HRThreshMaxSummary"
+            android:title="@string/HRThreshMaxTitle" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Fall Detector Settings">
+    <PreferenceCategory android:title="@string/fall_detect_title">
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="FallActive"
             android:summary=""
-            android:title="Activate Fall Detection Function" />
+            android:title="@string/fall_detect_active_title" />
         <EditTextPreference
             android:defaultValue="200"
             android:key="FallThreshMin"
             android:summary=""
-            android:title="Fall Detection Lower Threshold (milli-g)" />
+            android:title="@string/fall_thresh_min_title" />
         <EditTextPreference
             android:defaultValue="1200"
             android:key="FallThreshMax"
             android:summary=""
-            android:title="Fall Detection Upper Threshold (milli-g)" />
+            android:title="@string/fall_thresh_max_title" />
         <EditTextPreference
             android:defaultValue="1500"
             android:key="FallWindow"
             android:summary=""
-            android:title="Fall Detection Window (milli-seconds)" />
+            android:title="@string/fall_window_title" />
     </PreferenceCategory>
 
 

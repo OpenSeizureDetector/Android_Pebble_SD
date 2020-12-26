@@ -29,7 +29,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Starting......"
+        android:text="@string/StartingTitle"
         android:id="@+id/dataSourceTextView"
         android:layout_gravity="center_horizontal" />
 

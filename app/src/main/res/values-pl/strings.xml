@@ -255,4 +255,31 @@
     <string name="data_update_period_summary">Częstość wyświetlania informacji w milisekundach</string>
     <string name="select_datasource_title">Wybierz źródło danych</string>
     <string name="select_datasource_summary">Wybierz które źródło danych wykrywania ataków chcesz używać</string>
+    <string name="ParsePreferenceWarning">Problem z ustawieniami - coś nie będzie działać - proszę wrócić do Ustawień i poprawić!</string>
+    <string name="ErrorWritingLogFileWarning">BŁĄD zapisu pliku dziennika</string>
+    <string name="RestartingServerMsg">Zmieniono uprawnienia - restartuję serwer</string>
+    <string name="ErrorReleasingWakelockMsg">Problem ze zwolnieniem Wakelock\'a</string>
+    <string name="SMSAlarmAlreadySentMsg">Alarm SMS już wysłany - nie wysyłam ponownie</string>
+    <string name="SMSAlarmDisabledNotSendingMsg">Alarmy SMS wyłączone - nie wysyłam alarmu SMS</string>
+    <string name="PleaseForceStopOSDorRebootMsg">BŁĄD - OpenSizureDetector nie uruchomił się poprawnie - proszę wyłączyć go na siłę lub uruchomić ponownie telefon.</string>
+    <string name="SMSPermissionsDeniedMsg">BŁĄD - odmówiono uprawnień do SMS\'ów lub lokalizacji - nie wysyłam SMS\'ów</string>
+    <string name="DatasourceTitle">\"Źródło danych: \"</string>
+    <string name="DefaultingToPhoneMsg">\" nie rozpoznano - używam czujnika w telefonie\"</string>
+    <string name="SMSAlarmCancelledMsg">Anulowano alarmy SMS</string>
+    <string name="StopServerTitle">Zatrzymaj serwer</string>
+    <string name="StartServerTitle">Uruchom serwer</string>
+    <string name="StartingTitle">Uruchamiam...</string>
+    <string name="AcceptAlarmBtnTxt">Zaakceptuj alarm</string>
+    <string name="CancelAudibleButtonTxt">Wycisz (tymczasowo)</string>
+    <string name="DataLoggingSettingsTitle">Ustawienia dziennika danych</string>
+    <string name="HeartRateAlarmSettingsTitle">Ustawienia tętna</string>
+    <string name="AlarmFunctionalitySettingsTitle">Ustawienia alarmów</string>
+    <string name="AudibleAlarmSettingsTitle">Ustawienia alarmów dźwiękowych</string>
+    <string name="SMSAlarmSettingsTitle">Ustawienia alarmów SMS</string>
+    <string name="DefaultSMSMsgText">**WYKRYTO DRGAWKI**</string>
+    <string name="AlarmLoggingTitle">Dziennik alarmów</string>
+    <string name="WarnTimeSummary">Czas oczekiwania przed włączeniem ostrzeżenia (domyślnie = 5 sek)</string>
+    <string name="WarnTimeTitle">Opóźnienie ostrzeżenia (sek)</string>
+    <string name="AlarmTimeSummary">Czas oczekiwania przed włączeniem alarmu (domyślnie = 10 sek)</string>
+    <string name="AlarmTimeTitle">Opóźnienie alarmu (sek)</string>
 </resources>
