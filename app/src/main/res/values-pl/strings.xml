@@ -113,7 +113,7 @@
     <string name="BasicPrefSummary">Ustawienia podstawowe</string>
     <string name="accept_alarm">Zaakceptuj alarm</string>
     <string name="start_stop_server">Włącz/wyłącz serwer</string>
-    <string name="install_watch_app">Zainstaluj apkę na zegarek</string>
+    <string name="install_watch_app">Pobierz apkę na zegarek</string>
     <string name="test_alarm_beep">Test alarmu dźwiękowego</string>
     <string name="test_warning_beep">Test dźwięku ostrzeżeń</string>
     <string name="test_sms_alarm_notification">Wyślij próbny alarm SMS</string>
