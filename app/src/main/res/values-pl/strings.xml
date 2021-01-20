@@ -276,7 +276,7 @@
     <string name="AlarmFunctionalitySettingsTitle">Ustawienia alarmów</string>
     <string name="AudibleAlarmSettingsTitle">Ustawienia alarmów dźwiękowych</string>
     <string name="SMSAlarmSettingsTitle">Ustawienia alarmów SMS</string>
-    <string name="DefaultSMSMsgText">**WYKRYTO DRGAWKI**</string>
+    <string name="DefaultSMSMsgText">**ALARM! SPRAWDŹ PODOPIECZNEGO!**</string>
     <string name="AlarmLoggingTitle">Dziennik alarmów</string>
     <string name="WarnTimeSummary">Czas oczekiwania przed włączeniem ostrzeżenia (domyślnie = 5 sek)</string>
     <string name="WarnTimeTitle">Opóźnienie ostrzeżenia (sek)</string>
