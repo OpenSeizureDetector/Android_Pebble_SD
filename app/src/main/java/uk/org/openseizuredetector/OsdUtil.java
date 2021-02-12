@@ -99,6 +99,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
     private final String[] SMS_PERMISSIONS = {
             Manifest.permission.SEND_SMS,
             Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
             Manifest.permission.READ_PHONE_STATE,
     };
 
