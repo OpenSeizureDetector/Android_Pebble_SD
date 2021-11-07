@@ -296,8 +296,9 @@ public class SdServer extends Service implements SdDataReceiver {
             showNotification(0);
         }
         // Record last time we sent an SMS so we can limit rate of SMS
-        // sending to one per minute.
+        // sending to one per minute.   We set it to one minute ago (60000 milliseconds)
         mSMSTime = new Time(Time.getCurrentTimezone());
+        mSMSTime.set(mSMSTime.toMillis(false)-60000);
 
 
         // Start timer to log data regularly..
@@ -529,6 +530,8 @@ public class SdServer extends Service implements SdDataReceiver {
      */
     public void onSdDataReceived(SdData sdData) {
         Log.v(TAG, "onSdDataReceived() - " + sdData.toString());
+        Log.v(TAG,"onSdDataReceived(), sdData.fallAlarmStanding="+sdData.fallAlarmStanding);
+
         if (sdData.alarmState == 0) {
             if ((!mLatchAlarms) ||
                     (mLatchAlarms &&
@@ -602,6 +605,7 @@ public class SdServer extends Service implements SdDataReceiver {
             startLatchTimer();
         }
         // Handle fall alarm
+        Log.v(TAG,"sdData.fallAlarmStanding="+sdData.fallAlarmStanding );
         if ((sdData.alarmState == 3) || (sdData.fallAlarmStanding)) {
             sdData.alarmPhrase = "FALL";
             sdData.fallAlarmStanding = true;

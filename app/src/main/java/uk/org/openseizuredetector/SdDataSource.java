@@ -457,6 +457,7 @@ public abstract class SdDataSource {
         hrCheck();
         fallCheck();
         muteCheck();
+        Log.v(TAG,"after fallCheck, mSdData.fallAlarmStanding="+mSdData.fallAlarmStanding);
 
         mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
     }
@@ -570,8 +571,9 @@ public abstract class SdDataSource {
                     if (mSdData.rawData[i + j] < minAcc) minAcc = mSdData.rawData[i + j];
                     if (mSdData.rawData[i + j] > maxAcc) maxAcc = mSdData.rawData[i + j];
                 }
+                Log.d(TAG, "check_fall() - minAcc=" + minAcc +" (mFallThreshMin="+mFallThreshMin+ "), maxAcc=" + maxAcc+" (mFallThreshMax="+mFallThreshMax+")") ;
                 if ((minAcc < mFallThreshMin) && (maxAcc > mFallThreshMax)) {
-                    Log.d(TAG, "check_fall() - minAcc=" + minAcc + ", maxAcc=" + maxAcc);
+                    Log.d(TAG, "check_fall() ****FALL DETECTED***** minAcc=" + minAcc + ", maxAcc=" + maxAcc);
                     Log.d(TAG, "check_fall() - ****FALL DETECTED****");
                     mSdData.fallAlarmStanding = true;
                     return;
