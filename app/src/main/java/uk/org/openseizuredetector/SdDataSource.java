@@ -271,6 +271,12 @@ public abstract class SdDataSource {
                     mSdData.mHR = -1;
                 }
                 try {
+                    mSdData.mO2Sat = dataObject.getDouble("O2Sat");
+                } catch (JSONException e) {
+                    // if we get 'null' O2 Saturation (For example if the oxygen sensor is not working)
+                    mSdData.mO2Sat = -1;
+                }
+                try {
                     mMute = dataObject.getInt("Mute");
                 } catch (JSONException e) {
                     // if we get 'null' HR (For example if the heart rate is not working)
@@ -455,6 +461,7 @@ public abstract class SdDataSource {
         // Check this data to see if it represents an alarm state.
         alarmCheck();
         hrCheck();
+        o2SatCheck();
         fallCheck();
         muteCheck();
         Log.v(TAG,"after fallCheck, mSdData.fallAlarmStanding="+mSdData.fallAlarmStanding);
@@ -544,8 +551,38 @@ public abstract class SdDataSource {
                 mSdData.mHRAlarmStanding = false;
             }
         }
+    }
+
+    /**
+     * hrCheck - check the Heart rate data in mSdData to see if it represents an alarm condition.
+     * Sets mSdData.mHRAlarmStanding
+     */
+    public void o2SatCheck() {
+        Log.v(TAG, "o2SatCheck()");
+        /* Check Oxygen Saturation against alarm settings */
+        if (mSdData.mO2SatAlarmActive) {
+            if (mSdData.mO2Sat < 0) {
+                if (mSdData.mO2SatNullAsAlarm) {
+                    Log.i(TAG, "Oxygen Saturation Null - Alarming");
+                    mSdData.mO2SatFaultStanding = false;
+                    mSdData.mO2SatAlarmStanding = true;
+                } else {
+                    Log.i(TAG, "Oxygen Saturation Fault (O2Sat<0)");
+                    mSdData.mO2SatFaultStanding = true;
+                    mSdData.mO2SatAlarmStanding = false;
+                }
+            } else if  (mSdData.mO2Sat < mSdData.mO2SatThreshMin) {
+                Log.i(TAG, "Oxygen Saturation Abnormal - " + mSdData.mO2Sat + " %");
+                mSdData.mO2SatFaultStanding = false;
+                mSdData.mO2SatAlarmStanding = true;
+            } else {
+                mSdData.mO2SatFaultStanding = false;
+                mSdData.mO2SatAlarmStanding = false;
+            }
+        }
 
     }
+
 
     /****************************************************************
      * Simple threshold analysis to chech for fall.
@@ -815,6 +852,19 @@ public abstract class SdDataSource {
                 mSdData.mHRThreshMax = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() HRThreshMax = " + mSdData.mHRThreshMax);
                 mUtil.writeToSysLogFile( "updatePrefs() HRThreshMax = " + mSdData.mHRThreshMax);
+
+                mSdData.mO2SatAlarmActive = SP.getBoolean("O2SatAlarmActive", false);
+                Log.v(TAG, "updatePrefs() O2SatAlarmActive = " + mSdData.mO2SatAlarmActive);
+                mUtil.writeToSysLogFile( "updatePrefs() O2SatAlarmActive = " + mSdData.mO2SatAlarmActive);
+
+                mSdData.mO2SatNullAsAlarm = SP.getBoolean("O2SatNullAsAlarm", false);
+                Log.v(TAG, "updatePrefs() O2SatNullAsAlarm = " + mSdData.mO2SatNullAsAlarm);
+                mUtil.writeToSysLogFile( "updatePrefs() O2SatNullAsAlarm = " + mSdData.mO2SatNullAsAlarm);
+
+                prefStr = SP.getString("O2SatThreshMin", "SET_FROM_XML");
+                mSdData.mO2SatThreshMin = (short) Integer.parseInt(prefStr);
+                Log.v(TAG, "updatePrefs() O2SatThreshMin = " + mSdData.mO2SatThreshMin);
+                mUtil.writeToSysLogFile( "updatePrefs() O2SatThreshMin = " + mSdData.mO2SatThreshMin);
 
             } else {
                 Log.v(TAG, "updatePrefs() - prefStr is null - WHY????");

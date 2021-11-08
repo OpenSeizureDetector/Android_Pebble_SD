@@ -65,6 +65,24 @@
             android:title="@string/HRThreshMaxTitle" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/O2SatSettingsTitle">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="O2SatAlarmActive"
+            android:summary="@string/O2Sat_enabled_summary"
+            android:title="@string/O2Sat_enabled_title" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="O2SatNullAsAlarm"
+            android:summary="@string/O2SatNullAlarmSummary"
+            android:title="@string/O2SatNullAlarmTitle" />
+        <EditTextPreference
+            android:defaultValue="80"
+            android:key="O2SatThreshMin"
+            android:summary="@string/O2SatThreshMinSummary"
+            android:title="@string/O2SatThreshMinTitle" />
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="@string/fall_detect_title">
         <CheckBoxPreference
             android:defaultValue="false"

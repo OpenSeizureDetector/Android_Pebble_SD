@@ -460,11 +460,12 @@ public class MainActivity extends AppCompatActivity {
                     // Pebble Connected Phrase - use for HR if active instead.
                     tv = (TextView) findViewById(R.id.pebbleTv);
                     if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
-                        tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR);
-                        if (mConnection.mSdServer.mSdData.mHRAlarmStanding) {
+                        tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR +" bpm\n"
+                        + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
+                        if (mConnection.mSdServer.mSdData.mHRAlarmStanding || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
                             tv.setBackgroundColor(alarmColour);
                             tv.setTextColor(alarmTextColour);
-                        } else if (mConnection.mSdServer.mSdData.mHRFaultStanding) {
+                        } else if (mConnection.mSdServer.mSdData.mHRFaultStanding || mConnection.mSdServer.mSdData.mO2SatFaultStanding) {
                             tv.setBackgroundColor(warnColour);
                             tv.setTextColor(warnTextColour);
                         } else {
@@ -589,7 +590,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(warnTextColour);
 
                         tv = (TextView) findViewById(R.id.pebbleTv);
-                        tv.setText(getString(R.string.HR_Equals)+"---");
+                        tv.setText(getString(R.string.HR_Equals)+" --- bpm\nO2 Sat = --- %");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
 

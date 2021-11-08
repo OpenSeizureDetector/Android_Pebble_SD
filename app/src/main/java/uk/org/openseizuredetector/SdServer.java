@@ -672,8 +672,42 @@ public class SdServer extends Service implements SdDataReceiver {
                 mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
                 Log.v(TAG, "mSMSAlarm is false - not sending");
             }
-
         }
+
+        // Handle Oxygen Saturation alarm
+        if ((sdData.mO2SatAlarmActive) && (sdData.mO2SatAlarmStanding)) {
+            sdData.alarmPhrase = "Oxygen Saturation ABNORMAL";
+            if (mLogAlarms) {
+                Log.v(TAG, "***OXYGEN SATURATION*** - Logging to SD Card");
+                writeAlarmToSD();
+            } else {
+                Log.v(TAG, "***OXYGEN SATURATION***");
+            }
+            // Make alarm beep tone
+            alarmBeep();
+            showNotification(2);
+            // Display MainActvity
+            showMainActivity();
+            // Send SMS Alarm.
+            if (mSMSAlarm) {
+                Time tnow = new Time(Time.getCurrentTimezone());
+                tnow.setToNow();
+                // limit SMS alarms to one per minute
+                if ((tnow.toMillis(false)
+                        - mSMSTime.toMillis(false))
+                        > 60000) {
+                    sendSMSAlarm();
+                    mSMSTime = tnow;
+                } else {
+                    mUtil.showToast("SMS Alarm already sent - not re-sending");
+                    Log.v(TAG, "SMS Alarm already sent - not re-sending");
+                }
+            } else {
+                mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
+                Log.v(TAG, "mSMSAlarm is false - not sending");
+            }
+        }
+
 
         // Fault
         if ((sdData.alarmState) == 4 || (sdData.alarmState == 7) || (sdData.mHRFaultStanding)) {

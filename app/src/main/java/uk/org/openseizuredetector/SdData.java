@@ -65,6 +65,13 @@ public class SdData implements Parcelable {
     public boolean mHRNullAsAlarm = false;
     public double mHRThreshMin = 40.0;
     public double mHRThreshMax = 150.0;
+
+    /* Oxygen Saturation Alarm Settings */
+    public boolean mO2SatAlarmActive = false;
+    public boolean mO2SatNullAsAlarm = false;
+    public double mO2SatThreshMin = 80.0;
+
+
     public double rawData[];
     int mNsamp = 0;
 
@@ -87,6 +94,11 @@ public class SdData implements Parcelable {
     public boolean mHRFaultStanding = false;
     public double mHR = 0;
 
+    public boolean mO2SatAlarmStanding = false;
+    public boolean mO2SatFaultStanding = false;
+    public double mO2Sat = 0;
+
+
     public SdData() {
         simpleSpec = new int[10];
         rawData = new double[N_RAW_DATA];
@@ -95,6 +107,7 @@ public class SdData implements Parcelable {
 
     /*
      * Intialise this SdData object from a JSON String
+     * FIXME - add O2saturation with checking in case it is not included in the data
      */
     public boolean fromJSON(String jsonStr) {
         Log.v(TAG, "fromJSON() - parsing jsonString - " + jsonStr);
@@ -182,6 +195,10 @@ public class SdData implements Parcelable {
             jsonObj.put("hrThreshMin",mHRThreshMin);
             jsonObj.put("hrThreshMax", mHRThreshMax);
             jsonObj.put("hr",mHR);
+            jsonObj.put("o2SatAlarmActive", mO2SatAlarmActive);
+            jsonObj.put("o2SatAlarmStanding", mO2SatAlarmStanding);
+            jsonObj.put("o2SatThreshMin",mO2SatThreshMin);
+            jsonObj.put("o2Sat",mO2Sat);
             JSONArray arr = new JSONArray();
             for (int i = 0; i < simpleSpec.length; i++) {
                 arr.put(simpleSpec[i]);
@@ -220,6 +237,7 @@ public class SdData implements Parcelable {
         retval = retval + ", " + mSampleFreq;
         retval = retval + ", " + alarmPhrase;
         retval = retval + ", " + mHR;
+        retval = retval + ", " + mO2Sat;
         if (includeRawData) {
             for (int i = 0; i< mNsamp;i++) {
                 retval = retval + ", " + rawData[i];
