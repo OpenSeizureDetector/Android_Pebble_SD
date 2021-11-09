@@ -42,6 +42,28 @@
         android:layout_height="wrap_content"
         android:text="current_ble_device_tv" />
 
+    <TextView
+        android:id="@+id/ble_perm1_tv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ble_perm1_tv" />
+    <TextView
+        android:id="@+id/ble_perm2_tv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ble_perm2_tv" />
+    <TextView
+        android:id="@+id/ble_perm3_tv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ble_perm3_tv" />
+    <TextView
+        android:id="@+id/ble_perm4_tv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ble_perm4_tv" />
+
+
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="fill_parent"
