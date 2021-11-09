@@ -39,6 +39,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -53,6 +54,7 @@ public class BLEScanActivity extends ListActivity {
     private BluetoothAdapter mBluetoothAdapter;
     private boolean mScanning;
     private Handler mHandler;
+    private boolean bleAvailable = false;
 
     private boolean mPermissionsRequested = false;
     private final String TAG = "BLEScanActivity";
@@ -70,6 +72,7 @@ public class BLEScanActivity extends ListActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.ble_scan_activity);
         //this.getActionBar().setTitle(R.string.title_devices);
         this.setTitle(R.string.title_devices);
         mHandler = new Handler();
@@ -79,6 +82,8 @@ public class BLEScanActivity extends ListActivity {
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
             Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
             finish();
+        } else {
+            bleAvailable = true;
         }
 
         // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
@@ -125,15 +130,40 @@ public class BLEScanActivity extends ListActivity {
         return true;
     }
 
+
+    public void onScanButtonClick(View v) {
+        scanLeDevice(true);
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
+        SharedPreferences SP = PreferenceManager
+                .getDefaultSharedPreferences(this);
+        TextView tv = (TextView) findViewById(R.id.current_ble_device_tv);
+        try {
+            String bleAddr = SP.getString("BLE_Device_Addr", "none");
+            String bleName = SP.getString("BLE_Device_Name", "none");
+            tv.setText("Current Device=" + bleName + " (" + bleAddr + ")");
+        } catch(Exception e) {
+            tv.setText("Current Device=" + "none" + " (" + "none" + ")");
+        }
 
+        tv = (TextView)findViewById(R.id.ble_present_tv);
+        if (mBluetoothAdapter == null) {
+            tv.setText("ERROR - Bluetooth Adapter Not Present");
+        } else {
+            tv.setText("Bluetooth Adapter Present - OK");
+        }
         // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
         // fire an intent to display a dialog asking the user to grant permission to enable it.
+        tv = (TextView)findViewById(R.id.ble_adapter_tv);
         if (!mBluetoothAdapter.isEnabled()) {
+            tv.setText("ERROR - Bluetoot NOT Enabled");
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+        } else {
+            tv.setText("Bluetooth Adapter Enabled OK");
         }
 
         // Initializes list view adapter.
@@ -191,6 +221,7 @@ public class BLEScanActivity extends ListActivity {
     }
 
     private void scanLeDevice(final boolean enable) {
+        TextView tv;
         requestPermissions(this);
         if (enable) {
             // Stops scanning after a pre-defined scan period.
@@ -200,14 +231,28 @@ public class BLEScanActivity extends ListActivity {
                     mScanning = false;
                     mBluetoothAdapter.stopLeScan(mLeScanCallback);
                     invalidateOptionsMenu();
+                    TextView tv = (TextView)(findViewById(R.id.ble_scan_status_tv));
+                    tv.setText("Stopped");
+                    Button b = (Button)findViewById(R.id.startScanButton);
+                    b.setEnabled(true);
+
                 }
             }, SCAN_PERIOD);
 
             mScanning = true;
             mBluetoothAdapter.startLeScan(mLeScanCallback);
+            tv = (TextView)(findViewById(R.id.ble_scan_status_tv));
+            tv.setText("Scanning");
+            Button b = (Button)findViewById(R.id.startScanButton);
+            b.setEnabled(false);
+
         } else {
             mScanning = false;
             mBluetoothAdapter.stopLeScan(mLeScanCallback);
+            tv = (TextView)(findViewById(R.id.ble_scan_status_tv));
+            tv.setText("Stopped");
+            Button b = (Button)findViewById(R.id.startScanButton);
+            b.setEnabled(true);
         }
         invalidateOptionsMenu();
     }
