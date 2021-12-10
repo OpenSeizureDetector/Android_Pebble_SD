@@ -2,7 +2,8 @@
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
-        "V3.7.0 - Added support for Garmin Blood Oxygen Saturation measurements
+        "V3.9.x - Added logging of data to remote server
+        \nV3.7.0 - Added support for Garmin Blood Oxygen Saturation measurements
         \nV3.6.2 - Fix of issue with log file permissions on some Android 10 devices and added more translatable strings with polish translation.
         \nV3.6.1 - Possible fix for issue with shutting down system and expanded Polish translation to all settings screens.
         \nV3.6 - Added phone sensor data source for testing without a watches

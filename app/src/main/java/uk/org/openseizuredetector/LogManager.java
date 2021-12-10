@@ -67,6 +67,7 @@ public class LogManager {
 
 
     public LogManager(Context context) {
+        Log.d(TAG,"LogManger Constructor");
         mLogRemote = false;
         mLogRemoteMobile = false;
         mOSDUrl = null;
@@ -74,16 +75,20 @@ public class LogManager {
 
         Handler handler = new Handler();
         mUtil = new OsdUtil(mContext, handler);
-
+        openDb();
         startRemoteLogTimer();
     }
 
     private boolean openDb() {
+        Log.d(TAG, "openDb");
         try {
             mOSDDb = new OsdDbHelper(mDbTableName, mContext);
             if (!checkTableExists(mOSDDb, mDbTableName)) {
                 Log.e(TAG,"ERROR - Table does not exist");
                 return false;
+            }
+            else {
+                Log.d(TAG,"table "+mDbTableName+" exists ok");
             }
             return true;
         } catch (SQLException e) {
@@ -96,6 +101,7 @@ public class LogManager {
     private boolean checkTableExists(OsdDbHelper osdDb, String osdTableName) {
         Cursor c = null;
         boolean tableExists = false;
+        Log.d(TAG,"checkTableExists()");
         try {
             c = osdDb.getWritableDatabase().query(osdTableName, null,
                     null, null, null, null, null);
@@ -120,6 +126,9 @@ public class LogManager {
         String SQLStr = "SQLStr";
 
         try {
+            double  roiRatio = -1;
+            if (sdData.specPower != 0)
+                roiRatio = 10. * sdData.roiPower / sdData.specPower;
             SQLStr = "INSERT INTO "+ mDbTableName
                     + "(dataTime, wearer_id, BattPC, specPow, roiRatio, avAcc, sdAcc, hr, status, dataJSON, uploaded)"
                     + " VALUES("
@@ -127,7 +136,7 @@ public class LogManager {
                     + -1 + ","
                     + sdData.batteryPc + ","
                     + sdData.specPower + ","
-                    + 10. * sdData.roiPower / sdData.specPower + ","
+                    + roiRatio + ","
                     + sdData.getAvAcc() + ","
                     + sdData.getSdAcc() + ","
                     + sdData.mHR + ","
@@ -136,6 +145,7 @@ public class LogManager {
                     + 0
                     +")";
             mOSDDb.getWritableDatabase().execSQL(SQLStr);
+            Log.d(TAG,"data written to database");
 
         } catch (SQLException e) {
             Log.e(TAG,"writeToLocalDb(): Error Writing Data: " + e.toString());
@@ -302,10 +312,11 @@ public class LogManager {
         public static final int DATABASE_VERSION = 1;
         public static final String DATABASE_NAME = "OsdData.db";
         private String mOsdTableName;
-        private String TAG = "OsdDbHelper";
+        private String TAG = "LogManager.OsdDbHelper";
 
         public OsdDbHelper(String osdTableName, Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
+            Log.d(TAG,"OsdDbHelper constructor");
             mOsdTableName = osdTableName;
         }
         public void onCreate(SQLiteDatabase db) {
