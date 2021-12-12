@@ -62,6 +62,14 @@
         />
 
     <item
+        android:enabled="true"
+        android:id="@+id/action_authenticate_api"
+        android:icon="@drawable/ic_action_settings"
+        android:showAsAction="never|withText"
+        android:title="@string/authenticate"
+    />
+
+    <item
         android:id="@+id/action_logs"
         android:icon="@drawable/ic_action_settings"
         android:showAsAction="never|withText"

@@ -244,6 +244,17 @@ public class MainActivity extends AppCompatActivity {
                     mConnection.mSdServer.sendPhoneAlarm();
                 }
                 return true;
+            case R.id.action_authenticate_api:
+                Log.i(TAG, "action_autheticate_api");
+                try {
+                    Intent i = new Intent(
+                            MainActivity.this,
+                            AuthenticateActivity.class);
+                    this.startActivity(i);
+                } catch (Exception ex) {
+                    Log.i(TAG, "exception starting export activity " + ex.toString());
+                }
+                return true;
             case R.id.action_export:
                 Log.i(TAG, "action_export");
                 try {

@@ -291,4 +291,7 @@
     <string name="O2SatNullAlarmTitle">Treat Null Value as Alarm</string>
     <string name="O2SatThreshMinTitle">Oxygen Saturation Low Alarm Level (%)</string>
     <string name="O2SatThreshMinSummary">O2 Saturation Low Alarm Level (%)</string>
+    <string name="title_activity_authenticate">AuthenticateActivity</string>
+    <string name="logout">Log Out</string>
+    <string name="logged_in_with_token">Logged in with Token:</string>
 </resources>
