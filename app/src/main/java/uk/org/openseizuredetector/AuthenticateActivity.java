@@ -12,6 +12,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 public class AuthenticateActivity extends AppCompatActivity implements AuthCallbackInterface {
     private String TAG = "AuthenticateActivity";
@@ -31,6 +32,11 @@ public class AuthenticateActivity extends AppCompatActivity implements AuthCallb
         cancelBtn.setOnClickListener(onCancel);
         Button OKBtn = (Button) findViewById(R.id.OKBtn);
         OKBtn.setOnClickListener(onOK);
+        Button logoutCancelBtn =
+                (Button) findViewById(R.id.logoutCancelBtn);
+        logoutCancelBtn.setOnClickListener(onCancel);
+        Button logoutBtn = (Button)findViewById(R.id.logoutBtn);
+        logoutBtn.setOnClickListener(onLogout);
 
         mUnameEt = (EditText) findViewById(R.id.username);
         mPasswdEt = (EditText) findViewById(R.id.password);
@@ -40,15 +46,15 @@ public class AuthenticateActivity extends AppCompatActivity implements AuthCallb
     @Override
     protected void onStart() {
         super.onStart();
-        switchUi();
+        updateUi();
     }
 
     public void authCallback(boolean authSuccess, String tokenStr) {
         Log.v(TAG,"authCallback");
-        switchUi();
+        updateUi();
     }
 
-    private void switchUi() {
+    private void updateUi() {
         SharedPreferences prefs;
         String storedAuthToken;
         LinearLayout loginLl = (LinearLayout)findViewById(R.id.login_ui);
@@ -67,6 +73,8 @@ public class AuthenticateActivity extends AppCompatActivity implements AuthCallb
             Log.v(TAG, "Already Logged in - showing Log Out prompt");
             loginLl.setVisibility(View.GONE);
             logoutLl.setVisibility(View.VISIBLE);
+            TextView tv = (TextView)findViewById(R.id.tokenTv);
+            tv.setText("Logged in with Token:"+storedAuthToken);
         }
 
     }
@@ -95,5 +103,15 @@ public class AuthenticateActivity extends AppCompatActivity implements AuthCallb
                 }
             };
 
+    View.OnClickListener onLogout =
+            new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.v(TAG, "onLogout");
+                    //m_status=false;
+                    mWac.logout();
+                    updateUi();
+                }
+            };
 
 }

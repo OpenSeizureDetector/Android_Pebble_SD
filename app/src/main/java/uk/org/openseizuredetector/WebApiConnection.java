@@ -51,9 +51,16 @@ public class WebApiConnection {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
+                        String tokenStr;
                         Log.v(TAG, "Response is: " + response);
+                        try {
+                            JSONObject jo = new JSONObject(response);
+                            tokenStr = jo.getString("token");
+                        } catch (JSONException e) {
+                            tokenStr = "Error Parsing Rsponse";
+                        }
                         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-                        prefs.edit().putString("webApiAuthToken", response).commit();
+                        prefs.edit().putString("webApiAuthToken", tokenStr).commit();
                         mAuthCallback.authCallback(true, response);
                     }
                 },
@@ -80,6 +87,25 @@ public class WebApiConnection {
 
         mQueue.add(req);
         return (true);
+    }
+
+    // Remove the stored token so future calls are not authemticated.
+    public void logout() {
+        Log.v(TAG, "logout()");
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+        prefs.edit().putString("webApiAuthToken", null).commit();
+    }
+
+
+    // Create a new event in the remote database, based on the provided parameters.
+    public boolean createEvent() {
+        Log.v(TAG,"createEvent() - FIXME - This does not do anything!");
+
+    }
+
+    public boolean createDatapoint() {
+        Log.v(TAG,"createDatapoint() - FIXME - This does not do anything!");
+
     }
 
 }
