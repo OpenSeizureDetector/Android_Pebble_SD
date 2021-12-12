@@ -13,7 +13,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
-public class AuthenticateActivity extends AppCompatActivity {
+public class AuthenticateActivity extends AppCompatActivity implements AuthCallbackInterface {
     private String TAG = "AuthenticateActivity";
     private Context mContext;
     private EditText mUnameEt;
@@ -34,12 +34,17 @@ public class AuthenticateActivity extends AppCompatActivity {
 
         mUnameEt = (EditText) findViewById(R.id.username);
         mPasswdEt = (EditText) findViewById(R.id.password);
-        mWac = new WebApiConnection(this);
+        mWac = new WebApiConnection(this, this);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        switchUi();
+    }
+
+    public void authCallback(boolean authSuccess, String tokenStr) {
+        Log.v(TAG,"authCallback");
         switchUi();
     }
 
