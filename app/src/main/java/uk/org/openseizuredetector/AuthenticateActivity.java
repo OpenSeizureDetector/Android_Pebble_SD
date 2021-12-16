@@ -14,6 +14,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.util.Date;
+
 public class AuthenticateActivity extends AppCompatActivity implements AuthCallbackInterface {
     private String TAG = "AuthenticateActivity";
     private Context mContext;
@@ -52,6 +54,7 @@ public class AuthenticateActivity extends AppCompatActivity implements AuthCallb
     public void authCallback(boolean authSuccess, String tokenStr) {
         Log.v(TAG,"authCallback");
         updateUi();
+        mWac.createEvent(10,new Date(),"eventDescription....");
     }
 
     private void updateUi() {
@@ -60,8 +63,9 @@ public class AuthenticateActivity extends AppCompatActivity implements AuthCallb
         LinearLayout loginLl = (LinearLayout)findViewById(R.id.login_ui);
         LinearLayout logoutLl = (LinearLayout)findViewById(R.id.logout_ui);
         Log.i(TAG, "switchUi()");
-        prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        storedAuthToken = (prefs.getString("webApiAuthToken", null));
+        storedAuthToken = mWac.getStoredToken();
+        //prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        //storedAuthToken = (prefs.getString("webApiAuthToken", null));
         Log.v(TAG, "storedAuthToken=" + storedAuthToken);
 
         // Check if we are already logged in
