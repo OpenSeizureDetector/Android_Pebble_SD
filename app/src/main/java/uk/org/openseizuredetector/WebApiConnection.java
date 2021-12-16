@@ -36,14 +36,17 @@ public class WebApiConnection {
     private String TAG = "WebApiConnection";
     private AuthCallbackInterface mAuthCallback;
     private EventCallbackInterface mEventCallback;
+    private DatapointCallbackInterface mDatapointCallback;
     private Context mContext;
     private String TOKEN_ID = "webApiAuthToken";
     RequestQueue mQueue;
 
-    public WebApiConnection(Context context, AuthCallbackInterface authCallback, EventCallbackInterface eventCallback) {
+    public WebApiConnection(Context context, AuthCallbackInterface authCallback, EventCallbackInterface eventCallback,
+                            DatapointCallbackInterface datapointCallback) {
         mContext = context;
         mAuthCallback = authCallback;
         mEventCallback = eventCallback;
+        mDatapointCallback = datapointCallback;
         mQueue = Volley.newRequestQueue(context);
     }
 
@@ -76,9 +79,9 @@ public class WebApiConnection {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         String responseBody = new String(error.networkResponse.data);
-                        Log.v(TAG, "Login Error: " + error.toString() + ", message:" + error.getMessage()+", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        Log.v(TAG, "Login Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
                         saveStoredToken(null);
-                        mAuthCallback.authCallback(false,new String(error.networkResponse.data));
+                        mAuthCallback.authCallback(false, new String(error.networkResponse.data));
                     }
                 }) {
             // Note, this is overriding part of StringRequest, not one of the sub-classes above!
@@ -117,12 +120,12 @@ public class WebApiConnection {
 
     private boolean isLoggedIn() {
         String authToken = getStoredToken();
-        Log.v(TAG,"isLoggedIn(): token="+authToken);
+        Log.v(TAG, "isLoggedIn(): token=" + authToken);
         if (authToken == null || authToken.length() == 0) {
-            Log.v(TAG,"isLogged in - not logged in");
-            return(false);
+            Log.v(TAG, "isLogged in - not logged in");
+            return (false);
         } else {
-            return(true);
+            return (true);
         }
 
     }
@@ -130,14 +133,14 @@ public class WebApiConnection {
 
     // Create a new event in the remote database, based on the provided parameters.
     public boolean createEvent(final int eventType, final Date eventDate, final String eventDesc) {
-        Log.v(TAG,"createEvent() - FIXME - This does not do anything!");
+        Log.v(TAG, "createEvent() - FIXME - This does not do anything!");
         String urlStr = mUrlBase + "/api/events/";
         Log.v(TAG, "urlStr=" + urlStr);
         final String authtoken = getStoredToken();
 
         if (!isLoggedIn()) {
-            Log.v(TAG,"not logged in - doing nothing");
-            return(false);
+            Log.v(TAG, "not logged in - doing nothing");
+            return (false);
         }
 
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
@@ -147,10 +150,10 @@ public class WebApiConnection {
             jsonObject.put("dataTime", dateFormat.format(eventDate));
             jsonObject.put("desc", eventDesc);
         } catch (JSONException e) {
-            Log.e(TAG,"Error generating event JSON string");
+            Log.e(TAG, "Error generating event JSON string");
         }
         final String dataStr = jsonObject.toString();
-        Log.v(TAG,"createEvent - data="+dataStr);
+        Log.v(TAG, "createEvent - data=" + dataStr);
 
 
         StringRequest req = new StringRequest(Request.Method.POST, urlStr,
@@ -165,8 +168,8 @@ public class WebApiConnection {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         String responseBody = new String(error.networkResponse.data);
-                        Log.v(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage()+", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
-                        mEventCallback.eventCallback(false,new String(error.networkResponse.data));
+                        Log.v(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        mEventCallback.eventCallback(false, new String(error.networkResponse.data));
                     }
                 }) {
             // Note, this is overriding part of StringRequest, not one of the sub-classes above!
@@ -175,20 +178,99 @@ public class WebApiConnection {
                 Map<String, String> params = new HashMap<>();
                 // params.put("name",sname); // passing parameters to server
                 String authToken = getStoredToken();
-                params.put("Authorization: Token "+authToken, authToken);
-                Log.v(TAG,"getParams: params="+params.toString());
+                params.put("Authorization: Token " + authToken, authToken);
+                Log.v(TAG, "getParams: params=" + params.toString());
                 //params.put("eventType", String.valueOf(eventType));
                 //params.put("dataTime", dateFormat.format(eventDate));
                 //params.put("desc", eventDesc);
                 return params;
             }
+
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
                 Map<String, String> params = new HashMap<String, String>();
                 params.put("Content-Type", "application/json; charset=UTF-8");
-                params.put("Authorization", "Token "+getStoredToken());
+                params.put("Authorization", "Token " + getStoredToken());
                 return params;
             }
+
+            @Override
+            public byte[] getBody() throws AuthFailureError {
+                try {
+                    return dataStr == null ? null : dataStr.getBytes("utf-8");
+                } catch (UnsupportedEncodingException uee) {
+                    VolleyLog.wtf("Unsupported Encoding while trying to get the bytes of %s using %s", dataStr, "utf-8");
+                    return null;
+                }
+            }
+        };
+
+        mQueue.add(req);
+        return (true);
+    }
+
+    public boolean createDatapoint(JSONObject dataObj, int eventId) {
+        Log.v(TAG, "createDatapoint() - FIXME - This does not do anything!");
+        // Create a new event in the remote database, based on the provided parameters.
+        String urlStr = mUrlBase + "/api/datapoints/";
+        Log.v(TAG, "urlStr=" + urlStr);
+        final String authtoken = getStoredToken();
+
+        if (!isLoggedIn()) {
+            Log.v(TAG, "not logged in - doing nothing");
+            return (false);
+        }
+
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("eventId", String.valueOf(eventId));
+            jsonObject.put("dataJSON", dataObj.toString());
+        } catch (JSONException e) {
+            Log.e(TAG, "Error generating event JSON string");
+        }
+        final String dataStr = jsonObject.toString();
+        Log.v(TAG, "createDatapoint - data=" + dataStr);
+
+
+        StringRequest req = new StringRequest(Request.Method.POST, urlStr,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.v(TAG, "Response is: " + response);
+                        mDatapointCallback.datapointCallback(true, response);
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        String responseBody = new String(error.networkResponse.data);
+                        Log.v(TAG, "Create Datapoint Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        mDatapointCallback.datapointCallback(false, new String(error.networkResponse.data));
+                    }
+                }) {
+            // Note, this is overriding part of StringRequest, not one of the sub-classes above!
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<>();
+                // params.put("name",sname); // passing parameters to server
+                String authToken = getStoredToken();
+                params.put("Authorization: Token " + authToken, authToken);
+                Log.v(TAG, "getParams: params=" + params.toString());
+                //params.put("eventType", String.valueOf(eventType));
+                //params.put("dataTime", dateFormat.format(eventDate));
+                //params.put("desc", eventDesc);
+                return params;
+            }
+
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("Content-Type", "application/json; charset=UTF-8");
+                params.put("Authorization", "Token " + getStoredToken());
+                return params;
+            }
+
             @Override
             public byte[] getBody() throws AuthFailureError {
                 try {
@@ -203,16 +285,6 @@ public class WebApiConnection {
         mQueue.add(req);
         return (true);
 
-
-
-
-
-
-    }
-
-    public boolean createDatapoint() {
-        Log.v(TAG,"createDatapoint() - FIXME - This does not do anything!");
-        return(true);
     }
 
 }

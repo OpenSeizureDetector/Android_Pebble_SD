@@ -14,9 +14,13 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.Date;
 
-public class AuthenticateActivity extends AppCompatActivity implements AuthCallbackInterface {
+public class AuthenticateActivity extends AppCompatActivity
+        implements AuthCallbackInterface, EventCallbackInterface, DatapointCallbackInterface {
     private String TAG = "AuthenticateActivity";
     private Context mContext;
     private EditText mUnameEt;
@@ -40,9 +44,14 @@ public class AuthenticateActivity extends AppCompatActivity implements AuthCallb
         Button logoutBtn = (Button)findViewById(R.id.logoutBtn);
         logoutBtn.setOnClickListener(onLogout);
 
+        Button createEventBtn = (Button)findViewById(R.id.createEventBtn);
+        createEventBtn.setOnClickListener(onCreateEvent);
+        Button createDatapointBtn = (Button)findViewById(R.id.createDatapointBtn);
+        createDatapointBtn.setOnClickListener(onCreateDatapoint);
+
         mUnameEt = (EditText) findViewById(R.id.username);
         mPasswdEt = (EditText) findViewById(R.id.password);
-        mWac = new WebApiConnection(this, this);
+        mWac = new WebApiConnection(this, this, this, this);
     }
 
     @Override
@@ -54,7 +63,14 @@ public class AuthenticateActivity extends AppCompatActivity implements AuthCallb
     public void authCallback(boolean authSuccess, String tokenStr) {
         Log.v(TAG,"authCallback");
         updateUi();
-        mWac.createEvent(10,new Date(),"eventDescription....");
+    }
+
+    public void eventCallback(boolean success, String eventStr) {
+        Log.v(TAG,"eventCallback");
+    }
+
+    public void datapointCallback(boolean success, String datapointStr) {
+        Log.v(TAG,"datapointCallback");
     }
 
     private void updateUi() {
@@ -115,6 +131,37 @@ public class AuthenticateActivity extends AppCompatActivity implements AuthCallb
                     //m_status=false;
                     mWac.logout();
                     updateUi();
+                }
+            };
+    View.OnClickListener onCreateEvent =
+            new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.v(TAG, "onCreateEvent");
+                    mWac.createEvent(10,new Date(),"eventDescription....");
+                }
+            };
+
+    View.OnClickListener onCreateDatapoint =
+            new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.v(TAG, "onCreateDatapoint");
+                    String jsonStr = "";
+                    JSONObject dataObj;
+                    try {
+                        jsonStr = "{HR:70}";
+                        dataObj = new JSONObject(jsonStr);
+                        Log.v(TAG, "Creating Datapoint..."+dataObj.toString());
+                        mWac.createDatapoint(dataObj,10);
+                    } catch (JSONException e) {
+                        Log.v(TAG,"Error Creating JSON Object from string "+jsonStr);
+                        dataObj = null;
+                        jsonStr = null;
+                    }
+                    //m_status=false;
+                    // mWac.logout();
+                    //updateUi();
                 }
             };
 
