@@ -17,6 +17,8 @@ import android.widget.TextView;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class AuthenticateActivity extends AppCompatActivity
@@ -150,8 +152,10 @@ public class AuthenticateActivity extends AppCompatActivity
                     String jsonStr = "";
                     JSONObject dataObj;
                     try {
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
                         jsonStr = "{HR:70}";
                         dataObj = new JSONObject(jsonStr);
+                        dataObj.put("dataTime", dateFormat.format(new Date()));
                         Log.v(TAG, "Creating Datapoint..."+dataObj.toString());
                         mWac.createDatapoint(dataObj,10);
                     } catch (JSONException e) {

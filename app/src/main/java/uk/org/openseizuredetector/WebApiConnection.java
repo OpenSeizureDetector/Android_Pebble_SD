@@ -225,6 +225,7 @@ public class WebApiConnection {
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject.put("eventId", String.valueOf(eventId));
+            jsonObject.put("dataTime", dataObj.getString("dataTime"));
             jsonObject.put("dataJSON", dataObj.toString());
         } catch (JSONException e) {
             Log.e(TAG, "Error generating event JSON string");
