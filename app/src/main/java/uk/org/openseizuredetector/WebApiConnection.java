@@ -210,7 +210,7 @@ public class WebApiConnection {
     }
 
     public boolean createDatapoint(JSONObject dataObj, int eventId) {
-        Log.v(TAG, "createDatapoint() - FIXME - This does not do anything!");
+        Log.v(TAG, "createDatapoint()");
         // Create a new event in the remote database, based on the provided parameters.
         String urlStr = mUrlBase + "/api/datapoints/";
         Log.v(TAG, "urlStr=" + urlStr);
@@ -224,6 +224,7 @@ public class WebApiConnection {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
         JSONObject jsonObject = new JSONObject();
         try {
+            //jsonObject.put("userId", -1);
             jsonObject.put("eventId", String.valueOf(eventId));
             jsonObject.put("dataTime", dataObj.getString("dataTime"));
             jsonObject.put("dataJSON", dataObj.toString());
@@ -231,7 +232,7 @@ public class WebApiConnection {
             Log.e(TAG, "Error generating event JSON string");
         }
         final String dataStr = jsonObject.toString();
-        Log.v(TAG, "createDatapoint - data=" + dataStr);
+        Log.v(TAG, "createDatapoint - dataStr=" + dataStr);
 
 
         StringRequest req = new StringRequest(Request.Method.POST, urlStr,

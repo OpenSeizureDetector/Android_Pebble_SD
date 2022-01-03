@@ -160,6 +160,10 @@ public class SdData implements Parcelable {
         return toDataString(false);
     }
 
+    public String toJSON(boolean includeRawData) {
+        return toDataString(includeRawData);
+    }
+
     public String toDataString(boolean includeRawData) {
         String retval;
         retval = "SdData.toDataString() Output";

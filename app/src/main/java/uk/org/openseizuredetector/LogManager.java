@@ -2,7 +2,7 @@
   Android_SD - Android host for Garmin or Pebble watch based seizure detectors.
   See http://openseizuredetector.org for more information.
 
-  Copyright Graham Jones, 2019.
+  Copyright Graham Jones, 2019, 2021.
 
   This file is part of Android_SD.
 
@@ -35,6 +35,8 @@ import android.text.format.Time;
 import android.util.Log;
 
 import org.apache.commons.codec.binary.Base64;
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -51,6 +53,21 @@ import static android.database.sqlite.SQLiteDatabase.openOrCreateDatabase;
 
 /**
  * LogManager is a class to handle all aspects of Data Logging within OpenSeizureDetector.
+ * It performs several functions:
+ *  - It will store seizure detector data to a local database on demand (it is called by the SdServer background service)
+ *  - <FIXME: Not Yet Implemented> It will retrieve data from the local database for display on the user interface
+ *  - <FIXME: Not Yet Implemented> It will periodically trim the local database to retain only a specified number of days worth of data
+ *        to avoid the local storage use increasing continuously.
+ *  - It will periodically attempt to upload the oldest logged data to the osdApi remote database - the interface to the
+ *       remote database is handled by the WebApiConnection class.   It only tries to do one transaction with the external database
+ *       at a time - if the periodic timer times out and an upload is in progress it will not do anything and wait for the next timeout.*
+ *
+ *  The data upload process is as follows:
+ *  - Select the oldest non-uploaded datapoint that is marked as an alarm or warning state.
+ *  - Create an Event in the remote database based on that datapoint date and alarm type, and note the Event ID.
+ *  - Query the local database to return all datapoints within +/- EventDuration/2 minutes of the event.
+ *  - Upload the datapoints, linking them to the new eventID.
+ *  - Mark all the uploaded datapoints as uploaded.
  */
 public class LogManager {
     private String TAG = "LogManager";
@@ -58,19 +75,22 @@ public class LogManager {
     private String mDbTableName = "datapoints";
     private boolean mLogRemote;
     private boolean mLogRemoteMobile;
-    private String mOSDUrl = "https://https://osd.dynu.net/";
-    private String mApiToken;
+    //private String mOSDUrl = "https://https://osd.dynu.net/";
+    //private String mApiToken;
     private OsdDbHelper mOSDDb;
     private RemoteLogTimer mRemoteLogTimer;
     private Context mContext;
     private OsdUtil mUtil;
+
+    private boolean mUploadInProgress;
+    private int mUploadingDatapointId;
 
 
     public LogManager(Context context) {
         Log.d(TAG,"LogManger Constructor");
         mLogRemote = false;
         mLogRemoteMobile = false;
-        mOSDUrl = null;
+        //mOSDUrl = null;
         mContext = context;
 
         Handler handler = new Handler();
@@ -78,6 +98,40 @@ public class LogManager {
         openDb();
         startRemoteLogTimer();
     }
+
+    /**
+     * Returns a JSON String representing an array of datapoints that are selected from sqlite cursor c.
+     * @param c sqlite cursor pointing to datapoints query result.
+     * @return JSON String.
+     * from https://stackoverflow.com/a/20488153/2104584
+     */
+    private String cursor2Json(Cursor c) {
+        String retVal = "";
+        c.moveToFirst();
+        //JSONObject Root = new JSONObject();
+        JSONArray dataPointArray = new JSONArray();
+        int i = 0;
+        while (!c.isAfterLast()) {
+            JSONObject datapoint = new JSONObject();
+            try {
+                datapoint.put("id", c.getString(c.getColumnIndex("id")));
+                datapoint.put("dataTime", c.getString(c.getColumnIndex("dataTime")));
+                datapoint.put("status", c.getString(c.getColumnIndex("Status")));
+                datapoint.put("dataJSON", c.getString(c.getColumnIndex("dataJSON")));
+                datapoint.put("uploaded", c.getString(c.getColumnIndex("uploaded")));
+                c.moveToNext();
+                dataPointArray.put(i, datapoint);
+                i++;
+            } catch (JSONException e) {
+
+                e.printStackTrace();
+            }
+        }
+        return dataPointArray.toString();
+    }
+
+
+
 
     private boolean openDb() {
         Log.d(TAG, "openDb");
@@ -130,18 +184,11 @@ public class LogManager {
             if (sdData.specPower != 0)
                 roiRatio = 10. * sdData.roiPower / sdData.specPower;
             SQLStr = "INSERT INTO "+ mDbTableName
-                    + "(dataTime, wearer_id, BattPC, specPow, roiRatio, avAcc, sdAcc, hr, status, dataJSON, uploaded)"
+                    + "(dataTime, status, dataJSON, uploaded)"
                     + " VALUES("
                     +"CURRENT_TIMESTAMP,"
-                    + -1 + ","
-                    + sdData.batteryPc + ","
-                    + sdData.specPower + ","
-                    + roiRatio + ","
-                    + sdData.getAvAcc() + ","
-                    + sdData.getSdAcc() + ","
-                    + sdData.mHR + ","
                     + sdData.alarmState + ","
-                    + DatabaseUtils.sqlEscapeString(sdData.toCSVString(true)) + ","
+                    + DatabaseUtils.sqlEscapeString(sdData.toJSON(true)) + ","
                     + 0
                     +")";
             mOSDDb.getWritableDatabase().execSQL(SQLStr);
@@ -154,51 +201,131 @@ public class LogManager {
 
     }
 
+    /**
+     * Returns a json representation of datapoint 'id'.
+     * @param id datapoint id to return
+     * @return JSON representation of requested datapoint (single element JSON array)
+     */
+    public String getDatapointById(int id) {
+        Log.d(TAG,"getDatapointById() - id="+id);
+        Cursor c = null;
+        String retVal;
+        try {
+            String selectStr = "id =?";
+            String[] selectArgs = new String[]{String.format("%d",id)};
+            c = mOSDDb.getWritableDatabase().query(mDbTableName, null,
+                    selectStr, selectArgs, null, null, null);
+            retVal = cursor2Json(c);
+        }
+        catch (Exception e) {
+            Log.d(TAG,"getDatapointById(): Error Querying Database: "+e.getLocalizedMessage());
+            retVal = null;
+        }
+        return(retVal);
+
+    }
+
+    /**
+     * getDatapointsJSON() Returns a JSON Object of all of the datapoints in the local database
+     * between endDateStr-duration and endDateStr
+     * @param endDateStr  String representation of the period end date
+     * @param duration Duration in minutes.
+     * @return JSONObject of all the datapoints in the range.
+     */
+    public String getDatapointsbyDate(String startDateStr, String endDateStr) {
+        Log.d(TAG,"queryDatapoints() - endDateStr="+endDateStr);
+        Cursor c = null;
+        String retVal;
+        try {
+            String selectStr = "DataTime>=? and DataTime<=?";
+            String[] selectArgs = {startDateStr, endDateStr};
+            c = mOSDDb.getWritableDatabase().query(mDbTableName, null,
+                    null, null, null, null, null);
+            //c.query("Select * from ? where DataTime < ?", mDbTableName, endDateStr);
+            retVal = cursor2Json(c);
+        }
+        catch (Exception e) {
+            Log.d(TAG, mDbTableName+" doesn't exist :(((");
+            retVal = null;
+        }
+        return(retVal);
+    }
+
+
+
+
+    /**
+     * Return the ID of the next datapoint that needs to be uploaded (alarm or warning condition and has not yet been uploaded.
+     */
+    public int eventToUpload(boolean includeWarnings) {
+        Log.v(TAG, "getLocalEvents()");
+        Time tnow = new Time(Time.getCurrentTimezone());
+        tnow.setToNow();
+        String dateStr = tnow.format("%Y-%m-%d");
+        String SQLStr = "SQLStr";
+        String statusListStr;
+        String recordStr;
+        int recordId;
+
+        if (includeWarnings) {
+            statusListStr ="1,2,3,5";   // Warning, Alarm, Fall, Manual Alarm
+        } else {
+            statusListStr = "2,3,5";    // Alarm, Fall, Manual Alarm
+        }
+        try {
+            SQLStr = "SELECT * from "+ mDbTableName + " where uploaded=false and Status in ("+statusListStr+");";
+            Cursor resultSet = mOSDDb.getWritableDatabase().rawQuery(SQLStr,null);
+            resultSet.moveToFirst();
+            recordStr = resultSet.getString(3);
+            recordId = resultSet.getInt(0);
+            Log.d(TAG,"getLocalEvents: "+recordStr);
+
+        } catch (SQLException e) {
+            Log.e(TAG,"writeToLocalDb(): Error selecting Data: " + e.toString());
+            Log.e(TAG,"SQLStr was "+SQLStr);
+            recordStr = "ERROR";
+            recordId = -1;
+        }
+    return (recordId);
+    }
+
+
     public void writeToRemoteServer() {
         Log.v(TAG,"writeToRemoteServer()");
         if (!mLogRemote) {
-            Log.v(TAG,"mLogRemote not set, not doing anything");
+            Log.v(TAG,"writeToRemoteServer(): mLogRemote not set, not doing anything");
             return;
         }
 
         if (!mLogRemoteMobile) {
             // Check network state - are we using mobile data?
             if (mUtil.isMobileDataActive()) {
-                Log.v(TAG,"Using mobile data, so not doing anything");
+                Log.v(TAG,"writeToRemoteServer(): Using mobile data, so not doing anything");
                 return;
             }
         }
 
         if (!mUtil.isNetworkConnected()) {
-            Log.v(TAG,"No network connection - doing nothing");
+            Log.v(TAG,"writeToRemoteServer(): No network connection - doing nothing");
             return;
         }
 
-        Log.v(TAG,"Requirements for remote logging met!");
+        if (mUploadInProgress) {
+            Log.v(TAG,"writeToRemoteServer(): Upload already in progress, not starting another upload");
+            return;
+        }
+
+        Log.v(TAG,"writeToRemoteServer(): calling UploadSdData()");
         uploadSdData();
     }
 
 
-    /**
-     * Authenticate using the WebAPI to obtain a token for future API requests.
-     * @param uname - user name
-     * @param passwd - password
-     */
-    public void authenticate(String uname, String passwd) {
-        Log.v(TAG, "authenticate()");
-        // FIXME - this does not work!!!!
-        String dataStr = "{'login':"+uname+", 'password':"+passwd+"}";
-        //new PostDataTask().execute("http://" + mOSDUrl + ":8080/data", dataStr, mOSDUname, mOSDPasswd);
-        String urlStr = mOSDUrl+"/api/accounts/login/";
-        Log.v(TAG,"authenticate: url="+urlStr+", data="+dataStr);
-        new PostDataTask().execute(
-                urlStr, dataStr);
-    }
 
     /**
      * Upload a batch of seizure detector data records to the server..
-     * Uses the UploadSdDataTask class to upload the data in the
-     * background.  DownloadSdDataTask.onPostExecute() is called on completion.
+     * Uses the webApiConnection class to upload the data in the background.
+     * It searches the local database for the oldest event that has not been uploaded and uploads it.
+     * eventCallback is called when the event is created.
      */
     public void uploadSdData() {
         Log.v(TAG, "uploadSdData()");
@@ -207,83 +334,18 @@ public class LogManager {
         //new PostDataTask().execute("http://192.168.43.175:8765/datapoints/add", dataStr, mOSDUname, mOSDPasswd);
     }
 
-    private class PostDataTask extends AsyncTask<String, Void, String> {
-        @Override
-        protected String doInBackground(String... params) {
-            // params comes from the execute() call:
-            // params[0] is the url,
-            // params[1] is the data to send.
-            // params[2] is the user name (not used)
-            // params[3] is the password (not used)
-            int MAXLEN = 500;  // Maximum length of response that we will accept (bytes)
-            InputStream is = null;
-            String urlStr = params[0];
-            String dataStr = params[1];
-            String resultStr = "Not Initialised";
-            Log.v(TAG,"doInBackgound(): url="+urlStr+" data="+dataStr);
-            try {
-                URL url = new URL(urlStr);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setReadTimeout(2000 /* milliseconds */);
-                conn.setConnectTimeout(5000 /* milliseconds */);
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/json; utf-8");
-                conn.setRequestProperty("Accept", "application/json");
-                //String auth = uname + ":" + passwd;
-                //byte[] encodedAuth = Base64.encodeBase64(auth.getBytes("utf-8"));
-                //String authHeaderValue = "Basic " + new String(encodedAuth);
-                //conn.setRequestProperty("Authorization", authHeaderValue);
-                conn.setDoInput(true);
 
-                // Put our data into the outputstream associated with the connection.
-                OutputStream os = conn.getOutputStream();
-                byte[] input = dataStr.getBytes("utf-8");
-                os.write(input, 0, input.length);
-
-                // Starts the query
-                conn.connect();
-                int response = conn.getResponseCode();
-                Log.d(TAG, "The response code is: " + response);
-                is = conn.getInputStream();
-
-                // Convert the InputStream into a string
-                Reader reader = new InputStreamReader(is, "UTF-8");
-                char[] buffer = new char[MAXLEN];
-                reader.read(buffer);
-                resultStr = new String(buffer);
-
-            } catch (IOException e) {
-                Log.v(TAG,"doInBackground(): IOException - "+e.toString());
-                resultStr = "Error"+e.toString();
-
-                // Makes sure that the InputStream is closed after the app is
-                // finished using it.
-            } finally {
-                if (is != null) {
-                    try {
-                        is.close();
-                    } catch (IOException e) {
-                        Log.v(TAG,"doInBackground(): IOException - "+e.toString());
-                        resultStr = "Error"+e.toString();
-                    }
-                }
-            }
-
-            if (resultStr.startsWith("Unable to retrieve web page")) {
-                Log.v(TAG,"doInBackground() - Unable to retrieve data");
-            } else {
-                Log.v(TAG,"doInBackground(): result = "+resultStr);
-            }
-            return (resultStr);
-
-        }
-        // onPostExecute displays the results of the AsyncTask.
-        @Override
-        protected void onPostExecute(String result) {
-            Log.v(TAG,"onPostExecute() - result = "+result);
-        }
+    // Called by WebApiConnection when a new event record is created.
+    // Once the event is created it queries the local database to find the datapoints associated with the event
+    // and uploads those as a batch of data points.
+    public void eventCallback(boolean success, String eventStr) {
+        Log.v(TAG,"eventCallback(): " + eventStr);
     }
 
+    // Called by WebApiConnection when a new datapoint is created
+    public void datapointCallback(boolean success, String datapointStr) {
+        Log.v(TAG,"datapointCallback() " + datapointStr);
+    }
 
 
 
@@ -292,65 +354,8 @@ public class LogManager {
         stopRemoteLogTimer();
     }
 
-
-    public JSONObject queryDatapoints(String endDateStr, Double duration) {
-        Log.d(TAG,"queryDatapoints() - endDateStr="+endDateStr);
-        Cursor c = null;
-        try {
-            c = mOSDDb.getWritableDatabase().query(mDbTableName, null,
-                    null, null, null, null, null);
-            //c.query("Select * from ? where DataTime < ?", mDbTableName, endDateStr);
-        }
-        catch (Exception e) {
-            Log.d(TAG, mDbTableName+" doesn't exist :(((");
-        }
-        return(null);
-    }
-
-    public class OsdDbHelper extends SQLiteOpenHelper {
-        // If you change the database schema, you must increment the database version.
-        public static final int DATABASE_VERSION = 1;
-        public static final String DATABASE_NAME = "OsdData.db";
-        private String mOsdTableName;
-        private String TAG = "LogManager.OsdDbHelper";
-
-        public OsdDbHelper(String osdTableName, Context context) {
-            super(context, DATABASE_NAME, null, DATABASE_VERSION);
-            Log.d(TAG,"OsdDbHelper constructor");
-            mOsdTableName = osdTableName;
-        }
-        public void onCreate(SQLiteDatabase db) {
-            Log.v(TAG,"onCreate - TableName="+mOsdTableName);
-            String SQLStr = "CREATE TABLE IF NOT EXISTS "+mOsdTableName+"("
-                    + "id INT AUTO_INCREMENT PRIMARY KEY,"
-                    + "dataTime DATETIME,"
-                    + "wearer_id INT NOT NULL,"
-                    + "BattPC FLOAT,"
-                    + "specPow FLOAT,"
-                    + "roiRatio FLOAT,"
-                    + "avAcc FLOAT,"
-                    + "sdAcc FLOAT,"
-                    + "HR FLOAT,"
-                    + "Status INT,"
-                    + "dataJSON TEXT,"
-                    + "uploaded INT"
-                    + ");";
-
-            db.execSQL(SQLStr);
-        }
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            // This database is only a cache for online data, so its upgrade policy is
-            // to simply to discard the data and start over
-            db.execSQL("Drop table if exists " + mOsdTableName + ";");
-            onCreate(db);
-        }
-        public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            onUpgrade(db, oldVersion, newVersion);
-        }
-    }
-
     /*
-     * Start the timer that will send and SMS alert after a given period.
+     * Start the timer that will upload data to the remote server after a given period.
      */
     private void startRemoteLogTimer() {
         if (mRemoteLogTimer != null) {
@@ -366,7 +371,7 @@ public class LogManager {
 
 
     /*
-     * Cancel the SMS timer to prevent the SMS message being sent..
+     * Cancel the remote logging timer to prevent attempts to upload to remote database.
      */
     public void stopRemoteLogTimer() {
         if (mRemoteLogTimer != null) {
@@ -375,9 +380,49 @@ public class LogManager {
             mRemoteLogTimer = null;
         }
     }
+
+
+
+    public class OsdDbHelper extends SQLiteOpenHelper {
+        // If you change the database schema, you must increment the database version.
+        public static final int DATABASE_VERSION = 1;
+        public static final String DATABASE_NAME = "OsdData.db";
+        private String mOsdTableName;
+        private String TAG = "LogManager.OsdDbHelper";
+
+        public OsdDbHelper(String osdTableName, Context context) {
+            super(context, DATABASE_NAME, null, DATABASE_VERSION);
+            Log.d(TAG, "OsdDbHelper constructor");
+            mOsdTableName = osdTableName;
+        }
+
+        public void onCreate(SQLiteDatabase db) {
+            Log.v(TAG, "onCreate - TableName=" + mOsdTableName);
+            String SQLStr = "CREATE TABLE IF NOT EXISTS " + mOsdTableName + "("
+                    + "id INT AUTO_INCREMENT PRIMARY KEY,"
+                    + "dataTime DATETIME,"
+                    + "Status INT,"
+                    + "dataJSON TEXT,"
+                    + "uploaded INT"
+                    + ");";
+
+            db.execSQL(SQLStr);
+        }
+
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            // This database is only a cache for online data, so its upgrade policy is
+            // to simply to discard the data and start over
+            db.execSQL("Drop table if exists " + mOsdTableName + ";");
+            onCreate(db);
+        }
+
+        public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            onUpgrade(db, oldVersion, newVersion);
+        }
+    }
+
     /**
-     * Inhibit fault alarm initiation for a period to avoid spurious warning
-     * beeps caused by short term network interruptions.
+     * Upload recorded data to the remote database periodically.
      */
     private class RemoteLogTimer extends CountDownTimer {
         public RemoteLogTimer(long startTime, long interval) {
@@ -391,9 +436,9 @@ public class LogManager {
 
         @Override
         public void onFinish() {
-            //FIXME - make this do something!
-            //Log.v(TAG, "mRemoteLogTimer - onFinish");
-            //writeToRemoteServer();
+            Log.v(TAG, "mRemoteLogTimer - onFinish - uploading data to remote database");
+            writeToRemoteServer();
+            // Restart this timer.
             start();
         }
 

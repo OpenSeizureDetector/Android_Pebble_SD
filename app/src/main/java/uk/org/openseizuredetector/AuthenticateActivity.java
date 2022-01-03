@@ -29,6 +29,7 @@ public class AuthenticateActivity extends AppCompatActivity
     private EditText mPasswdEt;
     private boolean mIsLoggedIn;
     private WebApiConnection mWac;
+    private LogManager mLm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,10 +51,14 @@ public class AuthenticateActivity extends AppCompatActivity
         createEventBtn.setOnClickListener(onCreateEvent);
         Button createDatapointBtn = (Button)findViewById(R.id.createDatapointBtn);
         createDatapointBtn.setOnClickListener(onCreateDatapoint);
+        Button getLocalEventsBtn = (Button)findViewById(R.id.getLocalEventsBtn);
+        getLocalEventsBtn.setOnClickListener(onGetLocalEvents);
+
 
         mUnameEt = (EditText) findViewById(R.id.username);
         mPasswdEt = (EditText) findViewById(R.id.password);
         mWac = new WebApiConnection(this, this, this, this);
+        mLm = new LogManager(this);
     }
 
     @Override
@@ -156,7 +161,7 @@ public class AuthenticateActivity extends AppCompatActivity
                         jsonStr = "{HR:70}";
                         dataObj = new JSONObject(jsonStr);
                         dataObj.put("dataTime", dateFormat.format(new Date()));
-                        Log.v(TAG, "Creating Datapoint..."+dataObj.toString());
+                        Log.v(TAG, "Creating Datapoint...SdData="+dataObj.toString());
                         mWac.createDatapoint(dataObj,10);
                     } catch (JSONException e) {
                         Log.v(TAG,"Error Creating JSON Object from string "+jsonStr);
@@ -166,6 +171,15 @@ public class AuthenticateActivity extends AppCompatActivity
                     //m_status=false;
                     // mWac.logout();
                     //updateUi();
+                }
+            };
+
+    View.OnClickListener onGetLocalEvents =
+            new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.v(TAG, "onGetLocalEvents");
+                    mLm.uploadSdData();
                 }
             };
 
