@@ -22,6 +22,7 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -99,7 +100,7 @@ public class WebApiConnection {
         return (true);
     }
 
-    // Remove the stored token so future calls are not authemticated.
+    // Remove the stored token so future calls are not authenticated.
     public void logout() {
         Log.v(TAG, "logout()");
         saveStoredToken(null);
@@ -132,6 +133,14 @@ public class WebApiConnection {
 
 
     // Create a new event in the remote database, based on the provided parameters.
+    // EventType is defined by the WebAPI in https://github.com/OpenSeizureDetector/webApi/blob/master/api/events/models.py
+    // We currently use:
+    // 0: Unvalidated Alarm
+    // 1: Unvalidated Warning
+    // 2: Unvalidated Fall
+    // 6: TC Seizure
+    // 7: Other Seizure
+    // 9: Other Medical Issue
     public boolean createEvent(final int eventType, final Date eventDate, final String eventDesc) {
         Log.v(TAG, "createEvent() - FIXME - This does not do anything!");
         String urlStr = mUrlBase + "/api/events/";
@@ -142,7 +151,6 @@ public class WebApiConnection {
             Log.v(TAG, "not logged in - doing nothing");
             return (false);
         }
-
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
         JSONObject jsonObject = new JSONObject();
         try {

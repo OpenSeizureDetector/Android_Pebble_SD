@@ -48,6 +48,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import static android.database.sqlite.SQLiteDatabase.openOrCreateDatabase;
 
@@ -69,7 +73,8 @@ import static android.database.sqlite.SQLiteDatabase.openOrCreateDatabase;
  *  - Upload the datapoints, linking them to the new eventID.
  *  - Mark all the uploaded datapoints as uploaded.
  */
-public class LogManager {
+public class LogManager implements AuthCallbackInterface, EventCallbackInterface, DatapointCallbackInterface
+{
     private String TAG = "LogManager";
     private String mDbName = "osdData";
     private String mDbTableName = "datapoints";
@@ -81,9 +86,11 @@ public class LogManager {
     private RemoteLogTimer mRemoteLogTimer;
     private Context mContext;
     private OsdUtil mUtil;
+    private WebApiConnection mWac;
 
     private boolean mUploadInProgress;
     private int mUploadingDatapointId;
+    private long eventDuration = 1;   // event duration in minutes - uploads datapoints that cover this time range centred on the event time.
 
 
     public LogManager(Context context) {
@@ -96,7 +103,10 @@ public class LogManager {
         Handler handler = new Handler();
         mUtil = new OsdUtil(mContext, handler);
         openDb();
+        mWac = new WebApiConnection(mContext, this, this, this);
+
         startRemoteLogTimer();
+
     }
 
     /**
@@ -106,6 +116,11 @@ public class LogManager {
      * from https://stackoverflow.com/a/20488153/2104584
      */
     private String cursor2Json(Cursor c) {
+        StringBuilder cNames = new StringBuilder();
+        for (String n : c.getColumnNames()) {
+            cNames.append(", ").append(n);
+        }
+        //Log.v(TAG,"cursor2Json() - c="+c.toString()+", columns="+cNames+", number of rows="+c.getCount());
         String retVal = "";
         c.moveToFirst();
         //JSONObject Root = new JSONObject();
@@ -119,11 +134,12 @@ public class LogManager {
                 datapoint.put("status", c.getString(c.getColumnIndex("Status")));
                 datapoint.put("dataJSON", c.getString(c.getColumnIndex("dataJSON")));
                 datapoint.put("uploaded", c.getString(c.getColumnIndex("uploaded")));
+                //Log.v(TAG,"cursor2json() - datapoint="+datapoint.toString());
                 c.moveToNext();
                 dataPointArray.put(i, datapoint);
                 i++;
             } catch (JSONException e) {
-
+                Log.e(TAG,"cursor2Json(): error creating JSON Object");
                 e.printStackTrace();
             }
         }
@@ -174,9 +190,10 @@ public class LogManager {
      */
     public void writeToLocalDb(SdData sdData) {
         Log.v(TAG, "writeToLocalDb()");
-        Time tnow = new Time(Time.getCurrentTimezone());
-        tnow.setToNow();
-        String dateStr = tnow.format("%Y-%m-%d");
+        Date curDate = new Date();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+
+        String dateStr = dateFormat.format(curDate);
         String SQLStr = "SQLStr";
 
         try {
@@ -186,7 +203,7 @@ public class LogManager {
             SQLStr = "INSERT INTO "+ mDbTableName
                     + "(dataTime, status, dataJSON, uploaded)"
                     + " VALUES("
-                    +"CURRENT_TIMESTAMP,"
+                    + "'"+dateStr+"',"
                     + sdData.alarmState + ","
                     + DatabaseUtils.sqlEscapeString(sdData.toJSON(true)) + ","
                     + 0
@@ -211,10 +228,11 @@ public class LogManager {
         Cursor c = null;
         String retVal;
         try {
-            String selectStr = "id =?";
+            String selectStr = "select * from "+ mDbTableName + " where id="+id+";";
             String[] selectArgs = new String[]{String.format("%d",id)};
-            c = mOSDDb.getWritableDatabase().query(mDbTableName, null,
-                    selectStr, selectArgs, null, null, null);
+            //c = mOSDDb.getWritableDatabase().query(mDbTableName, null,
+            //        selectStr, selectArgs, null, null, null);
+            c = mOSDDb.getWritableDatabase().rawQuery(selectStr,null);
             retVal = cursor2Json(c);
         }
         catch (Exception e) {
@@ -233,19 +251,23 @@ public class LogManager {
      * @return JSONObject of all the datapoints in the range.
      */
     public String getDatapointsbyDate(String startDateStr, String endDateStr) {
-        Log.d(TAG,"queryDatapoints() - endDateStr="+endDateStr);
+        Log.d(TAG,"getDatapointsbyDate() - startDateStr="+startDateStr+", endDateStr="+endDateStr);
         Cursor c = null;
         String retVal;
         try {
-            String selectStr = "DataTime>=? and DataTime<=?";
-            String[] selectArgs = {startDateStr, endDateStr};
-            c = mOSDDb.getWritableDatabase().query(mDbTableName, null,
-                    null, null, null, null, null);
-            //c.query("Select * from ? where DataTime < ?", mDbTableName, endDateStr);
+            //String selectStr = "DataTime>=? and DataTime<=?";
+            //String[] selectArgs = {startDateStr, endDateStr};
+            //c = mOSDDb.getWritableDatabase().query(mDbTableName, null,
+            //        null, null, null, null, null);
+            c = mOSDDb.getWritableDatabase().rawQuery(
+                    "Select * from "+ mDbTableName
+                            + " where dataTime>= '"+startDateStr
+                            +"' and dataTime<= '"+endDateStr+"'",
+                    null);
             retVal = cursor2Json(c);
         }
         catch (Exception e) {
-            Log.d(TAG, mDbTableName+" doesn't exist :(((");
+            Log.d(TAG,"Error selecting datapoints"+e.toString());
             retVal = null;
         }
         return(retVal);
@@ -255,10 +277,10 @@ public class LogManager {
 
 
     /**
-     * Return the ID of the next datapoint that needs to be uploaded (alarm or warning condition and has not yet been uploaded.
+     * Return the ID of the next event (alarm, warning, fall etc that needs to be uploaded (alarm or warning condition and has not yet been uploaded.
      */
-    public int eventToUpload(boolean includeWarnings) {
-        Log.v(TAG, "getLocalEvents()");
+    public int getNextEventToUpload(boolean includeWarnings) {
+        Log.v(TAG, "getNextEventToUpload()");
         Time tnow = new Time(Time.getCurrentTimezone());
         tnow.setToNow();
         String dateStr = tnow.format("%Y-%m-%d");
@@ -278,10 +300,10 @@ public class LogManager {
             resultSet.moveToFirst();
             recordStr = resultSet.getString(3);
             recordId = resultSet.getInt(0);
-            Log.d(TAG,"getLocalEvents: "+recordStr);
+            Log.d(TAG,"getNextEventToUpload(): id="+recordId+", recordStr="+recordStr);
 
         } catch (SQLException e) {
-            Log.e(TAG,"writeToLocalDb(): Error selecting Data: " + e.toString());
+            Log.e(TAG,"getNextEventToUpload(): Error selecting Data: " + e.toString());
             Log.e(TAG,"SQLStr was "+SQLStr);
             recordStr = "ERROR";
             recordId = -1;
@@ -328,18 +350,101 @@ public class LogManager {
      * eventCallback is called when the event is created.
      */
     public void uploadSdData() {
+        int eventId = -1;
         Log.v(TAG, "uploadSdData()");
-        String dataStr = "data string to upload";
-        //new PostDataTask().execute("http://" + mOSDUrl + ":8080/data", dataStr, mOSDUname, mOSDPasswd);
-        //new PostDataTask().execute("http://192.168.43.175:8765/datapoints/add", dataStr, mOSDUname, mOSDPasswd);
+        eventId=getNextEventToUpload(true);
+        Log.v(TAG, "uploadSdData() - eventId="+eventId);
+        String eventJsonStr = getDatapointById(eventId);
+        Log.v(TAG,"uploadSdData() - eventJsonStr="+eventJsonStr);
+        int eventType;
+        JSONObject eventObj;
+        int eventAlarmStatus;
+        String eventDateStr;
+        Date eventDate;
+        try {
+            JSONArray datapointJsonArr = new JSONArray(eventJsonStr);
+            eventObj = datapointJsonArr.getJSONObject(0);  // We only look at the first (and hopefully only) item in the array.
+            eventAlarmStatus = Integer.parseInt(eventObj.getString("status"));
+            eventDateStr = eventObj.getString("dataTime");
+            Log.v(TAG,"uploadSdData - data from local DB is:" +eventJsonStr+", eventAlarmStatus="
+                    +eventAlarmStatus+", eventDateStr="+eventDateStr);
+        } catch (JSONException e) {
+            Log.e(TAG,"ERROR parsing event JSON Data"+eventJsonStr);
+            e.printStackTrace();
+            return;
+        } catch (NullPointerException e) {
+            Log.e(TAG,"ERROR null pointer exception parsing event JSON Data"+eventJsonStr);
+            e.printStackTrace();
+            return;
+        }
+        // FIXME - this should really not be hard coded but based on a file on the API server.
+        // GJ 03jan22
+        switch (eventAlarmStatus) {
+            case 1: // Warning
+                eventType = 1;
+                break;
+            case 2: // alarm
+                eventType = 0;
+                break;
+            case 3: // fall
+                eventType = 2;
+                break;
+            case 5: // Manual alarm
+                eventType = 3;
+                break;
+            default:
+                eventType = -1;
+                Log.e(TAG,"UploadSdData - alarmStatus "+eventAlarmStatus+" unrecognised");
+                return;
+        }
+        try {
+            eventDate = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(eventDateStr);
+        } catch (ParseException e) {
+            Log.e(TAG,"Error parsing date "+eventDateStr);
+            return;
+        }
+        mWac.createEvent(eventType,eventDate,"Uploaded by OpenSeizureDetector Android App");
     }
 
+    public void authCallback(boolean authSuccess, String tokenStr) {
+        Log.v(TAG,"authCallback");
+    }
 
     // Called by WebApiConnection when a new event record is created.
     // Once the event is created it queries the local database to find the datapoints associated with the event
     // and uploads those as a batch of data points.
     public void eventCallback(boolean success, String eventStr) {
-        Log.v(TAG,"eventCallback(): " + eventStr);
+        Log.v(TAG,"eventCallback():  FIXME - we need to upload the datapoints associated with this event now! " + eventStr);
+        Date eventDate;
+        String eventDateStr;
+        int eventId;
+        try {
+            JSONObject eventObj = new JSONObject(eventStr);
+            eventDateStr = eventObj.getString("dataTime");
+            eventId = eventObj.getInt("id");
+        } catch (JSONException e) {
+            Log.e(TAG,"eventCallback() - Error parsing eventStr: "+eventStr);
+            return;
+        }
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
+        try {
+            eventDate = dateFormat.parse(eventDateStr);
+        } catch (ParseException e) {
+            Log.e(TAG,"eventCallback() - error parsing date string "+eventDateStr);
+            return;
+        }
+        Log.v(TAG,"eventCallback() EventId="+eventId+", eventDateStr="+eventDateStr+", eventDate="+eventDate.toString());
+
+        long eventDateMillis = eventDate.getTime();
+        long startDateMillis = eventDateMillis - 1000*60* eventDuration/2;
+        long endDateMillis = eventDateMillis + 1000*60*eventDuration/2;
+        dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+
+        String datapointsJsonStr = getDatapointsbyDate(
+                dateFormat.format(new Date(startDateMillis)),
+                dateFormat.format(new Date(endDateMillis)));
+        Log.v(TAG,"eventCallback() - datapointsJsonStr="+datapointsJsonStr);
+
     }
 
     // Called by WebApiConnection when a new datapoint is created
@@ -399,7 +504,7 @@ public class LogManager {
         public void onCreate(SQLiteDatabase db) {
             Log.v(TAG, "onCreate - TableName=" + mOsdTableName);
             String SQLStr = "CREATE TABLE IF NOT EXISTS " + mOsdTableName + "("
-                    + "id INT AUTO_INCREMENT PRIMARY KEY,"
+                    + "id INTEGER PRIMARY KEY,"
                     + "dataTime DATETIME,"
                     + "Status INT,"
                     + "dataJSON TEXT,"
