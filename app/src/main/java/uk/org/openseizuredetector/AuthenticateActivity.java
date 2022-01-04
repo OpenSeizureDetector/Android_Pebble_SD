@@ -153,6 +153,15 @@ public class AuthenticateActivity extends AppCompatActivity
             new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    Log.v(TAG, "onCreateDatapoint - Pruning database");
+                    mLm.pruneLocalDb();
+                }
+            };
+
+    View.OnClickListener onCreateDatapointOld =
+            new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
                     Log.v(TAG, "onCreateDatapoint");
                     String jsonStr = "";
                     JSONObject dataObj;

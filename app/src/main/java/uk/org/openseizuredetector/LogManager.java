@@ -29,26 +29,15 @@ import android.database.DatabaseUtils;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.AsyncTask;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.text.format.Time;
 import android.util.Log;
 
-import org.apache.commons.codec.binary.Base64;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -93,6 +82,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     private boolean mUploadInProgress;
     private int mUploadingDatapointId;
     private long eventDuration = 1;   // event duration in minutes - uploads datapoints that cover this time range centred on the event time.
+    private long mLocaDbTimeLimitDays = 1; // Prunes the local db so it only retains data younger than this duration.
     private ArrayList<JSONObject> mDatapointsToUploadList;
     private int mCurrentEventId;
     private int mCurrentDatapointId;
@@ -290,6 +280,31 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     }
 
 
+    /**
+     * pruneLocalDb() removes data that is older than mLocalDbMaxAgeDays days
+     * */
+    public int pruneLocalDb() {
+        Log.d(TAG,"pruneLocalDb()");
+        Cursor c = null;
+        int retVal;
+        long currentDateMillis = new Date().getTime();
+        //long endDateMillis = currentDateMillis - 24*3600*1000* mLocaDbTimeLimitDays;
+        long endDateMillis = currentDateMillis - 3600*1000* mLocaDbTimeLimitDays;  // Using hours rather than days for testing
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        String endDateStr = dateFormat.format(new Date(endDateMillis));
+        try {
+            String selectStr = "DataTime<=?";
+            String[] selectArgs = {endDateStr};
+            retVal = mOSDDb.getWritableDatabase().delete(mDbTableName, selectStr, selectArgs);
+        }
+        catch (Exception e) {
+            Log.d(TAG,"Error deleting datapoints"+e.toString());
+            retVal = 0;
+        }
+        Log.d(TAG,String.format("pruneLocalDb() - deleted %d records", retVal));
+        return(retVal);
+    }
 
 
     /**
