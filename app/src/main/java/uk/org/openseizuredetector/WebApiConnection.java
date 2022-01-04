@@ -151,7 +151,7 @@ public class WebApiConnection {
             Log.v(TAG, "not logged in - doing nothing");
             return (false);
         }
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject.put("eventType", String.valueOf(eventType));
@@ -229,7 +229,7 @@ public class WebApiConnection {
             return (false);
         }
 
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         JSONObject jsonObject = new JSONObject();
         try {
             //jsonObject.put("userId", -1);

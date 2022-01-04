@@ -195,7 +195,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     public void writeToLocalDb(SdData sdData) {
         Log.v(TAG, "writeToLocalDb()");
         Date curDate = new Date();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         String dateStr = dateFormat.format(curDate);
         String SQLStr = "SQLStr";
@@ -419,7 +419,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
                     return;
             }
             try {
-                eventDate = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(eventDateStr);
+                eventDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(eventDateStr);
             } catch (ParseException e) {
                 Log.e(TAG, "Error parsing date " + eventDateStr);
                 return;
@@ -460,7 +460,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
             finishUpload();
             return;
         }
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         try {
             eventDate = dateFormat.parse(eventDateStr);
         } catch (ParseException e) {
@@ -473,7 +473,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         long eventDateMillis = eventDate.getTime();
         long startDateMillis = eventDateMillis - 1000*60* eventDuration/2;
         long endDateMillis = eventDateMillis + 1000*60*eventDuration/2;
-        dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         String datapointsJsonStr = getDatapointsbyDate(
                 dateFormat.format(new Date(startDateMillis)),
@@ -483,7 +483,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         JSONArray dataObj;
         mDatapointsToUploadList = new ArrayList<JSONObject>();
         try {
-            //DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
+            //DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
             dataObj = new JSONArray(datapointsJsonStr);
             for (int i = 0 ; i < dataObj.length(); i++) {
                 mDatapointsToUploadList.add(dataObj.getJSONObject(i));
