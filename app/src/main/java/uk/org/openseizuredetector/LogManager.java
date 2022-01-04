@@ -22,6 +22,7 @@
 */
 package uk.org.openseizuredetector;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
@@ -51,6 +52,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import static android.database.sqlite.SQLiteDatabase.openOrCreateDatabase;
@@ -91,7 +93,9 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     private boolean mUploadInProgress;
     private int mUploadingDatapointId;
     private long eventDuration = 1;   // event duration in minutes - uploads datapoints that cover this time range centred on the event time.
-
+    private ArrayList<JSONObject> mDatapointsToUploadList;
+    private int mCurrentEventId;
+    private int mCurrentDatapointId;
 
     public LogManager(Context context) {
         Log.d(TAG,"LogManger Constructor");
@@ -243,6 +247,18 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
 
     }
 
+    public boolean setDatapointToUploaded(int id) {
+        Log.d(TAG,"setDatapointToUploaded() - id="+id);
+        Cursor c = null;
+        ContentValues cv = new ContentValues();
+        cv.put("uploaded",1);
+        int nRowsUpdated = mOSDDb.getWritableDatabase().update(mDbTableName, cv, "id = ?",
+                new String[]{String.format("%d",id)});
+
+        return(nRowsUpdated == 1);
+
+    }
+
     /**
      * getDatapointsJSON() Returns a JSON Object of all of the datapoints in the local database
      * between endDateStr-duration and endDateStr
@@ -298,10 +314,14 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
             SQLStr = "SELECT * from "+ mDbTableName + " where uploaded=false and Status in ("+statusListStr+");";
             Cursor resultSet = mOSDDb.getWritableDatabase().rawQuery(SQLStr,null);
             resultSet.moveToFirst();
-            recordStr = resultSet.getString(3);
-            recordId = resultSet.getInt(0);
-            Log.d(TAG,"getNextEventToUpload(): id="+recordId+", recordStr="+recordStr);
-
+            if (resultSet.getCount() == 0) {
+                Log.v(TAG,"getNextEventToUpload() - no events to Upload - exiting");
+                recordId = -1;
+            } else {
+                recordStr = resultSet.getString(3);
+                recordId = resultSet.getInt(0);
+                Log.d(TAG, "getNextEventToUpload(): id=" + recordId + ", recordStr=" + recordStr);
+            }
         } catch (SQLException e) {
             Log.e(TAG,"getNextEventToUpload(): Error selecting Data: " + e.toString());
             Log.e(TAG,"SQLStr was "+SQLStr);
@@ -352,62 +372,75 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     public void uploadSdData() {
         int eventId = -1;
         Log.v(TAG, "uploadSdData()");
-        eventId=getNextEventToUpload(true);
-        Log.v(TAG, "uploadSdData() - eventId="+eventId);
-        String eventJsonStr = getDatapointById(eventId);
-        Log.v(TAG,"uploadSdData() - eventJsonStr="+eventJsonStr);
-        int eventType;
-        JSONObject eventObj;
-        int eventAlarmStatus;
-        String eventDateStr;
-        Date eventDate;
-        try {
-            JSONArray datapointJsonArr = new JSONArray(eventJsonStr);
-            eventObj = datapointJsonArr.getJSONObject(0);  // We only look at the first (and hopefully only) item in the array.
-            eventAlarmStatus = Integer.parseInt(eventObj.getString("status"));
-            eventDateStr = eventObj.getString("dataTime");
-            Log.v(TAG,"uploadSdData - data from local DB is:" +eventJsonStr+", eventAlarmStatus="
-                    +eventAlarmStatus+", eventDateStr="+eventDateStr);
-        } catch (JSONException e) {
-            Log.e(TAG,"ERROR parsing event JSON Data"+eventJsonStr);
-            e.printStackTrace();
-            return;
-        } catch (NullPointerException e) {
-            Log.e(TAG,"ERROR null pointer exception parsing event JSON Data"+eventJsonStr);
-            e.printStackTrace();
-            return;
-        }
-        // FIXME - this should really not be hard coded but based on a file on the API server.
-        // GJ 03jan22
-        switch (eventAlarmStatus) {
-            case 1: // Warning
-                eventType = 1;
-                break;
-            case 2: // alarm
-                eventType = 0;
-                break;
-            case 3: // fall
-                eventType = 2;
-                break;
-            case 5: // Manual alarm
-                eventType = 3;
-                break;
-            default:
-                eventType = -1;
-                Log.e(TAG,"UploadSdData - alarmStatus "+eventAlarmStatus+" unrecognised");
+        eventId = getNextEventToUpload(true);
+        if (eventId != -1) {
+            Log.v(TAG, "uploadSdData() - eventId=" + eventId);
+            String eventJsonStr = getDatapointById(eventId);
+            Log.v(TAG, "uploadSdData() - eventJsonStr=" + eventJsonStr);
+            int eventType;
+            JSONObject eventObj;
+            int eventAlarmStatus;
+            String eventDateStr;
+            Date eventDate;
+            try {
+                JSONArray datapointJsonArr = new JSONArray(eventJsonStr);
+                eventObj = datapointJsonArr.getJSONObject(0);  // We only look at the first (and hopefully only) item in the array.
+                eventAlarmStatus = Integer.parseInt(eventObj.getString("status"));
+                eventDateStr = eventObj.getString("dataTime");
+                Log.v(TAG, "uploadSdData - data from local DB is:" + eventJsonStr + ", eventAlarmStatus="
+                        + eventAlarmStatus + ", eventDateStr=" + eventDateStr);
+            } catch (JSONException e) {
+                Log.e(TAG, "ERROR parsing event JSON Data" + eventJsonStr);
+                e.printStackTrace();
                 return;
+            } catch (NullPointerException e) {
+                Log.e(TAG, "ERROR null pointer exception parsing event JSON Data" + eventJsonStr);
+                e.printStackTrace();
+                return;
+            }
+            // FIXME - this should really not be hard coded but based on a file on the API server.
+            // GJ 03jan22
+            switch (eventAlarmStatus) {
+                case 1: // Warning
+                    eventType = 1;
+                    break;
+                case 2: // alarm
+                    eventType = 0;
+                    break;
+                case 3: // fall
+                    eventType = 2;
+                    break;
+                case 5: // Manual alarm
+                    eventType = 3;
+                    break;
+                default:
+                    eventType = -1;
+                    Log.e(TAG, "UploadSdData - alarmStatus " + eventAlarmStatus + " unrecognised");
+                    return;
+            }
+            try {
+                eventDate = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(eventDateStr);
+            } catch (ParseException e) {
+                Log.e(TAG, "Error parsing date " + eventDateStr);
+                return;
+            }
+            mWac.createEvent(eventType, eventDate, "Uploaded by OpenSeizureDetector Android App");
+        } else{
+        Log.v(TAG,"UploadSdData - no data to upload");
         }
-        try {
-            eventDate = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss").parse(eventDateStr);
-        } catch (ParseException e) {
-            Log.e(TAG,"Error parsing date "+eventDateStr);
-            return;
-        }
-        mWac.createEvent(eventType,eventDate,"Uploaded by OpenSeizureDetector Android App");
     }
 
     public void authCallback(boolean authSuccess, String tokenStr) {
         Log.v(TAG,"authCallback");
+    }
+
+
+    // Mark the relevant member variables to show we are not currently doing an upload, so a new one can be
+    // started if necessary.
+    public void finishUpload() {
+        mCurrentEventId = -1;
+        mDatapointsToUploadList = null;
+        mUploadInProgress = false;
     }
 
     // Called by WebApiConnection when a new event record is created.
@@ -424,6 +457,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
             eventId = eventObj.getInt("id");
         } catch (JSONException e) {
             Log.e(TAG,"eventCallback() - Error parsing eventStr: "+eventStr);
+            finishUpload();
             return;
         }
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
@@ -431,6 +465,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
             eventDate = dateFormat.parse(eventDateStr);
         } catch (ParseException e) {
             Log.e(TAG,"eventCallback() - error parsing date string "+eventDateStr);
+            finishUpload();
             return;
         }
         Log.v(TAG,"eventCallback() EventId="+eventId+", eventDateStr="+eventDateStr+", eventDate="+eventDate.toString());
@@ -445,11 +480,60 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
                 dateFormat.format(new Date(endDateMillis)));
         Log.v(TAG,"eventCallback() - datapointsJsonStr="+datapointsJsonStr);
 
+        JSONArray dataObj;
+        mDatapointsToUploadList = new ArrayList<JSONObject>();
+        try {
+            //DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
+            dataObj = new JSONArray(datapointsJsonStr);
+            for (int i = 0 ; i < dataObj.length(); i++) {
+                mDatapointsToUploadList.add(dataObj.getJSONObject(i));
+            }
+            //dataObj.put("dataTime", dateFormat.format(new Date()));
+            //Log.v(TAG, "eventCallback(): Creating Datapoint...SdData="+dataObj.toString());
+            //mWac.createDatapoint(dataObj,eventId);
+        } catch (JSONException e) {
+            Log.v(TAG,"Error Creating JSON Object from string "+datapointsJsonStr);
+            dataObj = null;
+            finishUpload();
+        }
+        // This starts the process of uploading the datapoints, one at a time.
+        mCurrentEventId = eventId;
+        mUploadInProgress = true;
+        Log.v(TAG,"eventCallback() - starting datapoints upload with eventId "+mCurrentEventId);
+        uploadNextDatapoint();
     }
 
-    // Called by WebApiConnection when a new datapoint is created
+    public void uploadNextDatapoint() {
+        Log.v(TAG,"uploadDatapoint()");
+        if (mDatapointsToUploadList.size() > 0) {
+            mUploadInProgress = true;
+            try {
+                mCurrentDatapointId = mDatapointsToUploadList.get(0).getInt("id");
+            } catch (JSONException e) {
+                Log.e(TAG,"Error reading currentDatapointID from mDatapointsToUploadList[0]"+e.getMessage());
+                Log.e(TAG,"Removing mDatapointsToUploadList[0] and trying the next datapoint");
+                mDatapointsToUploadList.remove(0);
+                uploadNextDatapoint();
+            }
+
+            Log.v(TAG,"uploadDatapoint() - uploading datapoint with local id of "+mCurrentDatapointId);
+            mWac.createDatapoint(mDatapointsToUploadList.get(0),mCurrentEventId);
+
+        } else {
+            mCurrentEventId = -1;
+            mCurrentDatapointId = -1;
+            mUploadInProgress = false;
+        }
+    }
+
+    // Called by WebApiConnection when a new datapoint is created.   It assumes that we have just created
+    // a datapoint based on mDatapointsToUploadList(0) so removes that from the list and calls UploadDatapoint()
+    // to upload the next one.
     public void datapointCallback(boolean success, String datapointStr) {
         Log.v(TAG,"datapointCallback() " + datapointStr);
+        mDatapointsToUploadList.remove(0);
+        setDatapointToUploaded(mCurrentDatapointId);
+        uploadNextDatapoint();
     }
 
 
