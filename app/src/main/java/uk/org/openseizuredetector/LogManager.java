@@ -24,6 +24,7 @@ package uk.org.openseizuredetector;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.SQLException;
@@ -31,6 +32,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 
@@ -71,16 +73,13 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     private String mDbTableName = "datapoints";
     private boolean mLogRemote;
     private boolean mLogRemoteMobile;
-    //private String mOSDUrl = "https://https://osd.dynu.net/";
-    //private String mApiToken;
     private OsdDbHelper mOSDDb;
     private RemoteLogTimer mRemoteLogTimer;
     private Context mContext;
     private OsdUtil mUtil;
-    private WebApiConnection mWac;
+    public WebApiConnection mWac;
 
     private boolean mUploadInProgress;
-    private int mUploadingDatapointId;
     private long eventDuration = 1;   // event duration in minutes - uploads datapoints that cover this time range centred on the event time.
     private long mLocaDbTimeLimitDays = 1; // Prunes the local db so it only retains data younger than this duration.
     private ArrayList<JSONObject> mDatapointsToUploadList;
@@ -89,12 +88,17 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
 
     public LogManager(Context context) {
         Log.d(TAG,"LogManger Constructor");
-        mLogRemote = false;
-        mLogRemoteMobile = false;
-        //mOSDUrl = null;
         mContext = context;
-
         Handler handler = new Handler();
+
+        SharedPreferences prefs;
+        prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+        mLogRemote = (prefs.getBoolean("LogDataRemote", false));
+        Log.v(TAG,"mLogRemote="+mLogRemote);
+        mLogRemoteMobile = (prefs.getBoolean("LogDataRemoteMobile", false));
+        Log.v(TAG,"mLogRemoteMobile="+mLogRemoteMobile);
+
+
         mUtil = new OsdUtil(mContext, handler);
         openDb();
         mWac = new WebApiConnection(mContext, this, this, this);
@@ -346,6 +350,51 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     return (recordId);
     }
 
+    /**
+     * Return the number of events stored in the local database
+     */
+    public int getLocalEventsCount(boolean includeWarnings) {
+        Log.v(TAG, "getLocalEventsCount()");
+        String SQLStr = "SQLStr";
+        String statusListStr;
+
+        if (includeWarnings) {
+            statusListStr ="1,2,3,5";   // Warning, Alarm, Fall, Manual Alarm
+        } else {
+            statusListStr = "2,3,5";    // Alarm, Fall, Manual Alarm
+        }
+        try {
+            SQLStr = "SELECT * from "+ mDbTableName + " where Status in ("+statusListStr+");";
+            Cursor resultSet = mOSDDb.getWritableDatabase().rawQuery(SQLStr,null);
+            resultSet.moveToFirst();
+            return (resultSet.getCount());
+        } catch (SQLException e) {
+            Log.e(TAG,"getLocalEventsCount(): Error selecting Data: " + e.toString());
+            Log.e(TAG,"SQLStr was "+SQLStr);
+            return(0);
+        }
+    }
+
+    /**
+     * Return the number of datapoints stored in the local database
+     */
+    public int getLocalDatapointsCount() {
+        Log.v(TAG, "getLocalDatapointsCount()");
+        String SQLStr = "SQLStr";
+        String statusListStr;
+
+        try {
+            SQLStr = "SELECT * from "+ mDbTableName + ";";
+            Cursor resultSet = mOSDDb.getWritableDatabase().rawQuery(SQLStr,null);
+            resultSet.moveToFirst();
+            return (resultSet.getCount());
+        } catch (SQLException e) {
+            Log.e(TAG,"getLocalDatapointsCount(): Error selecting Data: " + e.toString());
+            Log.e(TAG,"SQLStr was "+SQLStr);
+            return(0);
+        }
+    }
+
 
     public void writeToRemoteServer() {
         Log.v(TAG,"writeToRemoteServer()");
@@ -522,6 +571,8 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         uploadNextDatapoint();
     }
 
+    // takes the next datapoint of the list mDatapointsToUploadList and uploads it to the remote server.
+    // datapointCallback is called when the upload is complete.
     public void uploadNextDatapoint() {
         Log.v(TAG,"uploadDatapoint()");
         if (mDatapointsToUploadList.size() > 0) {
@@ -556,7 +607,9 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     }
 
 
-
+    /**
+     * close() - shut down the logging system
+     */
     public void close() {
         mOSDDb.close();
         stopRemoteLogTimer();

@@ -54,7 +54,7 @@
         android:title="@string/test_phone_alarm_notification" />
 
     <item
-        android:enabled="false"
+        android:enabled="true"
         android:id="@+id/action_logmanager"
         android:icon="@drawable/ic_action_settings"
         android:showAsAction="never|withText"

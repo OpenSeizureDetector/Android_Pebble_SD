@@ -119,7 +119,7 @@ public class WebApiConnection {
         return authToken;
     }
 
-    private boolean isLoggedIn() {
+    public boolean isLoggedIn() {
         String authToken = getStoredToken();
         Log.v(TAG, "isLoggedIn(): token=" + authToken);
         if (authToken == null || authToken.length() == 0) {
@@ -142,7 +142,7 @@ public class WebApiConnection {
     // 7: Other Seizure
     // 9: Other Medical Issue
     public boolean createEvent(final int eventType, final Date eventDate, final String eventDesc) {
-        Log.v(TAG, "createEvent() - FIXME - This does not do anything!");
+        Log.v(TAG, "createEvent()");
         String urlStr = mUrlBase + "/api/events/";
         Log.v(TAG, "urlStr=" + urlStr);
         final String authtoken = getStoredToken();

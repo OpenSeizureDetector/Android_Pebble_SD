@@ -64,7 +64,7 @@
             android:name=".SdServer"
             android:exported="false" />
 
-        <activity android:name=".LogManagerActivity" />
+        <activity android:name=".LogManagerControlActivity" />
 
         <receiver
             android:name=".BootBroadcastReceiver"

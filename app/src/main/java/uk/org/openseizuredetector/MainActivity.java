@@ -288,7 +288,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     Intent intent = new Intent(
                             MainActivity.this,
-                            LogManagerActivity.class);
+                            LogManagerControlActivity.class);
                     this.startActivity(intent);
                 } catch (Exception ex) {
                     Log.i(TAG, "exception starting log manager activity " + ex.toString());
