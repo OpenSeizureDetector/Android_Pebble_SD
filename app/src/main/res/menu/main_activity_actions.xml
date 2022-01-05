@@ -55,6 +55,14 @@
 
     <item
         android:enabled="true"
+        android:id="@+id/action_report_seizure"
+        android:icon="@drawable/ic_action_settings"
+        android:showAsAction="never|withText"
+        android:title="@string/report_seizure"
+        />
+
+    <item
+        android:enabled="true"
         android:id="@+id/action_logmanager"
         android:icon="@drawable/ic_action_settings"
         android:showAsAction="never|withText"

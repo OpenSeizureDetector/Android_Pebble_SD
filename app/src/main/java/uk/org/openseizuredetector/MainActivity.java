@@ -294,6 +294,17 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "exception starting log manager activity " + ex.toString());
                 }
                 return true;
+            case R.id.action_report_seizure:
+                Log.i(TAG, "action_report_seizure");
+                try {
+                    Intent intent = new Intent(
+                            MainActivity.this,
+                            ReportSeizureActivity.class);
+                    this.startActivity(intent);
+                } catch (Exception ex) {
+                    Log.i(TAG, "exception starting Report Seizure activity " + ex.toString());
+                }
+                return true;
             case R.id.action_settings:
                 Log.i(TAG, "action_settings");
                 try {

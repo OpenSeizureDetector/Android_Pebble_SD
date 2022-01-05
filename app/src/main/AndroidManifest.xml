@@ -66,6 +66,7 @@
 
         <activity android:name=".LogManagerControlActivity" />
         <activity android:name=".RemoteDbActivity" />
+        <activity android:name=".ReportSeizureActivity" />
 
         <receiver
             android:name=".BootBroadcastReceiver"

@@ -330,6 +330,8 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
             statusListStr = "2,3,5";    // Alarm, Fall, Manual Alarm
         }
         try {
+            //FIXME: We need to exclude very recent records from this, otherwise the system might upload
+            // a seizure while it is still occurring and we will miss out on the post-seizure date.
             SQLStr = "SELECT * from "+ mDbTableName + " where uploaded=false and Status in ("+statusListStr+");";
             Cursor resultSet = mOSDDb.getWritableDatabase().rawQuery(SQLStr,null);
             resultSet.moveToFirst();
@@ -349,6 +351,42 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         }
     return (recordId);
     }
+
+
+    /**
+     * Return the ID of the datapoint that is closest to date/time string dateStr
+     * Based on https://stackoverflow.com/questions/45749046/sql-get-nearest-date-record
+     */
+    public int getNearestDatapointToDate(String dateStr) {
+        Log.v(TAG, "getNearestDatapointToDate()");
+        String SQLStr = "SQLStr";
+        String recordStr;
+        int recordId;
+
+        try {
+            SQLStr = "SELECT *, (dataTime-date('"+dateStr+"')) as ddiff from "+ mDbTableName + " order by ABS(ddiff) desc;";
+            SQLStr = "SELECT * from "+ mDbTableName + " ;";
+            Cursor resultSet = mOSDDb.getWritableDatabase().rawQuery(SQLStr,null);
+            resultSet.moveToFirst();
+            if (resultSet.getCount() == 0) {
+                Log.v(TAG,"getNearestDatapointToDate() - no datapoints found - exiting");
+                recordId = -1;
+            } else {
+                recordId = resultSet.getInt(0);
+                resultSet.moveToFirst();
+                recordStr = cursor2Json(resultSet); //getDatapointById(recordId);
+                Log.d(TAG, "getNearestDatapointToDate(): id=" + recordId + ", count="+resultSet.getCount()+", recordStr=" + recordStr);
+            }
+        } catch (SQLException e) {
+            Log.e(TAG,"getNearestDatapointToDate(): Error selecting Data: " + e.toString());
+            Log.e(TAG,"SQLStr was "+SQLStr);
+            recordStr = "ERROR";
+            recordId = -1;
+        }
+        return (recordId);
+    }
+
+
 
     /**
      * Return the number of events stored in the local database
