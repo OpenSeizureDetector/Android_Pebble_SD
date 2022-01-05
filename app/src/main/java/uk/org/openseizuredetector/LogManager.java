@@ -387,7 +387,11 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     public void uploadSdData() {
         int eventId = -1;
         Log.v(TAG, "uploadSdData()");
-        eventId = getNextEventToUpload(true);
+        // First try uploading full alarms, and only if we do not have any of those, upload warnings.
+        eventId = getNextEventToUpload(false);
+        if (eventId==-1) {
+            eventId = getNextEventToUpload(true);
+        }
         if (eventId != -1) {
             Log.v(TAG, "uploadSdData() - eventId=" + eventId);
             String eventJsonStr = getDatapointById(eventId);
@@ -441,7 +445,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
             }
             mWac.createEvent(eventType, eventDate, "Uploaded by OpenSeizureDetector Android App");
         } else{
-        Log.v(TAG,"UploadSdData - no data to upload");
+            Log.v(TAG,"UploadSdData - no data to upload");
         }
     }
 
