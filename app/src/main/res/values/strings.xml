@@ -298,4 +298,5 @@
     <string name="remote_database">Remote Database</string>
     <string name="num_local_events">Number of Stored Events: </string>
     <string name="num_local_datapoints">"Number of Stored Datapoints: "</string>
+    <string name="view_remote_db_btn">View Remote DB Data</string>
 </resources>

@@ -65,6 +65,7 @@
             android:exported="false" />
 
         <activity android:name=".LogManagerControlActivity" />
+        <activity android:name=".RemoteDbActivity" />
 
         <receiver
             android:name=".BootBroadcastReceiver"

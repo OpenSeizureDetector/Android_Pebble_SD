@@ -93,6 +93,7 @@
                 android:layout_weight="1"
                 android:text="@string/logout" />
         </LinearLayout>
+        <!--
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
@@ -125,7 +126,7 @@
                 android:text="getLocalEvents" />
 
         </LinearLayout>
-
+-->
     </LinearLayout>
 
 </LinearLayout>

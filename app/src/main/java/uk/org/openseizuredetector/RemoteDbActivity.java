@@ -9,14 +9,19 @@ import android.os.CountDownTimer;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class LogManagerControlActivity extends AppCompatActivity {
-    private String TAG = "LogManagerControlActivity";
-    private LogManager mLm;
+import java.util.HashMap;
+
+public class RemoteDbActivity extends AppCompatActivity {
+    private String TAG = "RemoteDbActivity";
     private Context mContext;
     private UiTimer mUiTimer;
+    private LogManager mLm;
+    private WebView mWebView;
 
 
     @Override
@@ -24,27 +29,27 @@ public class LogManagerControlActivity extends AppCompatActivity {
         Log.v(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         mContext = this;
-        setContentView(R.layout.activity_log_manager_control);
+        setContentView(R.layout.activity_remote_db);
+        mLm= new LogManager(mContext);
 
         Button authBtn =
                 (Button) findViewById(R.id.auth_button);
         authBtn.setOnClickListener(onAuth);
-        Button pruneBtn =
-                (Button) findViewById(R.id.pruneDatabaseBtn);
-        pruneBtn.setOnClickListener(onPruneBtn);
-        Button remoteDbBtn =
-                (Button) findViewById(R.id.view_remote_db_button);
-        remoteDbBtn.setOnClickListener(onRemoteDbBtn);
+        //Button pruneBtn =
+        //        (Button) findViewById(R.id.pruneDatabaseBtn);
+        //pruneBtn.setOnClickListener(onPruneBtn);
 
+        mWebView = (WebView) findViewById(R.id.remote_db_webview);
+        WebSettings webSettings = mWebView.getSettings();
+        webSettings.setJavaScriptEnabled(true);
 
-        mLm = new LogManager(this);
         updateUi();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        startUiTimer();
+        //startUiTimer();
     }
 
     @Override
@@ -53,6 +58,19 @@ public class LogManagerControlActivity extends AppCompatActivity {
         stopUiTimer();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startUiTimer();
+        mWebView.loadUrl("https://osdapi.ddns.net/api/events/", getAuthHeaders());
+    }
+
+    private HashMap<String, String> getAuthHeaders() {
+        HashMap<String, String> headersMap = new HashMap<>();
+        String authToken = mLm.mWac.getStoredToken();
+        headersMap.put("Authorization", "Token "+authToken);
+        return (headersMap);
+    }
 
 
     private void updateUi() {
@@ -60,12 +78,12 @@ public class LogManagerControlActivity extends AppCompatActivity {
         TextView tv;
         Button btn;
         // Local Database Information
-        tv = (TextView)findViewById(R.id.num_local_events_tv);
-        int eventCount = mLm.getLocalEventsCount(true);
-        tv.setText(String.format("%d",eventCount));
-        tv = (TextView)findViewById(R.id.num_local_datapoints_tv);
-        int datapointsCount = mLm.getLocalDatapointsCount();
-        tv.setText(String.format("%d",datapointsCount));
+        //tv = (TextView)findViewById(R.id.num_local_events_tv);
+        //int eventCount = 0;
+        //tv.setText(String.format("%d",eventCount));
+        //tv = (TextView)findViewById(R.id.num_local_datapoints_tv);
+        //int datapointsCount = 0;
+        //tv.setText(String.format("%d",datapointsCount));
 
 
 
@@ -97,16 +115,6 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 public void onClick(View view) {
                     Log.v(TAG, "onPruneBtn");
                     mLm.pruneLocalDb();
-                }
-            };
-    View.OnClickListener onRemoteDbBtn =
-            new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Log.v(TAG, "onRemoteDbBtn");
-                    Intent i;
-                    i =new Intent(mContext, RemoteDbActivity.class);
-                    startActivity(i);
                 }
             };
 

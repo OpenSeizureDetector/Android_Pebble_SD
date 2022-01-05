@@ -1,9 +1,7 @@
 package uk.org.openseizuredetector;
 
-//import androidx.appcompat.app.AppCompatActivity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 
 import android.os.Bundle;
@@ -14,20 +12,12 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 public class AuthenticateActivity extends AppCompatActivity
         implements AuthCallbackInterface, EventCallbackInterface, DatapointCallbackInterface {
     private String TAG = "AuthenticateActivity";
     private Context mContext;
     private EditText mUnameEt;
     private EditText mPasswdEt;
-    private boolean mIsLoggedIn;
     private WebApiConnection mWac;
     private LogManager mLm;
 
@@ -46,14 +36,6 @@ public class AuthenticateActivity extends AppCompatActivity
         logoutCancelBtn.setOnClickListener(onCancel);
         Button logoutBtn = (Button)findViewById(R.id.logoutBtn);
         logoutBtn.setOnClickListener(onLogout);
-
-        Button createEventBtn = (Button)findViewById(R.id.createEventBtn);
-        createEventBtn.setOnClickListener(onCreateEvent);
-        Button createDatapointBtn = (Button)findViewById(R.id.createDatapointBtn);
-        createDatapointBtn.setOnClickListener(onCreateDatapoint);
-        Button getLocalEventsBtn = (Button)findViewById(R.id.getLocalEventsBtn);
-        getLocalEventsBtn.setOnClickListener(onGetLocalEvents);
-
 
         mUnameEt = (EditText) findViewById(R.id.username);
         mPasswdEt = (EditText) findViewById(R.id.password);
@@ -140,56 +122,4 @@ public class AuthenticateActivity extends AppCompatActivity
                     updateUi();
                 }
             };
-    View.OnClickListener onCreateEvent =
-            new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Log.v(TAG, "onCreateEvent");
-                    mWac.createEvent(10,new Date(),"eventDescription....");
-                }
-            };
-
-    View.OnClickListener onCreateDatapoint =
-            new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Log.v(TAG, "onCreateDatapoint - Pruning database");
-                    mLm.pruneLocalDb();
-                }
-            };
-
-    View.OnClickListener onCreateDatapointOld =
-            new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Log.v(TAG, "onCreateDatapoint");
-                    String jsonStr = "";
-                    JSONObject dataObj;
-                    try {
-                        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
-                        jsonStr = "{HR:70}";
-                        dataObj = new JSONObject(jsonStr);
-                        dataObj.put("dataTime", dateFormat.format(new Date()));
-                        Log.v(TAG, "Creating Datapoint...SdData="+dataObj.toString());
-                        mWac.createDatapoint(dataObj,10);
-                    } catch (JSONException e) {
-                        Log.v(TAG,"Error Creating JSON Object from string "+jsonStr);
-                        dataObj = null;
-                        jsonStr = null;
-                    }
-                    //m_status=false;
-                    // mWac.logout();
-                    //updateUi();
-                }
-            };
-
-    View.OnClickListener onGetLocalEvents =
-            new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Log.v(TAG, "onGetLocalEvents");
-                    mLm.uploadSdData();
-                }
-            };
-
 }
