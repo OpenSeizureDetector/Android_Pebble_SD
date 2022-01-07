@@ -8,7 +8,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
+import android.system.Os;
 import android.util.Log;
 import android.view.View;
 import android.webkit.WebSettings;
@@ -33,12 +35,16 @@ public class ReportSeizureActivity extends AppCompatActivity {
     private UiTimer mUiTimer;
     private LogManager mLm;
     private int mYear, mMonth, mDay, mHour, mMinute;
+    private String mMsg = "Messages";
+    private OsdUtil osdUtil;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.v(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         mContext = this;
+        Handler h = new Handler();
+        osdUtil = new OsdUtil(mContext, h);
         setContentView(R.layout.activity_report_seizure);
         mLm= new LogManager(mContext);
 
@@ -89,7 +95,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
     }
 
     private void updateUi() {
-        Log.v(TAG,"updateUi()");
+        //Log.v(TAG,"updateUi()");
         TextView tv;
         Button btn;
 
@@ -103,6 +109,8 @@ public class ReportSeizureActivity extends AppCompatActivity {
         tv.setText(String.format("%02d",mHour));
         tv = (TextView)findViewById(R.id.time_mm_tv);
         tv.setText(String.format("%02d",mMinute));
+        tv = (TextView)findViewById(R.id.msg_tv);
+        tv.setText(mMsg);
     }
 
     View.OnClickListener onOk =
@@ -112,8 +120,19 @@ public class ReportSeizureActivity extends AppCompatActivity {
                     Log.v(TAG, "onOk");
                     String dateStr=String.format("%4d-%02d-%02d %02d:%02d:30",mYear,mMonth+1,mDay, mHour, mMinute);
                     Log.v(TAG, "onOk() - dateSTr="+dateStr);
+                    mMsg = "Finding Nearest Datapoint to Date/Time "+dateStr+"...";
                     int id = mLm.getNearestDatapointToDate(dateStr);
+                    mMsg = mMsg + "\nNearest Datapoint is "+id;
                     Log.v(TAG, "onOK() - nearest datapoint is "+id);
+                    if (id!=-1) {
+                        mLm.setDatapointStatus(id,5);
+                        mMsg = mMsg + "\nSet Datapoint to Manual Alarm Status";
+                        osdUtil.showToast(getString(R.string.createdNewEvent));
+                        finish();
+                    } else {
+                        mMsg = mMsg + "\n*** Datapoint not found - not doing anything ***";
+                        osdUtil.showToast(getString(R.string.DatapointNotFound));
+                    }
                 }
             };
     View.OnClickListener onCancel =
@@ -205,7 +224,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
 
         @Override
         public void onFinish() {
-            Log.v(TAG, "UiTimer - onFinish - Updating UI");
+            //Log.v(TAG, "UiTimer - onFinish - Updating UI");
             updateUi();
             // Restart this timer.
             start();

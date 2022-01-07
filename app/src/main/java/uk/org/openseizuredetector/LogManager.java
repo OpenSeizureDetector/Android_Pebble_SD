@@ -45,6 +45,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 
 import static android.database.sqlite.SQLiteDatabase.openOrCreateDatabase;
 
@@ -254,6 +255,25 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     }
 
     /**
+     * setDatapointStatus() - Update the status of data point id.
+     * @param id
+     * @param statusVal
+     * @return true on success or false on failure
+     */
+    public boolean setDatapointStatus(int id, int statusVal) {
+        Log.d(TAG,"setDatapointStatus() - id="+id+", statusVal="+statusVal);
+        Cursor c = null;
+        ContentValues cv = new ContentValues();
+        cv.put("status",statusVal);
+        int nRowsUpdated = mOSDDb.getWritableDatabase().update(mDbTableName, cv, "id = ?",
+                new String[]{String.format("%d",id)});
+
+        return(nRowsUpdated == 1);
+
+    }
+
+
+    /**
      * getDatapointsJSON() Returns a JSON Object of all of the datapoints in the local database
      * between endDateStr-duration and endDateStr
      * @param endDateStr  String representation of the period end date
@@ -283,6 +303,54 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         return(retVal);
     }
 
+
+    // Return an array list of objects representing the events in the database.
+    // Based on https://www.tutlane.com/tutorial/android/android-sqlite-listview-with-examples
+    public ArrayList<HashMap<String, String>> getEventsList(boolean includeWarnings) {
+        Log.v(TAG,"getEventsList()");
+        SQLiteDatabase db = mOSDDb.getWritableDatabase();
+        ArrayList<HashMap<String, String>> eventsList = new ArrayList<>();
+        String statusListStr, sqlStr;
+        if (includeWarnings) {
+            statusListStr ="1,2,3,5";   // Warning, Alarm, Fall, Manual Alarm
+        } else {
+            statusListStr = "2,3,5";    // Alarm, Fall, Manual Alarm
+        }
+
+        sqlStr = "SELECT * from "+ mDbTableName + " where Status in ("+statusListStr+") order by dataTime desc;";
+
+        Cursor cursor = db.rawQuery(sqlStr, null);
+        Log.v(TAG,"getEventsList - returned "+cursor.getCount()+" records");
+        while (cursor.moveToNext()) {
+            HashMap<String, String> event = new HashMap<>();
+            //event.put("id", cursor.getString(cursor.getColumnIndex("id")));
+            event.put("dataTime", cursor.getString(cursor.getColumnIndex("dataTime")));
+            int status = cursor.getInt(cursor.getColumnIndex("Status"));
+            String statusStr = "Unknown";
+            switch (status) {
+                case 1:
+                    statusStr = "WARNING";
+                    break;
+                case 2:
+                    statusStr = "ALARM";
+                    break;
+                case 3:
+                    statusStr = "FALL";
+                    break;
+                case 5:
+                    statusStr = "MANUAL ALARM";
+                    break;
+                default:
+                    statusStr = "Unknown";
+            }
+            event.put("status",statusStr);
+            //event.put("uploaded", cursor.getString(cursor.getColumnIndex("uploaded")));
+            //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
+            eventsList.add(event);
+        }
+        Log.v(TAG,"getEventsList() - returning "+eventsList);
+        return eventsList;
+    }
 
     /**
      * pruneLocalDb() removes data that is older than mLocalDbMaxAgeDays days
@@ -360,12 +428,12 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     public int getNearestDatapointToDate(String dateStr) {
         Log.v(TAG, "getNearestDatapointToDate()");
         String SQLStr = "SQLStr";
-        String recordStr;
+        //String recordStr;
         int recordId;
 
         try {
-            SQLStr = "SELECT *, (dataTime-date('"+dateStr+"')) as ddiff from "+ mDbTableName + " order by ABS(ddiff) desc;";
-            SQLStr = "SELECT * from "+ mDbTableName + " ;";
+            SQLStr = "SELECT *, (julianday(dataTime)-julianday(datetime('"+dateStr+"'))) as ddiff from "+ mDbTableName + " order by ABS(ddiff) asc;";
+            //SQLStr = "SELECT * from "+ mDbTableName + " ;";
             Cursor resultSet = mOSDDb.getWritableDatabase().rawQuery(SQLStr,null);
             resultSet.moveToFirst();
             if (resultSet.getCount() == 0) {
@@ -373,14 +441,14 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
                 recordId = -1;
             } else {
                 recordId = resultSet.getInt(0);
-                resultSet.moveToFirst();
-                recordStr = cursor2Json(resultSet); //getDatapointById(recordId);
-                Log.d(TAG, "getNearestDatapointToDate(): id=" + recordId + ", count="+resultSet.getCount()+", recordStr=" + recordStr);
+                //resultSet.moveToFirst();
+                //recordStr = cursor2Json(resultSet); //getDatapointById(recordId);
+                Log.d(TAG, "getNearestDatapointToDate(): id=" + recordId + ", count="+resultSet.getCount());
             }
         } catch (SQLException e) {
             Log.e(TAG,"getNearestDatapointToDate(): Error selecting Data: " + e.toString());
             Log.e(TAG,"SQLStr was "+SQLStr);
-            recordStr = "ERROR";
+            //recordStr = "ERROR";
             recordId = -1;
         }
         return (recordId);

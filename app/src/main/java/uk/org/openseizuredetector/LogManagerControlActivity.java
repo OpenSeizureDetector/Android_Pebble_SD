@@ -3,20 +3,29 @@ package uk.org.openseizuredetector;
 //import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class LogManagerControlActivity extends AppCompatActivity {
     private String TAG = "LogManagerControlActivity";
     private LogManager mLm;
     private Context mContext;
     private UiTimer mUiTimer;
+    private ArrayList<HashMap<String, String>> mEventsList;
 
 
     @Override
@@ -32,12 +41,16 @@ public class LogManagerControlActivity extends AppCompatActivity {
         Button pruneBtn =
                 (Button) findViewById(R.id.pruneDatabaseBtn);
         pruneBtn.setOnClickListener(onPruneBtn);
+        Button reportSeizureBtn =
+                (Button) findViewById(R.id.reportSeizureBtn);
+        reportSeizureBtn.setOnClickListener(onReportSeizureBtn);
         Button remoteDbBtn =
                 (Button) findViewById(R.id.view_remote_db_button);
         remoteDbBtn.setOnClickListener(onRemoteDbBtn);
 
 
         mLm = new LogManager(this);
+
         updateUi();
     }
 
@@ -56,7 +69,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
 
     private void updateUi() {
-        Log.v(TAG,"updateUi()");
+        //Log.v(TAG,"updateUi()");
         TextView tv;
         Button btn;
         // Local Database Information
@@ -67,6 +80,16 @@ public class LogManagerControlActivity extends AppCompatActivity {
         int datapointsCount = mLm.getLocalDatapointsCount();
         tv.setText(String.format("%d",datapointsCount));
 
+        // Populate events list - we only do it once when the activity is created because the query might slow down the UI.
+        // We could try this code in updateUI() and see though.
+        // Based on https://www.tutlane.com/tutorial/android/android-sqlite-listview-with-examples
+        mEventsList = mLm.getEventsList(true);
+        ListView lv = (ListView) findViewById(R.id.eventLogListView);
+        ListAdapter adapter = new SimpleAdapter(LogManagerControlActivity.this, mEventsList, R.layout.log_entry_layout,
+                new String[]{"dataTime","status"},
+                new int[]{R.id.event_date, R.id.event_alarmState});
+        lv.setAdapter(adapter);
+        //Log.v(TAG,"eventsList="+mEventsList);
 
 
         // Remote Database Information
@@ -96,9 +119,42 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
                     Log.v(TAG, "onPruneBtn");
-                    mLm.pruneLocalDb();
+                    AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+
+                    builder.setTitle("Prune Database");
+                    builder.setMessage("This will remove all data from the database that is more than xxx days old.\nAre you sure?");
+
+                    builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            mLm.pruneLocalDb();
+                            dialog.dismiss();
+                        }
+                    });
+
+                    builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+
+                    AlertDialog alert = builder.create();
+                    alert.show();
                 }
             };
+
+    View.OnClickListener onReportSeizureBtn =
+            new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.v(TAG, "onReportSeizureBtn");
+                    Intent i;
+                    i =new Intent(mContext, ReportSeizureActivity.class);
+                    startActivity(i);
+                }
+            };
+
     View.OnClickListener onRemoteDbBtn =
             new View.OnClickListener() {
                 @Override
@@ -153,7 +209,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
         @Override
         public void onFinish() {
-            Log.v(TAG, "UiTimer - onFinish - Updating UI");
+            //Log.v(TAG, "UiTimer - onFinish - Updating UI");
             updateUi();
             // Restart this timer.
             start();
