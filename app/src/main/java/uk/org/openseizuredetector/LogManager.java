@@ -81,13 +81,19 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     public WebApiConnection mWac;
 
     private boolean mUploadInProgress;
-    private long eventDuration = 1;   // event duration in minutes - uploads datapoints that cover this time range centred on the event time.
-    private long mLocaDbTimeLimitDays = 1; // Prunes the local db so it only retains data younger than this duration.
+    private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
+    private long mDataRetentionPeriod = 1; // Prunes the local db so it only retains data younger than this duration (in days)
+    private long mRemoteLogPeriod = 60; // Period in seconds between uploads to the remote server.
     private ArrayList<JSONObject> mDatapointsToUploadList;
     private int mCurrentEventId;
     private int mCurrentDatapointId;
+    private long mAutoPrunePeriod = 3600;  // Prune the database every hour
+    private boolean mAutoPruneDb;
+    private AutoPruneTimer mAutoPruneTimer;
+
 
     public LogManager(Context context) {
+        String prefVal;
         Log.d(TAG,"LogManger Constructor");
         mContext = context;
         Handler handler = new Handler();
@@ -99,12 +105,35 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         mLogRemoteMobile = (prefs.getBoolean("LogDataRemoteMobile", false));
         Log.v(TAG,"mLogRemoteMobile="+mLogRemoteMobile);
 
+        prefVal = prefs.getString("EventDurationSec", "300");
+        mEventDuration = Integer.parseInt(prefVal);
+        Log.v(TAG,"mEventDuration="+mEventDuration);
+
+        mAutoPruneDb = prefs.getBoolean("AutoPruneDb", false);
+        Log.v(TAG,"mAutoPruneDb="+mAutoPruneDb);
+
+        prefVal = prefs.getString("DataRetentionPeriod", "28");
+        mDataRetentionPeriod = Integer.parseInt(prefVal);
+        Log.v(TAG,"mDataRetentionPeriod="+mDataRetentionPeriod);
+
+        prefVal = prefs.getString("RemoteLogPeriod", "60");
+        mRemoteLogPeriod = Integer.parseInt(prefVal);
+        Log.v(TAG,"mRemoteLogPeriod="+mRemoteLogPeriod);
+
+
 
         mUtil = new OsdUtil(mContext, handler);
         openDb();
         mWac = new WebApiConnection(mContext, this, this, this);
 
         startRemoteLogTimer();
+
+        if (mAutoPruneDb) {
+            Log.v(TAG,"Starting Auto Prune Timer");
+            startAutoPruneTimer();
+        } else {
+            Log.v(TAG,"AutoPruneDB is not set");
+        }
 
     }
 
@@ -307,7 +336,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     // Return an array list of objects representing the events in the database.
     // Based on https://www.tutlane.com/tutorial/android/android-sqlite-listview-with-examples
     public ArrayList<HashMap<String, String>> getEventsList(boolean includeWarnings) {
-        Log.v(TAG,"getEventsList()");
+        //Log.v(TAG,"getEventsList()");
         SQLiteDatabase db = mOSDDb.getWritableDatabase();
         ArrayList<HashMap<String, String>> eventsList = new ArrayList<>();
         String statusListStr, sqlStr;
@@ -348,7 +377,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
             //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
             eventsList.add(event);
         }
-        Log.v(TAG,"getEventsList() - returning "+eventsList);
+        //Log.v(TAG,"getEventsList() - returning "+eventsList);
         return eventsList;
     }
 
@@ -360,8 +389,8 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         Cursor c = null;
         int retVal;
         long currentDateMillis = new Date().getTime();
-        //long endDateMillis = currentDateMillis - 24*3600*1000* mLocaDbTimeLimitDays;
-        long endDateMillis = currentDateMillis - 3600*1000* mLocaDbTimeLimitDays;  // Using hours rather than days for testing
+        long endDateMillis = currentDateMillis - 24*3600*1000* mDataRetentionPeriod;
+        //long endDateMillis = currentDateMillis - 3600*1000* mDataRetentionPeriod;  // Using hours rather than days for testing
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         String endDateStr = dateFormat.format(new Date(endDateMillis));
@@ -383,7 +412,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
      * Return the ID of the next event (alarm, warning, fall etc that needs to be uploaded (alarm or warning condition and has not yet been uploaded.
      */
     public int getNextEventToUpload(boolean includeWarnings) {
-        Log.v(TAG, "getNextEventToUpload()");
+        Log.v(TAG, "getNextEventToUpload("+includeWarnings+")");
         Time tnow = new Time(Time.getCurrentTimezone());
         tnow.setToNow();
         String dateStr = tnow.format("%Y-%m-%d");
@@ -397,10 +426,14 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         } else {
             statusListStr = "2,3,5";    // Alarm, Fall, Manual Alarm
         }
+
+        // Do not try to upload very recent events so that we have chance to record the post-event data before uploading it.
+        long currentDateMillis = new Date().getTime();
+        long endDateMillis = currentDateMillis - 1000* mEventDuration;
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String endDateStr = dateFormat.format(new Date(endDateMillis));
         try {
-            //FIXME: We need to exclude very recent records from this, otherwise the system might upload
-            // a seizure while it is still occurring and we will miss out on the post-seizure date.
-            SQLStr = "SELECT * from "+ mDbTableName + " where uploaded=false and Status in ("+statusListStr+");";
+            SQLStr = "SELECT * from "+ mDbTableName + " where uploaded=false and Status in ("+statusListStr+") and DataTime<'"+endDateStr+"';";
             Cursor resultSet = mOSDDb.getWritableDatabase().rawQuery(SQLStr,null);
             resultSet.moveToFirst();
             if (resultSet.getCount() == 0) {
@@ -460,7 +493,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
      * Return the number of events stored in the local database
      */
     public int getLocalEventsCount(boolean includeWarnings) {
-        Log.v(TAG, "getLocalEventsCount()");
+        //Log.v(TAG, "getLocalEventsCount()");
         String SQLStr = "SQLStr";
         String statusListStr;
 
@@ -485,7 +518,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
      * Return the number of datapoints stored in the local database
      */
     public int getLocalDatapointsCount() {
-        Log.v(TAG, "getLocalDatapointsCount()");
+        //Log.v(TAG, "getLocalDatapointsCount()");
         String SQLStr = "SQLStr";
         String statusListStr;
 
@@ -645,8 +678,8 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         Log.v(TAG,"eventCallback() EventId="+eventId+", eventDateStr="+eventDateStr+", eventDate="+eventDate.toString());
 
         long eventDateMillis = eventDate.getTime();
-        long startDateMillis = eventDateMillis - 1000*60* eventDuration/2;
-        long endDateMillis = eventDateMillis + 1000*60*eventDuration/2;
+        long startDateMillis = eventDateMillis - 1000* mEventDuration /2;
+        long endDateMillis = eventDateMillis + 1000* mEventDuration /2;
         dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         String datapointsJsonStr = getDatapointsbyDate(
@@ -732,7 +765,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         }
         Log.v(TAG, "startRemoteLogTimer() - starting RemoteLogTimer");
         mRemoteLogTimer =
-                new RemoteLogTimer(10 * 1000, 1000);
+                new RemoteLogTimer(mRemoteLogPeriod * 1000, 1000);
         mRemoteLogTimer.start();
     }
 
@@ -748,6 +781,33 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         }
     }
 
+
+    /*
+     * Start the timer that will Auto Prune the database
+     */
+    private void startAutoPruneTimer() {
+        if (mAutoPruneTimer != null) {
+            Log.v(TAG, "startAutoPruneTimer -timer already running - cancelling it");
+            mAutoPruneTimer.cancel();
+            mAutoPruneTimer = null;
+        }
+        Log.v(TAG, "startAutoPruneTimer() - starting AutoPruneTimer");
+        mAutoPruneTimer =
+                new AutoPruneTimer(mAutoPrunePeriod * 1000, 1000);
+        mAutoPruneTimer.start();
+    }
+
+
+    /*
+     * Cancel the auto prune timer to prevent attempts to upload to remote database.
+     */
+    public void stopAutoPruneTimer() {
+        if (mAutoPruneTimer != null) {
+            Log.v(TAG, "stopAutoPruneTimer(): cancelling Auto Prune timer");
+            mAutoPruneTimer.cancel();
+            mAutoPruneTimer = null;
+        }
+    }
 
 
     public class OsdDbHelper extends SQLiteOpenHelper {
@@ -810,5 +870,27 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         }
 
     }
+
+    /**
+     * Prune the database periodically.
+     */
+    private class AutoPruneTimer extends CountDownTimer {
+        public AutoPruneTimer(long startTime, long interval) {
+            super(startTime, interval);
+        }
+
+        @Override
+        public void onTick(long l) { }
+
+        @Override
+        public void onFinish() {
+            Log.v(TAG, "mAutoPruneTimer - onFinish - Pruning Local Database");
+            pruneLocalDb();
+            // Restart this timer.
+            start();
+        }
+
+    }
+
 
 }

@@ -308,4 +308,14 @@
     <string name="EventsInLocalDb">Events in Local Database</string>
     <string name="createdNewEvent">Created new Manual Alarm Event</string>
     <string name="DatapointNotFound">Datapoint not found - not doing anything</string>
+    <string name="logging_settings_title">Data Logging Settings</string>
+    <string name="logging_settings_summary">Settings that control how data is recorded on the phone and uploaded to the Open Seizure Database</string>
+    <string name="eventDurationSummary">The time (in seconds) before and after a seizure event that we record data.</string>
+    <string name="eventDurationTitle">Event Duration (seconds)</string>
+    <string name="dataRetentionPeriodTitle">Data Retention Period (days)</string>
+    <string name="dataRetentionPeriodSummary">The period (in days) that data will be retained and is protected from deletion by the \'Prune Database\' Option.</string>
+    <string name="AutoPruneDbTitle">Automatically Prune (Trim) Database</string>
+    <string name="AutoPruneDbSummary">Automatically Prune (Trim) the Database periodically to prevent excessive storage capacity (memory) usage.</string>
+    <string name="remoteLogPeriodSummary">The period (in seconds) between attempts to upload data to the remote server.   Each attempt only uploads a single event, not all the available data.</string>
+    <string name="remoteLogPeriodTitle">Remote Log Period (seconds)</string>
 </resources>

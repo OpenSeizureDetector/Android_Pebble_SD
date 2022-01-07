@@ -17,6 +17,11 @@
         android:title="@string/alarms_settings_title"
         android:summary="@string/alarms_settings_summary" />
 
+    <header android:fragment="uk.org.openseizuredetector.PrefActivity$LoggingPrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="@string/logging_settings_title"
+        android:summary="@string/logging_settings_summary" />
+
     <header android:fragment="uk.org.openseizuredetector.PrefActivity$SeizureDetectorPrefsFragment"
         android:icon="@drawable/icon_24x24"
         android:title="@string/seizure_detector_settings_title"

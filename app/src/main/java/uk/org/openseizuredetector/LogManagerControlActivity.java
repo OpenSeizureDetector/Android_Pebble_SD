@@ -119,11 +119,12 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
                     Log.v(TAG, "onPruneBtn");
+                    // Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
                     AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
 
                     builder.setTitle("Prune Database");
-                    builder.setMessage("This will remove all data from the database that is more than xxx days old.\nAre you sure?");
-
+                    builder.setMessage("This will remove all data from the database that is more than xxx days old."
+                            +"\nThis can NOT be undone.\nAre you sure?");
                     builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -178,7 +179,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         }
         Log.v(TAG, "startRemoteLogTimer() - starting RemoteLogTimer");
         mUiTimer =
-                new UiTimer(1000, 1000);
+                new UiTimer(5000, 1000);
         mUiTimer.start();
     }
 

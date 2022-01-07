@@ -276,6 +276,17 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         }
     }
 
+    public static class LoggingPrefsFragment extends PreferenceFragment {
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            // Load the preferences from an XML resource
+            addPreferencesFromResource(R.xml.logging_prefs);
+        }
+    }
+
+
     public static class SeizureDetectorPrefsFragment extends PreferenceFragment {
         @Override
         public void onCreate(Bundle savedInstanceState) {
