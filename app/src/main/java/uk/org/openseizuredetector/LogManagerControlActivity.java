@@ -11,6 +11,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -48,6 +49,9 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 (Button) findViewById(R.id.view_remote_db_button);
         remoteDbBtn.setOnClickListener(onRemoteDbBtn);
 
+        ListView lv = (ListView) findViewById(R.id.eventLogListView);
+        lv.setOnItemClickListener(onEventListClick);
+
 
         mLm = new LogManager(this);
 
@@ -67,18 +71,17 @@ public class LogManagerControlActivity extends AppCompatActivity {
     }
 
 
-
     private void updateUi() {
         //Log.v(TAG,"updateUi()");
         TextView tv;
         Button btn;
         // Local Database Information
-        tv = (TextView)findViewById(R.id.num_local_events_tv);
+        tv = (TextView) findViewById(R.id.num_local_events_tv);
         int eventCount = mLm.getLocalEventsCount(true);
-        tv.setText(String.format("%d",eventCount));
-        tv = (TextView)findViewById(R.id.num_local_datapoints_tv);
+        tv.setText(String.format("%d", eventCount));
+        tv = (TextView) findViewById(R.id.num_local_datapoints_tv);
         int datapointsCount = mLm.getLocalDatapointsCount();
-        tv.setText(String.format("%d",datapointsCount));
+        tv.setText(String.format("%d", datapointsCount));
 
         // Populate events list - we only do it once when the activity is created because the query might slow down the UI.
         // We could try this code in updateUI() and see though.
@@ -86,15 +89,15 @@ public class LogManagerControlActivity extends AppCompatActivity {
         mEventsList = mLm.getEventsList(true);
         ListView lv = (ListView) findViewById(R.id.eventLogListView);
         ListAdapter adapter = new SimpleAdapter(LogManagerControlActivity.this, mEventsList, R.layout.log_entry_layout,
-                new String[]{"dataTime","status"},
-                new int[]{R.id.event_date, R.id.event_alarmState});
+                new String[]{"dataTime", "status", "uploaded"},
+                new int[]{R.id.event_date, R.id.event_alarmState, R.id.event_uploaded});
         lv.setAdapter(adapter);
         //Log.v(TAG,"eventsList="+mEventsList);
 
 
         // Remote Database Information
-        tv = (TextView)findViewById(R.id.authStatusTv);
-        btn = (Button)findViewById(R.id.auth_button);
+        tv = (TextView) findViewById(R.id.authStatusTv);
+        btn = (Button) findViewById(R.id.auth_button);
         if (mLm.mWac.isLoggedIn()) {
             tv.setText("Authenticated");
             btn.setText("Log Out");
@@ -110,7 +113,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 public void onClick(View view) {
                     Log.v(TAG, "onAuth");
                     Intent i;
-                    i =new Intent(mContext, AuthenticateActivity.class);
+                    i = new Intent(mContext, AuthenticateActivity.class);
                     startActivity(i);
                 }
             };
@@ -121,10 +124,9 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     Log.v(TAG, "onPruneBtn");
                     // Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
                     AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
-
                     builder.setTitle("Prune Database");
-                    builder.setMessage("This will remove all data from the database that is more than xxx days old."
-                            +"\nThis can NOT be undone.\nAre you sure?");
+                    builder.setMessage(String.format("This will remove all data from the database that is more than %d days old."
+                            + "\nThis can NOT be undone.\nAre you sure?", mLm.mDataRetentionPeriod));
                     builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -132,14 +134,12 @@ public class LogManagerControlActivity extends AppCompatActivity {
                             dialog.dismiss();
                         }
                     });
-
                     builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             dialog.dismiss();
                         }
                     });
-
                     AlertDialog alert = builder.create();
                     alert.show();
                 }
@@ -151,7 +151,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 public void onClick(View view) {
                     Log.v(TAG, "onReportSeizureBtn");
                     Intent i;
-                    i =new Intent(mContext, ReportSeizureActivity.class);
+                    i = new Intent(mContext, ReportSeizureActivity.class);
                     startActivity(i);
                 }
             };
@@ -162,11 +162,38 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 public void onClick(View view) {
                     Log.v(TAG, "onRemoteDbBtn");
                     Intent i;
-                    i =new Intent(mContext, RemoteDbActivity.class);
+                    i = new Intent(mContext, RemoteDbActivity.class);
                     startActivity(i);
                 }
             };
 
+    AdapterView.OnItemClickListener onEventListClick =
+            new AdapterView.OnItemClickListener() {
+                public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
+                    Log.v(TAG, "onItemClicKListener() - Position=" + position + ", id=" + id);// Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
+                    AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+                    builder.setTitle("Edit Remote Event Details");
+                    builder.setMessage("Edit this event details on the remote database?");
+                    builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // Do Something!
+                            dialog.dismiss();
+                        }
+                    });
+                    builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+                    AlertDialog alert = builder.create();
+                    alert.show();
+                    
+                    //MyClass selItem = (MyClass) myList.getSelectedItem(); //
+                    //String value= selItem.getTheValue(); //getter method
+                }
+            };
 
     /*
      * Start the timer that will upload data to the remote server after a given period.

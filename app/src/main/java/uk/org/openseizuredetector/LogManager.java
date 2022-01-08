@@ -82,7 +82,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
 
     private boolean mUploadInProgress;
     private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
-    private long mDataRetentionPeriod = 1; // Prunes the local db so it only retains data younger than this duration (in days)
+    public long mDataRetentionPeriod = 1; // Prunes the local db so it only retains data younger than this duration (in days)
     private long mRemoteLogPeriod = 60; // Period in seconds between uploads to the remote server.
     private ArrayList<JSONObject> mDatapointsToUploadList;
     private int mCurrentEventId;
@@ -373,7 +373,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
                     statusStr = "Unknown";
             }
             event.put("status",statusStr);
-            //event.put("uploaded", cursor.getString(cursor.getColumnIndex("uploaded")));
+            event.put("uploaded", cursor.getString(cursor.getColumnIndex("uploaded")));
             //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
             eventsList.add(event);
         }

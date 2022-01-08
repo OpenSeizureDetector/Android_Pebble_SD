@@ -21,14 +21,17 @@
         android:text="alarm"
         android:id="@+id/event_alarmState"
          />
-
- <!--   <TextView
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="note"
-        android:id="@+id/event_note"
+        android:text=" : "/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="uploaded"
+        android:id="@+id/event_uploaded"
          />
-         -->
+
 </LinearLayout>
  <!--   <TextView
         android:layout_width="wrap_content"
