@@ -271,11 +271,17 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
 
     }
 
-    public boolean setDatapointToUploaded(int id) {
+    /**
+     * setDatapointToUploaded
+     * @param id - datapoint ID to change
+     * @param eventId - the eventId associated with the uploaded datapoint - the 'uploaded' field is set to this value.
+     * @return True on success or False on failure.
+     */
+    public boolean setDatapointToUploaded(int id, int eventId) {
         Log.d(TAG,"setDatapointToUploaded() - id="+id);
         Cursor c = null;
         ContentValues cv = new ContentValues();
-        cv.put("uploaded",1);
+        cv.put("uploaded",eventId);
         int nRowsUpdated = mOSDDb.getWritableDatabase().update(mDbTableName, cv, "id = ?",
                 new String[]{String.format("%d",id)});
 
@@ -654,7 +660,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     // Once the event is created it queries the local database to find the datapoints associated with the event
     // and uploads those as a batch of data points.
     public void eventCallback(boolean success, String eventStr) {
-        Log.v(TAG,"eventCallback():  FIXME - we need to upload the datapoints associated with this event now! " + eventStr);
+        Log.v(TAG,"eventCallback(): " + eventStr);
         Date eventDate;
         String eventDateStr;
         int eventId;
@@ -739,9 +745,9 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     // a datapoint based on mDatapointsToUploadList(0) so removes that from the list and calls UploadDatapoint()
     // to upload the next one.
     public void datapointCallback(boolean success, String datapointStr) {
-        Log.v(TAG,"datapointCallback() " + datapointStr);
+        Log.v(TAG,"datapointCallback() " + datapointStr+", mCurrentEventId="+mCurrentEventId);
         mDatapointsToUploadList.remove(0);
-        setDatapointToUploaded(mCurrentDatapointId);
+        setDatapointToUploaded(mCurrentDatapointId, mCurrentEventId);
         uploadNextDatapoint();
     }
 
