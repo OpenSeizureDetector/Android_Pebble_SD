@@ -40,7 +40,6 @@ public class LogManagerControlActivity extends AppCompatActivity {
         mContext = this;
         mUtil = new OsdUtil(this, serverStatusHandler);
         mConnection = new SdServiceConnection(this);
-        mUtil.bindToServer(this, mConnection);
 
         setContentView(R.layout.activity_log_manager_control);
 
@@ -65,17 +64,20 @@ public class LogManagerControlActivity extends AppCompatActivity {
     protected void onStart() {
         Log.v(TAG, "onStart()");
         super.onStart();
+        mUtil.bindToServer(this, mConnection);
         //startUiTimer();
     }
 
     @Override
     protected void onStop() {
+        Log.v(TAG,"onStop()");
         super.onStop();
         mUtil.unbindFromServer(this, mConnection);
     }
 
     @Override
     protected void onPause() {
+        Log.v(TAG,"onPause()");
         super.onPause();
         stopUiTimer();
     }

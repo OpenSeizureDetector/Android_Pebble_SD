@@ -37,6 +37,10 @@ public class ReportSeizureActivity extends AppCompatActivity {
     private int mYear, mMonth, mDay, mHour, mMinute;
     private String mMsg = "Messages";
     private OsdUtil osdUtil;
+    private SdServiceConnection mConnection;
+    private OsdUtil mUtil;
+    final Handler serverStatusHandler = new Handler();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +50,21 @@ public class ReportSeizureActivity extends AppCompatActivity {
         Handler h = new Handler();
         osdUtil = new OsdUtil(mContext, h);
         setContentView(R.layout.activity_report_seizure);
-        mLm= new LogManager(mContext);
+        mUtil = new OsdUtil(this, serverStatusHandler);
+        mConnection = new SdServiceConnection(this);
+
+        // It takes a finite time for
+        // the mConnection to bind to the service, so we delay half a second to give it chance
+        // to connect before trying to get the SdServer LogManager instance)
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.v(TAG,"onCreate(): setting mLm");
+                mLm = mConnection.mSdServer.mLm;
+            }
+        }, 100);
+
+        //mLm= new LogManager(mContext);
 
         Button okBtn =
                 (Button) findViewById(R.id.OKBtn);
@@ -79,6 +97,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        mUtil.bindToServer(this, mConnection);
         //startUiTimer();
     }
 
@@ -93,6 +112,13 @@ public class ReportSeizureActivity extends AppCompatActivity {
         super.onResume();
         startUiTimer();
     }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mUtil.unbindFromServer(this, mConnection);
+    }
+
 
     private void updateUi() {
         //Log.v(TAG,"updateUi()");
