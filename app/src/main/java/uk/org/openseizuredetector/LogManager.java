@@ -566,7 +566,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
             return;
         }
 
-        Log.v(TAG,"writeToRemoteServer(): calling UploadSdData()");
+        Log.d(TAG,"writeToRemoteServer(): calling UploadSdData()");
         uploadSdData();
     }
 
