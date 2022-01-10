@@ -143,7 +143,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
     private final IBinder mBinder = new SdBinder();
 
-    private LogManager mLm;
+    public LogManager mLm;
 
     /**
      * class to handle binding the MainApp activity to this service

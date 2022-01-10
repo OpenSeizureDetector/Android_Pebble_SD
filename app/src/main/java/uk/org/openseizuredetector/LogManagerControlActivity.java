@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -27,6 +28,9 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private Context mContext;
     private UiTimer mUiTimer;
     private ArrayList<HashMap<String, String>> mEventsList;
+    private SdServiceConnection mConnection;
+    private OsdUtil mUtil;
+    final Handler serverStatusHandler = new Handler();
 
 
     @Override
@@ -34,6 +38,10 @@ public class LogManagerControlActivity extends AppCompatActivity {
         Log.v(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         mContext = this;
+        mUtil = new OsdUtil(this, serverStatusHandler);
+        mConnection = new SdServiceConnection(this);
+        mUtil.bindToServer(this, mConnection);
+
         setContentView(R.layout.activity_log_manager_control);
 
         Button authBtn =
@@ -51,17 +59,19 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
         ListView lv = (ListView) findViewById(R.id.eventLogListView);
         lv.setOnItemClickListener(onEventListClick);
-
-
-        mLm = new LogManager(this);
-
-        updateUi();
     }
 
     @Override
     protected void onStart() {
+        Log.v(TAG, "onStart()");
         super.onStart();
-        startUiTimer();
+        //startUiTimer();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mUtil.unbindFromServer(this, mConnection);
     }
 
     @Override
@@ -70,42 +80,69 @@ public class LogManagerControlActivity extends AppCompatActivity {
         stopUiTimer();
     }
 
+    @Override
+    protected void onResume() {
+        Log.v(TAG,"onResume()");
+        super.onResume();
+        startUiTimer();
+        // We want the UI to update as soon as it is displayed, but it takes a finite time for
+        // the mConnection to bind to the service, so we delay half a second to give it chance
+        // to connect before trying to update the UI for the first time (it happens again periodically using the uiTimer)
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Log.v(TAG,"onResume(): Updating UI after delay");
+                updateUi();
+            }
+        }, 100);
+
+    }
+
 
     private void updateUi() {
         //Log.v(TAG,"updateUi()");
         TextView tv;
         Button btn;
-        // Local Database Information
-        tv = (TextView) findViewById(R.id.num_local_events_tv);
-        int eventCount = mLm.getLocalEventsCount(true);
-        tv.setText(String.format("%d", eventCount));
-        tv = (TextView) findViewById(R.id.num_local_datapoints_tv);
-        int datapointsCount = mLm.getLocalDatapointsCount();
-        tv.setText(String.format("%d", datapointsCount));
+        if (mConnection.mBound) {
+            mLm = mConnection.mSdServer.mLm;
 
-        // Populate events list - we only do it once when the activity is created because the query might slow down the UI.
-        // We could try this code in updateUI() and see though.
-        // Based on https://www.tutlane.com/tutorial/android/android-sqlite-listview-with-examples
-        mEventsList = mLm.getEventsList(true);
-        ListView lv = (ListView) findViewById(R.id.eventLogListView);
-        ListAdapter adapter = new SimpleAdapter(LogManagerControlActivity.this, mEventsList, R.layout.log_entry_layout,
-                new String[]{"dataTime", "status", "uploaded"},
-                new int[]{R.id.event_date, R.id.event_alarmState, R.id.event_uploaded});
-        lv.setAdapter(adapter);
-        //Log.v(TAG,"eventsList="+mEventsList);
+            // Local Database Information
+            tv = (TextView) findViewById(R.id.num_local_events_tv);
+            int eventCount = mLm.getLocalEventsCount(true);
+            tv.setText(String.format("%d", eventCount));
+            tv = (TextView) findViewById(R.id.num_local_datapoints_tv);
+            int datapointsCount = mLm.getLocalDatapointsCount();
+            tv.setText(String.format("%d", datapointsCount));
+
+            // Populate events list - we only do it once when the activity is created because the query might slow down the UI.
+            // We could try this code in updateUI() and see though.
+            // Based on https://www.tutlane.com/tutorial/android/android-sqlite-listview-with-examples
+            mEventsList = mLm.getEventsList(true);
+            ListView lv = (ListView) findViewById(R.id.eventLogListView);
+            ListAdapter adapter = new SimpleAdapter(LogManagerControlActivity.this, mEventsList, R.layout.log_entry_layout,
+                    new String[]{"dataTime", "status", "uploaded"},
+                    new int[]{R.id.event_date, R.id.event_alarmState, R.id.event_uploaded});
+            lv.setAdapter(adapter);
+            //Log.v(TAG,"eventsList="+mEventsList);
 
 
-        // Remote Database Information
-        tv = (TextView) findViewById(R.id.authStatusTv);
-        btn = (Button) findViewById(R.id.auth_button);
-        if (mLm.mWac.isLoggedIn()) {
-            tv.setText("Authenticated");
-            btn.setText("Log Out");
-        } else {
-            tv.setText("NOT AUTHENTICATED");
-            btn.setText("Log In");
+            // Remote Database Information
+            tv = (TextView) findViewById(R.id.authStatusTv);
+            btn = (Button) findViewById(R.id.auth_button);
+            if (mLm.mWac.isLoggedIn()) {
+                tv.setText("Authenticated");
+                btn.setText("Log Out");
+            } else {
+                tv.setText("NOT AUTHENTICATED");
+                btn.setText("Log In");
+            }
+        }  else {
+            Log.e(TAG, "ERROR: Not connected to SDServer - not updating UI");
         }
     }
+    //updateUi();
+
+
 
     View.OnClickListener onAuth =
             new View.OnClickListener() {
@@ -196,17 +233,17 @@ public class LogManagerControlActivity extends AppCompatActivity {
             };
 
     /*
-     * Start the timer that will upload data to the remote server after a given period.
+     * Start the timer that will update the user interface every 5 seconds..
      */
     private void startUiTimer() {
         if (mUiTimer != null) {
-            Log.v(TAG, "startRemoteLogTimer -timer already running - cancelling it");
+            Log.v(TAG, "startUiTimer -timer already running - cancelling it");
             mUiTimer.cancel();
             mUiTimer = null;
         }
-        Log.v(TAG, "startRemoteLogTimer() - starting RemoteLogTimer");
+        Log.v(TAG, "startUiTimer() - starting UiTimer");
         mUiTimer =
-                new UiTimer(5000, 1000);
+                new UiTimer(2000, 1000);
         mUiTimer.start();
     }
 
