@@ -318,4 +318,5 @@
     <string name="AutoPruneDbSummary">Automatically Prune (Trim) the Database periodically to prevent excessive storage capacity (memory) usage.</string>
     <string name="remoteLogPeriodSummary">The period (in seconds) between attempts to upload data to the remote server.   Each attempt only uploads a single event, not all the available data.</string>
     <string name="remoteLogPeriodTitle">Remote Log Period (seconds)</string>
+    <string name="ManualAlarmBtnTxt">Raise Alarm</string>
 </resources>

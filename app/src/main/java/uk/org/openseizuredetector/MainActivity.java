@@ -25,7 +25,9 @@
 
 package uk.org.openseizuredetector;
 
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -158,6 +160,38 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Deal with the 'Raise Alarm'
+        button = (Button) findViewById(R.id.manualAlarmButton);
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Log.v(TAG, "manualAlarmButton.onClick()");
+                // Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
+                //AlertDialog.Builder builder = new AlertDialog.Builder(getBaseContext());
+                //builder.setTitle("Raise Alarm");
+                //builder.setMessage(String.format("Raise a Seizure Detected Alarm NOW?"));
+                //builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                //    @Override
+                //    public void onClick(DialogInterface dialog, int which) {
+                        if (mConnection.mBound) {
+                            mConnection.mSdServer.raiseManualAlarm();
+                        }
+                //        dialog.dismiss();
+                //    }
+                //});
+                //builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                //    @Override
+                //    public void onClick(DialogInterface dialog, int which) {
+                //        dialog.dismiss();
+                //    }
+                //});
+                //AlertDialog alert = builder.create();
+                //if (!(this).isFinishing()) {
+                //    alert.show();
+                //}
+
+
+            }
+        });
 
     }
 

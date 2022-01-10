@@ -520,6 +520,13 @@ public class SdServer extends Service implements SdDataReceiver {
         }
     }
 
+    public void raiseManualAlarm() {
+        Log.d(TAG,"raiseManualAlarm()");
+        SdData sdData = mSdData;
+        sdData.alarmState = 5;
+        onSdDataReceived(sdData);
+    }
+
     /**
      * Process the data received from the SdData source.  On exit, the mSdData structure is populated with
      * the appropriate data.
