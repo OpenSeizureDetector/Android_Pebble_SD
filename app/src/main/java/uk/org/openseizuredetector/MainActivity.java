@@ -709,7 +709,7 @@ public class MainActivity extends AppCompatActivity {
                     acceptAlarmButton.setEnabled(true);
                 } else {
                     acceptAlarmButton.setText(R.string.AcceptAlarm);
-                    acceptAlarmButton.setBackgroundColor(Color.DKGRAY);
+                    //acceptAlarmButton.setBackgroundColor(Color.DKGRAY);
                     if (mConnection.mBound)
                         if ((mConnection.mSdServer.isLatchAlarms())
                                 || mConnection.mSdServer.mSdData.mFallActive) {
@@ -730,15 +730,17 @@ public class MainActivity extends AppCompatActivity {
             if (mConnection.mBound)
                 if (mConnection.mSdServer.isAudibleCancelled()) {
                     cancelAudibleButton.setText(getString(R.string.AudibleAlarmsCancelledFor)
-                            + mConnection.mSdServer.
+                            + " " +mConnection.mSdServer.
                             cancelAudibleTimeRemaining()
-                            + " sec."
-                            + getString(R.string.PressToReEnable));
+                            + " sec");
+                    cancelAudibleButton.setEnabled(true);
                 } else {
                     if (mConnection.mSdServer.mAudibleAlarm) {
                         cancelAudibleButton.setText(R.string.CancelAudibleAlarms);
+                        cancelAudibleButton.setEnabled(true);
                     } else {
                         cancelAudibleButton.setText(R.string.AudibleAlarmsOff);
+                        cancelAudibleButton.setEnabled(false);
                     }
                 }
 

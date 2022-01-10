@@ -66,9 +66,9 @@
     <string name="SMSWillBeSentIn">SMS Will Be Sent in </string>
     <string name="Cancel">CANCEL?</string>
     <string name="AcceptAlarm">Accept Alarm</string>
-    <string name="AudibleAlarmsCancelledFor">Audible Alarms Cancelled for </string>
-    <string name="PressToReEnable"> Press to re-enable</string>
-    <string name="CancelAudibleAlarms">Cancel Audible Alarms (temporarily)</string>
+    <string name="AudibleAlarmsCancelledFor">Muted for </string>
+    <string name="PressToReEnable"> Restore</string>
+    <string name="CancelAudibleAlarms">Mute Alarms</string>
     <string name="AudibleAlarmsOff">Audible Alarms OFF</string>
     <string name="Fault">FAULT</string>
     <string name="authenticate">Authenticate</string>
