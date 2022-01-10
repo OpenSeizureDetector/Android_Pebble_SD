@@ -1112,8 +1112,8 @@ public class SdServer extends Service implements SdDataReceiver {
      */
     public void logData() {
         if (mLogData) {
-            Log.v(TAG, "logData() - writing data to SD Card");
-            writeToSD();
+            Log.v(TAG, "logData() - writing data to Database");
+            //writeToSD();
             mLm.writeToLocalDb(mSdData);
         }
     }
