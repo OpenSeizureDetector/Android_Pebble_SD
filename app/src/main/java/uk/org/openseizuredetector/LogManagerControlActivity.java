@@ -210,7 +210,13 @@ public class LogManagerControlActivity extends AppCompatActivity {
             new AdapterView.OnItemClickListener() {
                 public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
                     Log.v(TAG, "onItemClicKListener() - Position=" + position + ", id=" + id);// Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
-                    AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+                    HashMap<String, String> eventObj = (HashMap<String,String>)adapter.getItemAtPosition(position);
+                    Long eventId = Long.parseLong(eventObj.get("uploaded"));
+                    Log.d(TAG,"onItemClickListener(): eventId="+eventId+", eventObj="+eventObj);
+                    Intent i = new Intent(getApplicationContext(), EditEventActivity.class);
+                    i.putExtra("eventId",eventId);
+                    startActivity(i);
+                    /*AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
                     builder.setTitle("Edit Remote Event Details");
                     builder.setMessage("Edit this event details on the remote database?");
                     builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
@@ -228,7 +234,8 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     });
                     AlertDialog alert = builder.create();
                     alert.show();
-                    
+                    */
+
                     //MyClass selItem = (MyClass) myList.getSelectedItem(); //
                     //String value= selItem.getTheValue(); //getter method
                 }

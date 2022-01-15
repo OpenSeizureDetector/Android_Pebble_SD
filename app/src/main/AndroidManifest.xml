@@ -65,6 +65,7 @@
             android:exported="false" />
 
         <activity android:name=".LogManagerControlActivity" />
+        <activity android:name=".EditEventActivity" />
         <activity android:name=".RemoteDbActivity" />
         <activity android:name=".ReportSeizureActivity" />
 

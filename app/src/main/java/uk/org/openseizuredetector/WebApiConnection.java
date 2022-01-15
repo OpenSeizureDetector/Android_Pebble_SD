@@ -27,6 +27,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 
 // This class is intended to handle all interactions with the OSD WebAPI
@@ -296,5 +297,61 @@ public class WebApiConnection {
         return (true);
 
     }
+
+    /**
+     * Retrieve the file containing the standard event types from the server.
+     * Calls the specified callback function, passing a JSONObject as a parameter when the data has been received and parsed.
+     * Note it uses a Consumer callback function to avoid having to create another interface
+     *    - see https://medium.com/@pra4mesh/callback-function-in-java-20fa48b27797
+     * @return true if request sent successfully or else false.
+     */
+    public boolean getEventTypes(Consumer<JSONObject> callback) {
+        Log.v(TAG, "getEventTypes()");
+        String urlStr = mUrlBase + "/static/eventTypes.json";
+        Log.v(TAG, "urlStr=" + urlStr);
+        final String authtoken = getStoredToken();
+
+        if (!isLoggedIn()) {
+            Log.v(TAG, "not logged in - doing nothing");
+            return (false);
+        }
+
+        StringRequest req = new StringRequest(Request.Method.GET, urlStr,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.v(TAG, "getEventTypes.onResponse(): Response is: " + response);
+                        try {
+                            JSONObject retObj = new JSONObject(response);
+                            callback.accept(retObj);
+                        } catch (JSONException e) {
+                            Log.e(TAG,"getEventTypes.onRespons(): Error: "+e.getMessage()+","+e.toString());
+                            callback.accept(null);
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        String responseBody = new String(error.networkResponse.data);
+                        Log.e(TAG, "getEventTypes.onErrorResponse(): " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        callback.accept(null);
+                    }
+                }) {
+            // Note, this is overriding part of StringRequest, not one of the sub-classes above!
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("Content-Type", "application/json; charset=UTF-8");
+                params.put("Authorization", "Token " + getStoredToken());
+                return params;
+            }
+        };
+
+        mQueue.add(req);
+        return (true);
+
+    }
+
 
 }
