@@ -322,5 +322,6 @@
     <string name="save">Save</string>
     <string name="event_type">Event Type:</string>
     <string name="event_sub_type">"Event Sub-Type: "</string>
-    <string name="selectFromOptionselow"><![CDATA[<Select from Options Below>]]></string>
+    <string name="selectFromOptionselow">"-- select option --"</string>
+    <string name="waitingForData">...waiting for data...</string>
 </resources>
