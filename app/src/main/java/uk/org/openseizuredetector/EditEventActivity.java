@@ -52,17 +52,29 @@ public class EditEventActivity extends AppCompatActivity
         Log.v(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_event);
+
+        mWac = new WebApiConnection(this, this, this, this);
+        mLm = new LogManager(this);
+
+
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
             Long eventId = extras.getLong("eventId");
-            Log.v(TAG, "onCreate - eventId=" + eventId);
             mEventId = eventId;
-            mWac.getEvent(mEventId, (JSONObject eventObj) -> {
-                        mEventObj = eventObj;
-                        updateUi();
-                        // FIXME: modify updateUi to use mEventObj
-                    }
-            );
+            Log.v(TAG, "onCreate - mEventId=" + mEventId);
+            try {
+                mWac.getEvent(mEventId, (JSONObject eventObj) -> {
+                    Log.v(TAG,"onCreate.getEvent");
+                            mEventObj = eventObj;
+                            Log.v(TAG, "onCreate.getEvent:  eventObj=" + eventObj.toString());
+                            updateUi();
+                            // FIXME: modify updateUi to use mEventObj
+                        }
+                );
+            } catch (Exception e) {
+                Log.e(TAG,"ERROR:"+e.getMessage());
+                e.printStackTrace();
+            }
         }
         mUtil = new OsdUtil(this, serverStatusHandler);
 
@@ -77,8 +89,6 @@ public class EditEventActivity extends AppCompatActivity
         mEventSubTypeRg = findViewById(R.id.eventSubTypeRg);
         mEventSubTypeRg.setOnCheckedChangeListener(onEventSubTypeChange);
 
-        mWac = new WebApiConnection(this, this, this, this);
-        mLm = new LogManager(this);
 
         // Retrieve the JSONObject containing the standard event types.
         // Note this obscure syntax is to avoid having to create another interface, so it is worth it :)

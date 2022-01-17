@@ -219,6 +219,7 @@ public class WebApiConnection {
     }
 
     public boolean getEvent(Long eventId, Consumer<JSONObject> callback) {
+        //Long eventId=Long.valueOf(285);
         Log.v(TAG, "getEvent()");
         String urlStr = mUrlBase + "/api/events/"+eventId;
         Log.v(TAG, "getEvent(): urlStr=" + urlStr);
