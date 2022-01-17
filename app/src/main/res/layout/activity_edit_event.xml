@@ -32,11 +32,45 @@
                 android:text="[id]" />
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:text="@string/event_type" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:text="event_type"
+                android:id="@+id/eventTypeTv"/>
+        </LinearLayout>
+
         <ListView
             android:id="@+id/eventTypeLv"
             android:layout_width="wrap_content"
             android:layout_height="150dp"
-            android:layout_marginTop="10dp" />
+            android:layout_marginTop="0dp" />
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="20sp"
+                android:text="@string/event_sub_type" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="event_sub_type"
+                android:textSize="20sp"
+                android:id="@+id/eventSubTypeTv"/>
+        </LinearLayout>
+
         <ListView
             android:id="@+id/eventSubTypeLv"
             android:layout_width="wrap_content"

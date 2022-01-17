@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -23,6 +24,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -37,6 +39,12 @@ public class EditEventActivity extends AppCompatActivity
     private OsdUtil mUtil;
     private List<String> mEventTypesList = null;
     private HashMap<String, ArrayList<String>> mEventSubTypesHashMap = null;
+    private String mEventTypeStr = null;
+    private String mEventSubTypeStr = null;
+    private Long mEventId;
+    private String mEventNotes = "";
+    private Date mEventDateTime;
+
 
 
     @Override
@@ -57,8 +65,12 @@ public class EditEventActivity extends AppCompatActivity
         Button OKBtn = (Button) findViewById(R.id.OKBtn);
         OKBtn.setOnClickListener(onOK);
 
-        ListView lv = (ListView) findViewById(R.id.eventTypeLv);
+        ListView lv;
+        lv = (ListView) findViewById(R.id.eventTypeLv);
         lv.setOnItemClickListener(onEventTypeClick);
+        lv = (ListView) findViewById(R.id.eventSubTypeLv);
+        lv.setOnItemClickListener(onEventSubTypeClick);
+
 
         mWac = new WebApiConnection(this, this, this, this);
         mLm = new LogManager(this);
@@ -118,15 +130,40 @@ public class EditEventActivity extends AppCompatActivity
 
     private void updateUi() {
         Log.v(TAG, "updateUI");
+        TextView tv;
+        // tv = (TextView) findViewById(R.id.tokenTv);
+        //tv.setText("Logged in with Token:" + storedAuthToken);
         if (mEventTypesList != null) {
-            //TextView tv = (TextView) findViewById(R.id.tokenTv);
-            //tv.setText("Logged in with Token:" + storedAuthToken);
             Log.v(TAG, "updateUi: " + mEventTypesList.toString());
             ListView lv = (ListView) findViewById(R.id.eventTypeLv);
             ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                     R.layout.event_type_list_item, R.id.eventTypeTv, mEventTypesList);
             lv.setAdapter(adapter);
         }
+        if (mEventSubTypesHashMap != null) {
+            if (mEventTypeStr != null) {
+                // based on https://androidexample.com/create-a-simple-listview
+                ArrayList<String> subtypesArrayList = mEventSubTypesHashMap.get(mEventTypeStr);
+                Log.v(TAG, "setSubtypesLV - eventType=" + mEventTypeStr + ", subtypes=" + subtypesArrayList);
+                ListView lv = (ListView) findViewById(R.id.eventSubTypeLv);
+                ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+                        R.layout.event_sub_type_list_item, R.id.eventSubTypeTv, subtypesArrayList);
+                lv.setAdapter(adapter);
+            }
+        }
+        tv = (TextView)findViewById(R.id.eventTypeTv);
+        if (mEventTypeStr != null) {
+            tv.setText(mEventTypeStr);
+        } else {
+            tv.setText(R.string.selectFromOptionselow);
+        }
+        tv = (TextView)findViewById(R.id.eventSubTypeTv);
+        if (mEventSubTypeStr != null) {
+            tv.setText(mEventSubTypeStr);
+        } else {
+            tv.setText(R.string.selectFromOptionselow);
+        }
+
     }
 
     View.OnClickListener onCancel =
@@ -154,11 +191,12 @@ public class EditEventActivity extends AppCompatActivity
             };
 
     private void setSubTypesLV(String eventType) {
+        // based on https://androidexample.com/create-a-simple-listview
         ArrayList<String> subtypesArrayList = mEventSubTypesHashMap.get(eventType);
         Log.v(TAG,"setSubtypesLV - eventType="+eventType+", subtypes="+subtypesArrayList);
         ListView lv = (ListView)findViewById(R.id.eventSubTypeLv);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                R.layout.event_sub_type_list_item, R.id.eventSubTypeLv, subtypesArrayList);
+                R.layout.event_sub_type_list_item, R.id.eventSubTypeTv, subtypesArrayList);
         lv.setAdapter(adapter);
     }
 
@@ -166,9 +204,22 @@ public class EditEventActivity extends AppCompatActivity
             new AdapterView.OnItemClickListener() {
                 public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
                     Log.v(TAG, "onEventTypeClick() - Position=" + position + ", id=" + id);// Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
-                    String selectedEventType = (String) adapter.getItemAtPosition(position);
-                    Log.v(TAG,"onEventTypeClick - selected "+selectedEventType);
-                    setSubTypesLV(selectedEventType);
+                    mEventTypeStr = (String) adapter.getItemAtPosition(position);
+                    Log.v(TAG,"onEventTypeClick - selected "+mEventTypeStr);
+                    updateUi();
+                    //setSubTypesLV(selectedEventType);
                 }
             };
+
+    AdapterView.OnItemClickListener onEventSubTypeClick =
+            new AdapterView.OnItemClickListener() {
+                public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
+                    Log.v(TAG, "onEventSubTypeClick() - Position=" + position + ", id=" + id);// Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
+                    mEventSubTypeStr = (String) adapter.getItemAtPosition(position);
+                    Log.v(TAG,"onEventSubTypeClick - selected "+mEventSubTypeStr);
+                    updateUi();
+                    //setSubTypesLV(selectedEventType);
+                }
+            };
+
 }
