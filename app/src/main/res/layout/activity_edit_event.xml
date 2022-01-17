@@ -48,12 +48,18 @@
                 android:text="event_type"
                 android:id="@+id/eventTypeTv"/>
         </LinearLayout>
+        <RadioGroup
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/eventTypeRg">
 
-        <ListView
+        </RadioGroup>
+        <!--<ListView
             android:id="@+id/eventTypeLv"
             android:layout_width="wrap_content"
             android:layout_height="150dp"
             android:layout_marginTop="0dp" />
+            -->
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"

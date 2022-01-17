@@ -1,22 +1,17 @@
 package uk.org.openseizuredetector;
 
 import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
-import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import org.json.JSONArray;
@@ -44,7 +39,8 @@ public class EditEventActivity extends AppCompatActivity
     private Long mEventId;
     private String mEventNotes = "";
     private Date mEventDateTime;
-
+    private RadioGroup mEventTypeRg;
+    private boolean mEventTypesListChanged = false;
 
 
     @Override
@@ -65,9 +61,11 @@ public class EditEventActivity extends AppCompatActivity
         Button OKBtn = (Button) findViewById(R.id.OKBtn);
         OKBtn.setOnClickListener(onOK);
 
+        mEventTypeRg = findViewById(R.id.eventTypeRg);
+        mEventTypeRg.setOnCheckedChangeListener(onEventTypeChange);
         ListView lv;
-        lv = (ListView) findViewById(R.id.eventTypeLv);
-        lv.setOnItemClickListener(onEventTypeClick);
+        //lv = (ListView) findViewById(R.id.eventTypeLv);
+        //lv.setOnItemClickListener(onEventTypeClick);
         lv = (ListView) findViewById(R.id.eventSubTypeLv);
         lv.setOnItemClickListener(onEventSubTypeClick);
 
@@ -99,6 +97,7 @@ public class EditEventActivity extends AppCompatActivity
                             eventSubtypesList.add(eventSubTypes.getString(i));
                         }
                         mEventSubTypesHashMap.put(key, eventSubtypesList);
+                        mEventTypesListChanged = true;
                     } catch (JSONException e) {
                         Log.e(TAG, "onCreate(getEventTypes Callback: Error parsing JSONObject" + e.getMessage() + e.toString());
                     }
@@ -133,13 +132,35 @@ public class EditEventActivity extends AppCompatActivity
         TextView tv;
         // tv = (TextView) findViewById(R.id.tokenTv);
         //tv.setText("Logged in with Token:" + storedAuthToken);
-        if (mEventTypesList != null) {
+
+        // Regenerate event type button group if necessary
+        if (mEventTypesList != null && mEventTypesListChanged) {
             Log.v(TAG, "updateUi: " + mEventTypesList.toString());
-            ListView lv = (ListView) findViewById(R.id.eventTypeLv);
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                    R.layout.event_type_list_item, R.id.eventTypeTv, mEventTypesList);
-            lv.setAdapter(adapter);
+            //ListView lv = (ListView) findViewById(R.id.eventTypeLv);
+            //ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+            //        R.layout.event_type_list_item, R.id.eventTypeTv, mEventTypesList);
+            //lv.setAdapter(adapter);
+            mEventTypeRg.removeAllViews();
+            for (String eventTypeStr : mEventTypesList) {
+                RadioButton b = new RadioButton(this);
+                b.setText(eventTypeStr);
+                mEventTypeRg.addView(b);
+            }
+            mEventTypesListChanged = false;
         }
+
+        // Check the correct button in the event type group
+        RadioButton b;
+        for (int index = 0; index < mEventTypeRg.getChildCount(); index++) {
+            b = (RadioButton) mEventTypeRg.getChildAt(index);
+            String buttonText = b.getText().toString();
+            if (buttonText.equals(mEventTypeStr)) {
+                Log.v(TAG, "updateUi - selecting button " + mEventTypeStr);
+                b.setChecked(true);
+            }
+        }
+
+
         if (mEventSubTypesHashMap != null) {
             if (mEventTypeStr != null) {
                 // based on https://androidexample.com/create-a-simple-listview
@@ -151,13 +172,13 @@ public class EditEventActivity extends AppCompatActivity
                 lv.setAdapter(adapter);
             }
         }
-        tv = (TextView)findViewById(R.id.eventTypeTv);
+        tv = (TextView) findViewById(R.id.eventTypeTv);
         if (mEventTypeStr != null) {
             tv.setText(mEventTypeStr);
         } else {
             tv.setText(R.string.selectFromOptionselow);
         }
-        tv = (TextView)findViewById(R.id.eventSubTypeTv);
+        tv = (TextView) findViewById(R.id.eventSubTypeTv);
         if (mEventSubTypeStr != null) {
             tv.setText(mEventSubTypeStr);
         } else {
@@ -193,8 +214,8 @@ public class EditEventActivity extends AppCompatActivity
     private void setSubTypesLV(String eventType) {
         // based on https://androidexample.com/create-a-simple-listview
         ArrayList<String> subtypesArrayList = mEventSubTypesHashMap.get(eventType);
-        Log.v(TAG,"setSubtypesLV - eventType="+eventType+", subtypes="+subtypesArrayList);
-        ListView lv = (ListView)findViewById(R.id.eventSubTypeLv);
+        Log.v(TAG, "setSubtypesLV - eventType=" + eventType + ", subtypes=" + subtypesArrayList);
+        ListView lv = (ListView) findViewById(R.id.eventSubTypeLv);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 R.layout.event_sub_type_list_item, R.id.eventSubTypeTv, subtypesArrayList);
         lv.setAdapter(adapter);
@@ -205,7 +226,7 @@ public class EditEventActivity extends AppCompatActivity
                 public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
                     Log.v(TAG, "onEventTypeClick() - Position=" + position + ", id=" + id);// Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
                     mEventTypeStr = (String) adapter.getItemAtPosition(position);
-                    Log.v(TAG,"onEventTypeClick - selected "+mEventTypeStr);
+                    Log.v(TAG, "onEventTypeClick - selected " + mEventTypeStr);
                     updateUi();
                     //setSubTypesLV(selectedEventType);
                 }
@@ -216,9 +237,20 @@ public class EditEventActivity extends AppCompatActivity
                 public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
                     Log.v(TAG, "onEventSubTypeClick() - Position=" + position + ", id=" + id);// Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
                     mEventSubTypeStr = (String) adapter.getItemAtPosition(position);
-                    Log.v(TAG,"onEventSubTypeClick - selected "+mEventSubTypeStr);
+                    Log.v(TAG, "onEventSubTypeClick - selected " + mEventSubTypeStr);
                     updateUi();
                     //setSubTypesLV(selectedEventType);
+                }
+            };
+    RadioGroup.OnCheckedChangeListener onEventTypeChange =
+            new RadioGroup.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(RadioGroup group, int checkedId) {
+                    Log.v(TAG,"onEventTypeChange() - id="+checkedId);
+                    RadioButton b = (RadioButton)findViewById(group.getCheckedRadioButtonId());
+                    String selectedEventType = b.getText().toString();
+                    mEventTypeStr = selectedEventType;
+                    updateUi();
                 }
             };
 
