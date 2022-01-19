@@ -214,7 +214,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
     /**
      * bind an activity to to an already running server.
      */
-    public void bindToServer(Activity activity, SdServiceConnection sdServiceConnection) {
+    public void bindToServer(Context activity, SdServiceConnection sdServiceConnection) {
         Log.i(TAG, "OsdUtil.bindToServer() - binding to SdServer");
         writeToSysLogFile("bindToServer() - binding to SdServer");
         Intent intent = new Intent(sdServiceConnection.mContext, SdServer.class);

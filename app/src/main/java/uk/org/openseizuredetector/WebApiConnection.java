@@ -17,6 +17,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -288,7 +289,9 @@ public class WebApiConnection {
                     public void onResponse(String response) {
                         Log.v(TAG, "Response is: " + response);
                         try {
-                            JSONObject retObj = new JSONObject(response);
+                            JSONObject retObj = new JSONObject();
+                            JSONArray eventArray = new JSONArray(response);
+                            retObj.put("events", eventArray);
                             callback.accept(retObj);
                         } catch (JSONException e) {
                             Log.e(TAG,"getEventTypes.onRespons(): Error: "+e.getMessage()+","+e.toString());

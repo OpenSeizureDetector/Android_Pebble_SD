@@ -67,12 +67,16 @@ public class EditEventActivity extends AppCompatActivity
             try {
                 mWac.getEvent(mEventId, (JSONObject eventObj) -> {
                     Log.v(TAG,"onCreate.getEvent");
-                            mEventObj = eventObj;
-                            Log.v(TAG, "onCreate.getEvent:  eventObj=" + eventObj.toString());
-                            updateUi();
-                            // FIXME: modify updateUi to use mEventObj
-                        }
-                );
+                    if (eventObj != null) {
+                        mEventObj = eventObj;
+                        Log.v(TAG, "onCreate.getEvent:  eventObj=" + eventObj.toString());
+                        updateUi();
+                        // FIXME: modify updateUi to use mEventObj
+                    } else {
+                        mUtil.showToast("Failed to Retrieve Event from Remote Database");
+                        finish();
+                    }
+                });
             } catch (Exception e) {
                 Log.e(TAG,"ERROR:"+e.getMessage());
                 e.printStackTrace();

@@ -88,7 +88,7 @@ public class StartupActivity extends Activity {
 
 
         mHandler = new Handler();
-        mUtil = new OsdUtil(this, mHandler);
+        mUtil = new OsdUtil(getApplicationContext(), mHandler);
         mUtil.writeToSysLogFile("");
         mUtil.writeToSysLogFile("*******************************");
         mUtil.writeToSysLogFile("* StartUpActivity Started     *");

@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         //int i = 5/0;  // Force exception to test handler.
-        mUtil = new OsdUtil(this,serverStatusHandler);
+        mUtil = new OsdUtil(getApplicationContext(),serverStatusHandler);
         mConnection = new SdServiceConnection(this);
         mUtil.writeToSysLogFile("");
         mUtil.writeToSysLogFile("* MainActivity Started     *");
