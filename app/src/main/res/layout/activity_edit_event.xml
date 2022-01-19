@@ -39,13 +39,15 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Event Date: " />
+                    android:text="Event Date: "
+                    android:textSize="20sp"/>
 
                 <TextView
                     android:id="@+id/eventDateTv"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="..." />
+                    android:text="..."
+                    android:textSize="20sp"/>
             </LinearLayout>
 
             <LinearLayout

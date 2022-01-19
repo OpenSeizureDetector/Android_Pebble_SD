@@ -19,8 +19,13 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class LogManagerControlActivity extends AppCompatActivity {
     private String TAG = "LogManagerControlActivity";
@@ -28,6 +33,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private Context mContext;
     private UiTimer mUiTimer;
     private ArrayList<HashMap<String, String>> mEventsList;
+    private ArrayList<HashMap<String, String>> mRemoteEventsList;
     private SdServiceConnection mConnection;
     private OsdUtil mUtil;
     final Handler serverStatusHandler = new Handler();
@@ -138,6 +144,45 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 tv.setText("NOT AUTHENTICATED");
                 btn.setText("Log In");
             }
+
+            // Retrieve events from remote database
+            mLm.mWac.getEvents((JSONObject remoteEventsObj) -> {
+                Log.v(TAG, "onResume.getEvents");
+                if (remoteEventsObj == null) {
+                    Log.e(TAG, "onResume.getEvents Callback:  Error Retrieving events");
+                    mUtil.showToast("Error Retrieving Remote Events from Server - Please Try Again Later!");
+                } else {
+                    Log.v(TAG,"remoteEventsObj = "+remoteEventsObj.toString());
+/*                Iterator<String> keys = eventTypesObj.keys();
+                mEventTypesList = new ArrayList<String>();
+                mEventSubTypesHashMap = new HashMap<String, ArrayList<String>>();
+                while (keys.hasNext()) {
+                    String key = keys.next();
+                    Log.v(TAG, "onCreate.getEventTypes Callback: key=" + key);
+                    mEventTypesList.add(key);
+                    try {
+                        JSONArray eventSubTypes = eventTypesObj.getJSONArray(key);
+                        ArrayList<String> eventSubtypesList = new ArrayList<String>();
+                        for (int i = 0; i < eventSubTypes.length(); i++) {
+                            eventSubtypesList.add(eventSubTypes.getString(i));
+                        }
+                        mEventSubTypesHashMap.put(key, eventSubtypesList);
+                        mEventTypesListChanged = true;
+                    } catch (JSONException e) {
+                        Log.e(TAG, "onCreate(getEventTypes Callback: Error parsing JSONObject" + e.getMessage() + e.toString());
+                    }
+                }
+                updateUi();
+
+ */
+                }
+
+
+            });
+
+
+
+
         }  else {
             Log.e(TAG, "ERROR: Not connected to SDServer - not updating UI");
         }

@@ -122,9 +122,9 @@ public class WebApiConnection {
 
     public boolean isLoggedIn() {
         String authToken = getStoredToken();
-        Log.v(TAG, "isLoggedIn(): token=" + authToken);
+        //Log.v(TAG, "isLoggedIn(): token=" + authToken);
         if (authToken == null || authToken.length() == 0) {
-            Log.v(TAG, "isLogged in - not logged in");
+            //Log.v(TAG, "isLogged in - not logged in");
             return (false);
         } else {
             return (true);
@@ -142,7 +142,7 @@ public class WebApiConnection {
     // 6: TC Seizure
     // 7: Other Seizure
     // 9: Other Medical Issue
-    public boolean createEvent(final int eventType, final Date eventDate, final String eventDesc) {
+    public boolean createEvent(final int osdAlarmState, final Date eventDate, final String eventDesc) {
         Log.v(TAG, "createEvent()");
         String urlStr = mUrlBase + "/api/events/";
         Log.v(TAG, "urlStr=" + urlStr);
@@ -155,7 +155,7 @@ public class WebApiConnection {
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         JSONObject jsonObject = new JSONObject();
         try {
-            jsonObject.put("eventType", String.valueOf(eventType));
+            jsonObject.put("osdAlarmState", String.valueOf(osdAlarmState));
             jsonObject.put("dataTime", dateFormat.format(eventDate));
             jsonObject.put("desc", eventDesc);
         } catch (JSONException e) {
@@ -264,6 +264,151 @@ public class WebApiConnection {
         mQueue.add(req);
         return (true);
     }
+
+    /**
+     * Retrieve all events accessible to the logged in user, and pass them to the callback function as a JSONObject
+     * @param callback
+     * @return true on success or false on failure to initiate the request.
+     */
+    public boolean getEvents(Consumer<JSONObject> callback) {
+        //Long eventId=Long.valueOf(285);
+        Log.v(TAG, "getEvents()");
+        String urlStr = mUrlBase + "/api/events/";
+        Log.v(TAG, "getEvents(): urlStr=" + urlStr);
+        final String authtoken = getStoredToken();
+
+        if (!isLoggedIn()) {
+            Log.v(TAG, "not logged in - doing nothing");
+            return (false);
+        }
+
+        StringRequest req = new StringRequest(Request.Method.GET, urlStr,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.v(TAG, "Response is: " + response);
+                        try {
+                            JSONObject retObj = new JSONObject(response);
+                            callback.accept(retObj);
+                        } catch (JSONException e) {
+                            Log.e(TAG,"getEventTypes.onRespons(): Error: "+e.getMessage()+","+e.toString());
+                            callback.accept(null);
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        String responseBody = new String(error.networkResponse.data);
+                        Log.v(TAG, "getEvents(): Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        callback.accept(null);
+                    }
+                }) {
+
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("Content-Type", "application/json; charset=UTF-8");
+                params.put("Authorization", "Token " + getStoredToken());
+                return params;
+            }
+        };
+        mQueue.add(req);
+        return (true);
+    }
+
+
+    public boolean updateEvent(final JSONObject eventObj, Consumer<JSONObject> callback) {
+        Long eventId;
+        Log.v(TAG, "updateEvent()");
+        final String authtoken = getStoredToken();
+
+        if (!isLoggedIn()) {
+            Log.v(TAG, "not logged in - doing nothing");
+            return (false);
+        }
+        try {
+            eventId = eventObj.getLong("id");
+        } catch (JSONException e) {
+            Log.e(TAG, "updateEvent(): Error reading id from eventObj");
+            eventId= Long.valueOf(-1);
+        }
+        final String dataStr = eventObj.toString();
+        Log.v(TAG, "createEvent - data=" + dataStr);
+
+
+        int reqMethod;
+        String urlStr;
+        if (eventId!=-1) {
+            Log.v(TAG,"updateEvent() - found eventId "+eventId+", Updating event record");urlStr = mUrlBase + "/api/events/"+eventId+"/";
+            Log.v(TAG, "urlStr=" + urlStr);
+            reqMethod = Request.Method.PUT;
+        } else {
+            Log.v(TAG,"updateEvent() - eventId not found - creating new event record");
+            urlStr = mUrlBase + "/api/events/";
+            Log.v(TAG, "urlStr=" + urlStr);
+            reqMethod = Request.Method.POST;
+        }
+
+        StringRequest req = new StringRequest(reqMethod, urlStr,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.v(TAG, "Response is: " + response);
+                        try {
+                            JSONObject retObj = new JSONObject(response);
+                            callback.accept(retObj);
+                        } catch (JSONException e) {
+                            Log.e(TAG,"getEventTypes.onRespons(): Error: "+e.getMessage()+","+e.toString());
+                            callback.accept(null);
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        String responseBody = new String(error.networkResponse.data);
+                        Log.v(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        callback.accept(null);
+                    }
+                }) {
+            // Note, this is overriding part of StringRequest, not one of the sub-classes above!
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<>();
+                // params.put("name",sname); // passing parameters to server
+                String authToken = getStoredToken();
+                params.put("Authorization: Token " + authToken, authToken);
+                Log.v(TAG, "getParams: params=" + params.toString());
+                //params.put("eventType", String.valueOf(eventType));
+                //params.put("dataTime", dateFormat.format(eventDate));
+                //params.put("desc", eventDesc);
+                return params;
+            }
+
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("Content-Type", "application/json; charset=UTF-8");
+                params.put("Authorization", "Token " + getStoredToken());
+                return params;
+            }
+
+            @Override
+            public byte[] getBody() throws AuthFailureError {
+                try {
+                    return dataStr == null ? null : dataStr.getBytes("utf-8");
+                } catch (UnsupportedEncodingException uee) {
+                    VolleyLog.wtf("Unsupported Encoding while trying to get the bytes of %s using %s", dataStr, "utf-8");
+                    return null;
+                }
+            }
+        };
+
+        mQueue.add(req);
+        return (true);
+    }
+
 
 
 
