@@ -147,18 +147,19 @@ public class ReportSeizureActivity extends AppCompatActivity {
                     String dateStr=String.format("%4d-%02d-%02d %02d:%02d:30",mYear,mMonth+1,mDay, mHour, mMinute);
                     Log.v(TAG, "onOk() - dateSTr="+dateStr);
                     mMsg = "Finding Nearest Datapoint to Date/Time "+dateStr+"...";
-                    int id = mLm.getNearestDatapointToDate(dateStr);
-                    mMsg = mMsg + "\nNearest Datapoint is "+id;
-                    Log.v(TAG, "onOK() - nearest datapoint is "+id);
-                    if (id!=-1) {
-                        mLm.setDatapointStatus(id,5);
-                        mMsg = mMsg + "\nSet Datapoint to Manual Alarm Status";
-                        osdUtil.showToast(getString(R.string.createdNewEvent));
-                        finish();
-                    } else {
-                        mMsg = mMsg + "\n*** Datapoint not found - not doing anything ***";
-                        osdUtil.showToast(getString(R.string.DatapointNotFound));
-                    }
+                    mLm.getNearestDatapointToDate(dateStr, (Long id) -> {
+                        mMsg = mMsg + "\nNearest Datapoint is "+id;
+                        Log.v(TAG, "onOK() - nearest datapoint is "+id);
+                        if (id!=-1) {
+                            mLm.setDatapointStatus(id,5);
+                            mMsg = mMsg + "\nSet Datapoint to Manual Alarm Status";
+                            osdUtil.showToast(getString(R.string.createdNewEvent));
+                            finish();
+                        } else {
+                            mMsg = mMsg + "\n*** Datapoint not found - not doing anything ***";
+                            osdUtil.showToast(getString(R.string.DatapointNotFound));
+                        }
+                    });
                 }
             };
     View.OnClickListener onCancel =

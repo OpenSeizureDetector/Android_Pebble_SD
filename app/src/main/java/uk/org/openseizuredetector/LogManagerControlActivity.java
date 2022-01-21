@@ -82,7 +82,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        Log.v(TAG,"onStop()");
+        Log.v(TAG, "onStop()");
         super.onStop();
         stopUiTimer();
         mUtil.unbindFromServer(this, mConnection);
@@ -90,14 +90,14 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
     @Override
     protected void onPause() {
-        Log.v(TAG,"onPause()");
+        Log.v(TAG, "onPause()");
         super.onPause();
         //stopUiTimer();
     }
 
     @Override
     protected void onResume() {
-        Log.v(TAG,"onResume()");
+        Log.v(TAG, "onResume()");
         super.onResume();
         //startUiTimer();
     }
@@ -107,10 +107,10 @@ public class LogManagerControlActivity extends AppCompatActivity {
         // the mConnection to bind to the service, so we delay half a second to give it chance
         // to connect before trying to update the UI for the first time (it happens again periodically using the uiTimer)
         if (mConnection.mBound) {
-            Log.v(TAG,"waitForConnection - Bound!");
+            Log.v(TAG, "waitForConnection - Bound!");
             initialiseServiceConnection();
         } else {
-            Log.v(TAG,"waitForConnection - waiting...");
+            Log.v(TAG, "waitForConnection - waiting...");
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -134,14 +134,13 @@ public class LogManagerControlActivity extends AppCompatActivity {
         // Populate events list - we only do it once when the activity is created because the query might slow down the UI.
         // We could try this code in updateUI() and see though.
         // Based on https://www.tutlane.com/tutorial/android/android-sqlite-listview-with-examples
-        mLm.getEventsList(true, (ArrayList<HashMap<String,String>> eventsList)-> {
+        mLm.getEventsList(true, (ArrayList<HashMap<String, String>> eventsList) -> {
             mEventsList = eventsList;
-            Log.v(TAG,"initialiseServiceConnection() - set mEventsList");
+            Log.v(TAG, "initialiseServiceConnection() - set mEventsList - Updating UI");
             updateUi();
         });
         //mEventsList = mLm.getEventsList(true);
     }
-
 
 
     private void getRemoteEvents() {
@@ -157,7 +156,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     JSONArray eventsArray = remoteEventsObj.getJSONArray("events");
                     mRemoteEventsList = new ArrayList<HashMap<String, String>>();
                     // A bit of a hack to display in reverse chronological order
-                    for (int i = eventsArray.length()-1; i>=0; i--) {
+                    for (int i = eventsArray.length() - 1; i >= 0; i--) {
                         JSONObject eventObj = eventsArray.getJSONObject(i);
                         Long id = eventObj.getLong("id");
                         int osdAlarmState = eventObj.getInt("osdAlarmState");
@@ -175,6 +174,8 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         eventHashMap.put("desc", desc);
                         mRemoteEventsList.add(eventHashMap);
                     }
+                    Log.v(TAG, "getRemoteEvents() - set mRemoteEventsList().  Updating UI");
+                    updateUi();
                 } catch (JSONException e) {
                     Log.e(TAG, "getRemoteEvents(): Error Parsing remoteEventsObj: " + e.getMessage());
                     mUtil.showToast("Error Parsing remoteEventsObj - this should not happen!!!");
@@ -193,12 +194,14 @@ public class LogManagerControlActivity extends AppCompatActivity {
         Button btn;
         // Local Database Information
         if (mLm != null) {
-            tv = (TextView) findViewById(R.id.num_local_events_tv);
-            int eventCount = mLm.getLocalEventsCount(true);
-            tv.setText(String.format("%d", eventCount));
-            tv = (TextView) findViewById(R.id.num_local_datapoints_tv);
-            int datapointsCount = mLm.getLocalDatapointsCount();
-            tv.setText(String.format("%d", datapointsCount));
+            mLm.getLocalEventsCount(true, (Long eventCount) -> {
+                TextView tv1 = (TextView) findViewById(R.id.num_local_events_tv);
+                tv1.setText(String.format("%d", eventCount));
+            });
+            mLm.getLocalDatapointsCount((Long datapointsCount) -> {
+                TextView tv2 = (TextView) findViewById(R.id.num_local_datapoints_tv);
+                tv2.setText(String.format("%d", datapointsCount));
+            });
         } else {
             stopUpdating = false;
         }
@@ -222,7 +225,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
             lv.setAdapter(adapter);
         } else {
             //mUtil.showToast("No Remote Events");
-            Log.d(TAG,"UpdateUi: No Remote Events");
+            Log.d(TAG, "UpdateUi: No Remote Events");
             stopUpdating = false;
         }
 
@@ -243,7 +246,6 @@ public class LogManagerControlActivity extends AppCompatActivity {
         }
         if (stopUpdating) stopUiTimer();
     }  //updateUi();
-
 
 
     View.OnClickListener onAuth =
@@ -320,10 +322,10 @@ public class LogManagerControlActivity extends AppCompatActivity {
             new AdapterView.OnItemClickListener() {
                 public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
                     Log.v(TAG, "onItemClicKListener() - Position=" + position + ", id=" + id);// Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
-                    HashMap<String, String> eventObj = (HashMap<String,String>)adapter.getItemAtPosition(position);
+                    HashMap<String, String> eventObj = (HashMap<String, String>) adapter.getItemAtPosition(position);
                     Long eventId = Long.parseLong(eventObj.get("uploaded"));
-                    Log.d(TAG,"onItemClickListener(): eventId="+eventId+", eventObj="+eventObj);
-                    if (eventId>0) {
+                    Log.d(TAG, "onItemClickListener(): eventId=" + eventId + ", eventObj=" + eventObj);
+                    if (eventId > 0) {
                         Intent i = new Intent(getApplicationContext(), EditEventActivity.class);
                         i.putExtra("eventId", eventId);
                         startActivity(i);
@@ -337,11 +339,11 @@ public class LogManagerControlActivity extends AppCompatActivity {
             new AdapterView.OnItemClickListener() {
                 public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
                     Log.v(TAG, "onRemoteEventList Click() - Position=" + position + ", id=" + id);// Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
-                    HashMap<String, String> eventObj = (HashMap<String,String>)adapter.getItemAtPosition(position);
+                    HashMap<String, String> eventObj = (HashMap<String, String>) adapter.getItemAtPosition(position);
                     Long eventId = Long.parseLong(eventObj.get("id"));
-                    Log.d(TAG,"onItemClickListener(): eventId="+eventId+", eventObj="+eventObj);
+                    Log.d(TAG, "onItemClickListener(): eventId=" + eventId + ", eventObj=" + eventObj);
                     Intent i = new Intent(getApplicationContext(), EditEventActivity.class);
-                    i.putExtra("eventId",eventId);
+                    i.putExtra("eventId", eventId);
                     startActivity(i);
                 }
             };

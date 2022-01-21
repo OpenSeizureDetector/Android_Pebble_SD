@@ -295,7 +295,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
      * @param statusVal
      * @return true on success or false on failure
      */
-    public boolean setDatapointStatus(int id, int statusVal) {
+    public boolean setDatapointStatus(Long id, int statusVal) {
         Log.d(TAG, "setDatapointStatus() - id=" + id + ", statusVal=" + statusVal);
         Cursor c = null;
         ContentValues cv = new ContentValues();
@@ -309,36 +309,27 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
 
 
     /**
-     * getDatapointsJSON() Returns a JSON Object of all of the datapoints in the local database
-     * between endDateStr-duration and endDateStr
+     * Return a JSON string representing all the datapoints between startDate and endDate
      *
-     * @param endDateStr String representation of the period end date
-     * @param duration   Duration in minutes.
-     * @return JSONObject of all the datapoints in the range.
+     * @return True on successful start or false if call fails.
      */
-    public String getDatapointsbyDate(String startDateStr, String endDateStr) {
+    public boolean getDatapointsByDate(String startDateStr, String endDateStr, Consumer<String> callback) {
         Log.d(TAG, "getDatapointsbyDate() - startDateStr=" + startDateStr + ", endDateStr=" + endDateStr);
-        Cursor c = null;
-        String retVal;
-        try {
-            //String selectStr = "DataTime>=? and DataTime<=?";
-            //String[] selectArgs = {startDateStr, endDateStr};
-            //c = mOSDDb.getWritableDatabase().query(mDbTableName, null,
-            //        null, null, null, null, null);
-            c = mOSDDb.getWritableDatabase().rawQuery(
-                    "Select * from " + mDbTableName
-                            + " where dataTime>= '" + startDateStr
-                            + "' and dataTime<= '" + endDateStr + "'",
-                    null);
-            retVal = cursor2Json(c);
-        } catch (Exception e) {
-            Log.d(TAG, "Error selecting datapoints" + e.toString());
-            retVal = null;
-        }
-        return (retVal);
+        String[] columns = {"*"};
+        String whereClause = "DataTime>? AND DataTime<?";
+        String[] whereArgs = {startDateStr, endDateStr};
+        new SelectQueryTask(mDbTableName, columns, whereClause, whereArgs,
+                null, null, "dataTime DESC", (Cursor cursor) -> {
+            Log.v(TAG, "getDataPointsByDate - returned " + cursor);
+            if (cursor != null) {
+                callback.accept(cursor2Json(cursor));
+            } else {
+                callback.accept(null);
+            }
+        }).execute();
+        return (true);
     }
 
-    //Consumer<JSONObject> callback
 
     /**
      * Return an array list of objects representing the events in the database by calling the specified callback function.
@@ -350,17 +341,8 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         Log.v(TAG, "getEventsList - includeWarnings=" + includeWarnings);
         ArrayList<HashMap<String, String>> eventsList = new ArrayList<>();
 
-        String[] whereArgs;
-        String whereClause;
-        if (includeWarnings) {
-            String[] whereArgsWarnings = { "1", "2", "3", "5"};
-            whereClause = "Status in (?, ?, ?, ?)";
-            whereArgs = whereArgsWarnings;
-        } else {
-            whereClause = "Status in (?, ?, ?)";
-            String[] whereArgsNoWarnings = { "2", "3", "5"};
-            whereArgs = whereArgsNoWarnings;
-        }
+        String[] whereArgs = getEventWhereArgs(includeWarnings);
+        String whereClause = getEventWhereClause(includeWarnings);
         //sqlStr = "SELECT * from " + mDbTableName + " where Status in (" + statusListStr + ") order by dataTime desc;";
         String[] columns = {"*"};
         new SelectQueryTask(mDbTableName, columns, whereClause, whereArgs,
@@ -368,7 +350,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
             Log.v(TAG, "getEventsList - returned " + cursor);
             if (cursor != null) {
                 Log.v(TAG, "getEventsList - returned " + cursor.getCount() + " records");
-                while (cursor.moveToNext()) {
+                while (!cursor.isAfterLast()) {
                     HashMap<String, String> event = new HashMap<>();
                     //event.put("id", cursor.getString(cursor.getColumnIndex("id")));
                     event.put("dataTime", cursor.getString(cursor.getColumnIndex("dataTime")));
@@ -378,6 +360,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
                     event.put("uploaded", cursor.getString(cursor.getColumnIndex("uploaded")));
                     //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
                     eventsList.add(event);
+                    cursor.moveToNext();
                 }
             }
             callback.accept(eventsList);
@@ -412,154 +395,135 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     }
 
 
-    public boolean getNextEventToUpload(Consumer<Long> callback) {
-        Log.v(TAG, "getNextEventToUpload");
-        // Based on https://stackoverflow.com/questions/24827312/is-a-good-practice-create-anonymous-asynctask-for-parallel-small-known-freeze-pr
-        new AsyncTask<Void, Void, Long>() {
-            @Override
-            protected Long doInBackground(Void... params) {
-                Log.v(TAG, "getEventsNextEventToUpload.doInBackground");
-                Long eventId;
-                eventId = _getNextEventToUpload(false);
-                if (eventId == -1) {
-                    eventId = _getNextEventToUpload(true);
-                }
-                return (eventId);
-            }
-
-            @Override
-            protected void onPostExecute(final Long result) {
-                callback.accept(result);
-            }
-        }.execute();
-        return (true);
-    }
-
-
     /**
      * Return the ID of the next event (alarm, warning, fall etc that needs to be uploaded (alarm or warning condition and has not yet been uploaded.
+     *
+     * @param includeWarnings - whether to include warnings in the list of events, or just alarm conditions.
+     * @return True on successful start or false if call fails.
      */
-    public Long _getNextEventToUpload(boolean includeWarnings) {
-        Log.v(TAG, "getNextEventToUpload(" + includeWarnings + ")");
-        Time tnow = new Time(Time.getCurrentTimezone());
-        tnow.setToNow();
-        String dateStr = tnow.format("%Y-%m-%d");
-        String SQLStr = "SQLStr";
-        String statusListStr;
-        String recordStr;
-        Long recordId;
+    public boolean getNextEventToUpload(boolean includeWarnings, Consumer<Long> callback) {
+        Log.v(TAG, "getNextEventToUpload - includeWarnings=" + includeWarnings);
 
-        if (includeWarnings) {
-            statusListStr = "1,2,3,5";   // Warning, Alarm, Fall, Manual Alarm
-        } else {
-            statusListStr = "2,3,5";    // Alarm, Fall, Manual Alarm
-        }
+        String[] whereArgsStatus = getEventWhereArgs(includeWarnings);
+        String whereClauseStatus = getEventWhereClause(includeWarnings);
+        String[] columns = {"*"};
 
         // Do not try to upload very recent events so that we have chance to record the post-event data before uploading it.
         long currentDateMillis = new Date().getTime();
         long endDateMillis = currentDateMillis - 1000 * mEventDuration;
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String endDateStr = dateFormat.format(new Date(endDateMillis));
-        try {
-            SQLStr = "SELECT * from " + mDbTableName + " where uploaded=false and Status in (" + statusListStr + ") and DataTime<'" + endDateStr + "';";
-            Cursor resultSet = mOSDDb.getWritableDatabase().rawQuery(SQLStr, null);
-            resultSet.moveToFirst();
-            if (resultSet.getCount() == 0) {
-                Log.v(TAG, "getNextEventToUpload() - no events to Upload - exiting");
-                recordId = new Long(-1);
-            } else {
-                recordStr = resultSet.getString(3);
-                recordId = resultSet.getLong(0);
-                Log.d(TAG, "getNextEventToUpload(): id=" + recordId + ", recordStr=" + recordStr);
-            }
-        } catch (SQLException e) {
-            Log.e(TAG, "getNextEventToUpload(): Error selecting Data: " + e.toString());
-            Log.e(TAG, "SQLStr was " + SQLStr);
-            recordStr = "ERROR";
-            recordId = new Long(-1);
+        String whereClauseUploaded = "uploaded = false";
+        String whereClauseDate = "DataTime<?";
+        String whereClause = whereClauseStatus + " AND " + whereClauseUploaded + " AND " + whereClauseDate;
+
+        String[] whereArgs = new String[ whereArgsStatus.length + 1];
+        for (int i = 0; i<whereArgsStatus.length; i++) {
+            whereArgs[i] = whereArgsStatus[i];
         }
-        return (recordId);
+        whereArgs[whereArgsStatus.length] = endDateStr;
+        new SelectQueryTask(mDbTableName, columns, whereClause, whereArgs,
+                null, null, "dataTime DESC", (Cursor cursor) -> {
+            Log.v(TAG, "getEventsList - returned " + cursor);
+            Long recordId = new Long(-1);
+            if (cursor != null) {
+                Log.v(TAG, "getNextEventToUpload - returned " + cursor.getCount() + " records");
+                cursor.moveToFirst();
+                if (cursor.getCount() == 0) {
+                    Log.v(TAG, "getNextEventToUpload() - no events to Upload - exiting");
+                    recordId = new Long(-1);
+                } else {
+                    String recordStr = cursor.getString(3);
+                    recordId = cursor.getLong(0);
+                    Log.d(TAG, "getNextEventToUpload(): id=" + recordId + ", recordStr=" + recordStr);
+                }
+            }
+            callback.accept(recordId);
+        }).execute();
+        return (true);
     }
 
 
     /**
      * Return the ID of the datapoint that is closest to date/time string dateStr
      * Based on https://stackoverflow.com/questions/45749046/sql-get-nearest-date-record
+     *
+     * @return True on successful start or false if call fails.
      */
-    public int getNearestDatapointToDate(String dateStr) {
-        Log.v(TAG, "getNearestDatapointToDate()");
-        String SQLStr = "SQLStr";
-        //String recordStr;
-        int recordId;
-
-        try {
-            SQLStr = "SELECT *, (julianday(dataTime)-julianday(datetime('" + dateStr + "'))) as ddiff from " + mDbTableName + " order by ABS(ddiff) asc;";
-            //SQLStr = "SELECT * from "+ mDbTableName + " ;";
-            Cursor resultSet = mOSDDb.getWritableDatabase().rawQuery(SQLStr, null);
-            resultSet.moveToFirst();
-            if (resultSet.getCount() == 0) {
-                Log.v(TAG, "getNearestDatapointToDate() - no datapoints found - exiting");
-                recordId = -1;
-            } else {
-                recordId = resultSet.getInt(0);
-                //resultSet.moveToFirst();
-                //recordStr = cursor2Json(resultSet); //getDatapointById(recordId);
-                Log.d(TAG, "getNearestDatapointToDate(): id=" + recordId + ", count=" + resultSet.getCount());
+    public boolean getNearestDatapointToDate(String dateStr, Consumer<Long> callback) {
+        Log.v(TAG, "getNextEventToDate - dateStr=" + dateStr);
+        String[] columns = {"*","(julianday(dataTime)-julianday(datetime('" + dateStr + "'))) as ddiff"};
+        //SQLStr = "SELECT *, (julianday(dataTime)-julianday(datetime('" + dateStr + "'))) as ddiff from " + mDbTableName + " order by ABS(ddiff) asc;";
+        String orderByStr = "ABS(ddiff) asc";
+        new SelectQueryTask(mDbTableName, columns, null, null,
+                null, null, orderByStr, (Cursor cursor) -> {
+            Log.v(TAG, "getEventsNearestDatapointToDate - returned " + cursor);
+            Long recordId = new Long(-1);
+            if (cursor != null) {
+                Log.v(TAG, "getNearestDatapointToDate - returned " + cursor.getCount() + " records");
+                cursor.moveToFirst();
+                if (cursor.getCount() == 0) {
+                    Log.v(TAG, "getNearestDatapointToDate() - no events to Upload - exiting");
+                    recordId = new Long(-1);
+                } else {
+                    String recordStr = cursor.getString(3);
+                    recordId = cursor.getLong(0);
+                    Log.d(TAG, "getNearestDatapointToDate(): id=" + recordId + ", recordStr=" + recordStr);
+                }
             }
-        } catch (SQLException e) {
-            Log.e(TAG, "getNearestDatapointToDate(): Error selecting Data: " + e.toString());
-            Log.e(TAG, "SQLStr was " + SQLStr);
-            //recordStr = "ERROR";
-            recordId = -1;
-        }
-        return (recordId);
+            callback.accept(recordId);
+        }).execute();
+        return (true);
     }
 
 
     /**
-     * Return the number of events stored in the local database
+     * Return the number of events stored in the local database (via a callback).
+     *
+     * @param includeWarnings - whether to include warnings in the list of events, or just alarm conditions.
+     * @return True on successful start or false if call fails.
      */
-    public int getLocalEventsCount(boolean includeWarnings) {
-        //Log.v(TAG, "getLocalEventsCount()");
-        String SQLStr = "SQLStr";
-        String statusListStr;
-
-        if (includeWarnings) {
-            statusListStr = "1,2,3,5";   // Warning, Alarm, Fall, Manual Alarm
-        } else {
-            statusListStr = "2,3,5";    // Alarm, Fall, Manual Alarm
-        }
-        try {
-            SQLStr = "SELECT * from " + mDbTableName + " where Status in (" + statusListStr + ");";
-            Cursor resultSet = mOSDDb.getWritableDatabase().rawQuery(SQLStr, null);
-            resultSet.moveToFirst();
-            return (resultSet.getCount());
-        } catch (SQLException e) {
-            Log.e(TAG, "getLocalEventsCount(): Error selecting Data: " + e.toString());
-            Log.e(TAG, "SQLStr was " + SQLStr);
-            return (0);
-        }
+    public boolean getLocalEventsCount(boolean includeWarnings, Consumer<Long> callback) {
+        Log.v(TAG, "getLocalEventsCount- includeWarnings=" + includeWarnings);
+        String[] whereArgs = getEventWhereArgs(includeWarnings);
+        String whereClause = getEventWhereClause(includeWarnings);
+        String[] columns = {"*"};
+        new SelectQueryTask(mDbTableName, columns, whereClause, whereArgs,
+                null, null, null, (Cursor cursor) -> {
+            Log.v(TAG, "getLocalEventsCount - returned " + cursor);
+            Long eventCount = Long.valueOf(0);
+            if (cursor != null) {
+                eventCount = Long.valueOf(cursor.getCount());
+                Log.v(TAG, "getLocalEventsCount - returned " + eventCount + " records");
+            }
+            callback.accept(eventCount);
+        }).execute();
+        return (true);
     }
 
     /**
-     * Return the number of datapoints stored in the local database
+     * Return the number of datapoints stored in the local database (via a callback).
+     *
+     * @return True on successful start or false if call fails.
      */
-    public int getLocalDatapointsCount() {
-        //Log.v(TAG, "getLocalDatapointsCount()");
-        String SQLStr = "SQLStr";
-        String statusListStr;
-
-        try {
-            SQLStr = "SELECT * from " + mDbTableName + ";";
-            Cursor resultSet = mOSDDb.getWritableDatabase().rawQuery(SQLStr, null);
-            resultSet.moveToFirst();
-            return (resultSet.getCount());
-        } catch (SQLException e) {
-            Log.e(TAG, "getLocalDatapointsCount(): Error selecting Data: " + e.toString());
-            Log.e(TAG, "SQLStr was " + SQLStr);
-            return (0);
-        }
+    public boolean getLocalDatapointsCount(Consumer<Long> callback) {
+        Log.v(TAG, "getLocalDatapointsCount");
+        String[] whereArgs = null;
+        String whereClause = null;
+        String[] columns = {"*"};
+        new SelectQueryTask(mDbTableName, columns, whereClause, whereArgs,
+                null, null, null, (Cursor cursor) -> {
+            Log.v(TAG, "getLocalDatapointsCount - returned " + cursor);
+            Long eventCount = Long.valueOf(0);
+            if (cursor != null) {
+                eventCount = Long.valueOf(cursor.getCount());
+                Log.v(TAG, "getLocalDatapointsCount - returned " + eventCount + " records");
+            }
+            callback.accept(eventCount);
+        }).execute();
+        return (true);
     }
+
 
     /**
      * Executes the sqlite query (=SELECT statement)
@@ -630,6 +594,31 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     }
 
 
+    private String getEventWhereClause(boolean includeWarnings) {
+        String whereClause;
+        if (includeWarnings) {
+            whereClause = "Status in (?, ?, ?, ?)";
+        } else {
+            whereClause = "Status in (?, ?, ?)";
+        }
+        return(whereClause);
+    }
+
+    private String[] getEventWhereArgs(boolean includeWarnings) {
+        String[] whereArgs;
+        if (includeWarnings) {
+            String[] whereArgsWarnings = { "1", "2", "3", "5"};
+            whereArgs = whereArgsWarnings;
+        } else {
+            String[] whereArgsNoWarnings = { "2", "3", "5"};
+            whereArgs = whereArgsNoWarnings;
+        }
+        return(whereArgs);
+    }
+
+
+
+
     /***************************************************************************************
      * Remote Database Part
      */
@@ -673,7 +662,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         //int eventId = -1;
         Log.v(TAG, "uploadSdData()");
         // First try uploading full alarms, and only if we do not have any of those, upload warnings.
-        getNextEventToUpload((Long eventId) -> {
+        getNextEventToUpload(true, (Long eventId) -> {
             if (eventId != -1) {
                 Log.v(TAG, "uploadSdData() - eventId=" + eventId);
                 String eventJsonStr = getDatapointById(eventId);
@@ -757,32 +746,30 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         long endDateMillis = eventDateMillis + 1000 * mEventDuration / 2;
         dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-        String datapointsJsonStr = getDatapointsbyDate(
+        getDatapointsByDate(
                 dateFormat.format(new Date(startDateMillis)),
-                dateFormat.format(new Date(endDateMillis)));
-        Log.v(TAG, "eventCallback() - datapointsJsonStr=" + datapointsJsonStr);
+                dateFormat.format(new Date(endDateMillis)), (String datapointsJsonStr) -> {
+                    Log.v(TAG, "eventCallback() - datapointsJsonStr=" + datapointsJsonStr);
+                    JSONArray dataObj;
+                    mDatapointsToUploadList = new ArrayList<JSONObject>();
+                    try {
+                        //DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+                        dataObj = new JSONArray(datapointsJsonStr);
+                        for (int i = 0; i < dataObj.length(); i++) {
+                            mDatapointsToUploadList.add(dataObj.getJSONObject(i));
+                        }
+                    } catch (JSONException e) {
+                        Log.v(TAG, "Error Creating JSON Object from string " + datapointsJsonStr);
+                        dataObj = null;
+                        finishUpload();
+                    }
+                    // This starts the process of uploading the datapoints, one at a time.
+                    mCurrentEventId = eventId;
+                    mUploadInProgress = true;
+                    Log.v(TAG, "eventCallback() - starting datapoints upload with eventId " + mCurrentEventId);
+                    uploadNextDatapoint();
 
-        JSONArray dataObj;
-        mDatapointsToUploadList = new ArrayList<JSONObject>();
-        try {
-            //DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-            dataObj = new JSONArray(datapointsJsonStr);
-            for (int i = 0; i < dataObj.length(); i++) {
-                mDatapointsToUploadList.add(dataObj.getJSONObject(i));
-            }
-            //dataObj.put("dataTime", dateFormat.format(new Date()));
-            //Log.v(TAG, "eventCallback(): Creating Datapoint...SdData="+dataObj.toString());
-            //mWac.createDatapoint(dataObj,eventId);
-        } catch (JSONException e) {
-            Log.v(TAG, "Error Creating JSON Object from string " + datapointsJsonStr);
-            dataObj = null;
-            finishUpload();
-        }
-        // This starts the process of uploading the datapoints, one at a time.
-        mCurrentEventId = eventId;
-        mUploadInProgress = true;
-        Log.v(TAG, "eventCallback() - starting datapoints upload with eventId " + mCurrentEventId);
-        uploadNextDatapoint();
+                });
     }
 
     // takes the next datapoint of the list mDatapointsToUploadList and uploads it to the remote server.
