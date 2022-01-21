@@ -361,23 +361,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
             //event.put("id", cursor.getString(cursor.getColumnIndex("id")));
             event.put("dataTime", cursor.getString(cursor.getColumnIndex("dataTime")));
             int status = cursor.getInt(cursor.getColumnIndex("Status"));
-            String statusStr = "Unknown";
-            switch (status) {
-                case 1:
-                    statusStr = "WARNING";
-                    break;
-                case 2:
-                    statusStr = "ALARM";
-                    break;
-                case 3:
-                    statusStr = "FALL";
-                    break;
-                case 5:
-                    statusStr = "MANUAL ALARM";
-                    break;
-                default:
-                    statusStr = "Unknown";
-            }
+            String statusStr = mUtil.alarmStatusToString(status);
             event.put("status",statusStr);
             event.put("uploaded", cursor.getString(cursor.getColumnIndex("uploaded")));
             //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
@@ -611,33 +595,13 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
                 e.printStackTrace();
                 return;
             }
-            // FIXME - this should really not be hard coded but based on a file on the API server.
-            // GJ 03jan22
-            switch (eventAlarmStatus) {
-                case 1: // Warning
-                    eventType = 1;
-                    break;
-                case 2: // alarm
-                    eventType = 0;
-                    break;
-                case 3: // fall
-                    eventType = 2;
-                    break;
-                case 5: // Manual alarm
-                    eventType = 3;
-                    break;
-                default:
-                    eventType = -1;
-                    Log.e(TAG, "UploadSdData - alarmStatus " + eventAlarmStatus + " unrecognised");
-                    return;
-            }
             try {
                 eventDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(eventDateStr);
             } catch (ParseException e) {
                 Log.e(TAG, "Error parsing date " + eventDateStr);
                 return;
             }
-            mWac.createEvent(eventType, eventDate, "Uploaded by OpenSeizureDetector Android App");
+            mWac.createEvent(eventAlarmStatus, eventDate, "Uploaded by OpenSeizureDetector Android App");
         } else{
             Log.v(TAG,"UploadSdData - no data to upload");
         }

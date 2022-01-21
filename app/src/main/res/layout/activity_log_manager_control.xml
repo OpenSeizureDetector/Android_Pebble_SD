@@ -111,10 +111,10 @@
     </LinearLayout>
 
     <Button
-        android:id="@+id/view_remote_db_button"
+        android:id="@+id/refresh_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/view_remote_db_btn" />
+        android:text="@string/refreshBtn" />
 
 
 

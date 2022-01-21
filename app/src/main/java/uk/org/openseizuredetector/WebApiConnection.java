@@ -3,6 +3,7 @@ package uk.org.openseizuredetector;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.icu.text.RelativeDateTimeFormatter;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -42,6 +43,7 @@ public class WebApiConnection {
     private DatapointCallbackInterface mDatapointCallback;
     private Context mContext;
     private String TOKEN_ID = "webApiAuthToken";
+    private OsdUtil mUtil;
     RequestQueue mQueue;
 
     public WebApiConnection(Context context, AuthCallbackInterface authCallback, EventCallbackInterface eventCallback,
@@ -51,6 +53,7 @@ public class WebApiConnection {
         mEventCallback = eventCallback;
         mDatapointCallback = datapointCallback;
         mQueue = Volley.newRequestQueue(context);
+        mUtil = new OsdUtil(mContext, new Handler());
     }
 
     public boolean authenticate(final String uname, final String passwd) {
@@ -135,6 +138,7 @@ public class WebApiConnection {
 
 
     // Create a new event in the remote database, based on the provided parameters.
+    // FIXME - eventType info below is wrong!
     // EventType is defined by the WebAPI in https://github.com/OpenSeizureDetector/webApi/blob/master/api/events/models.py
     // We currently use:
     // 0: Unvalidated Alarm
@@ -165,7 +169,6 @@ public class WebApiConnection {
         final String dataStr = jsonObject.toString();
         Log.v(TAG, "createEvent - data=" + dataStr);
 
-
         StringRequest req = new StringRequest(Request.Method.POST, urlStr,
                 new Response.Listener<String>() {
                     @Override
@@ -190,9 +193,6 @@ public class WebApiConnection {
                 String authToken = getStoredToken();
                 params.put("Authorization: Token " + authToken, authToken);
                 Log.v(TAG, "getParams: params=" + params.toString());
-                //params.put("eventType", String.valueOf(eventType));
-                //params.put("dataTime", dateFormat.format(eventDate));
-                //params.put("desc", eventDesc);
                 return params;
             }
 
@@ -238,6 +238,7 @@ public class WebApiConnection {
                         Log.v(TAG, "Response is: " + response);
                         try {
                             JSONObject retObj = new JSONObject(response);
+                            retObj.put("alarmStateStr",mUtil.alarmStatusToString(retObj.getInt("osdAlarmState")));
                             callback.accept(retObj);
                         } catch (JSONException e) {
                             Log.e(TAG,"getEventTypes.onRespons(): Error: "+e.getMessage()+","+e.toString());

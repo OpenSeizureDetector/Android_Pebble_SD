@@ -324,4 +324,5 @@
     <string name="event_sub_type">"Event Sub-Type: "</string>
     <string name="selectFromOptionselow">"-- select option --"</string>
     <string name="waitingForData">...waiting for data...</string>
+    <string name="refreshBtn">Refresh</string>
 </resources>

@@ -61,8 +61,8 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 (Button) findViewById(R.id.reportSeizureBtn);
         reportSeizureBtn.setOnClickListener(onReportSeizureBtn);
         Button remoteDbBtn =
-                (Button) findViewById(R.id.view_remote_db_button);
-        remoteDbBtn.setOnClickListener(onRemoteDbBtn);
+                (Button) findViewById(R.id.refresh_button);
+        remoteDbBtn.setOnClickListener(onRefreshBtn);
 
         ListView lv = (ListView) findViewById(R.id.eventLogListView);
         lv.setOnItemClickListener(onEventListClick);
@@ -129,6 +129,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
     private void initialiseServiceConnection() {
         mLm = mConnection.mSdServer.mLm;
+        startUiTimer();
         getRemoteEvents();
         // Populate events list - we only do it once when the activity is created because the query might slow down the UI.
         // We could try this code in updateUI() and see though.
@@ -162,6 +163,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         HashMap<String, String> eventHashMap = new HashMap<String, String>();
                         eventHashMap.put("id", String.valueOf(id));
                         eventHashMap.put("osdAlarmState", String.valueOf(osdAlarmState));
+                        eventHashMap.put("osdAlarmStateStr", mUtil.alarmStatusToString(osdAlarmState));
                         eventHashMap.put("dataTime", dataTime);
                         eventHashMap.put("type", typeStr);
                         eventHashMap.put("subType", subType);
@@ -298,6 +300,16 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     startActivity(i);
                 }
             };
+
+    View.OnClickListener onRefreshBtn =
+            new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.v(TAG, "onRefreshBtn");
+                    initialiseServiceConnection();
+                }
+            };
+
 
     AdapterView.OnItemClickListener onEventListClick =
             new AdapterView.OnItemClickListener() {

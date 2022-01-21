@@ -541,4 +541,30 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
         }, 100);
 
     }
+
+
+    public final int ALARM_STATUS_WARNING = 1;
+    public final int ALARM_STATUS_ALARM = 2;
+    public final int ALARM_STATUS_FALL = 3;
+    public final int ALARM_STATUS_MANUAL = 5;
+
+    public String alarmStatusToString(int eventAlarmStatus) {
+        String retVal = "Unknown";
+        switch (eventAlarmStatus) {
+            case ALARM_STATUS_WARNING: // Warning
+                retVal = "WARNING";
+                break;
+            case ALARM_STATUS_ALARM: // alarm
+                retVal = "ALARM";
+                break;
+            case ALARM_STATUS_FALL: // fall
+                retVal = "FALL";
+                break;
+            case ALARM_STATUS_MANUAL: // Manual alarm
+                retVal = "MANUAL ALARM";
+                break;
+
+        }
+        return(retVal);
+    }
 }

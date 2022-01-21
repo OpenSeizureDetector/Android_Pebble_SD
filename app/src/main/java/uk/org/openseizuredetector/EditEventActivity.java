@@ -171,6 +171,8 @@ public class EditEventActivity extends AppCompatActivity
             if (mEventObj != null) {
                 tv = (TextView) findViewById(R.id.eventIdTv);
                 tv.setText(String.valueOf(mEventObj.getLong("id")));
+                tv = (TextView) findViewById(R.id.eventAlarmStateTv);
+                tv.setText(mEventObj.getString("alarmStateStr"));
                 tv = (TextView) findViewById(R.id.eventNotsTv);
                 tv.setText(mEventObj.getString("desc"));
 
