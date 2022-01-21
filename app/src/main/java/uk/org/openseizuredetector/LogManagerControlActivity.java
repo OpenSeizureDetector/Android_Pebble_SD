@@ -134,7 +134,10 @@ public class LogManagerControlActivity extends AppCompatActivity {
         // Populate events list - we only do it once when the activity is created because the query might slow down the UI.
         // We could try this code in updateUI() and see though.
         // Based on https://www.tutlane.com/tutorial/android/android-sqlite-listview-with-examples
-        mEventsList = mLm.getEventsList(true);
+        mLm.getEventsList(true, (ArrayList<HashMap<String,String>> eventsList)-> {
+            mEventsList = eventsList;
+        });
+        //mEventsList = mLm.getEventsList(true);
     }
 
 
