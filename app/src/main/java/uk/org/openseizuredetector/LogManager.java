@@ -45,6 +45,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.function.Consumer;
@@ -347,53 +348,43 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
      */
     public boolean getEventsList(boolean includeWarnings, Consumer<ArrayList<HashMap<String, String>>> callback) {
         Log.v(TAG, "getEventsList - includeWarnings=" + includeWarnings);
-        // Based on https://stackoverflow.com/questions/24827312/is-a-good-practice-create-anonymous-asynctask-for-parallel-small-known-freeze-pr
-        new AsyncTask<Boolean, Void, ArrayList<HashMap<String, String>>>() {
-            @Override
-            protected ArrayList<HashMap<String, String>> doInBackground(Boolean... includeWarnings) {
-                Log.v(TAG, "getEventsList.doInBackground - includeWarnings=" + includeWarnings);
-                return _getEventsList(includeWarnings[0]);
-            }
+        ArrayList<HashMap<String, String>> eventsList = new ArrayList<>();
 
-            @Override
-            protected void onPostExecute(final ArrayList<HashMap<String, String>> result) {
-                callback.accept(result);
+        String[] whereArgs;
+        String whereClause;
+        if (includeWarnings) {
+            String[] whereArgsWarnings = { "1", "2", "3", "5"};
+            whereClause = "Status in (?, ?, ?, ?)";
+            whereArgs = whereArgsWarnings;
+        } else {
+            whereClause = "Status in (?, ?, ?)";
+            String[] whereArgsNoWarnings = { "2", "3", "5"};
+            whereArgs = whereArgsNoWarnings;
+        }
+        //sqlStr = "SELECT * from " + mDbTableName + " where Status in (" + statusListStr + ") order by dataTime desc;";
+        String[] columns = {"*"};
+        new SelectQueryTask(mDbTableName, columns, whereClause, whereArgs,
+                null, null, "dataTime DESC", (Cursor cursor) -> {
+            Log.v(TAG, "getEventsList - returned " + cursor);
+            if (cursor != null) {
+                Log.v(TAG, "getEventsList - returned " + cursor.getCount() + " records");
+                while (cursor.moveToNext()) {
+                    HashMap<String, String> event = new HashMap<>();
+                    //event.put("id", cursor.getString(cursor.getColumnIndex("id")));
+                    event.put("dataTime", cursor.getString(cursor.getColumnIndex("dataTime")));
+                    int status = cursor.getInt(cursor.getColumnIndex("Status"));
+                    String statusStr = mUtil.alarmStatusToString(status);
+                    event.put("status", statusStr);
+                    event.put("uploaded", cursor.getString(cursor.getColumnIndex("uploaded")));
+                    //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
+                    eventsList.add(event);
+                }
             }
-        }.execute(includeWarnings);
+            callback.accept(eventsList);
+        }).execute();
         return (true);
     }
 
-    // Return an array list of objects representing the events in the database.
-    // Based on https://www.tutlane.com/tutorial/android/android-sqlite-listview-with-examples
-    public ArrayList<HashMap<String, String>> _getEventsList(boolean includeWarnings) {
-        //Log.v(TAG,"getEventsList()");
-        SQLiteDatabase db = mOSDDb.getWritableDatabase();
-        ArrayList<HashMap<String, String>> eventsList = new ArrayList<>();
-        String statusListStr, sqlStr;
-        if (includeWarnings) {
-            statusListStr = "1,2,3,5";   // Warning, Alarm, Fall, Manual Alarm
-        } else {
-            statusListStr = "2,3,5";    // Alarm, Fall, Manual Alarm
-        }
-
-        sqlStr = "SELECT * from " + mDbTableName + " where Status in (" + statusListStr + ") order by dataTime desc;";
-
-        Cursor cursor = db.rawQuery(sqlStr, null);
-        Log.v(TAG, "getEventsList - returned " + cursor.getCount() + " records");
-        while (cursor.moveToNext()) {
-            HashMap<String, String> event = new HashMap<>();
-            //event.put("id", cursor.getString(cursor.getColumnIndex("id")));
-            event.put("dataTime", cursor.getString(cursor.getColumnIndex("dataTime")));
-            int status = cursor.getInt(cursor.getColumnIndex("Status"));
-            String statusStr = mUtil.alarmStatusToString(status);
-            event.put("status", statusStr);
-            event.put("uploaded", cursor.getString(cursor.getColumnIndex("uploaded")));
-            //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
-            eventsList.add(event);
-        }
-        //Log.v(TAG,"getEventsList() - returning "+eventsList);
-        return eventsList;
-    }
 
     /**
      * pruneLocalDb() removes data that is older than mLocalDbMaxAgeDays days
@@ -570,7 +561,78 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         }
     }
 
+    /**
+     * Executes the sqlite query (=SELECT statement)
+     * Use as new SelectQueryTask(xxx,xxx,xx,xxxx).execute()
+     *
+     * @param table         - table name to query
+     * @param columns       - array of strings of column names to return
+     * @param selection     - where clause
+     * @param selectionArgs - arguments for where clause (array of strings)
+     * @param groupBy;
+     * @param having;
+     * @param orderBy;
+     * @param callback
+     * @return A Cursor object containing the result of the query.
+     */
+    private class SelectQueryTask extends AsyncTask<Void, Void, Cursor> {
+        // Based on https://stackoverflow.com/a/21120199/2104584
+        String mTable;
+        String[] mColumns;
+        String mSelection;
+        String[] mSelectionArgs;
+        String mGroupBy;
+        String mHaving;
+        String mOrderBy;
+        Consumer<Cursor> mCallback;
 
+        //query(String table, String[] columns, String selection, String[] selectionArgs,
+        // String groupBy, String having, String orderBy)
+        SelectQueryTask(String table, String[] columns, String selection, String[] selectionArgs,
+                        String groupBy, String having, String orderBy, Consumer<Cursor> callback) {
+            // list all the parameters like in normal class define
+            this.mTable = table;
+            this.mColumns = columns;
+            this.mSelection = selection;
+            this.mSelectionArgs = selectionArgs;
+            this.mGroupBy = groupBy;
+            this.mHaving = having;
+            this.mOrderBy = orderBy;
+            this.mCallback = callback;
+
+        }
+
+        @Override
+        protected Cursor doInBackground(Void... params) {
+            Log.v(TAG, "runSelect.doInBackground()");
+            Log.v(TAG, "SelectQueryTask.doInBackground: mTable=" + mTable + ", mColumns=" + Arrays.toString(mColumns)
+                    + ", mSelection=" + mSelection + ", mSelectionArgs=" + Arrays.toString(mSelectionArgs) + ", mGroupBy=" + mGroupBy
+                    + ", mHaving =" + mHaving + ", mOrderBy=" + mOrderBy);
+
+            try {
+                Cursor resultSet = mOSDDb.getWritableDatabase().query(mTable, mColumns, mSelection,
+                        mSelectionArgs, mGroupBy, mHaving, mOrderBy);
+                resultSet.moveToFirst();
+                return (resultSet);
+            } catch (SQLException e) {
+                Log.e(TAG, "SelectQueryTask.doInBackground(): Error selecting Data: " + e.toString());
+                return (null);
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "SelectQueryTask.doInBackground(): Illegal Argument Exception: " + e.toString());
+                return (null);
+            }
+        }
+
+        @Override
+        protected void onPostExecute(final Cursor result) {
+            mCallback.accept(result);
+        }
+    }
+
+
+    /***************************************************************************************
+     * Remote Database Part
+     */
     public void writeToRemoteServer() {
         Log.v(TAG, "writeToRemoteServer()");
         if (!mLogRemote) {

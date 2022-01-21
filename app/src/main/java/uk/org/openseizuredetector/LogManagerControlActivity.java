@@ -136,6 +136,8 @@ public class LogManagerControlActivity extends AppCompatActivity {
         // Based on https://www.tutlane.com/tutorial/android/android-sqlite-listview-with-examples
         mLm.getEventsList(true, (ArrayList<HashMap<String,String>> eventsList)-> {
             mEventsList = eventsList;
+            Log.v(TAG,"initialiseServiceConnection() - set mEventsList");
+            updateUi();
         });
         //mEventsList = mLm.getEventsList(true);
     }
@@ -150,7 +152,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 Log.e(TAG, "getRemoteEvents Callback:  Error Retrieving events");
                 mUtil.showToast("Error Retrieving Remote Events from Server - Please Try Again Later!");
             } else {
-                Log.v(TAG, "remoteEventsObj = " + remoteEventsObj.toString());
+                //Log.v(TAG, "remoteEventsObj = " + remoteEventsObj.toString());
                 try {
                     JSONArray eventsArray = remoteEventsObj.getJSONArray("events");
                     mRemoteEventsList = new ArrayList<HashMap<String, String>>();
@@ -178,7 +180,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     mUtil.showToast("Error Parsing remoteEventsObj - this should not happen!!!");
                     mRemoteEventsList = null;
                 }
-                Log.v(TAG, "getRemoteEvents(): mRemoteEventsList = " + mRemoteEventsList.toString());
+                //Log.v(TAG, "getRemoteEvents(): mRemoteEventsList = " + mRemoteEventsList.toString());
             }
         });
     }
