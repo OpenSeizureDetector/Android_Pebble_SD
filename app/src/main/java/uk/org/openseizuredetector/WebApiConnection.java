@@ -84,8 +84,12 @@ public class WebApiConnection {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        String responseBody = new String(error.networkResponse.data);
-                        Log.v(TAG, "Login Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        if (error != null) {
+                            String responseBody = new String(error.networkResponse.data);
+                            Log.e(TAG, "Login Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        } else {
+                            Log.e(TAG,"Login Error:  Returned null response");
+                        }
                         saveStoredToken(null);
                         mAuthCallback.authCallback(false, new String(error.networkResponse.data));
                     }
@@ -180,9 +184,14 @@ public class WebApiConnection {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        String responseBody = new String(error.networkResponse.data);
-                        Log.v(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
-                        mEventCallback.eventCallback(false, new String(error.networkResponse.data));
+                        if (error != null) {
+                            String responseBody = new String(error.networkResponse.data);
+                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                            mEventCallback.eventCallback(false, new String(error.networkResponse.data));
+                        } else {
+                            Log.e(TAG,"Create Event Error - null respones");
+                            mEventCallback.eventCallback(false, null);
+                        }
                     }
                 }) {
             // Note, this is overriding part of StringRequest, not one of the sub-classes above!
@@ -249,8 +258,12 @@ public class WebApiConnection {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        String responseBody = new String(error.networkResponse.data);
-                        Log.v(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        if (error != null) {
+                            String responseBody = new String(error.networkResponse.data);
+                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        } else {
+                            Log.e(TAG, "Create Event Error: returned null response");
+                        }
                         callback.accept(null);
                     }
                 }) {
@@ -303,8 +316,12 @@ public class WebApiConnection {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        String responseBody = new String(error.networkResponse.data);
-                        Log.v(TAG, "getEvents(): Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        if (error != null) {
+                            String responseBody = new String(error.networkResponse.data);
+                            Log.e(TAG, "getEvents(): Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        } else {
+                            Log.e(TAG,"getEvents(): Error: - request returned null response");
+                        }
                         callback.accept(null);
                     }
                 }) {
@@ -371,8 +388,12 @@ public class WebApiConnection {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        String responseBody = new String(error.networkResponse.data);
-                        Log.v(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        if (error != null) {
+                            String responseBody = new String(error.networkResponse.data);
+                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        } else {
+                            Log.e(TAG,"Create Event Error - returned null response");
+                        }
                         callback.accept(null);
                     }
                 }) {
@@ -453,9 +474,15 @@ public class WebApiConnection {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        String responseBody = new String(error.networkResponse.data);
-                        Log.v(TAG, "Create Datapoint Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
-                        mDatapointCallback.datapointCallback(false, new String(error.networkResponse.data));
+                        if (error != null) {
+                            // Fixme = are we sure that networResponse.data is not null???
+                            String responseBody = new String(error.networkResponse.data);
+                            Log.e(TAG, "Create Datapoint Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                            mDatapointCallback.datapointCallback(false, new String(error.networkResponse.data));
+                        } else {
+                            Log.e(TAG,"Create Datapoint Error - returned null respones");
+                            mDatapointCallback.datapointCallback(false, null);
+                        }
                     }
                 }) {
             // Note, this is overriding part of StringRequest, not one of the sub-classes above!
@@ -531,8 +558,12 @@ public class WebApiConnection {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        String responseBody = new String(error.networkResponse.data);
-                        Log.e(TAG, "getEventTypes.onErrorResponse(): " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        if (error != null) {
+                            String responseBody = new String(error.networkResponse.data);
+                            Log.e(TAG, "getEventTypes.onErrorResponse(): " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        } else {
+                            Log.e(TAG,"getEventTypes.onErrorResponse() - returned null response");
+                        }
                         callback.accept(null);
                     }
                 }) {
