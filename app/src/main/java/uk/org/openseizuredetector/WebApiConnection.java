@@ -38,25 +38,26 @@ public class WebApiConnection {
     public int retCode;
     private String mUrlBase = "https://osdApi.ddns.net";
     private String TAG = "WebApiConnection";
-    private AuthCallbackInterface mAuthCallback;
-    private EventCallbackInterface mEventCallback;
-    private DatapointCallbackInterface mDatapointCallback;
+    private String mAuthToken;
     private Context mContext;
-    private String TOKEN_ID = "webApiAuthToken";
     private OsdUtil mUtil;
     RequestQueue mQueue;
 
-    public WebApiConnection(Context context, AuthCallbackInterface authCallback, EventCallbackInterface eventCallback,
-                            DatapointCallbackInterface datapointCallback) {
+    public WebApiConnection(Context context) {
         mContext = context;
-        mAuthCallback = authCallback;
-        mEventCallback = eventCallback;
-        mDatapointCallback = datapointCallback;
         mQueue = Volley.newRequestQueue(context);
         mUtil = new OsdUtil(mContext, new Handler());
     }
 
-    public boolean authenticate(final String uname, final String passwd) {
+    /**
+     * Attempt to authenticate with the web API using user name uname and password passwd.  Calls function callback with either
+     * the authentication token on success or null on failure.
+     * @param uname - user name
+     * @param passwd - password
+     * @param callback - call back function callback(String retVal)
+     * @return true if request sent, or false if failed to send request.
+     */
+    public boolean authenticate(final String uname, final String passwd, Consumer<String> callback) {
         // NOTE:  the 'final' keyword is necessary for uname and passwd to be accessible to getParams below - I don't know why!
         // We know that this command works, so we just need the Java equivalent:
         // curl -X POST -d 'login=graham4&password=testpwd1' https://osdapi.ddns.net/api/accounts/login/
@@ -69,7 +70,7 @@ public class WebApiConnection {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        String tokenStr;
+                        String tokenStr = null;
                         Log.v(TAG, "Response is: " + response);
                         try {
                             JSONObject jo = new JSONObject(response);
@@ -77,8 +78,8 @@ public class WebApiConnection {
                         } catch (JSONException e) {
                             tokenStr = "Error Parsing Rsponse";
                         }
-                        saveStoredToken(tokenStr);
-                        mAuthCallback.authCallback(true, response);
+                        setStoredToken(tokenStr);
+                        callback.accept(tokenStr);
                     }
                 },
                 new Response.ErrorListener() {
@@ -90,8 +91,8 @@ public class WebApiConnection {
                         } else {
                             Log.e(TAG,"Login Error:  Returned null response");
                         }
-                        saveStoredToken(null);
-                        mAuthCallback.authCallback(false, new String(error.networkResponse.data));
+                        setStoredToken(null);
+                        callback.accept(null);
                     }
                 }) {
             // Note, this is overriding part of StringRequest, not one of the sub-classes above!
@@ -112,20 +113,16 @@ public class WebApiConnection {
     // Remove the stored token so future calls are not authenticated.
     public void logout() {
         Log.v(TAG, "logout()");
-        saveStoredToken(null);
+        setStoredToken(null);
+        //saveStoredToken(null);
     }
 
-
-    private void saveStoredToken(String tokenStr) {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-        prefs.edit().putString(TOKEN_ID, tokenStr).commit();
-
+    public void setStoredToken(String authToken) {
+        mAuthToken = authToken;
     }
 
-    public String getStoredToken() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-        String authToken = prefs.getString(TOKEN_ID, null);
-        return authToken;
+    private String getStoredToken() {
+        return(mAuthToken);
     }
 
     public boolean isLoggedIn() {
@@ -142,7 +139,7 @@ public class WebApiConnection {
 
 
     // Create a new event in the remote database, based on the provided parameters.
-    public boolean createEvent(final int osdAlarmState, final Date eventDate, final String eventDesc) {
+    public boolean createEvent(final int osdAlarmState, final Date eventDate, final String eventDesc, Consumer<String> callback) {
         Log.v(TAG, "createEvent()");
         String urlStr = mUrlBase + "/api/events/";
         Log.v(TAG, "urlStr=" + urlStr);
@@ -169,7 +166,7 @@ public class WebApiConnection {
                     @Override
                     public void onResponse(String response) {
                         Log.v(TAG, "Response is: " + response);
-                        mEventCallback.eventCallback(true, response);
+                        callback.accept(response);
                     }
                 },
                 new Response.ErrorListener() {
@@ -178,10 +175,10 @@ public class WebApiConnection {
                         if (error != null) {
                             String responseBody = new String(error.networkResponse.data);
                             Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
-                            mEventCallback.eventCallback(false, new String(error.networkResponse.data));
+                            callback.accept(null);
                         } else {
                             Log.e(TAG,"Create Event Error - null respones");
-                            mEventCallback.eventCallback(false, null);
+                            callback.accept(null);
                         }
                     }
                 }) {
@@ -428,7 +425,7 @@ public class WebApiConnection {
 
 
 
-    public boolean createDatapoint(JSONObject dataObj, int eventId) {
+    public boolean createDatapoint(JSONObject dataObj, int eventId, Consumer<String>callback) {
         Log.v(TAG, "createDatapoint()");
         // Create a new event in the remote database, based on the provided parameters.
         String urlStr = mUrlBase + "/api/datapoints/";
@@ -459,7 +456,7 @@ public class WebApiConnection {
                     @Override
                     public void onResponse(String response) {
                         Log.v(TAG, "Response is: " + response);
-                        mDatapointCallback.datapointCallback(true, response);
+                        callback.accept(response);
                     }
                 },
                 new Response.ErrorListener() {
@@ -469,10 +466,10 @@ public class WebApiConnection {
                             // Fixme = are we sure that networResponse.data is not null???
                             String responseBody = new String(error.networkResponse.data);
                             Log.e(TAG, "Create Datapoint Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
-                            mDatapointCallback.datapointCallback(false, new String(error.networkResponse.data));
+                            callback.accept(null);
                         } else {
                             Log.e(TAG,"Create Datapoint Error - returned null respones");
-                            mDatapointCallback.datapointCallback(false, null);
+                            callback.accept(null);
                         }
                     }
                 }) {
@@ -484,9 +481,6 @@ public class WebApiConnection {
                 String authToken = getStoredToken();
                 params.put("Authorization: Token " + authToken, authToken);
                 Log.v(TAG, "getParams: params=" + params.toString());
-                //params.put("eventType", String.valueOf(eventType));
-                //params.put("dataTime", dateFormat.format(eventDate));
-                //params.put("desc", eventDesc);
                 return params;
             }
 

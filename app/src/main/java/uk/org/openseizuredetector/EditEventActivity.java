@@ -27,12 +27,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-public class EditEventActivity extends AppCompatActivity
-        implements AuthCallbackInterface, EventCallbackInterface, DatapointCallbackInterface {
+public class EditEventActivity extends AppCompatActivity {
     private String TAG = "EditEventActivity";
     private Context mContext;
     private WebApiConnection mWac;
     private LogManager mLm;
+    private SdServiceConnection mConnection;
     final Handler serverStatusHandler = new Handler();
     private OsdUtil mUtil;
     private List<String> mEventTypesList = null;
@@ -54,9 +54,11 @@ public class EditEventActivity extends AppCompatActivity
         Log.v(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_event);
+        mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
+        mConnection = new SdServiceConnection(getApplicationContext());
 
-        mWac = new WebApiConnection(this, this, this, this);
-        mLm = new LogManager(this);
+        //mWac = new WebApiConnection(this, this, this, this);
+        //mLm = new LogManager(this);
 
 
         Bundle extras = getIntent().getExtras();
@@ -64,25 +66,8 @@ public class EditEventActivity extends AppCompatActivity
             Long eventId = extras.getLong("eventId");
             mEventId = eventId;
             Log.v(TAG, "onCreate - mEventId=" + mEventId);
-            try {
-                mWac.getEvent(mEventId, (JSONObject eventObj) -> {
-                    Log.v(TAG,"onCreate.getEvent");
-                    if (eventObj != null) {
-                        mEventObj = eventObj;
-                        Log.v(TAG, "onCreate.getEvent:  eventObj=" + eventObj.toString());
-                        updateUi();
-                        // FIXME: modify updateUi to use mEventObj
-                    } else {
-                        mUtil.showToast("Failed to Retrieve Event from Remote Database");
-                        finish();
-                    }
-                });
-            } catch (Exception e) {
-                Log.e(TAG,"ERROR:"+e.getMessage());
-                e.printStackTrace();
-            }
         }
-        mUtil = new OsdUtil(this, serverStatusHandler);
+
 
         Button cancelBtn =
                 (Button) findViewById(R.id.cancelBtn);
@@ -96,13 +81,47 @@ public class EditEventActivity extends AppCompatActivity
         mEventSubTypeRg.setOnCheckedChangeListener(onEventSubTypeChange);
 
 
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.v(TAG, "onStart()");
+        mUtil.bindToServer(getApplicationContext(), mConnection);
+        waitForConnection();
+
+        updateUi();
+    }
+
+    private void waitForConnection() {
+        // We want the UI to update as soon as it is displayed, but it takes a finite time for
+        // the mConnection to bind to the service, so we delay half a second to give it chance
+        // to connect before trying to update the UI for the first time (it happens again periodically using the uiTimer)
+        if (mConnection.mBound) {
+            Log.v(TAG, "waitForConnection - Bound!");
+            initialiseServiceConnection();
+        } else {
+            Log.v(TAG, "waitForConnection - waiting...");
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    waitForConnection();
+                }
+            }, 100);
+        }
+    }
+
+    private void initialiseServiceConnection() {
+        mLm = mConnection.mSdServer.mLm;
+        mWac = mConnection.mSdServer.mLm.mWac;
+
         // Retrieve the JSONObject containing the standard event types.
         // Note this obscure syntax is to avoid having to create another interface, so it is worth it :)
         // See https://medium.com/@pra4mesh/callback-function-in-java-20fa48b27797
         mWac.getEventTypes((JSONObject eventTypesObj) -> {
-            Log.v(TAG, "onCreate.onEventTypesReceived");
+            Log.v(TAG, "initialiseServiceConnection().onEventTypesReceived");
             if (eventTypesObj == null) {
-                Log.e(TAG, "onCreate.getEventTypes Callback:  Error Retrieving event types");
+                Log.e(TAG, "initialiseServiceConnection().getEventTypes Callback:  Error Retrieving event types");
                 mUtil.showToast("Error Retrieving Event Types from Server - Please Try Again Later!");
             } else {
                 Iterator<String> keys = eventTypesObj.keys();
@@ -110,7 +129,7 @@ public class EditEventActivity extends AppCompatActivity
                 mEventSubTypesHashMap = new HashMap<String, ArrayList<String>>();
                 while (keys.hasNext()) {
                     String key = keys.next();
-                    Log.v(TAG, "onCreate.getEventTypes Callback: key=" + key);
+                    Log.v(TAG, "initialiseServiceConnection().getEventTypes Callback: key=" + key);
                     mEventTypesList.add(key);
                     try {
                         JSONArray eventSubTypes = eventTypesObj.getJSONArray(key);
@@ -121,33 +140,37 @@ public class EditEventActivity extends AppCompatActivity
                         mEventSubTypesHashMap.put(key, eventSubtypesList);
                         mEventTypesListChanged = true;
                     } catch (JSONException e) {
-                        Log.e(TAG, "onCreate(getEventTypes Callback: Error parsing JSONObject" + e.getMessage() + e.toString());
+                        Log.e(TAG, "initialiseServiceConnection().getEventTypes Callback: Error parsing JSONObject" + e.getMessage() + e.toString());
                     }
                 }
                 updateUi();
             }
         });
+
+        // Retrieve the event data to edit
+        try {
+            mWac.getEvent(mEventId, (JSONObject eventObj) -> {
+                Log.v(TAG,"onCreate.getEvent");
+                if (eventObj != null) {
+                    mEventObj = eventObj;
+                    Log.v(TAG, "onCreate.getEvent:  eventObj=" + eventObj.toString());
+                    updateUi();
+                    // FIXME: modify updateUi to use mEventObj
+                } else {
+                    mUtil.showToast("Failed to Retrieve Event from Remote Database");
+                    finish();
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG,"ERROR:"+e.getMessage());
+            e.printStackTrace();
+        }
+
+
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Log.v(TAG, "onStart()");
-        updateUi();
-    }
 
-    public void authCallback(boolean authSuccess, String tokenStr) {
-        Log.v(TAG, "authCallback");
-        updateUi();
-    }
 
-    public void eventCallback(boolean success, String eventStr) {
-        Log.v(TAG, "eventCallback");
-    }
-
-    public void datapointCallback(boolean success, String datapointStr) {
-        Log.v(TAG, "datapointCallback");
-    }
 
     private void updateUi() {
         Log.v(TAG, "updateUI");

@@ -40,7 +40,7 @@
         <activity android:name=".AuthenticateActivity"></activity>
         <!-- @android:style/Theme.Holo.Light" -->
         <activity android:name=".BLEScanActivity" />
-        <activity android:name=".DBQueryActivity" /> <!-- android:usesCleartextTraffic="true" -->
+        <activity android:name=".ExportDataActivity" /> <!-- android:usesCleartextTraffic="true" -->
         <activity android:name=".StartupActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

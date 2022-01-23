@@ -15,9 +15,9 @@ import android.widget.TimePicker;
 
 import java.util.Calendar;
 
-public class DBQueryActivity extends AppCompatActivity
+public class ExportDataActivity extends AppCompatActivity
     implements View.OnClickListener {
-    String TAG = "DBQueryActivity";
+    String TAG = "ExportDataActivity";
     Button mDateBtn;
     Button mTimeBtn;
     Button mExportBtn;

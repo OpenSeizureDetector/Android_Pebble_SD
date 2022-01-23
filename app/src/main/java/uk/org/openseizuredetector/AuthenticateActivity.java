@@ -2,6 +2,8 @@ package uk.org.openseizuredetector;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 
 import android.os.Bundle;
@@ -12,20 +14,28 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-public class AuthenticateActivity extends AppCompatActivity
-        implements AuthCallbackInterface, EventCallbackInterface, DatapointCallbackInterface {
+import org.json.JSONObject;
+
+public class AuthenticateActivity extends AppCompatActivity {
     private String TAG = "AuthenticateActivity";
-    private Context mContext;
     private EditText mUnameEt;
     private EditText mPasswdEt;
     private WebApiConnection mWac;
     private LogManager mLm;
+    private SdServiceConnection mConnection;
+    private OsdUtil mUtil;
+    final Handler serverStatusHandler = new Handler();
+    private String TOKEN_ID = "webApiAuthToken";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.v(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_authenticate);
+
+        mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
+        mConnection = new SdServiceConnection(getApplicationContext());
+
         Button cancelBtn =
                 (Button) findViewById(R.id.cancelBtn);
         cancelBtn.setOnClickListener(onCancel);
@@ -39,20 +49,46 @@ public class AuthenticateActivity extends AppCompatActivity
 
         mUnameEt = (EditText) findViewById(R.id.username);
         mPasswdEt = (EditText) findViewById(R.id.password);
-        mWac = new WebApiConnection(this, this, this, this);
-        mLm = new LogManager(this);
+        //mWac = new WebApiConnection(this, String tokenStr);
+        //mLm = new LogManager(this);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        mUtil.bindToServer(getApplicationContext(), mConnection);
+        waitForConnection();
+
         updateUi();
     }
 
-    public void authCallback(boolean authSuccess, String tokenStr) {
-        Log.v(TAG,"authCallback");
-        updateUi();
+    private void waitForConnection() {
+        // We want the UI to update as soon as it is displayed, but it takes a finite time for
+        // the mConnection to bind to the service, so we delay half a second to give it chance
+        // to connect before trying to update the UI for the first time (it happens again periodically using the uiTimer)
+        if (mConnection.mBound) {
+            Log.v(TAG, "waitForConnection - Bound!");
+            initialiseServiceConnection();
+        } else {
+            Log.v(TAG, "waitForConnection - waiting...");
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    waitForConnection();
+                }
+            }, 100);
+        }
     }
+
+    private void initialiseServiceConnection() {
+        mLm = mConnection.mSdServer.mLm;
+        mWac = mConnection.mSdServer.mLm.mWac;
+    }
+
+    //public void authCallback(boolean authSuccess, String tokenStr) {
+    //Log.v(TAG,"authCallback");
+    //    updateUi();
+    //}
 
     public void eventCallback(boolean success, String eventStr) {
         Log.v(TAG,"eventCallback");
@@ -68,7 +104,7 @@ public class AuthenticateActivity extends AppCompatActivity
         LinearLayout loginLl = (LinearLayout)findViewById(R.id.login_ui);
         LinearLayout logoutLl = (LinearLayout)findViewById(R.id.logout_ui);
         Log.i(TAG, "switchUi()");
-        storedAuthToken = mWac.getStoredToken();
+        storedAuthToken = getAuthToken(); //mWac.getStoredToken();
         //prefs = PreferenceManager.getDefaultSharedPreferences(this);
         //storedAuthToken = (prefs.getString("webApiAuthToken", null));
         Log.v(TAG, "storedAuthToken=" + storedAuthToken);
@@ -107,7 +143,13 @@ public class AuthenticateActivity extends AppCompatActivity
                     String uname = mUnameEt.getText().toString();
                     String passwd = mPasswdEt.getText().toString();
                     Log.v(TAG,"onOK() - uname="+uname+", passwd="+passwd);
-                    mWac.authenticate(uname,passwd);
+                    mWac.authenticate(uname,passwd, (String retVal) -> {
+                        if (retVal != null) {
+                            Log.d(TAG,"Authentication Success - token is "+retVal);
+                            saveAuthToken(retVal);
+                            updateUi();
+                        }
+                    });
                     //finish();
                 }
             };
@@ -119,7 +161,23 @@ public class AuthenticateActivity extends AppCompatActivity
                     Log.v(TAG, "onLogout");
                     //m_status=false;
                     mWac.logout();
+                    saveAuthToken(null);
                     updateUi();
                 }
             };
+
+    private void saveAuthToken(String tokenStr) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        prefs.edit().putString(TOKEN_ID, tokenStr).commit();
+        mWac.setStoredToken(tokenStr);
+    }
+
+    public String getAuthToken() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String authToken = prefs.getString(TOKEN_ID, null);
+        return authToken;
+    }
+
+
+
 }

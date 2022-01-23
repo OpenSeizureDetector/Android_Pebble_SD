@@ -25,9 +25,7 @@
 
 package uk.org.openseizuredetector;
 
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -294,7 +292,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     Intent i = new Intent(
                             MainActivity.this,
-                            DBQueryActivity.class);
+                            ExportDataActivity.class);
                     this.startActivity(i);
                 } catch (Exception ex) {
                     Log.i(TAG, "exception starting export activity " + ex.toString());

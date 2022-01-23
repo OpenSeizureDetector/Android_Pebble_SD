@@ -70,12 +70,13 @@ import static android.database.sqlite.SQLiteDatabase.openOrCreateDatabase;
  * - Upload the datapoints, linking them to the new eventID.
  * - Mark all the uploaded datapoints as uploaded.
  */
-public class LogManager implements AuthCallbackInterface, EventCallbackInterface, DatapointCallbackInterface {
+public class LogManager {
     private String TAG = "LogManager";
     private String mDbName = "osdData";
     private String mDbTableName = "datapoints";
     private boolean mLogRemote;
     private boolean mLogRemoteMobile;
+    private String mAuthToken;
     private OsdDbHelper mOSDDb;
     private RemoteLogTimer mRemoteLogTimer;
     private Context mContext;
@@ -94,38 +95,33 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     private AutoPruneTimer mAutoPruneTimer;
 
 
-    public LogManager(Context context) {
+    public LogManager(Context context,
+                      boolean logRemote, boolean logRemoteMobile, String authToken,
+                      long eventDuration, long remoteLogPeriod,
+                      boolean autoPruneDb, long dataRetentionPeriod) {
         String prefVal;
         Log.d(TAG, "LogManger Constructor");
         mContext = context;
         Handler handler = new Handler();
 
-        SharedPreferences prefs;
-        prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-        mLogRemote = (prefs.getBoolean("LogDataRemote", false));
+        mLogRemote = logRemote;
+        mLogRemoteMobile = logRemoteMobile;
+        mAuthToken = authToken;
+        mEventDuration = eventDuration;
+        mAutoPruneDb = autoPruneDb;
+        mDataRetentionPeriod = dataRetentionPeriod;
+        mRemoteLogPeriod = remoteLogPeriod;
         Log.v(TAG, "mLogRemote=" + mLogRemote);
-        mLogRemoteMobile = (prefs.getBoolean("LogDataRemoteMobile", false));
         Log.v(TAG, "mLogRemoteMobile=" + mLogRemoteMobile);
-
-        prefVal = prefs.getString("EventDurationSec", "300");
-        mEventDuration = Integer.parseInt(prefVal);
         Log.v(TAG, "mEventDuration=" + mEventDuration);
-
-        mAutoPruneDb = prefs.getBoolean("AutoPruneDb", false);
         Log.v(TAG, "mAutoPruneDb=" + mAutoPruneDb);
-
-        prefVal = prefs.getString("DataRetentionPeriod", "28");
-        mDataRetentionPeriod = Integer.parseInt(prefVal);
         Log.v(TAG, "mDataRetentionPeriod=" + mDataRetentionPeriod);
-
-        prefVal = prefs.getString("RemoteLogPeriod", "60");
-        mRemoteLogPeriod = Integer.parseInt(prefVal);
         Log.v(TAG, "mRemoteLogPeriod=" + mRemoteLogPeriod);
-
 
         mUtil = new OsdUtil(mContext, handler);
         openDb();
-        mWac = new WebApiConnection(mContext, this, this, this);
+        mWac = new WebApiConnection(mContext);
+        mWac.setStoredToken(mAuthToken);
 
         startRemoteLogTimer();
 
@@ -417,8 +413,8 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         String whereClauseDate = "DataTime<?";
         String whereClause = whereClauseStatus + " AND " + whereClauseUploaded + " AND " + whereClauseDate;
 
-        String[] whereArgs = new String[ whereArgsStatus.length + 1];
-        for (int i = 0; i<whereArgsStatus.length; i++) {
+        String[] whereArgs = new String[whereArgsStatus.length + 1];
+        for (int i = 0; i < whereArgsStatus.length; i++) {
             whereArgs[i] = whereArgsStatus[i];
         }
         whereArgs[whereArgsStatus.length] = endDateStr;
@@ -452,7 +448,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
      */
     public boolean getNearestDatapointToDate(String dateStr, Consumer<Long> callback) {
         Log.v(TAG, "getNextEventToDate - dateStr=" + dateStr);
-        String[] columns = {"*","(julianday(dataTime)-julianday(datetime('" + dateStr + "'))) as ddiff"};
+        String[] columns = {"*", "(julianday(dataTime)-julianday(datetime('" + dateStr + "'))) as ddiff"};
         //SQLStr = "SELECT *, (julianday(dataTime)-julianday(datetime('" + dateStr + "'))) as ddiff from " + mDbTableName + " order by ABS(ddiff) asc;";
         String orderByStr = "ABS(ddiff) asc";
         new SelectQueryTask(mDbTableName, columns, null, null,
@@ -601,22 +597,20 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
         } else {
             whereClause = "Status in (?, ?, ?)";
         }
-        return(whereClause);
+        return (whereClause);
     }
 
     private String[] getEventWhereArgs(boolean includeWarnings) {
         String[] whereArgs;
         if (includeWarnings) {
-            String[] whereArgsWarnings = { "1", "2", "3", "5"};
+            String[] whereArgsWarnings = {"1", "2", "3", "5"};
             whereArgs = whereArgsWarnings;
         } else {
-            String[] whereArgsNoWarnings = { "2", "3", "5"};
+            String[] whereArgsNoWarnings = {"2", "3", "5"};
             whereArgs = whereArgsNoWarnings;
         }
-        return(whereArgs);
+        return (whereArgs);
     }
-
-
 
 
     /***************************************************************************************
@@ -694,15 +688,11 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
                     Log.e(TAG, "Error parsing date " + eventDateStr);
                     return;
                 }
-                mWac.createEvent(eventAlarmStatus, eventDate, "Uploaded by OpenSeizureDetector Android App");
+                mWac.createEvent(eventAlarmStatus, eventDate, "", this::createEventCallback);
             } else {
                 Log.v(TAG, "UploadSdData - no data to upload");
             }
         });
-    }
-
-    public void authCallback(boolean authSuccess, String tokenStr) {
-        Log.v(TAG, "authCallback");
     }
 
 
@@ -717,7 +707,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     // Called by WebApiConnection when a new event record is created.
     // Once the event is created it queries the local database to find the datapoints associated with the event
     // and uploads those as a batch of data points.
-    public void eventCallback(boolean success, String eventStr) {
+    public void createEventCallback(String eventStr) {
         Log.v(TAG, "eventCallback(): " + eventStr);
         Date eventDate;
         String eventDateStr;
@@ -788,7 +778,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
             }
 
             Log.v(TAG, "uploadDatapoint() - uploading datapoint with local id of " + mCurrentDatapointId);
-            mWac.createDatapoint(mDatapointsToUploadList.get(0), mCurrentEventId);
+            mWac.createDatapoint(mDatapointsToUploadList.get(0), mCurrentEventId, this::datapointCallback);
 
         } else {
             mCurrentEventId = -1;
@@ -800,7 +790,7 @@ public class LogManager implements AuthCallbackInterface, EventCallbackInterface
     // Called by WebApiConnection when a new datapoint is created.   It assumes that we have just created
     // a datapoint based on mDatapointsToUploadList(0) so removes that from the list and calls UploadDatapoint()
     // to upload the next one.
-    public void datapointCallback(boolean success, String datapointStr) {
+    public void datapointCallback(String datapointStr) {
         Log.v(TAG, "datapointCallback() " + datapointStr + ", mCurrentEventId=" + mCurrentEventId);
         mDatapointsToUploadList.remove(0);
         setDatapointToUploaded(mCurrentDatapointId, mCurrentEventId);

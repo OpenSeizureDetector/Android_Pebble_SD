@@ -86,8 +86,9 @@ public class SdServer extends Service implements SdDataReceiver {
 
     // Notification ID
     private int NOTIFICATION_ID = 1;
+    private int EVENT_NOTIFICATION_ID = 2;
     private String mNotChId = "OSD Notification Channel";
-    private CharSequence mNotChName = "OSD Notification Chennel";
+    private CharSequence mNotChName = "OSD Notification Channel";
     private String mNotChDesc = "OSD Notification Channel Description";
 
     private NotificationManager mNM;
@@ -130,9 +131,13 @@ public class SdServer extends Service implements SdDataReceiver {
     private boolean mLogData = false;
     private boolean mLogDataRemote = false;
     private boolean mLogDataRemoteMobile = false;
-    private String mOSDUname = "";
-    private String mOSDPasswd = "";
-    private int mOSDWearerId = 0;
+    private String mAuthToken = null;
+    private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
+    public long mDataRetentionPeriod = 1; // Prunes the local db so it only retains data younger than this duration (in days)
+    private long mRemoteLogPeriod = 60; // Period in seconds between uploads to the remote server.
+    private long mAutoPrunePeriod = 3600;  // Prune the database every hour
+    private boolean mAutoPruneDb;
+
     private String mOSDUrl = "";
 
     private OsdUtil mUtil;
@@ -219,7 +224,8 @@ public class SdServer extends Service implements SdDataReceiver {
         updatePrefs();
 
         // Create our log manager.
-        mLm = new LogManager(this);
+        mLm = new LogManager(this, mLogDataRemote, mLogDataRemoteMobile, mAuthToken, mEventDuration,
+                mRemoteLogPeriod, mAutoPruneDb, mDataRetentionPeriod);
 
         Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName);
         switch (mSdDataSourceName) {
@@ -1197,12 +1203,32 @@ public class SdServer extends Service implements SdDataReceiver {
             mLogDataRemoteMobile = SP.getBoolean("LogDataRemoteMobile", false);
             Log.v(TAG, "updatePrefs() - mLogDataRemoteMobile = " + mLogDataRemoteMobile);
             mUtil.writeToSysLogFile("updatePrefs() - mLogDataRemoteMobile = " + mLogDataRemoteMobile);
-            mOSDUname = SP.getString("OSDUname", "<username>");
-            Log.v(TAG, "updatePrefs() - mOSDUname = " + mOSDUname);
-            mOSDPasswd = SP.getString("OSDPasswd", "<passwd>");
-            Log.v(TAG, "updatePrefs() - mOSDPasswd = " + mOSDPasswd);
-            mOSDWearerId = Integer.parseInt(SP.getString("OSDWearerId", "0"));
-            Log.v(TAG, "updatePrefs() - mOSDWearerId = " + mOSDWearerId);
+            mAuthToken = SP.getString("webApiAuthToken", null);
+            Log.v(TAG, "updatePrefs() - mAuthToken = " + mAuthToken);
+            mUtil.writeToSysLogFile("updatePrefs() - mAuthToken = " + mAuthToken);
+
+            String prefVal;
+            prefVal = SP.getString("EventDurationSec", "300");
+            mEventDuration = Integer.parseInt(prefVal);
+            Log.v(TAG, "mEventDuration=" + mEventDuration);
+
+            mAutoPruneDb = SP.getBoolean("AutoPruneDb", false);
+            Log.v(TAG, "mAutoPruneDb=" + mAutoPruneDb);
+
+            prefVal = SP.getString("DataRetentionPeriod", "28");
+            mDataRetentionPeriod = Integer.parseInt(prefVal);
+            Log.v(TAG, "mDataRetentionPeriod=" + mDataRetentionPeriod);
+
+            prefVal = SP.getString("RemoteLogPeriod", "60");
+            mRemoteLogPeriod = Integer.parseInt(prefVal);
+            Log.v(TAG, "mRemoteLogPeriod=" + mRemoteLogPeriod);
+
+            //mOSDUname = SP.getString("OSDUname", "<username>");
+            //Log.v(TAG, "updatePrefs() - mOSDUname = " + mOSDUname);
+            //mOSDPasswd = SP.getString("OSDPasswd", "<passwd>");
+            //Log.v(TAG, "updatePrefs() - mOSDPasswd = " + mOSDPasswd);
+            //mOSDWearerId = Integer.parseInt(SP.getString("OSDWearerId", "0"));
+            //Log.v(TAG, "updatePrefs() - mOSDWearerId = " + mOSDWearerId);
             mOSDUrl = SP.getString("OSDUrl", "http://openseizuredetector.org.uk/webApi");
             Log.v(TAG, "updatePrefs() - mOSDUrl = " + mOSDUrl);
             mUtil.writeToSysLogFile( "updatePrefs() - mOSDUrl = " + mOSDUrl);

@@ -4,8 +4,11 @@ package uk.org.openseizuredetector;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -22,6 +25,10 @@ public class RemoteDbActivity extends AppCompatActivity {
     private UiTimer mUiTimer;
     private LogManager mLm;
     private WebView mWebView;
+    private SdServiceConnection mConnection;
+    private OsdUtil mUtil;
+    final Handler serverStatusHandler = new Handler();
+    private String TOKEN_ID = "webApiAuthToken";
 
 
     @Override
@@ -30,7 +37,12 @@ public class RemoteDbActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         mContext = this;
         setContentView(R.layout.activity_remote_db);
-        mLm= new LogManager(mContext);
+        mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
+        mConnection = new SdServiceConnection(getApplicationContext());
+        mUtil.bindToServer(getApplicationContext(), mConnection);
+        waitForConnection();
+
+        //mLm= new LogManager(mContext);
 
         Button authBtn =
                 (Button) findViewById(R.id.auth_button);
@@ -43,12 +55,37 @@ public class RemoteDbActivity extends AppCompatActivity {
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
 
-        updateUi();
     }
+
+    private void waitForConnection() {
+        // We want the UI to update as soon as it is displayed, but it takes a finite time for
+        // the mConnection to bind to the service, so we delay half a second to give it chance
+        // to connect before trying to update the UI for the first time (it happens again periodically using the uiTimer)
+        if (mConnection.mBound) {
+            Log.v(TAG, "waitForConnection - Bound!");
+            initialiseServiceConnection();
+        } else {
+            Log.v(TAG, "waitForConnection - waiting...");
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    waitForConnection();
+                }
+            }, 100);
+        }
+    }
+
+    private void initialiseServiceConnection() {
+        mLm = mConnection.mSdServer.mLm;
+        //mWac = mConnection.mSdServer.mLm.mWac;
+    }
+
 
     @Override
     protected void onStart() {
         super.onStart();
+        waitForConnection();
+        updateUi();
         //startUiTimer();
     }
 
@@ -67,11 +104,16 @@ public class RemoteDbActivity extends AppCompatActivity {
 
     private HashMap<String, String> getAuthHeaders() {
         HashMap<String, String> headersMap = new HashMap<>();
-        String authToken = mLm.mWac.getStoredToken();
+        String authToken = getAuthToken();
         headersMap.put("Authorization", "Token "+authToken);
         return (headersMap);
     }
 
+    public String getAuthToken() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+        String authToken = prefs.getString(TOKEN_ID, null);
+        return authToken;
+    }
 
     private void updateUi() {
         Log.v(TAG,"updateUi()");
