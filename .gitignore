@@ -7,4 +7,5 @@ app/release/app-release.apk
 app/build
 app/app.iml
 app/release/output-metadata.json
+*#
 

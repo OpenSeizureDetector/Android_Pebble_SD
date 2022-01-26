@@ -73,6 +73,11 @@ import java.util.*;
 import android.text.format.Time;
 
 import com.rohitss.uceh.UCEHandler;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import uk.org.openseizuredetector.LogManager;
 
 /**
@@ -101,6 +106,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private int mCancelAudiblePeriod = 10;  // Cancel Audible Period in minutes
     private long mCancelAudibleTimeRemaining = 0;
     private FaultTimer mFaultTimer = null;
+    private CheckUnvalidatedEventsTimer mEventsTimer = null;
     private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
     private boolean mFaultTimerCompleted = false;
 
@@ -323,6 +329,10 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.writeToSysLogFile("SdServer.onStartCommand() - dataLog timer already running???");
         }
 
+        if (mLogDataRemote) {
+            startValidatedEventsTimer();
+        }
+
 
         // Start the web server
         mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting web server");
@@ -384,6 +394,12 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "onDestroy(): cancelling fault timer");
             mFaultTimer.cancel();
             mFaultTimer = null;
+        }
+
+        // Stop the Event timer
+        if (mEventsTimer != null) {
+            Log.v(TAG, "onDestroy(): Cancelling events timer");
+            stopValidatedEventsTimer();
         }
 
         // Stop the Cancel Alarm Latch timer
@@ -1507,13 +1523,13 @@ public class SdServer extends Service implements SdDataReceiver {
 
     public void stopFaultTimer() {
         if (mFaultTimer != null) {
-            Log.v(TAG, "stopFaultTimer(): fault timer already running - cancelling it.");
+            //Log.v(TAG, "stopFaultTimer(): fault timer already running - cancelling it.");
             mUtil.writeToSysLogFile("stopFaultTimer() - stopping fault timer");
             mFaultTimer.cancel();
             mFaultTimer = null;
             mFaultTimerCompleted = false;
         } else {
-            Log.v(TAG, "stopFaultTimer(): fault timer not running - not doing anything.");
+            //Log.v(TAG, "stopFaultTimer(): fault timer not running - not doing anything.");
             //mUtil.writeToSysLogFile("stopFaultTimer() - fault timer not running");
         }
     }
@@ -1542,6 +1558,132 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "mFaultTimer - onTick() - Time Remaining = "
                     + mFaultTimerRemaining);
         }
+
+    }
+
+
+
+    /**
+     * Start the events timer.
+     */
+    public void startValidatedEventsTimer() {
+        if (mEventsTimer != null) {
+            Log.v(TAG, "startValidatedEventsTimer(): timer already running - not doing anything.");
+            mUtil.writeToSysLogFile("startValidatedEventsTimer() - timer already running");
+        } else {
+            Log.v(TAG, "startValidatedEventsTimer(): starting timer.");
+            mUtil.writeToSysLogFile("startValidatedEventsTimer() - starting timer");
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    mEventsTimer =
+                            // Run every 5 minutes (convert to ms.)
+                            new CheckUnvalidatedEventsTimer(10 * 1000, 1000);
+                    mEventsTimer.mIsRunning = true;
+                    mEventsTimer.start();
+                }
+            });
+        }
+    }
+
+    public void stopValidatedEventsTimer() {
+        if (mEventsTimer != null) {
+            Log.v(TAG, "stopEventsTimer(): timer already running - cancelling it.");
+            mUtil.writeToSysLogFile("stopEventsTimer() - stopping timer");
+            mEventsTimer.cancel();
+            mEventsTimer = null;
+            mEventsTimer.mIsRunning = false;
+        } else {
+            Log.v(TAG, "stopEventsTimer(): timer not running - not doing anything.");
+        }
+    }
+
+    /**
+     * Periodically check if we have unvalidated events in the remote database.
+     * Show a notification if we do.
+     */
+    private class CheckUnvalidatedEventsTimer extends CountDownTimer {
+        long mFirstUnvalidatedEvent;
+        public boolean mIsRunning = true;
+        public CheckUnvalidatedEventsTimer(long startTime, long interval) {
+            super(startTime, interval);
+        }
+
+        @Override
+        public void onFinish() {
+            Log.v(TAG, "CheckUnvalidatedEventsTimer.onFinish()");
+            // Retrieve events from remote database
+            mLm.mWac.getEvents((JSONObject remoteEventsObj) -> {
+                Log.v(TAG, "CheckUnvalidatedEventsTimer.onFinish.getEvents.Callback()");
+                if (remoteEventsObj == null) {
+                    Log.e(TAG, "CheckUnvalidatedEventsTimer.onFinish() Callback:  Error Retrieving events");
+                } else {
+                    try {
+                        JSONArray eventsArray = remoteEventsObj.getJSONArray("events");
+                        // A bit of a hack to display in reverse chronological order
+                        mFirstUnvalidatedEvent = -1;
+                        for (int i = eventsArray.length() - 1; i >= 0; i--) {
+                            JSONObject eventObj = eventsArray.getJSONObject(i);
+                            Long id = eventObj.getLong("id");
+                            String typeStr = eventObj.getString("type");
+                            //Log.v(TAG,"CheckUnvalidatedEventsTimer: id="+id+", typeStr="+typeStr);
+                            if (typeStr.equals("null")) {
+                                mFirstUnvalidatedEvent = id;
+                                //Log.v(TAG,"CheckUnvalidatedEventsTimer:setting mFirstUnvalidatedEvent to "+mFirstUnvalidatedEvent);
+                            }
+                        }
+                        Log.v(TAG,"CheckUnvalidatedEventsTimer.onFinish.callback - mFirstUnvalidatedEvent = "+
+                                mFirstUnvalidatedEvent);
+                        if (mFirstUnvalidatedEvent >=0) {
+                            showEventNotification(mFirstUnvalidatedEvent);
+                        } else {
+                            mNM.cancel(EVENT_NOTIFICATION_ID);
+                        }
+                    } catch (JSONException e) {
+                        Log.e(TAG, "CheckUnvalidatedEventsTimer.onFinish(): Error Parsing remoteEventsObj: " + e.getMessage());
+                        //mUtil.showToast("Error Parsing remoteEventsObj - this should not happen!!!");
+                    }
+                }
+            });
+            if (mIsRunning) {
+                // Restart this timer.
+                start();
+            }
+        }
+
+        @Override public void onTick(long msRemaining) { }
+
+        /**
+         * Show a notification to tell the user that we have unvalidated events.
+         */
+        private void showEventNotification(long eventId) {
+            Log.v(TAG, "showEventNotification()");
+            int iconId;
+            String titleStr;
+            Uri soundUri = null;
+            iconId = R.drawable.star_of_life_query_24x24;
+            titleStr = getString(R.string.unvalidatedEventsTitle);
+
+            Intent i = new Intent(getApplicationContext(), LogManagerControlActivity.class);
+            i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            PendingIntent contentIntent =
+                    PendingIntent.getActivity(getApplicationContext(),
+                            0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+            String contentStr = "Please Record your Seizure Events";
+            if (mNotificationBuilder != null) {
+                mNotification = mNotificationBuilder.setContentIntent(contentIntent)
+                        .setSmallIcon(iconId)
+                        .setColor(0x00ffffff)
+                        .setAutoCancel(false)
+                        .setContentTitle(titleStr)
+                        .setContentText(contentStr)
+                        .setOnlyAlertOnce(true)
+                        .build();
+                mNM.notify(EVENT_NOTIFICATION_ID, mNotification);
+            } else {
+                Log.i(TAG, "showEventNotification() - notification builder is null, so not showing notification.");
+            }
+        }
+
 
     }
 
