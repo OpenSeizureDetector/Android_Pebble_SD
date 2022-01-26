@@ -325,4 +325,5 @@
     <string name="selectFromOptionselow">"-- select option --"</string>
     <string name="waitingForData">...waiting for data...</string>
     <string name="refreshBtn">Refresh</string>
+    <string name="back">Back</string>
 </resources>

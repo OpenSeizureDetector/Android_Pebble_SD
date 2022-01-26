@@ -85,19 +85,6 @@ public class AuthenticateActivity extends AppCompatActivity {
         mWac = mConnection.mSdServer.mLm.mWac;
     }
 
-    //public void authCallback(boolean authSuccess, String tokenStr) {
-    //Log.v(TAG,"authCallback");
-    //    updateUi();
-    //}
-
-    public void eventCallback(boolean success, String eventStr) {
-        Log.v(TAG,"eventCallback");
-    }
-
-    public void datapointCallback(boolean success, String datapointStr) {
-        Log.v(TAG,"datapointCallback");
-    }
-
     private void updateUi() {
         SharedPreferences prefs;
         String storedAuthToken;
@@ -146,8 +133,13 @@ public class AuthenticateActivity extends AppCompatActivity {
                     mWac.authenticate(uname,passwd, (String retVal) -> {
                         if (retVal != null) {
                             Log.d(TAG,"Authentication Success - token is "+retVal);
+                            mUtil.showToast("Login Successful");
                             saveAuthToken(retVal);
                             updateUi();
+                        } else {
+                            Log.e(TAG,"onOk: Authentication failure for "+uname+", "+passwd);
+                            mUtil.showToast("ERROR: Authentication Failed - Please Try Again");
+                            mUtil.writeToSysLogFile("AuthActivity - Authorisation failed for "+uname+", "+passwd);
                         }
                     });
                     //finish();
