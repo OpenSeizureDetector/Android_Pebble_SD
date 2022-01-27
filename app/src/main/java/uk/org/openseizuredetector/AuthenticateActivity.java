@@ -1,7 +1,9 @@
 package uk.org.openseizuredetector;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -46,6 +48,8 @@ public class AuthenticateActivity extends AppCompatActivity {
         logoutCancelBtn.setOnClickListener(onCancel);
         Button logoutBtn = (Button)findViewById(R.id.logoutBtn);
         logoutBtn.setOnClickListener(onLogout);
+        Button registerBtn = (Button) findViewById(R.id.RegisterBtn);
+        registerBtn.setOnClickListener(onRegister);
 
         mUnameEt = (EditText) findViewById(R.id.username);
         mPasswdEt = (EditText) findViewById(R.id.password);
@@ -155,6 +159,22 @@ public class AuthenticateActivity extends AppCompatActivity {
                     mWac.logout();
                     saveAuthToken(null);
                     updateUi();
+                }
+            };
+
+    View.OnClickListener onRegister =
+            new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.d(TAG, "onRegisterBtn");
+                    //Intent i;
+                    //i = new Intent(getApplicationContext(), RemoteDbActivity.class);
+                    //i.putExtra("url", "https://osdapi.ddns.net/static/register.html");
+                    //startActivity(i);
+                    String url = "https://osdapi.ddns.net/static/register.html";
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setData(Uri.parse(url));
+                    startActivity(i);
                 }
             };
 

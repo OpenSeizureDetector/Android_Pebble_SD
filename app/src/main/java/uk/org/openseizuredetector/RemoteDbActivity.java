@@ -29,6 +29,7 @@ public class RemoteDbActivity extends AppCompatActivity {
     private OsdUtil mUtil;
     final Handler serverStatusHandler = new Handler();
     private String TOKEN_ID = "webApiAuthToken";
+    private String mRemtoteUrl = "https://osdapi.ddns.net/";
 
 
     @Override
@@ -40,6 +41,14 @@ public class RemoteDbActivity extends AppCompatActivity {
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
         mConnection = new SdServiceConnection(getApplicationContext());
         mUtil.bindToServer(getApplicationContext(), mConnection);
+
+        Bundle extras = getIntent().getExtras();
+        if (extras != null) {
+            String remoteUrl = extras.getString("url");
+            mRemtoteUrl = remoteUrl;
+            Log.d(TAG, "onCreate - mRemoteUrl=" + mRemtoteUrl);
+        }
+
         waitForConnection();
 
         //mLm= new LogManager(mContext);
@@ -62,7 +71,7 @@ public class RemoteDbActivity extends AppCompatActivity {
         // the mConnection to bind to the service, so we delay half a second to give it chance
         // to connect before trying to update the UI for the first time (it happens again periodically using the uiTimer)
         if (mConnection.mBound) {
-            Log.v(TAG, "waitForConnection - Bound!");
+            Log.d(TAG, "waitForConnection - Bound!");
             initialiseServiceConnection();
         } else {
             Log.v(TAG, "waitForConnection - waiting...");
@@ -77,6 +86,7 @@ public class RemoteDbActivity extends AppCompatActivity {
 
     private void initialiseServiceConnection() {
         mLm = mConnection.mSdServer.mLm;
+        mWebView.loadUrl(mRemtoteUrl, getAuthHeaders());
         //mWac = mConnection.mSdServer.mLm.mWac;
     }
 
@@ -99,7 +109,6 @@ public class RemoteDbActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         startUiTimer();
-        mWebView.loadUrl("https://osdapi.ddns.net/api/events/", getAuthHeaders());
     }
 
     private HashMap<String, String> getAuthHeaders() {
@@ -132,12 +141,14 @@ public class RemoteDbActivity extends AppCompatActivity {
         // Remote Database Information
         tv = (TextView)findViewById(R.id.authStatusTv);
         btn = (Button)findViewById(R.id.auth_button);
-        if (mLm.mWac.isLoggedIn()) {
-            tv.setText("Authenticated");
-            btn.setText("Log Out");
-        } else {
-            tv.setText("NOT AUTHENTICATED");
-            btn.setText("Log In");
+        if (mLm != null) {
+            if (mLm.mWac.isLoggedIn()) {
+                tv.setText("Authenticated");
+                btn.setText("Log Out");
+            } else {
+                tv.setText("NOT AUTHENTICATED");
+                btn.setText("Log In");
+            }
         }
     }
 
