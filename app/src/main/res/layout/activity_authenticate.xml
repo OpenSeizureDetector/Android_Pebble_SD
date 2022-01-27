@@ -4,13 +4,25 @@
     android:layout_height="fill_parent"
     android:orientation="vertical">
 
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:background="#FFFFFF"
-        android:contentDescription="@string/app_name"
-        android:scaleType="center"
-        android:src="@drawable/star_of_life_24x24" />
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#FFFFFF"
+            android:contentDescription="@string/app_name"
+            android:scaleType="center"
+            android:src="@drawable/star_of_life_24x24" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="@string/login_to_osdapi" />
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/login_ui"
@@ -59,12 +71,26 @@
                 android:layout_weight="1"
                 android:text="@string/authenticate" />
         </LinearLayout>
-        <Button
-            android:id="@+id/RegisterBtn"
-            android:layout_width="wrap_content"
+
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/register" />
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/RegisterBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/register" />
+
+            <Button
+                android:id="@+id/ResetPasswordBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/reset_password" />
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
@@ -90,7 +116,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/cancel" />
+                android:text="@string/back" />
 
             <Button
                 android:id="@+id/logoutBtn"

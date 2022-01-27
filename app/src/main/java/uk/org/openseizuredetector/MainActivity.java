@@ -270,13 +270,16 @@ public class MainActivity extends AppCompatActivity {
                     mConnection.mSdServer.sendSMSAlarm();
                 }
                 return true;
-            case R.id.action_test_phone_alarm:
+
+            /*case R.id.action_test_phone_alarm:
                 Log.i(TAG, "action_test_phone_alarm");
                 if (mConnection.mBound) {
                     mConnection.mSdServer.sendPhoneAlarm();
                 }
                 return true;
-            case R.id.action_authenticate_api:
+                */
+
+/*            case R.id.action_authenticate_api:
                 Log.i(TAG, "action_autheticate_api");
                 try {
                     Intent i = new Intent(
@@ -287,6 +290,8 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "exception starting export activity " + ex.toString());
                 }
                 return true;
+                */
+            /*
             case R.id.action_export:
                 Log.i(TAG, "action_export");
                 try {
@@ -298,6 +303,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "exception starting export activity " + ex.toString());
                 }
                 return true;
+             */
             case R.id.action_logs:
                 Log.i(TAG, "action_logs");
                 try {

@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
-        "V3.9.x - Added logging of data to remote server
+        "V4.0 - Added logging of data to remote server
         \nV3.7.0 - Added support for Garmin Blood Oxygen Saturation measurements
         \nV3.6.2 - Fix of issue with log file permissions on some Android 10 devices and added more translatable strings with polish translation.
         \nV3.6.1 - Possible fix for issue with shutting down system and expanded Polish translation to all settings screens.
@@ -328,4 +328,6 @@
     <string name="back">Back</string>
     <string name="unvalidatedEventsTitle">Unvalidated Seizure Events</string>
     <string name="register">Register New User</string>
+    <string name="reset_password">Reset Password</string>
+    <string name="login_to_osdapi">Log in to osdApi Remote Database</string>
 </resources>

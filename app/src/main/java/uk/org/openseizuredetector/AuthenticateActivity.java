@@ -50,6 +50,8 @@ public class AuthenticateActivity extends AppCompatActivity {
         logoutBtn.setOnClickListener(onLogout);
         Button registerBtn = (Button) findViewById(R.id.RegisterBtn);
         registerBtn.setOnClickListener(onRegister);
+        Button resetPasswordBtn = (Button) findViewById(R.id.ResetPasswordBtn);
+        resetPasswordBtn.setOnClickListener(onResetPassword);
 
         mUnameEt = (EditText) findViewById(R.id.username);
         mPasswdEt = (EditText) findViewById(R.id.password);
@@ -177,6 +179,23 @@ public class AuthenticateActivity extends AppCompatActivity {
                     startActivity(i);
                 }
             };
+
+    View.OnClickListener onResetPassword =
+            new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.d(TAG, "onResetPasswordBtn");
+                    //Intent i;
+                    //i = new Intent(getApplicationContext(), RemoteDbActivity.class);
+                    //i.putExtra("url", "https://osdapi.ddns.net/static/register.html");
+                    //startActivity(i);
+                    String url = "https://osdapi.ddns.net/static/request_password_reset.html";
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setData(Uri.parse(url));
+                    startActivity(i);
+                }
+            };
+
 
     private void saveAuthToken(String tokenStr) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
