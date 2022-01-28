@@ -1211,7 +1211,7 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "updatePrefs() - mLogAlarms = " + mLogAlarms);
             mUtil.writeToSysLogFile("updatePrefs() - mLogAlarms = " + mLogAlarms);
             mLogData = SP.getBoolean("LogData", true);
-            Log.v(TAG, "updatePrefs() - mLogData = " + mLogData);
+            Log.v(TAG, "SdServer.updatePrefs() - mLogData = " + mLogData);
             mUtil.writeToSysLogFile( "updatePrefs() - mLogData = " + mLogData);
             mLogDataRemote = SP.getBoolean("LogDataRemote", false);
             Log.v(TAG, "updatePrefs() - mLogDataRemote = " + mLogDataRemote);
@@ -1589,9 +1589,9 @@ public class SdServer extends Service implements SdDataReceiver {
         if (mEventsTimer != null) {
             Log.v(TAG, "stopEventsTimer(): timer already running - cancelling it.");
             mUtil.writeToSysLogFile("stopEventsTimer() - stopping timer");
+            mEventsTimer.mIsRunning = false;
             mEventsTimer.cancel();
             mEventsTimer = null;
-            mEventsTimer.mIsRunning = false;
         } else {
             Log.v(TAG, "stopEventsTimer(): timer not running - not doing anything.");
         }

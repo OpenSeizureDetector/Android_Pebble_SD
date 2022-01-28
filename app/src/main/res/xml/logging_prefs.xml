@@ -16,7 +16,7 @@
         android:summary="@string/eventDurationSummary"
         android:title="@string/eventDurationTitle" />
     <CheckBoxPreference
-        android:defaultValue="false"
+        android:defaultValue="true"
         android:key="AutoPruneDb"
         android:summary="@string/AutoPruneDbSummary"
         android:title="@string/AutoPruneDbTitle" />
@@ -27,7 +27,7 @@
         android:title="@string/dataRetentionPeriodTitle" />
 
     <CheckBoxPreference
-        android:defaultValue="false"
+        android:defaultValue="true"
         android:key="LogDataRemote"
         android:summary="@string/log_data_remote_summary"
         android:title="@string/log_data_remote_title" />

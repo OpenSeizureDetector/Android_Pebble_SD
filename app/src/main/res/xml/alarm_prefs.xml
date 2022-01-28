@@ -70,6 +70,7 @@
             android:title="Enable Phone Call Alarm" />
     </PreferenceCategory>
 -->
+    <!--
     <PreferenceCategory android:title="@string/AlarmLoggingTitle">
         <CheckBoxPreference
             android:defaultValue="true"
@@ -82,4 +83,5 @@
             android:summary="@string/log_data_summary"
             android:title="@string/log_data_title"/>
     </PreferenceCategory>
+    -->
 </PreferenceScreen>

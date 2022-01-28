@@ -86,6 +86,15 @@ public class StartupActivity extends Activity {
                 .addCommaSeparatedEmailAddresses("crashreports@openseizuredetector.org.uk,")
                 .build();
 
+        // Read the default settings from the xml preferences files, so we do
+        // not have to use the hard coded ones in the java files.
+        PreferenceManager.setDefaultValues(this, R.xml.alarm_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.general_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.network_datasource_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.pebble_datasource_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.seizure_detector_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.network_passive_datasource_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.logging_prefs, true);
 
         mHandler = new Handler();
         mUtil = new OsdUtil(getApplicationContext(), mHandler);
@@ -99,15 +108,6 @@ public class StartupActivity extends Activity {
 
 
         setContentView(R.layout.startup_activity);
-
-        // Read the default settings from the xml preferences files, so we do
-        // not have to use the hard coded ones in the java files.
-        PreferenceManager.setDefaultValues(this, R.xml.alarm_prefs, true);
-        PreferenceManager.setDefaultValues(this, R.xml.general_prefs, true);
-        PreferenceManager.setDefaultValues(this, R.xml.network_datasource_prefs, true);
-        PreferenceManager.setDefaultValues(this, R.xml.pebble_datasource_prefs, true);
-        PreferenceManager.setDefaultValues(this, R.xml.seizure_detector_prefs, true);
-        PreferenceManager.setDefaultValues(this, R.xml.network_passive_datasource_prefs, true);
 
 
         Button b;

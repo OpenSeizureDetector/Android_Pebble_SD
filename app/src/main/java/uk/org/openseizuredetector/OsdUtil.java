@@ -137,8 +137,8 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
         try {
             mLogAlarms = SP.getBoolean("LogAlarms", true);
             Log.v(TAG, "updatePrefs() - mLogAlarms = " + mLogAlarms);
-            mLogData = SP.getBoolean("LogData", false);
-            Log.v(TAG, "updatePrefs() - mLogData = " + mLogData);
+            mLogData = SP.getBoolean("LogData", true);
+            Log.v(TAG, "OsdUtil.updatePrefs() - mLogData = " + mLogData);
             mLogSystem = SP.getBoolean("LogSystem", true);
             Log.v(TAG, "updatePrefs() - mLogSystem = " + mLogSystem);
 
