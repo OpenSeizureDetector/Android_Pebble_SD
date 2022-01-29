@@ -330,4 +330,9 @@
     <string name="register">Register New User</string>
     <string name="reset_password">Reset Password</string>
     <string name="login_to_osdapi">Log in to osdApi Remote Database</string>
+    <string name="data_sharing_status">Data Sharing Status</string>
+    <string name="not_logging_data">Not Logging Data</string>
+    <string name="not_sharing_logged_data">Not Sharing Logged Data</string>
+    <string name="not_logged_in">Not Logged In</string>
+    <string name="data_sharing_setup_ok">Data Sharing Setup OK</string>
 </resources>

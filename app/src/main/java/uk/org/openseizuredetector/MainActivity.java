@@ -568,6 +568,42 @@ public class MainActivity extends AppCompatActivity {
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
                     }
+
+                    if (mConnection.mSdServer.mLogData) {
+                        if (mConnection.mSdServer.mLogDataRemote) {
+                            if (mConnection.mSdServer.mLm.mWac.isLoggedIn()) {
+                                tv = (TextView) findViewById(R.id.remoteDbTv);
+                                tv.setText(getString(R.string.data_sharing_status)
+                                        +": "
+                                        +getString(R.string.data_sharing_setup_ok));
+                                tv.setBackgroundColor(okColour);
+                                tv.setTextColor(okTextColour);
+                            } else {
+                                tv = (TextView) findViewById(R.id.remoteDbTv);
+                                tv.setText(getString(R.string.data_sharing_status)
+                                        +": "
+                                        +getString(R.string.not_logged_in));
+                                tv.setBackgroundColor(warnColour);
+                                tv.setTextColor(warnTextColour);
+                            }
+                        } else {
+                            tv = (TextView) findViewById(R.id.remoteDbTv);
+                            tv.setText(getString(R.string.data_sharing_status)
+                                    +": "
+                                    +getString(R.string.not_sharing_logged_data));
+                            tv.setBackgroundColor(warnColour);
+                            tv.setTextColor(warnTextColour);
+                        }
+                    } else {
+                        tv = (TextView) findViewById(R.id.remoteDbTv);
+                        tv.setText(getString(R.string.data_sharing_status)
+                                +": "
+                                +getString(R.string.not_logging_data));
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+
+
                     // Set ProgressBars to show margin to alarm.
                     long powerPc;
                     if (mConnection.mSdServer.mSdData.alarmThresh != 0)
@@ -664,7 +700,6 @@ public class MainActivity extends AppCompatActivity {
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
                     }
-
                 } else {   // Not bound to server
                     tv = (TextView) findViewById(R.id.alarmTv);
                     tv.setText(R.string.Dashes);
@@ -692,6 +727,11 @@ public class MainActivity extends AppCompatActivity {
 
                     tv = (TextView) findViewById(R.id.battTv);
                     tv.setText(getString(R.string.WatchBatteryEquals)+" ---%");
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+
+                    tv = (TextView) findViewById(R.id.remoteDbTv);
+                    tv.setText("---");
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
                 }
