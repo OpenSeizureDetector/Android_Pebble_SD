@@ -1668,7 +1668,7 @@ public class SdServer extends Service implements SdDataReceiver {
             PendingIntent contentIntent =
                     PendingIntent.getActivity(getApplicationContext(),
                             0, i, PendingIntent.FLAG_UPDATE_CURRENT);
-            String contentStr = "Please Record your Seizure Events";
+            String contentStr = getString(R.string.please_confirm_seizure_events);
             if (mNotificationBuilder != null) {
                 mNotification = mNotificationBuilder.setContentIntent(contentIntent)
                         .setSmallIcon(iconId)

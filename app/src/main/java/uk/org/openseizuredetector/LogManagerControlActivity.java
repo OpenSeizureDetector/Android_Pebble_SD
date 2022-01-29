@@ -39,7 +39,8 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private SdServiceConnection mConnection;
     private OsdUtil mUtil;
     final Handler serverStatusHandler = new Handler();
-
+    private Integer mUiTimerPeriodFast = 2000;  // 2 seconds - we use fast updating while UI is blank and we are waiting for first data
+    private Integer mUiTimerPeriodSlow = 60000; // 60 seconds - once data has been received and UI populated we only update once per minute.
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,7 +78,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         super.onStart();
         mUtil.bindToServer(getApplicationContext(), mConnection);
         waitForConnection();
-        startUiTimer();
+        startUiTimer(mUiTimerPeriodFast);
     }
 
     @Override
@@ -129,7 +130,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
     private void initialiseServiceConnection() {
         mLm = mConnection.mSdServer.mLm;
-        startUiTimer();
+        startUiTimer(mUiTimerPeriodFast);
         getRemoteEvents();
         // Populate events list - we only do it once when the activity is created because the query might slow down the UI.
         // We could try this code in updateUI() and see though.
@@ -244,7 +245,13 @@ public class LogManagerControlActivity extends AppCompatActivity {
         } else {
             stopUpdating = false;
         }
-        if (stopUpdating) stopUiTimer();
+
+        // Note we do not really stop updating the UI, just change from the fast update period to the slow update period
+        // to save hammering the databases once the UI has been populated once.
+        if (stopUpdating) {
+            stopUiTimer();
+            startUiTimer(mUiTimerPeriodSlow);
+        }
     }  //updateUi();
 
 
@@ -352,7 +359,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
     /*
      * Start the timer that will update the user interface every 5 seconds..
      */
-    private void startUiTimer() {
+    private void startUiTimer(Integer uiTimerPeriod) {
         if (mUiTimer != null) {
             Log.v(TAG, "startUiTimer -timer already running - cancelling it");
             mUiTimer.cancel();
@@ -360,7 +367,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         }
         Log.v(TAG, "startUiTimer() - starting UiTimer");
         mUiTimer =
-                new UiTimer(2000, 1000);
+                new UiTimer(uiTimerPeriod, 1000);
         mUiTimer.start();
     }
 

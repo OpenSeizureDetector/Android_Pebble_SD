@@ -294,10 +294,10 @@
     <string name="title_activity_authenticate">Log in to OpenSeizureDetector Data Sharing</string>
     <string name="logout">Log Out</string>
     <string name="logged_in_with_token">Logged in with Token</string>
-    <string name="local_database">Local Database</string>
-    <string name="remote_database">Remote Database</string>
-    <string name="num_local_events">Number of Stored Events: </string>
-    <string name="num_local_datapoints">"Number of Stored Datapoints: "</string>
+    <string name="local_database">Data on Phone</string>
+    <string name="remote_database">Shared Data</string>
+    <string name="num_local_events">Number of Events Stored on Phone: </string>
+    <string name="num_local_datapoints">"Number of Datapoints Stored on Phone: "</string>
     <string name="view_remote_db_btn">View Remote DB Data</string>
     <string name="report_seizure">Report Seizure</string>
     <string name="date">"Date: "</string>
@@ -305,7 +305,7 @@
     <string name="time">"Time: "</string>
     <string name="cancelBtnTxt">Cancel</string>
     <string name="select_time">Select Time</string>
-    <string name="EventsInLocalDb">Events in Local Database</string>
+    <string name="EventsInLocalDb">Events Stored on Phone</string>
     <string name="createdNewEvent">Created new Manual Alarm Event</string>
     <string name="DatapointNotFound">Datapoint not found - not doing anything</string>
     <string name="logging_settings_title">Data Logging Settings</string>
@@ -326,7 +326,7 @@
     <string name="waitingForData">...waiting for data...</string>
     <string name="refreshBtn">Refresh</string>
     <string name="back">Back</string>
-    <string name="unvalidatedEventsTitle">Unvalidated Seizure Events</string>
+    <string name="unvalidatedEventsTitle">Un-Confirmed Seizure Events</string>
     <string name="register">Register New User</string>
     <string name="reset_password">Reset Password</string>
     <string name="login_to_osdapi">Log in to Share Data</string>
@@ -336,4 +336,5 @@
     <string name="not_sharing_logged_data">Not Sharing Logged Data</string>
     <string name="not_logged_in">Not Logged In</string>
     <string name="data_sharing_setup_ok">Data Sharing Setup OK</string>
+    <string name="please_confirm_seizure_events">Please Check your Shared Seizure Events</string>
 </resources>
