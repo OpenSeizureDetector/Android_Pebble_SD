@@ -33,9 +33,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.text.SpannableString;
 import android.text.SpannedString;
 import android.text.util.Linkify;
@@ -157,6 +160,18 @@ public class StartupActivity extends Activity {
         } else {
             Log.i(TAG,"onStart() - Permissions Not OK - requesting them");
             mUtil.requestPermissions(this);
+        }
+
+        // FIXME = this does not seem to work - says there is a problem if optimisation is switched off...
+        PowerManager powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
+        if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
+            Log.i(TAG,"Power Management OK - we are ignoring Battery Optimizations");
+        } else {
+            Log.e(TAG,"Power Management Problem - not ignoring Battery Optimisations");
+            Intent i = new Intent();
+            i.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+            i.setData(Uri.parse("package:" + getPackageName()));
+            startActivity(i);
         }
 
 
