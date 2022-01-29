@@ -235,11 +235,11 @@ public class LogManagerControlActivity extends AppCompatActivity {
             tv = (TextView) findViewById(R.id.authStatusTv);
             btn = (Button) findViewById(R.id.auth_button);
             if (mLm.mWac.isLoggedIn()) {
-                tv.setText("Authenticated");
-                btn.setText("Log Out");
+                tv.setText(getString(R.string.logged_in_with_token));
+                btn.setText(getString(R.string.logout));
             } else {
-                tv.setText("NOT AUTHENTICATED");
-                btn.setText("Log In");
+                tv.setText(getString(R.string.not_authenticated));
+                btn.setText(getString(R.string.login));
             }
         } else {
             stopUpdating = false;
