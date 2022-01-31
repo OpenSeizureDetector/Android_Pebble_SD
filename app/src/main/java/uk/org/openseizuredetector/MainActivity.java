@@ -36,6 +36,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
 import android.preference.PreferenceManager;
+import android.support.v4.view.MenuCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -200,6 +201,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         Log.i(TAG, "onCreateOptionsMenu()");
         getMenuInflater().inflate(R.menu.main_activity_actions, menu);
+        MenuCompat.setGroupDividerEnabled(menu, true);
         //mOptionsMenu = menu;
         //if (mConnection.mSdServer.mSdDataSourceName != "Pebble") {
         //    Log.v(TAG,"Disabling Pebble Specific Menu Items");
@@ -279,7 +281,7 @@ public class MainActivity extends AppCompatActivity {
                 return true;
                 */
 
-/*            case R.id.action_authenticate_api:
+           case R.id.action_authenticate_api:
                 Log.i(TAG, "action_autheticate_api");
                 try {
                     Intent i = new Intent(
@@ -290,7 +292,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "exception starting export activity " + ex.toString());
                 }
                 return true;
-                */
+
             /*
             case R.id.action_export:
                 Log.i(TAG, "action_export");

@@ -337,4 +337,5 @@
     <string name="not_logged_in">Not Logged In</string>
     <string name="data_sharing_setup_ok">Data Sharing Setup OK</string>
     <string name="please_confirm_seizure_events">Please Check your Shared Seizure Events</string>
+    <string name="data_sharing_log_in">Data Sharing Log-In</string>
 </resources>
