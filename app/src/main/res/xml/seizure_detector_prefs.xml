@@ -30,7 +30,7 @@
             android:summary="@string/AlarmFreqMinSummary"
             android:title="@string/AlarmFreqMinTitle" />
         <EditTextPreference
-            android:defaultValue="10"
+            android:defaultValue="8"
             android:key="AlarmFreqMax"
             android:summary="@string/AlarmFreqMaxSummary"
             android:title="@string/AlarmFreqMaxTitle" />
