@@ -52,8 +52,9 @@ public class WebApiConnection {
     /**
      * Attempt to authenticate with the web API using user name uname and password passwd.  Calls function callback with either
      * the authentication token on success or null on failure.
-     * @param uname - user name
-     * @param passwd - password
+     *
+     * @param uname    - user name
+     * @param passwd   - password
      * @param callback - call back function callback(String retVal)
      * @return true if request sent, or false if failed to send request.
      */
@@ -89,7 +90,7 @@ public class WebApiConnection {
                             String responseBody = new String(error.networkResponse.data);
                             Log.e(TAG, "Login Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
                         } else {
-                            Log.e(TAG,"Login Error:  Returned null response");
+                            Log.e(TAG, "Login Error:  Returned null response");
                         }
                         setStoredToken(null);
                         callback.accept(null);
@@ -122,7 +123,7 @@ public class WebApiConnection {
     }
 
     private String getStoredToken() {
-        return(mAuthToken);
+        return (mAuthToken);
     }
 
     public boolean isLoggedIn() {
@@ -177,7 +178,7 @@ public class WebApiConnection {
                             Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
                             callback.accept(null);
                         } else {
-                            Log.e(TAG,"Create Event Error - null respones");
+                            Log.e(TAG, "Create Event Error - null respones");
                             callback.accept(null);
                         }
                     }
@@ -219,7 +220,7 @@ public class WebApiConnection {
     public boolean getEvent(Long eventId, Consumer<JSONObject> callback) {
         //Long eventId=Long.valueOf(285);
         Log.v(TAG, "getEvent()");
-        String urlStr = mUrlBase + "/api/events/"+eventId;
+        String urlStr = mUrlBase + "/api/events/" + eventId;
         Log.v(TAG, "getEvent(): urlStr=" + urlStr);
         final String authtoken = getStoredToken();
 
@@ -235,10 +236,10 @@ public class WebApiConnection {
                         Log.v(TAG, "Response is: " + response);
                         try {
                             JSONObject retObj = new JSONObject(response);
-                            retObj.put("alarmStateStr",mUtil.alarmStatusToString(retObj.getInt("osdAlarmState")));
+                            retObj.put("alarmStateStr", mUtil.alarmStatusToString(retObj.getInt("osdAlarmState")));
                             callback.accept(retObj);
                         } catch (JSONException e) {
-                            Log.e(TAG,"getEventTypes.onRespons(): Error: "+e.getMessage()+","+e.toString());
+                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
                             callback.accept(null);
                         }
                     }
@@ -270,6 +271,7 @@ public class WebApiConnection {
 
     /**
      * Retrieve all events accessible to the logged in user, and pass them to the callback function as a JSONObject
+     *
      * @param callback
      * @return true on success or false on failure to initiate the request.
      */
@@ -296,7 +298,7 @@ public class WebApiConnection {
                             retObj.put("events", eventArray);
                             callback.accept(retObj);
                         } catch (JSONException e) {
-                            Log.e(TAG,"getEventTypes.onRespons(): Error: "+e.getMessage()+","+e.toString());
+                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
                             callback.accept(null);
                         }
                     }
@@ -304,11 +306,12 @@ public class WebApiConnection {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        //if ((error != null) && (error.networkResponse != null) && (error.networkResponse.data != null)) {
                         if (error != null) {
                             String responseBody = new String(error.networkResponse.data);
                             Log.e(TAG, "getEvents(): Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
-                        } else {
-                            Log.e(TAG,"getEvents(): Error: - request returned null response");
+                        } else{
+                            Log.e(TAG, "getEvents(): Error: - request returned null response");
                         }
                         callback.accept(null);
                     }
@@ -340,7 +343,7 @@ public class WebApiConnection {
             eventId = eventObj.getLong("id");
         } catch (JSONException e) {
             Log.e(TAG, "updateEvent(): Error reading id from eventObj");
-            eventId= Long.valueOf(-1);
+            eventId = Long.valueOf(-1);
         }
         final String dataStr = eventObj.toString();
         Log.v(TAG, "createEvent - data=" + dataStr);
@@ -348,12 +351,13 @@ public class WebApiConnection {
 
         int reqMethod;
         String urlStr;
-        if (eventId!=-1) {
-            Log.v(TAG,"updateEvent() - found eventId "+eventId+", Updating event record");urlStr = mUrlBase + "/api/events/"+eventId+"/";
+        if (eventId != -1) {
+            Log.v(TAG, "updateEvent() - found eventId " + eventId + ", Updating event record");
+            urlStr = mUrlBase + "/api/events/" + eventId + "/";
             Log.v(TAG, "urlStr=" + urlStr);
             reqMethod = Request.Method.PUT;
         } else {
-            Log.v(TAG,"updateEvent() - eventId not found - creating new event record");
+            Log.v(TAG, "updateEvent() - eventId not found - creating new event record");
             urlStr = mUrlBase + "/api/events/";
             Log.v(TAG, "urlStr=" + urlStr);
             reqMethod = Request.Method.POST;
@@ -368,7 +372,7 @@ public class WebApiConnection {
                             JSONObject retObj = new JSONObject(response);
                             callback.accept(retObj);
                         } catch (JSONException e) {
-                            Log.e(TAG,"getEventTypes.onRespons(): Error: "+e.getMessage()+","+e.toString());
+                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
                             callback.accept(null);
                         }
                     }
@@ -380,7 +384,7 @@ public class WebApiConnection {
                             String responseBody = new String(error.networkResponse.data);
                             Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
                         } else {
-                            Log.e(TAG,"Create Event Error - returned null response");
+                            Log.e(TAG, "Create Event Error - returned null response");
                         }
                         callback.accept(null);
                     }
@@ -423,9 +427,7 @@ public class WebApiConnection {
     }
 
 
-
-
-    public boolean createDatapoint(JSONObject dataObj, int eventId, Consumer<String>callback) {
+    public boolean createDatapoint(JSONObject dataObj, int eventId, Consumer<String> callback) {
         Log.v(TAG, "createDatapoint()");
         // Create a new event in the remote database, based on the provided parameters.
         String urlStr = mUrlBase + "/api/datapoints/";
@@ -468,7 +470,7 @@ public class WebApiConnection {
                             Log.e(TAG, "Create Datapoint Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
                             callback.accept(null);
                         } else {
-                            Log.e(TAG,"Create Datapoint Error - returned null respones");
+                            Log.e(TAG, "Create Datapoint Error - returned null respones");
                             callback.accept(null);
                         }
                     }
@@ -512,7 +514,8 @@ public class WebApiConnection {
      * Retrieve the file containing the standard event types from the server.
      * Calls the specified callback function, passing a JSONObject as a parameter when the data has been received and parsed.
      * Note it uses a Consumer callback function to avoid having to create another interface
-     *    - see https://medium.com/@pra4mesh/callback-function-in-java-20fa48b27797
+     * - see https://medium.com/@pra4mesh/callback-function-in-java-20fa48b27797
+     *
      * @return true if request sent successfully or else false.
      */
     public boolean getEventTypes(Consumer<JSONObject> callback) {
@@ -535,7 +538,7 @@ public class WebApiConnection {
                             JSONObject retObj = new JSONObject(response);
                             callback.accept(retObj);
                         } catch (JSONException e) {
-                            Log.e(TAG,"getEventTypes.onRespons(): Error: "+e.getMessage()+","+e.toString());
+                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
                             callback.accept(null);
                         }
                     }
@@ -547,7 +550,7 @@ public class WebApiConnection {
                             String responseBody = new String(error.networkResponse.data);
                             Log.e(TAG, "getEventTypes.onErrorResponse(): " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
                         } else {
-                            Log.e(TAG,"getEventTypes.onErrorResponse() - returned null response");
+                            Log.e(TAG, "getEventTypes.onErrorResponse() - returned null response");
                         }
                         callback.accept(null);
                     }

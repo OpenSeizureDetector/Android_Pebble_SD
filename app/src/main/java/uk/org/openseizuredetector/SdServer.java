@@ -136,7 +136,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private boolean mLogAlarms = true;
     public boolean mLogData = false;
     public boolean mLogDataRemote = false;
-    private boolean mLogDataRemoteMobile = false;
+    public boolean mLogDataRemoteMobile = false;
     private String mAuthToken = null;
     private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
     public long mDataRetentionPeriod = 1; // Prunes the local db so it only retains data younger than this duration (in days)
