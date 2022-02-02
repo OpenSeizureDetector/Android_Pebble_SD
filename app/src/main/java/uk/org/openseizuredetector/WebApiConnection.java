@@ -36,6 +36,7 @@ import java.util.function.Consumer;
 public class WebApiConnection {
     public String retVal;
     public int retCode;
+    public boolean mServerConnectionOk = false;
     private String mUrlBase = "https://osdApi.ddns.net";
     private String TAG = "WebApiConnection";
     private String mAuthToken;
@@ -76,6 +77,7 @@ public class WebApiConnection {
                         try {
                             JSONObject jo = new JSONObject(response);
                             tokenStr = jo.getString("token");
+                            mServerConnectionOk = true;
                         } catch (JSONException e) {
                             tokenStr = "Error Parsing Rsponse";
                         }
@@ -92,6 +94,7 @@ public class WebApiConnection {
                         } else {
                             Log.e(TAG, "Login Error:  Returned null response");
                         }
+                        mServerConnectionOk = false;
                         setStoredToken(null);
                         callback.accept(null);
                     }
@@ -167,12 +170,14 @@ public class WebApiConnection {
                     @Override
                     public void onResponse(String response) {
                         Log.v(TAG, "Response is: " + response);
+                        mServerConnectionOk = true;
                         callback.accept(response);
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        mServerConnectionOk = false;
                         if (error != null) {
                             String responseBody = new String(error.networkResponse.data);
                             Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
@@ -242,6 +247,7 @@ public class WebApiConnection {
                             Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
                             callback.accept(null);
                         }
+                        mServerConnectionOk = true;
                     }
                 },
                 new Response.ErrorListener() {
@@ -253,6 +259,7 @@ public class WebApiConnection {
                         } else {
                             Log.e(TAG, "Create Event Error: returned null response");
                         }
+                        mServerConnectionOk = false;
                         callback.accept(null);
                     }
                 }) {
@@ -292,6 +299,7 @@ public class WebApiConnection {
                     @Override
                     public void onResponse(String response) {
                         Log.v(TAG, "Response is: " + response);
+                        mServerConnectionOk = true;
                         try {
                             JSONObject retObj = new JSONObject();
                             JSONArray eventArray = new JSONArray(response);
@@ -306,10 +314,15 @@ public class WebApiConnection {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        //if ((error != null) && (error.networkResponse != null) && (error.networkResponse.data != null)) {
+                        //if ((error != null) && (error.networkResponse != null) && (error.networkResponse.data != null)) {#
+                        mServerConnectionOk = false;
                         if (error != null) {
-                            String responseBody = new String(error.networkResponse.data);
-                            Log.e(TAG, "getEvents(): Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                            if (error.networkResponse != null) {
+                                String responseBody = new String(error.networkResponse.data);
+                                Log.e(TAG, "getEvents(): Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                            } else {
+                                Log.e(TAG, "getEvents(): Error: - request returned null networkResponse");
+                            }
                         } else{
                             Log.e(TAG, "getEvents(): Error: - request returned null response");
                         }
@@ -368,6 +381,7 @@ public class WebApiConnection {
                     @Override
                     public void onResponse(String response) {
                         Log.v(TAG, "Response is: " + response);
+                        mServerConnectionOk = true;
                         try {
                             JSONObject retObj = new JSONObject(response);
                             callback.accept(retObj);
@@ -380,6 +394,7 @@ public class WebApiConnection {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        mServerConnectionOk = false;
                         if (error != null) {
                             String responseBody = new String(error.networkResponse.data);
                             Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
@@ -458,12 +473,14 @@ public class WebApiConnection {
                     @Override
                     public void onResponse(String response) {
                         Log.v(TAG, "Response is: " + response);
+                        mServerConnectionOk = true;
                         callback.accept(response);
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        mServerConnectionOk = false;
                         if (error != null) {
                             // Fixme = are we sure that networResponse.data is not null???
                             String responseBody = new String(error.networkResponse.data);
@@ -534,6 +551,7 @@ public class WebApiConnection {
                     @Override
                     public void onResponse(String response) {
                         Log.v(TAG, "getEventTypes.onResponse(): Response is: " + response);
+                        mServerConnectionOk = true;
                         try {
                             JSONObject retObj = new JSONObject(response);
                             callback.accept(retObj);
@@ -546,6 +564,7 @@ public class WebApiConnection {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        mServerConnectionOk = false;
                         if (error != null) {
                             String responseBody = new String(error.networkResponse.data);
                             Log.e(TAG, "getEventTypes.onErrorResponse(): " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
@@ -570,5 +589,35 @@ public class WebApiConnection {
 
     }
 
+    /**
+     * Retrieve a trivial file from the server to check we have a good server connection.
+     *  sets mServerConnectionOk.
+     * @return true if request sent successfully or else false.
+     */
+    public boolean checkServerConnection() {
+        Log.v(TAG, "checkServerConnection()");
+        String urlStr = mUrlBase + "/static/test.txt";
+        Log.v(TAG, "urlStr=" + urlStr);
+
+        StringRequest req = new StringRequest(Request.Method.GET, urlStr,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.v(TAG, "checkServerConnection.onResponse(): Response is: " + response);
+                        mServerConnectionOk = true;
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.v(TAG, "checkServerConnection.onErrorResponse");
+                        mServerConnectionOk = false;
+                    }
+                });
+
+        mQueue.add(req);
+        return (true);
+
+    }
 
 }

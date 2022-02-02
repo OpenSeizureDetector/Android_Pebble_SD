@@ -577,20 +577,38 @@ public class MainActivity extends AppCompatActivity {
                                 if (!mConnection.mSdServer.mLogDataRemoteMobile) {
                                     Log.v(TAG,"mLogDataRemoteMobile="+mConnection.mSdServer.mLogDataRemoteMobile);
                                     Log.v(TAG,"mUtil.isMobileDataActive="+mUtil.isMobileDataActive());
-                                    if (mUtil.isMobileDataActive()) {
-                                        tv = (TextView) findViewById(R.id.remoteDbTv);
-                                        tv.setText(getString(R.string.data_sharing_status)
-                                                + ": "
-                                                + getString(R.string.not_updating_mobile));
-                                        tv.setBackgroundColor(warnColour);
-                                        tv.setTextColor(warnTextColour);
+                                    if (mUtil.isNetworkConnected()) {
+                                        if (mUtil.isMobileDataActive()) {
+                                            tv = (TextView) findViewById(R.id.remoteDbTv);
+                                            tv.setText(getString(R.string.data_sharing_status)
+                                                    + ": "
+                                                    + getString(R.string.not_updating_mobile));
+                                            tv.setBackgroundColor(warnColour);
+                                            tv.setTextColor(warnTextColour);
+                                        } else {
+                                            if (mConnection.mSdServer.mLm.mWac.mServerConnectionOk) {
+                                                tv = (TextView) findViewById(R.id.remoteDbTv);
+                                                tv.setText(getString(R.string.data_sharing_status)
+                                                        + ": "
+                                                        + getString(R.string.data_sharing_setup_ok));
+                                                tv.setBackgroundColor(okColour);
+                                                tv.setTextColor(okTextColour);
+                                            } else {
+                                                tv = (TextView) findViewById(R.id.remoteDbTv);
+                                                tv.setText(getString(R.string.data_sharing_status)
+                                                        + ": "
+                                                        + getString(R.string.error_connecting_to_server));
+                                                tv.setBackgroundColor(warnColour);
+                                                tv.setTextColor(warnTextColour);
+                                            }
+                                        }
                                     } else {
                                         tv = (TextView) findViewById(R.id.remoteDbTv);
                                         tv.setText(getString(R.string.data_sharing_status)
                                                 + ": "
-                                                + getString(R.string.data_sharing_setup_ok));
-                                        tv.setBackgroundColor(okColour);
-                                        tv.setTextColor(okTextColour);
+                                                + getString(R.string.not_updating_no_network));
+                                        tv.setBackgroundColor(warnColour);
+                                        tv.setTextColor(warnTextColour);
                                     }
                                 } else {
                                     tv = (TextView) findViewById(R.id.remoteDbTv);

@@ -302,6 +302,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
         // return true if we are using mobile data, otherwise return false
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        if (activeNetwork == null) return false;
         if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
             return true;
         } else {
@@ -313,7 +314,11 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
         // return true if we have a network connection, otherwise false.
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        return (activeNetwork.isConnected());
+        if (activeNetwork != null) {
+            return (activeNetwork.isConnected());
+        } else {
+            return (false);
+        }
     }
 
     /**

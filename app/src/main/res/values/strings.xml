@@ -339,4 +339,6 @@
     <string name="please_confirm_seizure_events">Please Check your Shared Seizure Events</string>
     <string name="data_sharing_log_in">Data Sharing Log-In</string>
     <string name="not_updating_mobile">Not Updating using Mobile Internet</string>
+    <string name="not_updating_no_network">Not Updating - No Network Connection</string>
+    <string name="error_connecting_to_server">Error Connecting to Server</string>
 </resources>
