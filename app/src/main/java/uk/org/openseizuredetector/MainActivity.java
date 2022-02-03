@@ -571,79 +571,64 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(okTextColour);
                     }
 
-                    if (mConnection.mSdServer.mLogData) {
-                        if (mConnection.mSdServer.mLogDataRemote) {
-                            if (mConnection.mSdServer.mLm.mWac.isLoggedIn()) {
-                                if (!mConnection.mSdServer.mLogDataRemoteMobile) {
-                                    Log.v(TAG,"mLogDataRemoteMobile="+mConnection.mSdServer.mLogDataRemoteMobile);
-                                    Log.v(TAG,"mUtil.isMobileDataActive="+mUtil.isMobileDataActive());
-                                    if (mUtil.isNetworkConnected()) {
-                                        if (mUtil.isMobileDataActive()) {
-                                            tv = (TextView) findViewById(R.id.remoteDbTv);
-                                            tv.setText(getString(R.string.data_sharing_status)
-                                                    + ": "
-                                                    + getString(R.string.not_updating_mobile));
-                                            tv.setBackgroundColor(warnColour);
-                                            tv.setTextColor(warnTextColour);
-                                        } else {
-                                            if (mConnection.mSdServer.mLm.mWac.mServerConnectionOk) {
-                                                tv = (TextView) findViewById(R.id.remoteDbTv);
-                                                tv.setText(getString(R.string.data_sharing_status)
-                                                        + ": "
-                                                        + getString(R.string.data_sharing_setup_ok));
-                                                tv.setBackgroundColor(okColour);
-                                                tv.setTextColor(okTextColour);
-                                            } else {
-                                                tv = (TextView) findViewById(R.id.remoteDbTv);
-                                                tv.setText(getString(R.string.data_sharing_status)
-                                                        + ": "
-                                                        + getString(R.string.error_connecting_to_server));
-                                                tv.setBackgroundColor(warnColour);
-                                                tv.setTextColor(warnTextColour);
-                                            }
-                                        }
-                                    } else {
-                                        tv = (TextView) findViewById(R.id.remoteDbTv);
-                                        tv.setText(getString(R.string.data_sharing_status)
-                                                + ": "
-                                                + getString(R.string.not_updating_no_network));
-                                        tv.setBackgroundColor(warnColour);
-                                        tv.setTextColor(warnTextColour);
-                                    }
-                                } else {
-                                    tv = (TextView) findViewById(R.id.remoteDbTv);
-                                    tv.setText(getString(R.string.data_sharing_status)
-                                            + ": "
-                                            + getString(R.string.data_sharing_setup_ok));
-                                    tv.setBackgroundColor(okColour);
-                                    tv.setTextColor(okTextColour);
-                                }
-                            } else {
-                                tv = (TextView) findViewById(R.id.remoteDbTv);
-                                tv.setText(getString(R.string.data_sharing_status)
-                                        +": "
-                                        +getString(R.string.not_logged_in));
-                                tv.setBackgroundColor(warnColour);
-                                tv.setTextColor(warnTextColour);
-                            }
-                        } else {
-                            tv = (TextView) findViewById(R.id.remoteDbTv);
-                            tv.setText(getString(R.string.data_sharing_status)
-                                    +": "
-                                    +getString(R.string.not_sharing_logged_data));
-                            tv.setBackgroundColor(warnColour);
-                            tv.setTextColor(warnTextColour);
-                        }
-                    } else {
+                    ////////////////////////////////////////////////////////////
+                    // Populate the Data Sharing Status Box
+                    // We start off with it set to OK, then check for several different abnormal conditions
+                    // in turn - the last one that is active is the one that is displayed.
+                    tv = (TextView) findViewById(R.id.remoteDbTv);
+                    tv.setText(getString(R.string.data_sharing_status)
+                            + ": "
+                            + getString(R.string.data_sharing_setup_ok));
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+
+                    if (!mConnection.mSdServer.mLm.mWac.mServerConnectionOk) {
+                        // Problem connecting to server
                         tv = (TextView) findViewById(R.id.remoteDbTv);
                         tv.setText(getString(R.string.data_sharing_status)
-                                +": "
-                                +getString(R.string.not_logging_data));
+                                + ": "
+                                + getString(R.string.error_connecting_to_server));
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
                     }
 
+                    if (!mConnection.mSdServer.mLogDataRemoteMobile && mUtil.isMobileDataActive()) {
+                        // We are on mobile internet but we are set to not upload over mobile data.
+                        tv.setText(getString(R.string.data_sharing_status)
+                                + ": "
+                                + getString(R.string.not_updating_mobile));
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
 
+                    if (!mUtil.isNetworkConnected()) {
+                        // No network connection
+                        tv.setText(getString(R.string.data_sharing_status)
+                                + ": "
+                                + getString(R.string.not_updating_no_network));
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+
+                    if (!mConnection.mSdServer.mLm.mWac.isLoggedIn()) {
+                        // Not Logged In
+                        tv.setText(getString(R.string.data_sharing_status)
+                                + ": "
+                                + getString(R.string.not_logged_in));
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+
+                    if (!mConnection.mSdServer.mLogData) {
+                        // Not set to share data
+                        tv.setText(getString(R.string.data_sharing_status)
+                                + ": "
+                                + getString(R.string.not_sharing_logged_data));
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+
+                    /////////////////////////////////////////////////////
                     // Set ProgressBars to show margin to alarm.
                     long powerPc;
                     if (mConnection.mSdServer.mSdData.alarmThresh != 0)
