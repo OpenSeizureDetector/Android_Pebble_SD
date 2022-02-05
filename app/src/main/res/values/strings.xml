@@ -341,4 +341,6 @@
     <string name="not_updating_mobile">Not Updating using Mobile Internet</string>
     <string name="not_updating_no_network">No Network Connection</string>
     <string name="error_connecting_to_server">Error Connecting to Server</string>
+    <string name="battery_usage_optimisation_dialog_title">WARNING: Battery Usage Optimisation</string>
+    <string name="battery_usage_optimisation_dialog_text">WARNING:  The Android System Battery Optimisation Settings are configured to \'Optimise\' OpenSeizureDetector.  This means it is likely to be shutdown when operating on battery power, so will not work correctly\n\nPlease go into the Phone Settings and search for \'Optimise Battery Usage\' and ensure that OpenSeizureDetector is NOT optimised</string>
 </resources>

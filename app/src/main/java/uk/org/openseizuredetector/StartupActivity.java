@@ -33,14 +33,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
 import android.text.SpannableString;
-import android.text.SpannedString;
 import android.text.util.Linkify;
 import android.util.Log;
 import android.view.View;
@@ -77,6 +74,8 @@ public class StartupActivity extends Activity {
     private Handler mHandler = new Handler();   // used to update ui from mUiTimer
     private boolean mUsingPebbleDataSource = true;
     private String mPebbleAppPackageName = null;
+    private boolean mBatteryOptDialogDisplayed = false;
+    private AlertDialog mBatteryOptDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -162,19 +161,6 @@ public class StartupActivity extends Activity {
             mUtil.requestPermissions(this);
         }
 
-        // FIXME = this does not seem to work - says there is a problem if optimisation is switched off...
-        PowerManager powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
-        if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
-            Log.i(TAG,"Power Management OK - we are ignoring Battery Optimizations");
-        } else {
-            Log.e(TAG,"Power Management Problem - not ignoring Battery Optimisations");
-            Intent i = new Intent();
-            i.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-            i.setData(Uri.parse("package:" + getPackageName()));
-            startActivity(i);
-        }
-
-
         String versionName = mUtil.getAppVersionName();
         tv = (TextView) findViewById(R.id.appNameTv);
         tv.setText("OpenSeizureDetector V" + versionName);
@@ -201,6 +187,18 @@ public class StartupActivity extends Activity {
         Log.i(TAG,"onStart() - binding to server");
         mUtil.writeToSysLogFile("StartupActivity.onStart() - binding to server");
         mUtil.bindToServer(this, mConnection);
+
+        // Check power management settings
+        PowerManager powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
+        if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
+            Log.i(TAG,"Power Management OK - we are ignoring Battery Optimizations");
+                mBatteryOptDialogDisplayed = false;
+        } else {
+            Log.e(TAG,"Power Management Problem - not ignoring Battery Optimisations");
+            //mUtil.showToast("WARNING - Phone is Optimising OpenSeizureDetector Battery Usage - this is likely to prevent it working correctly when running on battery!");
+            if (!mBatteryOptDialogDisplayed) showBatteryOptimisationWarningDialog();
+        }
+
 
         // Check to see if this is the first time the app has been run, and display welcome dialog if it is.
         checkFirstRun();
@@ -247,6 +245,16 @@ public class StartupActivity extends Activity {
                     .getDefaultSharedPreferences(getBaseContext());
             smsAlarmsActive = SP.getBoolean("SMSAlarm", false);
             phoneAlarmsActive = SP.getBoolean("PhoneCallAlarm", false);
+
+            // Check power management settings
+            PowerManager powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
+            if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
+                Log.i(TAG, "Power Management OK - we are ignoring Battery Optimizations");
+                if (mBatteryOptDialogDisplayed) {
+                    mBatteryOptDialog.cancel();
+                    mBatteryOptDialogDisplayed = false;
+                }
+            }
 
             // Settings ok
             tv = (TextView) findViewById(R.id.textItem1);
@@ -361,7 +369,7 @@ public class StartupActivity extends Activity {
             // If all the parameters are ok, close this activity and open the main
             // user interface activity instead.
             if (allOk) {
-                if (!mDialogDisplayed) {
+                if (!mDialogDisplayed && !mBatteryOptDialogDisplayed) {
                     if (!mStartedMainActivity) {
                         Log.i(TAG, "serverStatusRunnable() - starting main activity...");
                         mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - all checks ok - starting main activity.");
@@ -478,4 +486,27 @@ public class StartupActivity extends Activity {
         prefs.edit().putString("AppVersionName", versionName).commit();
     }
 
+    private void showBatteryOptimisationWarningDialog() {
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                this);
+        final SpannableString s = new SpannableString(
+                getString(R.string.battery_usage_optimisation_dialog_text)
+        );
+        // This makes the links display as links, but they do not respond to clicks for some reason...
+        Linkify.addLinks(s, Linkify.ALL);
+        alertDialogBuilder
+                .setTitle(R.string.battery_usage_optimisation_dialog_title)
+                .setMessage(s)
+                .setCancelable(false)
+                .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                        mBatteryOptDialogDisplayed = false;
+                    }
+                });
+        mBatteryOptDialog = alertDialogBuilder.create();
+        Log.i(TAG, "Displaying Update Dialog");
+        mBatteryOptDialog.show();
+        mBatteryOptDialogDisplayed = true;
+    }
 }
