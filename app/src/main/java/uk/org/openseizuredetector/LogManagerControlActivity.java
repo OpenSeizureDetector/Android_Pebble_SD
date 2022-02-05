@@ -6,18 +6,25 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.v4.view.MenuCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.RadioButton;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
@@ -25,6 +32,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -42,6 +50,11 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private Integer mUiTimerPeriodFast = 2000;  // 2 seconds - we use fast updating while UI is blank and we are waiting for first data
     private Integer mUiTimerPeriodSlow = 60000; // 60 seconds - once data has been received and UI populated we only update once per minute.
 
+    private Integer UI_MODE_LOCAL = 0;
+    private Integer UI_MODE_SHARED = 1;
+
+    private Integer mUiMode = UI_MODE_SHARED;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.v(TAG, "onCreate()");
@@ -52,15 +65,34 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_log_manager_control);
 
+        /* Force display of overflow menu - from stackoverflow
+         * "how to force use of..."
+         */
+        try {
+            Log.v(TAG, "trying menubar fiddle...");
+            ViewConfiguration config = ViewConfiguration.get(this);
+            Field menuKeyField =
+                    ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+            if (menuKeyField != null) {
+                Log.v(TAG, "menuKeyField is not null - configuring....");
+                menuKeyField.setAccessible(true);
+                menuKeyField.setBoolean(config, false);
+            } else {
+                Log.v(TAG, "menuKeyField is null - doing nothing...");
+            }
+        } catch (Exception e) {
+            Log.v(TAG, "menubar fiddle exception: " + e.toString());
+        }
+
         Button authBtn =
                 (Button) findViewById(R.id.auth_button);
         authBtn.setOnClickListener(onAuth);
-        Button pruneBtn =
-                (Button) findViewById(R.id.pruneDatabaseBtn);
-        pruneBtn.setOnClickListener(onPruneBtn);
-        Button reportSeizureBtn =
-                (Button) findViewById(R.id.reportSeizureBtn);
-        reportSeizureBtn.setOnClickListener(onReportSeizureBtn);
+        //Button pruneBtn =
+        //        (Button) findViewById(R.id.pruneDatabaseBtn);
+        //pruneBtn.setOnClickListener(onPruneBtn);
+        //Button reportSeizureBtn =
+        //        (Button) findViewById(R.id.reportSeizureBtn);
+        //reportSeizureBtn.setOnClickListener(onReportSeizureBtn);
         Button remoteDbBtn =
                 (Button) findViewById(R.id.refresh_button);
         remoteDbBtn.setOnClickListener(onRefreshBtn);
@@ -71,6 +103,18 @@ public class LogManagerControlActivity extends AppCompatActivity {
         lv = (ListView) findViewById(R.id.remoteEventsLv);
         lv.setOnItemClickListener(onRemoteEventListClick);
     }
+
+    /**
+     * Create Action Bar
+     */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        Log.i(TAG, "onCreateOptionsMenu()");
+        getMenuInflater().inflate(R.menu.log_manager_activity_menu, menu);
+        MenuCompat.setGroupDividerEnabled(menu, true);
+        return true;
+    }
+
 
     @Override
     protected void onStart() {
@@ -253,6 +297,79 @@ public class LogManagerControlActivity extends AppCompatActivity {
             startUiTimer(mUiTimerPeriodSlow);
         }
     }  //updateUi();
+
+    public void onRadioButtonClicked(View view) {
+        LinearLayout localDataLl  = (LinearLayout) findViewById(R.id.local_data_ll);;
+        LinearLayout sharedDataLl = (LinearLayout) findViewById(R.id.shared_data_ll);;;
+        // Is the button now checked?
+        boolean checked = ((RadioButton) view).isChecked();
+
+        // Check which radio button was clicked
+        switch(view.getId()) {
+            case R.id.local_data_rb:
+                if (checked) {
+                    // Switch to the local data view
+                    localDataLl.setVisibility(View.VISIBLE);
+                    sharedDataLl.setVisibility(View.GONE);
+                }
+                break;
+            case R.id.shared_data_rb:
+                if (checked) {
+                    // Switch to the local data view
+                    localDataLl.setVisibility(View.GONE);
+                    sharedDataLl.setVisibility(View.VISIBLE);
+                }
+                    break;
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Log.i(TAG, "onOptionsItemSelected() :  " + item.getItemId() + " selected");
+        switch (item.getItemId()) {
+            case R.id.action_authenticate_api:
+                Log.i(TAG, "action_autheticate_api");
+                try {
+                    Intent i = new Intent(
+                            getApplicationContext(),
+                            AuthenticateActivity.class);
+                    this.startActivity(i);
+                } catch (Exception ex) {
+                    Log.i(TAG, "exception starting export activity " + ex.toString());
+                }
+                return true;
+            case R.id.pruneDatabaseMenuItem:
+                Log.i(TAG, "action_pruneDatabase");
+                onPruneBtn.onClick(null);
+                return true;
+            case R.id.action_report_seizure:
+                Log.i(TAG, "action_report_seizure");
+                try {
+                    Intent intent = new Intent(
+                            getApplicationContext(),
+                            ReportSeizureActivity.class);
+                    this.startActivity(intent);
+                } catch (Exception ex) {
+                    Log.i(TAG, "exception starting Report Seizure activity " + ex.toString());
+                }
+                return true;
+            case R.id.action_settings:
+                Log.i(TAG, "action_settings");
+                try {
+                    Intent prefsIntent = new Intent(
+                            getApplicationContext(),
+                            PrefActivity.class);
+                    this.startActivity(prefsIntent);
+                } catch (Exception ex) {
+                    Log.i(TAG, "exception starting settings activity " + ex.toString());
+                }
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
 
 
     View.OnClickListener onAuth =
