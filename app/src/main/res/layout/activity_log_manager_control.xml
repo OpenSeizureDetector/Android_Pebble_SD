@@ -49,25 +49,6 @@
             android:layout_height="wrap_content"
             android:text="000" />
     </LinearLayout>
-<!--
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/pruneDatabaseBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/prune_database" />
-
-        <Button
-            android:id="@+id/reportSeizureBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/report_seizure" />
-    </LinearLayout>
--->
     <RadioGroup xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -122,7 +103,11 @@
             android:layout_height="wrap_content"
             android:text="@string/remote_database"
             android:textAppearance="?android:attr/textAppearanceLarge" />
-
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/check_seizures_message"
+        />
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -149,7 +134,7 @@
 
         <ListView
             android:id="@+id/remoteEventsLv"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp" />
 

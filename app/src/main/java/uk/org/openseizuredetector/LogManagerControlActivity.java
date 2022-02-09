@@ -6,6 +6,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -19,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -33,9 +35,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.reflect.Field;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class LogManagerControlActivity extends AppCompatActivity {
     private String TAG = "LogManagerControlActivity";
@@ -264,7 +271,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         // Remote Database List View
         if (mRemoteEventsList != null) {
             ListView lv = (ListView) findViewById(R.id.remoteEventsLv);
-            ListAdapter adapter = new SimpleAdapter(LogManagerControlActivity.this, mRemoteEventsList, R.layout.log_entry_layout_remote,
+            ListAdapter adapter = new RemoteEventsAdapter(LogManagerControlActivity.this, mRemoteEventsList, R.layout.log_entry_layout_remote,
                     new String[]{"dataTime", "type", "subType", "osdAlarmStateStr", "desc"},
                     new int[]{R.id.event_date_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
                     R.id.event_alarmState_remote_tv, R.id.event_notes_remote_tv});
@@ -526,6 +533,60 @@ public class LogManagerControlActivity extends AppCompatActivity {
         }
 
     }
+
+
+    private class RemoteEventsAdapter extends SimpleAdapter {
+
+        /**
+         * Constructor
+         *
+         * @param context  The context where the View associated with this SimpleAdapter is running
+         * @param data     A List of Maps. Each entry in the List corresponds to one row in the list. The
+         *                 Maps contain the data for each row, and should include all the entries specified in
+         *                 "from"
+         * @param resource Resource identifier of a view layout that defines the views for this list
+         *                 item. The layout file should include at least those named views defined in "to"
+         * @param from     A list of column names that will be added to the Map associated with each
+         *                 item.
+         * @param to       The views that should display column in the "from" parameter. These should all be
+         *                 TextViews. The first N views in this list are given the values of the first N columns
+         */
+        public RemoteEventsAdapter(Context context, List<? extends Map<String, ?>> data, int resource, String[] from, int[] to) {
+            super(context, data, resource, from, to);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View v = super.getView(position, convertView, parent);
+            Map<String, ?> dataItem = (Map<String,?>)getItem(position);
+            Log.i(TAG,dataItem.toString());
+            switch(dataItem.get("type").toString()) {
+                case "null":
+                    v.setBackgroundColor(Color.parseColor("#ffaaaa"));
+                    break;
+                case "Seizure":
+                    v.setBackgroundColor(Color.parseColor("#ff1a1a"));
+                    break;
+                default:
+                    v.setBackgroundColor(Color.TRANSPARENT);
+            }
+
+            // Convert date format to something more readable.
+            TextView tv = (TextView) v.findViewById(R.id.event_date_remote_tv);
+            try {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+                Date dataTime = dateFormat.parse(dataItem.get("dataTime").toString());
+                dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                tv.setText(dateFormat.format(dataTime));
+            } catch (ParseException e) {
+                Log.e(TAG,"remoteEventsAdapter.getView: Error Parsing dataDate "+e.getLocalizedMessage());
+                tv.setText("---");
+            }
+
+
+            return(v);
+        }
+    };
 
 
 }

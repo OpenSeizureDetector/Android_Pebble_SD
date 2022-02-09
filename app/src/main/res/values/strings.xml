@@ -293,7 +293,7 @@
     <string name="O2SatThreshMinSummary">O2 Saturation Low Alarm Level (%)</string>
     <string name="title_activity_authenticate">Log in to OpenSeizureDetector Data Sharing</string>
     <string name="logout">Log Out</string>
-    <string name="logged_in_with_token">Logged in with Token</string>
+    <string name="logged_in_with_token">Logged in to\nData Sharing</string>
     <string name="local_database">Logged Data Manager</string>
     <string name="remote_database">Shared Data</string>
     <string name="num_local_events">Number of Events Stored on Phone: </string>
@@ -346,4 +346,5 @@
     <string name="local_data">Local Data</string>
     <string name="shared_data">Shared Data</string>
     <string name="prune_database">Prune Database</string>
+    <string name="check_seizures_message">Please select the events highlighted in pink to say if they are real seizures or false alarms</string>
 </resources>
