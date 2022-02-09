@@ -106,7 +106,7 @@
         <ListView
             android:id="@+id/eventLogListView"
             android:layout_width="wrap_content"
-            android:layout_height="150dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="10dp" />
     </LinearLayout>
 
@@ -122,12 +122,6 @@
             android:layout_height="wrap_content"
             android:text="@string/remote_database"
             android:textAppearance="?android:attr/textAppearanceLarge" />
-
-        <ListView
-            android:id="@+id/remoteEventsLv"
-            android:layout_width="wrap_content"
-            android:layout_height="150dp"
-            android:layout_marginTop="10dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -145,13 +139,21 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/authenticate" />
+            <Button
+                android:id="@+id/refresh_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/refreshBtn" />
         </LinearLayout>
 
-        <Button
-            android:id="@+id/refresh_button"
+
+        <ListView
+            android:id="@+id/remoteEventsLv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/refreshBtn" />
+            android:layout_marginTop="10dp" />
+
+
     </LinearLayout>
 
 </LinearLayout>

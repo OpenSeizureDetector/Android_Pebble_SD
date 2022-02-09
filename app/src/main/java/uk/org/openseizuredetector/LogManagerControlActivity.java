@@ -233,7 +233,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
 
     private void updateUi() {
-        //Log.v(TAG,"updateUi()");
+        Log.i(TAG,"updateUi()");
         boolean stopUpdating = true;
         TextView tv;
         Button btn;
@@ -250,7 +250,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         } else {
             stopUpdating = false;
         }
-
+        // Local Database ListView
         if (mEventsList != null) {
             ListView lv = (ListView) findViewById(R.id.eventLogListView);
             ListAdapter adapter = new SimpleAdapter(LogManagerControlActivity.this, mEventsList, R.layout.log_entry_layout,
@@ -264,13 +264,16 @@ public class LogManagerControlActivity extends AppCompatActivity {
         // Remote Database List View
         if (mRemoteEventsList != null) {
             ListView lv = (ListView) findViewById(R.id.remoteEventsLv);
-            ListAdapter adapter = new SimpleAdapter(LogManagerControlActivity.this, mRemoteEventsList, R.layout.log_entry_layout,
-                    new String[]{"dataTime", "type", "subType"},
-                    new int[]{R.id.event_date, R.id.event_alarmState, R.id.event_uploaded});
+            ListAdapter adapter = new SimpleAdapter(LogManagerControlActivity.this, mRemoteEventsList, R.layout.log_entry_layout_remote,
+                    new String[]{"dataTime", "type", "subType", "osdAlarmStateStr", "desc"},
+                    new int[]{R.id.event_date_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
+                    R.id.event_alarmState_remote_tv, R.id.event_notes_remote_tv});
             lv.setAdapter(adapter);
+            Log.i(TAG,"adapter[0]="+adapter.getItem(0));
+            Log.i(TAG,"adapter[3]="+adapter.getItem(3));
         } else {
             //mUtil.showToast("No Remote Events");
-            Log.d(TAG, "UpdateUi: No Remote Events");
+            Log.i(TAG, "UpdateUi: No Remote Events");
             stopUpdating = false;
         }
 
