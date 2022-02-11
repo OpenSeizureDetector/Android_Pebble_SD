@@ -50,6 +50,11 @@ public class WebApiConnection {
         mUtil = new OsdUtil(mContext, new Handler());
     }
 
+    public void close() {
+        Log.i(TAG,"stop()");
+        mQueue.stop();
+    }
+
     /**
      * Attempt to authenticate with the web API using user name uname and password passwd.  Calls function callback with either
      * the authentication token on success or null on failure.

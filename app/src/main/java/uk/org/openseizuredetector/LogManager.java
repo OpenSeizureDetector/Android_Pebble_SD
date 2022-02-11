@@ -804,6 +804,10 @@ public class LogManager {
     public void close() {
         mOSDDb.close();
         stopRemoteLogTimer();
+        if (mWac != null) {
+            Log.i(TAG,"Stopping Remote Database");
+            mWac.close();
+        }
     }
 
     /*
