@@ -200,7 +200,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
      * Stop the SdServer service
      */
     public void stopServer() {
-        Log.d(TAG, "OsdUtil.stopServer() - stopping Server... - mNbound=" + mNbound);
+        Log.i(TAG, "OsdUtil.stopServer() - stopping Server... - mNbound=" + mNbound);
         writeToSysLogFile("stopserver() - stopping server");
 
         // then send an Intent to stop the service.
