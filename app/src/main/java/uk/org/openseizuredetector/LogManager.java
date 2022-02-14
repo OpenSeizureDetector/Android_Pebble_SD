@@ -409,7 +409,7 @@ public class LogManager {
         long endDateMillis = currentDateMillis - 1000 * mEventDuration;
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String endDateStr = dateFormat.format(new Date(endDateMillis));
-        String whereClauseUploaded = "uploaded = false";
+        String whereClauseUploaded = "uploaded = 0";
         String whereClauseDate = "DataTime<?";
         String whereClause = whereClauseStatus + " AND " + whereClauseUploaded + " AND " + whereClauseDate;
 

@@ -276,8 +276,8 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     new int[]{R.id.event_date_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
                     R.id.event_alarmState_remote_tv, R.id.event_notes_remote_tv});
             lv.setAdapter(adapter);
-            Log.i(TAG,"adapter[0]="+adapter.getItem(0));
-            Log.i(TAG,"adapter[3]="+adapter.getItem(3));
+            //Log.i(TAG,"adapter[0]="+adapter.getItem(0));
+            //Log.i(TAG,"adapter[3]="+adapter.getItem(3));
         } else {
             //mUtil.showToast("No Remote Events");
             Log.i(TAG, "UpdateUi: No Remote Events");
