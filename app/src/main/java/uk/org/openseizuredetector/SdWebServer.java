@@ -202,7 +202,7 @@ public class SdWebServer extends NanoHTTPD {
                 } else {
                     Log.v(TAG, "WebServer.serve() - Unknown uri -" +
                             uri);
-                    answer = "{'msg' : 'Unknown URI: '}";
+                    answer = "{'msg' : 'Unknown URI: "+uri+"'}";
                 }
         }
         res = new NanoHTTPD.Response(answer);
