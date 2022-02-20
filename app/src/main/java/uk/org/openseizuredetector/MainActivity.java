@@ -369,7 +369,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Log.i(TAG,"onStart()");
+        Log.d(TAG,"onStart()");
         mUtil.writeToSysLogFile("MainActivity.onStart()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
@@ -403,7 +403,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        Log.i(TAG,"onStop() - unbinding from server");
+        Log.d(TAG,"onStop() - unbinding from server");
         mUtil.writeToSysLogFile("MainActivity.onStop()");
         mUtil.unbindFromServer(this, mConnection);
         mUiTimer.cancel();
@@ -903,14 +903,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        Log.i(TAG,"onPause()");
+        Log.d(TAG,"onPause()");
         mUtil.writeToSysLogFile("MainActivity.onPause()");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Log.i(TAG,"onResume()");
+        Log.d(TAG,"onResume()");
         mUtil.writeToSysLogFile("MainActivity.onResume()");
     }
 

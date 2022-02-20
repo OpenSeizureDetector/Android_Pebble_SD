@@ -226,7 +226,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
     /**
      * unbind an activity from server
      */
-    public void unbindFromServer(Activity activity, SdServiceConnection sdServiceConnection) {
+    public void unbindFromServer(Context activity, SdServiceConnection sdServiceConnection) {
         // unbind this activity from the service if it is bound.
         if (sdServiceConnection.mBound) {
             Log.i(TAG, "unbindFromServer() - unbinding");
