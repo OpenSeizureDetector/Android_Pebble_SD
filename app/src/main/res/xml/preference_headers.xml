@@ -2,10 +2,10 @@
 <preference-headers
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <header android:fragment="uk.org.openseizuredetector.PrefActivity$BasicPrefsFragment"
+    <!--<header android:fragment="uk.org.openseizuredetector.PrefActivity$BasicPrefsFragment"
         android:icon="@drawable/icon_24x24"
         android:title="@string/basic_settings_title"
-        android:summary="@string/basic_settings_summary" />
+        android:summary="@string/basic_settings_summary" />-->
 
     <header android:fragment="uk.org.openseizuredetector.PrefActivity$GeneralPrefsFragment"
         android:icon="@drawable/icon_24x24"

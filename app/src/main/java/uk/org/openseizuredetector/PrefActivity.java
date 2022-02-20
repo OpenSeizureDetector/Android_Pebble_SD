@@ -75,7 +75,8 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                 .getDefaultSharedPreferences(this.getApplicationContext());
         String dataSourceStr = SP.getString("DataSource", "Pebble");
         Log.i(TAG, "onBuildHeaders DataSource = " + dataSourceStr);
-        Boolean advancedMode = SP.getBoolean("advancedMode", false);
+        //Boolean advancedMode = SP.getBoolean("advancedMode", false);
+        Boolean advancedMode = true;
         Log.i(TAG, "onBuildHeaders advancedMode = " + advancedMode);
 
         if (advancedMode) {

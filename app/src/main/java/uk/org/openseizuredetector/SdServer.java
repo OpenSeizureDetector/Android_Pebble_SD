@@ -1214,10 +1214,12 @@ public class SdServer extends Service implements SdDataReceiver {
             mLogAlarms = SP.getBoolean("LogAlarms", true);
             Log.v(TAG, "updatePrefs() - mLogAlarms = " + mLogAlarms);
             mUtil.writeToSysLogFile("updatePrefs() - mLogAlarms = " + mLogAlarms);
-            mLogData = SP.getBoolean("LogData", true);
+            //mLogData = SP.getBoolean("LogData", true);
+            mLogData = true;
             Log.v(TAG, "SdServer.updatePrefs() - mLogData = " + mLogData);
             mUtil.writeToSysLogFile("updatePrefs() - mLogData = " + mLogData);
-            mLogDataRemote = SP.getBoolean("LogDataRemote", false);
+            //mLogDataRemote = SP.getBoolean("LogDataRemote", false);
+            mLogDataRemote = true;
             Log.v(TAG, "updatePrefs() - mLogDataRemote = " + mLogDataRemote);
             mUtil.writeToSysLogFile("updatePrefs() - mLogDataRemote = " + mLogDataRemote);
             mLogDataRemoteMobile = SP.getBoolean("LogDataRemoteMobile", false);
@@ -1232,15 +1234,16 @@ public class SdServer extends Service implements SdDataReceiver {
             mEventDuration = Integer.parseInt(prefVal);
             Log.v(TAG, "mEventDuration=" + mEventDuration);
 
-            mAutoPruneDb = SP.getBoolean("AutoPruneDb", false);
+            mAutoPruneDb = SP.getBoolean("AutoPruneDb", true);
             Log.v(TAG, "mAutoPruneDb=" + mAutoPruneDb);
 
             prefVal = SP.getString("DataRetentionPeriod", "28");
             mDataRetentionPeriod = Integer.parseInt(prefVal);
             Log.v(TAG, "mDataRetentionPeriod=" + mDataRetentionPeriod);
 
-            prefVal = SP.getString("RemoteLogPeriod", "60");
-            mRemoteLogPeriod = Integer.parseInt(prefVal);
+            //prefVal = SP.getString("RemoteLogPeriod", "60");
+            //mRemoteLogPeriod = Integer.parseInt(prefVal);
+            mRemoteLogPeriod = 60;
             Log.v(TAG, "mRemoteLogPeriod=" + mRemoteLogPeriod);
 
             //mOSDUname = SP.getString("OSDUname", "<username>");

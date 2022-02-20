@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <CheckBoxPreference
+    <!--<CheckBoxPreference
         android:defaultValue="true"
         android:key="LogAlarms"
         android:summary="@string/log_alarms_summary"
@@ -9,7 +9,7 @@
         android:defaultValue="true"
         android:key="LogData"
         android:summary="@string/log_data_summary"
-        android:title="@string/log_data_title" />
+        android:title="@string/log_data_title" /> -->
     <EditTextPreference
         android:defaultValue="150"
         android:key="EventDurationSec"
@@ -25,28 +25,27 @@
         android:key="DataRetentionPeriod"
         android:summary="@string/dataRetentionPeriodSummary"
         android:title="@string/dataRetentionPeriodTitle" />
-
-    <CheckBoxPreference
+    <!--<CheckBoxPreference
         android:defaultValue="true"
         android:key="LogDataRemote"
         android:summary="@string/log_data_remote_summary"
-        android:title="@string/log_data_remote_title" />
+        android:title="@string/log_data_remote_title" /> -->
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="LogDataRemoteMobile"
         android:summary="@string/log_data_remote_mobile_summary"
         android:title="@string/log_data_remote_mobile_title" />
-    <EditTextPreference
+    <!--<EditTextPreference
         android:defaultValue="60"
         android:key="RemoteLogPeriod"
         android:summary="@string/remoteLogPeriodSummary"
-        android:title="@string/remoteLogPeriodTitle" />
+        android:title="@string/remoteLogPeriodTitle" />-->
 
-    <EditTextPreference
+    <!--<EditTextPreference
         android:defaultValue="https://osdapi.ddns.net/"
         android:key="OSDUrl"
         android:summary="@string/remote_url_summary"
-        android:title="@string/remote_url_title" />
+        android:title="@string/remote_url_title" /> -->
 
 
 </PreferenceScreen>
