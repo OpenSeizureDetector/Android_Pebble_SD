@@ -36,26 +36,27 @@ public class ReportSeizureActivity extends AppCompatActivity {
     private LogManager mLm;
     private int mYear, mMonth, mDay, mHour, mMinute;
     private String mMsg = "Messages";
-    private OsdUtil osdUtil;
     private SdServiceConnection mConnection;
     private OsdUtil mUtil;
     final Handler serverStatusHandler = new Handler();
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.v(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
-        mContext = this;
-        Handler h = new Handler();
-        osdUtil = new OsdUtil(mContext, h);
-        setContentView(R.layout.activity_report_seizure);
         mUtil = new OsdUtil(this, serverStatusHandler);
-        mConnection = new SdServiceConnection(this);
+        if (!mUtil.isServerRunning()) {
+            mUtil.showToast(getString(R.string.error_server_not_running));
+            finish();
+            return;
+        }
+        mConnection = new SdServiceConnection(getApplicationContext());
 
+        setContentView(R.layout.activity_report_seizure);
         // It takes a finite time for
         // the mConnection to bind to the service, so we delay half a second to give it chance
         // to connect before trying to get the SdServer LogManager instance)
+        // FIXME:  We should probably implement a WaitForConnection function like we do in some of the other activities
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -97,7 +98,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        mUtil.bindToServer(this, mConnection);
+        mUtil.bindToServer(getApplicationContext(), mConnection);
         //startUiTimer();
     }
 
@@ -116,7 +117,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        mUtil.unbindFromServer(this, mConnection);
+        mUtil.unbindFromServer(getApplicationContext(), mConnection);
     }
 
 
@@ -153,11 +154,11 @@ public class ReportSeizureActivity extends AppCompatActivity {
                         if (id!=-1) {
                             mLm.setDatapointStatus(id,5);
                             mMsg = mMsg + "\nSet Datapoint to Manual Alarm Status";
-                            osdUtil.showToast(getString(R.string.createdNewEvent));
+                            mUtil.showToast(getString(R.string.createdNewEvent));
                             finish();
                         } else {
                             mMsg = mMsg + "\n*** Datapoint not found - not doing anything ***";
-                            osdUtil.showToast(getString(R.string.DatapointNotFound));
+                            mUtil.showToast(getString(R.string.DatapointNotFound));
                         }
                     });
                 }

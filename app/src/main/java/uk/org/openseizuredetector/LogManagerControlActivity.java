@@ -68,6 +68,13 @@ public class LogManagerControlActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         mContext = this;
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
+
+        if (!mUtil.isServerRunning()) {
+            mUtil.showToast(getString(R.string.error_server_not_running));
+            finish();
+            return;
+        }
+
         mConnection = new SdServiceConnection(getApplicationContext());
 
         setContentView(R.layout.activity_log_manager_control);
@@ -137,7 +144,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         Log.v(TAG, "onStop()");
         super.onStop();
         stopUiTimer();
-        mUtil.unbindFromServer(this, mConnection);
+        mUtil.unbindFromServer(getApplicationContext(), mConnection);
     }
 
     @Override
@@ -559,7 +566,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         public View getView(int position, View convertView, ViewGroup parent) {
             View v = super.getView(position, convertView, parent);
             Map<String, ?> dataItem = (Map<String,?>)getItem(position);
-            Log.i(TAG,dataItem.toString());
+            Log.v(TAG,"getView() "+dataItem.toString());
             switch(dataItem.get("type").toString()) {
                 case "null":
                     v.setBackgroundColor(Color.parseColor("#ffaaaa"));

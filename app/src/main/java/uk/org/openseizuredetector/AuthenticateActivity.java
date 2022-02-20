@@ -31,11 +31,17 @@ public class AuthenticateActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.v(TAG, "onCreate()");
+        Log.d(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_authenticate);
 
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
+
+        if (!mUtil.isServerRunning()) {
+            mUtil.showToast(getString(R.string.error_server_not_running));
+            finish();
+            return;
+        }
         mConnection = new SdServiceConnection(getApplicationContext());
 
         Button cancelBtn =
@@ -61,12 +67,20 @@ public class AuthenticateActivity extends AppCompatActivity {
 
     @Override
     protected void onStart() {
+        Log.d(TAG, "onStart()");
         super.onStart();
         mUtil.bindToServer(getApplicationContext(), mConnection);
         waitForConnection();
-
         updateUi();
     }
+
+    @Override
+    protected void onStop() {
+        Log.d(TAG, "onStop()");
+        super.onStop();
+        mUtil.unbindFromServer(getApplicationContext(), mConnection);
+    }
+
 
     private void waitForConnection() {
         // We want the UI to update as soon as it is displayed, but it takes a finite time for

@@ -360,7 +360,7 @@ public class SdServer extends Service implements SdDataReceiver {
         if (mWakeLock != null) {
             try {
                 mWakeLock.release();
-                Log.v(TAG, "Released Wake Lock to allow device to sleep.");
+                Log.d(TAG, "Released Wake Lock to allow device to sleep.");
             } catch (Exception e) {
                 Log.e(TAG, "Error Releasing Wakelock - " + e.toString());
                 mUtil.writeToSysLogFile("SdServer.onDestroy() - Error releasing wakelock.");
@@ -372,7 +372,7 @@ public class SdServer extends Service implements SdDataReceiver {
         }
 
         if (mSdDataSource != null) {
-            Log.i(TAG, "stopping mSdDataSource");
+            Log.d(TAG, "stopping mSdDataSource");
             mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping mSdDataSource");
             mSdDataSource.stop();
         } else {
@@ -382,7 +382,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Stop the Cancel Audible timer
         if (mCancelAudibleTimer != null) {
-            Log.v(TAG, "onDestroy(): cancelling Cancel_Audible timer");
+            Log.d(TAG, "onDestroy(): cancelling Cancel_Audible timer");
             mCancelAudibleTimer.cancel();
             //mCancelAudibleTimer.purge();
             mCancelAudibleTimer = null;
@@ -391,23 +391,25 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Stop the Fault timer
         if (mFaultTimer != null) {
-            Log.v(TAG, "onDestroy(): cancelling fault timer");
+            Log.d(TAG, "onDestroy(): cancelling fault timer");
             mFaultTimer.cancel();
             mFaultTimer = null;
         }
 
         // Stop the Event timer
         if (mEventsTimer != null) {
-            Log.v(TAG, "onDestroy(): Cancelling events timer");
+            Log.d(TAG, "onDestroy(): Cancelling events timer");
             stopValidatedEventsTimer();
         }
 
         // Stop the Cancel Alarm Latch timer
+        Log.d(TAG,"onDestroy(): stopping alarm latch timer");
         stopLatchTimer();
 
 
         // Stop the location finder.
         if (mLocationFinder != null) {
+            Log.d(TAG,"onDestroy(): stopping Location Finder");
             mLocationFinder.destroy();
             mLocationFinder = null;
         }
@@ -415,7 +417,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         try {
             // Stop web server
-            Log.v(TAG, "onDestroy(): stopping web server");
+            Log.d(TAG, "onDestroy(): stopping web server");
             mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping Web Server");
             stopWebServer();
 
@@ -425,24 +427,24 @@ public class SdServer extends Service implements SdDataReceiver {
 
             this.stopForeground(true);
             // Cancel the notification.
-            Log.v(TAG, "onDestroy(): cancelling notification");
+            Log.d(TAG, "onDestroy(): cancelling notification");
             mUtil.writeToSysLogFile("SdServer.onDestroy - cancelling notification");
             mNM.cancel(NOTIFICATION_ID);
             mNM.cancel(EVENT_NOTIFICATION_ID);
 
 
             // stop this service.
-            Log.v(TAG, "onDestroy(): calling stopSelf()");
+            Log.d(TAG, "onDestroy(): calling stopSelf()");
             mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping self");
             stopSelf();
 
         } catch (Exception e) {
-            Log.v(TAG, "Error in onDestroy() - " + e.toString());
+            Log.e(TAG, "Error in onDestroy() - " + e.toString());
             mUtil.writeToSysLogFile("SdServer.onDestroy() -error " + e.toString());
         }
 
         if (mLm != null) {
-            Log.i(TAG, "Closing Down Log Manager");
+            Log.d(TAG, "Closing Down Log Manager");
             mLm.close();
         }
 
@@ -1594,10 +1596,10 @@ public class SdServer extends Service implements SdDataReceiver {
     public void stopValidatedEventsTimer() {
         if (mEventsTimer != null) {
             Log.v(TAG, "stopEventsTimer(): timer already running - cancelling it.");
-            mUtil.writeToSysLogFile("stopEventsTimer() - stopping timer");
+            mUtil.writeToSysLogFile("stopEventsTimer() - stopping timer, setting mIsRunning to false");
             mEventsTimer.mIsRunning = false;
             mEventsTimer.cancel();
-            mEventsTimer = null;
+            //mEventsTimer = null;
         } else {
             Log.v(TAG, "stopEventsTimer(): timer not running - not doing anything.");
         }
@@ -1658,6 +1660,7 @@ public class SdServer extends Service implements SdDataReceiver {
             }
             if (mIsRunning) {
                 // Restart this timer.
+                Log.v(TAG,"CheckUnvalidatedEventsTimer.onFinish() - mIsRunning is true, so re-starting timer");
                 start();
             }
         }

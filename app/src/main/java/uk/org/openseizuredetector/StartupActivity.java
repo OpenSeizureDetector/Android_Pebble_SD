@@ -144,7 +144,7 @@ public class StartupActivity extends Activity {
             }
         });
 
-        mConnection = new SdServiceConnection(this);
+        mConnection = new SdServiceConnection(getApplicationContext());
     }
 
     @Override
@@ -186,7 +186,7 @@ public class StartupActivity extends Activity {
         // Bind to the service.
         Log.i(TAG,"onStart() - binding to server");
         mUtil.writeToSysLogFile("StartupActivity.onStart() - binding to server");
-        mUtil.bindToServer(this, mConnection);
+        mUtil.bindToServer(getApplicationContext(), mConnection);
 
         // Check power management settings
         PowerManager powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
@@ -221,7 +221,7 @@ public class StartupActivity extends Activity {
         super.onStop();
         Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("StartupActivity.onStop() - unbinding from server");
-        mUtil.unbindFromServer(this, mConnection);
+        mUtil.unbindFromServer(getApplicationContext(), mConnection);
         mUiTimer.cancel();
     }
 

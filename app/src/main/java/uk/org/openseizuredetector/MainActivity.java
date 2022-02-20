@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
 
         //int i = 5/0;  // Force exception to test handler.
         mUtil = new OsdUtil(getApplicationContext(),serverStatusHandler);
-        mConnection = new SdServiceConnection(this);
+        mConnection = new SdServiceConnection(getApplicationContext());
         mUtil.writeToSysLogFile("");
         mUtil.writeToSysLogFile("* MainActivity Started     *");
         mUtil.writeToSysLogFile("MainActivity.onCreate()");
@@ -236,14 +236,14 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, "action_sart_stop");
                 if (mConnection.mBound) {
                     Log.i(TAG, "Stopping Server");
-                    mUtil.unbindFromServer(this, mConnection);
+                    mUtil.unbindFromServer(getApplicationContext(), mConnection);
                     stopServer();
                 } else {
                     Log.i(TAG, "Starting Server");
                     startServer();
                     // and bind to it so we can see its data
                     Log.i(TAG, "Binding to Server");
-                    mUtil.bindToServer(this, mConnection);
+                    mUtil.bindToServer(getApplicationContext(), mConnection);
                 }
                 return true;
             /* fault beep test does not work with fault timer, so disable test option.
@@ -369,7 +369,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Log.i(TAG,"onStart()");
+        Log.d(TAG,"onStart()");
         mUtil.writeToSysLogFile("MainActivity.onStart()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
@@ -383,7 +383,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (mUtil.isServerRunning()) {
             mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
-            mUtil.bindToServer(this, mConnection);
+            mUtil.bindToServer(getApplicationContext(), mConnection);
         } else {
             Log.i(TAG,"onStart() - Server Not Running");
             mUtil.writeToSysLogFile("MainActivity.onStart - Server Not Running");
@@ -403,9 +403,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        Log.i(TAG,"onStop() - unbinding from server");
+        Log.d(TAG,"onStop() - unbinding from server");
         mUtil.writeToSysLogFile("MainActivity.onStop()");
-        mUtil.unbindFromServer(this, mConnection);
+        mUtil.unbindFromServer(getApplicationContext(), mConnection);
         mUiTimer.cancel();
     }
 
@@ -903,14 +903,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        Log.i(TAG,"onPause()");
+        Log.d(TAG,"onPause()");
         mUtil.writeToSysLogFile("MainActivity.onPause()");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Log.i(TAG,"onResume()");
+        Log.d(TAG,"onResume()");
         mUtil.writeToSysLogFile("MainActivity.onResume()");
     }
 
