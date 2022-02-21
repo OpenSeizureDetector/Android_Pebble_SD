@@ -43,10 +43,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.database.DatabaseUtils;
-import android.database.SQLException;
-import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
@@ -77,8 +73,6 @@ import com.rohitss.uceh.UCEHandler;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import uk.org.openseizuredetector.LogManager;
 
 /**
  * Based on example at:
@@ -898,7 +892,7 @@ public class SdServer extends Service implements SdDataReceiver {
             }
         } else {
             Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
-            mUtil.showToast(getString(R.string.sms_alarm_disabled));
+            mUtil.showToast(getString(R.string.sms_alarms_disabled));
         }
         if (mPhoneAlarm) {
             if (!mCancelAudible) {
@@ -1142,7 +1136,7 @@ public class SdServer extends Service implements SdDataReceiver {
         if (mLogData) {
             Log.v(TAG, "logData() - writing data to Database");
             //writeToSD();
-            mLm.writeToLocalDb(mSdData);
+            mLm.writeDatapointToLocalDb(mSdData);
         }
     }
 

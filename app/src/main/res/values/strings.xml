@@ -129,7 +129,7 @@
     <string name="sms_location_alarm_active">SMS Location Alarm Active</string>
     <string name="sms_location_alarm_disabled">SMS Location Alarm Disabled</string>
     <string name="cancel_audible_not_sending_sms">Cancel Audible Active - not sending SMS</string>
-    <string name="sms_alarm_disabled">SMS Alarms Disabled - not doing anything!</string>
+    <!--<string name="sms_alarm_disabled">SMS Alarms Disabled - not doing anything!</string>-->
     <string name="no_wifi_connection">Network State Changed - no Wifi Connection</string>
     <string name="no_active_network">Network State Changed - No Active Network</string>
     <string name="problem_parsing_preferences">Problem Parsing Preferences - Something won\'t work - Please go back to Settings and correct it!</string>
@@ -193,7 +193,7 @@
     <string name="enable_audible_alarm_title">Enable Audible Alarm</string>
     <string name="enable_audible_warning_summary">Issue an audible alarm if the seizure detector enters a warning (pre-alarm) condition.</string>
     <string name="enable_audible_warning_title">Enable Audible Warnings</string>
-    <string name="enable_audible_fault_summary">Issue an audible alarm if the system detects a fault (e.g. can not talk to Pebble).</string>
+    <string name="enable_audible_fault_summary">Issue an audible alarm if the system detects a fault (e.g. can not talk to watch).</string>
     <string name="enable_audible_fault_title">Enable Audible System FaultWarnings</string>
     <string name="fault_timer_period_title">Fault Timer Duration (sec)</string>
     <string name="fault_timer_period_summary">Duration that fault alarms are muted before initiating.</string>

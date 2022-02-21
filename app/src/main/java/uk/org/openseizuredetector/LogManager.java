@@ -24,7 +24,6 @@ package uk.org.openseizuredetector;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.SQLException;
@@ -33,8 +32,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.AsyncTask;
 import android.os.CountDownTimer;
 import android.os.Handler;
-import android.preference.PreferenceManager;
-import android.text.format.Time;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -50,15 +47,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.function.Consumer;
 
-import static android.database.sqlite.SQLiteDatabase.openOrCreateDatabase;
+//import static android.database.sqlite.SQLiteDatabase.openOrCreateDatabase;
 
 /**
  * LogManager is a class to handle all aspects of Data Logging within OpenSeizureDetector.
  * It performs several functions:
  * - It will store seizure detector data to a local database on demand (it is called by the SdServer background service)
- * - <FIXME: Not Yet Implemented> It will retrieve data from the local database for display on the user interface
- * - <FIXME: Not Yet Implemented> It will periodically trim the local database to retain only a specified number of days worth of data
- * to avoid the local storage use increasing continuously.
+ * - It will store system log data to the local database on demand (called by any part of OSD via the osdUtil functions)
  * - It will periodically attempt to upload the oldest logged data to the osdApi remote database - the interface to the
  * remote database is handled by the WebApiConnection class.   It only tries to do one transaction with the external database
  * at a time - if the periodic timer times out and an upload is in progress it will not do anything and wait for the next timeout.*
@@ -71,13 +66,15 @@ import static android.database.sqlite.SQLiteDatabase.openOrCreateDatabase;
  * - Mark all the uploaded datapoints as uploaded.
  */
 public class LogManager {
-    private String TAG = "LogManager";
-    private String mDbName = "osdData";
-    private String mDbTableName = "datapoints";
+    static final private String TAG = "LogManager";
+    //private String mDbName = "osdData";
+    final private String mDpTableName = "datapoints";
+    final private String mSysLogTableName = "syslog";
     private boolean mLogRemote;
     private boolean mLogRemoteMobile;
     private String mAuthToken;
-    private OsdDbHelper mOSDDb;
+    static private OsdDbHelper mDpDb;   // Datapoints table helper.
+    private OsdDbHelper mSysLogDb;   // Datapoints table helper.
     private RemoteLogTimer mRemoteLogTimer;
     private Context mContext;
     private OsdUtil mUtil;
@@ -99,7 +96,6 @@ public class LogManager {
                       boolean logRemote, boolean logRemoteMobile, String authToken,
                       long eventDuration, long remoteLogPeriod,
                       boolean autoPruneDb, long dataRetentionPeriod) {
-        String prefVal;
         Log.d(TAG, "LogManger Constructor");
         mContext = context;
         Handler handler = new Handler();
@@ -147,7 +143,6 @@ public class LogManager {
             cNames.append(", ").append(n);
         }
         //Log.v(TAG,"cursor2Json() - c="+c.toString()+", columns="+cNames+", number of rows="+c.getCount());
-        String retVal = "";
         c.moveToFirst();
         //JSONObject Root = new JSONObject();
         JSONArray dataPointArray = new JSONArray();
@@ -176,17 +171,30 @@ public class LogManager {
     private boolean openDb() {
         Log.d(TAG, "openDb");
         try {
-            mOSDDb = new OsdDbHelper(mDbTableName, mContext);
-            if (!checkTableExists(mOSDDb, mDbTableName)) {
+            mDpDb = new OsdDbHelper(mDpTableName, mContext);
+            if (!checkTableExists(mDpDb, mDpTableName)) {
                 Log.e(TAG, "ERROR - Table does not exist");
                 return false;
             } else {
-                Log.d(TAG, "table " + mDbTableName + " exists ok");
+                Log.d(TAG, "table " + mDpTableName + " exists ok");
+            }
+        } catch (SQLException e) {
+            Log.e(TAG, "Failed to open Database: " + e.toString());
+            mDpDb = null;
+            return false;
+        }
+        try {
+            mSysLogDb = new OsdDbHelper(mSysLogTableName, mContext);
+            if (!checkTableExists(mSysLogDb, mSysLogTableName)) {
+                Log.e(TAG, "ERROR - SysLog table does not exist");
+                return false;
+            } else {
+                Log.d(TAG, "table " + mSysLogTableName + " exists ok");
             }
             return true;
         } catch (SQLException e) {
-            Log.e(TAG, "Failed to open Database: " + e.toString());
-            mOSDDb = null;
+            Log.e(TAG, "Failed to open Syslog Database: " + e.toString());
+            mSysLogDb = null;
             return false;
         }
     }
@@ -199,6 +207,7 @@ public class LogManager {
             c = osdDb.getWritableDatabase().query(osdTableName, null,
                     null, null, null, null, null);
             tableExists = true;
+            c.close();
         } catch (Exception e) {
             Log.d(TAG, osdTableName + " doesn't exist :(((");
         }
@@ -210,8 +219,8 @@ public class LogManager {
      * Write data to local database
      * FIXME - I am sure we should not be using raw SQL Srings to do this!
      */
-    public void writeToLocalDb(SdData sdData) {
-        Log.v(TAG, "writeToLocalDb()");
+    public void writeDatapointToLocalDb(SdData sdData) {
+        Log.v(TAG, "writeDatapointToLocalDb()");
         Date curDate = new Date();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -219,10 +228,10 @@ public class LogManager {
         String SQLStr = "SQLStr";
 
         try {
-            double roiRatio = -1;
-            if (sdData.specPower != 0)
-                roiRatio = 10. * sdData.roiPower / sdData.specPower;
-            SQLStr = "INSERT INTO " + mDbTableName
+            //double roiRatio = -1;
+            //if (sdData.specPower != 0)
+            //    roiRatio = 10. * sdData.roiPower / sdData.specPower;
+            SQLStr = "INSERT INTO " + mDpTableName
                     + "(dataTime, status, dataJSON, uploaded)"
                     + " VALUES("
                     + "'" + dateStr + "',"
@@ -230,8 +239,8 @@ public class LogManager {
                     + DatabaseUtils.sqlEscapeString(sdData.toJSON(true)) + ","
                     + 0
                     + ")";
-            mOSDDb.getWritableDatabase().execSQL(SQLStr);
-            Log.d(TAG, "data written to database");
+            mDpDb.getWritableDatabase().execSQL(SQLStr);
+            Log.v(TAG, "data written to database");
 
         } catch (SQLException e) {
             Log.e(TAG, "writeToLocalDb(): Error Writing Data: " + e.toString());
@@ -241,6 +250,38 @@ public class LogManager {
     }
 
     /**
+     * Write syslog string to local database
+     * FIXME - I am sure we should not be using raw SQL Srings to do this!
+     */
+    public void writeLogEntryToLocalDb(String logText, int statusVal) {
+        Log.v(TAG, "writeLogEntryToLocalDb()");
+        Date curDate = new Date();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        String dateStr = dateFormat.format(curDate);
+        String SQLStr = "SQLStr";
+
+        try {
+            SQLStr = "INSERT INTO " + mSysLogTableName
+                    + "(dataTime, status, dataJSON, uploaded)"
+                    + " VALUES("
+                    + "'" + dateStr + "',"
+                    + statusVal + ","
+                    + DatabaseUtils.sqlEscapeString(logText) + ","
+                    + 0
+                    + ")";
+            mSysLogDb.getWritableDatabase().execSQL(SQLStr);
+            Log.v(TAG, "syslog entry written to database: "+logText);
+
+        } catch (SQLException e) {
+            Log.e(TAG, "writeToLocalDb(): Error Writing Data: " + e.toString());
+            Log.e(TAG, "SQLStr was " + SQLStr);
+        }
+
+    }
+
+
+    /**
      * Returns a json representation of datapoint 'id'.
      *
      * @param id datapoint id to return
@@ -248,14 +289,14 @@ public class LogManager {
      */
     public String getDatapointById(long id) {
         Log.d(TAG, "getDatapointById() - id=" + id);
-        Cursor c = null;
+        Cursor c;
         String retVal;
         try {
-            String selectStr = "select * from " + mDbTableName + " where id=" + id + ";";
-            String[] selectArgs = new String[]{String.format("%d", id)};
+            String selectStr = "select * from " + mDpTableName + " where id=" + id + ";";
+            //String[] selectArgs = new String[]{String.format("%d", id)};
             //c = mOSDDb.getWritableDatabase().query(mDbTableName, null,
             //        selectStr, selectArgs, null, null, null);
-            c = mOSDDb.getWritableDatabase().rawQuery(selectStr, null);
+            c = mDpDb.getWritableDatabase().rawQuery(selectStr, null);
             retVal = cursor2Json(c);
         } catch (Exception e) {
             Log.d(TAG, "getDatapointById(): Error Querying Database: " + e.getLocalizedMessage());
@@ -274,10 +315,9 @@ public class LogManager {
      */
     public boolean setDatapointToUploaded(int id, int eventId) {
         Log.d(TAG, "setDatapointToUploaded() - id=" + id);
-        Cursor c = null;
         ContentValues cv = new ContentValues();
         cv.put("uploaded", eventId);
-        int nRowsUpdated = mOSDDb.getWritableDatabase().update(mDbTableName, cv, "id = ?",
+        int nRowsUpdated = mDpDb.getWritableDatabase().update(mDpTableName, cv, "id = ?",
                 new String[]{String.format("%d", id)});
 
         return (nRowsUpdated == 1);
@@ -287,20 +327,19 @@ public class LogManager {
     /**
      * setDatapointStatus() - Update the status of data point id.
      *
-     * @param id
-     * @param statusVal
+     * @param id    datapont id
+     * @param statusVal the status to set for the datapoint.
      * @return true on success or false on failure
      */
     public boolean setDatapointStatus(Long id, int statusVal) {
         Log.d(TAG, "setDatapointStatus() - id=" + id + ", statusVal=" + statusVal);
-        Cursor c = null;
+        //Cursor c = null;
         ContentValues cv = new ContentValues();
         cv.put("status", statusVal);
-        int nRowsUpdated = mOSDDb.getWritableDatabase().update(mDbTableName, cv, "id = ?",
+        int nRowsUpdated = mDpDb.getWritableDatabase().update(mDpTableName, cv, "id = ?",
                 new String[]{String.format("%d", id)});
 
         return (nRowsUpdated == 1);
-
     }
 
 
@@ -314,7 +353,7 @@ public class LogManager {
         String[] columns = {"*"};
         String whereClause = "DataTime>? AND DataTime<?";
         String[] whereArgs = {startDateStr, endDateStr};
-        new SelectQueryTask(mDbTableName, columns, whereClause, whereArgs,
+        new SelectQueryTask(mDpTableName, columns, whereClause, whereArgs,
                 null, null, "dataTime DESC", (Cursor cursor) -> {
             Log.v(TAG, "getDataPointsByDate - returned " + cursor);
             if (cursor != null) {
@@ -341,7 +380,7 @@ public class LogManager {
         String whereClause = getEventWhereClause(includeWarnings);
         //sqlStr = "SELECT * from " + mDbTableName + " where Status in (" + statusListStr + ") order by dataTime desc;";
         String[] columns = {"*"};
-        new SelectQueryTask(mDbTableName, columns, whereClause, whereArgs,
+        new SelectQueryTask(mDpTableName, columns, whereClause, whereArgs,
                 null, null, "dataTime DESC", (Cursor cursor) -> {
             Log.v(TAG, "getEventsList - returned " + cursor);
             if (cursor != null) {
@@ -370,7 +409,6 @@ public class LogManager {
      */
     public int pruneLocalDb() {
         Log.d(TAG, "pruneLocalDb()");
-        Cursor c = null;
         int retVal;
         long currentDateMillis = new Date().getTime();
         long endDateMillis = currentDateMillis - 24 * 3600 * 1000 * mDataRetentionPeriod;
@@ -381,7 +419,7 @@ public class LogManager {
         try {
             String selectStr = "DataTime<=?";
             String[] selectArgs = {endDateStr};
-            retVal = mOSDDb.getWritableDatabase().delete(mDbTableName, selectStr, selectArgs);
+            retVal = mDpDb.getWritableDatabase().delete(mDpTableName, selectStr, selectArgs);
         } catch (Exception e) {
             Log.d(TAG, "Error deleting datapoints" + e.toString());
             retVal = 0;
@@ -418,7 +456,7 @@ public class LogManager {
             whereArgs[i] = whereArgsStatus[i];
         }
         whereArgs[whereArgsStatus.length] = endDateStr;
-        new SelectQueryTask(mDbTableName, columns, whereClause, whereArgs,
+        new SelectQueryTask(mDpTableName, columns, whereClause, whereArgs,
                 null, null, "dataTime DESC", (Cursor cursor) -> {
             Log.v(TAG, "getEventsList - returned " + cursor);
             Long recordId = new Long(-1);
@@ -451,7 +489,7 @@ public class LogManager {
         String[] columns = {"*", "(julianday(dataTime)-julianday(datetime('" + dateStr + "'))) as ddiff"};
         //SQLStr = "SELECT *, (julianday(dataTime)-julianday(datetime('" + dateStr + "'))) as ddiff from " + mDbTableName + " order by ABS(ddiff) asc;";
         String orderByStr = "ABS(ddiff) asc";
-        new SelectQueryTask(mDbTableName, columns, null, null,
+        new SelectQueryTask(mDpTableName, columns, null, null,
                 null, null, orderByStr, (Cursor cursor) -> {
             Log.v(TAG, "getEventsNearestDatapointToDate - returned " + cursor);
             Long recordId = new Long(-1);
@@ -484,7 +522,7 @@ public class LogManager {
         String[] whereArgs = getEventWhereArgs(includeWarnings);
         String whereClause = getEventWhereClause(includeWarnings);
         String[] columns = {"*"};
-        new SelectQueryTask(mDbTableName, columns, whereClause, whereArgs,
+        new SelectQueryTask(mDpTableName, columns, whereClause, whereArgs,
                 null, null, null, (Cursor cursor) -> {
             Log.v(TAG, "getLocalEventsCount - returned " + cursor);
             Long eventCount = Long.valueOf(0);
@@ -507,7 +545,7 @@ public class LogManager {
         String[] whereArgs = null;
         String whereClause = null;
         String[] columns = {"*"};
-        new SelectQueryTask(mDbTableName, columns, whereClause, whereArgs,
+        new SelectQueryTask(mDpTableName, columns, whereClause, whereArgs,
                 null, null, null, (Cursor cursor) -> {
             Log.v(TAG, "getLocalDatapointsCount - returned " + cursor);
             Long eventCount = Long.valueOf(0);
@@ -525,17 +563,8 @@ public class LogManager {
      * Executes the sqlite query (=SELECT statement)
      * Use as new SelectQueryTask(xxx,xxx,xx,xxxx).execute()
      *
-     * @param table         - table name to query
-     * @param columns       - array of strings of column names to return
-     * @param selection     - where clause
-     * @param selectionArgs - arguments for where clause (array of strings)
-     * @param groupBy;
-     * @param having;
-     * @param orderBy;
-     * @param callback
-     * @return A Cursor object containing the result of the query.
      */
-    private class SelectQueryTask extends AsyncTask<Void, Void, Cursor> {
+    static private class SelectQueryTask extends AsyncTask<Void, Void, Cursor> {
         // Based on https://stackoverflow.com/a/21120199/2104584
         String mTable;
         String[] mColumns;
@@ -570,7 +599,7 @@ public class LogManager {
                     + ", mHaving =" + mHaving + ", mOrderBy=" + mOrderBy);
 
             try {
-                Cursor resultSet = mOSDDb.getWritableDatabase().query(mTable, mColumns, mSelection,
+                Cursor resultSet = mDpDb.getWritableDatabase().query(mTable, mColumns, mSelection,
                         mSelectionArgs, mGroupBy, mHaving, mOrderBy);
                 resultSet.moveToFirst();
                 return (resultSet);
@@ -603,11 +632,9 @@ public class LogManager {
     private String[] getEventWhereArgs(boolean includeWarnings) {
         String[] whereArgs;
         if (includeWarnings) {
-            String[] whereArgsWarnings = {"1", "2", "3", "5"};
-            whereArgs = whereArgsWarnings;
+            whereArgs = new String[]{"1", "2", "3", "5"};
         } else {
-            String[] whereArgsNoWarnings = {"2", "3", "5"};
-            whereArgs = whereArgsNoWarnings;
+            whereArgs = new String[]{"2", "3", "5"};
         }
         return (whereArgs);
     }
@@ -661,7 +688,7 @@ public class LogManager {
                 Log.v(TAG, "uploadSdData() - eventId=" + eventId);
                 String eventJsonStr = getDatapointById(eventId);
                 Log.v(TAG, "uploadSdData() - eventJsonStr=" + eventJsonStr);
-                int eventType;
+                //int eventType;
                 JSONObject eventObj;
                 int eventAlarmStatus;
                 String eventDateStr;
@@ -729,8 +756,7 @@ public class LogManager {
             finishUpload();
             return;
         }
-        Log.v(TAG, "eventCallback() EventId=" + eventId + ", eventDateStr=" + eventDateStr + ", eventDate=" + eventDate.toString());
-
+        Log.v(TAG, "eventCallback() EventId=" + eventId + ", eventDateStr=" + eventDateStr + ", eventDate=" + eventDate);
         long eventDateMillis = eventDate.getTime();
         long startDateMillis = eventDateMillis - 1000 * mEventDuration / 2;
         long endDateMillis = eventDateMillis + 1000 * mEventDuration / 2;
@@ -802,7 +828,7 @@ public class LogManager {
      * close() - shut down the logging system
      */
     public void close() {
-        mOSDDb.close();
+        mDpDb.close();
         stopRemoteLogTimer();
         if (mWac != null) {
             Log.i(TAG,"Stopping Remote Database");
@@ -866,12 +892,12 @@ public class LogManager {
     }
 
 
-    public class OsdDbHelper extends SQLiteOpenHelper {
+    static public class OsdDbHelper extends SQLiteOpenHelper {
         // If you change the database schema, you must increment the database version.
         public static final int DATABASE_VERSION = 1;
         public static final String DATABASE_NAME = "OsdData.db";
-        private String mOsdTableName;
-        private String TAG = "LogManager.OsdDbHelper";
+        private final String mOsdTableName;
+        private static final String TAG = "LogManager.OsdDbHelper";
 
         public OsdDbHelper(String osdTableName, Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -903,6 +929,8 @@ public class LogManager {
             onUpgrade(db, oldVersion, newVersion);
         }
     }
+
+
 
     /**
      * Upload recorded data to the remote database periodically.
