@@ -104,13 +104,18 @@ public class SdWebServer extends NanoHTTPD {
                         Log.v(TAG, "              files=" + files.toString());
                         String postData = files.get("postData");
                         Log.v(TAG, "              postData=" + postData);
-                        // Send the data to the SdDataSource so the app can pick it up.
-                        if (parameters.get("dataObj") != null) {
-                            Log.v(TAG,"passing parameters to data source");
-                            answer = mSdServer.mSdDataSource.updateFromJSON(parameters.get("dataObj").toString());
+                        if (mSdServer.mSdDataSourceName.equals("Garmin")) {
+                            // Send the data to the SdDataSource so the app can pick it up.
+                            if (parameters.get("dataObj") != null) {
+                                Log.v(TAG, "passing parameters to data source");
+                                answer = mSdServer.mSdDataSource.updateFromJSON(parameters.get("dataObj").toString());
+                            } else {
+                                Log.v(TAG, "Passing postData to data source");
+                                answer = mSdServer.mSdDataSource.updateFromJSON(files.get("postData"));
+                            }
                         } else {
-                            Log.v(TAG,"Passing postData to data source");
-                            answer = mSdServer.mSdDataSource.updateFromJSON(files.get("postData"));
+                            Log.i(TAG,"Web server received data, but datasource is not set to 'Garmin' - Ignoring");
+                            mUtil.showToast("Web server received data, but datasource is not set to 'Garmin' - Ignoring");
                         }
                         break;
                     default:
