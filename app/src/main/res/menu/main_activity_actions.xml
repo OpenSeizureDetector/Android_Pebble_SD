@@ -61,12 +61,12 @@
             android:title="@string/test_sms_alarm_notification" />
     </group>
     <group android:id="@+id/grp5">
-        <item
+        <!--<item
             android:id="@+id/action_logs"
             android:enabled="true"
             android:icon="@drawable/ic_action_settings"
             android:showAsAction="never|withText"
-            android:title="@string/view_log_entries" />
+            android:title="@string/view_log_entries" /> -->
         <!--
             <item
                 android:enabled="false"

@@ -51,16 +51,16 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private UiTimer mUiTimer;
     private ArrayList<HashMap<String, String>> mEventsList;
     private ArrayList<HashMap<String, String>> mRemoteEventsList;
+    private ArrayList<HashMap<String, String>> mSysLogList;
     private SdServiceConnection mConnection;
     private OsdUtil mUtil;
     final Handler serverStatusHandler = new Handler();
     private Integer mUiTimerPeriodFast = 2000;  // 2 seconds - we use fast updating while UI is blank and we are waiting for first data
     private Integer mUiTimerPeriodSlow = 60000; // 60 seconds - once data has been received and UI populated we only update once per minute.
-
-    private Integer UI_MODE_LOCAL = 0;
-    private Integer UI_MODE_SHARED = 1;
-
-    private Integer mUiMode = UI_MODE_SHARED;
+    private boolean mUpdateSysLog = true;
+    //private Integer UI_MODE_LOCAL = 0;
+    //private Integer UI_MODE_SHARED = 1;
+    //private Integer mUiMode = UI_MODE_SHARED;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -198,7 +198,11 @@ public class LogManagerControlActivity extends AppCompatActivity {
             Log.v(TAG, "initialiseServiceConnection() - set mEventsList - Updating UI");
             updateUi();
         });
-        //mEventsList = mLm.getEventsList(true);
+        mUtil.getSysLogList((ArrayList<HashMap<String, String>> syslogList) -> {
+            mSysLogList = syslogList;
+            Log.v(TAG, "initialiseServiceConnection() - set mSysLogList - Updating UI");
+            updateUi();
+        });
     }
 
 
@@ -275,6 +279,16 @@ public class LogManagerControlActivity extends AppCompatActivity {
         } else {
             stopUpdating = false;
         }
+        // SysLog ListView
+        if (mSysLogList != null && mUpdateSysLog) {
+            ListView lv = (ListView) findViewById(R.id.sysLogListView);
+            ListAdapter adapter = new SimpleAdapter(LogManagerControlActivity.this, mSysLogList, R.layout.syslog_entry_layout,
+                    new String[]{"dataTime", "logLevel", "dataJSON"},
+                    new int[]{R.id.syslog_entry_date_tv, R.id.syslog_level_tv, R.id.syslog_entry_text_tv});
+            lv.setAdapter(adapter);
+            //Log.v(TAG,"eventsList="+mEventsList);
+            mUpdateSysLog = false;
+        }
         // Remote Database List View
         if (mRemoteEventsList != null) {
             ListView lv = (ListView) findViewById(R.id.remoteEventsLv);
@@ -316,8 +330,9 @@ public class LogManagerControlActivity extends AppCompatActivity {
     }  //updateUi();
 
     public void onRadioButtonClicked(View view) {
-        LinearLayout localDataLl  = (LinearLayout) findViewById(R.id.local_data_ll);;
-        LinearLayout sharedDataLl = (LinearLayout) findViewById(R.id.shared_data_ll);;;
+        LinearLayout localDataLl  = (LinearLayout) findViewById(R.id.local_data_ll);
+        LinearLayout sharedDataLl = (LinearLayout) findViewById(R.id.shared_data_ll);
+        LinearLayout syslogLl = (LinearLayout) findViewById(R.id.syslog_ll);
         // Is the button now checked?
         boolean checked = ((RadioButton) view).isChecked();
 
@@ -328,6 +343,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     // Switch to the local data view
                     localDataLl.setVisibility(View.VISIBLE);
                     sharedDataLl.setVisibility(View.GONE);
+                    syslogLl.setVisibility(View.GONE);
                 }
                 break;
             case R.id.shared_data_rb:
@@ -335,8 +351,17 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     // Switch to the local data view
                     localDataLl.setVisibility(View.GONE);
                     sharedDataLl.setVisibility(View.VISIBLE);
+                    syslogLl.setVisibility(View.GONE);
                 }
                     break;
+            case R.id.syslog_rb:
+                if (checked) {
+                    // Switch to the local data view
+                    localDataLl.setVisibility(View.GONE);
+                    sharedDataLl.setVisibility(View.GONE);
+                    syslogLl.setVisibility(View.VISIBLE);
+                }
+                break;
         }
     }
 

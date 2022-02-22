@@ -68,17 +68,15 @@ import java.util.function.Consumer;
 public class LogManager {
     static final private String TAG = "LogManager";
     //private String mDbName = "osdData";
-    final private String mDpTableName = "datapoints";
-    final private String mSysLogTableName = "syslog";
+    final static private String mDpTableName = "datapoints";
     private boolean mLogRemote;
     private boolean mLogRemoteMobile;
     private String mAuthToken;
-    static private OsdDbHelper mDpDb;   // Datapoints table helper.
-    private OsdDbHelper mSysLogDb;   // Datapoints table helper.
+    static private SQLiteDatabase mOsdDb = null;   // SQLite Database for data and log entries.
     private RemoteLogTimer mRemoteLogTimer;
-    private Context mContext;
+    private static Context mContext;
     private OsdUtil mUtil;
-    public WebApiConnection mWac;
+    public static WebApiConnection mWac;
 
     private boolean mUploadInProgress;
     private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
@@ -116,16 +114,22 @@ public class LogManager {
 
         mUtil = new OsdUtil(mContext, handler);
         openDb();
+        Log.i(TAG,"Starting Remote Database Interface");
         mWac = new WebApiConnection(mContext);
         mWac.setStoredToken(mAuthToken);
 
-        startRemoteLogTimer();
+        if (mLogRemote) {
+            Log.i(TAG,"Starting Remote Log Timer");
+            startRemoteLogTimer();
+        } else {
+            Log.i(TAG,"mLogRemote is false - not starting remote log timer");
+        }
 
         if (mAutoPruneDb) {
-            Log.v(TAG, "Starting Auto Prune Timer");
+            Log.i(TAG, "Starting Auto Prune Timer");
             startAutoPruneTimer();
         } else {
-            Log.v(TAG, "AutoPruneDB is not set");
+            Log.i(TAG, "AutoPruneDB is not set - not starting Auto Prune Timer");
         }
 
     }
@@ -168,43 +172,34 @@ public class LogManager {
     }
 
 
-    private boolean openDb() {
+    private static boolean openDb() {
         Log.d(TAG, "openDb");
         try {
-            mDpDb = new OsdDbHelper(mDpTableName, mContext);
-            if (!checkTableExists(mDpDb, mDpTableName)) {
-                Log.e(TAG, "ERROR - Table does not exist");
+            if (mOsdDb == null) {
+                Log.i(TAG,"openDb: mOsdDb is null - initialising");
+                mOsdDb = new OsdDbHelper(mContext).getWritableDatabase();
+            } else {
+                Log.i(TAG,"openDb: mOsdDb has been initialised already so not doing anything");
+            }
+            if (!checkTableExists(mOsdDb, mDpTableName)) {
+                Log.e(TAG, "ERROR - Table "+mDpTableName+" does not exist");
                 return false;
             } else {
                 Log.d(TAG, "table " + mDpTableName + " exists ok");
             }
         } catch (SQLException e) {
             Log.e(TAG, "Failed to open Database: " + e.toString());
-            mDpDb = null;
             return false;
         }
-        try {
-            mSysLogDb = new OsdDbHelper(mSysLogTableName, mContext);
-            if (!checkTableExists(mSysLogDb, mSysLogTableName)) {
-                Log.e(TAG, "ERROR - SysLog table does not exist");
-                return false;
-            } else {
-                Log.d(TAG, "table " + mSysLogTableName + " exists ok");
-            }
-            return true;
-        } catch (SQLException e) {
-            Log.e(TAG, "Failed to open Syslog Database: " + e.toString());
-            mSysLogDb = null;
-            return false;
-        }
+        return true;
     }
 
-    private boolean checkTableExists(OsdDbHelper osdDb, String osdTableName) {
+    private static boolean checkTableExists(SQLiteDatabase osdDb, String osdTableName) {
         Cursor c = null;
         boolean tableExists = false;
         Log.d(TAG, "checkTableExists()");
         try {
-            c = osdDb.getWritableDatabase().query(osdTableName, null,
+            c = osdDb.query(osdTableName, null,
                     null, null, null, null, null);
             tableExists = true;
             c.close();
@@ -239,39 +234,8 @@ public class LogManager {
                     + DatabaseUtils.sqlEscapeString(sdData.toJSON(true)) + ","
                     + 0
                     + ")";
-            mDpDb.getWritableDatabase().execSQL(SQLStr);
+            mOsdDb.execSQL(SQLStr);
             Log.v(TAG, "data written to database");
-
-        } catch (SQLException e) {
-            Log.e(TAG, "writeToLocalDb(): Error Writing Data: " + e.toString());
-            Log.e(TAG, "SQLStr was " + SQLStr);
-        }
-
-    }
-
-    /**
-     * Write syslog string to local database
-     * FIXME - I am sure we should not be using raw SQL Srings to do this!
-     */
-    public void writeLogEntryToLocalDb(String logText, int statusVal) {
-        Log.v(TAG, "writeLogEntryToLocalDb()");
-        Date curDate = new Date();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-        String dateStr = dateFormat.format(curDate);
-        String SQLStr = "SQLStr";
-
-        try {
-            SQLStr = "INSERT INTO " + mSysLogTableName
-                    + "(dataTime, status, dataJSON, uploaded)"
-                    + " VALUES("
-                    + "'" + dateStr + "',"
-                    + statusVal + ","
-                    + DatabaseUtils.sqlEscapeString(logText) + ","
-                    + 0
-                    + ")";
-            mSysLogDb.getWritableDatabase().execSQL(SQLStr);
-            Log.v(TAG, "syslog entry written to database: "+logText);
 
         } catch (SQLException e) {
             Log.e(TAG, "writeToLocalDb(): Error Writing Data: " + e.toString());
@@ -296,7 +260,7 @@ public class LogManager {
             //String[] selectArgs = new String[]{String.format("%d", id)};
             //c = mOSDDb.getWritableDatabase().query(mDbTableName, null,
             //        selectStr, selectArgs, null, null, null);
-            c = mDpDb.getWritableDatabase().rawQuery(selectStr, null);
+            c = mOsdDb.rawQuery(selectStr, null);
             retVal = cursor2Json(c);
         } catch (Exception e) {
             Log.d(TAG, "getDatapointById(): Error Querying Database: " + e.getLocalizedMessage());
@@ -317,7 +281,7 @@ public class LogManager {
         Log.d(TAG, "setDatapointToUploaded() - id=" + id);
         ContentValues cv = new ContentValues();
         cv.put("uploaded", eventId);
-        int nRowsUpdated = mDpDb.getWritableDatabase().update(mDpTableName, cv, "id = ?",
+        int nRowsUpdated = mOsdDb.update(mDpTableName, cv, "id = ?",
                 new String[]{String.format("%d", id)});
 
         return (nRowsUpdated == 1);
@@ -336,7 +300,7 @@ public class LogManager {
         //Cursor c = null;
         ContentValues cv = new ContentValues();
         cv.put("status", statusVal);
-        int nRowsUpdated = mDpDb.getWritableDatabase().update(mDpTableName, cv, "id = ?",
+        int nRowsUpdated = mOsdDb.update(mDpTableName, cv, "id = ?",
                 new String[]{String.format("%d", id)});
 
         return (nRowsUpdated == 1);
@@ -419,7 +383,7 @@ public class LogManager {
         try {
             String selectStr = "DataTime<=?";
             String[] selectArgs = {endDateStr};
-            retVal = mDpDb.getWritableDatabase().delete(mDpTableName, selectStr, selectArgs);
+            retVal = mOsdDb.delete(mDpTableName, selectStr, selectArgs);
         } catch (Exception e) {
             Log.d(TAG, "Error deleting datapoints" + e.toString());
             retVal = 0;
@@ -599,7 +563,7 @@ public class LogManager {
                     + ", mHaving =" + mHaving + ", mOrderBy=" + mOrderBy);
 
             try {
-                Cursor resultSet = mDpDb.getWritableDatabase().query(mTable, mColumns, mSelection,
+                Cursor resultSet = mOsdDb.query(mTable, mColumns, mSelection,
                         mSelectionArgs, mGroupBy, mHaving, mOrderBy);
                 resultSet.moveToFirst();
                 return (resultSet);
@@ -826,14 +790,24 @@ public class LogManager {
 
     /**
      * close() - shut down the logging system
+     * WARNING - this should only be called by the final destructor of the app (not individual class destructors)
+     * because it will close the DB for all instances of LogManger, not just the one on which it is called.
+     * FIXME:  If I was keen I would keep a count of how many instances of LogManager there are, and have this function do nothing
+     *          unless it was the last instance.
      */
-    public void close() {
-        mDpDb.close();
-        stopRemoteLogTimer();
+    public static void close() {
+        mOsdDb.close();
+        mOsdDb = null;
         if (mWac != null) {
-            Log.i(TAG,"Stopping Remote Database");
+            Log.i(TAG,"Stopping Remote Database Interface");
             mWac.close();
         }
+    }
+
+    public void stop() {
+        // Stop the timers and shutdown the remote API connection.
+        stopRemoteLogTimer();
+        stopAutoPruneTimer();
     }
 
     /*
@@ -841,11 +815,11 @@ public class LogManager {
      */
     private void startRemoteLogTimer() {
         if (mRemoteLogTimer != null) {
-            Log.v(TAG, "startRemoteLogTimer -timer already running - cancelling it");
+            Log.i(TAG, "startRemoteLogTimer -timer already running - cancelling it");
             mRemoteLogTimer.cancel();
             mRemoteLogTimer = null;
         }
-        Log.v(TAG, "startRemoteLogTimer() - starting RemoteLogTimer");
+        Log.i(TAG, "startRemoteLogTimer() - starting RemoteLogTimer");
         mRemoteLogTimer =
                 new RemoteLogTimer(mRemoteLogPeriod * 1000, 1000);
         mRemoteLogTimer.start();
@@ -857,7 +831,7 @@ public class LogManager {
      */
     public void stopRemoteLogTimer() {
         if (mRemoteLogTimer != null) {
-            Log.v(TAG, "stopRemoteLogTimer(): cancelling Remote Log timer");
+            Log.i(TAG, "stopRemoteLogTimer(): cancelling Remote Log timer");
             mRemoteLogTimer.cancel();
             mRemoteLogTimer = null;
         }
@@ -869,11 +843,11 @@ public class LogManager {
      */
     private void startAutoPruneTimer() {
         if (mAutoPruneTimer != null) {
-            Log.v(TAG, "startAutoPruneTimer -timer already running - cancelling it");
+            Log.i(TAG, "startAutoPruneTimer -timer already running - cancelling it");
             mAutoPruneTimer.cancel();
             mAutoPruneTimer = null;
         }
-        Log.v(TAG, "startAutoPruneTimer() - starting AutoPruneTimer");
+        Log.i(TAG, "startAutoPruneTimer() - starting AutoPruneTimer");
         mAutoPruneTimer =
                 new AutoPruneTimer(mAutoPrunePeriod * 1000, 1000);
         mAutoPruneTimer.start();
@@ -885,47 +859,46 @@ public class LogManager {
      */
     public void stopAutoPruneTimer() {
         if (mAutoPruneTimer != null) {
-            Log.v(TAG, "stopAutoPruneTimer(): cancelling Auto Prune timer");
+            Log.i(TAG, "stopAutoPruneTimer(): cancelling Auto Prune timer");
             mAutoPruneTimer.cancel();
             mAutoPruneTimer = null;
         }
     }
 
 
-    static public class OsdDbHelper extends SQLiteOpenHelper {
+    public static class OsdDbHelper extends SQLiteOpenHelper {
         // If you change the database schema, you must increment the database version.
         public static final int DATABASE_VERSION = 1;
         public static final String DATABASE_NAME = "OsdData.db";
-        private final String mOsdTableName;
         private static final String TAG = "LogManager.OsdDbHelper";
 
-        public OsdDbHelper(String osdTableName, Context context) {
+        public OsdDbHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
             Log.d(TAG, "OsdDbHelper constructor");
-            mOsdTableName = osdTableName;
         }
 
         public void onCreate(SQLiteDatabase db) {
-            Log.v(TAG, "onCreate - TableName=" + mOsdTableName);
-            String SQLStr = "CREATE TABLE IF NOT EXISTS " + mOsdTableName + "("
+            Log.i(TAG, "onCreate - TableName=" + mDpTableName);
+            String SQLStr = "CREATE TABLE IF NOT EXISTS " + mDpTableName + "("
                     + "id INTEGER PRIMARY KEY,"
                     + "dataTime DATETIME,"
                     + "Status INT,"
                     + "dataJSON TEXT,"
                     + "uploaded INT"
                     + ");";
-
             db.execSQL(SQLStr);
         }
 
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             // This database is only a cache for online data, so its upgrade policy is
             // to simply to discard the data and start over
-            db.execSQL("Drop table if exists " + mOsdTableName + ";");
+            Log.i(TAG,"onUpgrade()");
+            db.execSQL("Drop table if exists " + mDpTableName + ";");
             onCreate(db);
         }
 
         public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            Log.i(TAG,"onDowngrade()");
             onUpgrade(db, oldVersion, newVersion);
         }
     }
@@ -947,7 +920,7 @@ public class LogManager {
 
         @Override
         public void onFinish() {
-            Log.v(TAG, "mRemoteLogTimer - onFinish - uploading data to remote database");
+            Log.d(TAG, "mRemoteLogTimer - onFinish - uploading data to remote database");
             writeToRemoteServer();
             // Restart this timer.
             start();
@@ -969,7 +942,7 @@ public class LogManager {
 
         @Override
         public void onFinish() {
-            Log.v(TAG, "mAutoPruneTimer - onFinish - Pruning Local Database");
+            Log.d(TAG, "mAutoPruneTimer - onFinish - Pruning Local Database");
             pruneLocalDb();
             // Restart this timer.
             start();

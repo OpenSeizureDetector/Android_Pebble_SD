@@ -306,7 +306,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 return true;
              */
-            case R.id.action_logs:
+            /* case R.id.action_logs:
                 Log.i(TAG, "action_logs");
                 try {
                     String url = "http://"
@@ -323,6 +323,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "exception starting log manager activity " + ex.toString());
                 }
                 return true;
+             */
             case R.id.action_logmanager:
                 Log.i(TAG, "action_logmanager");
                 try {

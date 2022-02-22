@@ -348,4 +348,5 @@
     <string name="prune_database">Prune Database</string>
     <string name="check_seizures_message">Please select the events highlighted in pink to say if they are real seizures or false alarms</string>
     <string name="error_server_not_running">ERROR:  OpenSeizureDetector Server is not running - please re-start it</string>
+    <string name="system_logs">System Logs</string>
 </resources>

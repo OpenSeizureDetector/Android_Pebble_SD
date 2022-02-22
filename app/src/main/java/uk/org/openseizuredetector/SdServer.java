@@ -439,6 +439,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         if (mLm != null) {
             Log.d(TAG, "Closing Down Log Manager");
+            mLm.stop();
             mLm.close();
         }
 
@@ -590,7 +591,7 @@ public class SdServer extends Service implements SdDataReceiver {
             }
             if (mLogAlarms) {
                 Log.v(TAG, "WARNING - Logging to SD Card");
-                writeAlarmToSD();
+                //writeAlarmToSD();
             } else {
                 Log.v(TAG, "WARNING");
             }
@@ -603,7 +604,7 @@ public class SdServer extends Service implements SdDataReceiver {
             sdData.alarmStanding = true;
             if (mLogAlarms) {
                 Log.v(TAG, "***ALARM*** - Logging to SD Card");
-                writeAlarmToSD();
+                //writeAlarmToSD();
             } else {
                 Log.v(TAG, "***ALARM***");
             }
@@ -641,7 +642,7 @@ public class SdServer extends Service implements SdDataReceiver {
             sdData.fallAlarmStanding = true;
             if (mLogAlarms) {
                 Log.v(TAG, "***FALL*** - Logging to SD Card");
-                writeAlarmToSD();
+                //writeAlarmToSD();
                 showNotification(2);
             } else {
                 Log.v(TAG, "***FALL***");
@@ -675,7 +676,7 @@ public class SdServer extends Service implements SdDataReceiver {
             sdData.alarmPhrase = "HR ABNORMAL";
             if (mLogAlarms) {
                 Log.v(TAG, "***HEART RATE*** - Logging to SD Card");
-                writeAlarmToSD();
+                //writeAlarmToSD();
             } else {
                 Log.v(TAG, "***HEART RATE***");
             }
@@ -709,7 +710,7 @@ public class SdServer extends Service implements SdDataReceiver {
             sdData.alarmPhrase = "Oxygen Saturation ABNORMAL";
             if (mLogAlarms) {
                 Log.v(TAG, "***OXYGEN SATURATION*** - Logging to SD Card");
-                writeAlarmToSD();
+                //writeAlarmToSD();
             } else {
                 Log.v(TAG, "***OXYGEN SATURATION***");
             }
@@ -742,7 +743,7 @@ public class SdServer extends Service implements SdDataReceiver {
         // Fault
         if ((sdData.alarmState) == 4 || (sdData.alarmState == 7) || (sdData.mHRFaultStanding)) {
             sdData.alarmPhrase = "FAULT";
-            writeAlarmToSD();
+            //writeAlarmToSD();
             faultWarningBeep();
             showNotification(-1);
         } else {
@@ -1255,62 +1256,6 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
             mUtil.writeToSysLogFile("SdServer.updatePrefs() - Error " + ex.toString());
             mUtil.showToast(getString(R.string.problem_parsing_preferences));
-        }
-    }
-
-
-    /**
-     * Write data to SD card alarm log
-     */
-    public void writeAlarmToSD() {
-        writeToSD(true);
-    }
-
-    /**
-     * Write to data log file on SD Card
-     */
-    public void writeToSD() {
-        writeToSD(false);
-    }
-
-    /**
-     * Write data to SD card - writes to data log file unless alarm=true,
-     * in which case writes to alarm log file.
-     */
-    public void writeToSD(boolean alarm) {
-        //Log.v(TAG, "writeToSD(" + alarm + ")");
-        Time tnow = new Time(Time.getCurrentTimezone());
-        tnow.setToNow();
-        String dateStr = tnow.format("%Y-%m-%d");
-
-        // Select filename depending on 'alarm' parameter.
-        String fname;
-        if (alarm)
-            fname = "AlarmLog";
-        else
-            fname = "DataLog";
-
-        fname = fname + "_" + dateStr + ".txt";
-        // Open output directory on SD Card.
-        if (mUtil.isExternalStorageWritable()) {
-            try {
-                FileWriter of = new FileWriter(getExternalFilesDir(null).toString()
-                        + "/" + fname, true);
-                if (mSdData != null) {
-                    if (alarm) {
-                        //Log.v(TAG, "writeToSD() - logging mSdData.toString()");
-                        of.append(mSdData.toString() + "\n");
-                    } else {
-                        //Log.v(TAG, "writeToSD() - logging mSdData.toCSVString()");
-                        of.append(mSdData.toCSVString(true) + "\n");
-                    }
-                }
-                of.close();
-            } catch (Exception ex) {
-                Log.e(TAG, "writeAlarmToSD - error " + ex.toString());
-            }
-        } else {
-            Log.e(TAG, "ERROR - Can not Write to External Folder");
         }
     }
 

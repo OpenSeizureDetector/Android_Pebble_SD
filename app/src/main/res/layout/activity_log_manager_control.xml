@@ -69,27 +69,15 @@
             android:checked="false"
             android:onClick="onRadioButtonClicked"
             android:text="@string/local_data" />
-    </RadioGroup>
 
-    <LinearLayout
-        android:visibility="gone"
-        android:id="@+id/local_data_ll"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/EventsInLocalDb"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
-
-        <ListView
-            android:id="@+id/eventLogListView"
+        <RadioButton
+            android:id="@+id/syslog_rb"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp" />
-    </LinearLayout>
+            android:checked="false"
+            android:onClick="onRadioButtonClicked"
+            android:text="@string/system_logs" />
+    </RadioGroup>
 
     <LinearLayout
         android:visibility="visible"
@@ -107,7 +95,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text="@string/check_seizures_message"
-        />
+            />
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -138,7 +126,48 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp" />
 
-
     </LinearLayout>
+
+
+    <LinearLayout
+        android:visibility="gone"
+        android:id="@+id/local_data_ll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/EventsInLocalDb"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <ListView
+            android:id="@+id/eventLogListView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:visibility="gone"
+        android:id="@+id/syslog_ll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/system_logs"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <ListView
+            android:id="@+id/sysLogListView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp" />
+    </LinearLayout>
+
 
 </LinearLayout>
