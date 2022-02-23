@@ -4,10 +4,28 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/event_id_remote_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+        android:text="eventId" />
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
     <TextView
         android:id="@+id/event_date_remote_tv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textStyle="bold"
         android:text="date" />
 
     <LinearLayout
@@ -19,6 +37,7 @@
             android:id="@+id/event_type_remote_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textStyle="bold"
             android:text="---" />
 
         <TextView
@@ -41,7 +60,8 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="date"
+        android:text="notes"
+        android:textStyle="italic"
         android:id="@+id/event_notes_remote_tv" />
 
     <!--   <TextView
@@ -50,4 +70,6 @@
            android:text="dataJSON"
            android:id="@+id/event_dataJSON" />
    -->
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>

@@ -105,7 +105,6 @@
     <string name="sms_location_alarm_active">SMS Location Alarm Active</string>
   <string name="sms_location_alarm_disabled">SMS Location Alarm Disabled</string>
   <string name="cancel_audible_not_sending_sms">Cancel Audible Active - not sending SMS</string>
-  <string name="sms_alarm_disabled">SMS Alarms Disabled - not doing anything!</string>
   <string name="no_wifi_connection">Network State Changed - no Wifi Connection</string>
   <string name="no_active_network">Network State Changed - No Active Network</string>
   <string name="problem_parsing_preferences">Problem Parsing Preferences - Something won\'t work - Please go back to Settings and correct it!</string>

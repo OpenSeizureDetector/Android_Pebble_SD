@@ -293,8 +293,8 @@ public class LogManagerControlActivity extends AppCompatActivity {
         if (mRemoteEventsList != null) {
             ListView lv = (ListView) findViewById(R.id.remoteEventsLv);
             ListAdapter adapter = new RemoteEventsAdapter(LogManagerControlActivity.this, mRemoteEventsList, R.layout.log_entry_layout_remote,
-                    new String[]{"dataTime", "type", "subType", "osdAlarmStateStr", "desc"},
-                    new int[]{R.id.event_date_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
+                    new String[]{"id","dataTime", "type", "subType", "osdAlarmStateStr", "desc"},
+                    new int[]{R.id.event_id_remote_tv, R.id.event_date_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
                     R.id.event_alarmState_remote_tv, R.id.event_notes_remote_tv});
             lv.setAdapter(adapter);
             //Log.i(TAG,"adapter[0]="+adapter.getItem(0));

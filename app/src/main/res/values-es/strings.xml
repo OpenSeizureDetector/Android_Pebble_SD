@@ -120,7 +120,6 @@
     <string name="sms_location_alarm_active">Alarma de Localización de SMS Activa</string>
     <string name="sms_location_alarm_disabled">Alarma de Localización de SMS Inactiva</string>
     <string name="cancel_audible_not_sending_sms">Cancele Alarma Audible - no enviando SMS</string>
-    <string name="sms_alarm_disabled">Alarmas de SMS Incativas - No está haciendo nada ! </string>
     <string name="no_wifi_connection">Cambio en el Estado de Red - Sin Conexión de Wifi</string>
     <string name="no_active_network">Cambio en el Estado de Red - Sin Red Activa</string>
     <string name="problem_parsing_preferences">Problema al Interpretar las Preferencias - Algo no está Trabajando - Por favor regrese a Ajustes y corríjalo !</string>

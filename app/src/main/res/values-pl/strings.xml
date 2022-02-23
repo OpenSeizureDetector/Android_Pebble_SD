@@ -128,7 +128,6 @@
     <string name="sms_location_alarm_active">Wysyłaj lokalizację w SMS</string>
     <string name="sms_location_alarm_disabled">Nie wysyłaj lokalizacji w SMS</string>
     <string name="cancel_audible_not_sending_sms">Wyłączono alarmy dźwiękowe - nie wysyłam SMS</string>
-    <string name="sms_alarm_disabled">Wyłączono alarmy SMS - nic nie zrobię!</string>
     <string name="no_wifi_connection">Stan sieci zmieniony - brak połączenia Wifi</string>
     <string name="no_active_network">Stan sieci zmieniony - brak aktywnych sieci</string>
     <string name="problem_parsing_preferences">Problem z ustawieniami - to nie zadziała - proszę wrócić do ustawień i poprawić to!</string>
