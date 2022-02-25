@@ -533,6 +533,66 @@ public class WebApiConnection {
     }
 
     /**
+     * Retieve the user profile of the authenticated user from the server, and return it to the callback function.
+     * @param callback - function to be called with a JSONObject as a parameter that contains the user profile data.
+     * @return true if request sent successfully, or else false.
+     */
+    public boolean getUserProfile(Consumer<JSONObject> callback) {
+        Log.v(TAG, "getUserProfile()");
+        String urlStr = mUrlBase + "/api/accounts/profile/";
+        Log.v(TAG, "getUserProfile(): urlStr=" + urlStr);
+        final String authtoken = getStoredToken();
+
+        if (!isLoggedIn()) {
+            Log.v(TAG, "not logged in - doing nothing");
+            return (false);
+        }
+
+        StringRequest req = new StringRequest(Request.Method.GET, urlStr,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.v(TAG, "Response is: " + response);
+                        try {
+                            JSONObject retObj = new JSONObject(response);
+                            callback.accept(retObj);
+                        } catch (JSONException e) {
+                            Log.e(TAG, "getUserProfile.onRespons(): Error: " + e.getMessage() + "," + e.toString());
+                            callback.accept(null);
+                        }
+                        mServerConnectionOk = true;
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        if (error != null) {
+                            String responseBody = new String(error.networkResponse.data);
+                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                        } else {
+                            Log.e(TAG, "Create Event Error: returned null response");
+                        }
+                        mServerConnectionOk = false;
+                        callback.accept(null);
+                    }
+                }) {
+
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("Content-Type", "application/json; charset=UTF-8");
+                params.put("Authorization", "Token " + getStoredToken());
+                return params;
+            }
+        };
+        mQueue.add(req);
+        return (true);
+    }
+
+
+
+
+    /**
      * Retrieve the file containing the standard event types from the server.
      * Calls the specified callback function, passing a JSONObject as a parameter when the data has been received and parsed.
      * Note it uses a Consumer callback function to avoid having to create another interface

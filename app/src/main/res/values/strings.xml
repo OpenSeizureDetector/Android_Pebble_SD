@@ -2,13 +2,11 @@
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
-        "V4.0 - Added logging of data to remote server
-        \nV3.7.0 - Added support for Garmin Blood Oxygen Saturation measurements
-        \nV3.6.2 - Fix of issue with log file permissions on some Android 10 devices and added more translatable strings with polish translation.
-        \nV3.6.1 - Possible fix for issue with shutting down system and expanded Polish translation to all settings screens.
-        \nV3.6 - Added phone sensor data source for testing without a watches
-        \nV3.5 - Added support for SMS Annunciator App
-        \nV3.4 - Added support for BLE Data Source     "</string>
+        "\nV4.0.0k - Added user name and user ID to login activity so the user knows who they are logged in as.
+        \nV4.0.0j - Added event ID to list in data log manager so users can refer to it when asking for assistance.
+        \n          Moved system log to sqlite database and added list of it to data log manager activity.
+        \nV4.0.0i - Tidied up user settings and (hopefully) fixed issue with server not shutting down correctly sometimes.
+        "</string>
     <string name="UpgradeMsg">
         OpenSeizureDetector does not collect any personal data.
         This does mean that it is not possible for me to contact users if I find an
@@ -349,4 +347,5 @@
     <string name="check_seizures_message">Please select the events highlighted in pink to say if they are real seizures or false alarms</string>
     <string name="error_server_not_running">ERROR:  OpenSeizureDetector Server is not running - please re-start it</string>
     <string name="system_logs">System Logs</string>
+    <string name="logged_in_as_user_id">Logged in as User Id:</string>
 </resources>

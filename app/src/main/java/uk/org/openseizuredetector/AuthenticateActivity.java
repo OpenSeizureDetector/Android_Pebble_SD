@@ -16,7 +16,12 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class AuthenticateActivity extends AppCompatActivity {
     private String TAG = "AuthenticateActivity";
@@ -71,7 +76,6 @@ public class AuthenticateActivity extends AppCompatActivity {
         super.onStart();
         mUtil.bindToServer(getApplicationContext(), mConnection);
         waitForConnection();
-        updateUi();
     }
 
     @Override
@@ -103,6 +107,7 @@ public class AuthenticateActivity extends AppCompatActivity {
     private void initialiseServiceConnection() {
         mLm = mConnection.mSdServer.mLm;
         mWac = mConnection.mSdServer.mLm.mWac;
+        updateUi();
     }
 
     private void updateUi() {
@@ -125,8 +130,25 @@ public class AuthenticateActivity extends AppCompatActivity {
             Log.v(TAG, "Already Logged in - showing Log Out prompt");
             loginLl.setVisibility(View.GONE);
             logoutLl.setVisibility(View.VISIBLE);
-            TextView tv = (TextView)findViewById(R.id.tokenTv);
-            tv.setText("Logged in with Token:"+storedAuthToken);
+            //TextView tv = (TextView)findViewById(R.id.tokenTv);
+            //tv.setText("Logged in with Token: "+storedAuthToken);
+            if (mWac != null) {
+                mWac.getUserProfile((JSONObject profileObj) -> {
+                    try {
+                        Long userId = profileObj.getLong("id");
+                        String userName = profileObj.getString("username");
+                        TextView tv2 = (TextView) findViewById(R.id.userIdTv);
+                        tv2.setText(userId.toString());
+                        tv2 = (TextView) findViewById(R.id.usernameTv);
+                        tv2.setText(userName);
+                    } catch (JSONException e) {
+                        Log.e(TAG, "Error Parsing profileObj: " + e.getMessage());
+                        mUtil.showToast("Error Parsing profileObj - this should not happen!!!");
+                    }
+                });
+            } else {
+                Log.i(TAG,"UpdateUI - not retrieving profile because mWac is null");
+            }
         }
 
     }
