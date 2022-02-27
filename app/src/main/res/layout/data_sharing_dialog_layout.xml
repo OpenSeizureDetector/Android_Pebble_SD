@@ -12,22 +12,21 @@
     android:orientation="vertical"
     android:padding="20dip">
 
-
+<!--
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="16sp"
         android:autoLink="web"
-        android:text="@string/about_text"
+        android:text="@string/datasharing_about_title"
         />
-
+-->
     <TextView
-        android:id="@+id/about_credits"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingTop="20dip"
         android:textSize="16sp"
-        android:text="@string/credits_text"
+        android:text="@string/datasharing_about_text"
         android:autoLink="web"
         />
 

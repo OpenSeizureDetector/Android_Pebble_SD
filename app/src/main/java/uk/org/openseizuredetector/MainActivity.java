@@ -26,6 +26,8 @@
 package uk.org.openseizuredetector;
 
 import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -81,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
     final Handler serverStatusHandler = new Handler();
     Messenger messenger = new Messenger(new ResponseHandler());
     Timer mUiTimer;
+    private Context mContext;
 
     /**
      * Called when the activity is first created.
@@ -88,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i(TAG,"onCreate()");
+        Log.i(TAG, "onCreate()");
 
         // Set our custom uncaught exception handler to report issues.
         //Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(MainActivity.this));
@@ -97,18 +100,19 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         //int i = 5/0;  // Force exception to test handler.
-        mUtil = new OsdUtil(getApplicationContext(),serverStatusHandler);
+        mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
         mConnection = new SdServiceConnection(getApplicationContext());
         mUtil.writeToSysLogFile("");
         mUtil.writeToSysLogFile("* MainActivity Started     *");
         mUtil.writeToSysLogFile("MainActivity.onCreate()");
+        mContext = this;
 
         // Initialise the User Interface
         setContentView(R.layout.main);
 
-	/* Force display of overflow menu - from stackoverflow
-     * "how to force use of..."
-	 */
+        /* Force display of overflow menu - from stackoverflow
+         * "how to force use of..."
+         */
         try {
             Log.v(TAG, "trying menubar fiddle...");
             ViewConfiguration config = ViewConfiguration.get(this);
@@ -135,15 +139,14 @@ public class MainActivity extends AppCompatActivity {
                 Log.v(TAG, "acceptAlarmButton.onClick()");
                 if (mConnection.mBound) {
                     if ((mConnection.mSdServer.mSmsTimer != null)
-                            && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0 )){
+                            && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0)) {
                         Log.v(TAG, "acceptAlarmButton.onClick() - Stopping SMS Timer");
                         mUtil.showToast(getString(R.string.SMSAlarmCancelledMsg));
                         mConnection.mSdServer.stopSmsTimer();
-                    }
-                    else {
+                    } else {
                         Log.v(TAG, "acceptAlarmButton.onClick() - Accepting Alarm");
                         mConnection.mSdServer.acceptAlarm();
-                        }
+                    }
                 }
             }
         });
@@ -171,9 +174,9 @@ public class MainActivity extends AppCompatActivity {
                 //builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
                 //    @Override
                 //    public void onClick(DialogInterface dialog, int which) {
-                        if (mConnection.mBound) {
-                            mConnection.mSdServer.raiseManualAlarm();
-                        }
+                if (mConnection.mBound) {
+                    mConnection.mSdServer.raiseManualAlarm();
+                }
                 //        dialog.dismiss();
                 //    }
                 //});
@@ -191,7 +194,42 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        // The background service might ask us to show the data sharing dialog if data sharing is not working correctly
+        String actionStr = getIntent().getAction();
+        if (actionStr != null) {
+            Log.i(TAG, "onCreate() - action=" + actionStr);
+            if (actionStr.equals("showDataSharingDialog")) {
+                showDataSharingDialog();
+            }
+        } else {
+            Log.i(TAG, "onCreate - action is null - starting normally");
+        }
+    }
 
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        String actionStr;
+        Log.i(TAG, "onNewIntent");
+        Bundle extras = intent.getExtras();
+        // The background service might ask us to show the data sharing dialog if data sharing is not working correctly
+        actionStr = getIntent().getAction();
+        if (actionStr != null) {
+            Log.i(TAG, "onNewIntent() - action=" + actionStr);
+            if (actionStr.equals("showDataSharingDialog")) {
+                showDataSharingDialog();
+            }
+        } else {
+            if (extras != null) {
+                actionStr = extras.getString("action");
+                if (actionStr.equals("showDataSharingDialog")) {
+                    showDataSharingDialog();
+                }
+                Log.i(TAG, "onNewIntent - extra actionstr is "+actionStr);
+            } else {
+                Log.i(TAG, "onNewIntent - extra actionstr is null - starting normally");
+            }
+        }
     }
 
     /**
@@ -225,7 +263,7 @@ public class MainActivity extends AppCompatActivity {
                 mConnection.mSdServer.mSdDataSource.installWatchApp();
                 return true;
 
-        case R.id.action_accept_alarm:
+            case R.id.action_accept_alarm:
                 Log.i(TAG, "action_accept_alarm");
                 if (mConnection.mBound) {
                     mConnection.mSdServer.acceptAlarm();
@@ -281,7 +319,7 @@ public class MainActivity extends AppCompatActivity {
                 return true;
                 */
 
-           case R.id.action_authenticate_api:
+            case R.id.action_authenticate_api:
                 Log.i(TAG, "action_autheticate_api");
                 try {
                     Intent i = new Intent(
@@ -292,7 +330,10 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "exception starting export activity " + ex.toString());
                 }
                 return true;
-
+            case R.id.action_about_datasharing:
+                Log.i(TAG, "action_about_datasharing");
+                showDataSharingDialog();
+                return true;
             /*
             case R.id.action_export:
                 Log.i(TAG, "action_export");
@@ -370,7 +411,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Log.d(TAG,"onStart()");
+        Log.i(TAG, "onStart()");
         mUtil.writeToSysLogFile("MainActivity.onStart()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
@@ -386,7 +427,7 @@ public class MainActivity extends AppCompatActivity {
             mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
             mUtil.bindToServer(getApplicationContext(), mConnection);
         } else {
-            Log.i(TAG,"onStart() - Server Not Running");
+            Log.i(TAG, "onStart() - Server Not Running");
             mUtil.writeToSysLogFile("MainActivity.onStart - Server Not Running");
         }
         // start timer to refresh user interface every second.
@@ -404,7 +445,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        Log.d(TAG,"onStop() - unbinding from server");
+        Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("MainActivity.onStop()");
         mUtil.unbindFromServer(getApplicationContext(), mConnection);
         mUiTimer.cancel();
@@ -465,7 +506,7 @@ public class MainActivity extends AppCompatActivity {
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
                 tv = (TextView) findViewById(R.id.serverIpTv);
-                tv.setText(getString(R.string.AccessServerAt)+" http://"
+                tv.setText(getString(R.string.AccessServerAt) + " http://"
                         + mUtil.getLocalIpAddress()
                         + ":8080");
                 tv.setBackgroundColor(okColour);
@@ -523,8 +564,8 @@ public class MainActivity extends AppCompatActivity {
                     // Pebble Connected Phrase - use for HR if active instead.
                     tv = (TextView) findViewById(R.id.pebbleTv);
                     if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
-                        tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR +" bpm\n"
-                        + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
+                        tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
+                                + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
                         if (mConnection.mSdServer.mSdData.mHRAlarmStanding || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
                             tv.setBackgroundColor(alarmColour);
                             tv.setTextColor(alarmTextColour);
@@ -655,9 +696,9 @@ public class MainActivity extends AppCompatActivity {
                         specRatio = 0;
 
                     ((TextView) findViewById(R.id.powerTv)).setText(getString(R.string.PowerEquals) + mConnection.mSdServer.mSdData.roiPower +
-                            " ("+ getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
+                            " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
                     ((TextView) findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
-                            " ("+ getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
+                            " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
 
                     ProgressBar pb;
                     Drawable pbDrawable;
@@ -712,17 +753,17 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(warnTextColour);
 
                         tv = (TextView) findViewById(R.id.pebbleTv);
-                        tv.setText(getString(R.string.HR_Equals)+" --- bpm\nO2 Sat = --- %");
+                        tv.setText(getString(R.string.HR_Equals) + " --- bpm\nO2 Sat = --- %");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
 
                         tv = (TextView) findViewById(R.id.appTv);
-                        tv.setText(getString(R.string.WatchApp)+" ----");
+                        tv.setText(getString(R.string.WatchApp) + " ----");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
 
                         tv = (TextView) findViewById(R.id.battTv);
-                        tv.setText(getString(R.string.WatchBatteryEquals)+" ---%");
+                        tv.setText(getString(R.string.WatchBatteryEquals) + " ---%");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
                     }
@@ -742,17 +783,17 @@ public class MainActivity extends AppCompatActivity {
                     tv.setTextColor(warnTextColour);
 
                     tv = (TextView) findViewById(R.id.pebbleTv);
-                    tv.setText(getString(R.string.HR_Equals)+"---");
+                    tv.setText(getString(R.string.HR_Equals) + "---");
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
 
                     tv = (TextView) findViewById(R.id.appTv);
-                    tv.setText(getString(R.string.WatchApp)+" -----");
+                    tv.setText(getString(R.string.WatchApp) + " -----");
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
 
                     tv = (TextView) findViewById(R.id.battTv);
-                    tv.setText(getString(R.string.WatchBatteryEquals)+" ---%");
+                    tv.setText(getString(R.string.WatchBatteryEquals) + " ---%");
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
 
@@ -774,7 +815,7 @@ public class MainActivity extends AppCompatActivity {
                         && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0)) {
                     acceptAlarmButton.setText(getString(R.string.SMSWillBeSentIn) + " " +
                             mConnection.mSdServer.mSmsTimer.mTimeLeft / 1000 +
-                            " s - "+getString(R.string.Cancel));
+                            " s - " + getString(R.string.Cancel));
                     acceptAlarmButton.setBackgroundColor(alarmColour);
                     acceptAlarmButton.setEnabled(true);
                 } else {
@@ -800,7 +841,7 @@ public class MainActivity extends AppCompatActivity {
             if (mConnection.mBound)
                 if (mConnection.mSdServer.isAudibleCancelled()) {
                     cancelAudibleButton.setText(getString(R.string.AudibleAlarmsCancelledFor)
-                            + " " +mConnection.mSdServer.
+                            + " " + mConnection.mSdServer.
                             cancelAudibleTimeRemaining()
                             + " sec");
                     cancelAudibleButton.setEnabled(true);
@@ -825,17 +866,16 @@ public class MainActivity extends AppCompatActivity {
             ArrayList<String> xVals = new ArrayList<String>();
             ArrayList<BarEntry> yBarVals = new ArrayList<BarEntry>();
             for (int i = 0; i < 10; i++) {
-                xVals.add(i+"-"+(i+1)+" Hz");
+                xVals.add(i + "-" + (i + 1) + " Hz");
                 if (mConnection.mSdServer != null) {
                     yBarVals.add(new BarEntry(mConnection.mSdServer.mSdData.simpleSpec[i], i));
-                }
-                else {
-                    yBarVals.add(new BarEntry(i,i));
+                } else {
+                    yBarVals.add(new BarEntry(i, i));
                 }
             }
 
             // create a dataset and give it a type
-            BarDataSet barDataSet = new BarDataSet(yBarVals,"Spectrum");
+            BarDataSet barDataSet = new BarDataSet(yBarVals, "Spectrum");
             try {
                 int[] barColours = new int[10];
                 for (int i = 0; i < 10; i++) {
@@ -847,20 +887,20 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 barDataSet.setColors(barColours);
-            } catch (NullPointerException e){
-                Log.e(TAG,"Null pointer exception setting bar colours");
+            } catch (NullPointerException e) {
+                Log.e(TAG, "Null pointer exception setting bar colours");
             }
             barDataSet.setBarSpacePercent(20f);
             barDataSet.setBarShadowColor(Color.WHITE);
-            BarData barData = new BarData(xVals,barDataSet);
+            BarData barData = new BarData(xVals, barDataSet);
             barData.setValueFormatter(new ValueFormatter() {
-                                          @Override
-                                          public String getFormattedValue(float v) {
-                                              DecimalFormat format = new DecimalFormat("####");
-                                              return format.format(v);
-                                          }
-                                      });
-                    mChart.setData(barData);
+                @Override
+                public String getFormattedValue(float v) {
+                    DecimalFormat format = new DecimalFormat("####");
+                    return format.format(v);
+                }
+            });
+            mChart.setData(barData);
 
             // format the axes
             XAxis xAxis = mChart.getXAxis();
@@ -893,7 +933,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 mChart.getLegend().setEnabled(false);
             } catch (NullPointerException e) {
-                Log.e(TAG,"Null Pointer Exception setting legend");
+                Log.e(TAG, "Null Pointer Exception setting legend");
             }
 
             mChart.invalidate();
@@ -904,14 +944,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        Log.d(TAG,"onPause()");
+        Log.i(TAG, "onPause()");
         mUtil.writeToSysLogFile("MainActivity.onPause()");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d(TAG,"onResume()");
+        Log.i(TAG, "onResume()");
         mUtil.writeToSysLogFile("MainActivity.onResume()");
     }
 
@@ -924,16 +964,45 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setIcon(R.drawable.icon_24x24);
         builder.setTitle("OpenSeizureDetector V" + versionName);
+        builder.setPositiveButton("OK", null);
         builder.setView(aboutView);
         builder.create();
         builder.show();
     }
+
+    private void showDataSharingDialog() {
+        mUtil.writeToSysLogFile("MainActivity.showDataSharingDialog()");
+        View aboutView = getLayoutInflater().inflate(R.layout.data_sharing_dialog_layout, null, false);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setIcon(R.drawable.datasharing_fault_24x24);
+        builder.setTitle("OpenSeizureDetector Data Sharing");
+        builder.setNegativeButton(getString(R.string.cancel), null);
+        builder.setPositiveButton(getString(R.string.login), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Log.i(TAG, "dataSharingDialog.positiveButton.onClick()");
+                try {
+                    Intent i = new Intent(
+                            MainActivity.this,
+                            AuthenticateActivity.class);
+                    mContext.startActivity(i);
+                } catch (Exception ex) {
+                    Log.i(TAG, "exception starting activity " + ex.toString());
+                }
+
+            }
+        });
+        builder.setView(aboutView);
+        builder.create();
+        builder.show();
+    }
+
 
     static class ResponseHandler extends Handler {
         @Override
         public void handleMessage(Message message) {
             Log.i(TAG, "Message=" + message.toString());
         }
-     }
+    }
 
 }
