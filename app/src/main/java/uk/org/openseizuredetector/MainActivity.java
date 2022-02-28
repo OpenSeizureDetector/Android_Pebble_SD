@@ -564,8 +564,13 @@ public class MainActivity extends AppCompatActivity {
                     // Pebble Connected Phrase - use for HR if active instead.
                     tv = (TextView) findViewById(R.id.pebbleTv);
                     if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
-                        tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
-                                + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
+                        if (mConnection.mSdServer.mSdData.mO2Sat>0) {
+                            tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
+                                    + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
+                        } else {
+                            tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
+                                    + "O2 Sat = ---%");
+                        }
                         if (mConnection.mSdServer.mSdData.mHRAlarmStanding || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
                             tv.setBackgroundColor(alarmColour);
                             tv.setTextColor(alarmTextColour);
