@@ -279,6 +279,8 @@ public class SdServer extends Service implements SdDataReceiver {
         mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting SdDataSource");
         mSdDataSource.start();
 
+        checkEvents();
+
         // Initialise Notification channel for API level 26 and over
         // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
         mNM = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -1550,12 +1552,58 @@ public class SdServer extends Service implements SdDataReceiver {
         }
     }
 
+
+    private void checkEvents() {
+        // Retrieve events from remote database
+        if (mLm.mWac.getEvents((JSONObject remoteEventsObj) -> {
+            Log.v(TAG, "CheckEvents.getEvents.Callback()");
+            long firstUnvalidatedEvent;
+            if (remoteEventsObj == null) {
+                Log.e(TAG, "CheckEvents.Callback:  Error Retrieving events");
+            } else {
+                try {
+                    JSONArray eventsArray = remoteEventsObj.getJSONArray("events");
+                    // A bit of a hack to display in reverse chronological order
+                    firstUnvalidatedEvent = -1;
+                    for (int i = eventsArray.length() - 1; i >= 0; i--) {
+                        JSONObject eventObj = eventsArray.getJSONObject(i);
+                        Long id = eventObj.getLong("id");
+                        String typeStr = eventObj.getString("type");
+                        //Log.v(TAG,"CheckEventsTimer: id="+id+", typeStr="+typeStr);
+                        if (typeStr.equals("null")) {
+                            firstUnvalidatedEvent = id;
+                            //Log.v(TAG,"CheckEventsTimer:setting firstUnvalidatedEvent to "+firstUnvalidatedEvent);
+                        }
+                    }
+                    Log.v(TAG, "CheckEventsTimer.onFinish.callback - firstUnvalidatedEvent = " +
+                            firstUnvalidatedEvent);
+                    if (firstUnvalidatedEvent >= 0) {
+                        showEventNotification(firstUnvalidatedEvent);
+                        mNM.cancel(DATASHARE_NOTIFICATION_ID);
+                    } else {
+                        mNM.cancel(EVENT_NOTIFICATION_ID);
+                        mNM.cancel(DATASHARE_NOTIFICATION_ID);
+                    }
+                } catch (JSONException e) {
+                    Log.e(TAG, "CheckEventsTimer.onFinish(): Error Parsing remoteEventsObj: " + e.getMessage());
+                    //mUtil.showToast("Error Parsing remoteEventsObj - this should not happen!!!");
+                }
+            }
+        })) {
+            Log.v(TAG, "CheckEventsTimer() - requested events");
+        } else {
+            Log.v(TAG, "CheckEventsTimer() - Not Logged In");
+            mNM.cancel(EVENT_NOTIFICATION_ID);
+            showDatashareNotification();
+        }
+
+    }
+
     /**
      * Periodically check if we have unvalidated events in the remote database.
      * Show a notification if we do.
      */
     private class CheckEventsTimer extends CountDownTimer {
-        long mFirstUnvalidatedEvent;
         public boolean mIsRunning = true;
 
         public CheckEventsTimer(long startTime, long interval) {
@@ -1565,47 +1613,7 @@ public class SdServer extends Service implements SdDataReceiver {
         @Override
         public void onFinish() {
             Log.v(TAG, "CheckEventsTimer.onFinish()");
-            // Retrieve events from remote database
-            if (mLm.mWac.getEvents((JSONObject remoteEventsObj) -> {
-                Log.v(TAG, "CheckEventsTimer.onFinish.getEvents.Callback()");
-                if (remoteEventsObj == null) {
-                    Log.e(TAG, "CheckEventsTimer.onFinish() Callback:  Error Retrieving events");
-                } else {
-                    try {
-                        JSONArray eventsArray = remoteEventsObj.getJSONArray("events");
-                        // A bit of a hack to display in reverse chronological order
-                        mFirstUnvalidatedEvent = -1;
-                        for (int i = eventsArray.length() - 1; i >= 0; i--) {
-                            JSONObject eventObj = eventsArray.getJSONObject(i);
-                            Long id = eventObj.getLong("id");
-                            String typeStr = eventObj.getString("type");
-                            //Log.v(TAG,"CheckEventsTimer: id="+id+", typeStr="+typeStr);
-                            if (typeStr.equals("null")) {
-                                mFirstUnvalidatedEvent = id;
-                                //Log.v(TAG,"CheckEventsTimer:setting mFirstUnvalidatedEvent to "+mFirstUnvalidatedEvent);
-                            }
-                        }
-                        Log.v(TAG, "CheckEventsTimer.onFinish.callback - mFirstUnvalidatedEvent = " +
-                                mFirstUnvalidatedEvent);
-                        if (mFirstUnvalidatedEvent >= 0) {
-                            showEventNotification(mFirstUnvalidatedEvent);
-                            mNM.cancel(DATASHARE_NOTIFICATION_ID);
-                        } else {
-                            mNM.cancel(EVENT_NOTIFICATION_ID);
-                            mNM.cancel(DATASHARE_NOTIFICATION_ID);
-                        }
-                    } catch (JSONException e) {
-                        Log.e(TAG, "CheckEventsTimer.onFinish(): Error Parsing remoteEventsObj: " + e.getMessage());
-                        //mUtil.showToast("Error Parsing remoteEventsObj - this should not happen!!!");
-                    }
-                }
-            })) {
-                Log.v(TAG, "CheckEventsTimer() - requested events");
-            } else {
-                Log.v(TAG, "CheckEventsTimer() - Not Logged In");
-                mNM.cancel(EVENT_NOTIFICATION_ID);
-                showDatashareNotification();
-            }
+            checkEvents();
             if (mIsRunning) {
                 // Restart this timer.
                 Log.v(TAG, "CheckEventsTimer.onFinish() - mIsRunning is true, so re-starting timer");
@@ -1616,49 +1624,49 @@ public class SdServer extends Service implements SdDataReceiver {
         @Override
         public void onTick(long msRemaining) {
         }
+    }
 
-        /**
-         * Show a notification to tell the user that we have unvalidated events.
-         */
-        private void showEventNotification(long eventId) {
-            Log.v(TAG, "showEventNotification()");
-            int iconId;
-            String titleStr;
-            Uri soundUri = null;
+    /**
+     * Show a notification to tell the user that we have unvalidated events.
+     */
+    private void showEventNotification(long eventId) {
+        Log.v(TAG, "showEventNotification()");
+        int iconId;
+        String titleStr;
+        Uri soundUri = null;
 
-            // Initialise Notification channel for API level 26 and over
-            // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
-            NotificationManager nM = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(getApplicationContext(), mEventNotChId);
-            if (Build.VERSION.SDK_INT >= 26) {
-                NotificationChannel channel = new NotificationChannel(mEventNotChId,
-                        mEventNotChName,
-                        NotificationManager.IMPORTANCE_DEFAULT);
-                channel.setDescription(mEventNotChDesc);
-                nM.createNotificationChannel(channel);
-            }
-
-            iconId = R.drawable.datasharing_query_24x24;
-            titleStr = getString(R.string.unvalidatedEventsTitle);
-
-            Intent i = new Intent(getApplicationContext(), LogManagerControlActivity.class);
-            i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            i.setAction("None");
-            PendingIntent contentIntent =
-                    PendingIntent.getActivity(getApplicationContext(),
-                            0, i, PendingIntent.FLAG_UPDATE_CURRENT);
-            String contentStr = getString(R.string.please_confirm_seizure_events);
-
-            Notification notification = notificationBuilder.setContentIntent(contentIntent)
-                    .setSmallIcon(iconId)
-                    .setColor(0x00ffffff)
-                    .setAutoCancel(false)
-                    .setContentTitle(titleStr)
-                    .setContentText(contentStr)
-                    .setOnlyAlertOnce(true)
-                    .build();
-            nM.notify(EVENT_NOTIFICATION_ID, notification);
+        // Initialise Notification channel for API level 26 and over
+        // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
+        NotificationManager nM = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(getApplicationContext(), mEventNotChId);
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationChannel channel = new NotificationChannel(mEventNotChId,
+                    mEventNotChName,
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription(mEventNotChDesc);
+            nM.createNotificationChannel(channel);
         }
+
+        iconId = R.drawable.datasharing_query_24x24;
+        titleStr = getString(R.string.unvalidatedEventsTitle);
+
+        Intent i = new Intent(getApplicationContext(), LogManagerControlActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        i.setAction("None");
+        PendingIntent contentIntent =
+                PendingIntent.getActivity(getApplicationContext(),
+                        0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+        String contentStr = getString(R.string.please_confirm_seizure_events);
+
+        Notification notification = notificationBuilder.setContentIntent(contentIntent)
+                .setSmallIcon(iconId)
+                .setColor(0x00ffffff)
+                .setAutoCancel(false)
+                .setContentTitle(titleStr)
+                .setContentText(contentStr)
+                .setOnlyAlertOnce(true)
+                .build();
+        nM.notify(EVENT_NOTIFICATION_ID, notification);
     }
 
 
