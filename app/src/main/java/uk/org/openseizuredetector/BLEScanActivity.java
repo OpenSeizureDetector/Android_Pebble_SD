@@ -17,6 +17,8 @@ package uk.org.openseizuredetector;
  */
 
 
+import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.ListActivity;
@@ -33,8 +35,6 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -47,9 +47,12 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.MenuItemCompat;
 
-import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
+import java.util.ArrayList;
 
 /**
  * Activity for scanning and displaying available Bluetooth LE devices.
@@ -116,7 +119,7 @@ public class BLEScanActivity extends ListActivity {
         if (!mScanning) {
             menu.findItem(R.id.menu_stop).setVisible(false);
             menu.findItem(R.id.menu_scan).setVisible(true);
-            menu.findItem(R.id.menu_refresh).setActionView(null);
+            MenuItemCompat.setActionView(menu.findItem(R.id.menu_refresh), null);
         } else {
             menu.findItem(R.id.menu_stop).setVisible(true);
             menu.findItem(R.id.menu_scan).setVisible(false);

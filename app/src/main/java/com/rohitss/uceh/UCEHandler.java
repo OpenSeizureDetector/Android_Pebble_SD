@@ -25,6 +25,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.ref.WeakReference;
@@ -228,7 +230,7 @@ public final class UCEHandler {
         return context.getSharedPreferences(SHARED_PREFERENCES_FILE, Context.MODE_PRIVATE).getLong(SHARED_PREFERENCES_FIELD_TIMESTAMP, -1);
     }
 
-    static void closeApplication(Activity activity) {
+    static void closeApplication(AppCompatActivity activity) {
         activity.finish();
         killCurrentProcess();
     }

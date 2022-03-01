@@ -24,8 +24,6 @@
 */
 package uk.org.openseizuredetector;
 
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -46,6 +44,9 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.rohitss.uceh.UCEHandler;
 
 import java.util.Timer;
@@ -56,7 +57,7 @@ import java.util.TimerTask;
  * for it to start and to receive data and settings from the seizure detector before exiting and
  * starting the main activity.
  */
-public class StartupActivity extends Activity {
+public class StartupActivity extends AppCompatActivity {
     private static String TAG = "StartupActivity";
     private int okColour = Color.BLUE;
     private int warnColour = Color.MAGENTA;

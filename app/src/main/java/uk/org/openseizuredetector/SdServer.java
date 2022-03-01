@@ -26,11 +26,7 @@
 
 package uk.org.openseizuredetector;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-
 import android.app.ActivityManager;
-import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -49,30 +45,33 @@ import android.media.ToneGenerator;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
-import androidx.core.app.NotificationCompat;
 import android.telephony.SmsManager;
+import android.text.format.Time;
 import android.util.Log;
 
-import java.util.Timer;
-import java.io.*;
-import java.util.*;
-
-import android.text.format.Time;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.NotificationCompat;
 
 import com.rohitss.uceh.UCEHandler;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.List;
+import java.util.Timer;
 
 /**
  * Based on example at:

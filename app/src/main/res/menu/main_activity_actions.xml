@@ -1,8 +1,9 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
     <group android:id="@+id/grp1">
         <item
             android:id="@+id/action_accept_alarm"
-            android:showAsAction="never|withText"
+            app:showAsAction="never|withText"
             android:title="@string/accept_alarm" />
     </group>
 
@@ -10,7 +11,7 @@
         <item
             android:id="@+id/action_start_stop"
             android:icon="@drawable/stop_server"
-            android:showAsAction="never|withText"
+            app:showAsAction="never|withText"
             android:title="@string/start_stop_server" />
     </group>
     <group android:id="@+id/grp3">
@@ -18,53 +19,53 @@
             android:id="@+id/action_report_seizure"
             android:enabled="true"
             android:icon="@drawable/ic_action_settings"
-            android:showAsAction="never|withText"
+            app:showAsAction="never|withText"
             android:title="@string/report_seizure" />
 
         <item
             android:id="@+id/action_logmanager"
             android:enabled="true"
             android:icon="@drawable/ic_action_settings"
-            android:showAsAction="never|withText"
+            app:showAsAction="never|withText"
             android:title="@string/data_log_manager" />
 
         <item
             android:id="@+id/action_authenticate_api"
             android:enabled="true"
             android:icon="@drawable/ic_action_settings"
-            android:showAsAction="never|withText"
+            app:showAsAction="never|withText"
             android:title="@string/data_sharing_log_in" />
 
         <item
             android:id="@+id/action_about_datasharing"
             android:enabled="true"
             android:icon="@drawable/ic_action_settings"
-            android:showAsAction="never|withText"
+            app:showAsAction="never|withText"
             android:title="About Data Sharing..." />
 
     </group>
     <group android:id="@+id/grp4">
         <item
             android:id="@+id/action_install_watch_app"
-            android:showAsAction="never|withText"
+            app:showAsAction="never|withText"
             android:title="@string/install_watch_app" />
 
         <item
             android:id="@+id/action_test_alarm_beep"
             android:icon="@drawable/stop_server"
-            android:showAsAction="never|withText"
+            app:showAsAction="never|withText"
             android:title="@string/test_alarm_beep" />
 
         <item
             android:id="@+id/action_test_warning_beep"
             android:icon="@drawable/stop_server"
-            android:showAsAction="never|withText"
+            app:showAsAction="never|withText"
             android:title="@string/test_warning_beep" />
 
         <item
             android:id="@+id/action_test_sms_alarm"
             android:icon="@drawable/stop_server"
-            android:showAsAction="never|withText"
+            app:showAsAction="never|withText"
             android:title="@string/test_sms_alarm_notification" />
     </group>
     <group android:id="@+id/grp5">
@@ -86,7 +87,7 @@
         <item
             android:id="@+id/action_settings"
             android:icon="@drawable/ic_action_settings"
-            android:showAsAction="never|withText"
+            app:showAsAction="never|withText"
             android:title="@string/settings" />
 
     </group>
@@ -95,7 +96,7 @@
 
         <item
             android:id="@+id/action_about"
-            android:showAsAction="never|withText"
+            app:showAsAction="never|withText"
             android:title="@string/about" />
     </group>
 

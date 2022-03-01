@@ -45,11 +45,13 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import android.text.format.Time;
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import org.apache.http.conn.util.InetAddressUtils;
 
@@ -488,7 +490,7 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
     }
 
 
-    public void requestPermissions(Activity activity) {
+    public void requestPermissions(AppCompatActivity activity) {
         if (mPermissionsRequested) {
             Log.i(TAG, "requestPermissions() - request already sent - not doing anything");
         } else {

@@ -25,7 +25,6 @@
 
 package uk.org.openseizuredetector;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -37,25 +36,20 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
 import android.preference.PreferenceManager;
-import androidx.core.view.MenuCompat;
-import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Button;
 
-import java.lang.reflect.Field;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.MenuCompat;
 
-//MPAndroidChart
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -64,6 +58,14 @@ import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.utils.ValueFormatter;
 import com.rohitss.uceh.UCEHandler;
+
+import java.lang.reflect.Field;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
+
+//MPAndroidChart
 
 public class MainActivity extends AppCompatActivity {
     static final String TAG = "MainActivity";

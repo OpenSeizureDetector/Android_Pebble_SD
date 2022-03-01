@@ -1,8 +1,9 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
     <group android:id="@+id/grp1">
         <item
             android:id="@+id/pruneDatabaseMenuItem"
-            android:showAsAction="never|withText"
+            app:showAsAction="never|withText"
             android:title="@string/prune_database" />
     </group>
 
@@ -11,7 +12,7 @@
             android:id="@+id/action_report_seizure"
             android:enabled="true"
             android:icon="@drawable/ic_action_settings"
-            android:showAsAction="never|withText"
+            app:showAsAction="never|withText"
             android:title="@string/report_seizure" />
 
 
@@ -19,7 +20,7 @@
             android:id="@+id/action_authenticate_api"
             android:enabled="true"
             android:icon="@drawable/ic_action_settings"
-            android:showAsAction="never|withText"
+            app:showAsAction="never|withText"
             android:title="@string/data_sharing_log_in" />
 
     </group>

@@ -1,6 +1,5 @@
 package uk.org.openseizuredetector;
 
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -11,7 +10,8 @@ import android.os.Environment;
 import android.os.Looper;
 import android.os.StatFs;
 import android.util.Log;
-import android.view.WindowManager;
+
+import androidx.appcompat.app.AlertDialog;
 
 import java.io.File;
 import java.io.PrintWriter;
