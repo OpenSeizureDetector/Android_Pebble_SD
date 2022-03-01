@@ -2,24 +2,29 @@
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
-        "\nV4.0.0k - Added user name and user ID to login activity so the user knows who they are logged in as.
+        "\n
+        \nV4.0.0n - Fixed issue with system not shutting down after accessing the event editor screen.
+        \nV4.0.0m - Minor tweaks to UI to show O2Sat as --- if no O2 sensor is present and avoid displaying error while waiting for
+          first data sharing update.
+        \nV4.0.0l - Added prompt for user if data sharing is not enabled.
+        \nV4.0.0k - Added user name and user ID to login activity so the user knows who they are logged in as.
         \nV4.0.0j - Added event ID to list in data log manager so users can refer to it when asking for assistance.
         \n          Moved system log to sqlite database and added list of it to data log manager activity.
         \nV4.0.0i - Tidied up user settings and (hopefully) fixed issue with server not shutting down correctly sometimes.
         "</string>
     <string name="UpgradeMsg">
-        OpenSeizureDetector does not collect any personal data.
-        This does mean that it is not possible for me to contact users if I find an
-        issue with the app that you should be aware of.   \nPlease subscribe to updates at
+        OpenSeizureDetector does not collect any personal data other than through the Data Sharing system that allows your seizure events to be analysed to improve detection reliability and false alarm rate (see https://www.openseizuredetector.org.uk/?page_id=1818)
+        Please enable Data Sharing to help improve OpenSeizureDetector!
+        \nPlease subscribe to updates at
         http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector.
         so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk
         \n\nChanges in this version:
         \n
     </string>
     <string name="FirstRunDlgMsg">
-        OpenSeizureDetector does not collect any personal data.
-        This does mean that it is not possible for me to contact users if I find an
-        issue with the app that you should be aware of.   \nPlease subscribe to updates at
+        OpenSeizureDetector does not collect any personal data other than through the Data Sharing system that allows your seizure events to be analysed to improve detection reliability and false alarm rate (see https://www.openseizuredetector.org.uk/?page_id=1818)
+        Please enable Data Sharing to help improve OpenSeizureDetector!
+        \nPlease subscribe to updates at
         http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector.
         so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk
         \n\nChanges in this version:
@@ -121,8 +126,33 @@
     <string name="export_data">Export Data</string>
     <string name="settings">Settings</string>
     <string name="about">About...</string>
-    <string name="about_text">OpenSeizureDetector epileptic\n (tonic-clonic) seizure detector and \n alarm system. Uses a Pebble Smart\n watch to detect the shaking \n associated with a seizure, \n then raises audible and text\n message (SMS) alerts for carers.\n The system is free and open source - see \n http://openseizuredetector.org.uk for details. Please report any issues to graham@openseizuredetector.org.uk\n or raise an issue on the project github source code \n repository - https://github.com/OpenSeizureDetector</string>
-    <string name="credits_text">Main Watch App and Android App \n copyright Graham Jones, 2015.\n The following libraries are used:\n - SYLT-FFT - https://github.com/stg/SYLT-FFT by D. Taylor.\n - NanoHTTPD - https://github.com/NanoHttpd/nanohttpd\n - jQuery - http://jquery.org\n - jBeep - http://www.ultraduz.com.br\n - Chartjs - http://www.chartjs.org\n - MPAndroidChart - https://github.com/PhilJay/MPAndroidChart\n - UCE-Handler - https://github.com/RohitSurwase/UCE-Handler\n \n The Logo is based on Star of life2 by Verdy P, \n Licensed under Public Domain via\n Wikimedia Commons (http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).</string>
+    <string name="about_text">OpenSeizureDetector epileptic\n
+        (tonic-clonic) seizure detector and alarm
+        system. Uses a Smart
+        watch to detect the shaking
+        associated with a seizure,
+        then raises audible and text
+        message (SMS) alerts for carers.\n\n
+        The system is free and open source - see \n http://openseizuredetector.org.uk for details. Please report any issues to graham@openseizuredetector.org.uk\n
+        or raise an issue on the project github source code repository - https://github.com/OpenSeizureDetector/Android_Pebble_SD/issues \n\n
+        OpenSeizureDetector does not collect any personal data other than through the Data Sharing system that allows your seizure events to be analysed to improve detection reliability and false alarm rate (see https://www.openseizuredetector.org.uk/?page_id=1818)
+        Please enable Data Sharing to help improve OpenSeizureDetector!
+</string>
+    <string name="credits_text">
+        Main Watch App and Android App \n
+        copyright Graham Jones, 2015-2022.\n
+        The following libraries are used:\n
+        - SYLT-FFT - https://github.com/stg/SYLT-FFT by D. Taylor.\n
+        - NanoHTTPD - https://github.com/NanoHttpd/nanohttpd\n
+        - jQuery - http://jquery.org\n
+        - jBeep - http://www.ultraduz.com.br\n
+        - Chartjs - http://www.chartjs.org\n
+        - MPAndroidChart - https://github.com/PhilJay/MPAndroidChart\n
+        - UCE-Handler - https://github.com/RohitSurwase/UCE-Handler\n \n
+        The Logo is based on Star of life2 by Verdy P, \n
+        Licensed under Public Domain via\n
+        Wikimedia Commons (http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).
+    </string>
     <string name="edit_settings">Edit Settings</string>
     <string name="sms_location_alarm_active">SMS Location Alarm Active</string>
     <string name="sms_location_alarm_disabled">SMS Location Alarm Disabled</string>

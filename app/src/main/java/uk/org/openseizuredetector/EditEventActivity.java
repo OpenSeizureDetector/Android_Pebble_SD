@@ -86,12 +86,20 @@ public class EditEventActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Log.v(TAG, "onStart()");
+        Log.i(TAG, "onStart()");
         mUtil.bindToServer(getApplicationContext(), mConnection);
         waitForConnection();
 
         updateUi();
     }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.i(TAG, "onStop()");
+        mUtil.unbindFromServer(getApplicationContext(), mConnection);
+    }
+
 
     private void waitForConnection() {
         // We want the UI to update as soon as it is displayed, but it takes a finite time for
