@@ -1,12 +1,8 @@
 package uk.org.openseizuredetector;
 
 import android.content.Context;
-import android.content.SharedPreferences;
-import android.icu.text.RelativeDateTimeFormatter;
 import android.os.Handler;
-import android.preference.PreferenceManager;
 import android.util.Log;
-
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -14,7 +10,6 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
-import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
@@ -24,12 +19,10 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer;
 
 
 // This class is intended to handle all interactions with the OSD WebAPI
@@ -43,6 +36,18 @@ public class WebApiConnection {
     private Context mContext;
     private OsdUtil mUtil;
     RequestQueue mQueue;
+
+    public interface JSONObjectCallback {
+        public void accept(JSONObject retValObj);
+    }
+
+    public interface StringCallback {
+        public void accept(String retValStr);
+    }
+
+    public interface LongCallback {
+        public void accept(Long retVal);
+    }
 
     public WebApiConnection(Context context) {
         mContext = context;
@@ -64,7 +69,7 @@ public class WebApiConnection {
      * @param callback - call back function callback(String retVal)
      * @return true if request sent, or false if failed to send request.
      */
-    public boolean authenticate(final String uname, final String passwd, Consumer<String> callback) {
+    public boolean authenticate(final String uname, final String passwd, StringCallback callback) {
         // NOTE:  the 'final' keyword is necessary for uname and passwd to be accessible to getParams below - I don't know why!
         // We know that this command works, so we just need the Java equivalent:
         // curl -X POST -d 'login=graham4&password=testpwd1' https://osdapi.ddns.net/api/accounts/login/
@@ -148,7 +153,7 @@ public class WebApiConnection {
 
 
     // Create a new event in the remote database, based on the provided parameters.
-    public boolean createEvent(final int osdAlarmState, final Date eventDate, final String eventDesc, Consumer<String> callback) {
+    public boolean createEvent(final int osdAlarmState, final Date eventDate, final String eventDesc, StringCallback callback) {
         Log.v(TAG, "createEvent()");
         String urlStr = mUrlBase + "/api/events/";
         Log.v(TAG, "urlStr=" + urlStr);
@@ -227,7 +232,7 @@ public class WebApiConnection {
         return (true);
     }
 
-    public boolean getEvent(Long eventId, Consumer<JSONObject> callback) {
+    public boolean getEvent(Long eventId, JSONObjectCallback callback) {
         //Long eventId=Long.valueOf(285);
         Log.v(TAG, "getEvent()");
         String urlStr = mUrlBase + "/api/events/" + eventId;
@@ -287,7 +292,7 @@ public class WebApiConnection {
      * @param callback
      * @return true on success or false on failure to initiate the request.
      */
-    public boolean getEvents(Consumer<JSONObject> callback) {
+    public boolean getEvents(JSONObjectCallback callback) {
         //Long eventId=Long.valueOf(285);
         Log.v(TAG, "getEvents()");
         String urlStr = mUrlBase + "/api/events/";
@@ -348,7 +353,7 @@ public class WebApiConnection {
     }
 
 
-    public boolean updateEvent(final JSONObject eventObj, Consumer<JSONObject> callback) {
+    public boolean updateEvent(final JSONObject eventObj, JSONObjectCallback callback) {
         Long eventId;
         Log.v(TAG, "updateEvent()");
         final String authtoken = getStoredToken();
@@ -447,7 +452,7 @@ public class WebApiConnection {
     }
 
 
-    public boolean createDatapoint(JSONObject dataObj, int eventId, Consumer<String> callback) {
+    public boolean createDatapoint(JSONObject dataObj, int eventId, StringCallback callback) {
         Log.v(TAG, "createDatapoint()");
         // Create a new event in the remote database, based on the provided parameters.
         String urlStr = mUrlBase + "/api/datapoints/";
@@ -537,7 +542,7 @@ public class WebApiConnection {
      * @param callback - function to be called with a JSONObject as a parameter that contains the user profile data.
      * @return true if request sent successfully, or else false.
      */
-    public boolean getUserProfile(Consumer<JSONObject> callback) {
+    public boolean getUserProfile(JSONObjectCallback callback) {
         Log.v(TAG, "getUserProfile()");
         String urlStr = mUrlBase + "/api/accounts/profile/";
         Log.v(TAG, "getUserProfile(): urlStr=" + urlStr);
@@ -595,12 +600,10 @@ public class WebApiConnection {
     /**
      * Retrieve the file containing the standard event types from the server.
      * Calls the specified callback function, passing a JSONObject as a parameter when the data has been received and parsed.
-     * Note it uses a Consumer callback function to avoid having to create another interface
-     * - see https://medium.com/@pra4mesh/callback-function-in-java-20fa48b27797
      *
      * @return true if request sent successfully or else false.
      */
-    public boolean getEventTypes(Consumer<JSONObject> callback) {
+    public boolean getEventTypes(JSONObjectCallback callback) {
         Log.v(TAG, "getEventTypes()");
         String urlStr = mUrlBase + "/static/eventTypes.json";
         Log.v(TAG, "urlStr=" + urlStr);

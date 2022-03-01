@@ -45,7 +45,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.function.Consumer;
 
 //import static android.database.sqlite.SQLiteDatabase.openOrCreateDatabase;
 
@@ -89,6 +88,13 @@ public class LogManager {
     private boolean mAutoPruneDb;
     private AutoPruneTimer mAutoPruneTimer;
 
+    public interface CursorCallback {
+        void accept(Cursor retVal);
+    }
+
+    public interface ArrayListCallback {
+        void accept(ArrayList<HashMap<String, String>> retVal);
+    }
 
     public LogManager(Context context,
                       boolean logRemote, boolean logRemoteMobile, String authToken,
@@ -312,7 +318,7 @@ public class LogManager {
      *
      * @return True on successful start or false if call fails.
      */
-    public boolean getDatapointsByDate(String startDateStr, String endDateStr, Consumer<String> callback) {
+    public boolean getDatapointsByDate(String startDateStr, String endDateStr, WebApiConnection.StringCallback callback) {
         Log.d(TAG, "getDatapointsbyDate() - startDateStr=" + startDateStr + ", endDateStr=" + endDateStr);
         String[] columns = {"*"};
         String whereClause = "DataTime>? AND DataTime<?";
@@ -336,7 +342,7 @@ public class LogManager {
      * @param includeWarnings - whether to include warnings in the list of events, or just alarm conditions.
      * @return True on successful start or false if call fails.
      */
-    public boolean getEventsList(boolean includeWarnings, Consumer<ArrayList<HashMap<String, String>>> callback) {
+    public boolean getEventsList(boolean includeWarnings, ArrayListCallback callback) {
         Log.v(TAG, "getEventsList - includeWarnings=" + includeWarnings);
         ArrayList<HashMap<String, String>> eventsList = new ArrayList<>();
 
@@ -399,7 +405,7 @@ public class LogManager {
      * @param includeWarnings - whether to include warnings in the list of events, or just alarm conditions.
      * @return True on successful start or false if call fails.
      */
-    public boolean getNextEventToUpload(boolean includeWarnings, Consumer<Long> callback) {
+    public boolean getNextEventToUpload(boolean includeWarnings, WebApiConnection.LongCallback callback) {
         Log.v(TAG, "getNextEventToUpload - includeWarnings=" + includeWarnings);
 
         String[] whereArgsStatus = getEventWhereArgs(includeWarnings);
@@ -448,7 +454,7 @@ public class LogManager {
      *
      * @return True on successful start or false if call fails.
      */
-    public boolean getNearestDatapointToDate(String dateStr, Consumer<Long> callback) {
+    public boolean getNearestDatapointToDate(String dateStr, WebApiConnection.LongCallback callback) {
         Log.v(TAG, "getNextEventToDate - dateStr=" + dateStr);
         String[] columns = {"*", "(julianday(dataTime)-julianday(datetime('" + dateStr + "'))) as ddiff"};
         //SQLStr = "SELECT *, (julianday(dataTime)-julianday(datetime('" + dateStr + "'))) as ddiff from " + mDbTableName + " order by ABS(ddiff) asc;";
@@ -481,7 +487,7 @@ public class LogManager {
      * @param includeWarnings - whether to include warnings in the list of events, or just alarm conditions.
      * @return True on successful start or false if call fails.
      */
-    public boolean getLocalEventsCount(boolean includeWarnings, Consumer<Long> callback) {
+    public boolean getLocalEventsCount(boolean includeWarnings, WebApiConnection.LongCallback callback) {
         Log.v(TAG, "getLocalEventsCount- includeWarnings=" + includeWarnings);
         String[] whereArgs = getEventWhereArgs(includeWarnings);
         String whereClause = getEventWhereClause(includeWarnings);
@@ -504,7 +510,7 @@ public class LogManager {
      *
      * @return True on successful start or false if call fails.
      */
-    public boolean getLocalDatapointsCount(Consumer<Long> callback) {
+    public boolean getLocalDatapointsCount(WebApiConnection.LongCallback callback) {
         Log.v(TAG, "getLocalDatapointsCount");
         String[] whereArgs = null;
         String whereClause = null;
@@ -537,12 +543,12 @@ public class LogManager {
         String mGroupBy;
         String mHaving;
         String mOrderBy;
-        Consumer<Cursor> mCallback;
+        CursorCallback mCallback;
 
         //query(String table, String[] columns, String selection, String[] selectionArgs,
         // String groupBy, String having, String orderBy)
         SelectQueryTask(String table, String[] columns, String selection, String[] selectionArgs,
-                        String groupBy, String having, String orderBy, Consumer<Cursor> callback) {
+                        String groupBy, String having, String orderBy, CursorCallback callback) {
             // list all the parameters like in normal class define
             this.mTable = table;
             this.mColumns = columns;

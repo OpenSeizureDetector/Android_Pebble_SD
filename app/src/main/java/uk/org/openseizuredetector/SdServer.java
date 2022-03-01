@@ -279,8 +279,6 @@ public class SdServer extends Service implements SdDataReceiver {
         mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting SdDataSource");
         mSdDataSource.start();
 
-        checkEvents();
-
         // Initialise Notification channel for API level 26 and over
         // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
         mNM = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -348,6 +346,8 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.d(TAG, "mmm...mWakeLock is null, so not aquiring lock.  This shouldn't happen!");
             mUtil.writeToSysLogFile("SdServer.onStartCommand() - mWakeLock is not null - this shouldn't happen???");
         }
+
+        checkEvents();
 
         return START_STICKY;
     }

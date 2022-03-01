@@ -172,16 +172,19 @@ public class AuthenticateActivity extends AppCompatActivity {
                     String uname = mUnameEt.getText().toString();
                     String passwd = mPasswdEt.getText().toString();
                     Log.v(TAG,"onOK() - uname="+uname+", passwd="+passwd);
-                    mWac.authenticate(uname,passwd, (String retVal) -> {
-                        if (retVal != null) {
-                            Log.d(TAG,"Authentication Success - token is "+retVal);
-                            mUtil.showToast("Login Successful");
-                            saveAuthToken(retVal);
-                            updateUi();
-                        } else {
-                            Log.e(TAG,"onOk: Authentication failure for "+uname+", "+passwd);
-                            mUtil.showToast("ERROR: Authentication Failed - Please Try Again");
-                            mUtil.writeToSysLogFile("AuthActivity - Authorisation failed for "+uname+", "+passwd);
+                    mWac.authenticate(uname, passwd, new WebApiConnection.StringCallback() {
+                        @Override
+                        public void accept(String retVal) {
+                            if (retVal != null) {
+                                Log.d(TAG,"Authentication Success - token is "+retVal);
+                                mUtil.showToast("Login Successful");
+                                saveAuthToken(retVal);
+                                updateUi();
+                            } else {
+                                Log.e(TAG,"onOk: Authentication failure for "+uname+", "+passwd);
+                                mUtil.showToast("ERROR: Authentication Failed - Please Try Again");
+                                mUtil.writeToSysLogFile("AuthActivity - Authorisation failed for "+uname+", "+passwd);
+                            }
                         }
                     });
                     //finish();
