@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OpenSeizureDetector</string>
+    <string name="changelog">
+        "V4.0 - Dodano logiranje podatkov na strežnik.
+        \nV3.7.0 - Dodana podpora za Garmin meritve sauturacije kisika v krvi.
+        \nV3.6.2 - Popravek težav s pravicami datotek logiranja na nekaterih napravah Android 10 in dodanih nekaj prevedljivih besedil vmesnika.
+        \nV3.6.1 - Morebiten popravek težave ugašanja sistema.
+        \nV3.6 - Dodan podatkovni vir senzorjev telefona za testiranje brez pametnih ur.
+        \nV3.5 - Dodana podpora za SMS Annunciator App
+        \nV3.4 - Dodana podpora za podatkovne vire BLE"</string>
+    <string name="UpgradeMsg">
+        OpenSeizureDetector ne zbira osebnih podatkov.
+		To pomeni, da ne morem kontaktirati uporabnikov, če naletim na težavo z aplikacijo, 
+		ki bi se jo morali zavedati.\n
+		Prosim, naročite se na ažurne informacije na http://openseizuredetector.org.uk ali na https://www.facebook.com/openseizuredetector,
+		tako da vas lahko obvestim, če bo potrebno.\nHvala!  Graham \ngraham@openseizuredetector.org.uk
+		\n\nSpremembe v tej verziji:
+        \n        
+    </string>
+    <string name="FirstRunDlgMsg">
+        OpenSeizureDetector ne zbira osebnih podatkov.
+		To pomeni, da ne morem kontaktirati uporabnikov, če naletim na težavo z aplikacijo,
+		ki bi se jo morali zavedati.\n
+		Prosim, naročite se na ažurne informacije na http://openseizuredetector.org.uk ali na https://www.facebook.com/openseizuredetector,
+		tako da vas lahko obvestim, če bo potrebno.\nHvala!  Graham \ngraham@openseizuredetector.org.uk
+		\n\nSpremembe v tej verziji:
+    </string>
+    <string name="ask_for_error_log">Pardon, OpenSeizureDetector se je zrušil. Prosim, pošljite ta log po elektronski pošti, da lahko ugotovimo, kako odpraviti težavo.\nHvala, Graham.</string>
+	<string name="email_welcome_note">Dragi OpenSeizureDetector,\n\nAplikacija se je ravnokar zrušila, prosim preverite priloženi log za podrobnosti.\n\n\n</string>
+    <string name="copyright_info">OpenSeizureDetector (Uporablja UCE Handler\nCopyright © 2018 Rohit Sahebrao Surwase.)</string>
+    <string name="okBtnTxt">OK</string>
+    <string name="UpdateDialogTitleTxt">Hvala za posodobitev OpenSeizureDetector</string>
+    <string name="FirstRunDlgTitle">Dobrodošli v OpenSeizureDetector</string>
+    <string name="SmsPermissionWarning">Problem z SMS dovoljenji</string>
+    <string name="AppPermissionsOk">App dovoljenja OK</string>
+    <string name="AppPermissionsWarning">Problem z App dovoljenji</string>
+    <string name="BoundToServiceOk">Povezava na storitev OK</string>
+    <string name="BindingToService">Povezovanje na storitev v ozadnju ...</string>
+    <string name="WatchConnectedOk">Ura povezana OK</string>
+    <string name="WatchNotConnected">Ura NI povezana</string>
+    <string name="SeizureDetectorDataReceived">Podatki detektorja napadov sprejeti OK</string>
+    <string name="WaitingForSeizureDetectorData">Čakanje podatkov detektorja napadov ...</string>
+    <string name="SeizureDetectorSettingsReceived">Nastavitve detektorja napadov sprejeti OK</string>
+    <string name="WaitingForSeizureDetectorSettings">Čakanje nastavitev detektorja napadov ...</string>
+    <string name="DataSource">Vir podatkov</string>
+    <string name="AppTitleText">OpenSeizureDetector Android App Verzija </string>
+    <string name="ServerRunningOK">Strežnik deluje OK\n</string>
+    <string name="AccessServerAt">Dostopanje strežnika na  </string>
+    <string name="ServerStopped">Strežnik ustavljen</string>
+    <string name="Warning">OPOZORILO</string>
+    <string name="Mute">TIHO</string>
+    <string name="Alarm">**ALARM**</string>
+    <string name="Fall">**PADEC**</string>
+    <string name="HR_Equals">Srčni utrip = </string> 
+    <string name="HRAlarmOff">Alarm Srčnega utripa IZKLJUČEN</string>
+    <string name="WatchAppOK">App ure OK</string>
+    <string name="WatchAppNotRunning">App ure NE dela</string>
+    <string name="WatchBatteryEquals">Baterija ure = </string>
+    <string name="PowerEquals">Moč = </string>
+    <string name="SpectrumRatioEquals">Razmerje spektra = </string>       
+    <string name="Threshold">Prag</string>
+    <string name="NetFault">NAPAKA OMREŽJA</string>
+    <string name="WatchApp">App ure -----</string>
+    <string name="Dashes">------</string>
+    <string name="SMSWillBeSentIn">SMS bo poslan v </string>
+    <string name="Cancel">PREKLIC?</string>
+    <string name="AcceptAlarm">Sprejmi Alarm</string>
+    <string name="AudibleAlarmsCancelledFor">Utišano za </string>
+    <string name="PressToReEnable"> Obnovi</string>
+    <string name="CancelAudibleAlarms">Utišaj alarme</string>
+    <string name="AudibleAlarmsOff">Zvočni Alarmi IZKLJUČENI</string>
+    <string name="Fault">NAPAKA</string>
+    <string name="authenticate">Prijava</string>
+    <string name="not_authenticated">Neprijavljen</string>
+    <string name="cancel">Preklic</string>
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Geslo</string>
+    <string name="action_sign_in">Prijava ali registracija</string>
+    <string name="action_sign_in_short">Prijava</string>
+    <string name="welcome">"Dobrodošli!"</string>
+    <string name="invalid_username">Uporabniško ime ni veljavno</string>
+    <string name="invalid_password">Geslo mora biti >5 znakov</string>
+    <string name="login_failed">"Prijava neuspešna"</string>
+    <string name="AdvancedModeTitle">Napredni Način</string>
+    <string name="AdvancedModeSummary">Omogoči Napredni način (prikaže mnogo dodatnih nastavitev ...)</string>
+    <string name="AutoStartTitle">Samodejni Zagon</string>
+    <string name="AutoStartSummary">OpenSeizureDetector se samodejno zažene ob zagonu telefona</string>
+    <string name="DataSourceTitle">Izberi Vir Podatkov</string>
+    <string name="DataSourceSummary">Izberi, kaj naj se uporabi za vir podatkov detekcije napadov (ura Garmin, ura Pebble, ali omrežna povezava)</string>
+    <string name="LogRemoteTitle">Oddaljeno Logiranje Podatkov</string>     
+    <string name="LogRemoteSummary">Logiranje podatkov v centralno bazo OpenSeizureDetector</string>
+    <string name="UseMobileTitle">Uporabi Mobilni Internet</string>
+    <string name="UseMobileSummary">Uporabi mobilni internet za logiranje podatkov</string>
+    <string name="SeizureDetectorSettingsTitle">Nastavitve Detektorja Napadov</string>
+    <string name="AlarmThreshTitle">Prag Alarma</string>
+    <string name="AlarmThreshSummary">Prag alarma (Privzeto = 100)</string>
+    <string name="AlarmRatioThreshTitle">Prag Razmerja Alarma</string>
+    <string name="AlarmRatioThreshSummary">Prag razmerja alarma (Privzeto = 50). Povečaj za zmanjšanje občutljivosti.</string>
+    <string name="AlarmFreqMaxTitle">Max Frekv. Alarma (Hz)</string>
+    <string name="AlarmFreqMaxSummary">Najvišja frekvenca ROI (Hz) (Privzeto = 8 Hz)</string>
+    <string name="AlarmFreqMinTitle">Min frekv. Alarma (Hz)</string>
+    <string name="AlarmFreqMinSummary">Najnižja frekvenca ROI (Hz) (Privzeto = 3 Hz)</string>
+    <string name="HRAlarmEnabledTitle">Alarm Srčnega Utripa Omogočen</string>
+    <string name="HRAlarmEnabledSummary" />
+    <string name="HRNullAlarmTitle">Obravnavaj stanje brez srčnega utripa kot alarm</string>
+    <string name="HRNullAlarmSummary" />
+    <string name="HRThreshMinTitle">Min prag Srčnega Utripa (utripov/min)</string>
+    <string name="HRThreshMinSummary" />
+    <string name="HRThreshMaxTitle">Max prag Srčnega Utripa (utripov/min)</string>
+    <string name="HRThreshMaxSummary" />
+    <string name="BasicPrefTitle">Osnovno</string>
+    <string name="BasicPrefSummary">Osnovne preference</string>
+    <string name="accept_alarm">Sprejmi Alarm</string>
+    <string name="start_stop_server">Start/Stop Strežnik</string>
+    <string name="install_watch_app">Namesti app ure</string>
+    <string name="test_alarm_beep">Testiraj pisk alarma</string>
+    <string name="test_warning_beep">Testiraj pisk opozorila</string>
+    <string name="test_sms_alarm_notification">Testiraj SMS opozorilo alarma</string>
+    <string name="data_log_manager">Upravljanje podatkov logiranja</string>
+    <string name="view_log_entries">Pregled podatkov logiranja</string>
+    <string name="export_data">Izvažanje podatkov</string>
+    <string name="settings">Nastavitve</string>
+    <string name="about">O appu ...</string>
+    <string name="about_text">OpenSeizureDetector je detektor epileptičnih (konvulzivnih) napadov in sistem alarmov. Uporablja pametno uro za detekcijo tresenja povezanega z napadom, nakar sproži glasovna in SMS opozorila za skrbnike. Sistem je brezplačen in odprtokoden - več na http://openseizuredetector.org.uk. Prosim sporočite težave na graham@openseizuredetector.org.uk\n ali prijavite težavo na github projektu odprte kode, repozitorij - https://github.com/OpenSeizureDetector</string> <!-- preveri "konvulzivnost" z Grahamom  -->
+    <string name="credits_text">App glavne ure in Android App \n copyright Graham Jones, 2015.\n Uporabljene so sledeče knjižnice :\n - SYLT-FFT - https://github.com/stg/SYLT-FFT by D. Taylor.\n - NanoHTTPD - https://github.com/NanoHttpd/nanohttpd\n - jQuery - http://jquery.org\n - jBeep - http://www.ultraduz.com.br\n - Chartjs - http://www.chartjs.org\n - MPAndroidChart - https://github.com/PhilJay/MPAndroidChart\n - UCE-Handler - https://github.com/RohitSurwase/UCE-Handler\n \n Logotip temelji na Star of life2, avtorja Verdy P, \n Licensed under Public Domain via\n Wikimedia Commons (http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).</string>
+    <string name="edit_settings">Urejanje nastavitev</string>
+    <string name="sms_location_alarm_active">SMS alarm lokacije Aktiven</string>
+    <string name="sms_location_alarm_disabled">SMS alarm lokacije Neaktiven</string>
+    <string name="cancel_audible_not_sending_sms">Cancel Audible Active - not sending SMS</string>      <!-- HMMM, what does it mean??  -->
+    <!--<string name="sms_alarm_disabled">SMS alarmi Onemogočeni - ne javlja nič!</string>-->
+    <string name="no_wifi_connection">Spremenjeno stanje omrežja - ni Wifi povezave</string>
+    <string name="no_active_network">Spremenjeno stanje omrežja - Ni aktivne povezave</string>
+    <string name="problem_parsing_preferences">Težava pri razčlenjevanju nastavitev - Nekaj ne bo delalo - Prosim vrnite se v nastavitve in popravite!</string>
+    <string name="send_sms_last_location">Pošiljanje SMS - zadnja lokacija je </string>
+    <string name="failed_to_send_sms">NAPAKA:  POŠILJANJE SMS NEUSPEŠNO</string>
+    <string name="sms_alarms_disabled">SMS alarmi Onemogočeni - ne javlja nič!</string>
+    <string name="phone_alarm_disabled">Alarmi telefona Onemogočeni</string>
+    <string name="test_phone_alarm_notification">Testni alarm telefona</string>
+    <string name="DiallerNotInstalledWarning"><a href="https://github.com/OpenSeizureDetector/Dialler/tree/master/app/release/app-release.apk">OpenSeizureDetector Dialer App</a> Ni inštaliran - Potreben je za opozorilne klice.</string>
+    <string name="title_devices">BLE Naprave</string>
+    <string name="ble_not_supported">BLE ni podprto</string>
+    <string name="error_bluetooth_not_supported">Bluetooth ni podprt</string>
+    <string name="menu_stop">STOP</string>
+    <string name="menu_scan">IŠČI</string>
+    <string name="unknown_device">Neznana naprava</string>
+    <string name="select_ble_device_title">Izberi BLE Napravo (samo za Bluetooth kot podatkovni vir)</string>
+    <string name="select_ble_device_desc">Izberi napravo Bluetooth Low Energy (BLE) za pridobitev podatkov o napadih (pospešek in srčni utrip) data) pri uporabi Bluetooth naprave kot podatkovnega vira.</string>
+    <string name="basic_settings_title">Osnovno</string>
+    <string name="basic_settings_summary">Osnovne Nastavitve</string>
+    <string name="general_settings_title">General</string>
+    <string name="general_settings_summary">Splošne preference</string>
+    <string name="alarms_settings_title">Alarmi</string>
+    <string name="alarms_settings_summary">Preference alarmov</string>
+    <string name="seizure_detector_settings_title">Detektor Napadov</string>
+    <string name="seizure_detector_settings_summary">Preference detektorja napadov</string>
+    <string name="pebble_datasource_summary">Preference podatkovnega vira Pebble</string>
+    <string name="network_datasource_title">Vir Podatkov Omrežje</string>
+    <string name="network_datasource_summary">Preference podatkovnega vira Omrežje</string>
+    <string name="pebble_datasource_title">Vir Podatkov Pebble</string>
+    <string name="select_datasource_title">Izberi Podatkovni Vir</string>
+    <string name="select_datasource_summary">Izberi želeni podatkovni vir detektorja napadov.</string>
+    <string name="log_alarms_summary">Logiranje alarmov v pomnilnik telefona</string>
+    <string name="log_alarms_title">Log Alarmnih Dogodkov</string>
+    <string name="log_data_summary">Logiranje podatkov v pomnilnik telefona</string>
+    <string name="log_data_title">Podatki Logiranja</string>
+    <string name="log_data_remote_summary">Deljenje podatkov z OpenSeizureDetector</string>
+    <string name="log_data_remote_title">Deljenje Podatkov</string>
+    <string name="log_data_remote_mobile_summary">Uporabi mobilni internet za delitev podatkov</string>
+    <string name="log_data_remote_mobile_title">Uporabi Mobilni Internet</string>
+    <string name="remote_uname_title">Uporabniško Ime</string>
+    <string name="remote_uname_summary">Uporabniško ime za deljenje podatkov</string>
+    <string name="remote_passwd_summary">Geslo za deljenje podatkov</string>
+    <string name="remote_passwd_title">Geslo</string>
+    <string name="wearer_id_summary">ID uporabnika</string>
+    <string name="wearer_id_title">ID uporabnika, ki uporablja pametno uro (iz OSD Web API)</string>
+    <string name="remote_url_summary">URL za oddaljeno logiranje podatkov.</string>
+    <string name="remote_url_title">Oddaljeni URL</string>
+    <string name="prevent_sleep_summary">Prepreči ugašanje zaslona med delovanjem aplikacije.</string>
+    <string name="prevent_sleep_title">Prepreči Ugašanje Zaslona</string>
+    <string name="data_update_period_summary">Prikaži periodo osveževanja v milisekundah.</string>
+    <string name="data_update_period_title">Prikaži periodo osveževanja (ms).</string>
+    <string name="auto_start_summary">Samodejno zaženi App ob zagonu naprave</string>
+    <string name="auto_start_title">Samodejno Zaženi App ob Zagonu</string>
+    <string name="app_version_summary">Verzija aplikacije - uporabljeno za odločanje o prikazu sporočila dobrodošlice.</string>
+    <string name="app_version_title">Verzija Aplikacije</string>
+    <string name="latch_alarms_summary">Require manual reset of alarms to reset them to silence them.</string>   
+    <string name="latch_alarms_title">Trajanje Alarmov</string>
+    <string name="latch_timer_period_title">Trajanje Alarmov (sek)</string>
+    <string name="latch_timer_period_summary">Koliko sekund bodo alarmi opozarjali, preden se samodejno utišajo.</string>
+    <string name="enable_audible_alarm_summary">Sproži zvočni alarm, če datektor napadov zazna alarmno stanje.</string>
+    <string name="enable_audible_alarm_title">Omogoči Zvočni Alarm</string>
+    <string name="enable_audible_warning_summary">Sproži zvočni alarm, če datektor napadov zazna opozorilno (pred-alarmno) stanje.</string>
+    <string name="enable_audible_warning_title">Omogoči Zvočna Opozorila</string>
+    <string name="enable_audible_fault_summary">Sproži zvočni alarm, če sistem zazna napako (npr. ni komunikacije s pametno uro).</string>
+    <string name="enable_audible_fault_title">Omogoči Zvočna Opozorila Napak Sistema</string>
+    <string name="fault_timer_period_title">Časovnik Trajanja Napake (sek)</string>
+    <string name="fault_timer_period_summary">Trajanje zakasnitve alarmiranja o napakah sistema (preden se sprožijo).</string>
+    <string name="use_mp3_alarm_summary">Predvajaj MP3 datoteko za predvajanje opozorilnih alarmov (namesto privzetega generatorja tonov).</string>
+    <string name="use_mp3_alarm_title">Uporabi MP3 Zvok Alarma</string>
+    <string name="enable_sms_alarm_summary">Pošlji SMS alarm, če detektor napadov zazna alarmno stanje. OPOZORILO: SPOROČILO BO VSEBOVALO LOKACIJO UPORABNIKA. Onemogoči to izbiro, če deljenje lokacije vzbuja skrbi.</string>
+    <string name="enable_sms_alarm_title">Omogoči SMS Alarm</string>
+    <string name="sms_numbers_summary">Telefonske št. (1 ali več) za obveščanje z SMS Alarmi (ločene z vejico).</string>
+    <string name="sms_numbers_title">Telefonske št. SMS Alarmov</string>
+    <string name="sms_message_summary">SMS sporočilo za pošiljanje kadar je zaznan napad.</string>
+    <string name="sms_message_title">SMS Sporočilo</string>
+    <string name="server_ip_summary">IP naslov strežnika OpenSeizureDetector (npr. 192.168.1.175).</string>
+    <string name="server_ip_title">IP Naslov Strežnika.</string>
+    <string name="network_update_period_summary">Perioda med strežniškimi zahtevami v milisekundah.</string>
+    <string name="network_update_period_title">Perioda Posodobitve Podatkov (ms)</string>
+    <string name="connection_timeout_summary" />
+    <string name="connection_timeout_title">Timeout Povezovanja (ms)</string>
+    <string name="read_timeout_summary" />
+    <string name="read_timeout_title">Timeout Branja (ms)</string>
+    <string name="ble_device_settings_title">Nastavitve Naprave BLE</string>
+    <string name="ble_mac_addr_summary">MAC naslov naprave BLE kot podatkovnega vira</string>
+    <string name="ble_mac_addr_title">MAC Naslov Naprave</string>
+    <string name="ble_device_name_summary">Ime naprave BLE kot podatkovnega vira</string>
+    <string name="ble_device_name_title">Ime Naprave</string>
+    <string name="user_interface_settings_title">Nastavitve Uporabniškega Vmesnika</string>
+    <string name="pebble_update_period_summary">Časovna perioda pošiljanja podatkov telefonu (ne vpliva na frekvenco analize - tisto je v nastavitvi Perioda Vzorčenja)</string>
+    <string name="mute_period_summary">Trajanje utišanja alarmov po dolgem pritisku gumba GOR</string>
+    <string name="pebble_update_period_title">Perioda Prenosa Podatkov (sek)</string>
+    <string name="mute_period_title">Perioda Utišanja (sek)</string>
+    <string name="manual_alarm_period_summary">Trajanje zvonjenja ročnih alarmov po dolgem pritisku gumba DOL</string>
+    <string name="manual_alarm_period_title">Perioda Ročnega Alarma (sek)</string>
+    <string name="warn_time_summary">Trajanje pred začetkom opozarjanja (privzeto = 5 sek)</string>
+    <string name="warn_time_title">Čas do Opozarjanja (sek)</string>
+    <string name="alarm_time_summary">Trajanje pred začetkom alarmiranja (privzeto = 10 sek)</string>
+    <string name="alarm_time_title">Čas do Alarmiranja (sek)</string>
+    <string name="alarm_threshold_summary">Prag za proženje Alarma (privzeto = 100)</string>
+    <string name="alarm_threshold_title">Prag Alarma</string>
+    <string name="alarm_ratio_thresh_summary">Prag razmerja alarma (privzeto = 50). Povečaj to vrednost za zmanjšanje občutljivosti, če so lažni alarmi problem.</string>
+    <string name="alarm_ratio_thresh_title">Prag Razmerja Alarma</string>
+    <string name="alarm_freq_min_summary">Minimum za Območje Zanimanja, t.j. ROI (privzeto = 3 Hz)</string>
+    <string name="alarm_freq_min_title">Min. Frekvenca Alarma (Hz)</string>
+    <string name="alarm_freq_max_summary">Maksimum za Območje Zanimanja, t.j. ROI (privzeto = 10 Hz)</string>
+    <string name="alarm_freq_max_title">Max Frekvenca Alarma (Hz)</string>
+    <string name="sample_period_summary">Perioda med analizami podatkov (v sekundah)</string>
+    <string name="sample_period_title">Perioda Vzorčenja (sek)</string>
+    <string name="seizure_detect_mode_summary">Izberi enega od treh načinov delovanja.</string>
+    <string name="seizure_detect_mode_title">Način Detekcije Napadov</string>
+    <string name="sample_freq_summary">Višja frekvenca je bolj natančna, ampak porabi več baterije.</string>
+    <string name="sample_freq_title">Izberi Frekvenco Vzorca</string>
+    <string name="fall_detect_title">Nastavitve Detektorja Padcev</string>
+    <string name="fall_detect_active_title">Vključi Funkcijo Detekcije Padcev</string>
+    <string name="fall_thresh_min_title">Spodnji Prag Detekcije Padcev (milli-g)</string>
+    <string name="fall_thresh_max_title">Zgornji Prag Detekcije Padcev  (milli-g)</string>
+    <string name="fall_window_title">Časovno Okno Detekcije Padcev (mili sekund)</string>
+    <string name="watch_comms_title">Nastavitve Komunikacije Ure</string>
+    <string name="debug_mode_summary">Vključi ali Izključi odkrivanje napak.</string>
+    <string name="debug_mode_title">Odkrivanje Napak Detektorja Napadov</string>
+    <string name="app_restart_timeout_summary">Perioda čakanja na podatke iz ure preden predpostavimo, da ne dela, in ponovno zaženemo aplikacijo na uri.</string>
+    <string name="app_restart_timeout_title">Perioda čakanja podatkov (v sekundah) pred ponovnim zagonom aplikacije na uri.</string>
+    <string name="display_spectrum_mode_title">Select Display Spectrum Mode</string>    <!-- what is this -->
+    <string name="display_spectrum_mode_summary">Vključi ali Izključi Display Spectrum.</string>   <!-- what is this -->
+    <string name="analysis_prefs_title">Analiza</string>
+    <string name="watch_comms_settings_title">Nastavitve Komunikacije z Uro</string>
+    <string name="ParsePreferenceWarning">Problem Parsing Preferences - Something won\'t work - Please go back to Settings and correct it!</string>  <!-- same as line 135? -->
+    <string name="ErrorWritingLogFileWarning">NAPAKA pisanja v datoteko Logiranja</string>
+    <string name="RestartingServerMsg">Dovoljenja spremenjena - ponovno zaženi strežnik</string>
+    <string name="ErrorReleasingWakelockMsg">Napaka pri sprostitvi Wakelock mehanizma</string>
+    <string name="SMSAlarmAlreadySentMsg">SMS Alarm že poslan - ni ponovnega pošiljanja</string>
+    <string name="SMSAlarmDisabledNotSendingMsg">SMS Alarmi Onemogočeni - SMS opozorila se ne pošiljajo</string>
+    <string name="PleaseForceStopOSDorRebootMsg">NAPAKA - OpenSizureDetector se ni pravilno zagnal - prosim Prisilno zaustavi OpenSeizureDetector ali ponovno zaženi telefon.</string>
+    <string name="SMSPermissionsDeniedMsg">NAPAKA - Dovoljenje za SMS ali Lokacijo zavrnjeno - SMS se ne pošiljajo</string>
+    <string name="DatasourceTitle">\"Podatkovni vir\"</string>
+    <string name="DefaultingToPhoneMsg">\" ni prepoznan - Privzeto nastavljen na Telefon\"</string>
+    <string name="SMSAlarmCancelledMsg">SMS Alarm Preklican</string>
+    <string name="StopServerTitle">Ustavi Strežnik</string>
+    <string name="StartServerTitle">Startaj Strežnik</string>
+    <string name="StartingTitle">Starting......</string>
+    <string name="AcceptAlarmBtnTxt">Sprejmi Alarm</string>
+    <string name="CancelAudibleButtonTxt">Prekliči Zvoke (začasno)</string>
+    <string name="DataLoggingSettingsTitle">Nastavitve Logiranja podatkov</string>
+    <string name="HeartRateAlarmSettingsTitle">Nastavitve Alarmov Srčnega Utripa</string>
+    <string name="AlarmFunctionalitySettingsTitle">Nastavitve Alarmov</string>
+    <string name="AudibleAlarmSettingsTitle">Nastavitve Zvočnih Alarmov</string>
+    <string name="SMSAlarmSettingsTitle">Nastavitve SMS Alarmov</string>
+    <string name="DefaultSMSMsgText">**NAPAD ZAZNAN**</string>
+    <string name="AlarmLoggingTitle">Logiranje Alarmov</string>
+    <string name="WarnTimeSummary">Perioda čakanja preden se prožijo opozorila (privzeto = 5 sek)</string>     <!-- lines 283..286 already in 228...231  -->
+    <string name="WarnTimeTitle">Zamik Opozoril (sek)</string>
+    <string name="AlarmTimeSummary">Perioda čakanja preden se prožijo alarmi (privzeto = 10 sek)</string>
+    <string name="AlarmTimeTitle">Zamik Alarmov (sek)</string>
+    <string name="O2SatSettingsTitle">Nastavitve Alarmov Sauturacije Kisika v Krvi</string>
+    <string name="O2Sat_enabled_summary">O2Sat_enabled_summary</string>                        <!-- Missing "human string"?  -->
+    <string name="O2Sat_enabled_title">Omogoči Alarme Saturacije Kisika</string>
+    <string name="O2SatNullAlarmSummary">Obravnavaj napako (stanje brez meritev saturacije) kot alarm</string>
+    <string name="O2SatNullAlarmTitle">Obravnavaj stanje brez Saturacije kot alarm</string>
+    <string name="O2SatThreshMinTitle">Min. Saturacije kisika za Alarm (%)</string>
+    <string name="O2SatThreshMinSummary">Spodnja meja Saturacije kisika za proženje Alarmov (%)</string>
+    <string name="title_activity_authenticate">Prijava v Deljenje Podatkov OpenSeizureDetector</string>
+    <string name="logout">Odjava</string>
+    <string name="logged_in_with_token">Prijavljen v\nDeljenje Podatkov</string>
+    <string name="local_database">Upravitelj Podatkov Logiranja</string>
+    <string name="remote_database">Deljeni Podatki</string>
+    <string name="num_local_events">Št. Dogodkov Shranjenih na Telefonu: </string>
+    <string name="num_local_datapoints">"Št. Podatkovnih Točk Shranjenih na Telefonu: "</string>
+    <string name="view_remote_db_btn">Ogled Podatkov Oddaljene Baze</string>
+    <string name="report_seizure">Prijavi Napad</string>
+    <string name="date">"Datum: "</string>
+    <string name="select_date">Izberi Datum</string>
+    <string name="time">"Čas: "</string>
+    <string name="cancelBtnTxt">Preklic</string>
+    <string name="select_time">Izberi Čas</string>
+    <string name="EventsInLocalDb">Dogodki Shranjeni na Telefonu</string>
+    <string name="createdNewEvent">Ustvarjen nov Ročni Alarm</string>
+    <string name="DatapointNotFound">Podatkovna točka ni najdena - nič ni zabeleženo</string>
+    <string name="logging_settings_title">Nastavitve Logiranja podatkov</string>
+    <string name="logging_settings_summary">Nastavitve za upravljanje, kako so podatki shranjeni na telefonu in naloženi v Podatkovno bazo OpenSeizure</string>
+    <string name="eventDurationSummary">Trajanje (v sekundah) pred in po napadu, za katerega se beležijo podatki.</string>
+    <string name="eventDurationTitle">Trajanje Dogodka (v sekundah)</string>
+    <string name="dataRetentionPeriodTitle">Obdobje Hranjenja Podatkov (v dneh)</string>
+    <string name="dataRetentionPeriodSummary">Št. dni za katere se hrani podatke in so zaščiteni pred možnostjo \'Oklesti Bazo podatkov\' Option.</string>
+    <string name="AutoPruneDbTitle">Samodejno Oklesti Bazo podatkov</string>
+    <string name="AutoPruneDbSummary">Samodejno periodično Oklesti Bazo podatkov, da se prepreči pretiranjo zasedanje pomnilniškega prostora (spomina).</string>
+    <string name="remoteLogPeriodSummary">Perioda (v sekundah) med poizkusi nalaganja podatkov na oddljeni strežnik. Vsak poizkus naloži samo en dogodek, ne vseh rapoložljivih podatkov.</string>
+    <string name="remoteLogPeriodTitle">Perioda Logiranja Podatkov (v sekundah)</string>
+    <string name="ManualAlarmBtnTxt">Sproži Alarm</string>
+    <string name="save">Shrani</string>
+    <string name="event_type">Tip dogodka:</string>
+    <string name="event_sub_type">"Pod-tip dogodka: "</string>
+    <string name="selectFromOptionselow">"-- izberi možnost --"</string>
+    <string name="waitingForData">...čakanje na podatke...</string>
+    <string name="refreshBtn">Osveži</string>
+    <string name="back">Nazaj</string>
+    <string name="unvalidatedEventsTitle">Nepotrjeni Dogodki Napadov</string>
+    <string name="register">Registriraj Novega Uporabnika</string>
+    <string name="reset_password">Ponastavi Geslo</string>
+    <string name="login_to_osdapi">Prijava za Deljenje Podatkov</string>
+    <string name="login">Prijava</string>
+    <string name="data_sharing_status">Deljenje Podatkov</string>
+    <string name="not_logging_data">Ni deljenja Podatkov</string>
+    <string name="not_sharing_logged_data">Ni deljenja Logiranih Podatkov</string>
+    <string name="not_logged_in">Neprijavljen</string>
+    <string name="data_sharing_setup_ok">Nastavitev Deljenja Podatkov je OK</string>
+    <string name="please_confirm_seizure_events">Prosim preveri svoje Deljene dogodke Napadov</string>
+    <string name="data_sharing_log_in">Prijava za Deljenje Podatkov</string>
+    <string name="not_updating_mobile">Ni uporabe Mobilnega Interneta</string>
+    <string name="not_updating_no_network">Ni Podatkovne Povezave</string>
+    <string name="error_connecting_to_server">Napaka Povezovanje na Strežnik</string>
+    <string name="battery_usage_optimisation_dialog_title">OPOZORILO: Optimizacija Rabe Baterije</string>
+    <string name="battery_usage_optimisation_dialog_text">OPOZORILO:  Android sistemske Nastavitve Optimizacija Baterije so nastavljene na \'Optimiraj\' OpenSeizureDetector. To pomeni, da bo aplikacija najverjetneje prisilno ustavljena, kadar naprava ni priklopljena na polnjenje, in ne bo delovala. \n\nProsim, da v Nastavitvah Telefona poiščete \'Optimizacija Baterije\' in nastavite, da OpenSeizureDetector NI optimiziran</string>
+    <string name="local_data">Lokalni podatki</string>
+    <string name="shared_data">Deljeni podatki</string>
+    <string name="prune_database">Oklesti bazo podatkov</string>
+    <string name="check_seizures_message">Prosim izberi dogodke označene z roza za določanje, ali so to pravi napadi ali lažni alarmi</string>
+    <string name="error_server_not_running">NAPAKA:  OpenSeizureDetector Strežnik ne dela - prosim ponovno ga zaženi</string>
+</resources>
