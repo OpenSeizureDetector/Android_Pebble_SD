@@ -150,6 +150,8 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                 Intent i;
                 i = new Intent(this, StartupActivity.class);
                 startActivity(i);
+                Log.i(TAG,"onSharedPreferenceChanged() - finishing PrefActivity");
+                finish();
             } else {
                 Log.i(TAG, "OnSharedPreferenceChanged(): SMS Alarm disabled so do not need permissions");
             }
@@ -212,6 +214,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     protected void onStop() {
         super.onStop();
         mUtil.writeToSysLogFile("PrefActvity.onStop()");
+        Log.i(TAG,"onStop()");
     }
 
     /**
