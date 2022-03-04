@@ -141,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
                 if (mConnection.mBound) {
                     if ((mConnection.mSdServer.mSmsTimer != null)
                             && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0)) {
-                        Log.v(TAG, "acceptAlarmButton.onClick() - Stopping SMS Timer");
+                        Log.i(TAG, "acceptAlarmButton.onClick() - Stopping SMS Timer");
                         mUtil.showToast(getString(R.string.SMSAlarmCancelledMsg));
                         mConnection.mSdServer.stopSmsTimer();
                     } else {

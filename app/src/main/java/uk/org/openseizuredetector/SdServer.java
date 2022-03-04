@@ -883,17 +883,7 @@ public class SdServer extends Service implements SdDataReceiver {
         AlertDialog ad;
         if (mSMSAlarm) {
             if (!mCancelAudible) {
-                if (!mUtil.areSMSPermissionsOK()) {
-                    mUtil.showToast(getString(R.string.SMSPermissionsDeniedMsg));
-                    Log.e(TAG, "ERROR - Permission for SMS or Location Denied - Not Sending SMS");
-                } else {
-                    //mSMSAlertDialog = new AlertDialog.Builder(this);
-                    //mSMSAlertDialog.setMessage("SMS Will be Sent in 10 Seconds, unless you press the Cancel Button")
-                    //        .setPositiveButton("Send", smsCancelClickListener)
-                    //        .setNegativeButton("Cancel", smsCancelClickListener);
-                    //ad = mSMSAlertDialog.show();
-                    startSmsTimer();
-                }
+                startSmsTimer();
             } else {
                 Log.i(TAG, "sendSMSAlarm() - Cancel Audible Active - not sending SMS");
                 mUtil.showToast(getString(R.string.cancel_audible_not_sending_sms));

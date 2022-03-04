@@ -24,12 +24,14 @@
 */
 package uk.org.openseizuredetector;
 
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -46,7 +48,10 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.rohitss.uceh.UCEHandler;
 
 import java.util.Timer;
@@ -77,11 +82,14 @@ public class StartupActivity extends AppCompatActivity {
     private String mPebbleAppPackageName = null;
     private boolean mBatteryOptDialogDisplayed = false;
     private AlertDialog mBatteryOptDialog;
+    private boolean mSMSPermissionsRequested;
+    private boolean mPermissionsRequested;
+    private boolean mSMSPermissions2Requested;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i(TAG,"onCreate()");
+        Log.i(TAG, "onCreate()");
         setContentView(R.layout.startup_activity);
 
         // Set our custom uncaught exception handler to report issues.
@@ -109,8 +117,6 @@ public class StartupActivity extends AppCompatActivity {
 
         // Force the screen to stay on when the app is running
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-
 
 
         Button b;
@@ -151,15 +157,15 @@ public class StartupActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Log.i(TAG,"onStart()");
+        Log.i(TAG, "onStart()");
         mUtil.writeToSysLogFile("StartupActivity.onStart()");
         TextView tv;
 
-        if (mUtil.arePermissionsOK()) {
-            Log.i(TAG,"onStart() - Permissions OK");
+        if (arePermissionsOK()) {
+            Log.i(TAG, "onStart() - Permissions OK");
         } else {
-            Log.i(TAG,"onStart() - Permissions Not OK - requesting them");
-            mUtil.requestPermissions(this);
+            Log.i(TAG, "onStart() - Permissions Not OK - requesting them");
+            requestPermissions(this);
         }
 
         String versionName = mUtil.getAppVersionName();
@@ -181,21 +187,21 @@ public class StartupActivity extends AppCompatActivity {
             mUtil.stopServer();
         }
         mUtil.writeToSysLogFile("StartupActivity.onStart() - starting server");
-        Log.i(TAG,"onStart() - starting server");
+        Log.i(TAG, "onStart() - starting server");
         mUtil.startServer();
 
         // Bind to the service.
-        Log.i(TAG,"onStart() - binding to server");
+        Log.i(TAG, "onStart() - binding to server");
         mUtil.writeToSysLogFile("StartupActivity.onStart() - binding to server");
         mUtil.bindToServer(getApplicationContext(), mConnection);
 
         // Check power management settings
-        PowerManager powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
+        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
-            Log.i(TAG,"Power Management OK - we are ignoring Battery Optimizations");
-                mBatteryOptDialogDisplayed = false;
+            Log.i(TAG, "Power Management OK - we are ignoring Battery Optimizations");
+            mBatteryOptDialogDisplayed = false;
         } else {
-            Log.e(TAG,"Power Management Problem - not ignoring Battery Optimisations");
+            Log.e(TAG, "Power Management Problem - not ignoring Battery Optimisations");
             //mUtil.showToast("WARNING - Phone is Optimising OpenSeizureDetector Battery Usage - this is likely to prevent it working correctly when running on battery!");
             if (!mBatteryOptDialogDisplayed) showBatteryOptimisationWarningDialog();
         }
@@ -212,7 +218,7 @@ public class StartupActivity extends AppCompatActivity {
                 mHandler.post(serverStatusRunnable);
                 //updateServerStatus();
             }
-        }, 0, 1000);
+        }, 0, 2000);
 
 
     }
@@ -228,11 +234,11 @@ public class StartupActivity extends AppCompatActivity {
 
 
     /*
-    * serverStatusRunnable - called by updateServerStatus - updates the
-    * user interface to reflect the current status received from the server.
-    * If everything is ok, we close this activity and open the main user interface
-    * activity.
-    */
+     * serverStatusRunnable - called by updateServerStatus - updates the
+     * user interface to reflect the current status received from the server.
+     * If everything is ok, we close this activity and open the main user interface
+     * activity.
+     */
     final Runnable serverStatusRunnable = new Runnable() {
         public void run() {
             Boolean allOk = true;
@@ -241,14 +247,14 @@ public class StartupActivity extends AppCompatActivity {
             boolean smsAlarmsActive = true;
             boolean phoneAlarmsActive = true;
 
-            Log.v(TAG,"serverStatusRunnable()");
+            Log.v(TAG, "serverStatusRunnable()");
             SharedPreferences SP = PreferenceManager
                     .getDefaultSharedPreferences(getBaseContext());
             smsAlarmsActive = SP.getBoolean("SMSAlarm", false);
             phoneAlarmsActive = SP.getBoolean("PhoneCallAlarm", false);
 
             // Check power management settings
-            PowerManager powerManager = (PowerManager)getSystemService(Context.POWER_SERVICE);
+            PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
             if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
                 Log.i(TAG, "Power Management OK - we are ignoring Battery Optimizations");
                 if (mBatteryOptDialogDisplayed) {
@@ -260,14 +266,24 @@ public class StartupActivity extends AppCompatActivity {
             // Settings ok
             tv = (TextView) findViewById(R.id.textItem1);
             pb = (ProgressBar) findViewById(R.id.progressBar1);
-            if (mUtil.arePermissionsOK()) {
-                if (smsAlarmsActive && !mUtil.areSMSPermissionsOK()) {
+            if (arePermissionsOK()) {
+                if (smsAlarmsActive && !areSMSPermissionsOK()) {
+                    Log.i(TAG,"SMS permissions NOT OK");
                     tv.setText(getString(R.string.SmsPermissionWarning));
-                    tv.setBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
-                    pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                    pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
-                    mUtil.requestSMSPermissions(StartupActivity.this);
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                    //pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
+                    //pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                    requestSMSPermissions();
+                    //requestSMSPermissions2();
+                    allOk = false;
+                } else if (smsAlarmsActive && !areSMSPermissions2OK()) {
+                    Log.i(TAG,"SMS permissions2 NOT OK");
+                    tv.setText(getString(R.string.SmsPermissionWarning));
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                    requestSMSPermissions2();
+                    allOk = false;
                 } else {
                     tv.setText(getString(R.string.AppPermissionsOk));
                     tv.setBackgroundColor(okColour);
@@ -281,7 +297,7 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setTextColor(alarmTextColour);
                 pb.setIndeterminate(true);
                 allOk = false;
-                mUtil.requestPermissions(StartupActivity.this);
+                requestPermissions(StartupActivity.this);
             }
 
             // If phone alarms are selected, we need to have the uk.org.openseizuredetector.dialler package installed to do the actual dialling.
@@ -329,7 +345,6 @@ public class StartupActivity extends AppCompatActivity {
             }
 
 
-
             // Do we have seizure detector data?
             tv = (TextView) findViewById(R.id.textItem5);
             pb = (ProgressBar) findViewById(R.id.progressBar5);
@@ -364,7 +379,6 @@ public class StartupActivity extends AppCompatActivity {
                 pb.setIndeterminate(true);
                 allOk = false;
             }
-
 
 
             // If all the parameters are ok, close this activity and open the main
@@ -427,19 +441,19 @@ public class StartupActivity extends AppCompatActivity {
         AlertDialog UpdateDialog;
         AlertDialog FirstRunDialog;
         SharedPreferences prefs;
-        Log.i(TAG,"checkFirstRun()");
+        Log.i(TAG, "checkFirstRun()");
         versionName = this.getVersionName(this, StartupActivity.class);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         storedVersionName = (prefs.getString("AppVersionName", null));
-        Log.v(TAG,"storedVersionName="+storedVersionName+", versionName="+versionName);
+        Log.v(TAG, "storedVersionName=" + storedVersionName + ", versionName=" + versionName);
 
         // CHeck for new installation
         if (storedVersionName == null || storedVersionName.length() == 0) {
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
                     this);
             final SpannableString s = new SpannableString(
-                    getString(R.string.FirstRunDlgMsg)+getString(R.string.changelog)
-                );
+                    getString(R.string.FirstRunDlgMsg) + getString(R.string.changelog)
+            );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);
             alertDialogBuilder
@@ -462,7 +476,7 @@ public class StartupActivity extends AppCompatActivity {
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
                     this);
             final SpannableString s = new SpannableString(
-                    getString(R.string.UpgradeMsg)+getString(R.string.changelog)
+                    getString(R.string.UpgradeMsg) + getString(R.string.changelog)
             );
             // This makes the links display as links, but they do not respond to clicks for some reason...
             Linkify.addLinks(s, Linkify.ALL);
@@ -510,4 +524,133 @@ public class StartupActivity extends AppCompatActivity {
         mBatteryOptDialog.show();
         mBatteryOptDialogDisplayed = true;
     }
+
+    /*****************************************************************************/
+    public boolean arePermissionsOK() {
+        boolean allOk = true;
+        Log.v(TAG, "arePermissionsOK");
+        for (int i = 0; i < mUtil.REQUIRED_PERMISSIONS.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, mUtil.REQUIRED_PERMISSIONS[i])
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, mUtil.REQUIRED_PERMISSIONS[i] + " Permission Not Granted");
+                allOk = false;
+            }
+        }
+        return allOk;
+    }
+
+    public boolean areSMSPermissionsOK() {
+        boolean allOk = true;
+        Log.v(TAG, "areSMSPermissionsOK()");
+        for (int i = 0; i < mUtil.SMS_PERMISSIONS.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, mUtil.SMS_PERMISSIONS[i])
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, mUtil.SMS_PERMISSIONS[i] + " Permission Not Granted");
+                allOk = false;
+            }
+        }
+        return allOk;
+    }
+
+    public boolean areSMSPermissions2OK() {
+        boolean allOk = true;
+        Log.v(TAG, "areSMSPermissions2OK()");
+        for (int i = 0; i < mUtil.SMS_PERMISSIONS_2.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, mUtil.SMS_PERMISSIONS_2[i])
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, mUtil.SMS_PERMISSIONS_2[i] + " Permission Not Granted");
+                allOk = false;
+            }
+        }
+        return allOk;
+    }
+
+    public void requestPermissions(AppCompatActivity activity) {
+        if (mPermissionsRequested) {
+            Log.i(TAG, "requestPermissions() - request already sent - not doing anything");
+        } else {
+            Log.i(TAG, "requestPermissions() - requesting permissions");
+            for (int i = 0; i < mUtil.REQUIRED_PERMISSIONS.length; i++) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
+                        mUtil.REQUIRED_PERMISSIONS[i])) {
+                    Log.i(TAG, "shouldShowRationale for permission" + mUtil.REQUIRED_PERMISSIONS[i]);
+                }
+            }
+            ActivityCompat.requestPermissions(activity,
+                    mUtil.REQUIRED_PERMISSIONS,
+                    42);
+            mPermissionsRequested = true;
+        }
+    }
+
+    public void requestSMSPermissions() {
+        if (mSMSPermissionsRequested) {
+            Log.i(TAG, "requestSMSPermissions() - request already sent - not doing anything");
+        } else {
+            Log.i(TAG, "requestSMSPermissions() - requesting permissions");
+            mSMSPermissionsRequested = true;
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                    this);
+            alertDialogBuilder
+                    .setTitle(R.string.permissions_required)
+                    .setMessage(R.string.SMS_permissions_rationale_1)
+                    .setCancelable(false)
+                    .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            Log.i(TAG,"requestSMSPermissions(): Launching ActivityCompat.requestPermissions()");
+                            ActivityCompat.requestPermissions(StartupActivity.this,
+                                    mUtil.SMS_PERMISSIONS,
+                                    43);
+                        }
+                    }).create().show();
+        }
+    }
+
+    public void requestSMSPermissions2() {
+        if (mSMSPermissions2Requested) {
+            Log.i(TAG, "requestSMSPermissions2() - request already sent - not doing anything");
+        } else {
+            Log.i(TAG, "requestSMSPermissions2() - requesting permissions");
+            mSMSPermissions2Requested = true;
+
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                    this);
+            alertDialogBuilder
+                    .setTitle(R.string.permissions_required)
+                    .setMessage(R.string.sms_permissions_2_rationale)
+                    .setCancelable(false)
+                    .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            Log.i(TAG,"requestSMSPermissions(): Launching ActivityCompat.requestPermissions()");
+                            ActivityCompat.requestPermissions(StartupActivity.this,
+                                    mUtil.SMS_PERMISSIONS_2,
+                                    44);
+                        }
+                    }).create().show();
+        }
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        Log.i(TAG, "onRequestPermissionsResult - Permission" + permissions + " = " + grantResults);
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        for (int i = 0; i < permissions.length; i++) {
+            Log.i(TAG, "Permission " + permissions[i] + " = " + grantResults[i]);
+        }
+            //mUtil.showToast(getString(R.string.RestartingServerMsg));
+        //mUtil.stopServer();
+        // Wait 0.1 second to give the server chance to shutdown, then re-start it
+        //mHandler.postDelayed(new Runnable() {
+        //public void run() {
+        //mUtil.startServer();
+        //}
+        //}, 100);
+
+    }
+
+
 }

@@ -19,7 +19,7 @@
             android:summary="@string/AlarmThreshSummary"
             android:title="@string/AlarmThreshTitle" />
         <EditTextPreference
-            android:defaultValue="50"
+            android:defaultValue="57"
             android:key="AlarmRatioThresh"
             android:summary="@string/AlarmRatioThreshSummary"
             android:title="@string/AlarmRatioThreshTitle" />

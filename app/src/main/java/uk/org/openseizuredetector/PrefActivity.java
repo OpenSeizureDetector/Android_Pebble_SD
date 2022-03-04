@@ -121,7 +121,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                 } else {
                     titleStr = getResources().getString(h.titleRes);
                 }
-                Log.v(TAG, "i=" + i + ": found - " + titleStr + " looking for "+ getString(R.string.basic_settings_title));
+                Log.v(TAG, "i=" + i + ": found - " + titleStr + " looking for " + getString(R.string.basic_settings_title));
                 if (!titleStr.equals(getString(R.string.basic_settings_title))) {
                     Log.v(TAG, "an Advanced Mode Header, so removing it....");
                     target.remove(i);
@@ -146,12 +146,10 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
 
         if (s.equals("SMSAlarm")) {
             if (sharedPreferences.getBoolean("SMSAlarm", false) == true) {
-                if (mUtil.areSMSPermissionsOK() == false) {
-                    Log.i(TAG, "onSharedPreferenceChanged(): SMS Alarm Enabled - Requesting Permissions");
-                    mUtil.requestSMSPermissions(this);
-                } else {
-                    Log.i(TAG, "OnSharedPreferenceCHanged(): SMS Permissions already granted, doing nothing");
-                }
+                Log.i(TAG, "onSharedPreferenceChanged(): SMS Alarm Enabled - Restarting start-up activity to check permissions");
+                Intent i;
+                i = new Intent(this, StartupActivity.class);
+                startActivity(i);
             } else {
                 Log.i(TAG, "OnSharedPreferenceChanged(): SMS Alarm disabled so do not need permissions");
             }

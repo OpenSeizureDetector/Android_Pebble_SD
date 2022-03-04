@@ -35,7 +35,7 @@
     <string name="okBtnTxt">OK</string>
     <string name="UpdateDialogTitleTxt">Thank you for Updating OpenSeizureDetector</string>
     <string name="FirstRunDlgTitle">Welcome to OpenSeizureDetector</string>
-    <string name="SmsPermissionWarning">Problem with SMS Permissions</string>
+    <string name="SmsPermissionWarning">Problem with SMS Permissions\n(please check phone settings -> Apps -> OpenSeizureDetector -> Permissions</string>
     <string name="AppPermissionsOk">App Permissions OK</string>
     <string name="AppPermissionsWarning">Problem with App Permissions</string>
     <string name="BoundToServiceOk">Bound to Service OK</string>
@@ -370,7 +370,10 @@
     <string name="not_updating_no_network">No Network Connection</string>
     <string name="error_connecting_to_server">Error Connecting to Server</string>
     <string name="battery_usage_optimisation_dialog_title">WARNING: Battery Usage Optimisation</string>
-    <string name="battery_usage_optimisation_dialog_text">WARNING:  The Android System Battery Optimisation Settings are configured to \'Optimise\' OpenSeizureDetector.  This means it is likely to be shutdown when operating on battery power, so will not work correctly\n\nPlease go into the Phone Settings and search for \'Optimise Battery Usage\' and ensure that OpenSeizureDetector is NOT optimised</string>
+    <string name="battery_usage_optimisation_dialog_text">
+        <b>WARNING:  The Android System Battery Optimisation Settings are configured to \'Optimise\' OpenSeizureDetector.</b>\n\n
+        This means it is likely to be shutdown when operating on battery power, so will not work correctly\n\n
+        Please go into the Phone Settings and select <b>Apps->OpenSeizureDetector->Battery->Optimise battery usage</b> and set it so that OpenSeizureDetector is NOT optimised</string>
     <string name="local_data">Local Data</string>
     <string name="shared_data">Shared Data</string>
     <string name="prune_database">Prune Database</string>
@@ -394,4 +397,17 @@
         https://openseizuredetector.org.uk web site.
 
     </string>
+    <string name="SMS_permissions_rationale_1">
+        OpenSeizureDetector needs permission to <b>control your phone and send SMS messages</b> to be able to send SMS alerts.\n\n
+        It needs <b>access to your location</b> so that the SMS alert can include a Google Maps link so your carer knows where you are to offer assistance.\n\n
+        Please grant the permissions in the following screens after pressing \'OK\' below....\n\n
+            You can change this later by going into the phone settings and selecting Apps->OpenSeizureDetector->Permissions
+    </string>
+    <string name="sms_permissions_2_rationale">
+        OpenSeizureDetector needs your permission to access your location when it is <b>running in the background</b>.\n\n
+        This is so it can send <b>SMS location alert</b> messages even if you do not have the OpenSeizureDetector main screen displayed on your phone when you have a seizure.\n\n
+        Please grant the required permission by selecting "Allow all the time" on the next screen, after pressing \'OK\' below....\n\n
+        You can change this later by going into the phone settings and selecting Apps->OpenSeizureDetector->Permissions
+    </string>
+    <string name="permissions_required">Permissions Required</string>
 </resources>

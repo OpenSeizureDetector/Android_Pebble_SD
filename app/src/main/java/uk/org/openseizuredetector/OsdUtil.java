@@ -71,23 +71,26 @@ import java.util.function.Consumer;
  * OsdUtil - OpenSeizureDetector Utilities
  * Deals with starting and stopping the background service and binding to it to receive data.
  */
-public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallback {
+public class OsdUtil {
     private final String SYSLOG = "SysLog";
     private final String ALARMLOG = "AlarmLog";
     private final String DATALOG = "DataLog";
 
-    private final String[] REQUIRED_PERMISSIONS = {
+    public final String[] REQUIRED_PERMISSIONS = {
             //Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.WAKE_LOCK,
     };
 
-    private final String[] SMS_PERMISSIONS = {
+    public final String[] SMS_PERMISSIONS = {
             Manifest.permission.SEND_SMS,
             Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+            //Manifest.permission.ACCESS_BACKGROUND_LOCATION,
             Manifest.permission.READ_PHONE_STATE,
     };
 
+    public final String[] SMS_PERMISSIONS_2 = {
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+    };
 
     /**
      * Based on http://stackoverflow.com/questions/7440473/android-how-to-check-if-the-intent-service-is-still-running-or-has-stopped-running
@@ -463,84 +466,6 @@ public class OsdUtil implements ActivityCompat.OnRequestPermissionsResultCallbac
         }
     }
 
-    public boolean arePermissionsOK() {
-        boolean allOk = true;
-        Log.v(TAG, "arePermissionsOK");
-        for (int i = 0; i < REQUIRED_PERMISSIONS.length; i++) {
-            if (ContextCompat.checkSelfPermission(mContext, REQUIRED_PERMISSIONS[i])
-                    != PackageManager.PERMISSION_GRANTED) {
-                Log.i(TAG, REQUIRED_PERMISSIONS[i] + " Permission Not Granted");
-                allOk = false;
-            }
-        }
-        return allOk;
-    }
-
-    public boolean areSMSPermissionsOK() {
-        boolean allOk = true;
-        Log.v(TAG, "areSMSPermissionsOK()");
-        for (int i = 0; i < SMS_PERMISSIONS.length; i++) {
-            if (ContextCompat.checkSelfPermission(mContext, SMS_PERMISSIONS[i])
-                    != PackageManager.PERMISSION_GRANTED) {
-                Log.i(TAG, SMS_PERMISSIONS[i] + " Permission Not Granted");
-                allOk = false;
-            }
-        }
-        return allOk;
-    }
-
-
-    public void requestPermissions(AppCompatActivity activity) {
-        if (mPermissionsRequested) {
-            Log.i(TAG, "requestPermissions() - request already sent - not doing anything");
-        } else {
-            Log.i(TAG, "requestPermissions() - requesting permissions");
-            for (int i = 0; i < REQUIRED_PERMISSIONS.length; i++) {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
-                        REQUIRED_PERMISSIONS[i])) {
-                    Log.i(TAG, "shouldShowRationale for permission" + REQUIRED_PERMISSIONS[i]);
-                }
-            }
-            ActivityCompat.requestPermissions(activity,
-                    REQUIRED_PERMISSIONS,
-                    42);
-            mPermissionsRequested = true;
-        }
-    }
-
-    public void requestSMSPermissions(Activity activity) {
-        if (mSMSPermissionsRequested) {
-            Log.i(TAG, "requestSMSPermissions() - request already sent - not doing anything");
-        } else {
-            Log.i(TAG, "requestSMSPermissions() - requesting permissions");
-            for (int i = 0; i < SMS_PERMISSIONS.length; i++) {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
-                        SMS_PERMISSIONS[i])) {
-                    Log.i(TAG, "shouldShowRationale for permission" + SMS_PERMISSIONS[i]);
-                }
-            }
-            ActivityCompat.requestPermissions(activity,
-                    SMS_PERMISSIONS,
-                    43);
-            mSMSPermissionsRequested = true;
-        }
-    }
-
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        Log.i(TAG, "onRequestPermissionsResult - Permission" + permissions + " = " + grantResults);
-        showToast(mContext.getString(R.string.RestartingServerMsg));
-        stopServer();
-        // Wait 0.1 second to give the server chance to shutdown, then re-start it
-        mHandler.postDelayed(new Runnable() {
-            public void run() {
-                startServer();
-            }
-        }, 100);
-
-    }
 
 
     public final int ALARM_STATUS_WARNING = 1;
