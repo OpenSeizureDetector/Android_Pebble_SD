@@ -182,18 +182,24 @@ public class StartupActivity extends AppCompatActivity {
 
 
         if (mUtil.isServerRunning()) {
-            Log.i(TAG, "onStart() - server running - stopping it");
+            Log.i(TAG, "onStart() - server running - stopping it - isServerRunning="+mUtil.isServerRunning());
             mUtil.writeToSysLogFile("StartupActivity.onStart() - server already running - stopping it.");
             mUtil.stopServer();
+        } else {
+            Log.i(TAG, "onStart() - server not running - isServerRunning="+mUtil.isServerRunning());
         }
-        mUtil.writeToSysLogFile("StartupActivity.onStart() - starting server");
-        Log.i(TAG, "onStart() - starting server");
-        mUtil.startServer();
-
-        // Bind to the service.
-        Log.i(TAG, "onStart() - binding to server");
-        mUtil.writeToSysLogFile("StartupActivity.onStart() - binding to server");
-        mUtil.bindToServer(getApplicationContext(), mConnection);
+        // Wait 0.1 second to give the server chance to shutdown in case we have just shut it down below, then start it
+        mHandler.postDelayed(new Runnable() {
+            public void run() {
+                mUtil.writeToSysLogFile("StartupActivity.onStart() - starting server after delay - isServerRunning="+mUtil.isServerRunning());
+                Log.i(TAG, "onStart() - starting server after delay -isServerRunning="+mUtil.isServerRunning());
+                mUtil.startServer();
+                // Bind to the service.
+                Log.i(TAG, "onStart() - binding to server");
+                mUtil.writeToSysLogFile("StartupActivity.onStart() - binding to server");
+                mUtil.bindToServer(getApplicationContext(), mConnection);
+            }
+        }, 100);
 
         // Check power management settings
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -218,7 +224,7 @@ public class StartupActivity extends AppCompatActivity {
                 mHandler.post(serverStatusRunnable);
                 //updateServerStatus();
             }
-        }, 0, 2000);
+        }, 0, 5000);
 
 
     }
@@ -641,15 +647,6 @@ public class StartupActivity extends AppCompatActivity {
         for (int i = 0; i < permissions.length; i++) {
             Log.i(TAG, "Permission " + permissions[i] + " = " + grantResults[i]);
         }
-            //mUtil.showToast(getString(R.string.RestartingServerMsg));
-        //mUtil.stopServer();
-        // Wait 0.1 second to give the server chance to shutdown, then re-start it
-        //mHandler.postDelayed(new Runnable() {
-        //public void run() {
-        //mUtil.startServer();
-        //}
-        //}, 100);
-
     }
 
 

@@ -120,15 +120,15 @@ public class LogManager {
 
         mUtil = new OsdUtil(mContext, handler);
         openDb();
-        Log.i(TAG,"Starting Remote Database Interface");
+        Log.i(TAG, "Starting Remote Database Interface");
         mWac = new WebApiConnection(mContext);
         mWac.setStoredToken(mAuthToken);
 
         if (mLogRemote) {
-            Log.i(TAG,"Starting Remote Log Timer");
+            Log.i(TAG, "Starting Remote Log Timer");
             startRemoteLogTimer();
         } else {
-            Log.i(TAG,"mLogRemote is false - not starting remote log timer");
+            Log.i(TAG, "mLogRemote is false - not starting remote log timer");
         }
 
         if (mAutoPruneDb) {
@@ -182,13 +182,13 @@ public class LogManager {
         Log.d(TAG, "openDb");
         try {
             if (mOsdDb == null) {
-                Log.i(TAG,"openDb: mOsdDb is null - initialising");
+                Log.i(TAG, "openDb: mOsdDb is null - initialising");
                 mOsdDb = new OsdDbHelper(mContext).getWritableDatabase();
             } else {
-                Log.i(TAG,"openDb: mOsdDb has been initialised already so not doing anything");
+                Log.i(TAG, "openDb: mOsdDb has been initialised already so not doing anything");
             }
             if (!checkTableExists(mOsdDb, mDpTableName)) {
-                Log.e(TAG, "ERROR - Table "+mDpTableName+" does not exist");
+                Log.e(TAG, "ERROR - Table " + mDpTableName + " does not exist");
                 return false;
             } else {
                 Log.d(TAG, "table " + mDpTableName + " exists ok");
@@ -246,6 +246,8 @@ public class LogManager {
         } catch (SQLException e) {
             Log.e(TAG, "writeToLocalDb(): Error Writing Data: " + e.toString());
             Log.e(TAG, "SQLStr was " + SQLStr);
+        } catch (NullPointerException e) {
+            Log.e(TAG, "writeToLocalDb(): Null Pointer Exception: " + e.toString());
         }
 
     }
@@ -297,7 +299,7 @@ public class LogManager {
     /**
      * setDatapointStatus() - Update the status of data point id.
      *
-     * @param id    datapont id
+     * @param id        datapont id
      * @param statusVal the status to set for the datapoint.
      * @return true on success or false on failure
      */
@@ -532,7 +534,6 @@ public class LogManager {
     /**
      * Executes the sqlite query (=SELECT statement)
      * Use as new SelectQueryTask(xxx,xxx,xx,xxxx).execute()
-     *
      */
     static private class SelectQueryTask extends AsyncTask<Void, Void, Cursor> {
         // Based on https://stackoverflow.com/a/21120199/2104584
@@ -578,6 +579,9 @@ public class LogManager {
                 return (null);
             } catch (IllegalArgumentException e) {
                 Log.e(TAG, "SelectQueryTask.doInBackground(): Illegal Argument Exception: " + e.toString());
+                return (null);
+            } catch (NullPointerException e) {
+                Log.e(TAG, "SelectQueryTask.doInBackground(): Null Pointer Exception: " + e.toString());
                 return (null);
             }
         }
@@ -799,13 +803,13 @@ public class LogManager {
      * WARNING - this should only be called by the final destructor of the app (not individual class destructors)
      * because it will close the DB for all instances of LogManger, not just the one on which it is called.
      * FIXME:  If I was keen I would keep a count of how many instances of LogManager there are, and have this function do nothing
-     *          unless it was the last instance.
+     * unless it was the last instance.
      */
     public static void close() {
         mOsdDb.close();
         mOsdDb = null;
         if (mWac != null) {
-            Log.i(TAG,"Stopping Remote Database Interface");
+            Log.i(TAG, "Stopping Remote Database Interface");
             mWac.close();
         }
     }
@@ -898,17 +902,16 @@ public class LogManager {
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             // This database is only a cache for online data, so its upgrade policy is
             // to simply to discard the data and start over
-            Log.i(TAG,"onUpgrade()");
+            Log.i(TAG, "onUpgrade()");
             db.execSQL("Drop table if exists " + mDpTableName + ";");
             onCreate(db);
         }
 
         public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            Log.i(TAG,"onDowngrade()");
+            Log.i(TAG, "onDowngrade()");
             onUpgrade(db, oldVersion, newVersion);
         }
     }
-
 
 
     /**

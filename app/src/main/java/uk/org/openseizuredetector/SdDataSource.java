@@ -691,11 +691,11 @@ public abstract class SdDataSource {
 
         // get time since the last data was received from the watch.
         tdiff = (tnow.toMillis(false) - mDataStatusTime.toMillis(false));
-        Log.v(TAG, "faultCheck() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout
-                + ", combined = " + (mDataUpdatePeriod + mAppRestartTimeout) * 1000);
+        //Log.v(TAG, "faultCheck() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout
+        //        + ", combined = " + (mDataUpdatePeriod + mAppRestartTimeout) * 1000);
         if (!mWatchAppRunningCheck &&
                 (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000)) {
-            Log.v(TAG, "faultCheck() - watch app not running so not doing anything");
+            //Log.v(TAG, "faultCheck() - watch app not running so not doing anything");
             mAlarmCount = 0;
         }
     }

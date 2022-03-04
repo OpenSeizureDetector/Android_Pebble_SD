@@ -144,6 +144,8 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         Log.i(TAG, "SharedPreference " + s + " Changed.");
 
+        // if we have enabled the SMS alarm, we may need extra permissions approving.  This is handled in
+        // StartUpActivity, so we exit this activity and start start-up activity.
         if (s.equals("SMSAlarm")) {
             if (sharedPreferences.getBoolean("SMSAlarm", false) == true) {
                 Log.i(TAG, "onSharedPreferenceChanged(): SMS Alarm Enabled - Restarting start-up activity to check permissions");
@@ -152,10 +154,12 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                 startActivity(i);
                 Log.i(TAG,"onSharedPreferenceChanged() - finishing PrefActivity");
                 finish();
+                return;
             } else {
                 Log.i(TAG, "OnSharedPreferenceChanged(): SMS Alarm disabled so do not need permissions");
             }
         }
+        // For all other preference changes we just restart SdServer so it is not as alarming for the user!
         //mUtil.showToast("Setting " + s + " Changed - restarting server");
         mPrefChanged = true;
         mUtil.stopServer();
