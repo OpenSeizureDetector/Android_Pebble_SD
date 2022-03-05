@@ -24,7 +24,7 @@
 */
 package uk.org.openseizuredetector;
 
-import android.app.Activity;
+import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -51,7 +51,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.google.android.material.snackbar.Snackbar;
 import com.rohitss.uceh.UCEHandler;
 
 import java.util.Timer;
@@ -82,9 +81,34 @@ public class StartupActivity extends AppCompatActivity {
     private String mPebbleAppPackageName = null;
     private boolean mBatteryOptDialogDisplayed = false;
     private AlertDialog mBatteryOptDialog;
-    private boolean mSMSPermissionsRequested;
+    private boolean mLocationPermissions1Requested;
+    private boolean mLocationPermissions2Requested;
+    private boolean mSmsPermissionsRequested;
     private boolean mPermissionsRequested;
-    private boolean mSMSPermissions2Requested;
+
+    public final String[] REQUIRED_PERMISSIONS = {
+            //Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.WAKE_LOCK,
+    };
+
+    public final String[] SMS_PERMISSIONS_1 = {
+            Manifest.permission.SEND_SMS,
+            Manifest.permission.READ_PHONE_STATE,
+    };
+
+    public final String[] LOCATION_PERMISSIONS_1 = {
+            Manifest.permission.SEND_SMS,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            //Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+            Manifest.permission.READ_PHONE_STATE,
+    };
+
+    public final String[] LOCATION_PERMISSIONS_2 = {
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+    };
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -160,13 +184,6 @@ public class StartupActivity extends AppCompatActivity {
         Log.i(TAG, "onStart()");
         mUtil.writeToSysLogFile("StartupActivity.onStart()");
         TextView tv;
-
-        if (arePermissionsOK()) {
-            Log.i(TAG, "onStart() - Permissions OK");
-        } else {
-            Log.i(TAG, "onStart() - Permissions Not OK - requesting them");
-            requestPermissions(this);
-        }
 
         String versionName = mUtil.getAppVersionName();
         tv = (TextView) findViewById(R.id.appNameTv);
@@ -273,7 +290,7 @@ public class StartupActivity extends AppCompatActivity {
             tv = (TextView) findViewById(R.id.textItem1);
             pb = (ProgressBar) findViewById(R.id.progressBar1);
             if (arePermissionsOK()) {
-                if (smsAlarmsActive && !areSMSPermissionsOK()) {
+                if (smsAlarmsActive && !areSMSPermissions1OK()) {
                     Log.i(TAG,"SMS permissions NOT OK");
                     tv.setText(getString(R.string.SmsPermissionWarning));
                     tv.setBackgroundColor(alarmColour);
@@ -281,14 +298,20 @@ public class StartupActivity extends AppCompatActivity {
                     //pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                     //pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
                     requestSMSPermissions();
-                    //requestSMSPermissions2();
                     allOk = false;
-                } else if (smsAlarmsActive && !areSMSPermissions2OK()) {
+                } else if (smsAlarmsActive && !areLocationPermissions1OK()) {
+                    Log.i(TAG,"Location permissions NOT OK");
+                    tv.setText(getString(R.string.SmsPermissionWarning));
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                    requestLocationPermissions1();
+                    allOk = false;
+                } else if (smsAlarmsActive && !areLocationPermissions2OK()) {
                     Log.i(TAG,"SMS permissions2 NOT OK");
                     tv.setText(getString(R.string.SmsPermissionWarning));
                     tv.setBackgroundColor(alarmColour);
                     tv.setTextColor(alarmTextColour);
-                    requestSMSPermissions2();
+                    requestLocationPermissions2();
                     allOk = false;
                 } else {
                     tv.setText(getString(R.string.AppPermissionsOk));
@@ -535,36 +558,50 @@ public class StartupActivity extends AppCompatActivity {
     public boolean arePermissionsOK() {
         boolean allOk = true;
         Log.v(TAG, "arePermissionsOK");
-        for (int i = 0; i < mUtil.REQUIRED_PERMISSIONS.length; i++) {
-            if (ContextCompat.checkSelfPermission(this, mUtil.REQUIRED_PERMISSIONS[i])
+        for (int i = 0; i < REQUIRED_PERMISSIONS.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, REQUIRED_PERMISSIONS[i])
                     != PackageManager.PERMISSION_GRANTED) {
-                Log.i(TAG, mUtil.REQUIRED_PERMISSIONS[i] + " Permission Not Granted");
+                Log.i(TAG, REQUIRED_PERMISSIONS[i] + " Permission Not Granted");
                 allOk = false;
             }
         }
         return allOk;
     }
 
-    public boolean areSMSPermissionsOK() {
+    public boolean areSMSPermissions1OK() {
         boolean allOk = true;
-        Log.v(TAG, "areSMSPermissionsOK()");
-        for (int i = 0; i < mUtil.SMS_PERMISSIONS.length; i++) {
-            if (ContextCompat.checkSelfPermission(this, mUtil.SMS_PERMISSIONS[i])
+        Log.v(TAG, "areSMSPermissions1 OK()");
+        for (int i = 0; i < SMS_PERMISSIONS_1.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, SMS_PERMISSIONS_1[i])
                     != PackageManager.PERMISSION_GRANTED) {
-                Log.i(TAG, mUtil.SMS_PERMISSIONS[i] + " Permission Not Granted");
+                Log.i(TAG, "areSMSPermissions1OK: "+SMS_PERMISSIONS_1[i] + " Permission Not Granted");
                 allOk = false;
             }
         }
         return allOk;
     }
 
-    public boolean areSMSPermissions2OK() {
+
+    public boolean areLocationPermissions1OK() {
+        boolean allOk = true;
+        Log.v(TAG, "areLocationPermissions1 OK()");
+        for (int i = 0; i < LOCATION_PERMISSIONS_1.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, LOCATION_PERMISSIONS_1[i])
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, LOCATION_PERMISSIONS_1[i] + " Permission Not Granted");
+                allOk = false;
+            }
+        }
+        return allOk;
+    }
+
+    public boolean areLocationPermissions2OK() {
         boolean allOk = true;
         Log.v(TAG, "areSMSPermissions2OK()");
-        for (int i = 0; i < mUtil.SMS_PERMISSIONS_2.length; i++) {
-            if (ContextCompat.checkSelfPermission(this, mUtil.SMS_PERMISSIONS_2[i])
+        for (int i = 0; i < LOCATION_PERMISSIONS_2.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, LOCATION_PERMISSIONS_2[i])
                     != PackageManager.PERMISSION_GRANTED) {
-                Log.i(TAG, mUtil.SMS_PERMISSIONS_2[i] + " Permission Not Granted");
+                Log.i(TAG, LOCATION_PERMISSIONS_2[i] + " Permission Not Granted");
                 allOk = false;
             }
         }
@@ -576,62 +613,87 @@ public class StartupActivity extends AppCompatActivity {
             Log.i(TAG, "requestPermissions() - request already sent - not doing anything");
         } else {
             Log.i(TAG, "requestPermissions() - requesting permissions");
-            for (int i = 0; i < mUtil.REQUIRED_PERMISSIONS.length; i++) {
+            for (int i = 0; i < REQUIRED_PERMISSIONS.length; i++) {
                 if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
-                        mUtil.REQUIRED_PERMISSIONS[i])) {
-                    Log.i(TAG, "shouldShowRationale for permission" + mUtil.REQUIRED_PERMISSIONS[i]);
+                        REQUIRED_PERMISSIONS[i])) {
+                    Log.i(TAG, "shouldShowRationale for permission" + REQUIRED_PERMISSIONS[i]);
                 }
             }
             ActivityCompat.requestPermissions(activity,
-                    mUtil.REQUIRED_PERMISSIONS,
+                    REQUIRED_PERMISSIONS,
                     42);
             mPermissionsRequested = true;
         }
     }
 
     public void requestSMSPermissions() {
-        if (mSMSPermissionsRequested) {
+        if (mSmsPermissionsRequested) {
             Log.i(TAG, "requestSMSPermissions() - request already sent - not doing anything");
         } else {
             Log.i(TAG, "requestSMSPermissions() - requesting permissions");
-            mSMSPermissionsRequested = true;
+            mSmsPermissionsRequested = true;
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
                     this);
             alertDialogBuilder
                     .setTitle(R.string.permissions_required)
-                    .setMessage(R.string.SMS_permissions_rationale_1)
+                    .setMessage(R.string.sms_permissions_rationale_1)
                     .setCancelable(false)
                     .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.cancel();
                             Log.i(TAG,"requestSMSPermissions(): Launching ActivityCompat.requestPermissions()");
                             ActivityCompat.requestPermissions(StartupActivity.this,
-                                    mUtil.SMS_PERMISSIONS,
+                                    SMS_PERMISSIONS_1,
+                                    45);
+                        }
+                    }).create().show();
+        }
+    }
+
+
+    public void requestLocationPermissions1() {
+        if (mLocationPermissions1Requested) {
+            Log.i(TAG, "requestLocationPermissions1() - request already sent - not doing anything");
+        } else {
+            Log.i(TAG, "requestLocationPermissions1() - requesting permissions");
+            mLocationPermissions1Requested = true;
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                    this);
+            alertDialogBuilder
+                    .setTitle(R.string.permissions_required)
+                    .setMessage(R.string.location_permissions_rationale_1)
+                    .setCancelable(false)
+                    .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            Log.i(TAG,"requestLocationPermissions1(): Launching ActivityCompat.requestPermissions()");
+                            ActivityCompat.requestPermissions(StartupActivity.this,
+                                    LOCATION_PERMISSIONS_1,
                                     43);
                         }
                     }).create().show();
         }
     }
 
-    public void requestSMSPermissions2() {
-        if (mSMSPermissions2Requested) {
+    public void requestLocationPermissions2() {
+        if (mLocationPermissions2Requested) {
             Log.i(TAG, "requestSMSPermissions2() - request already sent - not doing anything");
         } else {
             Log.i(TAG, "requestSMSPermissions2() - requesting permissions");
-            mSMSPermissions2Requested = true;
+            mLocationPermissions2Requested = true;
 
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
                     this);
             alertDialogBuilder
                     .setTitle(R.string.permissions_required)
-                    .setMessage(R.string.sms_permissions_2_rationale)
+                    .setMessage(R.string.location_permissions_2_rationale)
                     .setCancelable(false)
                     .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.cancel();
                             Log.i(TAG,"requestSMSPermissions(): Launching ActivityCompat.requestPermissions()");
                             ActivityCompat.requestPermissions(StartupActivity.this,
-                                    mUtil.SMS_PERMISSIONS_2,
+                                    LOCATION_PERMISSIONS_2,
                                     44);
                         }
                     }).create().show();

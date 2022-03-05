@@ -76,22 +76,6 @@ public class OsdUtil {
     private final String ALARMLOG = "AlarmLog";
     private final String DATALOG = "DataLog";
 
-    public final String[] REQUIRED_PERMISSIONS = {
-            //Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.WAKE_LOCK,
-    };
-
-    public final String[] SMS_PERMISSIONS = {
-            Manifest.permission.SEND_SMS,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            //Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-            Manifest.permission.READ_PHONE_STATE,
-    };
-
-    public final String[] SMS_PERMISSIONS_2 = {
-            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-    };
-
     /**
      * Based on http://stackoverflow.com/questions/7440473/android-how-to-check-if-the-intent-service-is-still-running-or-has-stopped-running
      */
