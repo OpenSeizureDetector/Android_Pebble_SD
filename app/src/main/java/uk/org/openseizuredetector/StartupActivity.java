@@ -241,7 +241,7 @@ public class StartupActivity extends AppCompatActivity {
                 mHandler.post(serverStatusRunnable);
                 //updateServerStatus();
             }
-        }, 0, 5000);
+        }, 0, 2000);
 
 
     }

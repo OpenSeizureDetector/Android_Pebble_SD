@@ -3,6 +3,9 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
+        \nV4.0.0t - Fixed issue with occasional crashes when network disrupted.  Improved 'Prominent Disclosure' of SMS and Location permissions to satisfy Google Play Store requirements.
+        \nV4.0.0s - Fixed problem with Android 11 not sending SMS Location alerts.
+        \nV4.0.0p - Restored compatibility with Android V6
         \nV4.0.0n - Fixed issue with system not shutting down after accessing the event editor screen.
         \nV4.0.0m - Minor tweaks to UI to show O2Sat as --- if no O2 sensor is present and avoid displaying error while waiting for
           first data sharing update.

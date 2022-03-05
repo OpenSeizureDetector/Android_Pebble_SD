@@ -99,8 +99,7 @@ public class WebApiConnection {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         if (error != null) {
-                            String responseBody = new String(error.networkResponse.data);
-                            Log.e(TAG, "Login Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                            Log.e(TAG, "Login Error: " + error.toString() + ", message:" + error.getMessage());
                         } else {
                             Log.e(TAG, "Login Error:  Returned null response");
                         }
@@ -189,8 +188,7 @@ public class WebApiConnection {
                     public void onErrorResponse(VolleyError error) {
                         mServerConnectionOk = false;
                         if (error != null) {
-                            String responseBody = new String(error.networkResponse.data);
-                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage());
                             callback.accept(null);
                         } else {
                             Log.e(TAG, "Create Event Error - null respones");
@@ -264,8 +262,7 @@ public class WebApiConnection {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         if (error != null) {
-                            String responseBody = new String(error.networkResponse.data);
-                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage());
                         } else {
                             Log.e(TAG, "Create Event Error: returned null response");
                         }
@@ -328,8 +325,7 @@ public class WebApiConnection {
                         mServerConnectionOk = false;
                         if (error != null) {
                             if (error.networkResponse != null) {
-                                String responseBody = new String(error.networkResponse.data);
-                                Log.e(TAG, "getEvents(): Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                                Log.e(TAG, "getEvents(): Error: " + error.toString() + ", message:" + error.getMessage());
                             } else {
                                 Log.e(TAG, "getEvents(): Error: - request returned null networkResponse");
                             }
@@ -406,8 +402,7 @@ public class WebApiConnection {
                     public void onErrorResponse(VolleyError error) {
                         mServerConnectionOk = false;
                         if (error != null) {
-                            String responseBody = new String(error.networkResponse.data);
-                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage());
                         } else {
                             Log.e(TAG, "Create Event Error - returned null response");
                         }
@@ -492,9 +487,7 @@ public class WebApiConnection {
                     public void onErrorResponse(VolleyError error) {
                         mServerConnectionOk = false;
                         if (error != null) {
-                            // Fixme = are we sure that networResponse.data is not null???
-                            String responseBody = new String(error.networkResponse.data);
-                            Log.e(TAG, "Create Datapoint Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                            Log.e(TAG, "Create Datapoint Error: " + error.toString() + ", message:" + error.getMessage());
                             callback.accept(null);
                         } else {
                             Log.e(TAG, "Create Datapoint Error - returned null respones");
@@ -572,8 +565,7 @@ public class WebApiConnection {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         if (error != null) {
-                            String responseBody = new String(error.networkResponse.data);
-                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage());
                         } else {
                             Log.e(TAG, "Create Event Error: returned null response");
                         }
@@ -634,8 +626,7 @@ public class WebApiConnection {
                     public void onErrorResponse(VolleyError error) {
                         mServerConnectionOk = false;
                         if (error != null) {
-                            String responseBody = new String(error.networkResponse.data);
-                            Log.e(TAG, "getEventTypes.onErrorResponse(): " + error.toString() + ", message:" + error.getMessage() + ", Response Code:" + error.networkResponse.statusCode + ", Response: " + responseBody);
+                            Log.e(TAG, "getEventTypes.onErrorResponse(): " + error.toString() + ", message:" + error.getMessage());
                         } else {
                             Log.e(TAG, "getEventTypes.onErrorResponse() - returned null response");
                         }
