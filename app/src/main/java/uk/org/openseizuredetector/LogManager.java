@@ -661,43 +661,48 @@ public class LogManager {
         //int eventId = -1;
         Log.v(TAG, "uploadSdData()");
         // First try uploading full alarms, and only if we do not have any of those, upload warnings.
-        getNextEventToUpload(true, (Long eventId) -> {
-            if (eventId != -1) {
-                Log.v(TAG, "uploadSdData() - eventId=" + eventId);
-                String eventJsonStr = getDatapointById(eventId);
-                Log.v(TAG, "uploadSdData() - eventJsonStr=" + eventJsonStr);
-                //int eventType;
-                JSONObject eventObj;
-                int eventAlarmStatus;
-                String eventDateStr;
-                Date eventDate;
-                try {
-                    JSONArray datapointJsonArr = new JSONArray(eventJsonStr);
-                    eventObj = datapointJsonArr.getJSONObject(0);  // We only look at the first (and hopefully only) item in the array.
-                    eventAlarmStatus = Integer.parseInt(eventObj.getString("status"));
-                    eventDateStr = eventObj.getString("dataTime");
-                    Log.v(TAG, "uploadSdData - data from local DB is:" + eventJsonStr + ", eventAlarmStatus="
-                            + eventAlarmStatus + ", eventDateStr=" + eventDateStr);
-                } catch (JSONException e) {
-                    Log.e(TAG, "ERROR parsing event JSON Data" + eventJsonStr);
-                    e.printStackTrace();
-                    return;
-                } catch (NullPointerException e) {
-                    Log.e(TAG, "ERROR null pointer exception parsing event JSON Data" + eventJsonStr);
-                    e.printStackTrace();
-                    return;
+        boolean warningsArr[] = { false, true };
+        for (int n=0; n<warningsArr.length; n++) {
+            boolean warningsVal = warningsArr[n];
+            Log.i(TAG, "uploadSdData(): warningsVal=" + warningsVal);
+            getNextEventToUpload(warningsVal, (Long eventId) -> {
+                if (eventId != -1) {
+                    Log.v(TAG, "uploadSdData() - eventId=" + eventId);
+                    String eventJsonStr = getDatapointById(eventId);
+                    Log.v(TAG, "uploadSdData() - eventJsonStr=" + eventJsonStr);
+                    //int eventType;
+                    JSONObject eventObj;
+                    int eventAlarmStatus;
+                    String eventDateStr;
+                    Date eventDate;
+                    try {
+                        JSONArray datapointJsonArr = new JSONArray(eventJsonStr);
+                        eventObj = datapointJsonArr.getJSONObject(0);  // We only look at the first (and hopefully only) item in the array.
+                        eventAlarmStatus = Integer.parseInt(eventObj.getString("status"));
+                        eventDateStr = eventObj.getString("dataTime");
+                        Log.v(TAG, "uploadSdData - data from local DB is:" + eventJsonStr + ", eventAlarmStatus="
+                                + eventAlarmStatus + ", eventDateStr=" + eventDateStr);
+                    } catch (JSONException e) {
+                        Log.e(TAG, "ERROR parsing event JSON Data" + eventJsonStr);
+                        e.printStackTrace();
+                        return;
+                    } catch (NullPointerException e) {
+                        Log.e(TAG, "ERROR null pointer exception parsing event JSON Data" + eventJsonStr);
+                        e.printStackTrace();
+                        return;
+                    }
+                    try {
+                        eventDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(eventDateStr);
+                    } catch (ParseException e) {
+                        Log.e(TAG, "Error parsing date " + eventDateStr);
+                        return;
+                    }
+                    mWac.createEvent(eventAlarmStatus, eventDate, "", this::createEventCallback);
+                } else {
+                    Log.v(TAG, "UploadSdData - no data to upload");
                 }
-                try {
-                    eventDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(eventDateStr);
-                } catch (ParseException e) {
-                    Log.e(TAG, "Error parsing date " + eventDateStr);
-                    return;
-                }
-                mWac.createEvent(eventAlarmStatus, eventDate, "", this::createEventCallback);
-            } else {
-                Log.v(TAG, "UploadSdData - no data to upload");
-            }
-        });
+            });
+        }
     }
 
 
