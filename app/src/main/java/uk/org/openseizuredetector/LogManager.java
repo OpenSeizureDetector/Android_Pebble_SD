@@ -240,8 +240,12 @@ public class LogManager {
                     + DatabaseUtils.sqlEscapeString(sdData.toJSON(true)) + ","
                     + 0
                     + ")";
-            mOsdDb.execSQL(SQLStr);
-            Log.v(TAG, "data written to database");
+            if (mOsdDb != null) {
+                mOsdDb.execSQL(SQLStr);
+                Log.v(TAG, "writeDatapointToLocalDb(): data written to database");
+            } else {
+                Log.e(TAG,"writeDatapointToLocalDb(): mOsdDb is null");
+            }
 
         } catch (SQLException e) {
             Log.e(TAG, "writeToLocalDb(): Error Writing Data: " + e.toString());

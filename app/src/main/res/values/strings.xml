@@ -3,6 +3,7 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
+        \nV4.0.0v - Added BLE Characteristic changes for PineWatch, added cancel buttons to permissions dialogs.
         \nV4.0.0t - Fixed issue with occasional crashes when network disrupted.  Improved 'Prominent Disclosure' of SMS and Location permissions to satisfy Google Play Store requirements.
         \nV4.0.0s - Fixed problem with Android 11 not sending SMS Location alerts.
         \nV4.0.0p - Restored compatibility with Android V6

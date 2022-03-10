@@ -646,6 +646,11 @@ public class StartupActivity extends AppCompatActivity {
                                     SMS_PERMISSIONS_1,
                                     45);
                         }
+                    })
+                    .setNegativeButton(getString(R.string.cancelBtnTxt), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                        }
                     }).create().show();
         }
     }
@@ -666,12 +671,18 @@ public class StartupActivity extends AppCompatActivity {
                     .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.cancel();
-                            Log.i(TAG,"requestLocationPermissions1(): Launching ActivityCompat.requestPermissions()");
+                            Log.i(TAG, "requestLocationPermissions1(): Launching ActivityCompat.requestPermissions()");
                             ActivityCompat.requestPermissions(StartupActivity.this,
                                     LOCATION_PERMISSIONS_1,
                                     43);
                         }
-                    }).create().show();
+                    })
+                    .setNegativeButton(getString(R.string.cancelBtnTxt), new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                    })
+                    .create().show();
         }
     }
 
@@ -695,6 +706,11 @@ public class StartupActivity extends AppCompatActivity {
                             ActivityCompat.requestPermissions(StartupActivity.this,
                                     LOCATION_PERMISSIONS_2,
                                     44);
+                        }
+                    })
+                    .setNegativeButton(getString(R.string.cancelBtnTxt), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
                         }
                     }).create().show();
         }
