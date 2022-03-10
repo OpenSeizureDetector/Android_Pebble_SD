@@ -801,7 +801,9 @@ public class LogManager {
     // to upload the next one.
     public void datapointCallback(String datapointStr) {
         Log.v(TAG, "datapointCallback() " + datapointStr + ", mCurrentEventId=" + mCurrentEventId);
-        mDatapointsToUploadList.remove(0);
+        if (mDatapointsToUploadList.size() > 0) {
+            mDatapointsToUploadList.remove(0);
+        }
         setDatapointToUploaded(mCurrentDatapointId, mCurrentEventId);
         uploadNextDatapoint();
     }
