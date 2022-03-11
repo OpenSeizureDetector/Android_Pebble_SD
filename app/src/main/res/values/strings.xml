@@ -410,16 +410,40 @@
             You can change this later by going into the phone settings and selecting Apps->OpenSeizureDetector->Permissions
     </string>
     <string name="location_permissions_rationale_1">
-        This App collects location data to enable it to send <b>SMS location alert</b> messages when it detects a seizure.\n\n
-        With this permission enabled the App will send an SMS message to the phone numbers you enter on the Alarm settings page of the app when it detects a seizure.  <b>The message will include a Google Maps link to show your location</b>.\n\n
-        Please grant the permissions in the following screens after pressing \'OK\' below....\n\n
-            You can change this later by going into the phone settings and selecting Apps->OpenSeizureDetector->Permissions
+        OpenSeizureDetector <b>collects location data</b>
+        to enable the <b>SMS Location Alarms</b> feature
+        to include your location in the alarm message
+        <b>when the app is closed or not in use</b>.\n\n
+        This means that it will be able to send <b>SMS text messages</b> containing
+        <b>your location</b>
+        to the <b>phone numbers you enter</b> on the Alarm settings page of the app
+        when it detects a seizure, by running in the <b>background</b>,
+        even <b>when the app is closed</b>.\n
+        It does not store your location or share it with anyone other than the phone numbers
+        you specify\n\n
+
+        Please grant the permissions in the following screen by selecting
+        <b>While using the app</b>
+        if you wish to use SMS Location Alarms\n\n
+        You can change this later by going into the phone settings and selecting
+        <b>Apps->OpenSeizureDetector->Permissions</b>.
     </string>
     <string name="location_permissions_2_rationale">
-        This App collects location data to enable it to send <b>SMS location alert</b> messages when it detects a seizure, <b>even even when the app is closed or not in use</b>.\n\n
-        With this permission enabled the App will send an SMS message to the phone numbers you enter on the Alarm settings page of the app when it detects a seizure.  <b>The message will include a Google Maps link to show your location</b>.\n\n
-        Please grant the required permission by selecting "Allow all the time" on the next screen, after pressing \'OK\' below....\n\n
-        You can change this later by going into the phone settings and selecting Apps->OpenSeizureDetector->Permissions
+        OpenSeizureDetector <b>collects location data</b>
+        to enable the <b>SMS Location Alarms</b> feature
+        to include your location in the alarm message
+        <b>when the app is closed or not in use</b>.\n\n
+        This means that it will be able to send <b>SMS text messages</b> containing
+        <b>your location</b>
+        to the <b>phone numbers you enter</b> on the Alarm settings page of the app
+        when it detects a seizure, by running in the <b>background</b>,
+        even <b>when the app is closed</b>.\n
+        It does not store your location or share it with anyone other than the phone numbers
+        you specify.\n\n
+         Please grant the required permission by selecting <b>Allow all the time</b>
+        on the next screen, if you wish to use SMS Location Alarms\n\n
+        You can change this later by going into the phone settings
+        and selecting <b>Apps->OpenSeizureDetector->Permissions</b>.
     </string>
-    <string name="permissions_required">Permissions Disclosure, Prominent :)</string>
+    <string name="permissions_required">Permissions Disclosure</string>
 </resources>
