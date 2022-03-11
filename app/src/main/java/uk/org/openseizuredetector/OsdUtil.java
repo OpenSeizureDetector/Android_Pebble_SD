@@ -72,6 +72,9 @@ import java.util.function.Consumer;
  * Deals with starting and stopping the background service and binding to it to receive data.
  */
 public class OsdUtil {
+    public final static String PRIVACY_POLICY_URL = "https://www.openseizuredetector.org.uk/?page_id=1415";
+    public final static String DATA_SHARING_URL = "https://www.openseizuredetector.org.uk/?page_id=1818";
+
     private final String SYSLOG = "SysLog";
     private final String ALARMLOG = "AlarmLog";
     private final String DATALOG = "DataLog";

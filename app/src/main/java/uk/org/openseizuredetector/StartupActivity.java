@@ -33,10 +33,12 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.text.Html;
 import android.text.SpannableString;
 import android.text.util.Linkify;
 import android.util.Log;
@@ -50,6 +52,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.text.HtmlCompat;
 
 import com.rohitss.uceh.UCEHandler;
 
@@ -460,10 +463,10 @@ public class StartupActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * checkFirstRun - checks to see if this is the first run of the app after installation or upgrade.
-     * if it is, the relevant dialog message is displayed.  If not, the routine just exists so start-up can continue.
-     */
+        /**
+         * checkFirstRun - checks to see if this is the first run of the app after installation or upgrade.
+         * if it is, the relevant dialog message is displayed.  If not, the routine just exists so start-up can continue.
+         */
     public void checkFirstRun() {
         String storedVersionName = "";
         String versionName;
@@ -477,25 +480,48 @@ public class StartupActivity extends AppCompatActivity {
         Log.v(TAG, "storedVersionName=" + storedVersionName + ", versionName=" + versionName);
 
         // CHeck for new installation
+        //storedVersionName = null;  // FIXME Force first run dialog for easier testing ****************************
         if (storedVersionName == null || storedVersionName.length() == 0) {
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
                     this);
-            final SpannableString s = new SpannableString(
-                    getString(R.string.FirstRunDlgMsg) + getString(R.string.changelog)
-            );
-            // This makes the links display as links, but they do not respond to clicks for some reason...
-            Linkify.addLinks(s, Linkify.ALL);
+            final String s = new String(
+                    getString(R.string.FirstRunDlgMsg));
             alertDialogBuilder
                     .setTitle(getString(R.string.FirstRunDlgTitle))
-                    .setMessage(s)
+                    .setMessage(Html.fromHtml(s))
                     .setCancelable(false)
-                    .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
+                    .setNeutralButton(getString(R.string.closeBtnTxt), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.cancel();
                             mDialogDisplayed = false;
                             //MainActivity.this.finish();
                         }
-                    });
+                    })
+                    .setPositiveButton("Privacy Policy", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                            String url = OsdUtil.PRIVACY_POLICY_URL;
+                            Intent i = new Intent(Intent.ACTION_VIEW);
+                            i.setData(Uri.parse(url));
+                            startActivity(i);
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                        }
+                    })
+                    .setNegativeButton("Data Sharing", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                            String url = OsdUtil.DATA_SHARING_URL;
+                            Intent i = new Intent(Intent.ACTION_VIEW);
+                            i.setData(Uri.parse(url));
+                            startActivity(i);
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                        }
+                    })
+            ;
             FirstRunDialog = alertDialogBuilder.create();
             Log.i(TAG, "Displaying First Run Dialog");
             FirstRunDialog.show();
@@ -504,17 +530,41 @@ public class StartupActivity extends AppCompatActivity {
             // Check for update of installed application
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
                     this);
-            final SpannableString s = new SpannableString(
+            final String s = new String(
                     getString(R.string.UpgradeMsg) + getString(R.string.changelog)
             );
-            // This makes the links display as links, but they do not respond to clicks for some reason...
-            Linkify.addLinks(s, Linkify.ALL);
+
             alertDialogBuilder
                     .setTitle(getString(R.string.UpdateDialogTitleTxt))
-                    .setMessage(s)
+                    .setMessage(Html.fromHtml(s))
                     .setCancelable(false)
-                    .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
+                    .setNeutralButton(getString(R.string.closeBtnTxt), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                            //MainActivity.this.finish();
+                        }
+                    })
+                    .setPositiveButton("Privacy Policy", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                            String url = OsdUtil.PRIVACY_POLICY_URL;
+                            Intent i = new Intent(Intent.ACTION_VIEW);
+                            i.setData(Uri.parse(url));
+                            startActivity(i);
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                        }
+                    })
+                    .setNegativeButton("Data Sharing", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                            String url = OsdUtil.DATA_SHARING_URL;
+                            Intent i = new Intent(Intent.ACTION_VIEW);
+                            i.setData(Uri.parse(url));
+                            startActivity(i);
                             dialog.cancel();
                             mDialogDisplayed = false;
                         }

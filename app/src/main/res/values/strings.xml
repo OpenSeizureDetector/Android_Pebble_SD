@@ -3,40 +3,36 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
-        \nV4.0.0v - Added BLE Characteristic changes for PineWatch, added cancel buttons to permissions dialogs.
-        \nV4.0.0t - Fixed issue with occasional crashes when network disrupted.  Improved 'Prominent Disclosure' of SMS and Location permissions to satisfy Google Play Store requirements.
-        \nV4.0.0s - Fixed problem with Android 11 not sending SMS Location alerts.
-        \nV4.0.0p - Restored compatibility with Android V6
-        \nV4.0.0n - Fixed issue with system not shutting down after accessing the event editor screen.
-        \nV4.0.0m - Minor tweaks to UI to show O2Sat as --- if no O2 sensor is present and avoid displaying error while waiting for
-          first data sharing update.
-        \nV4.0.0l - Added prompt for user if data sharing is not enabled.
-        \nV4.0.0k - Added user name and user ID to login activity so the user knows who they are logged in as.
-        \nV4.0.0j - Added event ID to list in data log manager so users can refer to it when asking for assistance.
-        \n          Moved system log to sqlite database and added list of it to data log manager activity.
-        \nV4.0.0i - Tidied up user settings and (hopefully) fixed issue with server not shutting down correctly sometimes.
-        "</string>
+        \nV4.0.0
+          - Introduced the &lt;b>Data Sharing&lt;/b> feature to allow users to share their seizure and false alarm data
+        with researchers to help improve the system.&lt;br/>
+          - Fixed &lt;b>SMS Location Alerts&lt;/b> on Android V10+ (new permissions screens)&lt;br/>
+          - Added explicit link to the &lt;b>Privacy Policy&lt;/b> &lt;br/>
+          "</string>
     <string name="UpgradeMsg">
-        OpenSeizureDetector does not collect any personal data other than through the Data Sharing system that allows your seizure events to be analysed to improve detection reliability and false alarm rate (see https://www.openseizuredetector.org.uk/?page_id=1818)
-        Please enable Data Sharing to help improve OpenSeizureDetector!
-        \nPlease subscribe to updates at
-        http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector.
-        so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk
-        \n\nChanges in this version:
-        \n
+        Please enable the new &lt;b>Data Sharing&lt;/b> feature to help improve OpenSeizureDetector!&lt;br/>
+                (see below for details)&lt;br/>&lt;br/>
+
+        Please subscribe to updates at &lt;b>www.openseizuredetector.org.uk&lt;/b>
+        so we can inform you of any issues.
+&lt;br/>&lt;br/>
+        &lt;b>Changes in this version:&lt;/b>&lt;br/>
     </string>
     <string name="FirstRunDlgMsg">
-        OpenSeizureDetector does not collect any personal data other than through the Data Sharing system that allows your seizure events to be analysed to improve detection reliability and false alarm rate (see https://www.openseizuredetector.org.uk/?page_id=1818)
-        Please enable Data Sharing to help improve OpenSeizureDetector!
-        \nPlease subscribe to updates at
-        http://openseizuredetector.org.uk, or the app Facebook page at https://www.facebook.com/openseizuredetector.
-        so I can get in touch if necessary.\nThank you!  Graham \ngraham@openseizuredetector.org.uk
-        \n\nChanges in this version:
+        For details of how OpenSeizure Detector collects and uses
+        your personal data, please refer to the &lt;b>Privacy Policy below&lt;/b>.&lt;br/>&lt;br/>
+
+        Please enable &lt;b>Data Sharing&lt;/b> to help improve OpenSeizureDetector!&lt;br/>
+                (see below for details)&lt;br/>&lt;br/>
+
+        Please subscribe to updates at &lt;b>www.openseizuredetector.org.uk&lt;/b>
+        so we can inform you of any issues.
     </string>
     <string name="ask_for_error_log">Sorry, OpenSeizureDetector Has Crashed.  Please Email this log file to us so we can work out what happened and fix it.\nThanks, Graham.</string>
     <string name="email_welcome_note">Dear OpenSeizureDetector,\n\nApplication is just crashed, please check following error log for more details.\n\n\n</string>
     <string name="copyright_info">OpenSeizureDetector (Using UCE Handler\nCopyright © 2018 Rohit Sahebrao Surwase.)</string>
     <string name="okBtnTxt">OK</string>
+    <string name="closeBtnTxt">Close</string>
     <string name="UpdateDialogTitleTxt">Thank you for Updating OpenSeizureDetector</string>
     <string name="FirstRunDlgTitle">Welcome to OpenSeizureDetector</string>
     <string name="SmsPermissionWarning">Problem with SMS Permissions\n(please check phone settings -> Apps -> OpenSeizureDetector -> Permissions</string>
@@ -137,28 +133,15 @@
         associated with a seizure,
         then raises audible and text
         message (SMS) location alerts for carers.\n\n
-        The system is free and open source - see \n
-        http://openseizuredetector.org.uk for details.
-        Please report any issues by raising an issue on the project github source code repository - https://github.com/OpenSeizureDetector/Android_Pebble_SD/issues
-        or email graham@openseizuredetector.org.uk\n
-         \n\n
-        Please see the Privacy Policy (https://www.openseizuredetector.org.uk/?post=1415) for details of how OpenSeizureDetector uses and shares your data.
-</string>
-    <string name="credits_text">
-        Main Watch App and Android App \n
+        The system is free and open source - see
+        openseizuredetector.org.uk for details.\n\n
+        Please report any issues by raising an issue on the source code repository - https://github.com/OpenSeizureDetector/Android_Pebble_SD/issues
+        or email graham@openseizuredetector.org.uk\n\n
+        Android App and Garmin Watch App,
         copyright Graham Jones, 2015-2022.\n
-        The following libraries are used:\n
-        - SYLT-FFT - https://github.com/stg/SYLT-FFT by D. Taylor.\n
-        - NanoHTTPD - https://github.com/NanoHttpd/nanohttpd\n
-        - jQuery - http://jquery.org\n
-        - jBeep - http://www.ultraduz.com.br\n
-        - Chartjs - http://www.chartjs.org\n
-        - MPAndroidChart - https://github.com/PhilJay/MPAndroidChart\n
-        - UCE-Handler - https://github.com/RohitSurwase/UCE-Handler\n \n
-        The Logo is based on Star of life2 by Verdy P, \n
-        Licensed under Public Domain via\n
-        Wikimedia Commons (http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).
-    </string>
+
+         </string>
+    <string name="credits_text"></string>
     <string name="edit_settings">Edit Settings</string>
     <string name="sms_location_alarm_active">SMS Location Alarm Active</string>
     <string name="sms_location_alarm_disabled">SMS Location Alarm Disabled</string>
