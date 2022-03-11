@@ -136,11 +136,13 @@
         watch to detect the shaking
         associated with a seizure,
         then raises audible and text
-        message (SMS) alerts for carers.\n\n
-        The system is free and open source - see \n http://openseizuredetector.org.uk for details. Please report any issues to graham@openseizuredetector.org.uk\n
-        or raise an issue on the project github source code repository - https://github.com/OpenSeizureDetector/Android_Pebble_SD/issues \n\n
-        OpenSeizureDetector does not collect any personal data other than through the Data Sharing system that allows your seizure events to be analysed to improve detection reliability and false alarm rate (see https://www.openseizuredetector.org.uk/?page_id=1818)
-        Please enable Data Sharing to help improve OpenSeizureDetector!
+        message (SMS) location alerts for carers.\n\n
+        The system is free and open source - see \n
+        http://openseizuredetector.org.uk for details.
+        Please report any issues by raising an issue on the project github source code repository - https://github.com/OpenSeizureDetector/Android_Pebble_SD/issues
+        or email graham@openseizuredetector.org.uk\n
+         \n\n
+        Please see the Privacy Policy (https://www.openseizuredetector.org.uk/?post=1415) for details of how OpenSeizureDetector uses and shares your data.
 </string>
     <string name="credits_text">
         Main Watch App and Android App \n
