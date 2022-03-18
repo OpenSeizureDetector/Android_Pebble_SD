@@ -15,20 +15,14 @@ import java.util.TimeZone;
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = {Build.VERSION_CODES.O_MR1}, packageName = "uk.org.openseizuredetector")
 public class LogManagerTest extends TestCase {
-    LogManager mLm;
-    public void setUp() throws Exception {
-        super.setUp();
-        TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"));
-        mLm = new LogManager(RuntimeEnvironment.systemContext);
-    }
+
 
     public void tearDown() throws Exception {
-        mLm.close();
+
     }
 
     SdData getFakeSdData() {
-        SdData sdData = new SdData();
-        return sdData;
+    return null;
     }
 
 

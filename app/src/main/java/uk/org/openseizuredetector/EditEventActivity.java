@@ -35,7 +35,7 @@ public class EditEventActivity extends AppCompatActivity {
     private HashMap<String, ArrayList<String>> mEventSubTypesHashMap = null;
     private String mEventTypeStr = null;
     private String mEventSubTypeStr = null;
-    private Long mEventId;
+    private String mEventId;
     private String mEventNotes = "";
     //private Date mEventDateTime;
     private RadioGroup mEventTypeRg;
@@ -59,7 +59,7 @@ public class EditEventActivity extends AppCompatActivity {
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
-            Long eventId = extras.getLong("eventId");
+            String eventId = extras.getString("eventId");
             mEventId = eventId;
             Log.v(TAG, "onCreate - mEventId=" + mEventId);
         }
