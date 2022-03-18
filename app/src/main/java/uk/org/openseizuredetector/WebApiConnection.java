@@ -4,6 +4,8 @@ import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -12,6 +14,11 @@ import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,6 +42,8 @@ public class WebApiConnection {
     private String mAuthToken;
     private Context mContext;
     private OsdUtil mUtil;
+    FirebaseFirestore mDb;
+
     RequestQueue mQueue;
 
     public interface JSONObjectCallback {
@@ -53,6 +62,16 @@ public class WebApiConnection {
         mContext = context;
         mQueue = Volley.newRequestQueue(context);
         mUtil = new OsdUtil(mContext, new Handler());
+        // Check if we are already logged in
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        if (auth != null) {
+            Log.i(TAG,"Firebase Logged in OK");
+            mDb = FirebaseFirestore.getInstance();
+        } else {
+            Log.e(TAG,"Firebase not logged in");
+            mDb = null;
+        }
+
     }
 
     public void close() {
@@ -60,174 +79,62 @@ public class WebApiConnection {
         mQueue.stop();
     }
 
-    /**
-     * Attempt to authenticate with the web API using user name uname and password passwd.  Calls function callback with either
-     * the authentication token on success or null on failure.
-     *
-     * @param uname    - user name
-     * @param passwd   - password
-     * @param callback - call back function callback(String retVal)
-     * @return true if request sent, or false if failed to send request.
-     */
-    public boolean authenticate(final String uname, final String passwd, StringCallback callback) {
-        // NOTE:  the 'final' keyword is necessary for uname and passwd to be accessible to getParams below - I don't know why!
-        // We know that this command works, so we just need the Java equivalent:
-        // curl -X POST -d 'login=graham4&password=testpwd1' https://osdapi.ddns.net/api/accounts/login/
-        // sending the credentials as a JSONObject postData did not work, so try the method from:
-        //    https://protocoderspoint.com/login-and-registration-form-in-android-using-volley-keeping-user-logged-in/#Login_Registration_form_in_android_using_volley_library
-        String urlStr = mUrlBase + "/api/accounts/login/";
-        Log.v(TAG, "urlStr=" + urlStr);
-
-        StringRequest req = new StringRequest(Request.Method.POST, urlStr,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        String tokenStr = null;
-                        Log.v(TAG, "Response is: " + response);
-                        try {
-                            JSONObject jo = new JSONObject(response);
-                            tokenStr = jo.getString("token");
-                            mServerConnectionOk = true;
-                        } catch (JSONException e) {
-                            tokenStr = "Error Parsing Rsponse";
-                        }
-                        setStoredToken(tokenStr);
-                        callback.accept(tokenStr);
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        if (error != null) {
-                            Log.e(TAG, "Login Error: " + error.toString() + ", message:" + error.getMessage());
-                        } else {
-                            Log.e(TAG, "Login Error:  Returned null response");
-                        }
-                        mServerConnectionOk = false;
-                        setStoredToken(null);
-                        callback.accept(null);
-                    }
-                }) {
-            // Note, this is overriding part of StringRequest, not one of the sub-classes above!
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<>();
-                // params.put("name",sname); // passing parameters to server
-                params.put("login", uname);
-                params.put("password", passwd);
-                return params;
-            }
-        };
-
-        mQueue.add(req);
-        return (true);
-    }
-
-    // Remove the stored token so future calls are not authenticated.
-    public void logout() {
-        Log.v(TAG, "logout()");
-        setStoredToken(null);
-        //saveStoredToken(null);
-    }
-
-    public void setStoredToken(String authToken) {
-        mAuthToken = authToken;
-    }
-
-    private String getStoredToken() {
-        return (mAuthToken);
-    }
-
     public boolean isLoggedIn() {
-        String authToken = getStoredToken();
-        //Log.v(TAG, "isLoggedIn(): token=" + authToken);
-        if (authToken == null || authToken.length() == 0) {
-            //Log.v(TAG, "isLogged in - not logged in");
-            return (false);
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        if (auth != null) {
+            Log.v(TAG,"isLoggedIn(): Firebase Logged in OK");
+            return(false);
         } else {
-            return (true);
+            Log.v(TAG,"isLoggedIn(): Firebase not logged in");
+            return(true);
         }
+    }
 
+    public String getStoredToken() {
+        return null;
+    }
+
+    public void setStoredToken(String s) {
+        return;
     }
 
 
     // Create a new event in the remote database, based on the provided parameters.
     public boolean createEvent(final int osdAlarmState, final Date eventDate, final String eventDesc, StringCallback callback) {
         Log.v(TAG, "createEvent()");
-        String urlStr = mUrlBase + "/api/events/";
-        Log.v(TAG, "urlStr=" + urlStr);
-        final String authtoken = getStoredToken();
-
-        if (!isLoggedIn()) {
-            Log.v(TAG, "not logged in - doing nothing");
-            return (false);
+        String userId = null;
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            Log.e(TAG,"ERROR: createEvent() - not logged in");
+            return false;
+        } else {
+            userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         }
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-        JSONObject jsonObject = new JSONObject();
-        try {
-            jsonObject.put("osdAlarmState", String.valueOf(osdAlarmState));
-            jsonObject.put("dataTime", dateFormat.format(eventDate));
-            jsonObject.put("desc", eventDesc);
-        } catch (JSONException e) {
-            Log.e(TAG, "Error generating event JSON string");
-        }
-        final String dataStr = jsonObject.toString();
-        Log.v(TAG, "createEvent - data=" + dataStr);
+        Map<String, Object> event = new HashMap<>();
+        event.put("dataTime", eventDate.getTime());
+        event.put("osdAlarmState", osdAlarmState);
+        event.put("desc", eventDesc);
+        event.put("type", null);
+        event.put("subType", null);
+        event.put("userId", userId);
 
-        StringRequest req = new StringRequest(Request.Method.POST, urlStr,
-                new Response.Listener<String>() {
+        mDb.collection("Events")
+                .add(event)
+                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                     @Override
-                    public void onResponse(String response) {
-                        Log.v(TAG, "Response is: " + response);
+                    public void onSuccess(DocumentReference documentReference) {
+                        Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
                         mServerConnectionOk = true;
-                        callback.accept(response);
+                        callback.accept("OK");
                     }
-                },
-                new Response.ErrorListener() {
+                })
+                .addOnFailureListener(new OnFailureListener() {
                     @Override
-                    public void onErrorResponse(VolleyError error) {
-                        mServerConnectionOk = false;
-                        if (error != null) {
-                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage());
-                            callback.accept(null);
-                        } else {
-                            Log.e(TAG, "Create Event Error - null respones");
-                            callback.accept(null);
-                        }
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w(TAG, "Error adding document", e);
+                        callback.accept(null);
                     }
-                }) {
-            // Note, this is overriding part of StringRequest, not one of the sub-classes above!
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<>();
-                // params.put("name",sname); // passing parameters to server
-                String authToken = getStoredToken();
-                params.put("Authorization: Token " + authToken, authToken);
-                Log.v(TAG, "getParams: params=" + params.toString());
-                return params;
-            }
-
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<String, String>();
-                params.put("Content-Type", "application/json; charset=UTF-8");
-                params.put("Authorization", "Token " + getStoredToken());
-                return params;
-            }
-
-            @Override
-            public byte[] getBody() throws AuthFailureError {
-                try {
-                    return dataStr == null ? null : dataStr.getBytes("utf-8");
-                } catch (UnsupportedEncodingException uee) {
-                    VolleyLog.wtf("Unsupported Encoding while trying to get the bytes of %s using %s", dataStr, "utf-8");
-                    return null;
-                }
-            }
-        };
-
-        mQueue.add(req);
-        return (true);
+                });
+        return(true);
     }
 
     public boolean getEvent(Long eventId, JSONObjectCallback callback) {

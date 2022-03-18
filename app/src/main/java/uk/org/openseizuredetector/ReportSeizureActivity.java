@@ -64,7 +64,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
         //mLm= new LogManager(mContext);
 
         Button okBtn =
-                (Button) findViewById(R.id.OKBtn);
+                (Button) findViewById(R.id.loginBtn);
         okBtn.setOnClickListener(onOk);
 
         Button cancelBtn =

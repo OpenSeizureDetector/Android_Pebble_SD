@@ -369,7 +369,7 @@
     <string name="check_seizures_message">Please select the events highlighted in pink to say if they are real seizures or false alarms</string>
     <string name="error_server_not_running">ERROR:  OpenSeizureDetector Server is not running - please re-start it</string>
     <string name="system_logs">System Logs</string>
-    <string name="logged_in_as_user_id">Logged in as User Id:</string>
+    <string name="logged_in_as_user_id">Logged in as: </string>
     <string name="datasharing_notification_text">Select for more information</string>
     <string name="datasharing_notification_title">OpenSeizureDetector Data Sharing Problem</string>
     <string name="datasharing_about_title">OpenSeizureDetector Data Sharing</string>
@@ -429,4 +429,6 @@
         and selecting <b>Apps->OpenSeizureDetector->Permissions</b>.
     </string>
     <string name="permissions_required">Permissions Disclosure</string>
+    <string name="about_data_sharing">About Data Sharing</string>
+    <string name="privacy_policy">Privacy Policy</string>
 </resources>

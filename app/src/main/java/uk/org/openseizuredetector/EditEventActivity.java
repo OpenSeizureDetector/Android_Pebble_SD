@@ -68,7 +68,7 @@ public class EditEventActivity extends AppCompatActivity {
         Button cancelBtn =
                 (Button) findViewById(R.id.cancelBtn);
         cancelBtn.setOnClickListener(onCancel);
-        Button OKBtn = (Button) findViewById(R.id.OKBtn);
+        Button OKBtn = (Button) findViewById(R.id.loginBtn);
         OKBtn.setOnClickListener(onOK);
 
         mEventTypeRg = findViewById(R.id.eventTypeRg);
