@@ -250,7 +250,7 @@ public class WebApiConnection {
         return (true);
     }
 
-    public boolean createDatapoint(JSONObject dataObj, int eventId, StringCallback callback) {
+    public boolean createDatapoint(JSONObject dataObj, String eventId, StringCallback callback) {
         Log.v(TAG, "createDatapoint()");
         // Create a new event in the remote database, based on the provided parameters.
         String userId = null;
