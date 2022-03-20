@@ -40,6 +40,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         Log.v(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
+        mContext = this;
         mUtil = new OsdUtil(this, serverStatusHandler);
         if (!mUtil.isServerRunning()) {
             mUtil.showToast(getString(R.string.error_server_not_running));

@@ -88,10 +88,10 @@ public class WebApiConnection {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth != null) {
             Log.v(TAG, "isLoggedIn(): Firebase Logged in OK");
-            return (false);
+            return (true);
         } else {
             Log.v(TAG, "isLoggedIn(): Firebase not logged in");
-            return (true);
+            return (false);
         }
     }
 
