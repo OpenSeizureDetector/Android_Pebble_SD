@@ -11,9 +11,11 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
+
 import androidx.core.view.MenuCompat;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -219,14 +221,34 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     // A bit of a hack to display in reverse chronological order
                     for (int i = eventsArray.length() - 1; i >= 0; i--) {
                         JSONObject eventObj = eventsArray.getJSONObject(i);
-                        Long id = eventObj.getLong("id");
-                        int osdAlarmState = eventObj.getInt("osdAlarmState");
-                        String dataTime = eventObj.getString("dataTime");
-                        String typeStr = eventObj.getString("type");
-                        String subType = eventObj.getString("subType");
-                        String desc = eventObj.getString("desc");
+                        Log.v(TAG, "getRemoteEvents() - " + eventObj.toString());
+                        String id = null;
+                        if (!eventObj.isNull("id")) {
+                            id = eventObj.getString("id");
+                        }
+                        int osdAlarmState = -1;
+                        if (!eventObj.isNull("osdAlarmState")) {
+                            osdAlarmState = eventObj.getInt("osdAlarmState");
+                        }
+                        String dataTime = "null";
+                        if (!eventObj.isNull("dataTime")) {
+                            dataTime = eventObj.getString("dataTime");
+                            Log.v(TAG, "getRemoteEvents() - dataTime=" + dataTime);
+                        }
+                        String typeStr = "null";
+                        if (!eventObj.isNull("type")) {
+                            typeStr = eventObj.getString("type");
+                        }
+                        String subType = "null";
+                        if (!eventObj.isNull("subType")) {
+                            subType = eventObj.getString("subType");
+                        }
+                        String desc = "null";
+                        if (!eventObj.isNull("desc")) {
+                            desc = eventObj.getString("desc");
+                        }
                         HashMap<String, String> eventHashMap = new HashMap<String, String>();
-                        eventHashMap.put("id", String.valueOf(id));
+                        eventHashMap.put("id", id);
                         eventHashMap.put("osdAlarmState", String.valueOf(osdAlarmState));
                         eventHashMap.put("osdAlarmStateStr", mUtil.alarmStatusToString(osdAlarmState));
                         eventHashMap.put("dataTime", dataTime);
@@ -249,7 +271,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
 
     private void updateUi() {
-        Log.i(TAG,"updateUi()");
+        Log.i(TAG, "updateUi()");
         boolean stopUpdating = true;
         TextView tv;
         Button btn;
@@ -291,9 +313,9 @@ public class LogManagerControlActivity extends AppCompatActivity {
         if (mRemoteEventsList != null) {
             ListView lv = (ListView) findViewById(R.id.remoteEventsLv);
             ListAdapter adapter = new RemoteEventsAdapter(LogManagerControlActivity.this, mRemoteEventsList, R.layout.log_entry_layout_remote,
-                    new String[]{"id","dataTime", "type", "subType", "osdAlarmStateStr", "desc"},
+                    new String[]{"id", "dataTime", "type", "subType", "osdAlarmStateStr", "desc"},
                     new int[]{R.id.event_id_remote_tv, R.id.event_date_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
-                    R.id.event_alarmState_remote_tv, R.id.event_notes_remote_tv});
+                            R.id.event_alarmState_remote_tv, R.id.event_notes_remote_tv});
             lv.setAdapter(adapter);
             //Log.i(TAG,"adapter[0]="+adapter.getItem(0));
             //Log.i(TAG,"adapter[3]="+adapter.getItem(3));
@@ -328,14 +350,14 @@ public class LogManagerControlActivity extends AppCompatActivity {
     }  //updateUi();
 
     public void onRadioButtonClicked(View view) {
-        LinearLayout localDataLl  = (LinearLayout) findViewById(R.id.local_data_ll);
+        LinearLayout localDataLl = (LinearLayout) findViewById(R.id.local_data_ll);
         LinearLayout sharedDataLl = (LinearLayout) findViewById(R.id.shared_data_ll);
         LinearLayout syslogLl = (LinearLayout) findViewById(R.id.syslog_ll);
         // Is the button now checked?
         boolean checked = ((RadioButton) view).isChecked();
 
         // Check which radio button was clicked
-        switch(view.getId()) {
+        switch (view.getId()) {
             case R.id.local_data_rb:
                 if (checked) {
                     // Switch to the local data view
@@ -351,7 +373,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     sharedDataLl.setVisibility(View.VISIBLE);
                     syslogLl.setVisibility(View.GONE);
                 }
-                    break;
+                break;
             case R.id.syslog_rb:
                 if (checked) {
                     // Switch to the local data view
@@ -409,7 +431,6 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
-
 
 
     View.OnClickListener onAuth =
@@ -504,7 +525,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
                     Log.v(TAG, "onRemoteEventList Click() - Position=" + position + ", id=" + id);// Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
                     HashMap<String, String> eventObj = (HashMap<String, String>) adapter.getItemAtPosition(position);
-                    Long eventId = Long.parseLong(eventObj.get("id"));
+                    String eventId = eventObj.get("id");
                     Log.d(TAG, "onItemClickListener(): eventId=" + eventId + ", eventObj=" + eventObj);
                     Intent i = new Intent(getApplicationContext(), EditEventActivity.class);
                     i.putExtra("eventId", eventId);
@@ -588,9 +609,9 @@ public class LogManagerControlActivity extends AppCompatActivity {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             View v = super.getView(position, convertView, parent);
-            Map<String, ?> dataItem = (Map<String,?>)getItem(position);
-            Log.v(TAG,"getView() "+dataItem.toString());
-            switch(dataItem.get("type").toString()) {
+            Map<String, ?> dataItem = (Map<String, ?>) getItem(position);
+            Log.v(TAG, "getView() " + dataItem.toString());
+            switch (dataItem.get("type").toString()) {
                 case "null":
                     v.setBackgroundColor(Color.parseColor("#ffaaaa"));
                     break;
@@ -604,19 +625,23 @@ public class LogManagerControlActivity extends AppCompatActivity {
             // Convert date format to something more readable.
             TextView tv = (TextView) v.findViewById(R.id.event_date_remote_tv);
             try {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-                Date dataTime = dateFormat.parse(dataItem.get("dataTime").toString());
-                dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                //SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+                //Date dataTime = dateFormat.parse(dataItem.get("dataTime").toString());
+                Long tstamp = Long.parseLong((String) dataItem.get("dataTime"));
+                Date dataTime = new Date(tstamp);
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
                 tv.setText(dateFormat.format(dataTime));
-            } catch (ParseException e) {
-                Log.e(TAG,"remoteEventsAdapter.getView: Error Parsing dataDate "+e.getLocalizedMessage());
+            } catch (NumberFormatException e) {
+                Log.e(TAG, "remoteEventsAdapter.getView: Error Parsing dataDate " + e.getLocalizedMessage());
                 tv.setText("---");
             }
 
 
-            return(v);
+            return (v);
         }
-    };
+    }
+
+    ;
 
 
 }

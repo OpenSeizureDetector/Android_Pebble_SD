@@ -159,10 +159,10 @@ public class EditEventActivity extends AppCompatActivity {
             mWac.getEvent(mEventId, new WebApiConnection.JSONObjectCallback() {
                 @Override
                 public void accept(JSONObject eventObj) {
-                    Log.v(TAG, "onCreate.getEvent");
+                    Log.v(TAG, "initialiseServiceConnection.getEvent");
                     if (eventObj != null) {
                         mEventObj = eventObj;
-                        Log.v(TAG, "onCreate.getEvent:  eventObj=" + eventObj.toString());
+                        Log.v(TAG, "initialiseServiceConnection.getEvent:  eventObj=" + eventObj.toString());
                         updateUi();
                         // FIXME: modify updateUi to use mEventObj
                     } else {
@@ -198,9 +198,9 @@ public class EditEventActivity extends AppCompatActivity {
         try {
             if (mEventObj != null) {
                 tv = (TextView) findViewById(R.id.eventIdTv);
-                tv.setText(String.valueOf(mEventObj.getLong("id")));
+                tv.setText(mEventId);
                 tv = (TextView) findViewById(R.id.eventAlarmStateTv);
-                tv.setText(mEventObj.getString("alarmStateStr"));
+                tv.setText(mEventObj.getString("osdAlarmState"));
                 tv = (TextView) findViewById(R.id.eventNotsTv);
                 tv.setText(mEventObj.getString("desc"));
 
@@ -208,10 +208,11 @@ public class EditEventActivity extends AppCompatActivity {
                 tv = (TextView) findViewById(R.id.eventDateTv);
                 try {
                     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-                    Date dataTime = dateFormat.parse(mEventObj.getString("dataTime"));
+                    //Date dataTime = dateFormat.parse(mEventObj.getString("dataTime"));
+                    Date dataTime = new Date(mEventObj.getLong("dataTime"));
                     dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     tv.setText(dateFormat.format(dataTime));
-                } catch (ParseException e) {
+                } catch (Exception e) {
                     Log.e(TAG,"updateUI: Error Parsing dataDate "+e.getLocalizedMessage());
                     tv.setText("---");
                 }
@@ -283,11 +284,11 @@ public class EditEventActivity extends AppCompatActivity {
                     TextView tv = (TextView)findViewById(R.id.eventNotsTv);
                     try {
                         mEventObj.put("desc",tv.getText());
+                        mEventObj.put("id",mEventId);   // Add event Id to event object manually because firestore does not include it by default.
                     } catch (JSONException e) {
                         Log.e(TAG,"Error writing mEventObj: "+e.getMessage());
                     }
                     Log.v(TAG, "onOK() - eventObj="+mEventObj.toString());
-
 
                     try {
                         mWac.updateEvent(mEventObj, new WebApiConnection.JSONObjectCallback() {
@@ -307,7 +308,7 @@ public class EditEventActivity extends AppCompatActivity {
                             }
                         });
                     } catch (Exception e) {
-                        Log.e(TAG,"ERROR:"+e.getMessage());
+                        Log.e(TAG,"onOK() - ERROR: "+e.getMessage()+" : " +e.toString());
                         e.printStackTrace();
                         mUtil.showToast("Error Updating Event");
                         updateUi();

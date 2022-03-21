@@ -792,14 +792,14 @@ public class LogManager {
                     mCurrentEventLocalId = eventId;
                     mWac.createEvent(eventAlarmStatus, eventDate, "", this::createEventCallback);
                 } else {
-                    Log.v(TAG, "uploadSdData - no data to upload");
+                    Log.v(TAG, "uploadSdData - no data to upload "); //(warnings="+warningsVal+")");
                 }
             });
         }
     }
 
 
-    // Mark the relevant member variables to show we are not currently doing an upload, so a new one can be
+    // Mark the relevant member variables to show we are not cuurrently doing an upload, so a new one can be
     // started if necessary.
     public void finishUpload() {
         mCurrentEventRemoteId = null;

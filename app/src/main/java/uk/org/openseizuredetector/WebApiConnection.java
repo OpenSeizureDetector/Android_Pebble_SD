@@ -34,6 +34,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 
@@ -67,16 +69,22 @@ public class WebApiConnection {
         mContext = context;
         mQueue = Volley.newRequestQueue(context);
         mUtil = new OsdUtil(mContext, new Handler());
+        loginToFirebase();
+    }
+
+    public void loginToFirebase() {
         // Check if we are already logged in
         FirebaseAuth auth = FirebaseAuth.getInstance();
+        mDb = FirebaseFirestore.getInstance();
         if (auth != null) {
-            Log.i(TAG, "Firebase Logged in OK");
-            mDb = FirebaseFirestore.getInstance();
+            if (auth.getCurrentUser() != null) {
+                Log.i(TAG, "Firebase Logged in OK -" + auth.getCurrentUser().getDisplayName());
+            } else {
+                Log.e(TAG, "Firebase not logged in - no current user");
+            }
         } else {
             Log.e(TAG, "Firebase not logged in");
-            mDb = null;
         }
-
     }
 
     public void close() {
@@ -109,6 +117,12 @@ public class WebApiConnection {
     public boolean createEvent(final int osdAlarmState, final Date eventDate, final String eventDesc, StringCallback callback) {
         Log.v(TAG, "createEvent()");
         String userId = null;
+
+        if (mDb == null) {
+            Log.w(TAG, "createEvent() - mDb is null - not doing anything");
+            return false;
+        }
+
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             Log.e(TAG, "ERROR: createEvent() - not logged in");
             return false;
@@ -146,6 +160,10 @@ public class WebApiConnection {
     // calls function callback with a JSONObject representation of the event with id 'eventId'
     public boolean getEvent(String eventId, JSONObjectCallback callback) {
         Log.v(TAG, "getEvent()");
+        if (mDb == null) {
+            Log.w(TAG, "getEvent() - mDb is null - not doing anything");
+            return false;
+        }
 
         DocumentReference docRef = mDb.collection("Events").document(eventId);
         docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
@@ -183,7 +201,13 @@ public class WebApiConnection {
     public boolean getEvents(JSONObjectCallback callback) {
         //Long eventId=Long.valueOf(285);
         Log.v(TAG, "getEvents()");
-        mDb.collection("Events")
+        if (mDb == null) {
+            Log.w(TAG, "getEvents() - mDb is null - not doing anything");
+            return false;
+        }
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        mDb.collection("Events")  //.where("userId", "==", userId)
+                .whereEqualTo("userId", userId)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
@@ -192,14 +216,18 @@ public class WebApiConnection {
                             try {
                                 JSONObject retObj = new JSONObject();
                                 JSONArray eventArray = new JSONArray();
+                                Log.d(TAG, "getEvents() - returned " + task.getResult().size());
                                 for (QueryDocumentSnapshot document : task.getResult()) {
-                                    Log.d(TAG, document.getId() + " => " + document.getData());
-                                    eventArray.put(new JSONObject(document.getData()));
+                                    Log.d(TAG, "getEvents() - " + document.getId() + " => " + document.getData());
+                                    JSONObject eventObj = new JSONObject(document.getData());
+                                    // Add the event id into the event data because firebase does not include it as part of the document.
+                                    eventObj.put("id", document.getId());
+                                    eventArray.put(eventObj);
                                 }
                                 retObj.put("events", eventArray);
                                 callback.accept(retObj);
                             } catch (JSONException e) {
-                                Log.e(TAG, "getEventTypes.onResponse(): Error: " + e.getMessage() + "," + e.toString());
+                                Log.e(TAG, "getEvents.onResponse(): Error: " + e.getMessage() + "," + e.toString());
                                 callback.accept(null);
                             }
 
@@ -212,10 +240,29 @@ public class WebApiConnection {
         return (true);
     }
 
+    Map<String, Object> jsonObjectToMap(JSONObject obj) {
+        try {
+            Map<String, Object> retMap = new HashMap<String, Object>();
+            for (Iterator<String> it = obj.keys(); it.hasNext(); ) {
+                String keyStr = it.next();
+                Log.v(TAG, "jsonObjecToMap()- keyStr=" + keyStr + ", obj=" + obj.get(keyStr));
+                retMap.put(keyStr, obj.get(keyStr));
+            }
+            return (retMap);
+        } catch (JSONException e) {
+            Log.e(TAG, "jsonObjectToMap() - Error Converting JSONObject" + obj.toString() + ": " + e.toString());
+            return (null);
+        }
+    }
 
     public boolean updateEvent(final JSONObject eventObj, JSONObjectCallback callback) {
         String eventId;
         Log.v(TAG, "updateEvent()");
+        if (mDb == null) {
+            Log.w(TAG, "updateEvent() - mDb is null - not doing anything");
+            return false;
+        }
+
         try {
             eventId = eventObj.getString("id");
         } catch (JSONException e) {
@@ -225,29 +272,37 @@ public class WebApiConnection {
         }
         final String dataStr = eventObj.toString();
         Log.v(TAG, "updateEvent - data=" + dataStr);
+        Map<String, Object> eventMap = jsonObjectToMap(eventObj);
+        Log.v(TAG, "updateEvent - map=" + eventMap.toString());
 
-        DocumentReference docRef = mDb.collection("Events").document(eventId);
-        docRef.update((Map<String, Object>) eventObj)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        JSONObject retObj;
-                        try {
-                            retObj = new JSONObject("{\"status\":\"OK\"}");
-                        } catch (Exception e) {
-                            retObj = null;
+        try {
+            DocumentReference docRef = mDb.collection("Events").document(eventId);
+            docRef.set(eventMap)
+                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            JSONObject retObj;
+                            try {
+                                retObj = new JSONObject("{\"status\":\"OK\"}");
+                            } catch (Exception e) {
+                                retObj = null;
+                            }
+                            callback.accept(retObj);
                         }
-                        callback.accept(retObj);
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w(TAG, "Error updating document", e);
-                        callback.accept(null);
-                    }
-                });
-        return (true);
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.w(TAG, "Error updating document", e);
+                            callback.accept(null);
+                        }
+                    });
+            return (true);
+        } catch (Exception e) {
+            Log.e(TAG, "updateEvent() - ERROR: " + e.toString());
+            e.printStackTrace();
+        }
+        return (false);
     }
 
     public boolean createDatapoint(JSONObject dataObj, String eventId, StringCallback callback) {
@@ -268,7 +323,7 @@ public class WebApiConnection {
         }
         Map<String, Object> datapoint = new HashMap<>();
         datapoint.put("dataTime", dataTime);
-        datapoint.put("dataJSON",dataObj.toString());
+        datapoint.put("dataJSON", dataObj.toString());
         datapoint.put("userId", userId);
         datapoint.put("eventId", userId);
 
@@ -293,7 +348,6 @@ public class WebApiConnection {
     }
 
 
-
     /**
      * Retrieve the file containing the standard event types from the server.
      * Calls the specified callback function, passing a JSONObject as a parameter when the data has been received and parsed.
@@ -302,6 +356,10 @@ public class WebApiConnection {
      */
     public boolean getEventTypes(JSONObjectCallback callback) {
         Log.v(TAG, "getEventTypes()");
+        if (mDb == null) {
+            Log.w(TAG, "getEventTypes() - mDb is null - not doing anything");
+            return false;
+        }
 
         mDb.collection("EventTypes")
                 .get()
@@ -311,12 +369,13 @@ public class WebApiConnection {
                         if (task.isSuccessful()) {
                             try {
                                 JSONObject retObj = new JSONObject();
-                                JSONArray eventArray = new JSONArray();
                                 for (QueryDocumentSnapshot document : task.getResult()) {
-                                    Log.d(TAG, document.getId() + " => " + document.getData());
-                                    eventArray.put(new JSONObject(document.getData()));
+                                    Log.d(TAG, "getEventTypes.onComplete(): " + document.getId() + " => " + document.getData());
+                                    Log.v(TAG, "getEventTypes.onComplete() - subtypes=" + document.getData().get("subTypes"));
+                                    JSONArray subTypesArray = listToJSONArray((List) document.getData().get("subTypes"));
+                                    retObj.put(document.getData().get("type").toString(), subTypesArray);
                                 }
-                                retObj.put("eventTypes", eventArray);
+                                Log.d(TAG, "getEventTypes.onComplete() - retObj=" + retObj.toString());
                                 callback.accept(retObj);
                             } catch (JSONException e) {
                                 Log.e(TAG, "getEventTypes.onResponse(): Error: " + e.getMessage() + "," + e.toString());
@@ -332,6 +391,14 @@ public class WebApiConnection {
 
     }
 
+    private JSONArray listToJSONArray(List<Object> list) {
+        JSONArray arr = new JSONArray();
+        for (Object obj : list) {
+            arr.put(obj);
+        }
+        return arr;
+    }
+
     /**
      * Retrieve a trivial file from the server to check we have a good server connection.
      * sets mServerConnectionOk.
@@ -341,7 +408,7 @@ public class WebApiConnection {
     public boolean checkServerConnection() {
         //FIXME There must be a Firebase function for this?
         mServerConnectionOk = true;
-        return true;
+        return mServerConnectionOk;
     }
 
 }
