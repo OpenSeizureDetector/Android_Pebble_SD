@@ -95,10 +95,15 @@ public class WebApiConnection {
     public boolean isLoggedIn() {
         FirebaseAuth auth = FirebaseAuth.getInstance();
         if (auth != null) {
-            Log.v(TAG, "isLoggedIn(): Firebase Logged in OK");
-            return (true);
+            if (auth.getCurrentUser() != null) {
+                //Log.v(TAG, "isLoggedIn(): Firebase Logged in OK");
+                return (true);
+            } else {
+                //Log.v(TAG, "isLoggedIn(): Current user is null - Firebase not logged in");
+                return (false);
+            }
         } else {
-            Log.v(TAG, "isLoggedIn(): Firebase not logged in");
+            //Log.v(TAG, "isLoggedIn(): Firebase not logged in");
             return (false);
         }
     }
@@ -205,6 +210,11 @@ public class WebApiConnection {
             Log.w(TAG, "getEvents() - mDb is null - not doing anything");
             return false;
         }
+
+        if (!isLoggedIn()) {
+            Log.w(TAG, "getEvents() - not logged in - not doing anything");
+            return false;
+        }
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         mDb.collection("Events")  //.where("userId", "==", userId)
                 .whereEqualTo("userId", userId)
@@ -240,21 +250,6 @@ public class WebApiConnection {
         return (true);
     }
 
-    Map<String, Object> jsonObjectToMap(JSONObject obj) {
-        try {
-            Map<String, Object> retMap = new HashMap<String, Object>();
-            for (Iterator<String> it = obj.keys(); it.hasNext(); ) {
-                String keyStr = it.next();
-                Log.v(TAG, "jsonObjecToMap()- keyStr=" + keyStr + ", obj=" + obj.get(keyStr));
-                retMap.put(keyStr, obj.get(keyStr));
-            }
-            return (retMap);
-        } catch (JSONException e) {
-            Log.e(TAG, "jsonObjectToMap() - Error Converting JSONObject" + obj.toString() + ": " + e.toString());
-            return (null);
-        }
-    }
-
     public boolean updateEvent(final JSONObject eventObj, JSONObjectCallback callback) {
         String eventId;
         Log.v(TAG, "updateEvent()");
@@ -272,7 +267,19 @@ public class WebApiConnection {
         }
         final String dataStr = eventObj.toString();
         Log.v(TAG, "updateEvent - data=" + dataStr);
-        Map<String, Object> eventMap = jsonObjectToMap(eventObj);
+        Map<String, Object> eventMap = new HashMap<>();
+        try {
+            eventMap.put("dataTime", eventObj.getLong("dataTime"));
+            eventMap.put("osdAlarmState", eventObj.getInt("osdAlarmState"));
+            eventMap.put("desc", eventObj.getString("desc"));
+            eventMap.put("type", eventObj.getString("type"));
+            eventMap.put("subType", eventObj.getString("subType"));
+            eventMap.put("userId", eventObj.getString("userId"));
+        } catch (JSONException e) {
+            Log.e(TAG, "updateEvent(): Error data from eventObj." + e.toString());
+            e.printStackTrace();
+            return false;
+        }
         Log.v(TAG, "updateEvent - map=" + eventMap.toString());
 
         try {

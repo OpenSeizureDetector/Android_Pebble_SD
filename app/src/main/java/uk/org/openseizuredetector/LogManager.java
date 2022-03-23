@@ -287,15 +287,7 @@ public class LogManager {
 
             if (sdData.alarmState != 0) {
                 Log.i(TAG, "writeDatapointToLocalDb(): adding event to local DB");
-                // Write Datapoint to database
-                SQLStr = "INSERT INTO " + mEventsTableName
-                        + "(dataTime, status)"
-                        + " VALUES("
-                        + "'" + dateStr + "',"
-                        + sdData.alarmState
-                        + ")";
-                mOsdDb.execSQL(SQLStr);
-                Log.v(TAG, "writeDatapointToLocalDb(): event written to database");
+                createLocalEvent(dateStr, sdData.alarmState);
             }
         } catch (SQLException e) {
             Log.e(TAG, "writeToLocalDb(): Error Writing Data: " + e.toString());
@@ -303,6 +295,20 @@ public class LogManager {
         } catch (NullPointerException e) {
             Log.e(TAG, "writeToLocalDb(): Null Pointer Exception: " + e.toString());
         }
+    }
+
+    public boolean createLocalEvent(String dataTime, long status) {
+        // Expects dataTime to be in format: SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Log.d(TAG,"createLocalEvent() - dataTime="+dataTime+", status="+status);
+        // Write Datapoint to database
+        String SQLStr = "INSERT INTO " + mEventsTableName
+                + "(dataTime, status)"
+                + " VALUES("
+                + "'" + dataTime + "',"
+                + status
+                + ")";
+        mOsdDb.execSQL(SQLStr);
+        return true;
     }
 
     /**
@@ -872,24 +878,28 @@ public class LogManager {
     // datapointCallback is called when the upload is complete.
     public void uploadNextDatapoint() {
         //Log.v(TAG, "uploadNextDatapoint()");
-        if (mDatapointsToUploadList.size() > 0) {
-            mUploadInProgress = true;
-            try {
-                mCurrentDatapointId = mDatapointsToUploadList.get(0).getInt("id");
-            } catch (JSONException e) {
-                Log.e(TAG, "uploadNextDatapoint(): Error reading currentDatapointID from mDatapointsToUploadList[0]" + e.getMessage());
-                Log.e(TAG, "uploadNextDatapoint(): Removing mDatapointsToUploadList[0] and trying the next datapoint");
-                mDatapointsToUploadList.remove(0);
-                uploadNextDatapoint();
+        if (mDatapointsToUploadList != null) {
+            if (mDatapointsToUploadList.size() > 0) {
+                mUploadInProgress = true;
+                try {
+                    mCurrentDatapointId = mDatapointsToUploadList.get(0).getInt("id");
+                } catch (JSONException e) {
+                    Log.e(TAG, "uploadNextDatapoint(): Error reading currentDatapointID from mDatapointsToUploadList[0]" + e.getMessage());
+                    Log.e(TAG, "uploadNextDatapoint(): Removing mDatapointsToUploadList[0] and trying the next datapoint");
+                    mDatapointsToUploadList.remove(0);
+                    uploadNextDatapoint();
+                }
+
+                Log.v(TAG, "uploadNextDatapoint() - " + mDatapointsToUploadList.size() + " datapoints to upload.  Uploading datapoint ID:" + mCurrentDatapointId);
+                mWac.createDatapoint(mDatapointsToUploadList.get(0), mCurrentEventRemoteId, this::datapointCallback);
+
+            } else {
+                Log.i(TAG, "uploadNextDatapoint() - All datapoints uploaded!");
+                setEventToUploaded(mCurrentEventLocalId, mCurrentEventRemoteId);
+                finishUpload();
             }
-
-            Log.v(TAG, "uploadNextDatapoint() - "+ mDatapointsToUploadList.size()+" datapoints to upload.  Uploading datapoint ID:" + mCurrentDatapointId);
-            mWac.createDatapoint(mDatapointsToUploadList.get(0), mCurrentEventRemoteId, this::datapointCallback);
-
         } else {
-            Log.i(TAG,"uploadNextDatapoint() - All datapoints uploaded!");
-            setEventToUploaded(mCurrentEventLocalId, mCurrentEventRemoteId);
-            finishUpload();
+            Log.w(TAG,"uploadNextDatapoint - mDatapointsToUploadList is null - I don't thin this should have happened!");
         }
     }
 
@@ -898,8 +908,12 @@ public class LogManager {
     // to upload the next one.
     public void datapointCallback(String datapointStr) {
         Log.v(TAG, "datapointCallback() dataPointId="+mCurrentDatapointId+" remote datapointID=" + datapointStr + ", mCurrentEventId=" + mCurrentEventRemoteId);
-        if (mDatapointsToUploadList.size() > 0) {
-            mDatapointsToUploadList.remove(0);
+        if (mDatapointsToUploadList != null) {
+            if (mDatapointsToUploadList.size() > 0) {
+                mDatapointsToUploadList.remove(0);
+            }
+        } else {
+            Log.w(TAG,"datapointCallback - mDatapointsToUploadList is null - I don't thin this should have happened!");
         }
         setDatapointToUploaded(mCurrentDatapointId, mCurrentEventRemoteId);
         uploadNextDatapoint();
