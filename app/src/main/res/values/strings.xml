@@ -3,6 +3,7 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
+        \nV4.0.1 - fixed crash in Report Seizure function
         \nV4.0.0
           - Introduced the &lt;b>Data Sharing&lt;/b> feature to allow users to share their seizure and false alarm data
         with researchers to help improve the system.&lt;br/>

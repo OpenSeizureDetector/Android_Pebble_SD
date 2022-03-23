@@ -46,6 +46,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
             finish();
             return;
         }
+        mContext = this;
         mConnection = new SdServiceConnection(getApplicationContext());
 
         setContentView(R.layout.activity_report_seizure);
