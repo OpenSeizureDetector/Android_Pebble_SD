@@ -22,8 +22,10 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.core.OrderBy;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -218,6 +220,7 @@ public class WebApiConnection {
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         mDb.collection("Events")  //.where("userId", "==", userId)
                 .whereEqualTo("userId", userId)
+                .orderBy("dataTime", Query.Direction.ASCENDING)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
