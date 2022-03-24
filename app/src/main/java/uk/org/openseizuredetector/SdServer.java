@@ -1289,14 +1289,19 @@ public class SdServer extends Service implements SdDataReceiver {
         public void onFinish() {
             Log.v(TAG, "SmsTimer.onFinish()");
             mTimeLeft = 0;
-            mLocationFinder.getLocation(this);
-            Location loc = mLocationFinder.getLastLocation();
-            if (loc != null) {
-                mUtil.showToast(getString(R.string.send_sms_last_location)
-                        + loc.getLongitude() + ","
-                        + loc.getLatitude());
+            if (mLocationFinder != null) {
+                mLocationFinder.getLocation(this);
+                Location loc = mLocationFinder.getLastLocation();
+                if (loc != null) {
+                    mUtil.showToast(getString(R.string.send_sms_last_location)
+                            + loc.getLongitude() + ","
+                            + loc.getLatitude());
+                } else {
+                    Log.i(TAG, "SmsTimer.onFinish() - Last Location is Null so sending first SMS without location.");
+                }
             } else {
-                Log.i(TAG, "SmsTimer.onFinish() - Last Location is Null so sending first SMS without location.");
+                Log.e(TAG,"SmsTImer.onFinish() - mLocationFinder is NULL - this should not happen!");
+                mUtil.showToast("Error Finding Location - mLocationFinder is null - please report this issue!");
             }
             Log.i(TAG, "SmsTimer.onFinish() - Sending to " + mSMSNumbers.length + " Numbers");
             mUtil.writeToSysLogFile("SdServer.SmsTimer.onFinish()");
