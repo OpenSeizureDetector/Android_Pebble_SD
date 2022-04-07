@@ -1301,7 +1301,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 }
             } else {
                 Log.e(TAG,"SmsTimer.onFinish - mLocationFinder is null - this should not happen!");
-                mUtil.showToast("SmsTimer.onFinish - mLocationFinder is null - this should not happen! - Please report this issue!")
+                mUtil.showToast("SmsTimer.onFinish - mLocationFinder is null - this should not happen! - Please report this issue!");
             }
             Log.i(TAG, "SmsTimer.onFinish() - Sending to " + mSMSNumbers.length + " Numbers");
             mUtil.writeToSysLogFile("SdServer.SmsTimer.onFinish()");

@@ -123,8 +123,8 @@ public class LogManager {
         mUtil = new OsdUtil(mContext, handler);
         openDb();
         Log.i(TAG, "Starting Remote Database Interface");
-        mWac = new WebApiConnection(mContext);
-        mWac.setStoredToken(mAuthToken);
+        mWac = new WebApiConnection_firebase(mContext);
+        //mWac.setStoredToken(mAuthToken);
 
         if (mLogRemote) {
             Log.i(TAG, "Starting Remote Log Timer");
