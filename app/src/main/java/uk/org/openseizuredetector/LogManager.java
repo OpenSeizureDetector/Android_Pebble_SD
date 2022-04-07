@@ -77,6 +77,7 @@ public class LogManager {
     private static Context mContext;
     private OsdUtil mUtil;
     public static WebApiConnection mWac;
+    public final boolean USE_FIREBASE_BACKEND = false;
 
     private boolean mUploadInProgress;
     private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
@@ -123,7 +124,12 @@ public class LogManager {
         mUtil = new OsdUtil(mContext, handler);
         openDb();
         Log.i(TAG, "Starting Remote Database Interface");
-        mWac = new WebApiConnection_firebase(mContext);
+        if (USE_FIREBASE_BACKEND) {
+            mWac = new WebApiConnection_firebase(mContext);
+        } else {
+            mWac = new WebApiConnection_osdapi(mContext);
+        }
+
         //mWac.setStoredToken(mAuthToken);
 
         if (mLogRemote) {
