@@ -32,7 +32,6 @@ public class WebApiConnection_osdapi extends WebApiConnection {
     public boolean mServerConnectionOk = false;
     private String mUrlBase = "https://osdApi.ddns.net";
     private String TAG = "WebApiConnection_osdapi";
-    private String mAuthToken;
     private Context mContext;
     private OsdUtil mUtil;
     RequestQueue mQueue;
@@ -57,6 +56,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
      * @param callback - call back function callback(String retVal)
      * @return true if request sent, or false if failed to send request.
      */
+    @Override
     public boolean authenticate(final String uname, final String passwd, StringCallback callback) {
         // NOTE:  the 'final' keyword is necessary for uname and passwd to be accessible to getParams below - I don't know why!
         // We know that this command works, so we just need the Java equivalent:
@@ -111,28 +111,17 @@ public class WebApiConnection_osdapi extends WebApiConnection {
         return (true);
     }
 
-    // Remove the stored token so future calls are not authenticated.
-    public void logout() {
-        Log.v(TAG, "logout()");
-        setStoredToken(null);
-        //saveStoredToken(null);
-    }
 
-    public void setStoredToken(String authToken) {
-        mAuthToken = authToken;
-    }
 
-    private String getStoredToken() {
-        return (mAuthToken);
-    }
 
     public boolean isLoggedIn() {
         String authToken = getStoredToken();
-        //Log.v(TAG, "isLoggedIn(): token=" + authToken);
+        Log.v(TAG, "isLoggedIn(): token=" + authToken);
         if (authToken == null || authToken.length() == 0) {
-            //Log.v(TAG, "isLogged in - not logged in");
+            Log.v(TAG, "isLogged in - not logged in");
             return (false);
         } else {
+            Log.v(TAG,"isLoggedIn - logged in ok");
             return (true);
         }
 
@@ -543,7 +532,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                             JSONObject retObj = new JSONObject(response);
                             callback.accept(retObj);
                         } catch (JSONException e) {
-                            Log.e(TAG, "getUserProfile.onRespons(): Error: " + e.getMessage() + "," + e.toString());
+                            Log.e(TAG, "getUserProfile.onResponse(): Error: " + e.getMessage() + "," + e.toString());
                             callback.accept(null);
                         }
                         mServerConnectionOk = true;

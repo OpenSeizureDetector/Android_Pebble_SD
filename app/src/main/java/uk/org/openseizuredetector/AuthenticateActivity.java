@@ -24,6 +24,9 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.Arrays;
 
 public class AuthenticateActivity extends AppCompatActivity {
@@ -35,6 +38,7 @@ public class AuthenticateActivity extends AppCompatActivity {
     final Handler serverStatusHandler = new Handler();
     private WebApiConnection mWac;
     private LogManager mLm;
+    private static final String TOKEN_ID = "webApiAuthToken";
 
 
     @Override
@@ -146,6 +150,7 @@ public class AuthenticateActivity extends AppCompatActivity {
     }
 
     private void initialiseServiceConnection() {
+        Log.v(TAG,"initialiseServiceConnection()");
         mLm = mConnection.mSdServer.mLm;
         mWac = mConnection.mSdServer.mLm.mWac;
         updateUi();
@@ -165,25 +170,45 @@ public class AuthenticateActivity extends AppCompatActivity {
 
 
     private void updateUi() {
+        Log.v(TAG,"updateUi()");
         LinearLayout loginLl = (LinearLayout) findViewById(R.id.login_ui);
+        LinearLayout osdApiLoginLl = (LinearLayout) findViewById(R.id.login_osdapi_ui);
         LinearLayout logoutLl = (LinearLayout) findViewById(R.id.logout_ui);
 
-        // Check if we are already logged in
-        FirebaseAuth auth = FirebaseAuth.getInstance();
-        if (auth.getCurrentUser() == null) {
-            Log.i(TAG, "Not Logged in - showing log in UI");
-            loginLl.setVisibility(View.VISIBLE);
-            logoutLl.setVisibility(View.GONE);
-        } else {
-            Log.i(TAG, "Already Logged in - showing Log Out prompt - " + auth.getCurrentUser().toString());
-            loginLl.setVisibility(View.GONE);
-            logoutLl.setVisibility(View.VISIBLE);
-            TextView tv2 = (TextView) findViewById(R.id.userIdTv);
-            tv2.setText(auth.getCurrentUser().getDisplayName());
-            tv2 = (TextView) findViewById(R.id.usernameTv);
-            tv2.setText(auth.getCurrentUser().getEmail());
+        if (mWac == null) {
+            Log.i(TAG,"mWac is null - not updating UI");
+            return;
         }
 
+        if (mWac.isLoggedIn()) {
+            Log.v(TAG, "Already Logged in - showing Log Out prompt");
+            loginLl.setVisibility(View.GONE);
+            logoutLl.setVisibility(View.VISIBLE);
+            if (!LogManager.USE_FIREBASE_BACKEND) {
+                osdApiLoginLl.setVisibility(View.GONE);
+            }
+            mWac.getUserProfile((JSONObject profileObj) -> {
+                try {
+                    String userId = profileObj.getString("id");
+                    String userName = profileObj.getString("username");
+                    TextView tv2 = (TextView) findViewById(R.id.userIdTv);
+                    tv2.setText(userId);
+                    tv2 = (TextView) findViewById(R.id.usernameTv);
+                    tv2.setText(userName);
+                } catch (JSONException e) {
+                    Log.e(TAG, "Error Parsing profileObj: " + e.getMessage());
+                    mUtil.showToast("Error Parsing profileObj - this should not happen!!!");
+                }
+            });
+        } else {
+            Log.v(TAG,"updateUi() - not logged in..");
+            loginLl.setVisibility(View.VISIBLE);
+            logoutLl.setVisibility(View.GONE);
+            if (!LogManager.USE_FIREBASE_BACKEND) {
+                osdApiLoginLl.setVisibility(View.VISIBLE);
+            }
+
+        }
     }
 
     View.OnClickListener onCancel =
@@ -201,23 +226,46 @@ public class AuthenticateActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
                     //m_status=true;
-                    Log.v(TAG, "onLogin() - using Firebase Login");
-                    Intent signInIntent = AuthUI.getInstance()
-                            .createSignInIntentBuilder()
-                            .setAvailableProviders(Arrays.asList(
-                                    new AuthUI.IdpConfig.GoogleBuilder().build(),
-                                    //new AuthUI.IdpConfig.FacebookBuilder().build(),
-                                    //new AuthUI.IdpConfig.TwitterBuilder().build(),
-                                    //new AuthUI.IdpConfig.MicrosoftBuilder().build(),
-                                    //new AuthUI.IdpConfig.YahooBuilder().build(),
-                                    //new AuthUI.IdpConfig.AppleBuilder().build(),
-                                    new AuthUI.IdpConfig.EmailBuilder().build()
-                                    //new AuthUI.IdpConfig.PhoneBuilder().build()
-                                    //new AuthUI.IdpConfig.AnonymousBuilder().build()))
-                            ))
-                            // ... options ...
-                            .build();
-                    signInLauncher.launch(signInIntent);
+                    if (LogManager.USE_FIREBASE_BACKEND) {
+                        Log.v(TAG, "onLogin() - using Firebase Login");
+                        Intent signInIntent = AuthUI.getInstance()
+                                .createSignInIntentBuilder()
+                                .setAvailableProviders(Arrays.asList(
+                                        new AuthUI.IdpConfig.GoogleBuilder().build(),
+                                        //new AuthUI.IdpConfig.FacebookBuilder().build(),
+                                        //new AuthUI.IdpConfig.TwitterBuilder().build(),
+                                        //new AuthUI.IdpConfig.MicrosoftBuilder().build(),
+                                        //new AuthUI.IdpConfig.YahooBuilder().build(),
+                                        //new AuthUI.IdpConfig.AppleBuilder().build(),
+                                        new AuthUI.IdpConfig.EmailBuilder().build()
+                                        //new AuthUI.IdpConfig.PhoneBuilder().build()
+                                        //new AuthUI.IdpConfig.AnonymousBuilder().build()))
+                                ))
+                                // ... options ...
+                                .build();
+                        signInLauncher.launch(signInIntent);
+                    } else {
+                        // Use Username and password authentication for OSDAPI.
+                        // FIXME - make this work with Google Authentication like we do for Firebase.
+                        String uname = mUnameEt.getText().toString();
+                        String passwd = mPasswdEt.getText().toString();
+                        Log.v(TAG,"onOK() - uname="+uname+", passwd="+passwd);
+                        mWac.authenticate(uname, passwd, new WebApiConnection.StringCallback() {
+                            @Override
+                            public void accept(String retVal) {
+                                if (retVal != null) {
+                                    Log.d(TAG,"Authentication Success - token is "+retVal);
+                                    mUtil.showToast("Login Successful");
+                                    saveAuthToken(retVal);
+                                    updateUi();
+                                } else {
+                                    Log.e(TAG,"onOk: Authentication failure for "+uname+", "+passwd);
+                                    mUtil.showToast("ERROR: Authentication Failed - Please Try Again");
+                                    mUtil.writeToSysLogFile("AuthActivity - Authorisation failed for "+uname+", "+passwd);
+                                }
+                            }
+                        });
+                    }
                 }
             };
 
@@ -225,14 +273,24 @@ public class AuthenticateActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Log.v(TAG, "onLogout");
-                AuthUI.getInstance()
-                        .signOut(getApplicationContext())
-                        .addOnCompleteListener(new OnCompleteListener<Void>() {
-                            public void onComplete(@NonNull Task<Void> task) {
-                                // user is now signed out
-                                updateUi();
-                            }
-                        });
+                if (LogManager.USE_FIREBASE_BACKEND) {
+                    AuthUI.getInstance()
+                            .signOut(getApplicationContext())
+                            .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    // user is now signed out
+                                    updateUi();
+                                }
+                            });
+                } else {
+                    if (mWac != null) {
+                        mWac.logout();
+                        saveAuthToken(null);
+                    } else {
+                        Log.e(TAG,"logout() - mWac is null - not doing anything");
+                    }
+                }
+                updateUi();
             }
         };
 

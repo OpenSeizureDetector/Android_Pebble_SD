@@ -624,24 +624,27 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
             // Convert date format to something more readable.
             TextView tv = (TextView) v.findViewById(R.id.event_date_remote_tv);
+            Date dataTime = null;
             try {
-                //SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-                //Date dataTime = dateFormat.parse(dataItem.get("dataTime").toString());
                 Long tstamp = Long.parseLong((String) dataItem.get("dataTime"));
-                Date dataTime = new Date(tstamp);
+                dataTime = new Date(tstamp);
+            } catch (NumberFormatException e) {
+                Log.v(TAG, "remoteEventsAdapter.getView: Error Parsing dataDate as Long: " + e.getLocalizedMessage()+" trying as string");
+                try {
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+                    dataTime = dateFormat.parse(dataItem.get("dataTime").toString());
+                } catch (ParseException e2) {
+                    Log.e(TAG, "remoteEventsAdapter.getView: Error Parsing dataDate " + e2.getLocalizedMessage());
+                }
+            }
+            if (dataTime != null) {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
                 tv.setText(dateFormat.format(dataTime));
-            } catch (NumberFormatException e) {
-                Log.e(TAG, "remoteEventsAdapter.getView: Error Parsing dataDate " + e.getLocalizedMessage());
+            } else {
                 tv.setText("---");
             }
-
-
             return (v);
         }
     }
-
-    ;
-
 
 }

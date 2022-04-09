@@ -3,6 +3,7 @@ package uk.org.openseizuredetector;
 import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
@@ -31,7 +32,7 @@ import java.util.Map;
 
 
 // This class is intended to handle all interactions with the OSD WebAPI
-public class WebApiConnection_firebase extends WebApiConnection{
+public class WebApiConnection_firebase extends WebApiConnection {
     public String retVal;
     public int retCode;
     public boolean mServerConnectionOk = false;
@@ -42,7 +43,7 @@ public class WebApiConnection_firebase extends WebApiConnection{
     FirebaseFirestore mDb;
 
     RequestQueue mQueue;
-    
+
 
     public WebApiConnection_firebase(Context context) {
         super(context);
@@ -83,6 +84,28 @@ public class WebApiConnection_firebase extends WebApiConnection{
             //Log.v(TAG, "isLoggedIn(): Firebase not logged in");
             return (false);
         }
+    }
+
+    public boolean getUserProfile(JSONObjectCallback callback) {
+        Log.v(TAG, "getUserProfile()");
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        if (!isLoggedIn()) {
+            Log.v(TAG, "not logged in - doing nothing");
+            return (false);
+        } else {
+            try {
+                JSONObject retObj = new JSONObject();
+                retObj.put("id",auth.getCurrentUser().getUid());
+                retObj.put("username", auth.getCurrentUser().getDisplayName());
+                retObj.put("email", auth.getCurrentUser().getEmail());
+                callback.accept(retObj);
+            } catch (JSONException e) {
+                Log.e(TAG, "Error Creating retObjObj: " + e.getMessage());
+                mUtil.showToast("Error Creating retObj - this should not happen!!!");
+                return (false);
+            }
+        }
+        return (true);
     }
 
     public String getStoredToken() {

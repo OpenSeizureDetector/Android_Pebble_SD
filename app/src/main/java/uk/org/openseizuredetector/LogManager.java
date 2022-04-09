@@ -130,7 +130,7 @@ public class LogManager {
             mWac = new WebApiConnection_osdapi(mContext);
         }
 
-        //mWac.setStoredToken(mAuthToken);
+        mWac.setStoredToken(mAuthToken);
 
         if (mLogRemote) {
             Log.i(TAG, "Starting Remote Log Timer");

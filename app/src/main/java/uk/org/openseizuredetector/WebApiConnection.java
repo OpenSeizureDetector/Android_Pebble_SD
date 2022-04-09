@@ -46,6 +46,8 @@ public abstract class WebApiConnection {
     private Context mContext;
     private OsdUtil mUtil;
     private String TAG = "WebApiConnection";
+    private String mAuthToken;
+
 
 
     public interface JSONObjectCallback {
@@ -108,5 +110,27 @@ public abstract class WebApiConnection {
      * @return true if request sent successfully or else false.
      */
     public abstract boolean checkServerConnection();
+
+    public abstract boolean getUserProfile(JSONObjectCallback callback);
+
+
+    public boolean authenticate(final String uname, final String passwd, StringCallback callback) {
+        Log.e(TAG,"WebApiConnection.authenticate(username, password, callback) Not Implemented");
+        return false;
+    }
+
+    // Remove the stored token so future calls are not authenticated.
+    public void logout() {
+        Log.v(TAG, "logout()");
+        setStoredToken(null);
+    }
+
+    protected void setStoredToken(String authToken) {
+        mAuthToken = authToken;
+    }
+
+    protected String getStoredToken() {
+        return (mAuthToken);
+    }
 
 }
