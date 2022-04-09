@@ -77,7 +77,7 @@ public class LogManager {
     private static Context mContext;
     private OsdUtil mUtil;
     public static WebApiConnection mWac;
-    public final boolean USE_FIREBASE_BACKEND = false;
+    public static final boolean USE_FIREBASE_BACKEND = false;
 
     private boolean mUploadInProgress;
     private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.

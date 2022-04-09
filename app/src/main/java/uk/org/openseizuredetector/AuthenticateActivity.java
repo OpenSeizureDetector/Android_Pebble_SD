@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -28,7 +29,13 @@ import java.util.Arrays;
 public class AuthenticateActivity extends AppCompatActivity {
     private String TAG = "AuthenticateActivity";
     private OsdUtil mUtil;
+    private EditText mUnameEt;
+    private EditText mPasswdEt;
+    private SdServiceConnection mConnection;
     final Handler serverStatusHandler = new Handler();
+    private WebApiConnection mWac;
+    private LogManager mLm;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +44,11 @@ public class AuthenticateActivity extends AppCompatActivity {
         setContentView(R.layout.activity_authenticate);
 
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
+        if (!mUtil.isServerRunning()) {
+            mUtil.showToast(getString(R.string.error_server_not_running));
+            finish();
+            return;
+        }
 
         Button cancelBtn =
                 (Button) findViewById(R.id.cancelBtn);
@@ -48,6 +60,20 @@ public class AuthenticateActivity extends AppCompatActivity {
         logoutCancelBtn.setOnClickListener(onCancel);
         Button logoutBtn = (Button) findViewById(R.id.logoutBtn);
         logoutBtn.setOnClickListener(onLogout);
+
+        // Components required only for osdapi backend
+        if (LogManager.USE_FIREBASE_BACKEND) { }
+        else {
+            mConnection = new SdServiceConnection(getApplicationContext());
+
+            Button registerBtn = (Button) findViewById(R.id.RegisterBtn);
+            registerBtn.setOnClickListener(onRegister);
+            Button resetPasswordBtn = (Button) findViewById(R.id.ResetPasswordBtn);
+            resetPasswordBtn.setOnClickListener(onResetPassword);
+
+            mUnameEt = (EditText) findViewById(R.id.username);
+            mPasswdEt = (EditText) findViewById(R.id.password);
+        }
 
         Button aboutDataSharingBtn = (Button) findViewById(R.id.aboutDataSharingBtn);
         aboutDataSharingBtn.setOnClickListener(
@@ -82,14 +108,50 @@ public class AuthenticateActivity extends AppCompatActivity {
     protected void onStart() {
         Log.d(TAG, "onStart()");
         super.onStart();
-        updateUi();
+        if (LogManager.USE_FIREBASE_BACKEND) {
+            updateUi();
+        } else {
+            mUtil.bindToServer(getApplicationContext(), mConnection);
+            waitForConnection();
+        }
     }
 
     @Override
     protected void onStop() {
         Log.d(TAG, "onStop()");
         super.onStop();
+        if (LogManager.USE_FIREBASE_BACKEND) {
+
+        } else {
+            mUtil.unbindFromServer(getApplicationContext(), mConnection);
+        }
     }
+
+    private void waitForConnection() {
+        // We want the UI to update as soon as it is displayed, but it takes a finite time for
+        // the mConnection to bind to the service, so we delay half a second to give it chance
+        // to connect before trying to update the UI for the first time (it happens again periodically using the uiTimer)
+        if (mConnection.mBound) {
+            Log.v(TAG, "waitForConnection - Bound!");
+            initialiseServiceConnection();
+        } else {
+            Log.v(TAG, "waitForConnection - waiting...");
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    waitForConnection();
+                }
+            }, 100);
+        }
+    }
+
+    private void initialiseServiceConnection() {
+        mLm = mConnection.mSdServer.mLm;
+        mWac = mConnection.mSdServer.mLm.mWac;
+        updateUi();
+    }
+
+
 
     // Called after the Firebase Auth UI has completed
     private ActivityResultLauncher<Intent> signInLauncher = registerForActivityResult(
@@ -173,6 +235,51 @@ public class AuthenticateActivity extends AppCompatActivity {
                         });
             }
         };
+
+    View.OnClickListener onRegister =
+            new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.d(TAG, "onRegisterBtn");
+                    //Intent i;
+                    //i = new Intent(getApplicationContext(), RemoteDbActivity.class);
+                    //i.putExtra("url", "https://osdapi.ddns.net/static/register.html");
+                    //startActivity(i);
+                    String url = "https://osdapi.ddns.net/static/register.html";
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setData(Uri.parse(url));
+                    startActivity(i);
+                }
+            };
+
+    View.OnClickListener onResetPassword =
+            new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.d(TAG, "onResetPasswordBtn");
+                    //Intent i;
+                    //i = new Intent(getApplicationContext(), RemoteDbActivity.class);
+                    //i.putExtra("url", "https://osdapi.ddns.net/static/register.html");
+                    //startActivity(i);
+                    String url = "https://osdapi.ddns.net/static/request_password_reset.html";
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setData(Uri.parse(url));
+                    startActivity(i);
+                }
+            };
+
+
+    private void saveAuthToken(String tokenStr) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        prefs.edit().putString(TOKEN_ID, tokenStr).commit();
+        mWac.setStoredToken(tokenStr);
+    }
+
+    public String getAuthToken() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String authToken = prefs.getString(TOKEN_ID, null);
+        return authToken;
+    }
 
 
 }
