@@ -35,7 +35,7 @@ public class EditEventActivity extends AppCompatActivity {
     private HashMap<String, ArrayList<String>> mEventSubTypesHashMap = null;
     private String mEventTypeStr = null;
     private String mEventSubTypeStr = null;
-    private Long mEventId;
+    private String mEventId;
     private String mEventNotes = "";
     //private Date mEventDateTime;
     private RadioGroup mEventTypeRg;
@@ -59,7 +59,7 @@ public class EditEventActivity extends AppCompatActivity {
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
-            Long eventId = extras.getLong("eventId");
+            String eventId = extras.getString("eventId");
             mEventId = eventId;
             Log.v(TAG, "onCreate - mEventId=" + mEventId);
         }
@@ -68,7 +68,7 @@ public class EditEventActivity extends AppCompatActivity {
         Button cancelBtn =
                 (Button) findViewById(R.id.cancelBtn);
         cancelBtn.setOnClickListener(onCancel);
-        Button OKBtn = (Button) findViewById(R.id.OKBtn);
+        Button OKBtn = (Button) findViewById(R.id.loginBtn);
         OKBtn.setOnClickListener(onOK);
 
         mEventTypeRg = findViewById(R.id.eventTypeRg);
@@ -159,10 +159,10 @@ public class EditEventActivity extends AppCompatActivity {
             mWac.getEvent(mEventId, new WebApiConnection.JSONObjectCallback() {
                 @Override
                 public void accept(JSONObject eventObj) {
-                    Log.v(TAG, "onCreate.getEvent");
+                    Log.v(TAG, "initialiseServiceConnection.getEvent");
                     if (eventObj != null) {
                         mEventObj = eventObj;
-                        Log.v(TAG, "onCreate.getEvent:  eventObj=" + eventObj.toString());
+                        Log.v(TAG, "initialiseServiceConnection.getEvent:  eventObj=" + eventObj.toString());
                         updateUi();
                         // FIXME: modify updateUi to use mEventObj
                     } else {
@@ -198,20 +198,27 @@ public class EditEventActivity extends AppCompatActivity {
         try {
             if (mEventObj != null) {
                 tv = (TextView) findViewById(R.id.eventIdTv);
-                tv.setText(String.valueOf(mEventObj.getLong("id")));
+                tv.setText(mEventId);
                 tv = (TextView) findViewById(R.id.eventAlarmStateTv);
-                tv.setText(mEventObj.getString("alarmStateStr"));
+                String alarmStateStr = mEventObj.getString("osdAlarmState");
+                try {
+                    int alarmStateVal = Integer.parseInt(alarmStateStr);
+                    alarmStateStr = mUtil.alarmStatusToString(alarmStateVal);
+                } catch (Exception e) {
+                    Log.v(TAG,"updateUi: alarmState does not parse to int so displaying it as string: " +alarmStateStr);
+                }
+                tv.setText(alarmStateStr);
                 tv = (TextView) findViewById(R.id.eventNotsTv);
                 tv.setText(mEventObj.getString("desc"));
 
 
                 tv = (TextView) findViewById(R.id.eventDateTv);
                 try {
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-                    Date dataTime = dateFormat.parse(mEventObj.getString("dataTime"));
-                    dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    String dateStr = mEventObj.getString("dataTime");
+                    Date dataTime = mUtil.string2date(dateStr);
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     tv.setText(dateFormat.format(dataTime));
-                } catch (ParseException e) {
+                } catch (Exception e) {
                     Log.e(TAG,"updateUI: Error Parsing dataDate "+e.getLocalizedMessage());
                     tv.setText("---");
                 }
@@ -283,11 +290,11 @@ public class EditEventActivity extends AppCompatActivity {
                     TextView tv = (TextView)findViewById(R.id.eventNotsTv);
                     try {
                         mEventObj.put("desc",tv.getText());
+                        mEventObj.put("id",mEventId);   // Add event Id to event object manually because firestore does not include it by default.
                     } catch (JSONException e) {
                         Log.e(TAG,"Error writing mEventObj: "+e.getMessage());
                     }
                     Log.v(TAG, "onOK() - eventObj="+mEventObj.toString());
-
 
                     try {
                         mWac.updateEvent(mEventObj, new WebApiConnection.JSONObjectCallback() {
@@ -307,7 +314,7 @@ public class EditEventActivity extends AppCompatActivity {
                             }
                         });
                     } catch (Exception e) {
-                        Log.e(TAG,"ERROR:"+e.getMessage());
+                        Log.e(TAG,"onOK() - ERROR: "+e.getMessage()+" : " +e.toString());
                         e.printStackTrace();
                         mUtil.showToast("Error Updating Event");
                         updateUi();

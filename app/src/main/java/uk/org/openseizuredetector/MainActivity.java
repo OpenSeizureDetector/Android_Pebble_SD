@@ -631,7 +631,7 @@ public class MainActivity extends AppCompatActivity {
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
 
-                    if (!mConnection.mSdServer.mLm.mWac.mServerConnectionOk) {
+                    if (!mConnection.mSdServer.mLm.mWac.checkServerConnection()) {
                         // Problem connecting to server
                         tv = (TextView) findViewById(R.id.remoteDbTv);
                         tv.setText(getString(R.string.data_sharing_status)

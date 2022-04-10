@@ -17,6 +17,7 @@ import android.widget.DatePicker;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 /**
@@ -40,6 +41,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         Log.v(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
+        mContext = this;
         mUtil = new OsdUtil(this, serverStatusHandler);
         if (!mUtil.isServerRunning()) {
             mUtil.showToast(getString(R.string.error_server_not_running));
@@ -65,7 +67,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
         //mLm= new LogManager(mContext);
 
         Button okBtn =
-                (Button) findViewById(R.id.OKBtn);
+                (Button) findViewById(R.id.loginBtn);
         okBtn.setOnClickListener(onOk);
 
         Button cancelBtn =
@@ -142,22 +144,12 @@ public class ReportSeizureActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
                     Log.v(TAG, "onOk");
+                    //SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     String dateStr=String.format("%4d-%02d-%02d %02d:%02d:30",mYear,mMonth+1,mDay, mHour, mMinute);
                     Log.v(TAG, "onOk() - dateSTr="+dateStr);
-                    mMsg = "Finding Nearest Datapoint to Date/Time "+dateStr+"...";
-                    mLm.getNearestDatapointToDate(dateStr, (Long id) -> {
-                        mMsg = mMsg + "\nNearest Datapoint is "+id;
-                        Log.v(TAG, "onOK() - nearest datapoint is "+id);
-                        if (id!=-1) {
-                            mLm.setDatapointStatus(id,5);
-                            mMsg = mMsg + "\nSet Datapoint to Manual Alarm Status";
-                            mUtil.showToast(getString(R.string.createdNewEvent));
-                            finish();
-                        } else {
-                            mMsg = mMsg + "\n*** Datapoint not found - not doing anything ***";
-                            mUtil.showToast(getString(R.string.DatapointNotFound));
-                        }
-                    });
+                    mLm.createLocalEvent(dateStr,5);
+                    mUtil.showToast("Seizure Event Created");
+                    finish();
                 }
             };
     View.OnClickListener onCancel =

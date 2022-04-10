@@ -138,7 +138,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private long mEventsTimerPeriod = 60; // Number of seconds between checks to see if there are unvalidated remote events.
     private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
     public long mDataRetentionPeriod = 1; // Prunes the local db so it only retains data younger than this duration (in days)
-    private long mRemoteLogPeriod = 60; // Period in seconds between uploads to the remote server.
+    private long mRemoteLogPeriod = 20; // Period in seconds between uploads to the remote server.
     private long mAutoPrunePeriod = 3600;  // Prune the database every hour
     private boolean mAutoPruneDb;
 
@@ -1137,7 +1137,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 //writeToSD();
                 mLm.writeDatapointToLocalDb(mSdData);
             } else {
-                Log.e(TAG,"logData() - mLm is null - this should not happen");
+                Log.e(TAG, "logData() - mLm is null - this should not happen");
             }
         }
     }
@@ -1241,7 +1241,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
             //prefVal = SP.getString("RemoteLogPeriod", "60");
             //mRemoteLogPeriod = Integer.parseInt(prefVal);
-            mRemoteLogPeriod = 60;
+            //mRemoteLogPeriod = 60;
             Log.v(TAG, "mRemoteLogPeriod=" + mRemoteLogPeriod);
 
             //mOSDUname = SP.getString("OSDUname", "<username>");
@@ -1300,8 +1300,8 @@ public class SdServer extends Service implements SdDataReceiver {
                     Log.i(TAG, "SmsTimer.onFinish() - Last Location is Null so sending first SMS without location.");
                 }
             } else {
-                Log.e(TAG,"SmsTImer.onFinish() - mLocationFinder is NULL - this should not happen!");
-                mUtil.showToast("Error Finding Location - mLocationFinder is null - please report this issue!");
+                Log.e(TAG,"SmsTimer.onFinish - mLocationFinder is null - this should not happen!");
+                mUtil.showToast("SmsTimer.onFinish - mLocationFinder is null - this should not happen! - Please report this issue!");
             }
             Log.i(TAG, "SmsTimer.onFinish() - Sending to " + mSMSNumbers.length + " Numbers");
             mUtil.writeToSysLogFile("SdServer.SmsTimer.onFinish()");
@@ -1555,28 +1555,26 @@ public class SdServer extends Service implements SdDataReceiver {
         // Retrieve events from remote database
         if (mLm.mWac.getEvents((JSONObject remoteEventsObj) -> {
             Log.v(TAG, "CheckEvents.getEvents.Callback()");
-            long firstUnvalidatedEvent;
+            Boolean haveUnvalidatedEvent = false;
             if (remoteEventsObj == null) {
                 Log.e(TAG, "CheckEvents.Callback:  Error Retrieving events");
             } else {
                 try {
                     JSONArray eventsArray = remoteEventsObj.getJSONArray("events");
                     // A bit of a hack to display in reverse chronological order
-                    firstUnvalidatedEvent = -1;
                     for (int i = eventsArray.length() - 1; i >= 0; i--) {
                         JSONObject eventObj = eventsArray.getJSONObject(i);
-                        Long id = eventObj.getLong("id");
                         String typeStr = eventObj.getString("type");
                         //Log.v(TAG,"CheckEventsTimer: id="+id+", typeStr="+typeStr);
-                        if (typeStr.equals("null")) {
-                            firstUnvalidatedEvent = id;
+                        if (typeStr.equals("null") || typeStr.equals("")) {
+                            haveUnvalidatedEvent = true;
                             //Log.v(TAG,"CheckEventsTimer:setting firstUnvalidatedEvent to "+firstUnvalidatedEvent);
                         }
                     }
-                    Log.v(TAG, "CheckEventsTimer.onFinish.callback - firstUnvalidatedEvent = " +
-                            firstUnvalidatedEvent);
-                    if (firstUnvalidatedEvent >= 0) {
-                        showEventNotification(firstUnvalidatedEvent);
+                    Log.v(TAG, "CheckEventsTimer.onFinish.callback - haveUnvalidatedEvent = " +
+                            haveUnvalidatedEvent);
+                    if (haveUnvalidatedEvent) {
+                        showEventNotification();
                         mNM.cancel(DATASHARE_NOTIFICATION_ID);
                     } else {
                         mNM.cancel(EVENT_NOTIFICATION_ID);
@@ -1627,7 +1625,7 @@ public class SdServer extends Service implements SdDataReceiver {
     /**
      * Show a notification to tell the user that we have unvalidated events.
      */
-    private void showEventNotification(long eventId) {
+    private void showEventNotification() {
         Log.v(TAG, "showEventNotification()");
         int iconId;
         String titleStr;

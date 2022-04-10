@@ -3,6 +3,8 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
+        \nV4.1.1 - Changed remote database to be compatible with either OSD webAPI or future Firebase database.<br/>
+           - Performance improvement by having separate events and datapoints tables in local database
         \nV4.0.1 - fixed crash in Report Seizure function
         \nV4.0.0
           - Introduced the &lt;b>Data Sharing&lt;/b> feature to allow users to share their seizure and false alarm data
@@ -370,7 +372,7 @@
     <string name="check_seizures_message">Please select the events highlighted in pink to say if they are real seizures or false alarms</string>
     <string name="error_server_not_running">ERROR:  OpenSeizureDetector Server is not running - please re-start it</string>
     <string name="system_logs">System Logs</string>
-    <string name="logged_in_as_user_id">Logged in as User Id:</string>
+    <string name="logged_in_as_user_id">Logged in as: </string>
     <string name="datasharing_notification_text">Select for more information</string>
     <string name="datasharing_notification_title">OpenSeizureDetector Data Sharing Problem</string>
     <string name="datasharing_about_title">OpenSeizureDetector Data Sharing</string>
@@ -430,4 +432,6 @@
         and selecting <b>Apps->OpenSeizureDetector->Permissions</b>.
     </string>
     <string name="permissions_required">Permissions Disclosure</string>
+    <string name="about_data_sharing">About Data Sharing</string>
+    <string name="privacy_policy">Privacy Policy</string>
 </resources>

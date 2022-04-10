@@ -17,7 +17,7 @@
             android:text="@string/cancel" />
 
         <Button
-            android:id="@+id/OKBtn"
+            android:id="@+id/loginBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"

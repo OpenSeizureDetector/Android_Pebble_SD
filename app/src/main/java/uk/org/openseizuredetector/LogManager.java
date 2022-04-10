@@ -68,6 +68,7 @@ public class LogManager {
     static final private String TAG = "LogManager";
     //private String mDbName = "osdData";
     final static private String mDpTableName = "datapoints";
+    final static private String mEventsTableName = "events";
     private boolean mLogRemote;
     private boolean mLogRemoteMobile;
     private String mAuthToken;
@@ -76,13 +77,15 @@ public class LogManager {
     private static Context mContext;
     private OsdUtil mUtil;
     public static WebApiConnection mWac;
+    public static final boolean USE_FIREBASE_BACKEND = false;
 
     private boolean mUploadInProgress;
     private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
     public long mDataRetentionPeriod = 1; // Prunes the local db so it only retains data younger than this duration (in days)
     private long mRemoteLogPeriod = 60; // Period in seconds between uploads to the remote server.
     private ArrayList<JSONObject> mDatapointsToUploadList;
-    private int mCurrentEventId;
+    private String mCurrentEventRemoteId;
+    private long mCurrentEventLocalId = -1;
     private int mCurrentDatapointId;
     private long mAutoPrunePeriod = 3600;  // Prune the database every hour
     private boolean mAutoPruneDb;
@@ -121,7 +124,12 @@ public class LogManager {
         mUtil = new OsdUtil(mContext, handler);
         openDb();
         Log.i(TAG, "Starting Remote Database Interface");
-        mWac = new WebApiConnection(mContext);
+        if (USE_FIREBASE_BACKEND) {
+            mWac = new WebApiConnection_firebase(mContext);
+        } else {
+            mWac = new WebApiConnection_osdapi(mContext);
+        }
+
         mWac.setStoredToken(mAuthToken);
 
         if (mLogRemote) {
@@ -162,7 +170,7 @@ public class LogManager {
             try {
                 datapoint.put("id", c.getString(c.getColumnIndex("id")));
                 datapoint.put("dataTime", c.getString(c.getColumnIndex("dataTime")));
-                datapoint.put("status", c.getString(c.getColumnIndex("Status")));
+                datapoint.put("status", c.getString(c.getColumnIndex("status")));
                 datapoint.put("dataJSON", c.getString(c.getColumnIndex("dataJSON")));
                 datapoint.put("uploaded", c.getString(c.getColumnIndex("uploaded")));
                 //Log.v(TAG,"cursor2json() - datapoint="+datapoint.toString());
@@ -177,6 +185,41 @@ public class LogManager {
         return dataPointArray.toString();
     }
 
+    /**
+     * Returns a JSON String representing an array of events that are selected from sqlite cursor c.
+     *
+     * @param c sqlite cursor pointing to events query result.
+     * @return JSON String.
+     * from https://stackoverflow.com/a/20488153/2104584
+     */
+    private String eventCursor2Json(Cursor c) {
+        StringBuilder cNames = new StringBuilder();
+        for (String n : c.getColumnNames()) {
+            cNames.append(", ").append(n);
+        }
+        c.moveToFirst();
+        Log.v(TAG, "eventCursor2Json: size of cursor=" + c.getCount());
+        JSONArray eventsArray = new JSONArray();
+        int i = 0;
+        while (!c.isAfterLast()) {
+            JSONObject event = new JSONObject();
+            try {
+                event.put("id", c.getString(c.getColumnIndex("id")));
+                event.put("dataTime", c.getString(c.getColumnIndex("dataTime")));
+                event.put("status", c.getString(c.getColumnIndex("status")));
+                event.put("uploaded", c.getString(c.getColumnIndex("uploaded")));
+                c.moveToNext();
+                eventsArray.put(i, event);
+                i++;
+            } catch (JSONException e) {
+                Log.e(TAG, "eventCursor2Json(): error creating JSON Object");
+                e.printStackTrace();
+            }
+        }
+        Log.v(TAG, "eventCursor2JSON(): returning " + eventsArray.toString());
+        return eventsArray.toString();
+    }
+
 
     private static boolean openDb() {
         Log.d(TAG, "openDb");
@@ -187,11 +230,14 @@ public class LogManager {
             } else {
                 Log.i(TAG, "openDb: mOsdDb has been initialised already so not doing anything");
             }
-            if (!checkTableExists(mOsdDb, mDpTableName)) {
-                Log.e(TAG, "ERROR - Table " + mDpTableName + " does not exist");
-                return false;
-            } else {
-                Log.d(TAG, "table " + mDpTableName + " exists ok");
+            String[] tableNames = new String[]{mDpTableName, mEventsTableName};
+            for (String tableName : tableNames) {
+                if (!checkTableExists(mOsdDb, tableName)) {
+                    Log.e(TAG, "ERROR - Table " + tableName + " does not exist");
+                    return false;
+                } else {
+                    Log.d(TAG, "table " + tableName + " exists ok");
+                }
             }
         } catch (SQLException e) {
             Log.e(TAG, "Failed to open Database: " + e.toString());
@@ -221,17 +267,19 @@ public class LogManager {
      * FIXME - I am sure we should not be using raw SQL Srings to do this!
      */
     public void writeDatapointToLocalDb(SdData sdData) {
-        Log.v(TAG, "writeDatapointToLocalDb()");
+        //Log.v(TAG, "writeDatapointToLocalDb()");
         Date curDate = new Date();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         String dateStr = dateFormat.format(curDate);
         String SQLStr = "SQLStr";
 
+        if (mOsdDb == null) {
+            Log.e(TAG, "writeDatapointToLocalDb(): mOsdDb is null - doing nothing");
+            return;
+        }
         try {
-            //double roiRatio = -1;
-            //if (sdData.specPower != 0)
-            //    roiRatio = 10. * sdData.roiPower / sdData.specPower;
+            // Write Datapoint to database
             SQLStr = "INSERT INTO " + mDpTableName
                     + "(dataTime, status, dataJSON, uploaded)"
                     + " VALUES("
@@ -240,20 +288,55 @@ public class LogManager {
                     + DatabaseUtils.sqlEscapeString(sdData.toJSON(true)) + ","
                     + 0
                     + ")";
-            if (mOsdDb != null) {
-                mOsdDb.execSQL(SQLStr);
-                Log.v(TAG, "writeDatapointToLocalDb(): data written to database");
-            } else {
-                Log.e(TAG,"writeDatapointToLocalDb(): mOsdDb is null");
-            }
+            mOsdDb.execSQL(SQLStr);
+            Log.v(TAG, "writeDatapointToLocalDb(): datapoint written to database");
 
+            if (sdData.alarmState != 0) {
+                Log.i(TAG, "writeDatapointToLocalDb(): adding event to local DB");
+                createLocalEvent(dateStr, sdData.alarmState);
+            }
         } catch (SQLException e) {
             Log.e(TAG, "writeToLocalDb(): Error Writing Data: " + e.toString());
             Log.e(TAG, "SQLStr was " + SQLStr);
         } catch (NullPointerException e) {
             Log.e(TAG, "writeToLocalDb(): Null Pointer Exception: " + e.toString());
         }
+    }
 
+    public boolean createLocalEvent(String dataTime, long status) {
+        // Expects dataTime to be in format: SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Log.d(TAG,"createLocalEvent() - dataTime="+dataTime+", status="+status);
+        // Write Datapoint to database
+        String SQLStr = "INSERT INTO " + mEventsTableName
+                + "(dataTime, status)"
+                + " VALUES("
+                + "'" + dataTime + "',"
+                + status
+                + ")";
+        mOsdDb.execSQL(SQLStr);
+        return true;
+    }
+
+    /**
+     * Returns a json representation of locally stored event 'id'.
+     *
+     * @param id event id to return
+     * @return JSON representation of requested event (single element JSON array)
+     */
+    public String getLocalEventById(long id) {
+        Log.d(TAG, "getLocalEventById() - id=" + id);
+        Cursor c;
+        String retVal;
+        try {
+            String selectStr = "select * from " + mEventsTableName + " where id=" + id + ";";
+            c = mOsdDb.rawQuery(selectStr, null);
+            retVal = eventCursor2Json(c);
+        } catch (Exception e) {
+            Log.d(TAG, "getLocalEventById(): Error Querying Database: " + e.getLocalizedMessage());
+            retVal = null;
+        }
+        Log.d(TAG, "getLocalEventById() - returning " + retVal);
+        return (retVal);
     }
 
 
@@ -269,9 +352,6 @@ public class LogManager {
         String retVal;
         try {
             String selectStr = "select * from " + mDpTableName + " where id=" + id + ";";
-            //String[] selectArgs = new String[]{String.format("%d", id)};
-            //c = mOSDDb.getWritableDatabase().query(mDbTableName, null,
-            //        selectStr, selectArgs, null, null, null);
             c = mOsdDb.rawQuery(selectStr, null);
             retVal = cursor2Json(c);
         } catch (Exception e) {
@@ -279,7 +359,6 @@ public class LogManager {
             retVal = null;
         }
         return (retVal);
-
     }
 
     /**
@@ -289,15 +368,17 @@ public class LogManager {
      * @param eventId - the eventId associated with the uploaded datapoint - the 'uploaded' field is set to this value.
      * @return True on success or False on failure.
      */
-    public boolean setDatapointToUploaded(int id, int eventId) {
+    public boolean setDatapointToUploaded(int id, String eventId) {
         Log.d(TAG, "setDatapointToUploaded() - id=" + id);
+        if (mOsdDb == null) {
+            Log.e(TAG,"setDatapointToUploaded() - mOsdDb is null - not doing anything");
+            return false;
+        }
         ContentValues cv = new ContentValues();
         cv.put("uploaded", eventId);
         int nRowsUpdated = mOsdDb.update(mDpTableName, cv, "id = ?",
                 new String[]{String.format("%d", id)});
-
         return (nRowsUpdated == 1);
-
     }
 
     /**
@@ -356,7 +437,7 @@ public class LogManager {
         String whereClause = getEventWhereClause(includeWarnings);
         //sqlStr = "SELECT * from " + mDbTableName + " where Status in (" + statusListStr + ") order by dataTime desc;";
         String[] columns = {"*"};
-        new SelectQueryTask(mDpTableName, columns, whereClause, whereArgs,
+        new SelectQueryTask(mEventsTableName, columns, whereClause, whereArgs,
                 null, null, "dataTime DESC", (Cursor cursor) -> {
             Log.v(TAG, "getEventsList - returned " + cursor);
             if (cursor != null) {
@@ -365,7 +446,7 @@ public class LogManager {
                     HashMap<String, String> event = new HashMap<>();
                     //event.put("id", cursor.getString(cursor.getColumnIndex("id")));
                     event.put("dataTime", cursor.getString(cursor.getColumnIndex("dataTime")));
-                    int status = cursor.getInt(cursor.getColumnIndex("Status"));
+                    int status = cursor.getInt(cursor.getColumnIndex("status"));
                     String statusStr = mUtil.alarmStatusToString(status);
                     event.put("status", statusStr);
                     event.put("uploaded", cursor.getString(cursor.getColumnIndex("uploaded")));
@@ -385,23 +466,46 @@ public class LogManager {
      */
     public int pruneLocalDb() {
         Log.d(TAG, "pruneLocalDb()");
-        int retVal;
+        int retVal = 0;
         long currentDateMillis = new Date().getTime();
         long endDateMillis = currentDateMillis - 24 * 3600 * 1000 * mDataRetentionPeriod;
         //long endDateMillis = currentDateMillis - 3600*1000* mDataRetentionPeriod;  // Using hours rather than days for testing
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
         String endDateStr = dateFormat.format(new Date(endDateMillis));
-        try {
-            String selectStr = "DataTime<=?";
-            String[] selectArgs = {endDateStr};
-            retVal = mOsdDb.delete(mDpTableName, selectStr, selectArgs);
-        } catch (Exception e) {
-            Log.d(TAG, "Error deleting datapoints" + e.toString());
-            retVal = 0;
+        String[] tableNames = new String[]{mDpTableName, mEventsTableName};
+        for (String tableName : tableNames) {
+            Log.i(TAG, "pruneLocalDb - pruning table " + tableName);
+            try {
+                String selectStr = "DataTime<=?";
+                String[] selectArgs = {endDateStr};
+                retVal = mOsdDb.delete(tableName, selectStr, selectArgs);
+            } catch (Exception e) {
+                Log.d(TAG, "Error deleting data " + e.toString());
+                retVal = 0;
+            }
+            Log.d(TAG, String.format("pruneLocalDb() - deleted %d records from table %s", retVal, tableName));
         }
-        Log.d(TAG, String.format("pruneLocalDb() - deleted %d records", retVal));
         return (retVal);
+    }
+
+    /**
+     * setEventToUploaded
+     *
+     * @param localEventId      - local Event ID to change
+     * @param remoteEventId - the remote eventId associated with the uploaded datapoint - the 'uploaded' field is set to this value.
+     * @return True on success or False on failure.
+     */
+    public boolean setEventToUploaded(long localEventId, String remoteEventId) {
+        Log.d(TAG, "setEventToUploaded() - local id=" + localEventId + " remote id="+remoteEventId);
+        if (mOsdDb == null) {
+            Log.e(TAG,"setEventToUploaded() - mOsdDb is null - not doing anything");
+            return false;
+        }
+        ContentValues cv = new ContentValues();
+        cv.put("uploaded", remoteEventId);
+        int nRowsUpdated = mOsdDb.update(mEventsTableName, cv, "id = ?",
+                new String[]{String.format("%d", localEventId)});
+        return (nRowsUpdated == 1);
     }
 
 
@@ -423,7 +527,7 @@ public class LogManager {
         long endDateMillis = currentDateMillis - 1000 * mEventDuration;
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String endDateStr = dateFormat.format(new Date(endDateMillis));
-        String whereClauseUploaded = "uploaded = 0";
+        String whereClauseUploaded = "uploaded is null";
         String whereClauseDate = "DataTime<?";
         String whereClause = whereClauseStatus + " AND " + whereClauseUploaded + " AND " + whereClauseDate;
 
@@ -432,9 +536,8 @@ public class LogManager {
             whereArgs[i] = whereArgsStatus[i];
         }
         whereArgs[whereArgsStatus.length] = endDateStr;
-        new SelectQueryTask(mDpTableName, columns, whereClause, whereArgs,
+        new SelectQueryTask(mEventsTableName, columns, whereClause, whereArgs,
                 null, null, "dataTime DESC", (Cursor cursor) -> {
-            Log.v(TAG, "getEventsList - returned " + cursor);
             Long recordId = new Long(-1);
             if (cursor != null) {
                 Log.v(TAG, "getNextEventToUpload - returned " + cursor.getCount() + " records");
@@ -443,9 +546,8 @@ public class LogManager {
                     Log.v(TAG, "getNextEventToUpload() - no events to Upload - exiting");
                     recordId = new Long(-1);
                 } else {
-                    String recordStr = cursor.getString(3);
                     recordId = cursor.getLong(0);
-                    Log.d(TAG, "getNextEventToUpload(): id=" + recordId + ", recordStr=" + recordStr);
+                    Log.d(TAG, "getNextEventToUpload(): id=" + recordId);
                 }
             }
             callback.accept(recordId);
@@ -494,13 +596,13 @@ public class LogManager {
      * @return True on successful start or false if call fails.
      */
     public boolean getLocalEventsCount(boolean includeWarnings, WebApiConnection.LongCallback callback) {
-        Log.v(TAG, "getLocalEventsCount- includeWarnings=" + includeWarnings);
+        //Log.v(TAG, "getLocalEventsCount- includeWarnings=" + includeWarnings);
         String[] whereArgs = getEventWhereArgs(includeWarnings);
         String whereClause = getEventWhereClause(includeWarnings);
         String[] columns = {"*"};
-        new SelectQueryTask(mDpTableName, columns, whereClause, whereArgs,
+        new SelectQueryTask(mEventsTableName, columns, whereClause, whereArgs,
                 null, null, null, (Cursor cursor) -> {
-            Log.v(TAG, "getLocalEventsCount - returned " + cursor);
+            //Log.v(TAG, "getLocalEventsCount - returned " + cursor);
             Long eventCount = Long.valueOf(0);
             if (cursor != null) {
                 eventCount = Long.valueOf(cursor.getCount());
@@ -517,13 +619,13 @@ public class LogManager {
      * @return True on successful start or false if call fails.
      */
     public boolean getLocalDatapointsCount(WebApiConnection.LongCallback callback) {
-        Log.v(TAG, "getLocalDatapointsCount");
+        //Log.v(TAG, "getLocalDatapointsCount");
         String[] whereArgs = null;
         String whereClause = null;
         String[] columns = {"*"};
         new SelectQueryTask(mDpTableName, columns, whereClause, whereArgs,
                 null, null, null, (Cursor cursor) -> {
-            Log.v(TAG, "getLocalDatapointsCount - returned " + cursor);
+            //Log.v(TAG, "getLocalDatapointsCount - returned " + cursor);
             Long eventCount = Long.valueOf(0);
             if (cursor != null) {
                 eventCount = Long.valueOf(cursor.getCount());
@@ -568,7 +670,7 @@ public class LogManager {
 
         @Override
         protected Cursor doInBackground(Void... params) {
-            Log.v(TAG, "runSelect.doInBackground()");
+            //Log.v(TAG, "runSelect.doInBackground()");
             Log.v(TAG, "SelectQueryTask.doInBackground: mTable=" + mTable + ", mColumns=" + Arrays.toString(mColumns)
                     + ", mSelection=" + mSelection + ", mSelectionArgs=" + Arrays.toString(mSelectionArgs) + ", mGroupBy=" + mGroupBy
                     + ", mHaving =" + mHaving + ", mOrderBy=" + mOrderBy);
@@ -659,17 +761,24 @@ public class LogManager {
      */
     public void uploadSdData() {
         //int eventId = -1;
-        Log.v(TAG, "uploadSdData()");
+        //Log.v(TAG, "uploadSdData()");
         // First try uploading full alarms, and only if we do not have any of those, upload warnings.
-        boolean warningsArr[] = { false, true };
-        for (int n=0; n<warningsArr.length; n++) {
+        //boolean warningsArr[] = {false, true};
+        // Upload everything - alarms and warnings - we can sort it out in post-processing the data!
+        boolean warningsArr[] = {true};
+        for (int n = 0; n < warningsArr.length; n++) {
             boolean warningsVal = warningsArr[n];
             Log.i(TAG, "uploadSdData(): warningsVal=" + warningsVal);
+            if (mUploadInProgress) {
+                Log.d(TAG, "uploadSdData - upload already in progress - not doing anything");
+                return;
+            }
+            mUploadInProgress = true;
             getNextEventToUpload(warningsVal, (Long eventId) -> {
                 if (eventId != -1) {
-                    Log.v(TAG, "uploadSdData() - eventId=" + eventId);
-                    String eventJsonStr = getDatapointById(eventId);
-                    Log.v(TAG, "uploadSdData() - eventJsonStr=" + eventJsonStr);
+                    Log.i(TAG, "uploadSdData() - next Event to Upload eventId=" + eventId);
+                    String eventJsonStr = getLocalEventById(eventId);
+                    Log.v(TAG, "uploadSdData() - event to upload eventJsonStr=" + eventJsonStr);
                     //int eventType;
                     JSONObject eventObj;
                     int eventAlarmStatus;
@@ -680,36 +789,42 @@ public class LogManager {
                         eventObj = datapointJsonArr.getJSONObject(0);  // We only look at the first (and hopefully only) item in the array.
                         eventAlarmStatus = Integer.parseInt(eventObj.getString("status"));
                         eventDateStr = eventObj.getString("dataTime");
-                        Log.v(TAG, "uploadSdData - data from local DB is:" + eventJsonStr + ", eventAlarmStatus="
+                        Log.d(TAG, "uploadSdData - data from local DB is:" + eventJsonStr + ", eventAlarmStatus="
                                 + eventAlarmStatus + ", eventDateStr=" + eventDateStr);
                     } catch (JSONException e) {
-                        Log.e(TAG, "ERROR parsing event JSON Data" + eventJsonStr);
+                        Log.e(TAG, "uploadSdData(): ERROR parsing event JSON Data" + eventJsonStr);
                         e.printStackTrace();
                         return;
                     } catch (NullPointerException e) {
-                        Log.e(TAG, "ERROR null pointer exception parsing event JSON Data" + eventJsonStr);
+                        Log.e(TAG, "uploadSdData(): ERROR null pointer exception parsing event JSON Data" + eventJsonStr);
                         e.printStackTrace();
                         return;
                     }
                     try {
                         eventDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(eventDateStr);
                     } catch (ParseException e) {
-                        Log.e(TAG, "Error parsing date " + eventDateStr);
+                        Log.e(TAG, "UploadSdData(): Error parsing date " + eventDateStr);
                         return;
                     }
+
+                    Log.i(TAG, "uploadSdData - calling mWac.createEvent");
+                    mCurrentEventLocalId = eventId;
                     mWac.createEvent(eventAlarmStatus, eventDate, "", this::createEventCallback);
                 } else {
-                    Log.v(TAG, "UploadSdData - no data to upload");
+                    Log.v(TAG, "uploadSdData - no data to upload "); //(warnings="+warningsVal+")");
+                    mUploadInProgress = false;
                 }
             });
         }
     }
 
 
-    // Mark the relevant member variables to show we are not currently doing an upload, so a new one can be
+    // Mark the relevant member variables to show we are not cuurrently doing an upload, so a new one can be
     // started if necessary.
     public void finishUpload() {
-        mCurrentEventId = -1;
+        mCurrentEventRemoteId = null;
+        mCurrentEventLocalId = -1;
+        mCurrentDatapointId = -1;
         mDatapointsToUploadList = null;
         mUploadInProgress = false;
     }
@@ -717,82 +832,97 @@ public class LogManager {
     // Called by WebApiConnection when a new event record is created.
     // Once the event is created it queries the local database to find the datapoints associated with the event
     // and uploads those as a batch of data points.
-    public void createEventCallback(String eventStr) {
-        Log.v(TAG, "eventCallback(): " + eventStr);
-        Date eventDate;
-        String eventDateStr;
-        int eventId;
-        try {
-            JSONObject eventObj = new JSONObject(eventStr);
-            eventDateStr = eventObj.getString("dataTime");
-            eventId = eventObj.getInt("id");
-        } catch (JSONException e) {
-            Log.e(TAG, "eventCallback() - Error parsing eventStr: " + eventStr);
-            finishUpload();
-            return;
-        }
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-        try {
-            eventDate = dateFormat.parse(eventDateStr);
-        } catch (ParseException e) {
-            Log.e(TAG, "eventCallback() - error parsing date string " + eventDateStr);
-            finishUpload();
-            return;
-        }
-        Log.v(TAG, "eventCallback() EventId=" + eventId + ", eventDateStr=" + eventDateStr + ", eventDate=" + eventDate);
-        long eventDateMillis = eventDate.getTime();
-        long startDateMillis = eventDateMillis - 1000 * mEventDuration / 2;
-        long endDateMillis = eventDateMillis + 1000 * mEventDuration / 2;
-        dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-        getDatapointsByDate(
-                dateFormat.format(new Date(startDateMillis)),
-                dateFormat.format(new Date(endDateMillis)), (String datapointsJsonStr) -> {
-                    Log.v(TAG, "eventCallback() - datapointsJsonStr=" + datapointsJsonStr);
-                    JSONArray dataObj;
-                    mDatapointsToUploadList = new ArrayList<JSONObject>();
+    public void createEventCallback(String eventId) {
+        Log.v(TAG, "createEventCallback(): " + eventId);
+        Log.v(TAG, "createEventCallback(): Retrieving remote event details");
+        mWac.getEvent(eventId, new WebApiConnection.JSONObjectCallback() {
+            @Override
+            public void accept(JSONObject eventObj) {
+                if (eventObj == null) {
+                    Log.e(TAG,"createEventCallback() - eventObj is null - failed to create event");
+                    mUtil.showToast("Error Creating Remote Event");
+                } else {
+                    Log.v(TAG, "createEventCallback() - eventObj=" + eventObj.toString());
+                    Date eventDate;
+                    String eventDateStr = "";
                     try {
-                        //DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-                        dataObj = new JSONArray(datapointsJsonStr);
-                        for (int i = 0; i < dataObj.length(); i++) {
-                            mDatapointsToUploadList.add(dataObj.getJSONObject(i));
-                        }
+                        String dateStr= eventObj.getString("dataTime");
+                        eventDate = mUtil.string2date(dateStr);
                     } catch (JSONException e) {
-                        Log.v(TAG, "Error Creating JSON Object from string " + datapointsJsonStr);
-                        dataObj = null;
+                        Log.e(TAG, "createEventCallback() - Error parsing JSONObject: " + eventObj.toString());
+                        finishUpload();
+                        return;
+                    }
+                    if (eventDate != null) {
+                        Log.v(TAG, "createEventCallback() EventId=" + eventId + ", eventDateStr=" + eventDateStr + ", eventDate=" + eventDate);
+                        mUploadInProgress = true;
+                        long eventDateMillis = eventDate.getTime();
+                        long startDateMillis = eventDateMillis - 1000 * mEventDuration / 2;
+                        long endDateMillis = eventDateMillis + 1000 * mEventDuration / 2;
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+                        getDatapointsByDate(
+                                dateFormat.format(new Date(startDateMillis)),
+                                dateFormat.format(new Date(endDateMillis)),
+                                (String datapointsJsonStr) -> {
+                                    //Log.v(TAG, "createEventCallback() - datapointsJsonStr=" + datapointsJsonStr);
+                                    JSONArray dataObj;
+                                    mDatapointsToUploadList = new ArrayList<JSONObject>();
+                                    try {
+                                        //DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+                                        dataObj = new JSONArray(datapointsJsonStr);
+                                        Log.v(TAG, "createEventCallback() - datapointsObj length=" + dataObj.length());
+                                        for (int i = 0; i < dataObj.length(); i++) {
+                                            mDatapointsToUploadList.add(dataObj.getJSONObject(i));
+                                        }
+                                    } catch (JSONException e) {
+                                        Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string " + datapointsJsonStr);
+                                        dataObj = null;
+                                        finishUpload();
+                                    }
+                                    // This starts the process of uploading the datapoints, one at a time.
+                                    mCurrentEventRemoteId = eventId;
+                                    Log.v(TAG, "createEventCallback() - starting datapoints upload with eventId " + mCurrentEventRemoteId +
+                                            " Uploading " + mDatapointsToUploadList.size() + " datapoints");
+                                    uploadNextDatapoint();
+
+                                });
+                    } else {
+                        Log.e(TAG,"createEventCallback() - Error - event date is null - not doing anything");
+                        mUtil.showToast("Error uploading event - date is null");
                         finishUpload();
                     }
-                    // This starts the process of uploading the datapoints, one at a time.
-                    mCurrentEventId = eventId;
-                    mUploadInProgress = true;
-                    Log.v(TAG, "eventCallback() - starting datapoints upload with eventId " + mCurrentEventId);
-                    uploadNextDatapoint();
-
-                });
+                }
+            }
+        });
     }
 
     // takes the next datapoint of the list mDatapointsToUploadList and uploads it to the remote server.
     // datapointCallback is called when the upload is complete.
     public void uploadNextDatapoint() {
-        Log.v(TAG, "uploadDatapoint()");
-        if (mDatapointsToUploadList.size() > 0) {
-            mUploadInProgress = true;
-            try {
-                mCurrentDatapointId = mDatapointsToUploadList.get(0).getInt("id");
-            } catch (JSONException e) {
-                Log.e(TAG, "Error reading currentDatapointID from mDatapointsToUploadList[0]" + e.getMessage());
-                Log.e(TAG, "Removing mDatapointsToUploadList[0] and trying the next datapoint");
-                mDatapointsToUploadList.remove(0);
-                uploadNextDatapoint();
+        //Log.v(TAG, "uploadNextDatapoint()");
+        if (mDatapointsToUploadList != null) {
+            if (mDatapointsToUploadList.size() > 0) {
+                mUploadInProgress = true;
+                try {
+                    mCurrentDatapointId = mDatapointsToUploadList.get(0).getInt("id");
+                } catch (JSONException e) {
+                    Log.e(TAG, "uploadNextDatapoint(): Error reading currentDatapointID from mDatapointsToUploadList[0]" + e.getMessage());
+                    Log.e(TAG, "uploadNextDatapoint(): Removing mDatapointsToUploadList[0] and trying the next datapoint");
+                    mDatapointsToUploadList.remove(0);
+                    uploadNextDatapoint();
+                }
+
+                Log.v(TAG, "uploadNextDatapoint() - " + mDatapointsToUploadList.size() + " datapoints to upload.  Uploading datapoint ID:" + mCurrentDatapointId);
+                mWac.createDatapoint(mDatapointsToUploadList.get(0), mCurrentEventRemoteId, this::datapointCallback);
+
+            } else {
+                Log.i(TAG, "uploadNextDatapoint() - All datapoints uploaded!");
+                setEventToUploaded(mCurrentEventLocalId, mCurrentEventRemoteId);
+                finishUpload();
             }
-
-            Log.v(TAG, "uploadDatapoint() - uploading datapoint with local id of " + mCurrentDatapointId);
-            mWac.createDatapoint(mDatapointsToUploadList.get(0), mCurrentEventId, this::datapointCallback);
-
         } else {
-            mCurrentEventId = -1;
-            mCurrentDatapointId = -1;
-            mUploadInProgress = false;
+            Log.w(TAG,"uploadNextDatapoint - mDatapointsToUploadList is null - I don't thin this should have happened!");
         }
     }
 
@@ -800,11 +930,15 @@ public class LogManager {
     // a datapoint based on mDatapointsToUploadList(0) so removes that from the list and calls UploadDatapoint()
     // to upload the next one.
     public void datapointCallback(String datapointStr) {
-        Log.v(TAG, "datapointCallback() " + datapointStr + ", mCurrentEventId=" + mCurrentEventId);
-        if (mDatapointsToUploadList.size() > 0) {
-            mDatapointsToUploadList.remove(0);
+        Log.v(TAG, "datapointCallback() dataPointId="+mCurrentDatapointId+" remote datapointID=" + datapointStr + ", mCurrentEventId=" + mCurrentEventRemoteId);
+        if (mDatapointsToUploadList != null) {
+            if (mDatapointsToUploadList.size() > 0) {
+                mDatapointsToUploadList.remove(0);
+            }
+        } else {
+            Log.w(TAG,"datapointCallback - mDatapointsToUploadList is null - I don't thin this should have happened!");
         }
-        setDatapointToUploaded(mCurrentDatapointId, mCurrentEventId);
+        setDatapointToUploaded(mCurrentDatapointId, mCurrentEventRemoteId);
         uploadNextDatapoint();
     }
 
@@ -903,9 +1037,19 @@ public class LogManager {
             String SQLStr = "CREATE TABLE IF NOT EXISTS " + mDpTableName + "("
                     + "id INTEGER PRIMARY KEY,"
                     + "dataTime DATETIME,"
-                    + "Status INT,"
+                    + "status INT,"
                     + "dataJSON TEXT,"
-                    + "uploaded INT"
+                    + "uploaded TEXT"  // Stores the ID of the datapoint in the remote database if uploaded, otherwise empty
+                    + ");";
+            db.execSQL(SQLStr);
+            Log.i(TAG, "onCreate - TableName=" + mEventsTableName);
+            SQLStr = "CREATE TABLE IF NOT EXISTS " + mEventsTableName + "("
+                    + "id INTEGER PRIMARY KEY,"
+                    + "dataTime DATETIME,"
+                    + "status INT,"
+                    + "type TEXT,"
+                    + "subType TEXT,"
+                    + "uploaded TEXT"  // stores the id of the event in the remote dabase if uploaded, otherwise empty
                     + ");";
             db.execSQL(SQLStr);
         }

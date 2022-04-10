@@ -59,6 +59,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -453,6 +454,31 @@ public class OsdUtil {
         }
     }
 
+    /**
+     * string2date - returns a Date object represented by string dateStr
+     * It first attempts to parse it as a long integer, in which case it is assumed to
+     * be a unix timestamp.
+     * If that fails it attempts to parse it as yyyy-MM-dd'T'HH:mm:ss'Z' format.
+     * @param dateStr String reprenting a date
+     * @return Date object or null if parsing fails.
+     */
+    public Date string2date(String dateStr) {
+        Date dataTime = null;
+        try {
+            Long tstamp = Long.parseLong(dateStr);
+            dataTime = new Date(tstamp);
+        } catch (NumberFormatException e) {
+            Log.v(TAG, "remoteEventsAdapter.getView: Error Parsing dataDate as Long: " + e.getLocalizedMessage()+" trying as string");
+            try {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+                dataTime = dateFormat.parse(dateStr);
+            } catch (ParseException e2) {
+                Log.e(TAG, "remoteEventsAdapter.getView: Error Parsing dataDate " + e2.getLocalizedMessage());
+                dataTime = null;
+            }
+        }
+        return(dataTime);
+    }
 
 
     public final int ALARM_STATUS_WARNING = 1;
