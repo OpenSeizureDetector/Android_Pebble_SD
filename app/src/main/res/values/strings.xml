@@ -434,4 +434,5 @@
     <string name="permissions_required">Permissions Disclosure</string>
     <string name="about_data_sharing">About Data Sharing</string>
     <string name="privacy_policy">Privacy Policy</string>
+    <string name="mark_unverified_events_as_unknown">Mark Unverified Events as Unknown</string>
 </resources>

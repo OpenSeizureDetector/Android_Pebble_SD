@@ -426,6 +426,9 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     Log.i(TAG, "exception starting settings activity " + ex.toString());
                 }
                 return true;
+            case R.id.action_mark_unknown:
+                Log.i(TAG,"action_mark_unknown");
+                mLm.mWac.markUnverifiedEventsAsUnknown();
 
             default:
                 return super.onOptionsItemSelected(item);
