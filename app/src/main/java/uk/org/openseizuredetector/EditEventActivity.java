@@ -200,17 +200,23 @@ public class EditEventActivity extends AppCompatActivity {
                 tv = (TextView) findViewById(R.id.eventIdTv);
                 tv.setText(mEventId);
                 tv = (TextView) findViewById(R.id.eventAlarmStateTv);
-                tv.setText(mEventObj.getString("osdAlarmState"));
+                String alarmStateStr = mEventObj.getString("osdAlarmState");
+                try {
+                    int alarmStateVal = Integer.parseInt(alarmStateStr);
+                    alarmStateStr = mUtil.alarmStatusToString(alarmStateVal);
+                } catch (Exception e) {
+                    Log.v(TAG,"updateUi: alarmState does not parse to int so displaying it as string: " +alarmStateStr);
+                }
+                tv.setText(alarmStateStr);
                 tv = (TextView) findViewById(R.id.eventNotsTv);
                 tv.setText(mEventObj.getString("desc"));
 
 
                 tv = (TextView) findViewById(R.id.eventDateTv);
                 try {
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-                    //Date dataTime = dateFormat.parse(mEventObj.getString("dataTime"));
-                    Date dataTime = new Date(mEventObj.getLong("dataTime"));
-                    dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    String dateStr = mEventObj.getString("dataTime");
+                    Date dataTime = mUtil.string2date(dateStr);
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     tv.setText(dateFormat.format(dataTime));
                 } catch (Exception e) {
                     Log.e(TAG,"updateUI: Error Parsing dataDate "+e.getLocalizedMessage());

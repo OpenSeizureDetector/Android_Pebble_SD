@@ -763,10 +763,17 @@ public class LogManager {
         //int eventId = -1;
         //Log.v(TAG, "uploadSdData()");
         // First try uploading full alarms, and only if we do not have any of those, upload warnings.
-        boolean warningsArr[] = {false, true};
+        //boolean warningsArr[] = {false, true};
+        // Upload everything - alarms and warnings - we can sort it out in post-processing the data!
+        boolean warningsArr[] = {true};
         for (int n = 0; n < warningsArr.length; n++) {
             boolean warningsVal = warningsArr[n];
             Log.i(TAG, "uploadSdData(): warningsVal=" + warningsVal);
+            if (mUploadInProgress) {
+                Log.d(TAG, "uploadSdData - upload already in progress - not doing anything");
+                return;
+            }
+            mUploadInProgress = true;
             getNextEventToUpload(warningsVal, (Long eventId) -> {
                 if (eventId != -1) {
                     Log.i(TAG, "uploadSdData() - next Event to Upload eventId=" + eventId);
@@ -782,7 +789,7 @@ public class LogManager {
                         eventObj = datapointJsonArr.getJSONObject(0);  // We only look at the first (and hopefully only) item in the array.
                         eventAlarmStatus = Integer.parseInt(eventObj.getString("status"));
                         eventDateStr = eventObj.getString("dataTime");
-                        Log.v(TAG, "uploadSdData - data from local DB is:" + eventJsonStr + ", eventAlarmStatus="
+                        Log.d(TAG, "uploadSdData - data from local DB is:" + eventJsonStr + ", eventAlarmStatus="
                                 + eventAlarmStatus + ", eventDateStr=" + eventDateStr);
                     } catch (JSONException e) {
                         Log.e(TAG, "uploadSdData(): ERROR parsing event JSON Data" + eventJsonStr);
@@ -805,6 +812,7 @@ public class LogManager {
                     mWac.createEvent(eventAlarmStatus, eventDate, "", this::createEventCallback);
                 } else {
                     Log.v(TAG, "uploadSdData - no data to upload "); //(warnings="+warningsVal+")");
+                    mUploadInProgress = false;
                 }
             });
         }
@@ -830,52 +838,61 @@ public class LogManager {
         mWac.getEvent(eventId, new WebApiConnection.JSONObjectCallback() {
             @Override
             public void accept(JSONObject eventObj) {
-                Log.v(TAG,"createEventCallback() - eventObj="+eventObj.toString());
-                Date eventDate;
-                String eventDateStr = "";
-                try {
-                    Long eventTimestamp = eventObj.getLong("dataTime");
-                    eventDate = new Date(eventTimestamp);
-                    eventDateStr = eventDate.toString();
-                } catch (JSONException e) {
-                    Log.e(TAG, "createEventCallback() - Error parsing JSONObject: " + eventObj.toString());
-                    finishUpload();
-                    return;
+                if (eventObj == null) {
+                    Log.e(TAG,"createEventCallback() - eventObj is null - failed to create event");
+                    mUtil.showToast("Error Creating Remote Event");
+                } else {
+                    Log.v(TAG, "createEventCallback() - eventObj=" + eventObj.toString());
+                    Date eventDate;
+                    String eventDateStr = "";
+                    try {
+                        String dateStr= eventObj.getString("dataTime");
+                        eventDate = mUtil.string2date(dateStr);
+                    } catch (JSONException e) {
+                        Log.e(TAG, "createEventCallback() - Error parsing JSONObject: " + eventObj.toString());
+                        finishUpload();
+                        return;
+                    }
+                    if (eventDate != null) {
+                        Log.v(TAG, "createEventCallback() EventId=" + eventId + ", eventDateStr=" + eventDateStr + ", eventDate=" + eventDate);
+                        mUploadInProgress = true;
+                        long eventDateMillis = eventDate.getTime();
+                        long startDateMillis = eventDateMillis - 1000 * mEventDuration / 2;
+                        long endDateMillis = eventDateMillis + 1000 * mEventDuration / 2;
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+                        getDatapointsByDate(
+                                dateFormat.format(new Date(startDateMillis)),
+                                dateFormat.format(new Date(endDateMillis)),
+                                (String datapointsJsonStr) -> {
+                                    //Log.v(TAG, "createEventCallback() - datapointsJsonStr=" + datapointsJsonStr);
+                                    JSONArray dataObj;
+                                    mDatapointsToUploadList = new ArrayList<JSONObject>();
+                                    try {
+                                        //DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+                                        dataObj = new JSONArray(datapointsJsonStr);
+                                        Log.v(TAG, "createEventCallback() - datapointsObj length=" + dataObj.length());
+                                        for (int i = 0; i < dataObj.length(); i++) {
+                                            mDatapointsToUploadList.add(dataObj.getJSONObject(i));
+                                        }
+                                    } catch (JSONException e) {
+                                        Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string " + datapointsJsonStr);
+                                        dataObj = null;
+                                        finishUpload();
+                                    }
+                                    // This starts the process of uploading the datapoints, one at a time.
+                                    mCurrentEventRemoteId = eventId;
+                                    Log.v(TAG, "createEventCallback() - starting datapoints upload with eventId " + mCurrentEventRemoteId +
+                                            " Uploading " + mDatapointsToUploadList.size() + " datapoints");
+                                    uploadNextDatapoint();
+
+                                });
+                    } else {
+                        Log.e(TAG,"createEventCallback() - Error - event date is null - not doing anything");
+                        mUtil.showToast("Error uploading event - date is null");
+                        finishUpload();
+                    }
                 }
-                Log.v(TAG, "createEventCallback() EventId=" + eventId + ", eventDateStr=" + eventDateStr + ", eventDate=" + eventDate);
-                long eventDateMillis = eventDate.getTime();
-                long startDateMillis = eventDateMillis - 1000 * mEventDuration / 2;
-                long endDateMillis = eventDateMillis + 1000 * mEventDuration / 2;
-                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-                getDatapointsByDate(
-                        dateFormat.format(new Date(startDateMillis)),
-                        dateFormat.format(new Date(endDateMillis)),
-                        (String datapointsJsonStr) -> {
-                            //Log.v(TAG, "createEventCallback() - datapointsJsonStr=" + datapointsJsonStr);
-                            JSONArray dataObj;
-                            mDatapointsToUploadList = new ArrayList<JSONObject>();
-                            try {
-                                //DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-                                dataObj = new JSONArray(datapointsJsonStr);
-                                Log.v(TAG, "createEventCallback() - datapointsObj length="+dataObj.length());
-                                for (int i = 0; i < dataObj.length(); i++) {
-                                    mDatapointsToUploadList.add(dataObj.getJSONObject(i));
-                                }
-                            } catch (JSONException e) {
-                                Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string " + datapointsJsonStr);
-                                dataObj = null;
-                                finishUpload();
-                            }
-                            // This starts the process of uploading the datapoints, one at a time.
-                            mCurrentEventRemoteId = eventId;
-                            mUploadInProgress = true;
-                            Log.v(TAG, "createEventCallback() - starting datapoints upload with eventId " + mCurrentEventRemoteId +
-                                    " Uploading "+mDatapointsToUploadList.size()+" datapoints");
-                            uploadNextDatapoint();
-
-                        });
-
             }
         });
     }

@@ -32,8 +32,6 @@ public class WebApiConnection_osdapi extends WebApiConnection {
     public boolean mServerConnectionOk = false;
     private String mUrlBase = "https://osdApi.ddns.net";
     private String TAG = "WebApiConnection_osdapi";
-    private Context mContext;
-    private OsdUtil mUtil;
     RequestQueue mQueue;
 
     public WebApiConnection_osdapi(Context context) {
@@ -155,9 +153,18 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        Log.v(TAG, "Response is: " + response);
+                        Log.v(TAG, "createEvent.onResponse - Response is: " + response);
                         mServerConnectionOk = true;
-                        callback.accept(response);
+                        // we return just the eventId to be consistent with the firebase version of WebApiConnection.
+                        String retVal = null;
+                        try {
+                            JSONObject retObj = new JSONObject(response);
+                            retVal = retObj.getString("id");
+                        } catch (JSONException e) {
+                            Log.e(TAG, "createEvent.onResponse(): Error: " + e.getMessage() + "," + e.toString());
+                            retVal = null;
+                        }
+                        callback.accept(retVal);
                     }
                 },
                 new Response.ErrorListener() {
@@ -165,10 +172,10 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                     public void onErrorResponse(VolleyError error) {
                         mServerConnectionOk = false;
                         if (error != null) {
-                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage());
+                            Log.e(TAG, "createEvent Error: " + error.toString() + ", message:" + error.getMessage());
                             callback.accept(null);
                         } else {
-                            Log.e(TAG, "Create Event Error - null respones");
+                            Log.e(TAG, "createEvent Error - null response");
                             callback.accept(null);
                         }
                     }
@@ -208,7 +215,6 @@ public class WebApiConnection_osdapi extends WebApiConnection {
     }
 
     public boolean getEvent(String eventId, JSONObjectCallback callback) {
-        //Long eventId=Long.valueOf(285);
         Log.v(TAG, "getEvent()");
         String urlStr = mUrlBase + "/api/events/" + eventId;
         Log.v(TAG, "getEvent(): urlStr=" + urlStr);
@@ -267,7 +273,6 @@ public class WebApiConnection_osdapi extends WebApiConnection {
      * @return true on success or false on failure to initiate the request.
      */
     public boolean getEvents(JSONObjectCallback callback) {
-        //Long eventId=Long.valueOf(285);
         Log.v(TAG, "getEvents()");
         String urlStr = mUrlBase + "/api/events/";
         Log.v(TAG, "getEvents(): urlStr=" + urlStr);
@@ -327,7 +332,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
 
 
     public boolean updateEvent(final JSONObject eventObj, JSONObjectCallback callback) {
-        Long eventId;
+        String eventId;
         Log.v(TAG, "updateEvent()");
         final String authtoken = getStoredToken();
 
@@ -336,18 +341,17 @@ public class WebApiConnection_osdapi extends WebApiConnection {
             return (false);
         }
         try {
-            eventId = eventObj.getLong("id");
+            eventId = eventObj.getString("id");
         } catch (JSONException e) {
             Log.e(TAG, "updateEvent(): Error reading id from eventObj");
-            eventId = Long.valueOf(-1);
+            eventId = null;
         }
         final String dataStr = eventObj.toString();
-        Log.v(TAG, "createEvent - data=" + dataStr);
-
+        Log.v(TAG, "updateEvent - data=" + dataStr);
 
         int reqMethod;
         String urlStr;
-        if (eventId != -1) {
+        if (eventId != null) {
             Log.v(TAG, "updateEvent() - found eventId " + eventId + ", Updating event record");
             urlStr = mUrlBase + "/api/events/" + eventId + "/";
             Log.v(TAG, "urlStr=" + urlStr);

@@ -43,8 +43,8 @@ import java.util.Map;
 
 // This class is intended to handle all interactions with the OSD WebAPI
 public abstract class WebApiConnection {
-    private Context mContext;
-    private OsdUtil mUtil;
+    protected Context mContext;
+    protected OsdUtil mUtil;
     private String TAG = "WebApiConnection";
     private String mAuthToken;
 
