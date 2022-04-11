@@ -3,6 +3,7 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
+        \nV4.0.4 - Added watch info to events data
         \nV4.0.3 - Changed remote database to be compatible with either OSD webAPI or future Firebase database.<br/>
            - Performance improvement by having separate events and datapoints tables in local database
         \nV4.0.1, 4.0.2, - fixed repoted crashes

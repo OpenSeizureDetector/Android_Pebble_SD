@@ -207,6 +207,10 @@ public class LogManager {
                 event.put("id", c.getString(c.getColumnIndex("id")));
                 event.put("dataTime", c.getString(c.getColumnIndex("dataTime")));
                 event.put("status", c.getString(c.getColumnIndex("status")));
+                event.put("type", c.getString(c.getColumnIndex("type")));
+                event.put("subType", c.getString(c.getColumnIndex("subType")));
+                event.put("desc", c.getString(c.getColumnIndex("notes")));
+                event.put("dataJSON", c.getString(c.getColumnIndex("dataJSON")));
                 event.put("uploaded", c.getString(c.getColumnIndex("uploaded")));
                 c.moveToNext();
                 eventsArray.put(i, event);
@@ -293,7 +297,7 @@ public class LogManager {
 
             if (sdData.alarmState != 0) {
                 Log.i(TAG, "writeDatapointToLocalDb(): adding event to local DB");
-                createLocalEvent(dateStr, sdData.alarmState);
+                createLocalEvent(dateStr,sdData.alarmState,null, null, null, sdData.toSettingsJSON());
             }
         } catch (SQLException e) {
             Log.e(TAG, "writeToLocalDb(): Error Writing Data: " + e.toString());
@@ -304,14 +308,22 @@ public class LogManager {
     }
 
     public boolean createLocalEvent(String dataTime, long status) {
+        return (createLocalEvent(dataTime, status, null, null, null, null));
+    }
+
+    public boolean createLocalEvent(String dataTime, long status, String type, String subType, String desc, String dataJSON) {
         // Expects dataTime to be in format: SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Log.d(TAG,"createLocalEvent() - dataTime="+dataTime+", status="+status);
+        Log.d(TAG, "createLocalEvent() - dataTime=" + dataTime + ", status=" + status + ", dataJSON="+dataJSON);
         // Write Datapoint to database
         String SQLStr = "INSERT INTO " + mEventsTableName
-                + "(dataTime, status)"
+                + "(dataTime, status, type, subtype, notes, dataJSON)"
                 + " VALUES("
                 + "'" + dataTime + "',"
-                + status
+                + status + ","
+                + "'" + type + "',"
+                + "'" + subType + "',"
+                + "'" + desc + "',"
+                + "'" + dataJSON + "'"
                 + ")";
         mOsdDb.execSQL(SQLStr);
         return true;
@@ -371,7 +383,7 @@ public class LogManager {
     public boolean setDatapointToUploaded(int id, String eventId) {
         Log.d(TAG, "setDatapointToUploaded() - id=" + id);
         if (mOsdDb == null) {
-            Log.e(TAG,"setDatapointToUploaded() - mOsdDb is null - not doing anything");
+            Log.e(TAG, "setDatapointToUploaded() - mOsdDb is null - not doing anything");
             return false;
         }
         ContentValues cv = new ContentValues();
@@ -491,14 +503,14 @@ public class LogManager {
     /**
      * setEventToUploaded
      *
-     * @param localEventId      - local Event ID to change
+     * @param localEventId  - local Event ID to change
      * @param remoteEventId - the remote eventId associated with the uploaded datapoint - the 'uploaded' field is set to this value.
      * @return True on success or False on failure.
      */
     public boolean setEventToUploaded(long localEventId, String remoteEventId) {
-        Log.d(TAG, "setEventToUploaded() - local id=" + localEventId + " remote id="+remoteEventId);
+        Log.d(TAG, "setEventToUploaded() - local id=" + localEventId + " remote id=" + remoteEventId);
         if (mOsdDb == null) {
-            Log.e(TAG,"setEventToUploaded() - mOsdDb is null - not doing anything");
+            Log.e(TAG, "setEventToUploaded() - mOsdDb is null - not doing anything");
             return false;
         }
         ContentValues cv = new ContentValues();
@@ -784,32 +796,46 @@ public class LogManager {
                     int eventAlarmStatus;
                     String eventDateStr;
                     Date eventDate;
+                    String eventType;
+                    String eventSubType;
+                    String eventDesc;
+                    String eventDataJSON;
                     try {
                         JSONArray datapointJsonArr = new JSONArray(eventJsonStr);
                         eventObj = datapointJsonArr.getJSONObject(0);  // We only look at the first (and hopefully only) item in the array.
                         eventAlarmStatus = Integer.parseInt(eventObj.getString("status"));
                         eventDateStr = eventObj.getString("dataTime");
+                        eventType = eventObj.getString("type");
+                        eventSubType = eventObj.getString("subType");
+                        if (eventObj.has("desc"))
+                            eventDesc = eventObj.getString("desc");
+                        else
+                            eventDesc = "";
+                        eventDataJSON = eventObj.getString("dataJSON");
                         Log.d(TAG, "uploadSdData - data from local DB is:" + eventJsonStr + ", eventAlarmStatus="
                                 + eventAlarmStatus + ", eventDateStr=" + eventDateStr);
                     } catch (JSONException e) {
                         Log.e(TAG, "uploadSdData(): ERROR parsing event JSON Data" + eventJsonStr);
                         e.printStackTrace();
+                        mUploadInProgress = false;
                         return;
                     } catch (NullPointerException e) {
-                        Log.e(TAG, "uploadSdData(): ERROR null pointer exception parsing event JSON Data" + eventJsonStr);
+                        Log.e(TAG, "uploadSdData(): ERROR null pointer exception parsing event JSON Data: " + eventJsonStr);
                         e.printStackTrace();
+                        mUploadInProgress = false;
                         return;
                     }
                     try {
                         eventDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(eventDateStr);
                     } catch (ParseException e) {
                         Log.e(TAG, "UploadSdData(): Error parsing date " + eventDateStr);
+                        mUploadInProgress = false;
                         return;
                     }
 
                     Log.i(TAG, "uploadSdData - calling mWac.createEvent");
                     mCurrentEventLocalId = eventId;
-                    mWac.createEvent(eventAlarmStatus, eventDate, "", this::createEventCallback);
+                    mWac.createEvent(eventAlarmStatus, eventDate, eventType, eventSubType, eventDesc, eventDataJSON, this::createEventCallback);
                 } else {
                     Log.v(TAG, "uploadSdData - no data to upload "); //(warnings="+warningsVal+")");
                     mUploadInProgress = false;
@@ -839,14 +865,14 @@ public class LogManager {
             @Override
             public void accept(JSONObject eventObj) {
                 if (eventObj == null) {
-                    Log.e(TAG,"createEventCallback() - eventObj is null - failed to create event");
+                    Log.e(TAG, "createEventCallback() - eventObj is null - failed to create event");
                     mUtil.showToast("Error Creating Remote Event");
                 } else {
                     Log.v(TAG, "createEventCallback() - eventObj=" + eventObj.toString());
                     Date eventDate;
                     String eventDateStr = "";
                     try {
-                        String dateStr= eventObj.getString("dataTime");
+                        String dateStr = eventObj.getString("dataTime");
                         eventDate = mUtil.string2date(dateStr);
                     } catch (JSONException e) {
                         Log.e(TAG, "createEventCallback() - Error parsing JSONObject: " + eventObj.toString());
@@ -888,7 +914,7 @@ public class LogManager {
 
                                 });
                     } else {
-                        Log.e(TAG,"createEventCallback() - Error - event date is null - not doing anything");
+                        Log.e(TAG, "createEventCallback() - Error - event date is null - not doing anything");
                         mUtil.showToast("Error uploading event - date is null");
                         finishUpload();
                     }
@@ -922,7 +948,7 @@ public class LogManager {
                 finishUpload();
             }
         } else {
-            Log.w(TAG,"uploadNextDatapoint - mDatapointsToUploadList is null - I don't thin this should have happened!");
+            Log.w(TAG, "uploadNextDatapoint - mDatapointsToUploadList is null - I don't thin this should have happened!");
         }
     }
 
@@ -930,13 +956,13 @@ public class LogManager {
     // a datapoint based on mDatapointsToUploadList(0) so removes that from the list and calls UploadDatapoint()
     // to upload the next one.
     public void datapointCallback(String datapointStr) {
-        Log.v(TAG, "datapointCallback() dataPointId="+mCurrentDatapointId+" remote datapointID=" + datapointStr + ", mCurrentEventId=" + mCurrentEventRemoteId);
+        Log.v(TAG, "datapointCallback() dataPointId=" + mCurrentDatapointId + " remote datapointID=" + datapointStr + ", mCurrentEventId=" + mCurrentEventRemoteId);
         if (mDatapointsToUploadList != null) {
             if (mDatapointsToUploadList.size() > 0) {
                 mDatapointsToUploadList.remove(0);
             }
         } else {
-            Log.w(TAG,"datapointCallback - mDatapointsToUploadList is null - I don't thin this should have happened!");
+            Log.w(TAG, "datapointCallback - mDatapointsToUploadList is null - I don't thin this should have happened!");
         }
         setDatapointToUploaded(mCurrentDatapointId, mCurrentEventRemoteId);
         uploadNextDatapoint();
@@ -1049,6 +1075,8 @@ public class LogManager {
                     + "status INT,"
                     + "type TEXT,"
                     + "subType TEXT,"
+                    + "notes TEXT,"    // avoiding using 'desc' as that is an sql name.
+                    + "dataJSON TEXT,"
                     + "uploaded TEXT"  // stores the id of the event in the remote dabase if uploaded, otherwise empty
                     + ");";
             db.execSQL(SQLStr);

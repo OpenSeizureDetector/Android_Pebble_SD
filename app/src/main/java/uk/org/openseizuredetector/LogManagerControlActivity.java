@@ -427,7 +427,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 }
                 return true;
             case R.id.action_mark_unknown:
-                Log.i(TAG,"action_mark_unknown");
+                Log.i(TAG, "action_mark_unknown");
                 new AlertDialog.Builder(this)
                         .setTitle(R.string.mark_unverified_events_unknown_dialog_title)
                         .setMessage(R.string.mark_unverified_events_unknown_dialog_message)
@@ -435,7 +435,8 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
                                 mLm.mWac.markUnverifiedEventsAsUnknown();
-                            }})
+                            }
+                        })
                         .setNegativeButton(android.R.string.no, null)
                         .show();
             default:
@@ -624,6 +625,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
             Log.v(TAG, "getView() " + dataItem.toString());
             switch (dataItem.get("type").toString()) {
                 case "null":
+                case "":
                     v.setBackgroundColor(Color.parseColor("#ffaaaa"));
                     break;
                 case "Seizure":

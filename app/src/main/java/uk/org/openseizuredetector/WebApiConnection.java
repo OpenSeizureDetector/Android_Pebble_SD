@@ -76,7 +76,8 @@ public abstract class WebApiConnection {
 
     // Create a new event in the remote database, based on the provided parameters.
     // passes the newly created documentId to function callback on successful completion, or null on error.
-    public abstract boolean createEvent(final int osdAlarmState, final Date eventDate, final String eventDesc, StringCallback callback);
+    public abstract boolean createEvent(final int osdAlarmState, final Date eventDate, final String type, final String subType,
+                                        final String eventDesc, final String dataJSON, StringCallback callback);
 
     // calls function callback with a JSONObject representation of the event with id 'eventId'
     public abstract boolean getEvent(String eventId, JSONObjectCallback callback);

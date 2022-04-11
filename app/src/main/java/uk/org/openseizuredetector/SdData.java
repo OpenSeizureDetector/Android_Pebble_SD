@@ -71,6 +71,12 @@ public class SdData implements Parcelable {
     public boolean mO2SatNullAsAlarm = false;
     public double mO2SatThreshMin = 80.0;
 
+    /* Watch App Settings */
+    public String watchPartNo = "";
+    public String watchFwVersion = "";
+    public String watchSdVersion = "";
+    public String watchSdName = "";
+
 
     public double rawData[];
     int mNsamp = 0;
@@ -162,6 +168,48 @@ public class SdData implements Parcelable {
 
     public String toJSON(boolean includeRawData) {
         return toDataString(includeRawData);
+    }
+
+    public String toSettingsJSON() {
+        String retval;
+        retval = "SdData.toSettingsJSON() Output";
+        try {
+            JSONObject jsonObj = new JSONObject();
+            if (dataTime != null) {
+                jsonObj.put("dataTime", dataTime.format("%d-%m-%Y %H:%M:%S"));
+                jsonObj.put("dataTimeStr", dataTime.format("%Y%m%dT%H%M%S"));
+            }else{
+                jsonObj.put("dataTimeStr", "00000000T000000");
+                jsonObj.put("dataTime", "00-00-00 00:00:00");
+            }
+            jsonObj.put("batteryPc", batteryPc);
+            jsonObj.put("alarmState", alarmState);
+            jsonObj.put("alarmPhrase", alarmPhrase);
+            jsonObj.put("sdMode",mSdMode);
+            jsonObj.put("sampleFreq",mSampleFreq);
+            jsonObj.put("analysisPeriod",analysisPeriod);
+            jsonObj.put("alarmFreqMin",alarmFreqMin);
+            jsonObj.put("alarmFreqMax",alarmFreqMax);
+            jsonObj.put("alarmThresh", alarmThresh);
+            jsonObj.put("alarmRatioThresh", alarmRatioThresh);
+            jsonObj.put("hrAlarmActive", mHRAlarmActive);
+            jsonObj.put("hrAlarmStanding", mHRAlarmStanding);
+            jsonObj.put("hrThreshMin",mHRThreshMin);
+            jsonObj.put("hrThreshMax", mHRThreshMax);
+            jsonObj.put("o2SatAlarmActive", mO2SatAlarmActive);
+            jsonObj.put("o2SatAlarmStanding", mO2SatAlarmStanding);
+            jsonObj.put("o2SatThreshMin",mO2SatThreshMin);
+            jsonObj.put("watchPartNo",watchPartNo);
+            jsonObj.put("watchSdName",watchSdName);
+            jsonObj.put("watchFwVersion",watchFwVersion);
+            jsonObj.put("watchSdVersion",watchSdVersion);
+
+            retval = jsonObj.toString();
+        } catch (Exception ex) {
+            Log.e(TAG, "toSettingsJSON(): Error Creating Data Object - " + ex.toString());
+            retval = "Error Creating Data Object - " + ex.toString();
+        }
+        return (retval);
     }
 
     public String toDataString(boolean includeRawData) {

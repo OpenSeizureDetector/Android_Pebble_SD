@@ -147,7 +147,9 @@ public class ReportSeizureActivity extends AppCompatActivity {
                     //SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     String dateStr=String.format("%4d-%02d-%02d %02d:%02d:30",mYear,mMonth+1,mDay, mHour, mMinute);
                     Log.v(TAG, "onOk() - dateSTr="+dateStr);
-                    mLm.createLocalEvent(dateStr,5);
+                    // FIXME - make new version of SdData.toJSON that gives watch details for in the event.
+                    mLm.createLocalEvent(dateStr,5,null, null, null,
+                            mConnection.mSdServer.mSdData.toSettingsJSON());
                     mUtil.showToast("Seizure Event Created");
                     finish();
                 }

@@ -119,7 +119,9 @@ public class WebApiConnection_firebase extends WebApiConnection {
 
     // Create a new event in the remote database, based on the provided parameters.
     // passes the newly created documentId to function callback on successful completion, or null on error.
-    public boolean createEvent(final int osdAlarmState, final Date eventDate, final String eventDesc, StringCallback callback) {
+    public boolean createEvent(final int osdAlarmState, final Date eventDate, final String type, final String subType,
+                               final String eventDesc, final String dataJSON, StringCallback callback) {
+    // FIXME - save type, subtype, eventDesc and dataJSON
         Log.v(TAG, "createEvent()");
         String userId = null;
 
@@ -138,8 +140,9 @@ public class WebApiConnection_firebase extends WebApiConnection {
         event.put("dataTime", eventDate.getTime());
         event.put("osdAlarmState", osdAlarmState);
         event.put("desc", eventDesc);
-        event.put("type", null);
-        event.put("subType", null);
+        event.put("type", type);
+        event.put("subType", subType);
+        event.put("dataJSON", dataJSON);
         event.put("userId", userId);
 
         mDb.collection("Events")

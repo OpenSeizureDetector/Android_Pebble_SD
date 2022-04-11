@@ -127,7 +127,8 @@ public class WebApiConnection_osdapi extends WebApiConnection {
 
 
     // Create a new event in the remote database, based on the provided parameters.
-    public boolean createEvent(final int osdAlarmState, final Date eventDate, final String eventDesc, StringCallback callback) {
+    public boolean createEvent(final int osdAlarmState, final Date eventDate, final String type, final String subType,
+                               final String eventDesc, final String dataJSON, StringCallback callback) {
         Log.v(TAG, "createEvent()");
         String urlStr = mUrlBase + "/api/events/";
         Log.v(TAG, "urlStr=" + urlStr);
@@ -142,7 +143,10 @@ public class WebApiConnection_osdapi extends WebApiConnection {
         try {
             jsonObject.put("osdAlarmState", String.valueOf(osdAlarmState));
             jsonObject.put("dataTime", dateFormat.format(eventDate));
+            jsonObject.put("type", type);
+            jsonObject.put("subType", subType);
             jsonObject.put("desc", eventDesc);
+            jsonObject.put("dataJSON", dataJSON);
         } catch (JSONException e) {
             Log.e(TAG, "Error generating event JSON string");
         }

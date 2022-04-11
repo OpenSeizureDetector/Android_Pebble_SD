@@ -318,6 +318,10 @@ public abstract class SdDataSource {
                     sdName = dataObject.getString("sdName");
                     mUtil.writeToSysLogFile("    * sdName = " + sdName + " version " + sdVersion);
                     mUtil.writeToSysLogFile("    * watchPartNo = " + watchPartNo + " fwVersion " + watchFwVersion);
+                    mSdData.watchPartNo = watchPartNo;
+                    mSdData.watchFwVersion = watchFwVersion;
+                    mSdData.watchSdVersion = sdVersion;
+                    mSdData.watchSdName = sdName;
                 } catch (Exception e) {
                     Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString());
                     mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - " + jsonStr + " - " + e.toString());
