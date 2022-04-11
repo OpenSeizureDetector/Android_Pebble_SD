@@ -428,8 +428,16 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 return true;
             case R.id.action_mark_unknown:
                 Log.i(TAG,"action_mark_unknown");
-                mLm.mWac.markUnverifiedEventsAsUnknown();
-
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.mark_unverified_events_unknown_dialog_title)
+                        .setMessage(R.string.mark_unverified_events_unknown_dialog_message)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                mLm.mWac.markUnverifiedEventsAsUnknown();
+                            }})
+                        .setNegativeButton(android.R.string.no, null)
+                        .show();
             default:
                 return super.onOptionsItemSelected(item);
         }

@@ -165,11 +165,13 @@ public abstract class WebApiConnection {
                                         markEventsAsUnknown(eventList);
                                     } else {
                                         Log.e(TAG, "markEventsAsUnknown.updateEvent.callback - eventObj is null");
+                                        mUtil.showToast("markEventsAsUnknown.updateEvent.callback - eventObj is null");
                                     }
                                 }
                             });
                         } catch (JSONException e) {
                             Log.e(TAG,"markEventsAsUnknown.getEvent.callback: Error editing eventObj");
+                            mUtil.showToast("markEventsAsUnknown.getEvent.callback: Error editing eventObj");
                         }
                     } else {
                         mUtil.showToast("Failed to Retrieve Event from Remote Database");
@@ -179,7 +181,7 @@ public abstract class WebApiConnection {
             });
         } else {
             Log.i(TAG,"markEventsAsUnknown(): No more events to Modify");
-            mUtil.showToast("No unvalidated events to modify :)");
+            mUtil.showToast("No more unvalidated events to modify.");
 
         }
         return(true);

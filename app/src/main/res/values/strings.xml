@@ -3,9 +3,9 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
-        \nV4.1.1 - Changed remote database to be compatible with either OSD webAPI or future Firebase database.<br/>
+        \nV4.0.3 - Changed remote database to be compatible with either OSD webAPI or future Firebase database.<br/>
            - Performance improvement by having separate events and datapoints tables in local database
-        \nV4.0.1 - fixed crash in Report Seizure function
+        \nV4.0.1, 4.0.2, - fixed repoted crashes
         \nV4.0.0
           - Introduced the &lt;b>Data Sharing&lt;/b> feature to allow users to share their seizure and false alarm data
         with researchers to help improve the system.&lt;br/>
@@ -435,4 +435,6 @@
     <string name="about_data_sharing">About Data Sharing</string>
     <string name="privacy_policy">Privacy Policy</string>
     <string name="mark_unverified_events_as_unknown">Mark Unverified Events as Unknown</string>
+    <string name="mark_unverified_events_unknown_dialog_title">Mark All Unverified Events as Unknown?</string>
+    <string name="mark_unverified_events_unknown_dialog_message">Please confirm that all genuine seizure events have been verified before marking all unverified events as type \'unknown\'.   \n\nContinue to mark unverified events as Unknown?</string>
 </resources>
