@@ -227,10 +227,6 @@ public class SdServer extends Service implements SdDataReceiver {
         Log.v(TAG, "onStartCommand() - calling updatePrefs()");
         updatePrefs();
 
-        // Create our log manager.
-        mLm = new LogManager(this, mLogDataRemote, mLogDataRemoteMobile, mAuthToken, mEventDuration,
-                mRemoteLogPeriod, mAutoPruneDb, mDataRetentionPeriod);
-
         Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName);
         switch (mSdDataSourceName) {
             case "Pebble":
@@ -247,6 +243,8 @@ public class SdServer extends Service implements SdDataReceiver {
                 Log.v(TAG, "Selecting Network DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceNetwork");
                 mSdDataSource = new SdDataSourceNetwork(this.getApplicationContext(), mHandler, this);
+                Log.i(TAG,"Disabling remote logging when using network data source");
+                mLogDataRemote = false;
                 break;
             case "Garmin":
                 Log.v(TAG, "Selecting Garmin DataSource");
@@ -270,6 +268,10 @@ public class SdServer extends Service implements SdDataReceiver {
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePhone");
                 mSdDataSource = new SdDataSourcePhone(this.getApplicationContext(), mHandler, this);
         }
+
+        // Create our log manager.
+        mLm = new LogManager(this, mLogDataRemote, mLogDataRemoteMobile, mAuthToken, mEventDuration,
+                mRemoteLogPeriod, mAutoPruneDb, mDataRetentionPeriod);
 
         if (mSMSAlarm) {
             Log.v(TAG, "Creating LocationFinder");

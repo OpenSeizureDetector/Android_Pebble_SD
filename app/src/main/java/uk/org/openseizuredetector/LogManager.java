@@ -289,7 +289,7 @@ public class LogManager {
                     + " VALUES("
                     + "'" + dateStr + "',"
                     + sdData.alarmState + ","
-                    + DatabaseUtils.sqlEscapeString(sdData.toJSON(true)) + ","
+                    + DatabaseUtils.sqlEscapeString(sdData.toDatapointJSON()) + ","
                     + 0
                     + ")";
             mOsdDb.execSQL(SQLStr);
@@ -314,7 +314,7 @@ public class LogManager {
     public boolean createLocalEvent(String dataTime, long status, String type, String subType, String desc, String dataJSON) {
         // Expects dataTime to be in format: SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Log.d(TAG, "createLocalEvent() - dataTime=" + dataTime + ", status=" + status + ", dataJSON="+dataJSON);
-        // Write Datapoint to database
+        // Write Event to database
         String SQLStr = "INSERT INTO " + mEventsTableName
                 + "(dataTime, status, type, subtype, notes, dataJSON)"
                 + " VALUES("
