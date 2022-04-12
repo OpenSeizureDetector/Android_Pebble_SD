@@ -629,7 +629,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     v.setBackgroundColor(Color.parseColor("#ffaaaa"));
                     break;
                 case "Seizure":
-                    v.setBackgroundColor(Color.parseColor("#ff1a1a"));
+                    v.setBackgroundColor(Color.parseColor("#ff6060"));
                     break;
                 default:
                     v.setBackgroundColor(Color.TRANSPARENT);

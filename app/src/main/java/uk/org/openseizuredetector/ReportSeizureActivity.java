@@ -5,20 +5,33 @@ package uk.org.openseizuredetector;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * ReportSeizureActivity - Allows the user to report a seizure manually, which is saved in the database for
@@ -31,11 +44,24 @@ public class ReportSeizureActivity extends AppCompatActivity {
     private Context mContext;
     private UiTimer mUiTimer;
     private LogManager mLm;
+    private WebApiConnection mWac;
+
     private int mYear, mMonth, mDay, mHour, mMinute;
     private String mMsg = "Messages";
     private SdServiceConnection mConnection;
     private OsdUtil mUtil;
     final Handler serverStatusHandler = new Handler();
+    private List<String> mEventTypesList = null;
+    private HashMap<String, ArrayList<String>> mEventSubTypesHashMap = null;
+    private String mEventTypeStr = null;
+    private String mEventSubTypeStr = null;
+    private String mEventNotes = "";
+    private RadioGroup mEventTypeRg;
+    private boolean mRedrawEventSubTypesList = false;
+    private boolean mRedrawEventTypesList = false;
+    private RadioGroup mEventSubTypeRg;
+    private boolean mEventSubTypesListChanged = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,19 +78,11 @@ public class ReportSeizureActivity extends AppCompatActivity {
         mConnection = new SdServiceConnection(getApplicationContext());
 
         setContentView(R.layout.activity_report_seizure);
-        // It takes a finite time for
-        // the mConnection to bind to the service, so we delay half a second to give it chance
-        // to connect before trying to get the SdServer LogManager instance)
-        // FIXME:  We should probably implement a WaitForConnection function like we do in some of the other activities
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                Log.v(TAG,"onCreate(): setting mLm");
-                mLm = mConnection.mSdServer.mLm;
-            }
-        }, 100);
 
-        //mLm= new LogManager(mContext);
+        mEventTypeRg = findViewById(R.id.eventTypeRg);
+        mEventTypeRg.setOnCheckedChangeListener(onEventTypeChange);
+        mEventSubTypeRg = findViewById(R.id.eventSubTypeRg);
+        mEventSubTypeRg.setOnCheckedChangeListener(onEventSubTypeChange);
 
         Button okBtn =
                 (Button) findViewById(R.id.loginBtn);
@@ -89,16 +107,13 @@ public class ReportSeizureActivity extends AppCompatActivity {
         mDay = c.get(Calendar.DAY_OF_MONTH);
         mHour = c.get(Calendar.HOUR_OF_DAY);
         mMinute = c.get(Calendar.MINUTE);
-
-
-        updateUi();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         mUtil.bindToServer(getApplicationContext(), mConnection);
-        //startUiTimer();
+        waitForConnection();
     }
 
     @Override
@@ -110,7 +125,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        startUiTimer();
+        //startUiTimer();
     }
 
     @Override
@@ -119,11 +134,87 @@ public class ReportSeizureActivity extends AppCompatActivity {
         mUtil.unbindFromServer(getApplicationContext(), mConnection);
     }
 
+    private void waitForConnection() {
+        // We want the UI to update as soon as it is displayed, but it takes a finite time for
+        // the mConnection to bind to the service, so we delay half a second to give it chance
+        // to connect before trying to update the UI for the first time (it happens again periodically using the uiTimer)
+        if (mConnection.mBound) {
+            Log.v(TAG, "waitForConnection - Bound!");
+            initialiseServiceConnection();
+        } else {
+            Log.v(TAG, "waitForConnection - waiting...");
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    waitForConnection();
+                }
+            }, 100);
+        }
+    }
+
+    private void initialiseServiceConnection() {
+        mLm = mConnection.mSdServer.mLm;
+        mWac = mConnection.mSdServer.mLm.mWac;
+
+        if (mWac.isLoggedIn()) {
+
+            // Retrieve the JSONObject containing the standard event types.
+            // Note this obscure syntax is to avoid having to create another interface, so it is worth it :)
+            // See https://medium.com/@pra4mesh/callback-function-in-java-20fa48b27797
+            mWac.getEventTypes(new WebApiConnection.JSONObjectCallback() {
+                @Override
+                public void accept(JSONObject eventTypesObj) {
+                    Log.v(TAG, "initialiseServiceConnection().onEventTypesReceived");
+                    if (eventTypesObj == null) {
+                        Log.e(TAG, "initialiseServiceConnection().getEventTypes Callback:  Error Retrieving event types");
+                        mUtil.showToast("Error Retrieving Event Types from Server - Please Try Again Later!");
+                    } else {
+                        Iterator<String> keys = eventTypesObj.keys();
+                        mEventTypesList = new ArrayList<String>();
+                        mEventSubTypesHashMap = new HashMap<String, ArrayList<String>>();
+                        while (keys.hasNext()) {
+                            String key = keys.next();
+                            Log.v(TAG, "initialiseServiceConnection().getEventTypes Callback: key=" + key);
+                            mEventTypesList.add(key);
+                            try {
+                                JSONArray eventSubTypes = eventTypesObj.getJSONArray(key);
+                                ArrayList<String> eventSubtypesList = new ArrayList<String>();
+                                for (int i = 0; i < eventSubTypes.length(); i++) {
+                                    eventSubtypesList.add(eventSubTypes.getString(i));
+                                }
+                                mEventSubTypesHashMap.put(key, eventSubtypesList);
+                                mRedrawEventSubTypesList = true;
+                            } catch (JSONException e) {
+                                Log.e(TAG, "initialiseServiceConnection().getEventTypes Callback: Error parsing JSONObject" + e.getMessage() + e.toString());
+                            }
+                        }
+                        mRedrawEventTypesList = true;
+                        updateUi();
+                    }
+                }
+            });
+        } else {
+            new AlertDialog.Builder(mContext)
+                    .setTitle(R.string.not_logged_in_dialog_title)
+                    .setMessage(R.string.not_logged_in_dialog_message)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            finish();
+                        }
+                    })
+                    .show();
+
+        }
+    }
+
+
 
     private void updateUi() {
         //Log.v(TAG,"updateUi()");
         TextView tv;
         Button btn;
+        RadioButton b;
 
         tv = (TextView)findViewById(R.id.date_day_tv);
         tv.setText(String.format("%02d",mDay));
@@ -137,18 +228,81 @@ public class ReportSeizureActivity extends AppCompatActivity {
         tv.setText(String.format("%02d",mMinute));
         tv = (TextView)findViewById(R.id.msg_tv);
         tv.setText(mMsg);
+
+        // Populate event type button group if necessary
+        if (mEventTypesList != null && mRedrawEventTypesList) {
+            Log.v(TAG, "updateUi: " + mEventTypesList.toString());
+            mEventTypeRg.removeAllViews();
+            for (String eventTypeStr : mEventTypesList) {
+                b = new RadioButton(this);
+                b.setText(eventTypeStr);
+                mEventTypeRg.addView(b);
+            }
+            mRedrawEventTypesList = false;
+        }
+
+
+        String seizureTypeStr = null;
+        // Find which seizure type is selected
+        int checkedRadioButtonId = mEventTypeRg.getCheckedRadioButtonId();
+        //Log.i(TAG,"updateUi(): checkedRadioButtonId="+checkedRadioButtonId);
+        b = (RadioButton) findViewById(checkedRadioButtonId);
+        if (b != null) {
+            seizureTypeStr = b.getText().toString();
+        }
+        Log.i(TAG,"updateUi - SeizureType="+seizureTypeStr);
+
+        // Populate the event sub-types radio button list.
+        Log.v(TAG,"updateUi() - meventsubtypeshashmap="+mEventSubTypesHashMap+", mEventSubtypesListChanged="+mEventSubTypesListChanged);
+        if (mEventSubTypesHashMap != null && mRedrawEventSubTypesList) {
+            Log.v(TAG,"UpdateUi() - populating event sub types list");
+            if (seizureTypeStr != null) {
+                // based on https://androidexample.com/create-a-simple-listview
+                ArrayList<String> subtypesArrayList = mEventSubTypesHashMap.get(seizureTypeStr);
+                Log.v(TAG, "updateUi() - eventType=" + seizureTypeStr + ", subtypes=" + subtypesArrayList);
+                mEventSubTypeRg.removeAllViews();
+                for (String eventSubTypeStr : subtypesArrayList) {
+                    b = new RadioButton(this);
+                    b.setText(eventSubTypeStr);
+                    mEventSubTypeRg.addView(b);
+                }
+                mRedrawEventSubTypesList = false;
+            }
+        }
     }
 
     View.OnClickListener onOk =
             new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    RadioButton b;
+                    String seizureTypeStr = null;
+                    String seizureSubTypeStr = null;
+                    String notesStr = null;
                     Log.v(TAG, "onOk");
                     //SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     String dateStr=String.format("%4d-%02d-%02d %02d:%02d:30",mYear,mMonth+1,mDay, mHour, mMinute);
                     Log.v(TAG, "onOk() - dateSTr="+dateStr);
-                    // FIXME - make new version of SdData.toJSON that gives watch details for in the event.
-                    mLm.createLocalEvent(dateStr,5,null, null, null,
+
+                    // Read seizure type from radio buttons
+                    int checkedRadioButtonId = mEventTypeRg.getCheckedRadioButtonId();
+                    b = (RadioButton) findViewById(checkedRadioButtonId);
+                    if (b != null) {
+                        seizureTypeStr = b.getText().toString();
+                    }
+                    Log.i(TAG,"onOk() - SeizureType="+seizureTypeStr);
+
+                    checkedRadioButtonId = mEventSubTypeRg.getCheckedRadioButtonId();
+                    b = (RadioButton) findViewById(checkedRadioButtonId);
+                    if (b != null) {
+                        seizureSubTypeStr = b.getText().toString();
+                    }
+                    Log.i(TAG,"onOk() - SeizureSubType="+seizureSubTypeStr);
+
+                    TextView tv = (TextView)findViewById(R.id.eventNotesTv);
+                    notesStr = tv.getText().toString();
+
+                    mLm.createLocalEvent(dateStr,5,seizureTypeStr, seizureSubTypeStr, notesStr,
                             mConnection.mSdServer.mSdData.toSettingsJSON());
                     mUtil.showToast("Seizure Event Created");
                     finish();
@@ -201,6 +355,24 @@ public class ReportSeizureActivity extends AppCompatActivity {
                     timePickerDialog.show();
                 }
             };
+
+
+    RadioGroup.OnCheckedChangeListener onEventTypeChange =
+            new RadioGroup.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(RadioGroup group, int checkedId) {
+                    mRedrawEventSubTypesList = true;
+                    updateUi();
+                }
+            };
+    RadioGroup.OnCheckedChangeListener onEventSubTypeChange =
+            new RadioGroup.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(RadioGroup group, int checkedId) {
+                    updateUi();
+                }
+            };
+
 
     /*
      * Start the timer that will upload data to the remote server after a given period.
