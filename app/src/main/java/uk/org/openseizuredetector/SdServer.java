@@ -228,6 +228,7 @@ public class SdServer extends Service implements SdDataReceiver {
         updatePrefs();
 
         Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName);
+        mSdData.dataSourceName = mSdDataSourceName;
         switch (mSdDataSourceName) {
             case "Pebble":
                 Log.v(TAG, "Selecting Pebble DataSource");

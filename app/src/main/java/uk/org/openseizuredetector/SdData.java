@@ -72,6 +72,7 @@ public class SdData implements Parcelable {
     public double mO2SatThreshMin = 80.0;
 
     /* Watch App Settings */
+    public String dataSourceName = "";
     public String watchPartNo = "";
     public String watchFwVersion = "";
     public String watchSdVersion = "";
@@ -242,6 +243,7 @@ public class SdData implements Parcelable {
             jsonObj.put("o2SatAlarmActive", mO2SatAlarmActive);
             jsonObj.put("o2SatAlarmStanding", mO2SatAlarmStanding);
             jsonObj.put("o2SatThreshMin", mO2SatThreshMin);
+            jsonObj.put("dataSourceName", dataSourceName);
             jsonObj.put("watchPartNo", watchPartNo);
             jsonObj.put("watchSdName", watchSdName);
             jsonObj.put("watchFwVersion", watchFwVersion);

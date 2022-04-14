@@ -3,11 +3,7 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
-        \nV4.0.4 - Added watch info to events data
-        \nV4.0.3 - Changed remote database to be compatible with either OSD webAPI or future Firebase database.<br/>
-           - Performance improvement by having separate events and datapoints tables in local database
-        \nV4.0.1, 4.0.2, - fixed repoted crashes
-        \nV4.0.0
+        \nV4.0.4
           - Introduced the &lt;b>Data Sharing&lt;/b> feature to allow users to share their seizure and false alarm data
         with researchers to help improve the system.&lt;br/>
           - Fixed &lt;b>SMS Location Alerts&lt;/b> on Android V10+ (new permissions screens)&lt;br/>
