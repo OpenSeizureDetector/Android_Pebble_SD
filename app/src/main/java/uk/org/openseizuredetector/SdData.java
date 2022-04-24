@@ -80,6 +80,7 @@ public class SdData implements Parcelable {
 
 
     public double rawData[];
+    public double rawData3D[];
     int mNsamp = 0;
 
     /* Analysis results */
@@ -109,6 +110,7 @@ public class SdData implements Parcelable {
     public SdData() {
         simpleSpec = new int[10];
         rawData = new double[N_RAW_DATA];
+        rawData3D = new double[N_RAW_DATA * 3];
         dataTime = new Time(Time.getCurrentTimezone());
     }
 
@@ -203,6 +205,12 @@ public class SdData implements Parcelable {
                 rawArr.put(rawData[i]);
             }
             jsonObj.put("rawData", rawArr);
+
+            JSONArray raw3DArr = new JSONArray();
+            for (int i = 0; i < rawData3D.length; i++) {
+                raw3DArr.put(rawData3D[i]);
+            }
+            jsonObj.put("rawData3D", raw3DArr);
 
             retval = jsonObj.toString();
         } catch (Exception ex) {
@@ -307,6 +315,13 @@ public class SdData implements Parcelable {
                     rawArr.put(rawData[i]);
                 }
                 jsonObj.put("rawData", rawArr);
+
+                JSONArray raw3DArr = new JSONArray();
+                for (int i = 0; i < rawData3D.length; i++) {
+                    raw3DArr.put(rawData3D[i]);
+                }
+                jsonObj.put("rawData3D", raw3DArr);
+
             }
 
             retval = jsonObj.toString();
