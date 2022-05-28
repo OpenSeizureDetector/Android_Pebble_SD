@@ -204,14 +204,24 @@ public class LogManager {
         while (!c.isAfterLast()) {
             JSONObject event = new JSONObject();
             try {
-                event.put("id", c.getString(c.getColumnIndex("id")));
-                event.put("dataTime", c.getString(c.getColumnIndex("dataTime")));
-                event.put("status", c.getString(c.getColumnIndex("status")));
-                event.put("type", c.getString(c.getColumnIndex("type")));
-                event.put("subType", c.getString(c.getColumnIndex("subType")));
-                event.put("desc", c.getString(c.getColumnIndex("notes")));
-                event.put("dataJSON", c.getString(c.getColumnIndex("dataJSON")));
-                event.put("uploaded", c.getString(c.getColumnIndex("uploaded")));
+                String val;
+                val = c.getString(c.getColumnIndex("id"));
+                // We replace null values with empty string, otherwise they are completely excluded from output JSON.
+                event.put("id", val==null ? "" : val );
+                val = c.getString(c.getColumnIndex("dataTime"));
+                event.put("dataTime", val==null ? "" : val);
+                val = c.getString(c.getColumnIndex("status"));
+                event.put("status", val==null ? "" : val);
+                val = c.getString(c.getColumnIndex("type"));
+                event.put("type", val==null ? "" : val);
+                val = c.getString(c.getColumnIndex("subType"));
+                event.put("subType", val==null ? "" : val);
+                val = c.getString(c.getColumnIndex("notes"));
+                event.put("desc", val==null ? "" : val);
+                val = c.getString(c.getColumnIndex("dataJSON"));
+                event.put("dataJSON", val==null ? "" : val);
+                val = c.getString(c.getColumnIndex("uploaded"));
+                event.put("uploaded", val==null ? "" : val);
                 c.moveToNext();
                 eventsArray.put(i, event);
                 i++;
@@ -315,17 +325,27 @@ public class LogManager {
         // Expects dataTime to be in format: SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Log.d(TAG, "createLocalEvent() - dataTime=" + dataTime + ", status=" + status + ", dataJSON="+dataJSON);
         // Write Event to database
-        String SQLStr = "INSERT INTO " + mEventsTableName
-                + "(dataTime, status, type, subtype, notes, dataJSON)"
-                + " VALUES("
-                + "'" + dataTime + "',"
-                + status + ","
-                + "'" + type + "',"
-                + "'" + subType + "',"
-                + "'" + desc + "',"
-                + "'" + dataJSON + "'"
-                + ")";
-        mOsdDb.execSQL(SQLStr);
+        //String SQLStr = "INSERT INTO " + mEventsTableName
+        //        + "(dataTime, status, type, subtype, notes, dataJSON)"
+        //        + " VALUES("
+        //        + "'" + dataTime + "',"
+        //        + status + ","
+        //       + "'" + type + "',"
+        //        + "'" + subType + "',"
+        //        + "'" + desc + "',"
+        //        + "'" + dataJSON + "'"
+        //        + ")";
+        //mOsdDb.execSQL(SQLStr);
+        ContentValues values = new ContentValues();
+        values.put("dataTime", dataTime);
+        values.put("status", status);
+        values.put("type", type);
+        values.put("subType",subType);
+        values.put("notes",desc);
+        values.put("dataJSON", dataJSON);
+
+        long newRowId = mOsdDb.insert(mEventsTableName, null, values);
+        Log.d(TAG, "Created Row ID"+newRowId);
         return true;
     }
 
