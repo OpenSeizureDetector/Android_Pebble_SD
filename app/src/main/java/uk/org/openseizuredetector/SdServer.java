@@ -227,8 +227,9 @@ public class SdServer extends Service implements SdDataReceiver {
         Log.v(TAG, "onStartCommand() - calling updatePrefs()");
         updatePrefs();
 
-        Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName);
+        Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName + ", phoneAppVersion="+mUtil.getAppVersionName());
         mSdData.dataSourceName = mSdDataSourceName;
+        mSdData.phoneAppVersion = mUtil.getAppVersionName();
         switch (mSdDataSourceName) {
             case "Pebble":
                 Log.v(TAG, "Selecting Pebble DataSource");
@@ -760,6 +761,9 @@ public class SdServer extends Service implements SdDataReceiver {
             stopFaultTimer();
         }
         mSdData = sdData;
+        mSdData.dataSourceName = mSdDataSourceName;
+        mSdData.phoneAppVersion = mUtil.getAppVersionName();
+
         if (webServer != null) webServer.setSdData(mSdData);
         Log.v(TAG, "onSdDataReceived() - setting mSdData to " + mSdData.toString());
 
@@ -1332,7 +1336,6 @@ public class SdServer extends Service implements SdDataReceiver {
         /**
          * onSdLocationReceived - called with the best estimate location after mLocationReceiver times out.
          *
-         * @param ll - location (may be null if no location found)
          */
         private void sendSMS(String phoneNo, String msgStr) {
             Log.i(TAG, "sendSMS() - Sending to " + phoneNo);

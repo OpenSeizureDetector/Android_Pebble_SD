@@ -38,6 +38,7 @@ public class SdData implements Parcelable {
     private final static String TAG = "SdData";
     private final static int N_RAW_DATA = 500;  // 5 seconds at 100 Hz.
     /* Analysis settings */
+    public String phoneAppVersion = "";
     public boolean haveSettings = false;   // flag to say if we have received settings or not.
     public boolean haveData = false; // flag to say we have received data.
     public short mDataUpdatePeriod;
@@ -252,6 +253,8 @@ public class SdData implements Parcelable {
             jsonObj.put("o2SatAlarmStanding", mO2SatAlarmStanding);
             jsonObj.put("o2SatThreshMin", mO2SatThreshMin);
             jsonObj.put("dataSourceName", dataSourceName);
+            Log.v(TAG,"phoneAppVersion="+phoneAppVersion);
+            jsonObj.put("phoneAppVersion", phoneAppVersion);
             jsonObj.put("watchPartNo", watchPartNo);
             jsonObj.put("watchSdName", watchSdName);
             jsonObj.put("watchFwVersion", watchFwVersion);
