@@ -294,15 +294,22 @@ public abstract class SdDataSource {
                     mSdData.rawData[i] = accelVals.getInt(i);
                 }
                 mSdData.mNsamp = accelVals.length();
-
-                accelVals3D = dataObject.getJSONArray("data3D");
-                Log.v(TAG, "Received " + accelVals3D.length() + " acceleration 3D values, rawData Length is " + mSdData.rawData3D.length);
-                if (accelVals3D.length() > mSdData.rawData3D.length) {
-                    mUtil.writeToSysLogFile("ERROR:  Received " + accelVals3D.length() + " 3D acceleration values, but rawData3D storage length is "
-                            + mSdData.rawData3D.length);
-                }
-                for (i = 0; i < accelVals3D.length(); i++) {
-                    mSdData.rawData3D[i] = accelVals3D.getInt(i);
+                try {
+                    accelVals3D = dataObject.getJSONArray("data3D");
+                    Log.v(TAG, "Received " + accelVals3D.length() + " acceleration 3D values, rawData Length is " + mSdData.rawData3D.length);
+                    if (accelVals3D.length() > mSdData.rawData3D.length) {
+                        mUtil.writeToSysLogFile("ERROR:  Received " + accelVals3D.length() + " 3D acceleration values, but rawData3D storage length is "
+                                + mSdData.rawData3D.length);
+                    }
+                    for (i = 0; i < accelVals3D.length(); i++) {
+                        mSdData.rawData3D[i] = accelVals3D.getInt(i);
+                    }
+                } catch (JSONException e) {
+                    // If we get an error, just set rawData3D to zero
+                    Log.i(TAG,"updateFromJSON - error parsing 3D data - setting it to zero");
+                    for (i = 0; i < mSdData.rawData3D.length; i++) {
+                        mSdData.rawData3D[i] = 0.;
+                    }
                 }
 
                 mWatchAppRunningCheck = true;

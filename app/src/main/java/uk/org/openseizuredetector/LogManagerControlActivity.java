@@ -520,9 +520,9 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
                     Log.v(TAG, "onItemClicKListener() - Position=" + position + ", id=" + id);// Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
                     HashMap<String, String> eventObj = (HashMap<String, String>) adapter.getItemAtPosition(position);
-                    Long eventId = Long.parseLong(eventObj.get("uploaded"));
+                    String eventId = eventObj.get("uploaded");
                     Log.d(TAG, "onItemClickListener(): eventId=" + eventId + ", eventObj=" + eventObj);
-                    if (eventId > 0) {
+                    if (eventId != null) {
                         Intent i = new Intent(getApplicationContext(), EditEventActivity.class);
                         i.putExtra("eventId", eventId);
                         startActivity(i);
