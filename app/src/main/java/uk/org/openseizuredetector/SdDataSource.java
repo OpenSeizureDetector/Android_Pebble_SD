@@ -272,7 +272,7 @@ public abstract class SdDataSource {
                     mSdData.mHR = -1;
                 }
                 try {
-                    mSdData.mO2Sat = dataObject.getDouble("O2Sat");
+                    mSdData.mO2Sat = dataObject.getDouble("O2sat");
                 } catch (JSONException e) {
                     // if we get 'null' O2 Saturation (For example if the oxygen sensor is not working)
                     mSdData.mO2Sat = -1;
