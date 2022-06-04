@@ -291,9 +291,10 @@ public abstract class SdDataSource {
                 }
                 int i;
                 for (i = 0; i < accelVals.length(); i++) {
-                    mSdData.rawData[i] = accelVals.getInt(i);
+                    mSdData.rawData[i] = accelVals.getDouble(i);
                 }
                 mSdData.mNsamp = accelVals.length();
+                //Log.d(TAG,"accelVals[0]="+accelVals.getDouble(0)+", mSdData.rawData[0]="+mSdData.rawData[0]);
                 try {
                     accelVals3D = dataObject.getJSONArray("data3D");
                     Log.v(TAG, "Received " + accelVals3D.length() + " acceleration 3D values, rawData Length is " + mSdData.rawData3D.length);
@@ -302,7 +303,7 @@ public abstract class SdDataSource {
                                 + mSdData.rawData3D.length);
                     }
                     for (i = 0; i < accelVals3D.length(); i++) {
-                        mSdData.rawData3D[i] = accelVals3D.getInt(i);
+                        mSdData.rawData3D[i] = accelVals3D.getDouble(i);
                     }
                 } catch (JSONException e) {
                     // If we get an error, just set rawData3D to zero
