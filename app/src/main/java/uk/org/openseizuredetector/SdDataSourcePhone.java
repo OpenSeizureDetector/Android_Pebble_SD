@@ -129,6 +129,9 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                 float z = event.values[2];
                 //Log.v(TAG,"Accelerometer Data Received: x="+x+", y="+y+", z="+z);
                 mSdData.rawData[mSdData.mNsamp] = sqrt(x*x + y*y + z*z);
+                mSdData.rawData3D[3*mSdData.mNsamp] = x;
+                mSdData.rawData3D[3*mSdData.mNsamp+1] = y;
+                mSdData.rawData3D[3*mSdData.mNsamp+2] = z;
                 mSdData.mNsamp++;
                 if (mSdData.mNsamp==NSAMP) {
                     // Calculate the sample frequency for this sample, but do not change mSampleFreq, which is used for
@@ -142,6 +145,9 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     // FIXME - we should really do this properly rather than assume we are really receiving data at 50Hz.
                     for (int i=0; i<mSdData.mNsamp; i++) {
                         mSdData.rawData[i/2] = 1000.*mSdData.rawData[i]/9.81;
+                        mSdData.rawData3D[i/2] = 1000.*mSdData.rawData3D[i]/9.81;
+                        mSdData.rawData3D[i/2 +1] = 1000.*mSdData.rawData3D[i+1]/9.81;
+                        mSdData.rawData3D[i/2 +2] = 1000.*mSdData.rawData3D[i+2]/9.81;
                         //Log.v(TAG,"i="+i+", rawData="+mSdData.rawData[i]+","+mSdData.rawData[i/2]);
                     }
                     mSdData.mNsamp /= 2;

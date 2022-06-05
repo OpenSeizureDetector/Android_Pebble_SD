@@ -2,21 +2,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="uk.org.openseizuredetector"
-    android:versionCode="87"
-    android:versionName="3.6.2">
+    android:versionCode="102"
+    android:versionName="4.0.6">
     <!-- android:allowBackup="false" -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.GET_TASKS" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -24,16 +26,19 @@
     <uses-feature
         android:name="android.hardware.telephony"
         android:required="false" />
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="false" />
 
     <application
         android:icon="@drawable/star_of_life_48x48"
         android:label="@string/app_name"
         android:networkSecurityConfig="@xml/network_security_config"
-        android:theme="@style/AppTheme"
-        > <!--@android:style/Theme.Holo.Light"-->
-        <activity android:name=".BLEScanActivity"></activity>
-        <activity android:name=".DBQueryActivity"></activity>
-        <!-- android:usesCleartextTraffic="true" -->
+        android:theme="@style/AppTheme">
+        <activity android:name=".AuthenticateActivity"/>
+        <!-- @android:style/Theme.Holo.Light" -->
+        <activity android:name=".BLEScanActivity" />
+        <activity android:name=".ExportDataActivity" /> <!-- android:usesCleartextTraffic="true" -->
         <activity android:name=".StartupActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -57,7 +62,10 @@
             android:name=".SdServer"
             android:exported="false" />
 
-        <activity android:name=".LogManagerActivity" />
+        <activity android:name=".LogManagerControlActivity" />
+        <activity android:name=".EditEventActivity" />
+        <activity android:name=".RemoteDbActivity" />
+        <activity android:name=".ReportSeizureActivity" />
 
         <receiver
             android:name=".BootBroadcastReceiver"

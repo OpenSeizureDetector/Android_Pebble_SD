@@ -24,20 +24,22 @@
 */
 package uk.org.openseizuredetector;
 
-import android.app.Activity;
-import android.app.AlertDialog;
+import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
+import android.text.Html;
 import android.text.SpannableString;
-import android.text.SpannedString;
 import android.text.util.Linkify;
 import android.util.Log;
 import android.view.View;
@@ -45,6 +47,12 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.text.HtmlCompat;
 
 import com.rohitss.uceh.UCEHandler;
 
@@ -56,7 +64,7 @@ import java.util.TimerTask;
  * for it to start and to receive data and settings from the seizure detector before exiting and
  * starting the main activity.
  */
-public class StartupActivity extends Activity {
+public class StartupActivity extends AppCompatActivity {
     private static String TAG = "StartupActivity";
     private int okColour = Color.BLUE;
     private int warnColour = Color.MAGENTA;
@@ -74,31 +82,48 @@ public class StartupActivity extends Activity {
     private Handler mHandler = new Handler();   // used to update ui from mUiTimer
     private boolean mUsingPebbleDataSource = true;
     private String mPebbleAppPackageName = null;
+    private boolean mBatteryOptDialogDisplayed = false;
+    private AlertDialog mBatteryOptDialog;
+    private boolean mLocationPermissions1Requested;
+    private boolean mLocationPermissions2Requested;
+    private boolean mSmsPermissionsRequested;
+    private boolean mPermissionsRequested;
+
+    public final String[] REQUIRED_PERMISSIONS = {
+            //Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.WAKE_LOCK,
+    };
+
+    public final String[] SMS_PERMISSIONS_1 = {
+            Manifest.permission.SEND_SMS,
+            Manifest.permission.READ_PHONE_STATE,
+    };
+
+    public final String[] LOCATION_PERMISSIONS_1 = {
+            Manifest.permission.SEND_SMS,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            //Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+            Manifest.permission.READ_PHONE_STATE,
+    };
+
+    public final String[] LOCATION_PERMISSIONS_2 = {
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+    };
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i(TAG,"onCreate()");
+        Log.i(TAG, "onCreate()");
+        setContentView(R.layout.startup_activity);
 
         // Set our custom uncaught exception handler to report issues.
         //Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(StartupActivity.this));
         new UCEHandler.Builder(this)
                 .addCommaSeparatedEmailAddresses("crashreports@openseizuredetector.org.uk,")
                 .build();
-
-
-        mHandler = new Handler();
-        mUtil = new OsdUtil(this, mHandler);
-        mUtil.writeToSysLogFile("");
-        mUtil.writeToSysLogFile("*******************************");
-        mUtil.writeToSysLogFile("* StartUpActivity Started     *");
-        mUtil.writeToSysLogFile("*******************************");
-
-        // Force the screen to stay on when the app is running
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-
-        setContentView(R.layout.startup_activity);
 
         // Read the default settings from the xml preferences files, so we do
         // not have to use the hard coded ones in the java files.
@@ -108,6 +133,17 @@ public class StartupActivity extends Activity {
         PreferenceManager.setDefaultValues(this, R.xml.pebble_datasource_prefs, true);
         PreferenceManager.setDefaultValues(this, R.xml.seizure_detector_prefs, true);
         PreferenceManager.setDefaultValues(this, R.xml.network_passive_datasource_prefs, true);
+        PreferenceManager.setDefaultValues(this, R.xml.logging_prefs, true);
+
+        mHandler = new Handler();
+        mUtil = new OsdUtil(getApplicationContext(), mHandler);
+        mUtil.writeToSysLogFile("");
+        mUtil.writeToSysLogFile("*******************************");
+        mUtil.writeToSysLogFile("* StartUpActivity Started     *");
+        mUtil.writeToSysLogFile("*******************************");
+
+        // Force the screen to stay on when the app is running
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
 
         Button b;
@@ -142,23 +178,15 @@ public class StartupActivity extends Activity {
             }
         });
 
-        mConnection = new SdServiceConnection(this);
+        mConnection = new SdServiceConnection(getApplicationContext());
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        Log.i(TAG,"onStart()");
+        Log.i(TAG, "onStart()");
         mUtil.writeToSysLogFile("StartupActivity.onStart()");
         TextView tv;
-
-        if (mUtil.arePermissionsOK()) {
-            Log.i(TAG,"onStart() - Permissions OK");
-        } else {
-            Log.i(TAG,"onStart() - Permissions Not OK - requesting them");
-            mUtil.requestPermissions(this);
-        }
-
 
         String versionName = mUtil.getAppVersionName();
         tv = (TextView) findViewById(R.id.appNameTv);
@@ -174,18 +202,36 @@ public class StartupActivity extends Activity {
 
 
         if (mUtil.isServerRunning()) {
-            Log.i(TAG, "onStart() - server running - stopping it");
+            Log.i(TAG, "onStart() - server running - stopping it - isServerRunning="+mUtil.isServerRunning());
             mUtil.writeToSysLogFile("StartupActivity.onStart() - server already running - stopping it.");
             mUtil.stopServer();
+        } else {
+            Log.i(TAG, "onStart() - server not running - isServerRunning="+mUtil.isServerRunning());
         }
-        mUtil.writeToSysLogFile("StartupActivity.onStart() - starting server");
-        Log.i(TAG,"onStart() - starting server");
-        mUtil.startServer();
+        // Wait 0.1 second to give the server chance to shutdown in case we have just shut it down below, then start it
+        mHandler.postDelayed(new Runnable() {
+            public void run() {
+                mUtil.writeToSysLogFile("StartupActivity.onStart() - starting server after delay - isServerRunning="+mUtil.isServerRunning());
+                Log.i(TAG, "onStart() - starting server after delay -isServerRunning="+mUtil.isServerRunning());
+                mUtil.startServer();
+                // Bind to the service.
+                Log.i(TAG, "onStart() - binding to server");
+                mUtil.writeToSysLogFile("StartupActivity.onStart() - binding to server");
+                mUtil.bindToServer(getApplicationContext(), mConnection);
+            }
+        }, 100);
 
-        // Bind to the service.
-        Log.i(TAG,"onStart() - binding to server");
-        mUtil.writeToSysLogFile("StartupActivity.onStart() - binding to server");
-        mUtil.bindToServer(this, mConnection);
+        // Check power management settings
+        PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
+            Log.i(TAG, "Power Management OK - we are ignoring Battery Optimizations");
+            mBatteryOptDialogDisplayed = false;
+        } else {
+            Log.e(TAG, "Power Management Problem - not ignoring Battery Optimisations");
+            //mUtil.showToast("WARNING - Phone is Optimising OpenSeizureDetector Battery Usage - this is likely to prevent it working correctly when running on battery!");
+            if (!mBatteryOptDialogDisplayed) showBatteryOptimisationWarningDialog();
+        }
+
 
         // Check to see if this is the first time the app has been run, and display welcome dialog if it is.
         checkFirstRun();
@@ -198,7 +244,7 @@ public class StartupActivity extends Activity {
                 mHandler.post(serverStatusRunnable);
                 //updateServerStatus();
             }
-        }, 0, 1000);
+        }, 0, 2000);
 
 
     }
@@ -208,17 +254,17 @@ public class StartupActivity extends Activity {
         super.onStop();
         Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("StartupActivity.onStop() - unbinding from server");
-        mUtil.unbindFromServer(this, mConnection);
+        mUtil.unbindFromServer(getApplicationContext(), mConnection);
         mUiTimer.cancel();
     }
 
 
     /*
-    * serverStatusRunnable - called by updateServerStatus - updates the
-    * user interface to reflect the current status received from the server.
-    * If everything is ok, we close this activity and open the main user interface
-    * activity.
-    */
+     * serverStatusRunnable - called by updateServerStatus - updates the
+     * user interface to reflect the current status received from the server.
+     * If everything is ok, we close this activity and open the main user interface
+     * activity.
+     */
     final Runnable serverStatusRunnable = new Runnable() {
         public void run() {
             Boolean allOk = true;
@@ -227,23 +273,49 @@ public class StartupActivity extends Activity {
             boolean smsAlarmsActive = true;
             boolean phoneAlarmsActive = true;
 
-            Log.v(TAG,"serverStatusRunnable()");
+            Log.v(TAG, "serverStatusRunnable()");
             SharedPreferences SP = PreferenceManager
                     .getDefaultSharedPreferences(getBaseContext());
             smsAlarmsActive = SP.getBoolean("SMSAlarm", false);
             phoneAlarmsActive = SP.getBoolean("PhoneCallAlarm", false);
 
+            // Check power management settings
+            PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
+                Log.i(TAG, "Power Management OK - we are ignoring Battery Optimizations");
+                if (mBatteryOptDialogDisplayed) {
+                    mBatteryOptDialog.cancel();
+                    mBatteryOptDialogDisplayed = false;
+                }
+            }
+
             // Settings ok
             tv = (TextView) findViewById(R.id.textItem1);
             pb = (ProgressBar) findViewById(R.id.progressBar1);
-            if (mUtil.arePermissionsOK()) {
-                if (smsAlarmsActive && !mUtil.areSMSPermissionsOK()) {
+            if (arePermissionsOK()) {
+                if (smsAlarmsActive && !areSMSPermissions1OK()) {
+                    Log.i(TAG,"SMS permissions NOT OK");
                     tv.setText(getString(R.string.SmsPermissionWarning));
-                    tv.setBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
-                    pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                    pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
-                    mUtil.requestSMSPermissions(StartupActivity.this);
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                    //pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
+                    //pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                    requestSMSPermissions();
+                    allOk = false;
+                } else if (smsAlarmsActive && !areLocationPermissions1OK()) {
+                    Log.i(TAG,"Location permissions NOT OK");
+                    tv.setText(getString(R.string.SmsPermissionWarning));
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                    requestLocationPermissions1();
+                    allOk = false;
+                } else if (smsAlarmsActive && !areLocationPermissions2OK()) {
+                    Log.i(TAG,"SMS permissions2 NOT OK");
+                    tv.setText(getString(R.string.SmsPermissionWarning));
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                    requestLocationPermissions2();
+                    allOk = false;
                 } else {
                     tv.setText(getString(R.string.AppPermissionsOk));
                     tv.setBackgroundColor(okColour);
@@ -257,7 +329,7 @@ public class StartupActivity extends Activity {
                 tv.setTextColor(alarmTextColour);
                 pb.setIndeterminate(true);
                 allOk = false;
-                mUtil.requestPermissions(StartupActivity.this);
+                requestPermissions(StartupActivity.this);
             }
 
             // If phone alarms are selected, we need to have the uk.org.openseizuredetector.dialler package installed to do the actual dialling.
@@ -305,7 +377,6 @@ public class StartupActivity extends Activity {
             }
 
 
-
             // Do we have seizure detector data?
             tv = (TextView) findViewById(R.id.textItem5);
             pb = (ProgressBar) findViewById(R.id.progressBar5);
@@ -342,11 +413,10 @@ public class StartupActivity extends Activity {
             }
 
 
-
             // If all the parameters are ok, close this activity and open the main
             // user interface activity instead.
             if (allOk) {
-                if (!mDialogDisplayed) {
+                if (!mDialogDisplayed && !mBatteryOptDialogDisplayed) {
                     if (!mStartedMainActivity) {
                         Log.i(TAG, "serverStatusRunnable() - starting main activity...");
                         mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - all checks ok - starting main activity.");
@@ -393,42 +463,65 @@ public class StartupActivity extends Activity {
         }
     }
 
-    /**
-     * checkFirstRun - checks to see if this is the first run of the app after installation or upgrade.
-     * if it is, the relevant dialog message is displayed.  If not, the routine just exists so start-up can continue.
-     */
+        /**
+         * checkFirstRun - checks to see if this is the first run of the app after installation or upgrade.
+         * if it is, the relevant dialog message is displayed.  If not, the routine just exists so start-up can continue.
+         */
     public void checkFirstRun() {
         String storedVersionName = "";
         String versionName;
         AlertDialog UpdateDialog;
         AlertDialog FirstRunDialog;
         SharedPreferences prefs;
-        Log.i(TAG,"checkFirstRun()");
+        Log.i(TAG, "checkFirstRun()");
         versionName = this.getVersionName(this, StartupActivity.class);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
         storedVersionName = (prefs.getString("AppVersionName", null));
-        Log.v(TAG,"storedVersionName="+storedVersionName+", versionName="+versionName);
+        Log.v(TAG, "storedVersionName=" + storedVersionName + ", versionName=" + versionName);
 
         // CHeck for new installation
+        //storedVersionName = null;  // FIXME Force first run dialog for easier testing ****************************
         if (storedVersionName == null || storedVersionName.length() == 0) {
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
                     this);
-            final SpannableString s = new SpannableString(
-                    getString(R.string.FirstRunDlgMsg)+getString(R.string.changelog)
-                );
-            // This makes the links display as links, but they do not respond to clicks for some reason...
-            Linkify.addLinks(s, Linkify.ALL);
+            final String s = new String(
+                    getString(R.string.FirstRunDlgMsg));
             alertDialogBuilder
                     .setTitle(getString(R.string.FirstRunDlgTitle))
-                    .setMessage(s)
+                    .setMessage(Html.fromHtml(s))
                     .setCancelable(false)
-                    .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
+                    .setNeutralButton(getString(R.string.closeBtnTxt), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.cancel();
                             mDialogDisplayed = false;
                             //MainActivity.this.finish();
                         }
-                    });
+                    })
+                    .setPositiveButton("Privacy Policy", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                            String url = OsdUtil.PRIVACY_POLICY_URL;
+                            Intent i = new Intent(Intent.ACTION_VIEW);
+                            i.setData(Uri.parse(url));
+                            startActivity(i);
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                        }
+                    })
+                    .setNegativeButton("Data Sharing", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                            String url = OsdUtil.DATA_SHARING_URL;
+                            Intent i = new Intent(Intent.ACTION_VIEW);
+                            i.setData(Uri.parse(url));
+                            startActivity(i);
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                        }
+                    })
+            ;
             FirstRunDialog = alertDialogBuilder.create();
             Log.i(TAG, "Displaying First Run Dialog");
             FirstRunDialog.show();
@@ -437,17 +530,41 @@ public class StartupActivity extends Activity {
             // Check for update of installed application
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
                     this);
-            final SpannableString s = new SpannableString(
-                    getString(R.string.UpgradeMsg)+getString(R.string.changelog)
+            final String s = new String(
+                    getString(R.string.UpgradeMsg) + getString(R.string.changelog)
             );
-            // This makes the links display as links, but they do not respond to clicks for some reason...
-            Linkify.addLinks(s, Linkify.ALL);
+
             alertDialogBuilder
                     .setTitle(getString(R.string.UpdateDialogTitleTxt))
-                    .setMessage(s)
+                    .setMessage(Html.fromHtml(s))
                     .setCancelable(false)
-                    .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
+                    .setNeutralButton(getString(R.string.closeBtnTxt), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                            //MainActivity.this.finish();
+                        }
+                    })
+                    .setPositiveButton("Privacy Policy", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                            String url = OsdUtil.PRIVACY_POLICY_URL;
+                            Intent i = new Intent(Intent.ACTION_VIEW);
+                            i.setData(Uri.parse(url));
+                            startActivity(i);
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                        }
+                    })
+                    .setNegativeButton("Data Sharing", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            mDialogDisplayed = false;
+                            String url = OsdUtil.DATA_SHARING_URL;
+                            Intent i = new Intent(Intent.ACTION_VIEW);
+                            i.setData(Uri.parse(url));
+                            startActivity(i);
                             dialog.cancel();
                             mDialogDisplayed = false;
                         }
@@ -462,5 +579,203 @@ public class StartupActivity extends Activity {
         Log.i(TAG, "Setting Stored AppVersionName to" + versionName);
         prefs.edit().putString("AppVersionName", versionName).commit();
     }
+
+    private void showBatteryOptimisationWarningDialog() {
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                this);
+        final SpannableString s = new SpannableString(
+                getString(R.string.battery_usage_optimisation_dialog_text)
+        );
+        // This makes the links display as links, but they do not respond to clicks for some reason...
+        Linkify.addLinks(s, Linkify.ALL);
+        alertDialogBuilder
+                .setTitle(R.string.battery_usage_optimisation_dialog_title)
+                .setMessage(s)
+                .setCancelable(false)
+                .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                        mBatteryOptDialogDisplayed = false;
+                    }
+                });
+        mBatteryOptDialog = alertDialogBuilder.create();
+        Log.i(TAG, "Displaying Update Dialog");
+        mBatteryOptDialog.show();
+        mBatteryOptDialogDisplayed = true;
+    }
+
+    /*****************************************************************************/
+    public boolean arePermissionsOK() {
+        boolean allOk = true;
+        Log.v(TAG, "arePermissionsOK");
+        for (int i = 0; i < REQUIRED_PERMISSIONS.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, REQUIRED_PERMISSIONS[i])
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, REQUIRED_PERMISSIONS[i] + " Permission Not Granted");
+                allOk = false;
+            }
+        }
+        return allOk;
+    }
+
+    public boolean areSMSPermissions1OK() {
+        boolean allOk = true;
+        Log.v(TAG, "areSMSPermissions1 OK()");
+        for (int i = 0; i < SMS_PERMISSIONS_1.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, SMS_PERMISSIONS_1[i])
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, "areSMSPermissions1OK: "+SMS_PERMISSIONS_1[i] + " Permission Not Granted");
+                allOk = false;
+            }
+        }
+        return allOk;
+    }
+
+
+    public boolean areLocationPermissions1OK() {
+        boolean allOk = true;
+        Log.v(TAG, "areLocationPermissions1 OK()");
+        for (int i = 0; i < LOCATION_PERMISSIONS_1.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, LOCATION_PERMISSIONS_1[i])
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, LOCATION_PERMISSIONS_1[i] + " Permission Not Granted");
+                allOk = false;
+            }
+        }
+        return allOk;
+    }
+
+    public boolean areLocationPermissions2OK() {
+        boolean allOk = true;
+        Log.v(TAG, "areSMSPermissions2OK()");
+        for (int i = 0; i < LOCATION_PERMISSIONS_2.length; i++) {
+            if (ContextCompat.checkSelfPermission(this, LOCATION_PERMISSIONS_2[i])
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, LOCATION_PERMISSIONS_2[i] + " Permission Not Granted");
+                allOk = false;
+            }
+        }
+        return allOk;
+    }
+
+    public void requestPermissions(AppCompatActivity activity) {
+        if (mPermissionsRequested) {
+            Log.i(TAG, "requestPermissions() - request already sent - not doing anything");
+        } else {
+            Log.i(TAG, "requestPermissions() - requesting permissions");
+            for (int i = 0; i < REQUIRED_PERMISSIONS.length; i++) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
+                        REQUIRED_PERMISSIONS[i])) {
+                    Log.i(TAG, "shouldShowRationale for permission" + REQUIRED_PERMISSIONS[i]);
+                }
+            }
+            ActivityCompat.requestPermissions(activity,
+                    REQUIRED_PERMISSIONS,
+                    42);
+            mPermissionsRequested = true;
+        }
+    }
+
+    public void requestSMSPermissions() {
+        if (mSmsPermissionsRequested) {
+            Log.i(TAG, "requestSMSPermissions() - request already sent - not doing anything");
+        } else {
+            Log.i(TAG, "requestSMSPermissions() - requesting permissions");
+            mSmsPermissionsRequested = true;
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                    this);
+            alertDialogBuilder
+                    .setTitle(R.string.permissions_required)
+                    .setMessage(R.string.sms_permissions_rationale_1)
+                    .setCancelable(false)
+                    .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            Log.i(TAG,"requestSMSPermissions(): Launching ActivityCompat.requestPermissions()");
+                            ActivityCompat.requestPermissions(StartupActivity.this,
+                                    SMS_PERMISSIONS_1,
+                                    45);
+                        }
+                    })
+                    .setNegativeButton(getString(R.string.cancelBtnTxt), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                        }
+                    }).create().show();
+        }
+    }
+
+
+    public void requestLocationPermissions1() {
+        if (mLocationPermissions1Requested) {
+            Log.i(TAG, "requestLocationPermissions1() - request already sent - not doing anything");
+        } else {
+            Log.i(TAG, "requestLocationPermissions1() - requesting permissions");
+            mLocationPermissions1Requested = true;
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                    this);
+            alertDialogBuilder
+                    .setTitle(R.string.permissions_required)
+                    .setMessage(R.string.location_permissions_rationale_1)
+                    .setCancelable(false)
+                    .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            Log.i(TAG, "requestLocationPermissions1(): Launching ActivityCompat.requestPermissions()");
+                            ActivityCompat.requestPermissions(StartupActivity.this,
+                                    LOCATION_PERMISSIONS_1,
+                                    43);
+                        }
+                    })
+                    .setNegativeButton(getString(R.string.cancelBtnTxt), new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                    })
+                    .create().show();
+        }
+    }
+
+    public void requestLocationPermissions2() {
+        if (mLocationPermissions2Requested) {
+            Log.i(TAG, "requestSMSPermissions2() - request already sent - not doing anything");
+        } else {
+            Log.i(TAG, "requestSMSPermissions2() - requesting permissions");
+            mLocationPermissions2Requested = true;
+
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                    this);
+            alertDialogBuilder
+                    .setTitle(R.string.permissions_required)
+                    .setMessage(R.string.location_permissions_2_rationale)
+                    .setCancelable(false)
+                    .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            Log.i(TAG,"requestSMSPermissions(): Launching ActivityCompat.requestPermissions()");
+                            ActivityCompat.requestPermissions(StartupActivity.this,
+                                    LOCATION_PERMISSIONS_2,
+                                    44);
+                        }
+                    })
+                    .setNegativeButton(getString(R.string.cancelBtnTxt), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                        }
+                    }).create().show();
+        }
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        Log.i(TAG, "onRequestPermissionsResult - Permission" + permissions + " = " + grantResults);
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        for (int i = 0; i < permissions.length; i++) {
+            Log.i(TAG, "Permission " + permissions[i] + " = " + grantResults[i]);
+        }
+    }
+
 
 }

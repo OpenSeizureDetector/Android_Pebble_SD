@@ -1,92 +1,104 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item
-        android:id="@+id/action_accept_alarm"
-        android:showAsAction="never|withText"
-        android:title="@string/accept_alarm" />
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:id="@+id/grp1">
+        <item
+            android:id="@+id/action_accept_alarm"
+            app:showAsAction="never|withText"
+            android:title="@string/accept_alarm" />
+    </group>
+
+    <group android:id="@+id/grp2">
+        <item
+            android:id="@+id/action_start_stop"
+            android:icon="@drawable/stop_server"
+            app:showAsAction="never|withText"
+            android:title="@string/start_stop_server" />
+    </group>
+    <group android:id="@+id/grp3">
+        <item
+            android:id="@+id/action_report_seizure"
+            android:enabled="true"
+            android:icon="@drawable/ic_action_settings"
+            app:showAsAction="never|withText"
+            android:title="@string/report_seizure" />
+
+        <item
+            android:id="@+id/action_logmanager"
+            android:enabled="true"
+            android:icon="@drawable/ic_action_settings"
+            app:showAsAction="never|withText"
+            android:title="@string/data_log_manager" />
+
+        <item
+            android:id="@+id/action_authenticate_api"
+            android:enabled="true"
+            android:icon="@drawable/ic_action_settings"
+            app:showAsAction="never|withText"
+            android:title="@string/data_sharing_log_in" />
+
+        <item
+            android:id="@+id/action_about_datasharing"
+            android:enabled="true"
+            android:icon="@drawable/ic_action_settings"
+            app:showAsAction="never|withText"
+            android:title="About Data Sharing..." />
+
+    </group>
+    <group android:id="@+id/grp4">
+        <item
+            android:id="@+id/action_install_watch_app"
+            app:showAsAction="never|withText"
+            android:title="@string/install_watch_app" />
+
+        <item
+            android:id="@+id/action_test_alarm_beep"
+            android:icon="@drawable/stop_server"
+            app:showAsAction="never|withText"
+            android:title="@string/test_alarm_beep" />
+
+        <item
+            android:id="@+id/action_test_warning_beep"
+            android:icon="@drawable/stop_server"
+            app:showAsAction="never|withText"
+            android:title="@string/test_warning_beep" />
+
+        <item
+            android:id="@+id/action_test_sms_alarm"
+            android:icon="@drawable/stop_server"
+            app:showAsAction="never|withText"
+            android:title="@string/test_sms_alarm_notification" />
+    </group>
+    <group android:id="@+id/grp5">
+        <!--<item
+            android:id="@+id/action_logs"
+            android:enabled="true"
+            android:icon="@drawable/ic_action_settings"
+            android:showAsAction="never|withText"
+            android:title="@string/view_log_entries" /> -->
+        <!--
+            <item
+                android:enabled="false"
+                android:id="@+id/action_export"
+                android:icon="@drawable/ic_action_settings"
+                android:showAsAction="never|withText"
+                android:title="@string/export_data"
+                />
+        -->
+        <item
+            android:id="@+id/action_settings"
+            android:icon="@drawable/ic_action_settings"
+            app:showAsAction="never|withText"
+            android:title="@string/settings" />
+
+    </group>
+
+    <group android:id="@+id/grp6">
+
+        <item
+            android:id="@+id/action_about"
+            app:showAsAction="never|withText"
+            android:title="@string/about" />
+    </group>
 
 
-    <item
-        android:id="@+id/action_start_stop"
-        android:icon="@drawable/stop_server"
-        android:showAsAction="never|withText"
-        android:title="@string/start_stop_server" />
-
-  <!-- fault beep test does not work because of fault timer so don't show menu option
-    <item
-        android:id="@+id/action_test_fault_beep"
-        android:icon="@drawable/stop_server"
-        android:showAsAction="never|withText"
-        android:title="Test Fault Beep" />
--->
-<!--    <item
-        android:id="@+id/action_launch_pebble_app"
-        android:showAsAction="never|withText"
-        android:title="Launch Pebble App" />
--->
-    <item
-        android:id="@+id/action_install_watch_app"
-        android:showAsAction="never|withText"
-        android:title="@string/install_watch_app" />
-
-    <item
-        android:id="@+id/action_test_alarm_beep"
-        android:icon="@drawable/stop_server"
-        android:showAsAction="never|withText"
-        android:title="@string/test_alarm_beep" />
-
-    <item
-        android:id="@+id/action_test_warning_beep"
-        android:icon="@drawable/stop_server"
-        android:showAsAction="never|withText"
-        android:title="@string/test_warning_beep" />
-
-    <item
-        android:id="@+id/action_test_sms_alarm"
-        android:icon="@drawable/stop_server"
-        android:showAsAction="never|withText"
-        android:title="@string/test_sms_alarm_notification" />
-
-    <item
-        android:enabled="false"
-        android:id="@+id/action_test_phone_alarm"
-        android:icon="@drawable/stop_server"
-        android:showAsAction="never|withText"
-        android:title="@string/test_phone_alarm_notification" />
-
-    <item
-        android:enabled="false"
-        android:id="@+id/action_logmanager"
-        android:icon="@drawable/ic_action_settings"
-        android:showAsAction="never|withText"
-        android:title="@string/data_log_manager"
-        />
-
-    <item
-        android:id="@+id/action_logs"
-        android:icon="@drawable/ic_action_settings"
-        android:showAsAction="never|withText"
-        android:title="@string/view_log_entries"
-        android:enabled="true"
-        />
-
-    <item
-        android:enabled="false"
-        android:id="@+id/action_export"
-        android:icon="@drawable/ic_action_settings"
-        android:showAsAction="never|withText"
-        android:title="@string/export_data"
-        />
-
-    <item
-        android:id="@+id/action_settings"
-        android:icon="@drawable/ic_action_settings"
-        android:showAsAction="never|withText"
-        android:title="@string/settings"
-        />
-
-    <item
-        android:id="@+id/action_about"
-        android:showAsAction="never|withText"
-        android:title="@string/about" />
-
- </menu>
+</menu>

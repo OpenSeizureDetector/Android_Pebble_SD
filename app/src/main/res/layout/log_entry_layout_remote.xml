@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/event_date_remote_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="date"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/event_type_remote_tv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="---"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" : " />
+
+                <TextView
+                    android:id="@+id/event_subtype_remote_tv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="---" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/event_alarmState_remote_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="alarm" />
+
+            <TextView
+                android:id="@+id/event_notes_remote_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="notes"
+                android:textStyle="italic" />
+
+            <TextView
+                android:id="@+id/event_id_remote_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="10dp"
+                android:textAppearance="?android:attr/textAppearanceSmall" />
+                android:text="eventId" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

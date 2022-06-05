@@ -75,7 +75,8 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                 .getDefaultSharedPreferences(this.getApplicationContext());
         String dataSourceStr = SP.getString("DataSource", "Pebble");
         Log.i(TAG, "onBuildHeaders DataSource = " + dataSourceStr);
-        Boolean advancedMode = SP.getBoolean("advancedMode", false);
+        //Boolean advancedMode = SP.getBoolean("advancedMode", false);
+        Boolean advancedMode = true;
         Log.i(TAG, "onBuildHeaders advancedMode = " + advancedMode);
 
         if (advancedMode) {
@@ -120,7 +121,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                 } else {
                     titleStr = getResources().getString(h.titleRes);
                 }
-                Log.v(TAG, "i=" + i + ": found - " + titleStr + " looking for "+ getString(R.string.basic_settings_title));
+                Log.v(TAG, "i=" + i + ": found - " + titleStr + " looking for " + getString(R.string.basic_settings_title));
                 if (!titleStr.equals(getString(R.string.basic_settings_title))) {
                     Log.v(TAG, "an Advanced Mode Header, so removing it....");
                     target.remove(i);
@@ -143,18 +144,22 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         Log.i(TAG, "SharedPreference " + s + " Changed.");
 
+        // if we have enabled the SMS alarm, we may need extra permissions approving.  This is handled in
+        // StartUpActivity, so we exit this activity and start start-up activity.
         if (s.equals("SMSAlarm")) {
             if (sharedPreferences.getBoolean("SMSAlarm", false) == true) {
-                if (mUtil.areSMSPermissionsOK() == false) {
-                    Log.i(TAG, "onSharedPreferenceChanged(): SMS Alarm Enabled - Requesting Permissions");
-                    mUtil.requestSMSPermissions(this);
-                } else {
-                    Log.i(TAG, "OnSharedPreferenceCHanged(): SMS Permissions already granted, doing nothing");
-                }
+                Log.i(TAG, "onSharedPreferenceChanged(): SMS Alarm Enabled - Restarting start-up activity to check permissions");
+                Intent i;
+                i = new Intent(this, StartupActivity.class);
+                startActivity(i);
+                Log.i(TAG,"onSharedPreferenceChanged() - finishing PrefActivity");
+                finish();
+                return;
             } else {
                 Log.i(TAG, "OnSharedPreferenceChanged(): SMS Alarm disabled so do not need permissions");
             }
         }
+        // For all other preference changes we just restart SdServer so it is not as alarming for the user!
         //mUtil.showToast("Setting " + s + " Changed - restarting server");
         mPrefChanged = true;
         mUtil.stopServer();
@@ -213,6 +218,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     protected void onStop() {
         super.onStop();
         mUtil.writeToSysLogFile("PrefActvity.onStop()");
+        Log.i(TAG,"onStop()");
     }
 
     /**
@@ -275,6 +281,17 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
             addPreferencesFromResource(R.xml.alarm_prefs);
         }
     }
+
+    public static class LoggingPrefsFragment extends PreferenceFragment {
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            // Load the preferences from an XML resource
+            addPreferencesFromResource(R.xml.logging_prefs);
+        }
+    }
+
 
     public static class SeizureDetectorPrefsFragment extends PreferenceFragment {
         @Override

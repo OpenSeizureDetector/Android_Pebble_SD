@@ -254,6 +254,7 @@ public abstract class SdDataSource {
         String sdVersion;
         String sdName;
         JSONArray accelVals = null;
+        JSONArray accelVals3D = null;
         Log.v(TAG, "updateFromJSON - " + jsonStr);
 
         try {
@@ -271,6 +272,12 @@ public abstract class SdDataSource {
                     mSdData.mHR = -1;
                 }
                 try {
+                    mSdData.mO2Sat = dataObject.getDouble("O2sat");
+                } catch (JSONException e) {
+                    // if we get 'null' O2 Saturation (For example if the oxygen sensor is not working)
+                    mSdData.mO2Sat = -1;
+                }
+                try {
                     mMute = dataObject.getInt("Mute");
                 } catch (JSONException e) {
                     // if we get 'null' HR (For example if the heart rate is not working)
@@ -284,12 +291,31 @@ public abstract class SdDataSource {
                 }
                 int i;
                 for (i = 0; i < accelVals.length(); i++) {
-                    mSdData.rawData[i] = accelVals.getInt(i);
+                    mSdData.rawData[i] = accelVals.getDouble(i);
                 }
                 mSdData.mNsamp = accelVals.length();
-                //mNSamp = accelVals.length();
+                //Log.d(TAG,"accelVals[0]="+accelVals.getDouble(0)+", mSdData.rawData[0]="+mSdData.rawData[0]);
+                try {
+                    accelVals3D = dataObject.getJSONArray("data3D");
+                    Log.v(TAG, "Received " + accelVals3D.length() + " acceleration 3D values, rawData Length is " + mSdData.rawData3D.length);
+                    if (accelVals3D.length() > mSdData.rawData3D.length) {
+                        mUtil.writeToSysLogFile("ERROR:  Received " + accelVals3D.length() + " 3D acceleration values, but rawData3D storage length is "
+                                + mSdData.rawData3D.length);
+                    }
+                    for (i = 0; i < accelVals3D.length(); i++) {
+                        mSdData.rawData3D[i] = accelVals3D.getDouble(i);
+                    }
+                } catch (JSONException e) {
+                    // If we get an error, just set rawData3D to zero
+                    Log.i(TAG,"updateFromJSON - error parsing 3D data - setting it to zero");
+                    for (i = 0; i < mSdData.rawData3D.length; i++) {
+                        mSdData.rawData3D[i] = 0.;
+                    }
+                }
+
                 mWatchAppRunningCheck = true;
                 doAnalysis();
+
                 if (mSdData.haveSettings == false) {
                     retVal = "sendSettings";
                 } else {
@@ -312,6 +338,10 @@ public abstract class SdDataSource {
                     sdName = dataObject.getString("sdName");
                     mUtil.writeToSysLogFile("    * sdName = " + sdName + " version " + sdVersion);
                     mUtil.writeToSysLogFile("    * watchPartNo = " + watchPartNo + " fwVersion " + watchFwVersion);
+                    mSdData.watchPartNo = watchPartNo;
+                    mSdData.watchFwVersion = watchFwVersion;
+                    mSdData.watchSdVersion = sdVersion;
+                    mSdData.watchSdName = sdName;
                 } catch (Exception e) {
                     Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString());
                     mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - " + jsonStr + " - " + e.toString());
@@ -455,8 +485,10 @@ public abstract class SdDataSource {
         // Check this data to see if it represents an alarm state.
         alarmCheck();
         hrCheck();
+        o2SatCheck();
         fallCheck();
         muteCheck();
+        Log.v(TAG,"after fallCheck, mSdData.fallAlarmStanding="+mSdData.fallAlarmStanding);
 
         mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
     }
@@ -470,9 +502,12 @@ public abstract class SdDataSource {
      */
     private void alarmCheck() {
         boolean inAlarm;
-        Log.v(TAG, "alarmCheck()");
+        // Avoid potential divide by zero issue
+        if (mSdData.specPower == 0)
+            mSdData.specPower = 1;
+        Log.v(TAG, "alarmCheck() - roiPower="+mSdData.roiPower+" specPower="+ mSdData.specPower+" ratio="+10*mSdData.roiPower/ mSdData.specPower);
         // Is the current set of data representing an alarm state?
-        if ((mSdData.roiPower > mAlarmThresh) && (10 * (mSdData.roiPower / mSdData.specPower) > mAlarmRatioThresh)) {
+        if ((mSdData.roiPower > mAlarmThresh) && ((10 * mSdData.roiPower / mSdData.specPower) > mAlarmRatioThresh)) {
             inAlarm = true;
         } else {
             inAlarm = false;
@@ -502,7 +537,7 @@ public abstract class SdDataSource {
             }
         }
 
-        Log.v(TAG, "alarmCheck(): inAlarm=" + inAlarm + ", alarmState = " + mSdData.alarmState + " alarmCount=" + mAlarmCount + " mAlarmTime=" + mAlarmTime);
+        Log.v(TAG, "alarmCheck(): inAlarm=" + inAlarm + ", alarmState = " + mSdData.alarmState + " alarmCount=" + mAlarmCount + " mWarnTime=" + mWarnTime+ " mAlarmTime=" + mAlarmTime);
 
     }
 
@@ -543,8 +578,38 @@ public abstract class SdDataSource {
                 mSdData.mHRAlarmStanding = false;
             }
         }
+    }
+
+    /**
+     * hrCheck - check the Heart rate data in mSdData to see if it represents an alarm condition.
+     * Sets mSdData.mHRAlarmStanding
+     */
+    public void o2SatCheck() {
+        Log.v(TAG, "o2SatCheck()");
+        /* Check Oxygen Saturation against alarm settings */
+        if (mSdData.mO2SatAlarmActive) {
+            if (mSdData.mO2Sat < 0) {
+                if (mSdData.mO2SatNullAsAlarm) {
+                    Log.i(TAG, "Oxygen Saturation Null - Alarming");
+                    mSdData.mO2SatFaultStanding = false;
+                    mSdData.mO2SatAlarmStanding = true;
+                } else {
+                    Log.i(TAG, "Oxygen Saturation Fault (O2Sat<0)");
+                    mSdData.mO2SatFaultStanding = true;
+                    mSdData.mO2SatAlarmStanding = false;
+                }
+            } else if  (mSdData.mO2Sat < mSdData.mO2SatThreshMin) {
+                Log.i(TAG, "Oxygen Saturation Abnormal - " + mSdData.mO2Sat + " %");
+                mSdData.mO2SatFaultStanding = false;
+                mSdData.mO2SatAlarmStanding = true;
+            } else {
+                mSdData.mO2SatFaultStanding = false;
+                mSdData.mO2SatAlarmStanding = false;
+            }
+        }
 
     }
+
 
     /****************************************************************
      * Simple threshold analysis to chech for fall.
@@ -570,8 +635,9 @@ public abstract class SdDataSource {
                     if (mSdData.rawData[i + j] < minAcc) minAcc = mSdData.rawData[i + j];
                     if (mSdData.rawData[i + j] > maxAcc) maxAcc = mSdData.rawData[i + j];
                 }
+                Log.d(TAG, "check_fall() - minAcc=" + minAcc +" (mFallThreshMin="+mFallThreshMin+ "), maxAcc=" + maxAcc+" (mFallThreshMax="+mFallThreshMax+")") ;
                 if ((minAcc < mFallThreshMin) && (maxAcc > mFallThreshMax)) {
-                    Log.d(TAG, "check_fall() - minAcc=" + minAcc + ", maxAcc=" + maxAcc);
+                    Log.d(TAG, "check_fall() ****FALL DETECTED***** minAcc=" + minAcc + ", maxAcc=" + maxAcc);
                     Log.d(TAG, "check_fall() - ****FALL DETECTED****");
                     mSdData.fallAlarmStanding = true;
                     return;
@@ -649,11 +715,11 @@ public abstract class SdDataSource {
 
         // get time since the last data was received from the watch.
         tdiff = (tnow.toMillis(false) - mDataStatusTime.toMillis(false));
-        Log.v(TAG, "faultCheck() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout
-                + ", combined = " + (mDataUpdatePeriod + mAppRestartTimeout) * 1000);
+        //Log.v(TAG, "faultCheck() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout
+        //        + ", combined = " + (mDataUpdatePeriod + mAppRestartTimeout) * 1000);
         if (!mWatchAppRunningCheck &&
                 (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000)) {
-            Log.v(TAG, "faultCheck() - watch app not running so not doing anything");
+            //Log.v(TAG, "faultCheck() - watch app not running so not doing anything");
             mAlarmCount = 0;
         }
     }
@@ -813,6 +879,19 @@ public abstract class SdDataSource {
                 mSdData.mHRThreshMax = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() HRThreshMax = " + mSdData.mHRThreshMax);
                 mUtil.writeToSysLogFile( "updatePrefs() HRThreshMax = " + mSdData.mHRThreshMax);
+
+                mSdData.mO2SatAlarmActive = SP.getBoolean("O2SatAlarmActive", false);
+                Log.v(TAG, "updatePrefs() O2SatAlarmActive = " + mSdData.mO2SatAlarmActive);
+                mUtil.writeToSysLogFile( "updatePrefs() O2SatAlarmActive = " + mSdData.mO2SatAlarmActive);
+
+                mSdData.mO2SatNullAsAlarm = SP.getBoolean("O2SatNullAsAlarm", false);
+                Log.v(TAG, "updatePrefs() O2SatNullAsAlarm = " + mSdData.mO2SatNullAsAlarm);
+                mUtil.writeToSysLogFile( "updatePrefs() O2SatNullAsAlarm = " + mSdData.mO2SatNullAsAlarm);
+
+                prefStr = SP.getString("O2SatThreshMin", "SET_FROM_XML");
+                mSdData.mO2SatThreshMin = (short) Integer.parseInt(prefStr);
+                Log.v(TAG, "updatePrefs() O2SatThreshMin = " + mSdData.mO2SatThreshMin);
+                mUtil.writeToSysLogFile( "updatePrefs() O2SatThreshMin = " + mSdData.mO2SatThreshMin);
 
             } else {
                 Log.v(TAG, "updatePrefs() - prefStr is null - WHY????");

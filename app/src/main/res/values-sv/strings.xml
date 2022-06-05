@@ -119,7 +119,6 @@
     <string name="sms_location_alarm_active">SMS positionslarm PÅ</string>
     <string name="sms_location_alarm_disabled">SMS positionslarm AV</string>
     <string name="cancel_audible_not_sending_sms">Stäng av ljudlarm - skicka inte SMS</string>
-    <string name="sms_alarm_disabled">SMS-larm avstängt- ingen åtgärd</string>
     <string name="no_wifi_connection">Nätverksstatus ändrad - ingen uppkoppling</string>
     <string name="no_active_network">Nätverksstatus ändrad - inga aktiva nätverk</string>
     <string name="problem_parsing_preferences">Något gick fel! Problem med inställningarna - justera dessa.</string>

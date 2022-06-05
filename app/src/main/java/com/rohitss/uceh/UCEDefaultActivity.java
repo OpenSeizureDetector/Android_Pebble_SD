@@ -18,8 +18,6 @@
 package com.rohitss.uceh;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -28,7 +26,6 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -38,6 +35,9 @@ import android.util.TypedValue;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -54,7 +54,7 @@ import uk.org.openseizuredetector.R;
  * <p>This class is used to </p>
  * Created by Rohit.
  */
-public final class UCEDefaultActivity extends Activity {
+public final class UCEDefaultActivity extends AppCompatActivity {
     private File txtFile;
     private String strCurrentErrorLog;
     private String TAG = "UCEDefaultActivity";

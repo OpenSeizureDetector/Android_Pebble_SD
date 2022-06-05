@@ -1,5 +1,9 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V4.0.6 - fixed issue with O2sat data not being recorded to database
+    V4.0.5 - Added support for 3D data logging
+            - Fixed issue with seizure reporting crashing if quotation marks included in text.
+    V4.0.4 - Added support for Data Sharing system
     V3.6.2 - Nov 2020
         - Extended Polish translation further
         - Improved system log output to help with answering queries from users.

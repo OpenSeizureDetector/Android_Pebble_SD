@@ -25,7 +25,8 @@
 
 package uk.org.openseizuredetector;
 
-import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -36,24 +37,20 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Button;
 
-import java.lang.reflect.Field;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Timer;
-import java.util.TimerTask;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.MenuCompat;
 
-//MPAndroidChart
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -62,6 +59,14 @@ import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.utils.ValueFormatter;
 import com.rohitss.uceh.UCEHandler;
+
+import java.lang.reflect.Field;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
+
+//MPAndroidChart
 
 public class MainActivity extends AppCompatActivity {
     static final String TAG = "MainActivity";
@@ -80,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
     final Handler serverStatusHandler = new Handler();
     Messenger messenger = new Messenger(new ResponseHandler());
     Timer mUiTimer;
+    private Context mContext;
 
     /**
      * Called when the activity is first created.
@@ -87,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i(TAG,"onCreate()");
+        Log.i(TAG, "onCreate()");
 
         // Set our custom uncaught exception handler to report issues.
         //Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(MainActivity.this));
@@ -96,18 +102,19 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         //int i = 5/0;  // Force exception to test handler.
-        mUtil = new OsdUtil(this,serverStatusHandler);
-        mConnection = new SdServiceConnection(this);
+        mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
+        mConnection = new SdServiceConnection(getApplicationContext());
         mUtil.writeToSysLogFile("");
         mUtil.writeToSysLogFile("* MainActivity Started     *");
         mUtil.writeToSysLogFile("MainActivity.onCreate()");
+        mContext = this;
 
         // Initialise the User Interface
         setContentView(R.layout.main);
 
-	/* Force display of overflow menu - from stackoverflow
-     * "how to force use of..."
-	 */
+        /* Force display of overflow menu - from stackoverflow
+         * "how to force use of..."
+         */
         try {
             Log.v(TAG, "trying menubar fiddle...");
             ViewConfiguration config = ViewConfiguration.get(this);
@@ -134,15 +141,14 @@ public class MainActivity extends AppCompatActivity {
                 Log.v(TAG, "acceptAlarmButton.onClick()");
                 if (mConnection.mBound) {
                     if ((mConnection.mSdServer.mSmsTimer != null)
-                            && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0 )){
-                        Log.v(TAG, "acceptAlarmButton.onClick() - Stopping SMS Timer");
+                            && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0)) {
+                        Log.i(TAG, "acceptAlarmButton.onClick() - Stopping SMS Timer");
                         mUtil.showToast(getString(R.string.SMSAlarmCancelledMsg));
                         mConnection.mSdServer.stopSmsTimer();
-                    }
-                    else {
+                    } else {
                         Log.v(TAG, "acceptAlarmButton.onClick() - Accepting Alarm");
                         mConnection.mSdServer.acceptAlarm();
-                        }
+                    }
                 }
             }
         });
@@ -158,7 +164,74 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // Deal with the 'Raise Alarm'
+        button = (Button) findViewById(R.id.manualAlarmButton);
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Log.v(TAG, "manualAlarmButton.onClick()");
+                // Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
+                //AlertDialog.Builder builder = new AlertDialog.Builder(getBaseContext());
+                //builder.setTitle("Raise Alarm");
+                //builder.setMessage(String.format("Raise a Seizure Detected Alarm NOW?"));
+                //builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                //    @Override
+                //    public void onClick(DialogInterface dialog, int which) {
+                if (mConnection.mBound) {
+                    mConnection.mSdServer.raiseManualAlarm();
+                }
+                //        dialog.dismiss();
+                //    }
+                //});
+                //builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                //    @Override
+                //    public void onClick(DialogInterface dialog, int which) {
+                //        dialog.dismiss();
+                //    }
+                //});
+                //AlertDialog alert = builder.create();
+                //if (!(this).isFinishing()) {
+                //    alert.show();
+                //}
 
+
+            }
+        });
+        // The background service might ask us to show the data sharing dialog if data sharing is not working correctly
+        String actionStr = getIntent().getAction();
+        if (actionStr != null) {
+            Log.i(TAG, "onCreate() - action=" + actionStr);
+            if (actionStr.equals("showDataSharingDialog")) {
+                showDataSharingDialog();
+            }
+        } else {
+            Log.i(TAG, "onCreate - action is null - starting normally");
+        }
+    }
+
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        String actionStr;
+        Log.i(TAG, "onNewIntent");
+        Bundle extras = intent.getExtras();
+        // The background service might ask us to show the data sharing dialog if data sharing is not working correctly
+        actionStr = getIntent().getAction();
+        if (actionStr != null) {
+            Log.i(TAG, "onNewIntent() - action=" + actionStr);
+            if (actionStr.equals("showDataSharingDialog")) {
+                showDataSharingDialog();
+            }
+        } else {
+            if (extras != null) {
+                actionStr = extras.getString("action");
+                if (actionStr.equals("showDataSharingDialog")) {
+                    showDataSharingDialog();
+                }
+                Log.i(TAG, "onNewIntent - extra actionstr is "+actionStr);
+            } else {
+                Log.i(TAG, "onNewIntent - extra actionstr is null - starting normally");
+            }
+        }
     }
 
     /**
@@ -168,6 +241,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         Log.i(TAG, "onCreateOptionsMenu()");
         getMenuInflater().inflate(R.menu.main_activity_actions, menu);
+        MenuCompat.setGroupDividerEnabled(menu, true);
         //mOptionsMenu = menu;
         //if (mConnection.mSdServer.mSdDataSourceName != "Pebble") {
         //    Log.v(TAG,"Disabling Pebble Specific Menu Items");
@@ -191,7 +265,7 @@ public class MainActivity extends AppCompatActivity {
                 mConnection.mSdServer.mSdDataSource.installWatchApp();
                 return true;
 
-        case R.id.action_accept_alarm:
+            case R.id.action_accept_alarm:
                 Log.i(TAG, "action_accept_alarm");
                 if (mConnection.mBound) {
                     mConnection.mSdServer.acceptAlarm();
@@ -202,14 +276,14 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, "action_sart_stop");
                 if (mConnection.mBound) {
                     Log.i(TAG, "Stopping Server");
-                    mUtil.unbindFromServer(this, mConnection);
+                    mUtil.unbindFromServer(getApplicationContext(), mConnection);
                     stopServer();
                 } else {
                     Log.i(TAG, "Starting Server");
                     startServer();
                     // and bind to it so we can see its data
                     Log.i(TAG, "Binding to Server");
-                    mUtil.bindToServer(this, mConnection);
+                    mUtil.bindToServer(getApplicationContext(), mConnection);
                 }
                 return true;
             /* fault beep test does not work with fault timer, so disable test option.
@@ -238,24 +312,44 @@ public class MainActivity extends AppCompatActivity {
                     mConnection.mSdServer.sendSMSAlarm();
                 }
                 return true;
-            case R.id.action_test_phone_alarm:
+
+            /*case R.id.action_test_phone_alarm:
                 Log.i(TAG, "action_test_phone_alarm");
                 if (mConnection.mBound) {
                     mConnection.mSdServer.sendPhoneAlarm();
                 }
                 return true;
-            case R.id.action_export:
-                Log.i(TAG, "action_export");
+                */
+
+            case R.id.action_authenticate_api:
+                Log.i(TAG, "action_autheticate_api");
                 try {
                     Intent i = new Intent(
                             MainActivity.this,
-                            DBQueryActivity.class);
+                            AuthenticateActivity.class);
                     this.startActivity(i);
                 } catch (Exception ex) {
                     Log.i(TAG, "exception starting export activity " + ex.toString());
                 }
                 return true;
-            case R.id.action_logs:
+            case R.id.action_about_datasharing:
+                Log.i(TAG, "action_about_datasharing");
+                showDataSharingDialog();
+                return true;
+            /*
+            case R.id.action_export:
+                Log.i(TAG, "action_export");
+                try {
+                    Intent i = new Intent(
+                            MainActivity.this,
+                            ExportDataActivity.class);
+                    this.startActivity(i);
+                } catch (Exception ex) {
+                    Log.i(TAG, "exception starting export activity " + ex.toString());
+                }
+                return true;
+             */
+            /* case R.id.action_logs:
                 Log.i(TAG, "action_logs");
                 try {
                     String url = "http://"
@@ -272,15 +366,27 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "exception starting log manager activity " + ex.toString());
                 }
                 return true;
+             */
             case R.id.action_logmanager:
                 Log.i(TAG, "action_logmanager");
                 try {
                     Intent intent = new Intent(
                             MainActivity.this,
-                            LogManagerActivity.class);
+                            LogManagerControlActivity.class);
                     this.startActivity(intent);
                 } catch (Exception ex) {
                     Log.i(TAG, "exception starting log manager activity " + ex.toString());
+                }
+                return true;
+            case R.id.action_report_seizure:
+                Log.i(TAG, "action_report_seizure");
+                try {
+                    Intent intent = new Intent(
+                            MainActivity.this,
+                            ReportSeizureActivity.class);
+                    this.startActivity(intent);
+                } catch (Exception ex) {
+                    Log.i(TAG, "exception starting Report Seizure activity " + ex.toString());
                 }
                 return true;
             case R.id.action_settings:
@@ -307,7 +413,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Log.i(TAG,"onStart()");
+        Log.i(TAG, "onStart()");
         mUtil.writeToSysLogFile("MainActivity.onStart()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
@@ -321,9 +427,9 @@ public class MainActivity extends AppCompatActivity {
 
         if (mUtil.isServerRunning()) {
             mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
-            mUtil.bindToServer(this, mConnection);
+            mUtil.bindToServer(getApplicationContext(), mConnection);
         } else {
-            Log.i(TAG,"onStart() - Server Not Running");
+            Log.i(TAG, "onStart() - Server Not Running");
             mUtil.writeToSysLogFile("MainActivity.onStart - Server Not Running");
         }
         // start timer to refresh user interface every second.
@@ -341,9 +447,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        Log.i(TAG,"onStop() - unbinding from server");
+        Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("MainActivity.onStop()");
-        mUtil.unbindFromServer(this, mConnection);
+        mUtil.unbindFromServer(getApplicationContext(), mConnection);
         mUiTimer.cancel();
     }
 
@@ -402,7 +508,7 @@ public class MainActivity extends AppCompatActivity {
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
                 tv = (TextView) findViewById(R.id.serverIpTv);
-                tv.setText(getString(R.string.AccessServerAt)+" http://"
+                tv.setText(getString(R.string.AccessServerAt) + " http://"
                         + mUtil.getLocalIpAddress()
                         + ":8080");
                 tv.setBackgroundColor(okColour);
@@ -460,11 +566,17 @@ public class MainActivity extends AppCompatActivity {
                     // Pebble Connected Phrase - use for HR if active instead.
                     tv = (TextView) findViewById(R.id.pebbleTv);
                     if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
-                        tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR);
-                        if (mConnection.mSdServer.mSdData.mHRAlarmStanding) {
+                        if (mConnection.mSdServer.mSdData.mO2Sat>0) {
+                            tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
+                                    + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
+                        } else {
+                            tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
+                                    + "O2 Sat = ---%");
+                        }
+                        if (mConnection.mSdServer.mSdData.mHRAlarmStanding || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
                             tv.setBackgroundColor(alarmColour);
                             tv.setTextColor(alarmTextColour);
-                        } else if (mConnection.mSdServer.mSdData.mHRFaultStanding) {
+                        } else if (mConnection.mSdServer.mSdData.mHRFaultStanding || mConnection.mSdServer.mSdData.mO2SatFaultStanding) {
                             tv.setBackgroundColor(warnColour);
                             tv.setTextColor(warnTextColour);
                         } else {
@@ -507,6 +619,65 @@ public class MainActivity extends AppCompatActivity {
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
                     }
+
+                    ////////////////////////////////////////////////////////////
+                    // Populate the Data Sharing Status Box
+                    // We start off with it set to OK, then check for several different abnormal conditions
+                    // in turn - the last one that is active is the one that is displayed.
+                    tv = (TextView) findViewById(R.id.remoteDbTv);
+                    tv.setText(getString(R.string.data_sharing_status)
+                            + ": "
+                            + getString(R.string.data_sharing_setup_ok));
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+
+                    if (!mConnection.mSdServer.mLm.mWac.checkServerConnection()) {
+                        // Problem connecting to server
+                        tv = (TextView) findViewById(R.id.remoteDbTv);
+                        tv.setText(getString(R.string.data_sharing_status)
+                                + ": "
+                                + getString(R.string.error_connecting_to_server));
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+
+                    if (!mConnection.mSdServer.mLogDataRemoteMobile && mUtil.isMobileDataActive()) {
+                        // We are on mobile internet but we are set to not upload over mobile data.
+                        tv.setText(getString(R.string.data_sharing_status)
+                                + ": "
+                                + getString(R.string.not_updating_mobile));
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+
+                    if (!mUtil.isNetworkConnected()) {
+                        // No network connection
+                        tv.setText(getString(R.string.data_sharing_status)
+                                + ": "
+                                + getString(R.string.not_updating_no_network));
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+
+                    if (!mConnection.mSdServer.mLm.mWac.isLoggedIn()) {
+                        // Not Logged In
+                        tv.setText(getString(R.string.data_sharing_status)
+                                + ": "
+                                + getString(R.string.not_logged_in));
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+
+                    if (!mConnection.mSdServer.mLogData) {
+                        // Not set to share data
+                        tv.setText(getString(R.string.data_sharing_status)
+                                + ": "
+                                + getString(R.string.not_sharing_logged_data));
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+
+                    /////////////////////////////////////////////////////
                     // Set ProgressBars to show margin to alarm.
                     long powerPc;
                     if (mConnection.mSdServer.mSdData.alarmThresh != 0)
@@ -532,9 +703,9 @@ public class MainActivity extends AppCompatActivity {
                         specRatio = 0;
 
                     ((TextView) findViewById(R.id.powerTv)).setText(getString(R.string.PowerEquals) + mConnection.mSdServer.mSdData.roiPower +
-                            " ("+ getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
+                            " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
                     ((TextView) findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
-                            " ("+ getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
+                            " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
 
                     ProgressBar pb;
                     Drawable pbDrawable;
@@ -589,21 +760,20 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(warnTextColour);
 
                         tv = (TextView) findViewById(R.id.pebbleTv);
-                        tv.setText(getString(R.string.HR_Equals)+"---");
+                        tv.setText(getString(R.string.HR_Equals) + " --- bpm\nO2 Sat = --- %");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
 
                         tv = (TextView) findViewById(R.id.appTv);
-                        tv.setText(getString(R.string.WatchApp)+" ----");
+                        tv.setText(getString(R.string.WatchApp) + " ----");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
 
                         tv = (TextView) findViewById(R.id.battTv);
-                        tv.setText(getString(R.string.WatchBatteryEquals)+" ---%");
+                        tv.setText(getString(R.string.WatchBatteryEquals) + " ---%");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
                     }
-
                 } else {   // Not bound to server
                     tv = (TextView) findViewById(R.id.alarmTv);
                     tv.setText(R.string.Dashes);
@@ -620,17 +790,22 @@ public class MainActivity extends AppCompatActivity {
                     tv.setTextColor(warnTextColour);
 
                     tv = (TextView) findViewById(R.id.pebbleTv);
-                    tv.setText(getString(R.string.HR_Equals)+"---");
+                    tv.setText(getString(R.string.HR_Equals) + "---");
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
 
                     tv = (TextView) findViewById(R.id.appTv);
-                    tv.setText(getString(R.string.WatchApp)+" -----");
+                    tv.setText(getString(R.string.WatchApp) + " -----");
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
 
                     tv = (TextView) findViewById(R.id.battTv);
-                    tv.setText(getString(R.string.WatchBatteryEquals)+" ---%");
+                    tv.setText(getString(R.string.WatchBatteryEquals) + " ---%");
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+
+                    tv = (TextView) findViewById(R.id.remoteDbTv);
+                    tv.setText("---");
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
                 }
@@ -647,12 +822,12 @@ public class MainActivity extends AppCompatActivity {
                         && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0)) {
                     acceptAlarmButton.setText(getString(R.string.SMSWillBeSentIn) + " " +
                             mConnection.mSdServer.mSmsTimer.mTimeLeft / 1000 +
-                            " s - "+getString(R.string.Cancel));
+                            " s - " + getString(R.string.Cancel));
                     acceptAlarmButton.setBackgroundColor(alarmColour);
                     acceptAlarmButton.setEnabled(true);
                 } else {
                     acceptAlarmButton.setText(R.string.AcceptAlarm);
-                    acceptAlarmButton.setBackgroundColor(Color.DKGRAY);
+                    acceptAlarmButton.setBackgroundColor(Color.GRAY);
                     if (mConnection.mBound)
                         if ((mConnection.mSdServer.isLatchAlarms())
                                 || mConnection.mSdServer.mSdData.mFallActive) {
@@ -673,15 +848,17 @@ public class MainActivity extends AppCompatActivity {
             if (mConnection.mBound)
                 if (mConnection.mSdServer.isAudibleCancelled()) {
                     cancelAudibleButton.setText(getString(R.string.AudibleAlarmsCancelledFor)
-                            + mConnection.mSdServer.
+                            + " " + mConnection.mSdServer.
                             cancelAudibleTimeRemaining()
-                            + " sec."
-                            + getString(R.string.PressToReEnable));
+                            + " sec");
+                    cancelAudibleButton.setEnabled(true);
                 } else {
                     if (mConnection.mSdServer.mAudibleAlarm) {
                         cancelAudibleButton.setText(R.string.CancelAudibleAlarms);
+                        cancelAudibleButton.setEnabled(true);
                     } else {
                         cancelAudibleButton.setText(R.string.AudibleAlarmsOff);
+                        cancelAudibleButton.setEnabled(false);
                     }
                 }
 
@@ -696,17 +873,16 @@ public class MainActivity extends AppCompatActivity {
             ArrayList<String> xVals = new ArrayList<String>();
             ArrayList<BarEntry> yBarVals = new ArrayList<BarEntry>();
             for (int i = 0; i < 10; i++) {
-                xVals.add(i+"-"+(i+1)+" Hz");
+                xVals.add(i + "-" + (i + 1) + " Hz");
                 if (mConnection.mSdServer != null) {
                     yBarVals.add(new BarEntry(mConnection.mSdServer.mSdData.simpleSpec[i], i));
-                }
-                else {
-                    yBarVals.add(new BarEntry(i,i));
+                } else {
+                    yBarVals.add(new BarEntry(i, i));
                 }
             }
 
             // create a dataset and give it a type
-            BarDataSet barDataSet = new BarDataSet(yBarVals,"Spectrum");
+            BarDataSet barDataSet = new BarDataSet(yBarVals, "Spectrum");
             try {
                 int[] barColours = new int[10];
                 for (int i = 0; i < 10; i++) {
@@ -718,20 +894,20 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 barDataSet.setColors(barColours);
-            } catch (NullPointerException e){
-                Log.e(TAG,"Null pointer exception setting bar colours");
+            } catch (NullPointerException e) {
+                Log.e(TAG, "Null pointer exception setting bar colours");
             }
             barDataSet.setBarSpacePercent(20f);
             barDataSet.setBarShadowColor(Color.WHITE);
-            BarData barData = new BarData(xVals,barDataSet);
+            BarData barData = new BarData(xVals, barDataSet);
             barData.setValueFormatter(new ValueFormatter() {
-                                          @Override
-                                          public String getFormattedValue(float v) {
-                                              DecimalFormat format = new DecimalFormat("####");
-                                              return format.format(v);
-                                          }
-                                      });
-                    mChart.setData(barData);
+                @Override
+                public String getFormattedValue(float v) {
+                    DecimalFormat format = new DecimalFormat("####");
+                    return format.format(v);
+                }
+            });
+            mChart.setData(barData);
 
             // format the axes
             XAxis xAxis = mChart.getXAxis();
@@ -764,7 +940,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 mChart.getLegend().setEnabled(false);
             } catch (NullPointerException e) {
-                Log.e(TAG,"Null Pointer Exception setting legend");
+                Log.e(TAG, "Null Pointer Exception setting legend");
             }
 
             mChart.invalidate();
@@ -775,14 +951,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        Log.i(TAG,"onPause()");
+        Log.i(TAG, "onPause()");
         mUtil.writeToSysLogFile("MainActivity.onPause()");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Log.i(TAG,"onResume()");
+        Log.i(TAG, "onResume()");
         mUtil.writeToSysLogFile("MainActivity.onResume()");
     }
 
@@ -795,16 +971,69 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setIcon(R.drawable.icon_24x24);
         builder.setTitle("OpenSeizureDetector V" + versionName);
+        builder.setNeutralButton(getString(R.string.closeBtnTxt), new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.cancel();
+            }
+        });
+        builder.setPositiveButton("Privacy Policy", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                        String url = OsdUtil.PRIVACY_POLICY_URL;
+                        Intent i = new Intent(Intent.ACTION_VIEW);
+                        i.setData(Uri.parse(url));
+                        startActivity(i);
+                        dialog.cancel();
+                    }
+                });
+        builder.setNegativeButton("Data Sharing", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                        String url = OsdUtil.DATA_SHARING_URL;
+                        Intent i = new Intent(Intent.ACTION_VIEW);
+                        i.setData(Uri.parse(url));
+                        startActivity(i);
+                        dialog.cancel();
+                    }
+        });
         builder.setView(aboutView);
         builder.create();
         builder.show();
     }
+
+    private void showDataSharingDialog() {
+        mUtil.writeToSysLogFile("MainActivity.showDataSharingDialog()");
+        View aboutView = getLayoutInflater().inflate(R.layout.data_sharing_dialog_layout, null, false);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setIcon(R.drawable.datasharing_fault_24x24);
+        builder.setTitle("OpenSeizureDetector Data Sharing");
+        builder.setNegativeButton(getString(R.string.cancel), null);
+        builder.setPositiveButton(getString(R.string.login), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Log.i(TAG, "dataSharingDialog.positiveButton.onClick()");
+                try {
+                    Intent i = new Intent(
+                            MainActivity.this,
+                            AuthenticateActivity.class);
+                    mContext.startActivity(i);
+                } catch (Exception ex) {
+                    Log.i(TAG, "exception starting activity " + ex.toString());
+                }
+
+            }
+        });
+        builder.setView(aboutView);
+        builder.create();
+        builder.show();
+    }
+
 
     static class ResponseHandler extends Handler {
         @Override
         public void handleMessage(Message message) {
             Log.i(TAG, "Message=" + message.toString());
         }
-     }
+    }
 
 }

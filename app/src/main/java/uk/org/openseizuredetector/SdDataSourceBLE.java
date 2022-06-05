@@ -63,6 +63,7 @@ public class SdDataSourceBLE extends SdDataSource {
 
     private int nRawData = 0;
     private double[] rawData = new double[MAX_RAW_DATA];
+    private boolean waitForDescriptorWrite = false;
 
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
@@ -82,13 +83,12 @@ public class SdDataSourceBLE extends SdDataSource {
 
     public static String SERV_DEV_INFO = "0000180a-0000-1000-8000-00805f9b34fb";
     public static String SERV_HEART_RATE = "0000180d-0000-1000-8000-00805f9b34fb";
-    public static String SERV_OSD = "a19585e9-0001-39d0-015f-b3e2b9a0c854";
+    public static String SERV_OSD = "000085e9-0000-1000-8000-00805f9b34fb";
     public static String CHAR_HEART_RATE_MEASUREMENT = "00002a37-0000-1000-8000-00805f9b34fb";
     public static String CHAR_MANUF_NAME = "00002a29-0000-1000-8000-00805f9b34fb";
     public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
-    public static String CHAR_OSD_ACC_DATA = "a19585e9-0002-39d0-015f-b3e2b9a0c854";
-    public static String CHAR_OSD_BATT_DATA = "a19585e9-0004-39d0-015f-b3e2b9a0c854";
-
+    public static String CHAR_OSD_ACC_DATA = "000085ea-0000-1000-8000-00805f9b34fb";
+    public static String CHAR_OSD_BATT_DATA = "000085eb-0000-1000-8000-00805f9b34fb";
 
     public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID.fromString(CHAR_HEART_RATE_MEASUREMENT);
     private BluetoothGatt mGatt;
@@ -264,7 +264,8 @@ public class SdDataSourceBLE extends SdDataSource {
                             }
                             else if (charUuidStr.equals(CHAR_OSD_BATT_DATA)) {
                                 Log.v(TAG,"Saving battery characteristic for later");
-                                mBattChar = gattCharacteristic;
+                                Log.v(TAG, "Subscribing to battery change Notifications");
+                                setCharacteristicNotification(gattCharacteristic,true);
                             }
                         }
                     }
@@ -287,6 +288,8 @@ public class SdDataSourceBLE extends SdDataSource {
         }
 
         public void onDataReceived(BluetoothGattCharacteristic characteristic) {
+            Log.v(TAG, "onDataReceived uuid" + characteristic.getUuid().toString());
+
             // FIXME - collect data until we have enough to do analysis, then use onDataReceived to process it.
             //Log.v(TAG,"onDataReceived: Characteristic="+characteristic.getUuid().toString());
             if (characteristic.getUuid().toString().equals(CHAR_HEART_RATE_MEASUREMENT)) {
@@ -294,12 +297,13 @@ public class SdDataSourceBLE extends SdDataSource {
                 int format = -1;
                 if ((flag & 0x01) != 0) {
                     format = BluetoothGattCharacteristic.FORMAT_UINT16;
-                    //Log.d(TAG, "Heart rate format UINT16.");
+                    Log.d(TAG, "Heart rate format UINT16.");
                 } else {
                     format = BluetoothGattCharacteristic.FORMAT_UINT8;
-                    //Log.d(TAG, "Heart rate format UINT8.");
+                    Log.d(TAG, "Heart rate format UINT8.");
                 }
                 final int heartRate = characteristic.getIntValue(format, 1);
+                mSdData.mHR = (double) heartRate;
                 Log.d(TAG, String.format("Received heart rate: %d", heartRate));
             }
             else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_DATA)) {
@@ -322,21 +326,15 @@ public class SdDataSourceBLE extends SdDataSource {
                         //mNSamp = accelVals.length();
                         mWatchAppRunningCheck = true;
                         mDataStatusTime = new Time(Time.getCurrentTimezone());
-
-                        if (mSdData.haveSettings == false) {
-                            Log.v(TAG,"Requesting Battery Data");
-                            mGatt.readCharacteristic(mBattChar);
-                        }
-
                         doAnalysis();
-
                         nRawData = 0;
                     }
                 }
             }
             else if (characteristic.getUuid().toString().equals(CHAR_OSD_BATT_DATA)) {
-                mSdData.batteryPc = characteristic.getValue()[0];
-                Log.v(TAG,"Received Battery Data");
+                byte batteryPc = characteristic.getValue()[0];
+                mSdData.batteryPc = batteryPc;
+                Log.v(TAG,"Received Battery Data" + String.format("%d", batteryPc));
                 mSdData.haveSettings = true;
             }
             else {
@@ -361,8 +359,13 @@ public class SdDataSourceBLE extends SdDataSource {
             Log.v(TAG,"onCharacteristicChanged(): Characteristic "+characteristic.getUuid()+" changed");
             onDataReceived(characteristic);
         }
-    };
 
+        @Override
+        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+            Log.v(TAG,"onDescriptorWrite(): Characteristic " + descriptor.getUuid() + " changed");
+            waitForDescriptorWrite = false;
+        }
+    };
 
     /**
      * Enables or disables notification on a give characteristic.
@@ -370,12 +373,27 @@ public class SdDataSourceBLE extends SdDataSource {
      * @param characteristic Characteristic to act on.
      * @param enabled        If true, enable notification.  False otherwise.
      */
-    public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
-                                              boolean enabled) {
+    public void setCharacteristicNotification(final BluetoothGattCharacteristic characteristic, final boolean enabled) {
+        Log.w(TAG, "setCharacteristicNotification " + characteristic.getUuid());
+
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
+
+        if (waitForDescriptorWrite) {
+            // Apparently if you try to write multiple descriptors too quickly then only
+            // one is processed, hence why this waiting logic is necessary
+            Log.w(TAG, "waitForDescriptor " + characteristic.getUuid());
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    Log.w(TAG, "delayed");
+                    setCharacteristicNotification(characteristic, enabled);
+                }
+            }, 500);
+            return;
+        }
+
         if (enabled) {
             Log.v(TAG, "setCharacteristicNotification - Requesting notifications");
             mBluetoothGatt.setCharacteristicNotification(characteristic, true);
@@ -396,8 +414,9 @@ public class SdDataSourceBLE extends SdDataSource {
                     UUID.fromString(GattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
             descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
             mBluetoothGatt.writeDescriptor(descriptor);
-
         }
+
+        waitForDescriptorWrite = true;
     }
 
     /**
@@ -414,12 +433,3 @@ public class SdDataSourceBLE extends SdDataSource {
 
 
 }
-
-
-
-
-
-
-
-
-

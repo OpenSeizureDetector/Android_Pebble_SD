@@ -20,16 +20,16 @@
             android:id="@+id/serverStatusTv"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:gravity="center"
             android:layout_weight="0.5"
+            android:gravity="center"
             android:text="textView1" />
 
         <TextView
             android:id="@+id/serverIpTv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
             android:layout_weight="0.5"
+            android:gravity="center"
             android:text="textView2" />
     </LinearLayout>
 
@@ -86,6 +86,11 @@
         </LinearLayout>
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/remoteDbTv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="----" />
 
     <TextView
         android:id="@+id/powerTv"
@@ -116,19 +121,30 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:baselineAligned="false">
 
         <Button
             android:id="@+id/acceptAlarmButton"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="@string/AcceptAlarmBtnTxt" />
 
         <Button
             android:id="@+id/cancelAudibleButton"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="@string/CancelAudibleButtonTxt" />
+
+        <Button
+            android:id="@+id/manualAlarmButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:backgroundTint="#ff0000"
+            android:text="@string/ManualAlarmBtnTxt" />
     </LinearLayout>
 
     <com.github.mikephil.charting.charts.BarChart

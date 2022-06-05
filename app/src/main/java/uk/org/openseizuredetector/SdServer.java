@@ -26,11 +26,7 @@
 
 package uk.org.openseizuredetector;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-
 import android.app.ActivityManager;
-import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -43,37 +39,39 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.database.DatabaseUtils;
-import android.database.SQLException;
-import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
-import android.support.v4.app.NotificationCompat;
 import android.telephony.SmsManager;
+import android.text.format.Time;
 import android.util.Log;
 
-import java.util.Timer;
-import java.io.*;
-import java.util.*;
-
-import android.text.format.Time;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.NotificationCompat;
 
 import com.rohitss.uceh.UCEHandler;
-import uk.org.openseizuredetector.LogManager;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.List;
+import java.util.Timer;
 
 /**
  * Based on example at:
@@ -85,10 +83,15 @@ public class SdServer extends Service implements SdDataReceiver {
     private String mUuidStr = "0f675b21-5a36-4fe7-9761-fd0c691651f3";  // UUID to Identify OSD.
 
     // Notification ID
-    private int NOTIFICATION_ID = 1;
+    private final int NOTIFICATION_ID = 1;
+    private final int EVENT_NOTIFICATION_ID = 2;
+    private final int DATASHARE_NOTIFICATION_ID = 3;
     private String mNotChId = "OSD Notification Channel";
-    private CharSequence mNotChName = "OSD Notification Chennel";
+    private CharSequence mNotChName = "OSD Notification Channel";
     private String mNotChDesc = "OSD Notification Channel Description";
+    private String mEventNotChId = "OSD Event Notification Channel";
+    private CharSequence mEventNotChName = "OSD Event Notification Channel";
+    private String mEventNotChDesc = "OSD Event Notification Channel Description";
 
     private NotificationManager mNM;
     private NotificationCompat.Builder mNotificationBuilder;
@@ -100,6 +103,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private int mCancelAudiblePeriod = 10;  // Cancel Audible Period in minutes
     private long mCancelAudibleTimeRemaining = 0;
     private FaultTimer mFaultTimer = null;
+    private CheckEventsTimer mEventsTimer = null;
     private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
     private boolean mFaultTimerCompleted = false;
 
@@ -127,12 +131,17 @@ public class SdServer extends Service implements SdDataReceiver {
 
     // Data Logging Parameters
     private boolean mLogAlarms = true;
-    private boolean mLogData = false;
-    private boolean mLogDataRemote = false;
-    private boolean mLogDataRemoteMobile = false;
-    private String mOSDUname = "";
-    private String mOSDPasswd = "";
-    private int mOSDWearerId = 0;
+    public boolean mLogData = false;
+    public boolean mLogDataRemote = false;
+    public boolean mLogDataRemoteMobile = false;
+    private String mAuthToken = null;
+    private long mEventsTimerPeriod = 60; // Number of seconds between checks to see if there are unvalidated remote events.
+    private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
+    public long mDataRetentionPeriod = 1; // Prunes the local db so it only retains data younger than this duration (in days)
+    private long mRemoteLogPeriod = 6; // Period in seconds between uploads to the remote server.
+    private long mAutoPrunePeriod = 3600;  // Prune the database every hour
+    private boolean mAutoPruneDb;
+
     private String mOSDUrl = "";
 
     private OsdUtil mUtil;
@@ -143,7 +152,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
     private final IBinder mBinder = new SdBinder();
 
-    private LogManager mLm;
+    public LogManager mLm;
 
     /**
      * class to handle binding the MainApp activity to this service
@@ -218,12 +227,9 @@ public class SdServer extends Service implements SdDataReceiver {
         Log.v(TAG, "onStartCommand() - calling updatePrefs()");
         updatePrefs();
 
-        // Create our log manager.
-        //mLm = new LogManager(mLogDataRemote, mLogDataRemoteMobile,
-        //        mOSDUname, mOSDPasswd, mOSDWearerId, mOSDUrl, this);
-        //mLm = new LogManager(this);
-
-        Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName);
+        Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName + ", phoneAppVersion="+mUtil.getAppVersionName());
+        mSdData.dataSourceName = mSdDataSourceName;
+        mSdData.phoneAppVersion = mUtil.getAppVersionName();
         switch (mSdDataSourceName) {
             case "Pebble":
                 Log.v(TAG, "Selecting Pebble DataSource");
@@ -239,6 +245,8 @@ public class SdServer extends Service implements SdDataReceiver {
                 Log.v(TAG, "Selecting Network DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceNetwork");
                 mSdDataSource = new SdDataSourceNetwork(this.getApplicationContext(), mHandler, this);
+                Log.i(TAG,"Disabling remote logging when using network data source");
+                mLogDataRemote = false;
                 break;
             case "Garmin":
                 Log.v(TAG, "Selecting Garmin DataSource");
@@ -263,6 +271,10 @@ public class SdServer extends Service implements SdDataReceiver {
                 mSdDataSource = new SdDataSourcePhone(this.getApplicationContext(), mHandler, this);
         }
 
+        // Create our log manager.
+        mLm = new LogManager(this, mLogDataRemote, mLogDataRemoteMobile, mAuthToken, mEventDuration,
+                mRemoteLogPeriod, mAutoPruneDb, mDataRetentionPeriod);
+
         if (mSMSAlarm) {
             Log.v(TAG, "Creating LocationFinder");
             mLocationFinder = new LocationFinder(getApplicationContext());
@@ -272,8 +284,8 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Initialise Notification channel for API level 26 and over
         // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
-        mNM= (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationBuilder = new NotificationCompat.Builder(this,mNotChId);
+        mNM = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationBuilder = new NotificationCompat.Builder(this, mNotChId);
         if (Build.VERSION.SDK_INT >= 26) {
             NotificationChannel channel = new NotificationChannel(mNotChId,
                     mNotChName,
@@ -289,15 +301,16 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "showing Notification and calling startForeground (Android 8 and higher)");
             mUtil.writeToSysLogFile("SdServer.onStartCommand() - showing Notification and calling startForeground (Android 8 and higher)");
             showNotification(0);
-            startForeground(NOTIFICATION_ID,mNotification);
+            startForeground(NOTIFICATION_ID, mNotification);
         } else {
             Log.v(TAG, "showing Notification");
             mUtil.writeToSysLogFile("SdServer.onStartCommand() - showing Notification");
             showNotification(0);
         }
         // Record last time we sent an SMS so we can limit rate of SMS
-        // sending to one per minute.
+        // sending to one per minute.   We set it to one minute ago (60000 milliseconds)
         mSMSTime = new Time(Time.getCurrentTimezone());
+        mSMSTime.set(mSMSTime.toMillis(false) - 60000);
 
 
         // Start timer to log data regularly..
@@ -318,6 +331,10 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.writeToSysLogFile("SdServer.onStartCommand() - dataLog timer already running???");
         }
 
+        if (mLogDataRemote) {
+            startEventsTimer();
+        }
+
 
         // Start the web server
         mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting web server");
@@ -333,6 +350,8 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.writeToSysLogFile("SdServer.onStartCommand() - mWakeLock is not null - this shouldn't happen???");
         }
 
+        checkEvents();
+
         return START_STICKY;
     }
 
@@ -345,7 +364,7 @@ public class SdServer extends Service implements SdDataReceiver {
         if (mWakeLock != null) {
             try {
                 mWakeLock.release();
-                Log.v(TAG, "Released Wake Lock to allow device to sleep.");
+                Log.d(TAG, "Released Wake Lock to allow device to sleep.");
             } catch (Exception e) {
                 Log.e(TAG, "Error Releasing Wakelock - " + e.toString());
                 mUtil.writeToSysLogFile("SdServer.onDestroy() - Error releasing wakelock.");
@@ -357,7 +376,7 @@ public class SdServer extends Service implements SdDataReceiver {
         }
 
         if (mSdDataSource != null) {
-            Log.i(TAG, "stopping mSdDataSource");
+            Log.d(TAG, "stopping mSdDataSource");
             mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping mSdDataSource");
             mSdDataSource.stop();
         } else {
@@ -367,7 +386,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Stop the Cancel Audible timer
         if (mCancelAudibleTimer != null) {
-            Log.v(TAG, "onDestroy(): cancelling Cancel_Audible timer");
+            Log.d(TAG, "onDestroy(): cancelling Cancel_Audible timer");
             mCancelAudibleTimer.cancel();
             //mCancelAudibleTimer.purge();
             mCancelAudibleTimer = null;
@@ -376,17 +395,25 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Stop the Fault timer
         if (mFaultTimer != null) {
-            Log.v(TAG, "onDestroy(): cancelling fault timer");
+            Log.d(TAG, "onDestroy(): cancelling fault timer");
             mFaultTimer.cancel();
             mFaultTimer = null;
         }
 
+        // Stop the Event timer
+        if (mEventsTimer != null) {
+            Log.d(TAG, "onDestroy(): Cancelling events timer");
+            stopEventsTimer();
+        }
+
         // Stop the Cancel Alarm Latch timer
+        Log.d(TAG, "onDestroy(): stopping alarm latch timer");
         stopLatchTimer();
 
 
         // Stop the location finder.
         if (mLocationFinder != null) {
+            Log.d(TAG, "onDestroy(): stopping Location Finder");
             mLocationFinder.destroy();
             mLocationFinder = null;
         }
@@ -394,7 +421,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         try {
             // Stop web server
-            Log.v(TAG, "onDestroy(): stopping web server");
+            Log.d(TAG, "onDestroy(): stopping web server");
             mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping Web Server");
             stopWebServer();
 
@@ -404,18 +431,27 @@ public class SdServer extends Service implements SdDataReceiver {
 
             this.stopForeground(true);
             // Cancel the notification.
-            Log.v(TAG, "onDestroy(): cancelling notification");
+            Log.d(TAG, "onDestroy(): cancelling notification");
             mUtil.writeToSysLogFile("SdServer.onDestroy - cancelling notification");
             mNM.cancel(NOTIFICATION_ID);
+            mNM.cancel(EVENT_NOTIFICATION_ID);
+            mNM.cancel(DATASHARE_NOTIFICATION_ID);
+
 
             // stop this service.
-            Log.v(TAG, "onDestroy(): calling stopSelf()");
+            Log.d(TAG, "onDestroy(): calling stopSelf()");
             mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping self");
             stopSelf();
 
         } catch (Exception e) {
-            Log.v(TAG, "Error in onDestroy() - " + e.toString());
+            Log.e(TAG, "Error in onDestroy() - " + e.toString());
             mUtil.writeToSysLogFile("SdServer.onDestroy() -error " + e.toString());
+        }
+
+        if (mLm != null) {
+            Log.d(TAG, "Closing Down Log Manager");
+            mLm.stop();
+            mLm.close();
         }
 
         super.onDestroy();
@@ -427,7 +463,7 @@ public class SdServer extends Service implements SdDataReceiver {
      * Show a notification while this service is running.
      */
     private void showNotification(int alarmLevel) {
-        Log.v(TAG, "showNotification() - alarmLevel="+alarmLevel);
+        Log.v(TAG, "showNotification() - alarmLevel=" + alarmLevel);
         int iconId;
         String titleStr;
         Uri soundUri = null;
@@ -462,7 +498,7 @@ public class SdServer extends Service implements SdDataReceiver {
         }
 
         if (mCancelAudible) {
-            Log.v(TAG,"ShowNotification - Not beeping because mCancelAudible set");
+            Log.v(TAG, "ShowNotification - Not beeping because mCancelAudible set");
             soundUri = null;
         }
 
@@ -491,7 +527,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     .build();
             if (mMp3Alarm) {
                 if (soundUri != null) {
-                    Log.v(TAG, "showNotification - setting Notification Sound to "+soundUri.toString());
+                    Log.v(TAG, "showNotification - setting Notification Sound to " + soundUri.toString());
                     mNotificationBuilder.setSound(soundUri);
                 }
             }
@@ -521,6 +557,13 @@ public class SdServer extends Service implements SdDataReceiver {
         }
     }
 
+    public void raiseManualAlarm() {
+        Log.d(TAG, "raiseManualAlarm()");
+        SdData sdData = mSdData;
+        sdData.alarmState = 5;
+        onSdDataReceived(sdData);
+    }
+
     /**
      * Process the data received from the SdData source.  On exit, the mSdData structure is populated with
      * the appropriate data.
@@ -529,6 +572,8 @@ public class SdServer extends Service implements SdDataReceiver {
      */
     public void onSdDataReceived(SdData sdData) {
         Log.v(TAG, "onSdDataReceived() - " + sdData.toString());
+        Log.v(TAG, "onSdDataReceived(), sdData.fallAlarmStanding=" + sdData.fallAlarmStanding);
+
         if (sdData.alarmState == 0) {
             if ((!mLatchAlarms) ||
                     (mLatchAlarms &&
@@ -557,7 +602,7 @@ public class SdServer extends Service implements SdDataReceiver {
             }
             if (mLogAlarms) {
                 Log.v(TAG, "WARNING - Logging to SD Card");
-                writeAlarmToSD();
+                //writeAlarmToSD();
             } else {
                 Log.v(TAG, "WARNING");
             }
@@ -570,7 +615,7 @@ public class SdServer extends Service implements SdDataReceiver {
             sdData.alarmStanding = true;
             if (mLogAlarms) {
                 Log.v(TAG, "***ALARM*** - Logging to SD Card");
-                writeAlarmToSD();
+                //writeAlarmToSD();
             } else {
                 Log.v(TAG, "***ALARM***");
             }
@@ -602,12 +647,13 @@ public class SdServer extends Service implements SdDataReceiver {
             startLatchTimer();
         }
         // Handle fall alarm
+        Log.v(TAG, "sdData.fallAlarmStanding=" + sdData.fallAlarmStanding);
         if ((sdData.alarmState == 3) || (sdData.fallAlarmStanding)) {
             sdData.alarmPhrase = "FALL";
             sdData.fallAlarmStanding = true;
             if (mLogAlarms) {
                 Log.v(TAG, "***FALL*** - Logging to SD Card");
-                writeAlarmToSD();
+                //writeAlarmToSD();
                 showNotification(2);
             } else {
                 Log.v(TAG, "***FALL***");
@@ -641,7 +687,7 @@ public class SdServer extends Service implements SdDataReceiver {
             sdData.alarmPhrase = "HR ABNORMAL";
             if (mLogAlarms) {
                 Log.v(TAG, "***HEART RATE*** - Logging to SD Card");
-                writeAlarmToSD();
+                //writeAlarmToSD();
             } else {
                 Log.v(TAG, "***HEART RATE***");
             }
@@ -668,19 +714,56 @@ public class SdServer extends Service implements SdDataReceiver {
                 mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
                 Log.v(TAG, "mSMSAlarm is false - not sending");
             }
-
         }
+
+        // Handle Oxygen Saturation alarm
+        if ((sdData.mO2SatAlarmActive) && (sdData.mO2SatAlarmStanding)) {
+            sdData.alarmPhrase = "Oxygen Saturation ABNORMAL";
+            if (mLogAlarms) {
+                Log.v(TAG, "***OXYGEN SATURATION*** - Logging to SD Card");
+                //writeAlarmToSD();
+            } else {
+                Log.v(TAG, "***OXYGEN SATURATION***");
+            }
+            // Make alarm beep tone
+            alarmBeep();
+            showNotification(2);
+            // Display MainActvity
+            showMainActivity();
+            // Send SMS Alarm.
+            if (mSMSAlarm) {
+                Time tnow = new Time(Time.getCurrentTimezone());
+                tnow.setToNow();
+                // limit SMS alarms to one per minute
+                if ((tnow.toMillis(false)
+                        - mSMSTime.toMillis(false))
+                        > 60000) {
+                    sendSMSAlarm();
+                    mSMSTime = tnow;
+                } else {
+                    mUtil.showToast("SMS Alarm already sent - not re-sending");
+                    Log.v(TAG, "SMS Alarm already sent - not re-sending");
+                }
+            } else {
+                mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
+                Log.v(TAG, "mSMSAlarm is false - not sending");
+            }
+        }
+
 
         // Fault
         if ((sdData.alarmState) == 4 || (sdData.alarmState == 7) || (sdData.mHRFaultStanding)) {
             sdData.alarmPhrase = "FAULT";
-            writeAlarmToSD();
+            //writeAlarmToSD();
             faultWarningBeep();
             showNotification(-1);
         } else {
             stopFaultTimer();
         }
         mSdData = sdData;
+        mSdData.dataSourceName = mSdDataSourceName;
+        mSdData.phoneAppVersion = mUtil.getAppVersionName();
+
         if (webServer != null) webServer.setSdData(mSdData);
         Log.v(TAG, "onSdDataReceived() - setting mSdData to " + mSdData.toString());
 
@@ -713,7 +796,7 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.writeToSysLogFile("onSdDataFault() - starting Fault Timer");
         }
 
-    showNotification(-1);
+        showNotification(-1);
     }
 
     /* from http://stackoverflow.com/questions/12154940/how-to-make-a-beep-in-android */
@@ -737,8 +820,8 @@ public class SdServer extends Service implements SdDataReceiver {
      */
     public void faultWarningBeep() {
         if (mCancelAudible) {
-                Log.v(TAG, "faultWarningBeep() - CancelAudible Active - silent beep...");
-            } else {
+            Log.v(TAG, "faultWarningBeep() - CancelAudible Active - silent beep...");
+        } else {
             if (mAudibleFaultWarning) {
                 if (mMp3Alarm) {
                     Log.v(TAG, "Not making MP3 fault beep - handled by notification");
@@ -807,24 +890,14 @@ public class SdServer extends Service implements SdDataReceiver {
         AlertDialog ad;
         if (mSMSAlarm) {
             if (!mCancelAudible) {
-                if (!mUtil.areSMSPermissionsOK()) {
-                    mUtil.showToast(getString(R.string.SMSPermissionsDeniedMsg));
-                    Log.e(TAG, "ERROR - Permission for SMS or Location Denied - Not Sending SMS");
-                } else {
-                    //mSMSAlertDialog = new AlertDialog.Builder(this);
-                    //mSMSAlertDialog.setMessage("SMS Will be Sent in 10 Seconds, unless you press the Cancel Button")
-                    //        .setPositiveButton("Send", smsCancelClickListener)
-                    //        .setNegativeButton("Cancel", smsCancelClickListener);
-                    //ad = mSMSAlertDialog.show();
-                    startSmsTimer();
-                }
+                startSmsTimer();
             } else {
                 Log.i(TAG, "sendSMSAlarm() - Cancel Audible Active - not sending SMS");
                 mUtil.showToast(getString(R.string.cancel_audible_not_sending_sms));
             }
         } else {
             Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
-            mUtil.showToast(getString(R.string.sms_alarm_disabled));
+            mUtil.showToast(getString(R.string.sms_alarms_disabled));
         }
         if (mPhoneAlarm) {
             if (!mCancelAudible) {
@@ -848,20 +921,19 @@ public class SdServer extends Service implements SdDataReceiver {
     DialogInterface.OnClickListener smsCancelClickListener = new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int which) {
-            switch (which){
+            switch (which) {
                 case DialogInterface.BUTTON_POSITIVE:
-                    Log.v(TAG,"smsCancelClickListener - Positive button");
+                    Log.v(TAG, "smsCancelClickListener - Positive button");
                     //Yes button clicked
                     break;
 
                 case DialogInterface.BUTTON_NEGATIVE:
-                    Log.v(TAG,"smsCancelClickListener - Negative button");
+                    Log.v(TAG, "smsCancelClickListener - Negative button");
                     //No button clicked
                     break;
             }
         }
     };
-
 
 
     /*
@@ -896,10 +968,8 @@ public class SdServer extends Service implements SdDataReceiver {
     }
 
 
-
-
     /*
-    * Start the timer that will automatically re-set a latched alarm after a given period.
+     * Start the timer that will automatically re-set a latched alarm after a given period.
      */
     private void startLatchTimer() {
         if (mLatchAlarms) {
@@ -1011,7 +1081,7 @@ public class SdServer extends Service implements SdDataReceiver {
             } else {
                 if (webServer.isAlive()) {
                     Log.w(TAG, "stopWebServer() - server still alive???");
-                    mUtil.writeToSysLogFile( "stopWebServer() - server still alive???");
+                    mUtil.writeToSysLogFile("stopWebServer() - server still alive???");
                 } else {
                     mUtil.writeToSysLogFile("stopWebServer() - server died ok");
                     Log.v(TAG, "stopWebServer() - server died ok");
@@ -1069,9 +1139,13 @@ public class SdServer extends Service implements SdDataReceiver {
      */
     public void logData() {
         if (mLogData) {
-            Log.v(TAG, "logData() - writing data to SD Card");
-            writeToSD();
-            //mLm.writeToLocalDb(mSdData);
+            if (mLm != null) {
+                Log.v(TAG, "logData() - writing data to Database");
+                //writeToSD();
+                mLm.writeDatapointToLocalDb(mSdData);
+            } else {
+                Log.e(TAG, "logData() - mLm is null - this should not happen");
+            }
         }
     }
 
@@ -1101,7 +1175,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 mUtil.writeToSysLogFile("updatePrefs() - mLatchAlarmTimerPeriod = " + mLatchAlarmPeriod);
             } catch (Exception ex) {
                 Log.v(TAG, "updatePrefs() - Problem with LatchAlarmTimerPeriod preference!");
-                mUtil.writeToSysLogFile( "updatePrefs() - Problem with LatchAlarmTimerPeriod preference!");
+                mUtil.writeToSysLogFile("updatePrefs() - Problem with LatchAlarmTimerPeriod preference!");
                 mUtil.showToast(getString(R.string.problem_parsing_preferences));
             }
             mAudibleFaultWarning = SP.getBoolean("AudibleFaultWarning", true);
@@ -1127,42 +1201,65 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.writeToSysLogFile("updatePrefs() - mAuidbleWarning = " + mAudibleWarning);
             mMp3Alarm = SP.getBoolean("UseMp3Alarm", false);
             Log.v(TAG, "updatePrefs() - mMp3Alarm = " + mMp3Alarm);
-            mUtil.writeToSysLogFile( "updatePrefs() - mMp3Alarm = " + mMp3Alarm);
+            mUtil.writeToSysLogFile("updatePrefs() - mMp3Alarm = " + mMp3Alarm);
 
             mSMSAlarm = SP.getBoolean("SMSAlarm", false);
             Log.v(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
-            mUtil.writeToSysLogFile( "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
+            mUtil.writeToSysLogFile("updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             mPhoneAlarm = SP.getBoolean("PhoneCallAlarm", false);
             Log.v(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
-            mUtil.writeToSysLogFile( "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
+            mUtil.writeToSysLogFile("updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             String SMSNumberStr = SP.getString("SMSNumbers", "");
             mSMSNumbers = SMSNumberStr.split(",");
             mSMSMsgStr = SP.getString("SMSMsg", "Seizure Detected!!!");
             Log.v(TAG, "updatePrefs() - SMSNumberStr = " + SMSNumberStr);
-            mUtil.writeToSysLogFile( "updatePrefs() - SMSNumberStr = " + SMSNumberStr);
+            mUtil.writeToSysLogFile("updatePrefs() - SMSNumberStr = " + SMSNumberStr);
             Log.v(TAG, "updatePrefs() - mSMSNumbers = " + mSMSNumbers);
-            mUtil.writeToSysLogFile( "updatePrefs() - mSMSNumbers = " + mSMSNumbers);
+            mUtil.writeToSysLogFile("updatePrefs() - mSMSNumbers = " + mSMSNumbers);
             mLogAlarms = SP.getBoolean("LogAlarms", true);
             Log.v(TAG, "updatePrefs() - mLogAlarms = " + mLogAlarms);
             mUtil.writeToSysLogFile("updatePrefs() - mLogAlarms = " + mLogAlarms);
-            mLogData = SP.getBoolean("LogData", true);
-            Log.v(TAG, "updatePrefs() - mLogData = " + mLogData);
-            mUtil.writeToSysLogFile( "updatePrefs() - mLogData = " + mLogData);
-            mLogDataRemote = SP.getBoolean("LogDataRemote", false);
+            //mLogData = SP.getBoolean("LogData", true);
+            mLogData = true;
+            Log.v(TAG, "SdServer.updatePrefs() - mLogData = " + mLogData);
+            mUtil.writeToSysLogFile("updatePrefs() - mLogData = " + mLogData);
+            //mLogDataRemote = SP.getBoolean("LogDataRemote", false);
+            mLogDataRemote = true;
             Log.v(TAG, "updatePrefs() - mLogDataRemote = " + mLogDataRemote);
-            mUtil.writeToSysLogFile( "updatePrefs() - mLogDataRemote = " + mLogDataRemote);
+            mUtil.writeToSysLogFile("updatePrefs() - mLogDataRemote = " + mLogDataRemote);
             mLogDataRemoteMobile = SP.getBoolean("LogDataRemoteMobile", false);
             Log.v(TAG, "updatePrefs() - mLogDataRemoteMobile = " + mLogDataRemoteMobile);
             mUtil.writeToSysLogFile("updatePrefs() - mLogDataRemoteMobile = " + mLogDataRemoteMobile);
-            mOSDUname = SP.getString("OSDUname", "<username>");
-            Log.v(TAG, "updatePrefs() - mOSDUname = " + mOSDUname);
-            mOSDPasswd = SP.getString("OSDPasswd", "<passwd>");
-            Log.v(TAG, "updatePrefs() - mOSDPasswd = " + mOSDPasswd);
-            mOSDWearerId = Integer.parseInt(SP.getString("OSDWearerId", "0"));
-            Log.v(TAG, "updatePrefs() - mOSDWearerId = " + mOSDWearerId);
+            mAuthToken = SP.getString("webApiAuthToken", null);
+            Log.v(TAG, "updatePrefs() - mAuthToken = " + mAuthToken);
+            mUtil.writeToSysLogFile("updatePrefs() - mAuthToken = " + mAuthToken);
+
+            String prefVal;
+            prefVal = SP.getString("EventDurationSec", "300");
+            mEventDuration = Integer.parseInt(prefVal);
+            Log.v(TAG, "mEventDuration=" + mEventDuration);
+
+            mAutoPruneDb = SP.getBoolean("AutoPruneDb", true);
+            Log.v(TAG, "mAutoPruneDb=" + mAutoPruneDb);
+
+            prefVal = SP.getString("DataRetentionPeriod", "28");
+            mDataRetentionPeriod = Integer.parseInt(prefVal);
+            Log.v(TAG, "mDataRetentionPeriod=" + mDataRetentionPeriod);
+
+            //prefVal = SP.getString("RemoteLogPeriod", "60");
+            //mRemoteLogPeriod = Integer.parseInt(prefVal);
+            //mRemoteLogPeriod = 60;
+            Log.v(TAG, "mRemoteLogPeriod=" + mRemoteLogPeriod);
+
+            //mOSDUname = SP.getString("OSDUname", "<username>");
+            //Log.v(TAG, "updatePrefs() - mOSDUname = " + mOSDUname);
+            //mOSDPasswd = SP.getString("OSDPasswd", "<passwd>");
+            //Log.v(TAG, "updatePrefs() - mOSDPasswd = " + mOSDPasswd);
+            //mOSDWearerId = Integer.parseInt(SP.getString("OSDWearerId", "0"));
+            //Log.v(TAG, "updatePrefs() - mOSDWearerId = " + mOSDWearerId);
             mOSDUrl = SP.getString("OSDUrl", "http://openseizuredetector.org.uk/webApi");
             Log.v(TAG, "updatePrefs() - mOSDUrl = " + mOSDUrl);
-            mUtil.writeToSysLogFile( "updatePrefs() - mOSDUrl = " + mOSDUrl);
+            mUtil.writeToSysLogFile("updatePrefs() - mOSDUrl = " + mOSDUrl);
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
             mUtil.writeToSysLogFile("SdServer.updatePrefs() - Error " + ex.toString());
@@ -1171,70 +1268,14 @@ public class SdServer extends Service implements SdDataReceiver {
     }
 
 
-    /**
-     * Write data to SD card alarm log
-     */
-    public void writeAlarmToSD() {
-        writeToSD(true);
-    }
-
-    /**
-     * Write to data log file on SD Card
-     */
-    public void writeToSD() {
-        writeToSD(false);
-    }
-
-    /**
-     * Write data to SD card - writes to data log file unless alarm=true,
-     * in which case writes to alarm log file.
-     */
-    public void writeToSD(boolean alarm) {
-        //Log.v(TAG, "writeToSD(" + alarm + ")");
-        Time tnow = new Time(Time.getCurrentTimezone());
-        tnow.setToNow();
-        String dateStr = tnow.format("%Y-%m-%d");
-
-        // Select filename depending on 'alarm' parameter.
-        String fname;
-        if (alarm)
-            fname = "AlarmLog";
-        else
-            fname = "DataLog";
-
-        fname = fname + "_" + dateStr + ".txt";
-        // Open output directory on SD Card.
-        if (mUtil.isExternalStorageWritable()) {
-            try {
-                FileWriter of = new FileWriter(getExternalFilesDir(null).toString()
-                        + "/" + fname, true);
-                if (mSdData != null) {
-                    if (alarm) {
-                        //Log.v(TAG, "writeToSD() - logging mSdData.toString()");
-                        of.append(mSdData.toString() + "\n");
-                    } else {
-                        //Log.v(TAG, "writeToSD() - logging mSdData.toCSVString()");
-                        of.append(mSdData.toCSVString(true) + "\n");
-                    }
-                }
-                of.close();
-            } catch (Exception ex) {
-                Log.e(TAG, "writeAlarmToSD - error " + ex.toString());
-            }
-        } else {
-            Log.e(TAG, "ERROR - Can not Write to External Folder");
-        }
-    }
-
-
     public void sendPhoneAlarm() {
         /**
          * Use the separate OpenSeizureDetector Dialler app to generate a phone call alarm to the numbers selected for SMS Alarms.
          */
-        Log.v(TAG,"sendPhoneAlarm() - sending broadcast intent");
+        Log.v(TAG, "sendPhoneAlarm() - sending broadcast intent");
         Intent intent = new Intent();
         intent.setAction("uk.org.openseizuredetector.dialler.ALARM");
-        intent.putExtra("NUMBERS",mSMSNumbers);
+        intent.putExtra("NUMBERS", mSMSNumbers);
         sendBroadcast(intent);
     }
 
@@ -1245,6 +1286,7 @@ public class SdServer extends Service implements SdDataReceiver {
      */
     public class SmsTimer extends CountDownTimer implements SdLocationReceiver {
         public long mTimeLeft = -1;
+
         public SmsTimer(long startTime, long interval) {
             super(startTime, interval);
         }
@@ -1254,21 +1296,26 @@ public class SdServer extends Service implements SdDataReceiver {
         public void onFinish() {
             Log.v(TAG, "SmsTimer.onFinish()");
             mTimeLeft = 0;
-            mLocationFinder.getLocation(this);
-            Location loc = mLocationFinder.getLastLocation();
-            if (loc != null) {
-                mUtil.showToast(getString(R.string.send_sms_last_location)
-                        + loc.getLongitude() + ","
-                        + loc.getLatitude());
+            if (mLocationFinder != null) {
+                mLocationFinder.getLocation(this);
+                Location loc = mLocationFinder.getLastLocation();
+                if (loc != null) {
+                    mUtil.showToast(getString(R.string.send_sms_last_location)
+                            + loc.getLongitude() + ","
+                            + loc.getLatitude());
+                } else {
+                    Log.i(TAG, "SmsTimer.onFinish() - Last Location is Null so sending first SMS without location.");
+                }
             } else {
-                Log.i(TAG, "SmsTimer.onFinish() - Last Location is Null so sending first SMS without location.");
+                Log.e(TAG,"SmsTimer.onFinish - mLocationFinder is null - this should not happen!");
+                mUtil.showToast("SmsTimer.onFinish - mLocationFinder is null - this should not happen! - Please report this issue!");
             }
             Log.i(TAG, "SmsTimer.onFinish() - Sending to " + mSMSNumbers.length + " Numbers");
             mUtil.writeToSysLogFile("SdServer.SmsTimer.onFinish()");
             Time tnow = new Time(Time.getCurrentTimezone());
             tnow.setToNow();
             String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
-            String shortUuidStr = mUuidStr.substring(mUuidStr.length()-6);
+            String shortUuidStr = mUuidStr.substring(mUuidStr.length() - 6);
 
             // SmsManager sm = SmsManager.getDefault();
             for (int i = 0; i < mSMSNumbers.length; i++) {
@@ -1289,7 +1336,6 @@ public class SdServer extends Service implements SdDataReceiver {
         /**
          * onSdLocationReceived - called with the best estimate location after mLocationReceiver times out.
          *
-         * @param ll - location (may be null if no location found)
          */
         private void sendSMS(String phoneNo, String msgStr) {
             Log.i(TAG, "sendSMS() - Sending to " + phoneNo);
@@ -1341,7 +1387,7 @@ public class SdServer extends Service implements SdDataReceiver {
                             + ";u=" + df.format(ll.getAccuracy()) + "'>here</a>";
                     String googleUrl = "https://www.google.com/maps/place?q="
                             + ll.getLatitude() + "%2C" + ll.getLongitude();
-                    String shortUuidStr = mUuidStr.substring(mUuidStr.length()-6);
+                    String shortUuidStr = mUuidStr.substring(mUuidStr.length() - 6);
 
                     String messageStr = mSMSMsgStr + " - " +
                             dateStr + " - " + googleUrl + " " + shortUuidStr;
@@ -1360,14 +1406,13 @@ public class SdServer extends Service implements SdDataReceiver {
         }
 
 
-
     }
 
 
     /*
-    * Latch alarm in alarm state for a given period (mLatchAlarmPeriod seconds) after the alarm is raised.
-    * This is to ensure multiple Alarm annunciations even if only a single Alarm signal is received.
-    */
+     * Latch alarm in alarm state for a given period (mLatchAlarmPeriod seconds) after the alarm is raised.
+     * This is to ensure multiple Alarm annunciations even if only a single Alarm signal is received.
+     */
     private class LatchAlarmTimer extends CountDownTimer {
         public LatchAlarmTimer(long startTime, long interval) {
             super(startTime, interval);
@@ -1390,9 +1435,9 @@ public class SdServer extends Service implements SdDataReceiver {
     }
 
     /*
-    * Temporary cancel audible alarms, for the period specified by the
-    * CancelAudiblePeriod setting.
-    */
+     * Temporary cancel audible alarms, for the period specified by the
+     * CancelAudiblePeriod setting.
+     */
     private class CancelAudibleTimer extends CountDownTimer {
         public CancelAudibleTimer(long startTime, long interval) {
             super(startTime, interval);
@@ -1438,13 +1483,13 @@ public class SdServer extends Service implements SdDataReceiver {
 
     public void stopFaultTimer() {
         if (mFaultTimer != null) {
-            Log.v(TAG, "stopFaultTimer(): fault timer already running - cancelling it.");
+            //Log.v(TAG, "stopFaultTimer(): fault timer already running - cancelling it.");
             mUtil.writeToSysLogFile("stopFaultTimer() - stopping fault timer");
             mFaultTimer.cancel();
             mFaultTimer = null;
             mFaultTimerCompleted = false;
         } else {
-            Log.v(TAG, "stopFaultTimer(): fault timer not running - not doing anything.");
+            //Log.v(TAG, "stopFaultTimer(): fault timer not running - not doing anything.");
             //mUtil.writeToSysLogFile("stopFaultTimer() - fault timer not running");
         }
     }
@@ -1476,4 +1521,211 @@ public class SdServer extends Service implements SdDataReceiver {
 
     }
 
+
+    /**
+     * Start the events timer.
+     */
+    public void startEventsTimer() {
+        if (mEventsTimer != null) {
+            Log.v(TAG, "startEventsTimer(): timer already running - not doing anything.");
+            mUtil.writeToSysLogFile("startEventsTimer() - timer already running");
+        } else {
+            Log.v(TAG, "startEventsTimer(): starting timer.");
+            mUtil.writeToSysLogFile("startEventsTimer() - starting timer");
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    mEventsTimer =
+                            // Run every 10 sec (convert to ms.)
+                            new CheckEventsTimer(mEventsTimerPeriod * 1000, 1000);
+                    mEventsTimer.mIsRunning = true;
+                    mEventsTimer.start();
+                }
+            });
+        }
+    }
+
+    public void stopEventsTimer() {
+        if (mEventsTimer != null) {
+            Log.v(TAG, "stopEventsTimer(): timer already running - cancelling it.");
+            mUtil.writeToSysLogFile("stopEventsTimer() - stopping timer, setting mIsRunning to false");
+            mEventsTimer.mIsRunning = false;
+            mEventsTimer.cancel();
+            //mEventsTimer = null;
+        } else {
+            Log.v(TAG, "stopEventsTimer(): timer not running - not doing anything.");
+        }
+    }
+
+
+    private void checkEvents() {
+        // Retrieve events from remote database
+        if (mLm.mWac.getEvents((JSONObject remoteEventsObj) -> {
+            Log.v(TAG, "CheckEvents.getEvents.Callback()");
+            Boolean haveUnvalidatedEvent = false;
+            if (remoteEventsObj == null) {
+                Log.e(TAG, "CheckEvents.Callback:  Error Retrieving events");
+            } else {
+                try {
+                    JSONArray eventsArray = remoteEventsObj.getJSONArray("events");
+                    // A bit of a hack to display in reverse chronological order
+                    for (int i = eventsArray.length() - 1; i >= 0; i--) {
+                        JSONObject eventObj = eventsArray.getJSONObject(i);
+                        String typeStr = eventObj.getString("type");
+                        //Log.v(TAG,"CheckEventsTimer: id="+id+", typeStr="+typeStr);
+                        if (typeStr.equals("null") || typeStr.equals("")) {
+                            haveUnvalidatedEvent = true;
+                            //Log.v(TAG,"CheckEventsTimer:setting firstUnvalidatedEvent to "+firstUnvalidatedEvent);
+                        }
+                    }
+                    Log.v(TAG, "CheckEventsTimer.onFinish.callback - haveUnvalidatedEvent = " +
+                            haveUnvalidatedEvent);
+                    if (haveUnvalidatedEvent) {
+                        showEventNotification();
+                        mNM.cancel(DATASHARE_NOTIFICATION_ID);
+                    } else {
+                        mNM.cancel(EVENT_NOTIFICATION_ID);
+                        mNM.cancel(DATASHARE_NOTIFICATION_ID);
+                    }
+                } catch (JSONException e) {
+                    Log.e(TAG, "CheckEventsTimer.onFinish(): Error Parsing remoteEventsObj: " + e.getMessage());
+                    //mUtil.showToast("Error Parsing remoteEventsObj - this should not happen!!!");
+                }
+            }
+        })) {
+            Log.v(TAG, "CheckEventsTimer() - requested events");
+        } else {
+            Log.v(TAG, "CheckEventsTimer() - Not Logged In");
+            mNM.cancel(EVENT_NOTIFICATION_ID);
+            showDatashareNotification();
+        }
+
+    }
+
+    /**
+     * Periodically check if we have unvalidated events in the remote database.
+     * Show a notification if we do.
+     */
+    private class CheckEventsTimer extends CountDownTimer {
+        public boolean mIsRunning = true;
+
+        public CheckEventsTimer(long startTime, long interval) {
+            super(startTime, interval);
+        }
+
+        @Override
+        public void onFinish() {
+            Log.v(TAG, "CheckEventsTimer.onFinish()");
+            checkEvents();
+            if (mIsRunning) {
+                // Restart this timer.
+                Log.v(TAG, "CheckEventsTimer.onFinish() - mIsRunning is true, so re-starting timer");
+                start();
+            }
+        }
+
+        @Override
+        public void onTick(long msRemaining) {
+        }
+    }
+
+    /**
+     * Show a notification to tell the user that we have unvalidated events.
+     */
+    private void showEventNotification() {
+        Log.v(TAG, "showEventNotification()");
+        int iconId;
+        String titleStr;
+        Uri soundUri = null;
+
+        // Initialise Notification channel for API level 26 and over
+        // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
+        NotificationManager nM = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(getApplicationContext(), mEventNotChId);
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationChannel channel = new NotificationChannel(mEventNotChId,
+                    mEventNotChName,
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription(mEventNotChDesc);
+            nM.createNotificationChannel(channel);
+        }
+
+        iconId = R.drawable.datasharing_query_24x24;
+        titleStr = getString(R.string.unvalidatedEventsTitle);
+
+        Intent i = new Intent(getApplicationContext(), LogManagerControlActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        i.setAction("None");
+        PendingIntent contentIntent =
+                PendingIntent.getActivity(getApplicationContext(),
+                        0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+        String contentStr = getString(R.string.please_confirm_seizure_events);
+
+        Notification notification = notificationBuilder.setContentIntent(contentIntent)
+                .setSmallIcon(iconId)
+                .setColor(0x00ffffff)
+                .setAutoCancel(false)
+                .setContentTitle(titleStr)
+                .setContentText(contentStr)
+                .setOnlyAlertOnce(true)
+                .build();
+        nM.notify(EVENT_NOTIFICATION_ID, notification);
+    }
+
+
+    /**
+     * Show a notification asking the user to set-up data sharing.
+     */
+    private void showDatashareNotification() {
+        Log.v(TAG, "showDatashareNotification()");
+        int iconId;
+        String titleStr;
+        Uri soundUri = null;
+
+        // Initialise Notification channel for API level 26 and over
+        // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
+        NotificationManager nM = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(getApplicationContext(), mEventNotChId);
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationChannel channel = new NotificationChannel(mEventNotChId,
+                    mEventNotChName,
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription(mEventNotChDesc);
+            nM.createNotificationChannel(channel);
+        }
+
+        iconId = R.drawable.datasharing_fault_24x24;
+        titleStr = getString(R.string.datasharing_notification_title);
+
+        Intent i = new Intent(getApplicationContext(), MainActivity.class);
+        i.putExtra("action", "showDataSharingDialog");
+        i.setAction("showDataSharingDialog");
+        i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent contentIntent =
+                PendingIntent.getActivity(getApplicationContext(),
+                        0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+        Intent loginIntent = new Intent(getApplicationContext(), AuthenticateActivity.class);
+        loginIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        PendingIntent loginPendingIntent =
+                PendingIntent.getActivity(getApplicationContext(),
+                        0, loginIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        String contentStr = getString(R.string.datasharing_notification_text);
+        Notification notification = notificationBuilder
+                .setContentIntent(contentIntent)
+                .setSmallIcon(iconId)
+                .setColor(0x00ffffff)
+                .setAutoCancel(false)
+                .setContentTitle(titleStr)
+                .setContentText(contentStr)
+                .setOnlyAlertOnce(true)
+                .addAction(R.drawable.common_google_signin_btn_icon_dark, getString(R.string.login), loginPendingIntent)
+                .setPriority(0)
+                .build();
+        nM.notify(DATASHARE_NOTIFICATION_ID, notification);
+    }
+
+
 }
+
+
+
