@@ -21,7 +21,7 @@
         android:summary="@string/AutoPruneDbSummary"
         android:title="@string/AutoPruneDbTitle" />
     <EditTextPreference
-        android:defaultValue="28"
+        android:defaultValue="7"
         android:key="DataRetentionPeriod"
         android:summary="@string/dataRetentionPeriodSummary"
         android:title="@string/dataRetentionPeriodTitle" />

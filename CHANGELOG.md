@@ -4,6 +4,8 @@
         - Removed automatic refresh of shared data events list (Issue #62)
         - Added option to include warnings in shared data events list (Issue #64)
         - Added catch of NullPointerException in LogManager in case of network disruption (Issue #61)
+        - Added 'demo mode' on main screen when phone data source selected and highighted it in warning colour (Issue #56)
+        - Changed default local data retention time to 7 days (from 28) - works around #63
     V4.0.6 - fixed issue with O2sat data not being recorded to database
     V4.0.5 - Added support for 3D data logging
             - Fixed issue with seizure reporting crashing if quotation marks included in text.
