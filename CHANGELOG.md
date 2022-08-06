@@ -1,6 +1,9 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
     V4.0.7 - Improvements to Data Sharing data log manager screen
+        - Removed automatic refresh of shared data events list (Issue #62)
+        - Added option to include warnings in shared data events list (Issue #64)
+        - Added catch of NullPointerException in LogManager in case of network disruption (Issue #61)
     V4.0.6 - fixed issue with O2sat data not being recorded to database
     V4.0.5 - Added support for 3D data logging
             - Fixed issue with seizure reporting crashing if quotation marks included in text.

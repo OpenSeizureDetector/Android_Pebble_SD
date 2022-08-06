@@ -177,7 +177,7 @@ public class LogManager {
                 c.moveToNext();
                 dataPointArray.put(i, datapoint);
                 i++;
-            } catch (JSONException e) {
+            } catch (JSONException | NullPointerException e) {
                 Log.e(TAG, "cursor2Json(): error creating JSON Object");
                 e.printStackTrace();
             }
@@ -225,7 +225,7 @@ public class LogManager {
                 c.moveToNext();
                 eventsArray.put(i, event);
                 i++;
-            } catch (JSONException e) {
+            } catch (JSONException | NullPointerException e) {
                 Log.e(TAG, "eventCursor2Json(): error creating JSON Object");
                 e.printStackTrace();
             }
@@ -894,7 +894,7 @@ public class LogManager {
                     try {
                         String dateStr = eventObj.getString("dataTime");
                         eventDate = mUtil.string2date(dateStr);
-                    } catch (JSONException e) {
+                    } catch (JSONException | NullPointerException e) {
                         Log.e(TAG, "createEventCallback() - Error parsing JSONObject: " + eventObj.toString());
                         finishUpload();
                         return;
@@ -914,6 +914,7 @@ public class LogManager {
                                     //Log.v(TAG, "createEventCallback() - datapointsJsonStr=" + datapointsJsonStr);
                                     JSONArray dataObj;
                                     mDatapointsToUploadList = new ArrayList<JSONObject>();
+
                                     try {
                                         //DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
                                         dataObj = new JSONArray(datapointsJsonStr);
@@ -921,7 +922,7 @@ public class LogManager {
                                         for (int i = 0; i < dataObj.length(); i++) {
                                             mDatapointsToUploadList.add(dataObj.getJSONObject(i));
                                         }
-                                    } catch (JSONException e) {
+                                    } catch (JSONException | NullPointerException e) {
                                         Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string " + datapointsJsonStr);
                                         dataObj = null;
                                         finishUpload();
@@ -952,7 +953,7 @@ public class LogManager {
                 mUploadInProgress = true;
                 try {
                     mCurrentDatapointId = mDatapointsToUploadList.get(0).getInt("id");
-                } catch (JSONException e) {
+                } catch (JSONException | NullPointerException e) {
                     Log.e(TAG, "uploadNextDatapoint(): Error reading currentDatapointID from mDatapointsToUploadList[0]" + e.getMessage());
                     Log.e(TAG, "uploadNextDatapoint(): Removing mDatapointsToUploadList[0] and trying the next datapoint");
                     mDatapointsToUploadList.remove(0);
