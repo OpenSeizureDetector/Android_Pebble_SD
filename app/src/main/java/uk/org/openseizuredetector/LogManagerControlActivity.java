@@ -24,9 +24,12 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -111,6 +114,10 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 (Button) findViewById(R.id.refresh_button);
         remoteDbBtn.setOnClickListener(onRefreshBtn);
 
+        CheckBox includeWarningsCb =
+                (CheckBox) findViewById(R.id.include_warnings_cb);
+        includeWarningsCb.setOnCheckedChangeListener(onIncludeWarningsCb);
+
         ListView lv = (ListView) findViewById(R.id.eventLogListView);
         lv.setOnItemClickListener(onEventListClick);
 
@@ -189,7 +196,11 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private void initialiseServiceConnection() {
         mLm = mConnection.mSdServer.mLm;
         startUiTimer(mUiTimerPeriodFast);
-        getRemoteEvents();
+        final CheckBox includeWarningsCb = (CheckBox) findViewById(R.id.include_warnings_cb);
+        getRemoteEvents(includeWarningsCb.isChecked());
+        ProgressBar pb = (ProgressBar)findViewById(R.id.remoteAccessPb);
+        pb.setIndeterminate(true);
+        pb.setVisibility(View.VISIBLE);
         // Populate events list - we only do it once when the activity is created because the query might slow down the UI.
         // We could try this code in updateUI() and see though.
         // Based on https://www.tutlane.com/tutorial/android/android-sqlite-listview-with-examples
@@ -206,7 +217,8 @@ public class LogManagerControlActivity extends AppCompatActivity {
     }
 
 
-    private void getRemoteEvents() {
+    private void getRemoteEvents(boolean includeWarnings) {
+        mRemoteEventsList = null;  // clear existing data
         // Retrieve events from remote database
         mLm.mWac.getEvents((JSONObject remoteEventsObj) -> {
             Log.v(TAG, "getRemoteEvents()");
@@ -255,7 +267,11 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         eventHashMap.put("type", typeStr);
                         eventHashMap.put("subType", subType);
                         eventHashMap.put("desc", desc);
-                        mRemoteEventsList.add(eventHashMap);
+                        if (osdAlarmState!=1 | includeWarnings) {
+                            mRemoteEventsList.add(eventHashMap);
+                        } else {
+                            Log.v(TAG,"getRemoteEvents - skipping warning");
+                        }
                     }
                     Log.v(TAG, "getRemoteEvents() - set mRemoteEventsList().  Updating UI");
                     updateUi();
@@ -311,6 +327,9 @@ public class LogManagerControlActivity extends AppCompatActivity {
         }
         // Remote Database List View
         if (mRemoteEventsList != null) {
+            ProgressBar pb = (ProgressBar)findViewById(R.id.remoteAccessPb);
+            pb.setIndeterminate(false);
+            pb.setVisibility(View.INVISIBLE);
             ListView lv = (ListView) findViewById(R.id.remoteEventsLv);
             ListAdapter adapter = new RemoteEventsAdapter(LogManagerControlActivity.this, mRemoteEventsList, R.layout.log_entry_layout_remote,
                     new String[]{"id", "dataTime", "type", "subType", "osdAlarmStateStr", "desc"},
@@ -514,6 +533,14 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 }
             };
 
+    CompoundButton.OnCheckedChangeListener onIncludeWarningsCb =
+            new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    Log.v(TAG, "onIncludeWarningsCb");
+                    initialiseServiceConnection();
+                }
+            };
 
     AdapterView.OnItemClickListener onEventListClick =
             new AdapterView.OnItemClickListener() {

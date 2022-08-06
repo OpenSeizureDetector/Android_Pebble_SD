@@ -117,8 +117,19 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/refreshBtn" />
+            <ProgressBar
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:id="@+id/remoteAccessPb" />
+
         </LinearLayout>
 
+        <CheckBox
+            android:id="@+id/include_warnings_cb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/include_warnings">
+        </CheckBox>
 
         <ListView
             android:id="@+id/remoteEventsLv"

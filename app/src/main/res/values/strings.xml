@@ -437,4 +437,5 @@
     <string name="mark_unverified_events_unknown_dialog_message">Please confirm that all genuine seizure events have been verified before marking all unverified events as type \'unknown\'.   \n\nContinue to mark unverified events as Unknown?</string>
     <string name="not_logged_in_dialog_title">Not Logged in to Data Sharing</string>
     <string name="not_logged_in_dialog_message">You must be logged in to the Data Sharing system to be able to report seizures.</string>
+    <string name="include_warnings">Include Warnings</string>
 </resources>
