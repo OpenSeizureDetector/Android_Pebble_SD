@@ -345,7 +345,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         // to save hammering the databases once the UI has been populated once.
         if (stopUpdating) {
             stopUiTimer();
-            startUiTimer(mUiTimerPeriodSlow);
+            //startUiTimer(mUiTimerPeriodSlow);
         }
     }  //updateUi();
 
