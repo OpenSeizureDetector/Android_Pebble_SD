@@ -19,7 +19,7 @@
         <TextView
             android:id="@+id/serverStatusTv"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_weight="0.5"
             android:gravity="center"
             android:text="textView1" />
@@ -27,7 +27,7 @@
         <TextView
             android:id="@+id/serverIpTv"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="0.5"
             android:gravity="center"
             android:text="textView2" />
@@ -81,7 +81,7 @@
             <TextView
                 android:id="@+id/battTv"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:text="battTv" />
         </LinearLayout>
     </LinearLayout>

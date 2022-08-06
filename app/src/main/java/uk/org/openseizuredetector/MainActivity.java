@@ -504,9 +504,15 @@ public class MainActivity extends AppCompatActivity {
             if (mUtil.isServerRunning()) {
                 tv = (TextView) findViewById(R.id.serverStatusTv);
                 if (mConnection.mBound)
-                    tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
+                    if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
+                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone"+"\n"+"(Demo Mode)");
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    } else {
+                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
+                        tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+                    }
                 tv = (TextView) findViewById(R.id.serverIpTv);
                 tv.setText(getString(R.string.AccessServerAt) + " http://"
                         + mUtil.getLocalIpAddress()
