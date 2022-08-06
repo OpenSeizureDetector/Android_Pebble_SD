@@ -1560,10 +1560,10 @@ public class SdServer extends Service implements SdDataReceiver {
     private void checkEvents() {
         // Retrieve events from remote database
         if (mLm.mWac.getEvents((JSONObject remoteEventsObj) -> {
-            Log.v(TAG, "CheckEvents.getEvents.Callback()");
+            Log.v(TAG, "checkEvents.getEvents.Callback()");
             Boolean haveUnvalidatedEvent = false;
             if (remoteEventsObj == null) {
-                Log.e(TAG, "CheckEvents.Callback:  Error Retrieving events");
+                Log.e(TAG, "checkEvents.getEvents.Callback():  Error Retrieving events");
             } else {
                 try {
                     JSONArray eventsArray = remoteEventsObj.getJSONArray("events");
@@ -1577,12 +1577,14 @@ public class SdServer extends Service implements SdDataReceiver {
                             //Log.v(TAG,"CheckEventsTimer:setting firstUnvalidatedEvent to "+firstUnvalidatedEvent);
                         }
                     }
-                    Log.v(TAG, "CheckEventsTimer.onFinish.callback - haveUnvalidatedEvent = " +
+                    Log.v(TAG, "checkEvents() - haveUnvalidatedEvent = " +
                             haveUnvalidatedEvent);
                     if (haveUnvalidatedEvent) {
+                        Log.v(TAG,"checkEvents() - showing event notification and cancelling datashare notification.");
                         showEventNotification();
                         mNM.cancel(DATASHARE_NOTIFICATION_ID);
                     } else {
+                        Log.v(TAG,"checkEvents() - cancelling event and datashare notifications");
                         mNM.cancel(EVENT_NOTIFICATION_ID);
                         mNM.cancel(DATASHARE_NOTIFICATION_ID);
                     }
