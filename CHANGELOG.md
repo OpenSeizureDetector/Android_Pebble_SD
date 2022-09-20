@@ -1,5 +1,6 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V4.1.0 - Added experimental support for neural network based seizure detector.
     V4.0.7 - Improvements to Data Sharing data log manager screen
         - Removed automatic refresh of shared data events list (Issue #62)
         - Added option to include warnings in shared data events list (Issue #64)

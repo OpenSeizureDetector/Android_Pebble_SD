@@ -91,6 +91,7 @@ public abstract class SdDataSource {
     private short mFallThreshMax;
     private short mFallWindow;
     private int mMute;  // !=0 means muted by keypress on watch.
+    private SdAlgNn mSdAlgNn;
 
     // Values for SD_MODE
     private int SIMPLE_SPEC_FMAX = 10;
@@ -110,6 +111,8 @@ public abstract class SdDataSource {
         mUtil = new OsdUtil(mContext, mHandler);
         mSdDataReceiver = sdDataReceiver;
         mSdData = new SdData();
+
+        mSdAlgNn = new SdAlgNn(mContext);
     }
 
     /**
@@ -484,6 +487,7 @@ public abstract class SdDataSource {
 
         // Check this data to see if it represents an alarm state.
         alarmCheck();
+        nnCheck();
         hrCheck();
         o2SatCheck();
         fallCheck();
@@ -722,6 +726,13 @@ public abstract class SdDataSource {
             //Log.v(TAG, "faultCheck() - watch app not running so not doing anything");
             mAlarmCount = 0;
         }
+    }
+
+    void nnCheck() {
+        //Check the current set of data using the neural network model to look for alarms.
+        Log.d(TAG,"nnCheck");
+        int nnResult = mSdAlgNn.run(mSdData);
+        Log.d(TAG,"nnCheck - nnResult="+nnResult);
     }
 
     /**
