@@ -438,4 +438,8 @@
     <string name="not_logged_in_dialog_title">Not Logged in to Data Sharing</string>
     <string name="not_logged_in_dialog_message">You must be logged in to the Data Sharing system to be able to report seizures.</string>
     <string name="include_warnings">Include Warnings</string>
+    <string name="OsdAlarmEnabledSummary">Enable the original deterministic OpenSeizureDetector Algorithm to generate alarms.</string>
+    <string name="OsdAlarmEnabledTitle">Enable Original OSD Algorithm</string>
+    <string name="CnnAlarmEnabledTitle">Enable AI (Neural Network) Algorithm</string>
+    <string name="CnnAlarmEnabledSummary">Enable the Artificial Intelligence (Neural Network) algorithm to generate alarms.</string>
 </resources>

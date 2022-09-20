@@ -66,7 +66,7 @@ public class SdAlgNn {
         interpreter.close();
     }
 
-    public int run(SdData sdData) {
+    public float getPseizure(SdData sdData) {
         int i;
         float[][][] modelInput = new float[1][125][1];
         float[][] modelOutput = new float[1][2];
@@ -75,9 +75,6 @@ public class SdAlgNn {
         }
         interpreter.run(modelInput, modelOutput);
         Log.d(TAG,"run - pSeizure="+modelOutput[0][1]);
-        if (modelOutput[0][1]>0.5)
-            return 1;
-        else
-            return 0;
+        return(modelOutput[0][1]);
     }
 }

@@ -220,6 +220,8 @@ public abstract class SdDataSource {
             mUtil.writeToSysLogFile("SDDataSource.stop() - error - " + e.toString());
         }
 
+        mSdAlgNn.close();
+
     }
 
     /**
@@ -485,9 +487,12 @@ public abstract class SdDataSource {
             mWatchAppRunningCheck = false;
         }
 
+        // Use the neural network algorithm to calculate the probability of the data
+        // being representative of a seizure (sets mSdData.mPseizure)
+        nnAnalysis();
+
         // Check this data to see if it represents an alarm state.
         alarmCheck();
-        nnCheck();
         hrCheck();
         o2SatCheck();
         fallCheck();
@@ -505,16 +510,23 @@ public abstract class SdDataSource {
      * Sets mSdData.alarmState and mSdData.hrAlarmStanding
      */
     private void alarmCheck() {
-        boolean inAlarm;
+        boolean inAlarm = false;
         // Avoid potential divide by zero issue
         if (mSdData.specPower == 0)
             mSdData.specPower = 1;
         Log.v(TAG, "alarmCheck() - roiPower="+mSdData.roiPower+" specPower="+ mSdData.specPower+" ratio="+10*mSdData.roiPower/ mSdData.specPower);
-        // Is the current set of data representing an alarm state?
-        if ((mSdData.roiPower > mAlarmThresh) && ((10 * mSdData.roiPower / mSdData.specPower) > mAlarmRatioThresh)) {
-            inAlarm = true;
-        } else {
-            inAlarm = false;
+
+        if (mSdData.mOsdAlarmActive) {
+            // Is the current set of data representing an alarm state?
+            if ((mSdData.roiPower > mAlarmThresh) && ((10 * mSdData.roiPower / mSdData.specPower) > mAlarmRatioThresh)) {
+                inAlarm = true;
+            }
+        }
+
+        if (mSdData.mCnnAlarmActive) {
+            if (mSdData.mPseizure > 0.5) {
+                inAlarm = true;
+            }
         }
 
         // set the alarmState to Alarm, Warning or OK, depending on the current state and previous ones.
@@ -728,11 +740,12 @@ public abstract class SdDataSource {
         }
     }
 
-    void nnCheck() {
+    void nnAnalysis() {
         //Check the current set of data using the neural network model to look for alarms.
-        Log.d(TAG,"nnCheck");
-        int nnResult = mSdAlgNn.run(mSdData);
-        Log.d(TAG,"nnCheck - nnResult="+nnResult);
+        Log.d(TAG,"nnAnalysis");
+        float pSeizure = mSdAlgNn.getPseizure(mSdData);
+        Log.d(TAG,"nnAnalysis - nnResult="+pSeizure);
+        mSdData.mPseizure = pSeizure;
     }
 
     /**
@@ -872,6 +885,15 @@ public abstract class SdDataSource {
                 mFallWindow = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() FallWindow = " + mFallWindow);
                 mUtil.writeToSysLogFile( "updatePrefs() FallWindow = " + mFallWindow);
+
+                mSdData.mOsdAlarmActive = SP.getBoolean("OsdAlarmActive", false);
+                Log.v(TAG, "updatePrefs() OsdAlarmActive = " + mSdData.mOsdAlarmActive);
+                mUtil.writeToSysLogFile( "updatePrefs() OsdAlarmActive = " + mSdData.mOsdAlarmActive);
+
+                mSdData.mCnnAlarmActive = SP.getBoolean("CnnAlarmActive", false);
+                Log.v(TAG, "updatePrefs() CnnAlarmActive = " + mSdData.mCnnAlarmActive);
+                mUtil.writeToSysLogFile( "updatePrefs() CnnAlarmActive = " + mSdData.mCnnAlarmActive);
+
 
                 mSdData.mHRAlarmActive = SP.getBoolean("HRAlarmActive", false);
                 Log.v(TAG, "updatePrefs() HRAlarmActive = " + mSdData.mHRAlarmActive);

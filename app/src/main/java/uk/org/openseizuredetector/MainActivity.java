@@ -709,10 +709,14 @@ public class MainActivity extends AppCompatActivity {
                     } else
                         specRatio = 0;
 
+                    long pSeizurePc;
+                    pSeizurePc = (long)(mConnection.mSdServer.mSdData.mPseizure * 100);
+                    Log.d(TAG,"pSeizurePc="+pSeizurePc+", mPseizure="+mConnection.mSdServer.mSdData.mPseizure);
                     ((TextView) findViewById(R.id.powerTv)).setText(getString(R.string.PowerEquals) + mConnection.mSdServer.mSdData.roiPower +
                             " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
                     ((TextView) findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
                             " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
+                    ((TextView) findViewById(R.id.pSeizureTv)).setText("Seizure Probability = "+pSeizurePc+"%");
 
                     ProgressBar pb;
                     Drawable pbDrawable;
@@ -739,6 +743,18 @@ public class MainActivity extends AppCompatActivity {
                         pbDrawable = getResources().getDrawable(R.drawable.progress_bar_red);
                     //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
                     pb.setProgressDrawable(pbDrawable);
+
+                    pb = ((ProgressBar) findViewById(R.id.pSeizureProgressBar));
+                    pb.setMax(100);
+                    pb.setProgress((int) pSeizurePc);
+                    pbDrawable = getResources().getDrawable(R.drawable.progress_bar_blue);
+                    if (pSeizurePc > 30)
+                        pbDrawable = getResources().getDrawable(R.drawable.progress_bar_yellow);
+                    if (pSeizurePc > 50)
+                        pbDrawable = getResources().getDrawable(R.drawable.progress_bar_red);
+                    //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
+                    pb.setProgressDrawable(pbDrawable);
+
 
 
                     // Fault Conditions - We override the values in the UI because we do not know

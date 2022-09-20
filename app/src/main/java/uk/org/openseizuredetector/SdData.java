@@ -37,6 +37,11 @@ import org.json.JSONArray;
 public class SdData implements Parcelable {
     private final static String TAG = "SdData";
     private final static int N_RAW_DATA = 500;  // 5 seconds at 100 Hz.
+
+    // Seizure Detection Algorithm Selection
+    public boolean mOsdAlarmActive;
+    public boolean mCnnAlarmActive;
+
     /* Analysis settings */
     public String phoneAppVersion = "";
     public boolean haveSettings = false;   // flag to say if we have received settings or not.
@@ -107,6 +112,7 @@ public class SdData implements Parcelable {
     public boolean mO2SatFaultStanding = false;
     public double mO2Sat = 0;
 
+    public double mPseizure = 0.;
 
     public SdData() {
         simpleSpec = new int[10];
@@ -196,6 +202,7 @@ public class SdData implements Parcelable {
             jsonObj.put("alarmPhrase", alarmPhrase);
             jsonObj.put("hr", mHR);
             jsonObj.put("o2Sat", mO2Sat);
+            jsonObj.put("pSeizure", mPseizure);
             JSONArray arr = new JSONArray();
             for (int i = 0; i < simpleSpec.length; i++) {
                 arr.put(simpleSpec[i]);
@@ -247,6 +254,8 @@ public class SdData implements Parcelable {
             jsonObj.put("alarmFreqMax", alarmFreqMax);
             jsonObj.put("alarmThresh", alarmThresh);
             jsonObj.put("alarmRatioThresh", alarmRatioThresh);
+            jsonObj.put("osdAlarmActive", mOsdAlarmActive);
+            jsonObj.put("cnnAlarmActive", mCnnAlarmActive);
             jsonObj.put("hrAlarmActive", mHRAlarmActive);
             jsonObj.put("hrAlarmStanding", mHRAlarmStanding);
             jsonObj.put("hrThreshMin", mHRThreshMin);

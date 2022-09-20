@@ -119,6 +119,21 @@
         android:indeterminate="false"
         android:minHeight="20dp" />
 
+    <TextView
+        android:id="@+id/pSeizureTv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Seizure Probability (%)" />
+
+    <ProgressBar
+        android:id="@+id/pSeizureProgressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:indeterminate="false"
+        android:minHeight="20dp" />
+
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
