@@ -3,8 +3,8 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
-        \nV4.0.7 - imporovements to Data Sharing data log manager screen.
-        \nV4.0.6 - First public relase with Data Sharing feature enabled.
+        \nV4.1.0 - Added Machine Learning (Artificial Intelligence) Detection Algorithm Option
+        \nV4.0.7 - Improvements to Data Sharing data log manager screen.
           - Introduced the &lt;b>Data Sharing&lt;/b> feature to allow users to share their seizure and false alarm data
         with researchers to help improve the system.&lt;br/>
           - Fixed &lt;b>SMS Location Alerts&lt;/b> on Android V10+ (new permissions screens)&lt;br/>
@@ -106,7 +106,7 @@
     <string name="AlarmFreqMaxSummary">Maximum Frequency of ROI (Hz) (Default = 8 Hz)</string>
     <string name="AlarmFreqMinTitle">AlarmFreqMin (Hz)</string>
     <string name="AlarmFreqMinSummary">Minimum Frequency of ROI (Hz) (Default = 3 Hz)</string>
-    <string name="HRAlarmEnabledTitle">Heart Rate Alarm Enabled</string>
+    <string name="HRAlarmEnabledTitle">Enable Heart Rate Alarm</string>
     <string name="HRAlarmEnabledSummary" />
     <string name="HRNullAlarmTitle">Treat a Null heart rate as an alarm condition</string>
     <string name="HRNullAlarmSummary" />
@@ -122,7 +122,7 @@
     <string name="test_alarm_beep">Test Alarm Beep</string>
     <string name="test_warning_beep">Test Warning Beep</string>
     <string name="test_sms_alarm_notification">Test SMS Alarm Notification</string>
-    <string name="data_log_manager">Data Log Manager</string>
+    <string name="data_log_manager">Data Sharing</string>
     <string name="view_log_entries">View Log Entries</string>
     <string name="export_data">Export Data</string>
     <string name="settings">Settings</string>
@@ -262,7 +262,7 @@
     <string name="sample_freq_summary">Higher Frequency is more Accurate, but uses more battery power.</string>
     <string name="sample_freq_title">Select Sample Frequency</string>
     <string name="fall_detect_title">Fall Detector Settings</string>
-    <string name="fall_detect_active_title">Activate Fall Detection Function</string>
+    <string name="fall_detect_active_title">Enable Fall Detection Function</string>
     <string name="fall_thresh_min_title">Fall Detection Lower Threshold (milli-g)</string>
     <string name="fall_thresh_max_title">Fall Detection Upper Threshold (milli-g)</string>
     <string name="fall_window_title">Fall Detection Window (milli-seconds)</string>
@@ -312,7 +312,7 @@
     <string name="title_activity_authenticate">Log in to OpenSeizureDetector Data Sharing</string>
     <string name="logout">Log Out</string>
     <string name="logged_in_with_token">Logged in to\nData Sharing</string>
-    <string name="local_database">Logged Data Manager</string>
+    <string name="local_database">Data Sharing Manager</string>
     <string name="remote_database">Shared Data</string>
     <string name="num_local_events">Number of Events Stored on Phone: </string>
     <string name="num_local_datapoints">"Number of Datapoints Stored on Phone: "</string>
@@ -438,8 +438,9 @@
     <string name="not_logged_in_dialog_title">Not Logged in to Data Sharing</string>
     <string name="not_logged_in_dialog_message">You must be logged in to the Data Sharing system to be able to report seizures.</string>
     <string name="include_warnings">Include Warnings</string>
-    <string name="OsdAlarmEnabledSummary">Enable the original deterministic OpenSeizureDetector Algorithm to generate alarms.</string>
+    <string name="OsdAlarmEnabledSummary">Enable the original deterministic OpenSeizureDetector Algorithm to generate alarms.  ***Disabling this algorithm is NOT recommended except for testing purposes***</string>
     <string name="OsdAlarmEnabledTitle">Enable Original OSD Algorithm</string>
     <string name="CnnAlarmEnabledTitle">Enable AI (Neural Network) Algorithm</string>
     <string name="CnnAlarmEnabledSummary">Enable the Artificial Intelligence (Neural Network) algorithm to generate alarms.</string>
+    <string name="AlgorithmSelectionTitle">Seizure Detection Algorithms Selection</string>
 </resources>

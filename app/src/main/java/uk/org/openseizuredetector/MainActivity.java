@@ -30,6 +30,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -44,6 +45,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -112,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Initialise the User Interface
         setContentView(R.layout.main);
+        //getWindow().getDecorView().setBackgroundColor(okColour);
 
         /* Force display of overflow menu - from stackoverflow
          * "how to force use of..."
@@ -425,6 +428,8 @@ public class MainActivity extends AppCompatActivity {
         tv = (TextView) findViewById(R.id.versionTv);
         String versionName = mUtil.getAppVersionName();
         tv.setText(getString(R.string.AppTitleText) + " " + versionName);
+        tv.setBackgroundColor(okColour);
+        tv.setTextColor(okTextColour);
 
         if (mUtil.isServerRunning()) {
             mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
@@ -503,10 +508,15 @@ public class MainActivity extends AppCompatActivity {
 
             TextView tv;
             if (mUtil.isServerRunning()) {
+                LinearLayout ll = (LinearLayout) findViewById(R.id.statusLayout);
+                ll.setBackgroundColor(okColour);
+                ll = (LinearLayout) findViewById(R.id.watchStatusLl);
+                ll.setBackgroundColor(okColour);
+
                 tv = (TextView) findViewById(R.id.serverStatusTv);
-                if (mConnection.mBound)
+                if (mConnection.mBound) {
                     if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
-                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone"+"\n"+"(Demo Mode)");
+                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
                     } else {
@@ -514,6 +524,63 @@ public class MainActivity extends AppCompatActivity {
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
                     }
+                    tv = (TextView) findViewById(R.id.osdAlgTv);
+                    tv.setText("OSD ");
+                    if (mConnection.mSdServer.mSdData.mOsdAlarmActive) {
+                        tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+                        tv.setPaintFlags(tv.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
+                    } else {
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                        tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+                    }
+                    tv = (TextView) findViewById(R.id.cnnAlgTv);
+                    tv.setText("CNN ");
+                    if (mConnection.mSdServer.mSdData.mCnnAlarmActive) {
+                        tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+                        tv.setPaintFlags(tv.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
+                    } else {
+                        tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+                        tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+                    }
+                    tv = (TextView) findViewById(R.id.hrAlgTv);
+                    tv.setText("HR ");
+                    if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
+                        tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+                        tv.setPaintFlags(tv.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
+                    } else {
+                        tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+                        tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+                    }
+                    tv = (TextView) findViewById(R.id.o2AlgTv);
+                    tv.setText("O2 ");
+                    if (mConnection.mSdServer.mSdData.mO2SatAlarmActive) {
+                        tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+                        tv.setPaintFlags(tv.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
+                    } else {
+                        tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+                        tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+                    }
+                    tv = (TextView) findViewById(R.id.fallAlgTv);
+                    tv.setText("Fall");
+                    if (mConnection.mSdServer.mSdData.mFallActive) {
+                        tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+                        tv.setPaintFlags(tv.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
+                    } else {
+                        tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+                        tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+                    }
+
+                }
                 tv = (TextView) findViewById(R.id.serverIpTv);
                 tv.setText(getString(R.string.AccessServerAt) + " http://"
                         + mUtil.getLocalIpAddress()
@@ -572,7 +639,7 @@ public class MainActivity extends AppCompatActivity {
 
                     // Pebble Connected Phrase - use for HR if active instead.
                     tv = (TextView) findViewById(R.id.pebbleTv);
-                    if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
+                    //if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
                         if (mConnection.mSdServer.mSdData.mO2Sat>0) {
                             tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
                                     + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
@@ -590,7 +657,7 @@ public class MainActivity extends AppCompatActivity {
                             tv.setBackgroundColor(okColour);
                             tv.setTextColor(okTextColour);
                         }
-                    } else {
+                    /*} else {
                         if (mConnection.mSdServer.mSdData.watchConnected) {
                             tv.setText(R.string.HRAlarmOff);
                             tv.setBackgroundColor(okColour);
@@ -602,6 +669,8 @@ public class MainActivity extends AppCompatActivity {
                             tv.setTextColor(warnTextColour);
                         }
                     }
+                    */
+
                     tv = (TextView) findViewById(R.id.appTv);
                     if (mConnection.mSdServer.mSdData.watchAppRunning) {
                         tv.setText(R.string.WatchAppOK);

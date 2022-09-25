@@ -2,7 +2,7 @@
 <!-- The ListPreference data is defined in pebble_datasource_values.xml -->
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="@string/SeizureDetectorSettingsTitle">
+    <PreferenceCategory android:title="@string/AlgorithmSelectionTitle">
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="OsdAlarmActive"
@@ -13,6 +13,23 @@
             android:key="CnnAlarmActive"
             android:summary="@string/CnnAlarmEnabledSummary"
             android:title="@string/CnnAlarmEnabledTitle" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="HRAlarmActive"
+            android:summary="@string/HRAlarmEnabledSummary"
+            android:title="@string/HRAlarmEnabledTitle" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="O2SatAlarmActive"
+            android:summary="@string/O2Sat_enabled_summary"
+            android:title="@string/O2Sat_enabled_title" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="FallActive"
+            android:summary=""
+            android:title="@string/fall_detect_active_title" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/SeizureDetectorSettingsTitle">
         <EditTextPreference
             android:defaultValue="5"
             android:key="WarnTime"

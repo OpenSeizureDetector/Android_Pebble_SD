@@ -28,14 +28,14 @@
             android:icon="@drawable/ic_action_settings"
             app:showAsAction="never|withText"
             android:title="@string/data_log_manager" />
-
+<!--
         <item
             android:id="@+id/action_authenticate_api"
             android:enabled="true"
             android:icon="@drawable/ic_action_settings"
             app:showAsAction="never|withText"
             android:title="@string/data_sharing_log_in" />
-
+-->
         <item
             android:id="@+id/action_about_datasharing"
             android:enabled="true"
