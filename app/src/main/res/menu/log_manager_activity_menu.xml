@@ -9,6 +9,10 @@
             android:id="@+id/action_mark_unknown"
             app:showAsAction="never|withText"
             android:title="@string/mark_unverified_events_as_unknown" />
+        <item
+            android:id="@+id/action_mark_false_alarm"
+            app:showAsAction="never|withText"
+            android:title="@string/mark_unverified_events_as_false_alarm" />
     </group>
 
     <group android:id="@+id/grp3">

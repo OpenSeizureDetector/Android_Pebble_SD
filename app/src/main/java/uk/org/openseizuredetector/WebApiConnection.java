@@ -136,43 +136,46 @@ public abstract class WebApiConnection {
 
 
     /**
-     * Mark all of the events with IDs contained in eventList as unknown type.
+     * Mark all of the events with IDs contained in eventList as the specified type and subtype.
      * @param eventList list of String IDs of the events to mark as unknown.
+     * @param typeStr
+     * @param subTypeStr
      * @return true if request sent successfully or false.
      */
-    private boolean markEventsAsUnknown(ArrayList<String>eventList) {
+    private boolean markEventsAsTypeSubType(ArrayList<String>eventList, String typeStr, String subTypeStr) {
         if (eventList.size()>0) {
-            Log.i(TAG,"markEventsAsUnknown - eventList.size()="+eventList.size());
-            Log.i(TAG,"markEventsAsUnknown - eventList(0) = "+eventList.get(0));
+            Log.i(TAG,"markEventsAsTypeSubtype - eventList.size()="+eventList.size());
+            Log.i(TAG,"markEventsAsSypeSubtype - eventList(0) = "+eventList.get(0));
             getEvent(eventList.get(0), new WebApiConnection.JSONObjectCallback() {
                 @Override
                 public void accept(JSONObject eventObj) {
-                    Log.v(TAG, "markEventsAsUnknown.getEvent.callback: "+eventObj);
+                    Log.v(TAG, "markEventsAsTypeSubtype.getEvent.callback: "+eventObj);
                     if (eventObj != null) {
-                        Log.v(TAG, "markEventsAsUnknown.getEvent.callback:  eventObj=" + eventObj.toString());
+                        Log.v(TAG, "markEventsAsTypeSubtype.getEvent.callback:  eventObj=" + eventObj.toString());
                         try {
-                            eventObj.put("type", "Unknown");
+                            eventObj.put("type", typeStr);
+                            eventObj.put("subType", subTypeStr);
                             String notesStr = eventObj.getString("desc");
                             if (notesStr == null) notesStr = new String("");
-                            notesStr = notesStr + " Set to Unknown automatically by OSD Android App";
+                            notesStr = notesStr + " bulk type/subtype set";
                             eventObj.put("desc", notesStr);
                             updateEvent(eventObj,new WebApiConnection.JSONObjectCallback() {
                                 @Override
                                 public void accept(JSONObject eventObj) {
                                     if (eventObj != null) {
-                                        Log.i(TAG, "markEventsAsUnknown.updateEvent.callback" + eventObj.toString());
+                                        Log.i(TAG, "markEventsAsTypeSubtype.updateEvent.callback" + eventObj.toString());
                                         // Remove the first item from the list,then call this whole procedure again to modify the next one on the list.
                                         eventList.remove(0);
-                                        markEventsAsUnknown(eventList);
+                                        markEventsAsTypeSubType(eventList, typeStr, subTypeStr);
                                     } else {
-                                        Log.e(TAG, "markEventsAsUnknown.updateEvent.callback - eventObj is null");
-                                        mUtil.showToast("markEventsAsUnknown.updateEvent.callback - eventObj is null");
+                                        Log.e(TAG, "markEventsAsTypeSubtype.updateEvent.callback - eventObj is null");
+                                        mUtil.showToast("markEventsAsTypeSubtype.updateEvent.callback - eventObj is null");
                                     }
                                 }
                             });
                         } catch (JSONException e) {
-                            Log.e(TAG,"markEventsAsUnknown.getEvent.callback: Error editing eventObj");
-                            mUtil.showToast("markEventsAsUnknown.getEvent.callback: Error editing eventObj");
+                            Log.e(TAG,"markEventsAsTypeSubtype.getEvent.callback: Error editing eventObj");
+                            mUtil.showToast("markEventsAsTypeSubtype.getEvent.callback: Error editing eventObj");
                         }
                     } else {
                         mUtil.showToast("Failed to Retrieve Event from Remote Database");
@@ -181,7 +184,7 @@ public abstract class WebApiConnection {
                 }
             });
         } else {
-            Log.i(TAG,"markEventsAsUnknown(): No more events to Modify");
+            Log.i(TAG,"markEventsAsTypeSubtype(): No more events to Modify");
             mUtil.showToast("No more unvalidated events to modify.");
 
         }
@@ -193,37 +196,37 @@ public abstract class WebApiConnection {
      *
      * @return true if request is successful or false.
      */
-    public boolean markUnverifiedEventsAsUnknown() {
+    public boolean markUnverifiedEventsAsTypeSubtype(String typeStr, String subTypeStr) {
         if (getEvents((JSONObject remoteEventsObj) -> {
-            Log.v(TAG, "markUnverifiedEventsAsUnknown.getEvents.Callback()");
+            Log.v(TAG, "markUnverifiedEventsAsTypeSubtype.getEvents.Callback()");
             Boolean haveUnvalidatedEvent = false;
             if (remoteEventsObj == null) {
-                Log.e(TAG, "markUnverifiedEventsAsUnknown.getEvents.Callback:  Error Retrieving events");
+                Log.e(TAG, "markUnverifiedEventsAsTypeSubtype.getEvents.Callback:  Error Retrieving events");
             } else {
                 try {
                     JSONArray eventsArray = remoteEventsObj.getJSONArray("events");
                     ArrayList<String> unvalidatedEventsList = new ArrayList<String>();
                     for (int i = eventsArray.length() - 1; i >= 0; i--) {
                         JSONObject eventObj = eventsArray.getJSONObject(i);
-                        String typeStr = eventObj.getString("type");
-                        if (typeStr.equals("null") || typeStr.equals("")) {
+                        String currTypeStr = eventObj.getString("type");
+                        if (currTypeStr.equals("null") || currTypeStr.equals("")) {
                             haveUnvalidatedEvent = true;
                             unvalidatedEventsList.add(eventObj.getString("id"));
                         }
                     }
-                    Log.v(TAG, "markUnverifiedEventsAsUnknown.getEvents.onFinish.callback - haveUnvalidatedEvent = " +
+                    Log.v(TAG, "markUnverifiedEventsAsTypeSubtype.getEvents.onFinish.callback - haveUnvalidatedEvent = " +
                             haveUnvalidatedEvent);
-                    markEventsAsUnknown(unvalidatedEventsList);
+                    markEventsAsTypeSubType(unvalidatedEventsList, typeStr, subTypeStr);
 
                 } catch (JSONException e) {
-                    Log.e(TAG, "markUnverifiedEventsAsUnknown.getEvents.onFinish(): Error Parsing remoteEventsObj: " + e.getMessage());
+                    Log.e(TAG, "markUnverifiedEventsAsTypeSubtype.getEvents.onFinish(): Error Parsing remoteEventsObj: " + e.getMessage());
                     //mUtil.showToast("Error Parsing remoteEventsObj - this should not happen!!!");
                 }
             }
         })) {
-            Log.v(TAG, "markUnverifiedEventsAsUnknown.getEvents - requested events");
+            Log.v(TAG, "markUnverifiedEventsAsTypeSubtype.getEvents - requested events");
         } else {
-            Log.v(TAG, "markUnverifiedEventsAsUnknown.getEvents - Not Logged In");
+            Log.v(TAG, "markUnverifiedEventsAsTypeSubtype.getEvents - Not Logged In");
 
         }
 
@@ -231,4 +234,12 @@ public abstract class WebApiConnection {
         return (true);
     }
 
+    public boolean markUnverifiedEventsAsUnknown() {
+        markUnverifiedEventsAsTypeSubtype("Unknown", "");
+        return true;
+    }
+    public boolean markUnverifiedEventsAsFalseAlarm() {
+        markUnverifiedEventsAsTypeSubtype("False Alarm", "");
+        return true;
+    }
 }

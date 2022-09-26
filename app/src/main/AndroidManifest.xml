@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="uk.org.openseizuredetector"
-    android:versionCode="108"
-    android:versionName="4.1.0e">
+    android:versionCode="109"
+    android:versionName="4.1.0f">
     <!-- android:allowBackup="false" -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />

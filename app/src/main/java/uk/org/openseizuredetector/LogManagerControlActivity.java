@@ -458,6 +458,19 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         })
                         .setNegativeButton(android.R.string.no, null)
                         .show();
+            case R.id.action_mark_false_alarm:
+                Log.i(TAG, "action_mark_false_alarm");
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.mark_unverified_events_false_alarm_dialog_title)
+                        .setMessage(R.string.mark_unverified_events_false_alarm_dialog_message)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                mLm.mWac.markUnverifiedEventsAsFalseAlarm();
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, null)
+                        .show();
             default:
                 return super.onOptionsItemSelected(item);
         }

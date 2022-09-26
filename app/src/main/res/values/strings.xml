@@ -443,4 +443,7 @@
     <string name="CnnAlarmEnabledTitle">Enable AI (Neural Network) Algorithm</string>
     <string name="CnnAlarmEnabledSummary">Enable the Artificial Intelligence (Neural Network) algorithm to generate alarms.</string>
     <string name="AlgorithmSelectionTitle">Seizure Detection Algorithms Selection</string>
+    <string name="mark_unverified_events_false_alarm_dialog_title">Mark all Unverified Events as False Alarm</string>
+    <string name="mark_unverified_events_false_alarm_dialog_message">Please confirm that all genuine seizure events have been verified before marking all unverified events as type \'False Alarm\'.   \n\nContinue to mark unverified events as False Alarm?</string>
+    <string name="mark_unverified_events_as_false_alarm">Mark all Unverified Events as False Alarm</string>
 </resources>
