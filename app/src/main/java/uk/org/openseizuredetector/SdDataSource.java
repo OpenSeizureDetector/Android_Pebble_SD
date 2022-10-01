@@ -403,6 +403,7 @@ public abstract class SdDataSource {
             mSampleFreq = 25;
             double freqRes = 1.0 * mSampleFreq / mSdData.mNsamp;
             Log.v(TAG, "doAnalysis(): mSampleFreq=" + mSampleFreq + " mNSamp=" + mSdData.mNsamp + ": freqRes=" + freqRes);
+            Log.v(TAG,"doAnalysis(): rawData=" + Arrays.toString(mSdData.rawData));
             // Set the frequency bounds for the analysis in fft output bin numbers.
             nMin = (int) (mAlarmFreqMin / freqRes);
             nMax = (int) (mAlarmFreqMax / freqRes);
