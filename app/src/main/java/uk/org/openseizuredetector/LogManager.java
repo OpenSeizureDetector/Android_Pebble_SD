@@ -82,7 +82,7 @@ public class LogManager {
     private boolean mUploadInProgress;
     private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
     public long mDataRetentionPeriod = 1; // Prunes the local db so it only retains data younger than this duration (in days)
-    private long mRemoteLogPeriod = 60; // Period in seconds between uploads to the remote server.
+    private long mRemoteLogPeriod = 10; // Period in seconds between uploads to the remote server.
     private ArrayList<JSONObject> mDatapointsToUploadList;
     private String mCurrentEventRemoteId;
     private long mCurrentEventLocalId = -1;

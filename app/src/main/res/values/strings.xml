@@ -3,8 +3,7 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
-        \nV4.1.0g - CNN V0.09
-        \nV4.1.0 - Added Machine Learning (Artificial Intelligence) Detection Algorithm Option
+        \nV4.1.0 - Added Machine Learning (Artificial Intelligence) Detection Algorithm Option (CNN V0.12)
         \nV4.0.7 - Improvements to Data Sharing data log manager screen.
           - Introduced the &lt;b>Data Sharing&lt;/b> feature to allow users to share their seizure and false alarm data
         with researchers to help improve the system.&lt;br/>

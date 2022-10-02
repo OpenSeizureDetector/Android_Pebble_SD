@@ -112,7 +112,6 @@ public abstract class SdDataSource {
         mSdDataReceiver = sdDataReceiver;
         mSdData = new SdData();
 
-        mSdAlgNn = new SdAlgNn(mContext);
     }
 
     /**
@@ -133,6 +132,13 @@ public abstract class SdDataSource {
         Log.v(TAG, "start()");
         mUtil.writeToSysLogFile("SdDataSource.start()");
         updatePrefs();
+
+        if (mSdData.mCnnAlarmActive) {
+            mSdAlgNn = new SdAlgNn(mContext);
+        } else {
+            mSdData.mPseizure = 0;
+        }
+
         // Start timer to check status of watch regularly.
         mDataStatusTime = new Time(Time.getCurrentTimezone());
         // use a timer to check the status of the pebble app on the same frequency
@@ -220,7 +226,9 @@ public abstract class SdDataSource {
             mUtil.writeToSysLogFile("SDDataSource.stop() - error - " + e.toString());
         }
 
-        mSdAlgNn.close();
+        if (mSdData.mCnnAlarmActive) {
+            mSdAlgNn.close();
+        }
 
     }
 
@@ -490,7 +498,9 @@ public abstract class SdDataSource {
 
         // Use the neural network algorithm to calculate the probability of the data
         // being representative of a seizure (sets mSdData.mPseizure)
-        nnAnalysis();
+        if (mSdData.mCnnAlarmActive) {
+            nnAnalysis();
+        }
 
         // Check this data to see if it represents an alarm state.
         alarmCheck();
@@ -744,9 +754,14 @@ public abstract class SdDataSource {
     void nnAnalysis() {
         //Check the current set of data using the neural network model to look for alarms.
         Log.d(TAG,"nnAnalysis");
-        float pSeizure = mSdAlgNn.getPseizure(mSdData);
-        Log.d(TAG,"nnAnalysis - nnResult="+pSeizure);
-        mSdData.mPseizure = pSeizure;
+        if (mSdData.mCnnAlarmActive) {
+            float pSeizure = mSdAlgNn.getPseizure(mSdData);
+            Log.d(TAG, "nnAnalysis - nnResult=" + pSeizure);
+            mSdData.mPseizure = pSeizure;
+        } else {
+            Log.d(TAG, "nnAnalysis - mCnAlarmActive is false - not analysing");
+            mSdData.mPseizure = 0;
+        }
     }
 
     /**
