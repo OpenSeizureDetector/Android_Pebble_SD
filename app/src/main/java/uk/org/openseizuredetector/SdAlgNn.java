@@ -25,7 +25,7 @@ import java.util.Map;
 
 public class SdAlgNn {
     private final static String TAG = "SdAlgNn";
-    private final static String MODEL_PATH = "best_model_v0.12.tflite";
+    private final static String MODEL_PATH = "cnn_v0.20.tflite";
     private String mUrlBase = "https://osdApi.ddns.net";
     private InterpreterApi interpreter;
     private Context mContext;
