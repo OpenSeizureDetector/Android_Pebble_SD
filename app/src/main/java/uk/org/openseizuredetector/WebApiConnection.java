@@ -103,6 +103,8 @@ public abstract class WebApiConnection {
      */
     public abstract boolean getEventTypes(JSONObjectCallback callback);
 
+    public abstract boolean getCnnModelInfo(JSONObjectCallback callback);
+
 
     /**
      * Retrieve a trivial file from the server to check we have a good server connection.

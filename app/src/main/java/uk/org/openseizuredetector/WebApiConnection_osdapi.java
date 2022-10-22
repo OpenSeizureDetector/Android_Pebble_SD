@@ -634,6 +634,55 @@ public class WebApiConnection_osdapi extends WebApiConnection {
     }
 
     /**
+     * Retrieve the file containing the CNN Models information from the server.
+     * Calls the specified callback function, passing a JSONObject as a parameter when the data has been received and parsed.
+     *
+     * @return true if request sent successfully or else false.
+     */
+    public boolean getCNNModelInfo(JSONObjectCallback callback) {
+        Log.v(TAG, "getCNNModelInfo()");
+        String urlStr = mUrlBase + "/static/cnnModelInfo.json";
+        Log.v(TAG, "urlStr=" + urlStr);
+        final String authtoken = getStoredToken();
+
+        StringRequest req = new StringRequest(Request.Method.GET, urlStr,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.v(TAG, "getCNNModelInfo.onResponse(): Response is: " + response);
+                        mServerConnectionOk = true;
+                        try {
+                            JSONObject retObj = new JSONObject(response);
+                            callback.accept(retObj);
+                        } catch (JSONException e) {
+                            Log.e(TAG, "getCNNModelInfo.onRespons(): Error: " + e.getMessage() + "," + e.toString());
+                            callback.accept(null);
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        mServerConnectionOk = false;
+                        if (error != null) {
+                            Log.e(TAG, "getCNNModelInfo.onErrorResponse(): " + error.toString() + ", message:" + error.getMessage());
+                        } else {
+                            Log.e(TAG, "getCNNModelInfo.onErrorResponse() - returned null response");
+                        }
+                        callback.accept(null);
+                    }
+                }) {
+        };
+
+        mQueue.add(req);
+        return (true);
+
+    }
+
+
+
+
+    /**
      * Retrieve a trivial file from the server to check we have a good server connection.
      *  sets mServerConnectionOk.
      * @return true if request sent successfully or else false.
