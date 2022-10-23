@@ -35,6 +35,11 @@
         android:key="LogDataRemoteMobile"
         android:summary="@string/log_data_remote_mobile_summary"
         android:title="@string/log_data_remote_mobile_title" />
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="LogNDA"
+        android:summary="@string/LogNDASummary"
+        android:title="@string/LogNDATitle" />
     <!--<EditTextPreference
         android:defaultValue="60"
         android:key="RemoteLogPeriod"

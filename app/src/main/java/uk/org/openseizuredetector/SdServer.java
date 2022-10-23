@@ -134,6 +134,8 @@ public class SdServer extends Service implements SdDataReceiver {
     public boolean mLogData = false;
     public boolean mLogDataRemote = false;
     public boolean mLogDataRemoteMobile = false;
+    public boolean mLogNDA = false;
+
     private String mAuthToken = null;
     private long mEventsTimerPeriod = 60; // Number of seconds between checks to see if there are unvalidated remote events.
     private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
@@ -273,7 +275,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Create our log manager.
         mLm = new LogManager(this, mLogDataRemote, mLogDataRemoteMobile, mAuthToken, mEventDuration,
-                mRemoteLogPeriod, mAutoPruneDb, mDataRetentionPeriod);
+                mRemoteLogPeriod, mLogNDA ,mAutoPruneDb, mDataRetentionPeriod, mSdData);
 
         if (mSMSAlarm) {
             Log.v(TAG, "Creating LocationFinder");
@@ -562,6 +564,7 @@ public class SdServer extends Service implements SdDataReceiver {
         SdData sdData = mSdData;
         sdData.alarmState = 5;
         onSdDataReceived(sdData);
+        mLm.updateSdData(sdData);  // Make sure the data time is up to date in the log manager - only relevant for NDA logging.
     }
 
     /**
@@ -1229,6 +1232,8 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.writeToSysLogFile("updatePrefs() - mLogDataRemote = " + mLogDataRemote);
             mLogDataRemoteMobile = SP.getBoolean("LogDataRemoteMobile", false);
             Log.v(TAG, "updatePrefs() - mLogDataRemoteMobile = " + mLogDataRemoteMobile);
+            mLogNDA = SP.getBoolean("LogNDA", false);
+            Log.v(TAG, "updatePrefs() - mLogNDA = " + mLogNDA);
             mUtil.writeToSysLogFile("updatePrefs() - mLogDataRemoteMobile = " + mLogDataRemoteMobile);
             mAuthToken = SP.getString("webApiAuthToken", null);
             Log.v(TAG, "updatePrefs() - mAuthToken = " + mAuthToken);

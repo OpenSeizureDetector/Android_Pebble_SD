@@ -438,4 +438,7 @@
     <string name="not_logged_in_dialog_title">Not Logged in to Data Sharing</string>
     <string name="not_logged_in_dialog_message">You must be logged in to the Data Sharing system to be able to report seizures.</string>
     <string name="include_warnings">Include Warnings</string>
+    <string name="LogNDASummary">Continuously log data to the data sharing system to provide background \'normal daily activity\' data to help reduce false alarms.</string>
+    <string name="LogNDATitle">Log Normal Daily Activities (NDA)</string>
+    <string name="NDATimerStartTimeParseError">Error Parsing NDATimerStartTime</string>
 </resources>
