@@ -1104,7 +1104,9 @@ public class LogManager {
                 .getDefaultSharedPreferences(mContext);
         mNDATimerStartTime = SP.getLong("NDATimerStartTime", 0);
         if (mNDATimerStartTime == 0) {
-            mNDATimerStartTime = new Time(Time.getCurrentTimezone()).toMillis(true);
+            Time timeNow = new Time(Time.getCurrentTimezone());
+            timeNow.setToNow();
+            mNDATimerStartTime = timeNow.toMillis(true);
             SharedPreferences.Editor editor = SP.edit();
             editor.putLong("NDATimerStartTime", mNDATimerStartTime);
             editor.apply();
@@ -1245,7 +1247,7 @@ public class LogManager {
      */
     private class NDATimer extends CountDownTimer {
         // FIXME - NDA Log Period hard coded!
-        private double mNDALogPeriodHours = 0.1;
+        private double mNDALogPeriodHours = 24.0;
 
         public NDATimer(long startTime, long interval) {
             super(startTime, interval);
@@ -1261,8 +1263,11 @@ public class LogManager {
             Log.d(TAG, "mNDATimer - onFinish - Recording a Normal Daily Activity Event");
             createNDAEvent();
             // Check if we have been logging NDA events for more than the set limit.
-            long tNow = new Time(Time.getCurrentTimezone()).toMillis(true);
-            double tDiffHrs = (tNow - mNDATimerStartTime) / (3600.*1000.);
+            Time timeNow = new Time(Time.getCurrentTimezone());
+            timeNow.setToNow();
+            long tNow = timeNow.toMillis(true);
+            long tDiffMillis = (tNow - mNDATimerStartTime);
+            double tDiffHrs = tDiffMillis / (3600.*1000.);
             if (tDiffHrs >= mNDALogPeriodHours) {
                 Log.i(TAG, "mNDATimer - onFinish - NDA logging period completed - switching off NDA Logging");
                 SharedPreferences SP = PreferenceManager
@@ -1273,7 +1278,7 @@ public class LogManager {
                 editor.apply();
             } else {
                 // Restart this timer.
-                Log.i(TAG,"NDATimer - tdiffHrs = "+tDiffHrs+ ", tnow="+tNow+", tstrt="+mNDATimerStartTime+", NDALogPeriod="+mNDALogPeriodHours);
+                Log.i(TAG,"NDATimer - tDiffMillis="+tDiffMillis+", tdiffHrs = "+tDiffHrs+ ", tnow="+tNow+", tstart="+mNDATimerStartTime+", NDALogPeriod="+mNDALogPeriodHours);
                 Log.i(TAG,"NDATimer - re-starting NDA timer");
                 start();
             }
