@@ -11,7 +11,7 @@
         android:summary="@string/log_data_summary"
         android:title="@string/log_data_title" /> -->
     <EditTextPreference
-        android:defaultValue="150"
+        android:defaultValue="180"
         android:key="EventDurationSec"
         android:summary="@string/eventDurationSummary"
         android:title="@string/eventDurationTitle" />

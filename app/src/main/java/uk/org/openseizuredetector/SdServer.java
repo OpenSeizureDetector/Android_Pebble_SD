@@ -564,7 +564,6 @@ public class SdServer extends Service implements SdDataReceiver {
         SdData sdData = mSdData;
         sdData.alarmState = 5;
         onSdDataReceived(sdData);
-        mLm.updateSdData(sdData);  // Make sure the data time is up to date in the log manager - only relevant for NDA logging.
     }
 
     /**
@@ -769,6 +768,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         if (webServer != null) webServer.setSdData(mSdData);
         Log.v(TAG, "onSdDataReceived() - setting mSdData to " + mSdData.toString());
+        mLm.updateSdData(mSdData);
 
         logData();
     }
