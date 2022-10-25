@@ -49,6 +49,25 @@
             android:layout_height="wrap_content"
             android:text="000" />
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/NDATimeRemaining" />
+
+        <TextView
+            android:id="@+id/nda_time_remaining_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="000" />
+    </LinearLayout>
+
+
     <RadioGroup xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -80,22 +99,23 @@
     </RadioGroup>
 
     <LinearLayout
-        android:visibility="visible"
         android:id="@+id/shared_data_ll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:visibility="visible">
 
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text="@string/remote_database"
             android:textAppearance="?android:attr/textAppearanceLarge" />
+
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="@string/check_seizures_message"
-            />
+            android:text="@string/check_seizures_message" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -112,24 +132,36 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/authenticate" />
+
             <Button
                 android:id="@+id/refresh_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/refreshBtn" />
-            <ProgressBar
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:id="@+id/remoteAccessPb" />
 
+            <ProgressBar
+                android:id="@+id/remoteAccessPb"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent" />
         </LinearLayout>
 
-        <CheckBox
-            android:id="@+id/include_warnings_cb"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/include_warnings">
-        </CheckBox>
+            android:orientation="horizontal">
+
+            <CheckBox
+                android:id="@+id/include_warnings_cb"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/include_warnings"></CheckBox>
+
+            <CheckBox
+                android:id="@+id/include_nda_cb"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/include_nda"></CheckBox>
+        </LinearLayout>
 
         <ListView
             android:id="@+id/remoteEventsLv"
@@ -141,11 +173,11 @@
 
 
     <LinearLayout
-        android:visibility="gone"
         android:id="@+id/local_data_ll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:visibility="gone">
 
         <TextView
             android:layout_width="fill_parent"
@@ -161,11 +193,11 @@
     </LinearLayout>
 
     <LinearLayout
-        android:visibility="gone"
         android:id="@+id/syslog_ll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:visibility="gone">
 
         <TextView
             android:layout_width="fill_parent"

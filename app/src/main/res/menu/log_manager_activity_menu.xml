@@ -27,5 +27,12 @@
             app:showAsAction="never|withText"
             android:title="@string/data_sharing_log_in" />
 
+        <item
+            android:id="@+id/start_stop_nda"
+            android:enabled="true"
+            android:icon="@drawable/ic_action_settings"
+            app:showAsAction="never|withText"
+            android:title="@string/start_nda" />
+
     </group>
 </menu>

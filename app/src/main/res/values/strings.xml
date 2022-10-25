@@ -312,7 +312,7 @@
     <string name="title_activity_authenticate">Log in to OpenSeizureDetector Data Sharing</string>
     <string name="logout">Log Out</string>
     <string name="logged_in_with_token">Logged in to\nData Sharing</string>
-    <string name="local_database">Logged Data Manager</string>
+    <string name="local_database">Data Sharing Manager</string>
     <string name="remote_database">Shared Data</string>
     <string name="num_local_events">Number of Events Stored on Phone: </string>
     <string name="num_local_datapoints">"Number of Datapoints Stored on Phone: "</string>
@@ -441,4 +441,15 @@
     <string name="LogNDASummary">Continuously log data to the data sharing system to provide background \'normal daily activity\' data to help reduce false alarms.</string>
     <string name="LogNDATitle">Log Normal Daily Activities (NDA)</string>
     <string name="NDATimerStartTimeParseError">Error Parsing NDATimerStartTime</string>
+    <string name="include_nda">Include NDA</string>
+    <string name="start_nda">Start NDA Logging</string>
+    <string name="stop_nda">Stop NDA Logging</string>
+    <string name="stop_nda_logging_dialog_title">Stop NDA Logging?</string>
+    <string name="stop_nda_logging_dialog_meassage">Stop Normal Daily Activity (NDA) Logging?</string>
+    <string name="start_nda_logging_dialog_title">Start NDA Logging?</string>
+    <string name="start_nda_logging_dialog_meassage">Start Normal Daily Activity (NDA) Logging (will stop automatically after 24 hours)?</string>
+    <string name="NDATimeRemaining">"NDA Logging Time Remaining (hours): "</string>
+    <string name="stop_nda_menu_title">Stop NDA</string>
+    <string name="start_nda_menu_title">Start NDA</string>
+
 </resources>

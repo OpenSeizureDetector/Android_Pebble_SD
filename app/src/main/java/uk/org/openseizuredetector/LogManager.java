@@ -92,8 +92,10 @@ public class LogManager {
     static private SQLiteDatabase mOsdDb = null;   // SQLite Database for data and log entries.
     private RemoteLogTimer mRemoteLogTimer;
     private boolean mLogNDA;
-    private NDATimer mNDATimer;
-    private long mNDATimerStartTime;
+    public NDATimer mNDATimer;
+    private long mNDATimerStartTime;  // milliseconds
+    public double mNDATimeRemaining; // hours
+    public double mNDALogPeriodHours = 24.0;  // hours
     private static Context mContext;
     private OsdUtil mUtil;
     public static WebApiConnection mWac;
@@ -1095,7 +1097,7 @@ public class LogManager {
         // We set the timer to timeout after the event duration, so that we record all data
         // without a gap.
         mNDATimer =
-                new NDATimer(mEventDuration * 1000, 1000);
+                new NDATimer(mEventDuration * 1000, 1000, mNDALogPeriodHours);
         mNDATimer.start();
 
         // If we do not have a stored start time for NDA logging, set it to current time
@@ -1109,11 +1111,17 @@ public class LogManager {
             mNDATimerStartTime = timeNow.toMillis(true);
             SharedPreferences.Editor editor = SP.edit();
             editor.putLong("NDATimerStartTime", mNDATimerStartTime);
+            editor.putBoolean("LogNDA", true);
             editor.apply();
         }
+        Time timeNow = new Time(Time.getCurrentTimezone());
+        timeNow.setToNow();
+        long tNow = timeNow.toMillis(true);
+        long tDiffMillis = (tNow - mNDATimerStartTime);
+        mNDATimeRemaining = mNDALogPeriodHours - tDiffMillis / (3600.*1000.);
+
 
     }
-
 
     /*
      * Cancel the Normal Daily Actity Log timer
@@ -1124,6 +1132,22 @@ public class LogManager {
             mNDATimer.cancel();
             mNDATimer = null;
         }
+    }
+
+    public void disableNDATimer() {
+        SharedPreferences SP = PreferenceManager
+                .getDefaultSharedPreferences(mContext);
+        SharedPreferences.Editor editor = SP.edit();
+        editor.putBoolean("LogNDA", false);
+        editor.apply();
+    }
+
+    public void enableNDATimer() {
+        SharedPreferences SP = PreferenceManager
+                .getDefaultSharedPreferences(mContext);
+        SharedPreferences.Editor editor = SP.edit();
+        editor.putBoolean("LogNDA", true);
+        editor.apply();
     }
 
     /*
@@ -1246,11 +1270,10 @@ public class LogManager {
      * Log Normal Daily Activities periodically.
      */
     private class NDATimer extends CountDownTimer {
-        // FIXME - NDA Log Period hard coded!
-        private double mNDALogPeriodHours = 24.0;
-
-        public NDATimer(long startTime, long interval) {
+        double mNDALogPeriodHours = 0;
+        public NDATimer(long startTime, long interval, double logPeriod) {
             super(startTime, interval);
+            mNDALogPeriodHours = logPeriod;
         }
 
         @Override
@@ -1262,12 +1285,14 @@ public class LogManager {
         public void onFinish() {
             Log.d(TAG, "mNDATimer - onFinish - Recording a Normal Daily Activity Event");
             createNDAEvent();
-            // Check if we have been logging NDA events for more than the set limit.
+            // Check if we have been logging NDA events for more than the set limit.  If it has, we disable it
+            // and set the start time to zero so it is re-set next time NDA logging is enabled.
             Time timeNow = new Time(Time.getCurrentTimezone());
             timeNow.setToNow();
             long tNow = timeNow.toMillis(true);
             long tDiffMillis = (tNow - mNDATimerStartTime);
             double tDiffHrs = tDiffMillis / (3600.*1000.);
+            mNDATimeRemaining = mNDALogPeriodHours - tDiffHrs;
             if (tDiffHrs >= mNDALogPeriodHours) {
                 Log.i(TAG, "mNDATimer - onFinish - NDA logging period completed - switching off NDA Logging");
                 SharedPreferences SP = PreferenceManager
