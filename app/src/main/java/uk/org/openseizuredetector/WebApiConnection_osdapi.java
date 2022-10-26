@@ -713,4 +713,10 @@ public class WebApiConnection_osdapi extends WebApiConnection {
 
     }
 
+    public boolean getCnnModelInfo(JSONObjectCallback callback) {
+        Log.w(TAG,"getCnnModelInfo() - FIXME - not implemented yet!");
+        return false;
+    }
+
+
 }

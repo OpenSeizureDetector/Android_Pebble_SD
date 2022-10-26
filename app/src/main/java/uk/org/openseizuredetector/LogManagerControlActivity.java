@@ -61,6 +61,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private Integer mUiTimerPeriodFast = 2000;  // 2 seconds - we use fast updating while UI is blank and we are waiting for first data
     private Integer mUiTimerPeriodSlow = 60000; // 60 seconds - once data has been received and UI populated we only update once per minute.
     private boolean mUpdateSysLog = true;
+    private Menu mMenu;
     //private Integer UI_MODE_LOCAL = 0;
     //private Integer UI_MODE_SHARED = 1;
     //private Integer mUiMode = UI_MODE_SHARED;
@@ -117,6 +118,9 @@ public class LogManagerControlActivity extends AppCompatActivity {
         CheckBox includeWarningsCb =
                 (CheckBox) findViewById(R.id.include_warnings_cb);
         includeWarningsCb.setOnCheckedChangeListener(onIncludeWarningsCb);
+        CheckBox includeNDACb =
+                (CheckBox) findViewById(R.id.include_nda_cb);
+        includeNDACb.setOnCheckedChangeListener(onIncludeNDACb);
 
         ListView lv = (ListView) findViewById(R.id.eventLogListView);
         lv.setOnItemClickListener(onEventListClick);
@@ -133,6 +137,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         Log.i(TAG, "onCreateOptionsMenu()");
         getMenuInflater().inflate(R.menu.log_manager_activity_menu, menu);
         MenuCompat.setGroupDividerEnabled(menu, true);
+        this.mMenu = menu;
         return true;
     }
 
@@ -196,8 +201,10 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private void initialiseServiceConnection() {
         mLm = mConnection.mSdServer.mLm;
         startUiTimer(mUiTimerPeriodFast);
+
         final CheckBox includeWarningsCb = (CheckBox) findViewById(R.id.include_warnings_cb);
-        getRemoteEvents(includeWarningsCb.isChecked());
+        final CheckBox includeNDACb = (CheckBox) findViewById(R.id.include_nda_cb);
+        getRemoteEvents(includeWarningsCb.isChecked(), includeNDACb.isChecked());
         ProgressBar pb = (ProgressBar)findViewById(R.id.remoteAccessPb);
         pb.setIndeterminate(true);
         pb.setVisibility(View.VISIBLE);
@@ -217,7 +224,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
     }
 
 
-    private void getRemoteEvents(boolean includeWarnings) {
+    private void getRemoteEvents(boolean includeWarnings, boolean includeNDA) {
         mRemoteEventsList = null;  // clear existing data
         // Retrieve events from remote database
         mLm.mWac.getEvents((JSONObject remoteEventsObj) -> {
@@ -267,10 +274,11 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         eventHashMap.put("type", typeStr);
                         eventHashMap.put("subType", subType);
                         eventHashMap.put("desc", desc);
-                        if (osdAlarmState!=1 | includeWarnings) {
+                        if ((osdAlarmState!=1 | includeWarnings) &&
+                            (osdAlarmState!=6 | includeNDA)) {
                             mRemoteEventsList.add(eventHashMap);
                         } else {
-                            Log.v(TAG,"getRemoteEvents - skipping warning");
+                            Log.v(TAG,"getRemoteEvents - skipping warning or NDA record");
                         }
                     }
                     Log.v(TAG, "getRemoteEvents() - set mRemoteEventsList().  Updating UI");
@@ -301,6 +309,9 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 TextView tv2 = (TextView) findViewById(R.id.num_local_datapoints_tv);
                 tv2.setText(String.format("%d", datapointsCount));
             });
+            TextView tv3 = (TextView)findViewById(R.id.nda_time_remaining_tv);
+            tv3.setText(String.format("%.1f hrs",mLm.mNDATimeRemaining));
+            Log.d(TAG,"mNDATimeRemaining = "+String.format("%.1f hrs",mLm.mNDATimeRemaining));
         } else {
             stopUpdating = false;
         }
@@ -366,6 +377,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
             stopUiTimer();
             //startUiTimer(mUiTimerPeriodSlow);
         }
+
     }  //updateUi();
 
     public void onRadioButtonClicked(View view) {
@@ -444,6 +456,55 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 } catch (Exception ex) {
                     Log.i(TAG, "exception starting settings activity " + ex.toString());
                 }
+                return true;
+            case R.id.start_stop_nda:
+                Log.i(TAG,"start/stop NDA");
+                if (mConnection.mSdServer.mLogNDA) {
+                    new AlertDialog.Builder(this)
+                            .setTitle(R.string.stop_nda_logging_dialog_title)
+                            .setMessage(R.string.stop_nda_logging_dialog_meassage)
+                            .setIcon(android.R.drawable.ic_dialog_alert)
+                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int whichButton) {
+                                    mLm.disableNDATimer();
+                                    MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
+                                    startStopNDAMenuItem.setTitle(R.string.start_nda_menu_title);
+                                    mUtil.stopServer();
+                                    // Wait 0.1 second to give the server chance to shutdown, then re-start it
+                                    new Handler().postDelayed(new Runnable() {
+                                        public void run() {
+                                            mUtil.startServer();
+                                        }
+                                    }, 100);
+                                }
+                            })
+                            .setNegativeButton(android.R.string.no, null)
+                            .show();
+
+                } else {
+                    new AlertDialog.Builder(this)
+                            .setTitle(R.string.start_nda_logging_dialog_title)
+                            .setMessage(R.string.start_nda_logging_dialog_meassage)
+                            .setIcon(android.R.drawable.ic_dialog_alert)
+                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int whichButton) {
+                                    mLm.enableNDATimer();
+                                    MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
+                                    startStopNDAMenuItem.setTitle(R.string.stop_nda_menu_title);
+                                    mUtil.stopServer();
+                                    // Wait 0.1 second to give the server chance to shutdown, then re-start it
+                                    new Handler().postDelayed(new Runnable() {
+                                        public void run() {
+                                            mUtil.startServer();
+                                        }
+                                    }, 100);
+                                }
+                            })
+                            .setNegativeButton(android.R.string.no, null)
+                            .show();
+
+                }
+
                 return true;
             case R.id.action_mark_unknown:
                 Log.i(TAG, "action_mark_unknown");
@@ -554,6 +615,16 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     initialiseServiceConnection();
                 }
             };
+
+    CompoundButton.OnCheckedChangeListener onIncludeNDACb =
+            new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    Log.v(TAG, "onIncludeNDACb");
+                    initialiseServiceConnection();
+                }
+            };
+
 
     AdapterView.OnItemClickListener onEventListClick =
             new AdapterView.OnItemClickListener() {

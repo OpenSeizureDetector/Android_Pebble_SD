@@ -446,4 +446,17 @@
     <string name="mark_unverified_events_false_alarm_dialog_title">Mark all Unverified Events as False Alarm</string>
     <string name="mark_unverified_events_false_alarm_dialog_message">Please confirm that all genuine seizure events have been verified before marking all unverified events as type \'False Alarm\'.   \n\nContinue to mark unverified events as False Alarm?</string>
     <string name="mark_unverified_events_as_false_alarm">Mark all Unverified Events as False Alarm</string>
+    <string name="LogNDASummary">Continuously log data to the data sharing system to provide background \'normal daily activity\' data to help reduce false alarms.</string>
+    <string name="LogNDATitle">Log Normal Daily Activities (NDA)</string>
+    <string name="NDATimerStartTimeParseError">Error Parsing NDATimerStartTime</string>
+    <string name="include_nda">Include NDA</string>
+    <string name="start_nda">Start NDA Logging</string>
+    <string name="stop_nda">Stop NDA Logging</string>
+    <string name="stop_nda_logging_dialog_title">Stop NDA Logging?</string>
+    <string name="stop_nda_logging_dialog_meassage">Stop Normal Daily Activity (NDA) Logging?</string>
+    <string name="start_nda_logging_dialog_title">Start NDA Logging?</string>
+    <string name="start_nda_logging_dialog_meassage">Start Normal Daily Activity (NDA) Logging (will stop automatically after 24 hours)?</string>
+    <string name="NDATimeRemaining">"NDA Logging Time Remaining (hours): "</string>
+    <string name="stop_nda_menu_title">Stop NDA</string>
+    <string name="start_nda_menu_title">Start NDA</string>
 </resources>

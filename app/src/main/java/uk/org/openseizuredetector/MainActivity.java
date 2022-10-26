@@ -516,11 +516,17 @@ public class MainActivity extends AppCompatActivity {
                 tv = (TextView) findViewById(R.id.serverStatusTv);
                 if (mConnection.mBound) {
                     if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
-                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)");
+                        if (mConnection.mSdServer.mLogNDA)
+                            tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)"+"\nNDA Logging");
+                        else
+                            tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
                     } else {
-                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
+                        if (mConnection.mSdServer.mLogNDA)
+                            tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName+"\nNDA Logging");
+                        else
+                            tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
                     }
@@ -579,7 +585,6 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(okTextColour);
                         tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
                     }
-
                 }
                 tv = (TextView) findViewById(R.id.serverIpTv);
                 tv.setText(getString(R.string.AccessServerAt) + " http://"
