@@ -231,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
                 if (actionStr.equals("showDataSharingDialog")) {
                     showDataSharingDialog();
                 }
-                Log.i(TAG, "onNewIntent - extra actionstr is "+actionStr);
+                Log.i(TAG, "onNewIntent - extra actionstr is " + actionStr);
             } else {
                 Log.i(TAG, "onNewIntent - extra actionstr is null - starting normally");
             }
@@ -517,14 +517,14 @@ public class MainActivity extends AppCompatActivity {
                 if (mConnection.mBound) {
                     if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
                         if (mConnection.mSdServer.mLogNDA)
-                            tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)"+"\nNDA Logging");
+                            tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)" + "\nNDA Logging");
                         else
                             tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
                     } else {
                         if (mConnection.mSdServer.mLogNDA)
-                            tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName+"\nNDA Logging");
+                            tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName + "\nNDA Logging");
                         else
                             tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
                         tv.setBackgroundColor(okColour);
@@ -645,23 +645,23 @@ public class MainActivity extends AppCompatActivity {
                     // Pebble Connected Phrase - use for HR if active instead.
                     tv = (TextView) findViewById(R.id.pebbleTv);
                     //if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
-                        if (mConnection.mSdServer.mSdData.mO2Sat>0) {
-                            tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
-                                    + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
-                        } else {
-                            tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
-                                    + "O2 Sat = ---%");
-                        }
-                        if (mConnection.mSdServer.mSdData.mHRAlarmStanding || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
-                            tv.setBackgroundColor(alarmColour);
-                            tv.setTextColor(alarmTextColour);
-                        } else if (mConnection.mSdServer.mSdData.mHRFaultStanding || mConnection.mSdServer.mSdData.mO2SatFaultStanding) {
-                            tv.setBackgroundColor(warnColour);
-                            tv.setTextColor(warnTextColour);
-                        } else {
-                            tv.setBackgroundColor(okColour);
-                            tv.setTextColor(okTextColour);
-                        }
+                    if (mConnection.mSdServer.mSdData.mO2Sat > 0) {
+                        tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
+                                + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
+                    } else {
+                        tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
+                                + "O2 Sat = ---%");
+                    }
+                    if (mConnection.mSdServer.mSdData.mHRAlarmStanding || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
+                        tv.setBackgroundColor(alarmColour);
+                        tv.setTextColor(alarmTextColour);
+                    } else if (mConnection.mSdServer.mSdData.mHRFaultStanding || mConnection.mSdServer.mSdData.mO2SatFaultStanding) {
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    } else {
+                        tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+                    }
                     /*} else {
                         if (mConnection.mSdServer.mSdData.watchConnected) {
                             tv.setText(R.string.HRAlarmOff);
@@ -706,9 +706,15 @@ public class MainActivity extends AppCompatActivity {
                     // We start off with it set to OK, then check for several different abnormal conditions
                     // in turn - the last one that is active is the one that is displayed.
                     tv = (TextView) findViewById(R.id.remoteDbTv);
-                    tv.setText(getString(R.string.data_sharing_status)
-                            + ": "
-                            + getString(R.string.data_sharing_setup_ok));
+                    if (mConnection.mSdServer.mLogNDA)
+                        tv.setText(getString(R.string.data_sharing_status)
+                                + ": "
+                                + getString(R.string.data_sharing_setup_ok)
+                                + ": " + "NDA Logging");
+                    else
+                        tv.setText(getString(R.string.data_sharing_status)
+                                + ": "
+                                + getString(R.string.data_sharing_setup_ok));
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
 
@@ -784,13 +790,13 @@ public class MainActivity extends AppCompatActivity {
                         specRatio = 0;
 
                     long pSeizurePc;
-                    pSeizurePc = (long)(mConnection.mSdServer.mSdData.mPseizure * 100);
-                    Log.d(TAG,"pSeizurePc="+pSeizurePc+", mPseizure="+mConnection.mSdServer.mSdData.mPseizure);
+                    pSeizurePc = (long) (mConnection.mSdServer.mSdData.mPseizure * 100);
+                    Log.d(TAG, "pSeizurePc=" + pSeizurePc + ", mPseizure=" + mConnection.mSdServer.mSdData.mPseizure);
                     ((TextView) findViewById(R.id.powerTv)).setText(getString(R.string.PowerEquals) + mConnection.mSdServer.mSdData.roiPower +
                             " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
                     ((TextView) findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
                             " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
-                    ((TextView) findViewById(R.id.pSeizureTv)).setText("Seizure Probability = "+pSeizurePc+"%");
+                    ((TextView) findViewById(R.id.pSeizureTv)).setText("Seizure Probability = " + pSeizurePc + "%");
 
                     ProgressBar pb;
                     Drawable pbDrawable;
@@ -828,7 +834,6 @@ public class MainActivity extends AppCompatActivity {
                         pbDrawable = getResources().getDrawable(R.drawable.progress_bar_red);
                     //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
                     pb.setProgressDrawable(pbDrawable);
-
 
 
                     // Fault Conditions - We override the values in the UI because we do not know
@@ -1074,24 +1079,24 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         builder.setPositiveButton("Privacy Policy", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                        String url = OsdUtil.PRIVACY_POLICY_URL;
-                        Intent i = new Intent(Intent.ACTION_VIEW);
-                        i.setData(Uri.parse(url));
-                        startActivity(i);
-                        dialog.cancel();
-                    }
-                });
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.cancel();
+                String url = OsdUtil.PRIVACY_POLICY_URL;
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse(url));
+                startActivity(i);
+                dialog.cancel();
+            }
+        });
         builder.setNegativeButton("Data Sharing", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                        String url = OsdUtil.DATA_SHARING_URL;
-                        Intent i = new Intent(Intent.ACTION_VIEW);
-                        i.setData(Uri.parse(url));
-                        startActivity(i);
-                        dialog.cancel();
-                    }
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.cancel();
+                String url = OsdUtil.DATA_SHARING_URL;
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse(url));
+                startActivity(i);
+                dialog.cancel();
+            }
         });
         builder.setView(aboutView);
         builder.create();
