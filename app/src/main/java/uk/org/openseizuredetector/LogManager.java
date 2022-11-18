@@ -24,6 +24,7 @@ package uk.org.openseizuredetector;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.SQLException;
@@ -32,6 +33,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.AsyncTask;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.preference.PreferenceManager;
+import android.text.format.Time;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -63,6 +66,20 @@ import java.util.HashMap;
  * - Query the local database to return all datapoints within +/- EventDuration/2 minutes of the event.
  * - Upload the datapoints, linking them to the new eventID.
  * - Mark all the uploaded datapoints as uploaded.
+ *
+ * Event statuses:
+ *    0 - OK
+ *    1 - WARNING
+ *    2 - ALARM
+ *    3 - FALL
+ *    4 - FAULT
+ *    5 - Manual Alarm
+ *    6 - NDA (Normal Daily Activities)
+ *
+ *    NDA Timer creates an event periodically to record Normal Daily Activities (NDA),
+ *    irrespective of the alarm state.   This will upload a lot of data, so it will only run
+ *    for 24 hours after being activated before shutting down requring the user to re-select
+ *    the option to log NDA to re-start it.
  */
 public class LogManager {
     static final private String TAG = "LogManager";
@@ -71,8 +88,14 @@ public class LogManager {
     final static private String mEventsTableName = "events";
     private boolean mLogRemote;
     private boolean mLogRemoteMobile;
+    public boolean mLogNDA;
     static private SQLiteDatabase mOsdDb = null;   // SQLite Database for data and log entries.
     private RemoteLogTimer mRemoteLogTimer;
+    public NDATimer mNDATimer;
+    public double mNDATimeRemaining; // hours
+    public double mNDALogPeriodHours = 24.0;  // hours
+    private String mAuthToken;
+    private long mNDATimerStartTime;  // milliseconds
     private static Context mContext;
     private OsdUtil mUtil;
     public static WebApiConnection mWac;
@@ -81,13 +104,15 @@ public class LogManager {
     private boolean mUploadInProgress;
     private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
     public long mDataRetentionPeriod = 1; // Prunes the local db so it only retains data younger than this duration (in days)
-    private long mRemoteLogPeriod = 60; // Period in seconds between uploads to the remote server.
+    private long mRemoteLogPeriod = 10; // Period in seconds between uploads to the remote server.
     private ArrayList<JSONObject> mDatapointsToUploadList;
     private String mCurrentEventRemoteId;
     private long mCurrentEventLocalId = -1;
     private int mCurrentDatapointId;
+    private long mAutoPrunePeriod = 3600;  // Prune the database every hour
+    private boolean mAutoPruneDb;
     private AutoPruneTimer mAutoPruneTimer;
-
+    private SdData mSdSettingsData;
 
     public interface CursorCallback {
         void accept(Cursor retVal);
@@ -100,20 +125,27 @@ public class LogManager {
     public LogManager(Context context,
                       boolean logRemote, boolean logRemoteMobile, String authToken,
                       long eventDuration, long remoteLogPeriod,
-                      boolean autoPruneDb, long dataRetentionPeriod) {
+                      boolean logNDA,
+                      boolean autoPruneDb, long dataRetentionPeriod,
+                      SdData sdSettingsData) {
         Log.d(TAG, "LogManger Constructor");
         mContext = context;
         Handler handler = new Handler();
 
         mLogRemote = logRemote;
         mLogRemoteMobile = logRemoteMobile;
+        mAuthToken = authToken;
         mEventDuration = eventDuration;
+        mAutoPruneDb = autoPruneDb;
         mDataRetentionPeriod = dataRetentionPeriod;
         mRemoteLogPeriod = remoteLogPeriod;
+        mLogNDA = logNDA;
+        mSdSettingsData = sdSettingsData;
         Log.v(TAG, "mLogRemote=" + mLogRemote);
         Log.v(TAG, "mLogRemoteMobile=" + mLogRemoteMobile);
         Log.v(TAG, "mEventDuration=" + mEventDuration);
-        Log.v(TAG, "mAutoPruneDb=" + autoPruneDb);
+        Log.v(TAG, "mLogNDA=" + mLogNDA);
+        Log.v(TAG, "mAutoPruneDb=" + mAutoPruneDb);
         Log.v(TAG, "mDataRetentionPeriod=" + mDataRetentionPeriod);
         Log.v(TAG, "mRemoteLogPeriod=" + mRemoteLogPeriod);
 
@@ -126,7 +158,7 @@ public class LogManager {
             mWac = new WebApiConnection_osdapi(mContext);
         }
 
-        mWac.setStoredToken(authToken);
+        mWac.setStoredToken(mAuthToken);
 
         if (mLogRemote) {
             Log.i(TAG, "Starting Remote Log Timer");
@@ -135,11 +167,18 @@ public class LogManager {
             Log.i(TAG, "mLogRemote is false - not starting remote log timer");
         }
 
-        if (autoPruneDb) {
+        if (mAutoPruneDb) {
             Log.i(TAG, "Starting Auto Prune Timer");
             startAutoPruneTimer();
         } else {
             Log.i(TAG, "AutoPruneDB is not set - not starting Auto Prune Timer");
+        }
+
+        if (mLogNDA) {
+            Log.i(TAG, "Starting Normal Daily Activity Log Timer");
+            startNDATimer();
+        } else {
+            Log.i(TAG, "mLogNDA is false - not starting Normal Daily Activity Log timer");
         }
 
     }
@@ -321,17 +360,6 @@ public class LogManager {
         // Expects dataTime to be in format: SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Log.d(TAG, "createLocalEvent() - dataTime=" + dataTime + ", status=" + status + ", dataJSON="+dataJSON);
         // Write Event to database
-        //String SQLStr = "INSERT INTO " + mEventsTableName
-        //        + "(dataTime, status, type, subtype, notes, dataJSON)"
-        //        + " VALUES("
-        //        + "'" + dataTime + "',"
-        //        + status + ","
-        //       + "'" + type + "',"
-        //        + "'" + subType + "',"
-        //        + "'" + desc + "',"
-        //        + "'" + dataJSON + "'"
-        //        + ")";
-        //mOsdDb.execSQL(SQLStr);
         ContentValues values = new ContentValues();
         values.put("dataTime", dataTime);
         values.put("status", status);
@@ -341,7 +369,7 @@ public class LogManager {
         values.put("dataJSON", dataJSON);
 
         long newRowId = mOsdDb.insert(mEventsTableName, null, values);
-        Log.d(TAG, "Created Row ID"+newRowId);
+        Log.d(TAG, "createLocalEvent(): Created Row ID" + newRowId);
         return true;
     }
 
@@ -458,7 +486,7 @@ public class LogManager {
      * @return True on successful start or false if call fails.
      */
     public boolean getEventsList(boolean includeWarnings, ArrayListCallback callback) {
-        Log.v(TAG, "getEventsList - includeWarnings=" + includeWarnings);
+        Log.d(TAG, "getEventsList - includeWarnings=" + includeWarnings);
         ArrayList<HashMap<String, String>> eventsList = new ArrayList<>();
 
         String[] whereArgs = getEventWhereArgs(includeWarnings);
@@ -508,7 +536,7 @@ public class LogManager {
                 String[] selectArgs = {endDateStr};
                 retVal = mOsdDb.delete(tableName, selectStr, selectArgs);
             } catch (Exception e) {
-                Log.d(TAG, "Error deleting data " + e.toString());
+                Log.e(TAG, "Error deleting data " + e.toString());
                 retVal = 0;
             }
             Log.d(TAG, String.format("pruneLocalDb() - deleted %d records from table %s", retVal, tableName));
@@ -552,7 +580,7 @@ public class LogManager {
 
         // Do not try to upload very recent events so that we have chance to record the post-event data before uploading it.
         long currentDateMillis = new Date().getTime();
-        long endDateMillis = currentDateMillis - 1000 * mEventDuration;
+        long endDateMillis = currentDateMillis - 1000 * mEventDuration / 2;
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String endDateStr = dateFormat.format(new Date(endDateMillis));
         String whereClauseUploaded = "uploaded is null";
@@ -560,7 +588,9 @@ public class LogManager {
         String whereClause = whereClauseStatus + " AND " + whereClauseUploaded + " AND " + whereClauseDate;
 
         String[] whereArgs = new String[whereArgsStatus.length + 1];
-        System.arraycopy(whereArgsStatus, 0, whereArgs, 0, whereArgsStatus.length);
+        for (int i = 0; i < whereArgsStatus.length; i++) {
+            whereArgs[i] = whereArgsStatus[i];
+        }
         whereArgs[whereArgsStatus.length] = endDateStr;
         new SelectQueryTask(mEventsTableName, columns, whereClause, whereArgs,
                 null, null, "dataTime DESC", (Cursor cursor) -> {
@@ -569,7 +599,7 @@ public class LogManager {
                 Log.v(TAG, "getNextEventToUpload - returned " + cursor.getCount() + " records");
                 cursor.moveToFirst();
                 if (cursor.getCount() == 0) {
-                    Log.v(TAG, "getNextEventToUpload() - no events to Upload - exiting");
+                    Log.d(TAG, "getNextEventToUpload() - no events to Upload - exiting");
                     recordId = new Long(-1);
                 } else {
                     recordId = cursor.getLong(0);
@@ -601,8 +631,8 @@ public class LogManager {
                 Log.v(TAG, "getNearestDatapointToDate - returned " + cursor.getCount() + " records");
                 cursor.moveToFirst();
                 if (cursor.getCount() == 0) {
-                    Log.v(TAG, "getNearestDatapointToDate() - no events to Upload - exiting");
-                    recordId = Long.valueOf(-1);
+                    Log.d(TAG, "getNearestDatapointToDate() - no events to Upload - exiting");
+                    recordId = new Long(-1);
                 } else {
                     String recordStr = cursor.getString(3);
                     recordId = cursor.getLong(0);
@@ -726,21 +756,41 @@ public class LogManager {
 
 
     private String getEventWhereClause(boolean includeWarnings) {
+        /**
+         * * Event statuses:
+         *  *    0 - OK
+         *  *    1 - WARNING
+         *  *    2 - ALARM
+         *  *    3 - FALL
+         *  *    4 - FAULT
+         *  *    5 - Manual Alarm
+         *  *    6 - NDA (Normal Daily Activities)
+         */
         String whereClause;
         if (includeWarnings) {
-            whereClause = "Status in (?, ?, ?, ?)";
+            whereClause = "Status in (?, ?, ?, ?, ?)";
         } else {
-            whereClause = "Status in (?, ?, ?)";
+            whereClause = "Status in (?, ?, ?, ?)";
         }
         return (whereClause);
     }
 
     private String[] getEventWhereArgs(boolean includeWarnings) {
+        /**
+         * * Event statuses:
+         *  *    0 - OK
+         *  *    1 - WARNING
+         *  *    2 - ALARM
+         *  *    3 - FALL
+         *  *    4 - FAULT
+         *  *    5 - Manual Alarm
+         *  *    6 - NDA (Normal Daily Activities)
+         */
         String[] whereArgs;
         if (includeWarnings) {
-            whereArgs = new String[]{"1", "2", "3", "5"};
+            whereArgs = new String[]{"1", "2", "3", "5", "6"};
         } else {
-            whereArgs = new String[]{"2", "3", "5"};
+            whereArgs = new String[]{"2", "3", "5", "6"};
         }
         return (whereArgs);
     }
@@ -875,61 +925,64 @@ public class LogManager {
     public void createEventCallback(String eventId) {
         Log.v(TAG, "createEventCallback(): " + eventId);
         Log.v(TAG, "createEventCallback(): Retrieving remote event details");
-        mWac.getEvent(eventId, eventObj -> {
-            if (eventObj == null) {
-                Log.e(TAG, "createEventCallback() - eventObj is null - failed to create event");
-                mUtil.showToast("Error Creating Remote Event");
-            } else {
-                Log.v(TAG, "createEventCallback() - eventObj=" + eventObj.toString());
-                Date eventDate;
-                String eventDateStr = "";
-                try {
-                    String dateStr = eventObj.getString("dataTime");
-                    eventDate = mUtil.string2date(dateStr);
-                } catch (JSONException | NullPointerException e) {
-                    Log.e(TAG, "createEventCallback() - Error parsing JSONObject: " + eventObj.toString());
-                    finishUpload();
-                    return;
-                }
-                if (eventDate != null) {
-                    Log.v(TAG, "createEventCallback() EventId=" + eventId + ", eventDateStr=" + eventDateStr + ", eventDate=" + eventDate);
-                    mUploadInProgress = true;
-                    long eventDateMillis = eventDate.getTime();
-                    long startDateMillis = eventDateMillis - 1000 * mEventDuration / 2;
-                    long endDateMillis = eventDateMillis + 1000 * mEventDuration / 2;
-                    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-                    getDatapointsByDate(
-                            dateFormat.format(new Date(startDateMillis)),
-                            dateFormat.format(new Date(endDateMillis)),
-                            (String datapointsJsonStr) -> {
-                                //Log.v(TAG, "createEventCallback() - datapointsJsonStr=" + datapointsJsonStr);
-                                JSONArray dataObj;
-                                mDatapointsToUploadList = new ArrayList<JSONObject>();
-
-                                try {
-                                    //DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-                                    dataObj = new JSONArray(datapointsJsonStr);
-                                    Log.v(TAG, "createEventCallback() - datapointsObj length=" + dataObj.length());
-                                    for (int i = 0; i < dataObj.length(); i++) {
-                                        mDatapointsToUploadList.add(dataObj.getJSONObject(i));
-                                    }
-                                } catch (JSONException | NullPointerException e) {
-                                    Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string " + datapointsJsonStr);
-                                    dataObj = null;
-                                    finishUpload();
-                                }
-                                // This starts the process of uploading the datapoints, one at a time.
-                                mCurrentEventRemoteId = eventId;
-                                Log.v(TAG, "createEventCallback() - starting datapoints upload with eventId " + mCurrentEventRemoteId +
-                                        " Uploading " + mDatapointsToUploadList.size() + " datapoints");
-                                uploadNextDatapoint();
-
-                            });
+        mWac.getEvent(eventId, new WebApiConnection.JSONObjectCallback() {
+            @Override
+            public void accept(JSONObject eventObj) {
+                if (eventObj == null) {
+                    Log.e(TAG, "createEventCallback() - eventObj is null - failed to create event");
+                    mUtil.showToast("Error Creating Remote Event");
                 } else {
-                    Log.e(TAG, "createEventCallback() - Error - event date is null - not doing anything");
-                    mUtil.showToast("Error uploading event - date is null");
-                    finishUpload();
+                    Log.v(TAG, "createEventCallback() - eventObj=" + eventObj.toString());
+                    Date eventDate;
+                    String eventDateStr = "";
+                    try {
+                        String dateStr = eventObj.getString("dataTime");
+                        eventDate = mUtil.string2date(dateStr);
+                    } catch (JSONException | NullPointerException e) {
+                        Log.e(TAG, "createEventCallback() - Error parsing JSONObject: " + eventObj.toString());
+                        finishUpload();
+                        return;
+                    }
+                    if (eventDate != null) {
+                        Log.v(TAG, "createEventCallback() EventId=" + eventId + ", eventDateStr=" + eventDateStr + ", eventDate=" + eventDate);
+                        mUploadInProgress = true;
+                        long eventDateMillis = eventDate.getTime();
+                        long startDateMillis = eventDateMillis - 1000 * mEventDuration / 2;
+                        long endDateMillis = eventDateMillis + 1000 * mEventDuration / 2;
+                        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+                        getDatapointsByDate(
+                                dateFormat.format(new Date(startDateMillis)),
+                                dateFormat.format(new Date(endDateMillis)),
+                                (String datapointsJsonStr) -> {
+                                    //Log.v(TAG, "createEventCallback() - datapointsJsonStr=" + datapointsJsonStr);
+                                    JSONArray dataObj;
+                                    mDatapointsToUploadList = new ArrayList<JSONObject>();
+
+                                    try {
+                                        //DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+                                        dataObj = new JSONArray(datapointsJsonStr);
+                                        Log.v(TAG, "createEventCallback() - datapointsObj length=" + dataObj.length());
+                                        for (int i = 0; i < dataObj.length(); i++) {
+                                            mDatapointsToUploadList.add(dataObj.getJSONObject(i));
+                                        }
+                                    } catch (JSONException | NullPointerException e) {
+                                        Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string " + datapointsJsonStr);
+                                        dataObj = null;
+                                        finishUpload();
+                                    }
+                                    // This starts the process of uploading the datapoints, one at a time.
+                                    mCurrentEventRemoteId = eventId;
+                                    Log.v(TAG, "createEventCallback() - starting datapoints upload with eventId " + mCurrentEventRemoteId +
+                                            " Uploading " + mDatapointsToUploadList.size() + " datapoints");
+                                    uploadNextDatapoint();
+
+                                });
+                    } else {
+                        Log.e(TAG, "createEventCallback() - Error - event date is null - not doing anything");
+                        mUtil.showToast("Error uploading event - date is null");
+                        finishUpload();
+                    }
                 }
             }
         });
@@ -1001,6 +1054,7 @@ public class LogManager {
         // Stop the timers and shutdown the remote API connection.
         stopRemoteLogTimer();
         stopAutoPruneTimer();
+        stopNDATimer();
     }
 
     /*
@@ -1015,7 +1069,7 @@ public class LogManager {
         Log.i(TAG, "startRemoteLogTimer() - starting RemoteLogTimer");
         mRemoteLogTimer =
                 new RemoteLogTimer(mRemoteLogPeriod * 1000, 1000);
-        if (mLogRemote) mRemoteLogTimer.start();
+        mRemoteLogTimer.start();
     }
 
 
@@ -1030,6 +1084,71 @@ public class LogManager {
         }
     }
 
+    /*
+     * Start the timer that will log Normal Daily Activity continuously.
+     */
+    private void startNDATimer() {
+        if (mNDATimer != null) {
+            Log.i(TAG, "startNDATimer -timer already running - cancelling it");
+            mNDATimer.cancel();
+            mNDATimer = null;
+        }
+        Log.i(TAG, "startNDATimer() - starting NDATimer");
+        // We set the timer to timeout after the event duration, so that we record all data
+        // without a gap.
+        mNDATimer =
+                new NDATimer(mEventDuration * 1000, 1000, mNDALogPeriodHours);
+        mNDATimer.start();
+
+        // If we do not have a stored start time for NDA logging, set it to current time
+        // and store it.
+        SharedPreferences SP = PreferenceManager
+                .getDefaultSharedPreferences(mContext);
+        mNDATimerStartTime = SP.getLong("NDATimerStartTime", 0);
+        if (mNDATimerStartTime == 0) {
+            Time timeNow = new Time(Time.getCurrentTimezone());
+            timeNow.setToNow();
+            mNDATimerStartTime = timeNow.toMillis(true);
+            SharedPreferences.Editor editor = SP.edit();
+            editor.putLong("NDATimerStartTime", mNDATimerStartTime);
+            editor.putBoolean("LogNDA", true);
+            editor.apply();
+        }
+        Time timeNow = new Time(Time.getCurrentTimezone());
+        timeNow.setToNow();
+        long tNow = timeNow.toMillis(true);
+        long tDiffMillis = (tNow - mNDATimerStartTime);
+        mNDATimeRemaining = mNDALogPeriodHours - tDiffMillis / (3600. * 1000.);
+
+
+    }
+
+    /*
+     * Cancel the Normal Daily Actity Log timer
+     */
+    public void stopNDATimer() {
+        if (mNDATimer != null) {
+            Log.i(TAG, "stopNDATimer(): cancelling Normal Daily Activity timer");
+            mNDATimer.cancel();
+            mNDATimer = null;
+        }
+    }
+
+    public void disableNDATimer() {
+        SharedPreferences SP = PreferenceManager
+                .getDefaultSharedPreferences(mContext);
+        SharedPreferences.Editor editor = SP.edit();
+        editor.putBoolean("LogNDA", false);
+        editor.apply();
+    }
+
+    public void enableNDATimer() {
+        SharedPreferences SP = PreferenceManager
+                .getDefaultSharedPreferences(mContext);
+        SharedPreferences.Editor editor = SP.edit();
+        editor.putBoolean("LogNDA", true);
+        editor.apply();
+    }
 
     /*
      * Start the timer that will Auto Prune the database
@@ -1041,8 +1160,6 @@ public class LogManager {
             mAutoPruneTimer = null;
         }
         Log.i(TAG, "startAutoPruneTimer() - starting AutoPruneTimer");
-        // Prune the database every hour
-        long mAutoPrunePeriod = 3600;
         mAutoPruneTimer =
                 new AutoPruneTimer(mAutoPrunePeriod * 1000, 1000);
         mAutoPruneTimer.start();
@@ -1058,6 +1175,20 @@ public class LogManager {
             mAutoPruneTimer.cancel();
             mAutoPruneTimer = null;
         }
+    }
+
+
+    public void createNDAEvent() {
+        Log.i(TAG, "createNDAEvent()");
+        Date curDate = new Date();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String dateStr = dateFormat.format(curDate);
+        createLocalEvent(dateStr, 6, "nda", null, null,
+                mSdSettingsData.toSettingsJSON());
+    }
+
+    public void updateSdData(SdData sdData) {
+        mSdSettingsData = sdData;
     }
 
 
@@ -1133,6 +1264,53 @@ public class LogManager {
         }
 
     }
+
+    /**
+     * Log Normal Daily Activities periodically.
+     */
+    private class NDATimer extends CountDownTimer {
+        double mNDALogPeriodHours = 0;
+
+        public NDATimer(long startTime, long interval, double logPeriod) {
+            super(startTime, interval);
+            mNDALogPeriodHours = logPeriod;
+        }
+
+        @Override
+        public void onTick(long l) {
+            // Do Nothing
+        }
+
+        @Override
+        public void onFinish() {
+            Log.d(TAG, "mNDATimer - onFinish - Recording a Normal Daily Activity Event");
+            createNDAEvent();
+            // Check if we have been logging NDA events for more than the set limit.  If it has, we disable it
+            // and set the start time to zero so it is re-set next time NDA logging is enabled.
+            Time timeNow = new Time(Time.getCurrentTimezone());
+            timeNow.setToNow();
+            long tNow = timeNow.toMillis(true);
+            long tDiffMillis = (tNow - mNDATimerStartTime);
+            double tDiffHrs = tDiffMillis / (3600. * 1000.);
+            mNDATimeRemaining = mNDALogPeriodHours - tDiffHrs;
+            if (tDiffHrs >= mNDALogPeriodHours) {
+                Log.i(TAG, "mNDATimer - onFinish - NDA logging period completed - switching off NDA Logging");
+                SharedPreferences SP = PreferenceManager
+                        .getDefaultSharedPreferences(mContext);
+                SharedPreferences.Editor editor = SP.edit();
+                editor.putLong("NDATimerStartTime", 0);
+                editor.putBoolean("LogNDA", false);
+                editor.apply();
+            } else {
+                // Restart this timer.
+                Log.i(TAG, "NDATimer - tDiffMillis=" + tDiffMillis + ", tdiffHrs = " + tDiffHrs + ", tnow=" + tNow + ", tstart=" + mNDATimerStartTime + ", NDALogPeriod=" + mNDALogPeriodHours);
+                Log.i(TAG, "NDATimer - re-starting NDA timer");
+                start();
+            }
+        }
+
+    }
+
 
     /**
      * Prune the database periodically.
