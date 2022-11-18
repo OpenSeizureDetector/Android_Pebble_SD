@@ -91,7 +91,7 @@ public class LogManager {
     private String mAuthToken;
     static private SQLiteDatabase mOsdDb = null;   // SQLite Database for data and log entries.
     private RemoteLogTimer mRemoteLogTimer;
-    private boolean mLogNDA;
+    public boolean mLogNDA;
     public NDATimer mNDATimer;
     private long mNDATimerStartTime;  // milliseconds
     public double mNDATimeRemaining; // hours
@@ -341,7 +341,7 @@ public class LogManager {
             Log.v(TAG, "writeDatapointToLocalDb(): datapoint written to database");
 
             if (sdData.alarmState != 0) {
-                Log.i(TAG, "writeDatapointToLocalDb(): adding event to local DB");
+                Log.d(TAG, "writeDatapointToLocalDb(): adding event to local DB");
                 createLocalEvent(dateStr,sdData.alarmState,null, null, null, sdData.toSettingsJSON());
             }
         } catch (SQLException e) {
@@ -486,7 +486,7 @@ public class LogManager {
      * @return True on successful start or false if call fails.
      */
     public boolean getEventsList(boolean includeWarnings, ArrayListCallback callback) {
-        Log.v(TAG, "getEventsList - includeWarnings=" + includeWarnings);
+        Log.d(TAG, "getEventsList - includeWarnings=" + includeWarnings);
         ArrayList<HashMap<String, String>> eventsList = new ArrayList<>();
 
         String[] whereArgs = getEventWhereArgs(includeWarnings);
@@ -536,7 +536,7 @@ public class LogManager {
                 String[] selectArgs = {endDateStr};
                 retVal = mOsdDb.delete(tableName, selectStr, selectArgs);
             } catch (Exception e) {
-                Log.d(TAG, "Error deleting data " + e.toString());
+                Log.e(TAG, "Error deleting data " + e.toString());
                 retVal = 0;
             }
             Log.d(TAG, String.format("pruneLocalDb() - deleted %d records from table %s", retVal, tableName));
@@ -599,7 +599,7 @@ public class LogManager {
                 Log.v(TAG, "getNextEventToUpload - returned " + cursor.getCount() + " records");
                 cursor.moveToFirst();
                 if (cursor.getCount() == 0) {
-                    Log.v(TAG, "getNextEventToUpload() - no events to Upload - exiting");
+                    Log.d(TAG, "getNextEventToUpload() - no events to Upload - exiting");
                     recordId = new Long(-1);
                 } else {
                     recordId = cursor.getLong(0);
@@ -631,7 +631,7 @@ public class LogManager {
                 Log.v(TAG, "getNearestDatapointToDate - returned " + cursor.getCount() + " records");
                 cursor.moveToFirst();
                 if (cursor.getCount() == 0) {
-                    Log.v(TAG, "getNearestDatapointToDate() - no events to Upload - exiting");
+                    Log.d(TAG, "getNearestDatapointToDate() - no events to Upload - exiting");
                     recordId = new Long(-1);
                 } else {
                     String recordStr = cursor.getString(3);
@@ -1099,6 +1099,7 @@ public class LogManager {
         mNDATimer =
                 new NDATimer(mEventDuration * 1000, 1000, mNDALogPeriodHours);
         mNDATimer.start();
+        mLogNDA = true;
 
         // If we do not have a stored start time for NDA logging, set it to current time
         // and store it.
@@ -1111,7 +1112,7 @@ public class LogManager {
             mNDATimerStartTime = timeNow.toMillis(true);
             SharedPreferences.Editor editor = SP.edit();
             editor.putLong("NDATimerStartTime", mNDATimerStartTime);
-            editor.putBoolean("LogNDA", true);
+            editor.putBoolean("LogNDA", mLogNDA);
             editor.apply();
         }
         Time timeNow = new Time(Time.getCurrentTimezone());
@@ -1119,8 +1120,6 @@ public class LogManager {
         long tNow = timeNow.toMillis(true);
         long tDiffMillis = (tNow - mNDATimerStartTime);
         mNDATimeRemaining = mNDALogPeriodHours - tDiffMillis / (3600.*1000.);
-
-
     }
 
     /*
@@ -1131,10 +1130,12 @@ public class LogManager {
             Log.i(TAG, "stopNDATimer(): cancelling Normal Daily Activity timer");
             mNDATimer.cancel();
             mNDATimer = null;
+            mLogNDA = false;
         }
     }
 
     public void disableNDATimer() {
+        stopNDATimer();
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(mContext);
         SharedPreferences.Editor editor = SP.edit();
@@ -1143,6 +1144,7 @@ public class LogManager {
     }
 
     public void enableNDATimer() {
+        //startNDATimer();
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(mContext);
         SharedPreferences.Editor editor = SP.edit();

@@ -221,7 +221,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
     public boolean getEvent(String eventId, JSONObjectCallback callback) {
         Log.v(TAG, "getEvent()");
         String urlStr = mUrlBase + "/api/events/" + eventId;
-        Log.v(TAG, "getEvent(): urlStr=" + urlStr);
+        Log.d(TAG, "getEvent(): urlStr=" + urlStr);
         final String authtoken = getStoredToken();
 
         if (!isLoggedIn()) {
@@ -279,11 +279,11 @@ public class WebApiConnection_osdapi extends WebApiConnection {
     public boolean getEvents(JSONObjectCallback callback) {
         Log.v(TAG, "getEvents()");
         String urlStr = mUrlBase + "/api/events/";
-        Log.v(TAG, "getEvents(): urlStr=" + urlStr);
+        Log.d(TAG, "getEvents(): urlStr=" + urlStr);
         final String authtoken = getStoredToken();
 
         if (!isLoggedIn()) {
-            Log.v(TAG, "not logged in - doing nothing");
+            Log.d(TAG, "getEvents(): not logged in - doing nothing");
             return (false);
         }
 
@@ -341,7 +341,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
         final String authtoken = getStoredToken();
 
         if (!isLoggedIn()) {
-            Log.v(TAG, "not logged in - doing nothing");
+            Log.d(TAG, "updateEvent(): not logged in - doing nothing");
             return (false);
         }
         try {

@@ -137,7 +137,14 @@ public class LogManagerControlActivity extends AppCompatActivity {
         Log.i(TAG, "onCreateOptionsMenu()");
         getMenuInflater().inflate(R.menu.log_manager_activity_menu, menu);
         MenuCompat.setGroupDividerEnabled(menu, true);
-        this.mMenu = menu;
+        mMenu = menu;
+        MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
+        if (mConnection.mSdServer.mLm.mLogNDA) {
+            startStopNDAMenuItem.setTitle(R.string.stop_nda_menu_title);
+        } else {
+            startStopNDAMenuItem.setTitle(R.string.start_nda_menu_title);
+        }
+
         return true;
     }
 
@@ -458,8 +465,10 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 }
                 return true;
             case R.id.start_stop_nda:
+                // FIXME: When we use this we get left in a state with two processes running and the system
+                //        alternating between OK and FAULT - I don't know why yet!
                 Log.i(TAG,"start/stop NDA");
-                if (mConnection.mSdServer.mLogNDA) {
+                if (mConnection.mSdServer.mLm.mLogNDA) {
                     new AlertDialog.Builder(this)
                             .setTitle(R.string.stop_nda_logging_dialog_title)
                             .setMessage(R.string.stop_nda_logging_dialog_meassage)
@@ -469,13 +478,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                                     mLm.disableNDATimer();
                                     MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
                                     startStopNDAMenuItem.setTitle(R.string.start_nda_menu_title);
-                                    mUtil.stopServer();
-                                    // Wait 0.1 second to give the server chance to shutdown, then re-start it
-                                    new Handler().postDelayed(new Runnable() {
-                                        public void run() {
-                                            mUtil.startServer();
-                                        }
-                                    }, 100);
+                                    mUtil.restartServer();
                                 }
                             })
                             .setNegativeButton(android.R.string.no, null)
@@ -491,13 +494,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                                     mLm.enableNDATimer();
                                     MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
                                     startStopNDAMenuItem.setTitle(R.string.stop_nda_menu_title);
-                                    mUtil.stopServer();
-                                    // Wait 0.1 second to give the server chance to shutdown, then re-start it
-                                    new Handler().postDelayed(new Runnable() {
-                                        public void run() {
-                                            mUtil.startServer();
-                                        }
-                                    }, 100);
+                                    mUtil.restartServer();
                                 }
                             })
                             .setNegativeButton(android.R.string.no, null)

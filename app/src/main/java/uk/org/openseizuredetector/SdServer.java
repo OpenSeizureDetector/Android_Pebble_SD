@@ -420,6 +420,11 @@ public class SdServer extends Service implements SdDataReceiver {
             mLocationFinder = null;
         }
 
+        if (mLm != null) {
+            Log.d(TAG, "Closing Down Log Manager");
+            mLm.stop();
+            mLm.close();
+        }
 
         try {
             // Stop web server
@@ -450,11 +455,7 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.writeToSysLogFile("SdServer.onDestroy() -error " + e.toString());
         }
 
-        if (mLm != null) {
-            Log.d(TAG, "Closing Down Log Manager");
-            mLm.stop();
-            mLm.close();
-        }
+
 
         super.onDestroy();
 

@@ -3,7 +3,7 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
-        \nV4.1.2 - Added Machine Learning (Artificial Intelligence) Detection Algorithm Option (CNN V0.24) and 'Normal Daily Activity (NDA) logging function
+        \nV4.1.3 - Added Machine Learning (Artificial Intelligence) Detection Algorithm Option (CNN V0.24) and 'Normal Daily Activity (NDA) logging function
         \nV4.0.7 - Improvements to Data Sharing data log manager screen.
           - Introduced the &lt;b>Data Sharing&lt;/b> feature to allow users to share their seizure and false alarm data
         with researchers to help improve the system.&lt;br/>
@@ -457,6 +457,6 @@
     <string name="start_nda_logging_dialog_title">Start NDA Logging?</string>
     <string name="start_nda_logging_dialog_meassage">Start Normal Daily Activity (NDA) Logging (will stop automatically after 24 hours)?</string>
     <string name="NDATimeRemaining">"NDA Logging Time Remaining (hours): "</string>
-    <string name="stop_nda_menu_title">Stop NDA</string>
-    <string name="start_nda_menu_title">Start NDA</string>
+    <string name="stop_nda_menu_title">Stop NDA Logging</string>
+    <string name="start_nda_menu_title">Start NDA Logging</string>
 </resources>

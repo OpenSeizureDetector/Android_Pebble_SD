@@ -194,7 +194,15 @@ public class OsdUtil {
         mContext.stopService(sdServerIntent);
     }
 
-
+    public void restartServer() {
+        stopServer();
+        // Wait 1 second to give the server chance to shutdown, then re-start it
+        new Handler().postDelayed(new Runnable() {
+            public void run() {
+                startServer();
+            }
+        }, 1000);
+    }
     /**
      * bind an activity to to an already running server.
      */
