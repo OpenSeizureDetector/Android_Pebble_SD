@@ -27,13 +27,13 @@
     <string name="AppPermissionsOk">App de Permisos OK</string>
     <string name="AppPermissionsWarning">Problemas con la App de Permisos</string>
     <string name="BoundToServiceOk">Vinculación al Servicio OK</string>
-    <string name="BindingToService">Vinculándose al Servicio en Segundo Plano...</string>
+    <string name="BindingToService">Vinculándose al Servicio en Segundo Plano…</string>
     <string name="WatchConnectedOk">Reloj Conectado OK</string>
     <string name="WatchNotConnected">Reloj sin Conectar</string>
     <string name="SeizureDetectorDataReceived">Datos del Detector de Convulsiones Recibidos OK</string>
-    <string name="WaitingForSeizureDetectorData">Esperando por los Datos del Detector de Convulsiones...</string>
+    <string name="WaitingForSeizureDetectorData">Esperando por los Datos del Detector de Convulsiones…</string>
     <string name="SeizureDetectorSettingsReceived">Configuración del Detector de Convulsiones Recibida OK</string>
-    <string name="WaitingForSeizureDetectorSettings">Esperando por la Configuración del Detector de Convulsiones...</string>
+    <string name="WaitingForSeizureDetectorSettings">Esperando por la Configuración del Detector de Convulsiones…</string>
     <string name="DataSource">Fuente de los Datos</string>
     <string name="AppTitleText">Detector de Convulsiones Abierto para Android App Versión </string>
     <string name="ServerRunningOK">Servidor Funcionando OK\n</string>
@@ -113,7 +113,7 @@
     <string name="view_log_entries">Revise las Entradas del Registro</string>
     <string name="export_data">Exporte los Datos</string>
     <string name="settings">Ajustes</string>
-    <string name="about">Sobre...</string>
+    <string name="about">Sobre…</string>
     <string name="about_text">OpenSeizureDetector\n Detector de convulsiones tónico/clónicas y \n sistema de alarma. Usa un Reloj Inteligente Pebble\n para detectar las sacudidas \n asociadas con una convulsión, \n después envia un mensaje audible y de texto \n vía (SMS) para alertar a las personas que cuidan al paciente.\n El sistema es gratis y de código abierto - vea \n http://openseizuredetector.org.uk para más detalles. Por favor reporte cualquier problema a graham@openseizuredetector.org.uk\n o levante un registro de problema en el proyecto github source code \n repository - https://github.com/OpenSeizureDetector</string>
     <string name="credits_text">Aplicación de Reloj y Aplicación de Android \n derecho de autor Graham Jones, 2015.\n Las siguientes bibliotecas se usan :\n - SYLT-FFT - https://github.com/stg/SYLT-FFT by D. Taylor.\n - NanoHTTPD - https://github.com/NanoHttpd/nanohttpd\n - jQuery - http://jquery.org\n - jBeep - http://www.ultraduz.com.br\n - Chartjs - http://www.chartjs.org\n - MPAndroidChart - https://github.com/PhilJay/MPAndroidChart\n - UCE-Handler - https://github.com/RohitSurwase/UCE-Handler\n \n El Logo está basado en la Estrella de la Vida2 por Verdy P, \n Licensed under Public Domain via\n Wikimedia Commons (http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).</string>
     <string name="edit_settings">Edite Ajustes</string>

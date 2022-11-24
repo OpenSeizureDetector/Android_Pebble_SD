@@ -152,7 +152,9 @@
                 android:layout_marginTop="16dp"
                 android:layout_marginRight="4dp"
                 android:layout_marginBottom="4dp"
-                android:hint="notes about event" />
+                android:autofillHints=""
+                android:hint="notes about event"
+                android:inputType="text" />
 
 
             <LinearLayout
@@ -164,12 +166,14 @@
                     android:id="@+id/loginBtn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    style="?android:attr/buttonBarButtonStyle"
                     android:text="@string/okBtnTxt" />
 
                 <Button
                     android:id="@+id/cancelBtn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    style="?android:attr/buttonBarButtonStyle"
                     android:text="@string/cancelBtnTxt" />
             </LinearLayout>
 

@@ -30,7 +30,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.widget.Toast;
 
 /**
  * Broadcast Receiver responds to the BOOT_COMPLETED broadcast and if the 'AutoStart' preference is true,
@@ -39,10 +38,10 @@ import android.widget.Toast;
  */
 
 public class BootBroadcastReceiver extends BroadcastReceiver {
-    private String TAG = "BroadcastReceiver";
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        String TAG = "BroadcastReceiver";
         Log.v(TAG, "onReceive()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(context);

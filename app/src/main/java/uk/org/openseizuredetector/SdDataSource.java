@@ -63,21 +63,14 @@ public abstract class SdDataSource {
     private int mAppRestartTimeout = 10;  // Timeout before re-starting watch app (sec) if we have not received
     // data after mDataUpdatePeriod
     private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
-    private int mSettingsPeriod = 60;  // period between requesting settings in seconds.
     public SdData mSdData;
     public String mName = "undefined";
     protected OsdUtil mUtil;
     protected Context mContext;
-    protected SdDataReceiver mSdDataReceiver;
+    protected static SdDataReceiver mSdDataReceiver;
     private String TAG = "SdDataSource";
 
-    private short mDebug;
-    private short mFreqCutoff = 12;
-    private short mDisplaySpectrum;
     private short mDataUpdatePeriod;
-    private short mMutePeriod;
-    private short mManAlarmPeriod;
-    private short mPebbleSdMode;
     private short mSampleFreq;
     private short mAlarmFreqMin;
     private short mAlarmFreqMax;
@@ -91,11 +84,6 @@ public abstract class SdDataSource {
     private short mFallThreshMax;
     private short mFallWindow;
     private int mMute;  // !=0 means muted by keypress on watch.
-
-    // Values for SD_MODE
-    private int SIMPLE_SPEC_FMAX = 10;
-
-    private int ACCEL_SCALE_FACTOR = 1000;  // Amount by which to reduce analysis results to scale to be comparable to analysis on Pebble.
 
 
     private int mAlarmCount;
@@ -167,12 +155,14 @@ public abstract class SdDataSource {
             Log.v(TAG, "start(): starting settings timer");
             mUtil.writeToSysLogFile("SDDataSource.start() - starting settings timer");
             mSettingsTimer = new Timer();
+            // period between requesting settings in seconds.
+            int mSettingsPeriod = 60;
             mSettingsTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
                     mSdData.haveSettings = false;
                 }
-            }, 0, 1000 * mSettingsPeriod);  // ask for settings less frequently than we get data
+            }, 0, 1000L * mSettingsPeriod);  // ask for settings less frequently than we get data
         } else {
             Log.v(TAG, "start(): settings timer already running.");
             mUtil.writeToSysLogFile("SDDataSource.start() - settings timer already running??");
@@ -266,7 +256,7 @@ public abstract class SdDataSource {
             if (dataTypeStr.equals("raw")) {
                 Log.v(TAG, "updateFromJSON - processing raw data");
                 try {
-                    mSdData.mHR = dataObject.getDouble("HR");
+                    mSdData.mHR = (short) dataObject.getInt("HR");
                 } catch (JSONException e) {
                     // if we get 'null' HR (For example if the heart rate is not working)
                     mSdData.mHR = -1;
@@ -404,6 +394,7 @@ public abstract class SdDataSource {
             Log.v(TAG, "doAnalysis(): mAlarmFreqMin=" + mAlarmFreqMin + ", nMin=" + nMin
                     + ", mAlarmFreqMax=" + mAlarmFreqMax + ", nMax=" + nMax);
             // Calculate the bin number of the cutoff frequency
+            short mFreqCutoff = 12;
             nFreqCutoff = (int) (mFreqCutoff / freqRes);
             Log.v(TAG, "mFreqCutoff = " + mFreqCutoff + ", nFreqCutoff=" + nFreqCutoff);
 
@@ -438,6 +429,8 @@ public abstract class SdDataSource {
             double roiRatio = 10 * roiPower / specPower;
 
             // Calculate the simplified spectrum - power in 1Hz bins.
+            // Values for SD_MODE
+            int SIMPLE_SPEC_FMAX = 10;
             double[] simpleSpec = new double[SIMPLE_SPEC_FMAX + 1];
             for (int ifreq = 0; ifreq < SIMPLE_SPEC_FMAX; ifreq++) {
                 int binMin = (int) (1 + ifreq / freqRes);    // add 1 to loose dc component
@@ -451,6 +444,8 @@ public abstract class SdDataSource {
 
             // Populate the mSdData structure to communicate with the main SdServer service.
             mDataStatusTime.setToNow();
+            // Amount by which to reduce analysis results to scale to be comparable to analysis on Pebble.
+            int ACCEL_SCALE_FACTOR = 1000;
             mSdData.specPower = (long) specPower / ACCEL_SCALE_FACTOR;
             mSdData.roiPower = (long) roiPower / ACCEL_SCALE_FACTOR;
             mSdData.dataTime.setToNow();
@@ -675,11 +670,11 @@ public abstract class SdDataSource {
         // the app is not talking to us
         // mWatchAppRunningCheck is set to true in the receiveData handler.
         if (!mWatchAppRunningCheck &&
-                (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000)) {
+                (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000L)) {
             Log.v(TAG, "getStatus() - tdiff = " + tdiff);
             mSdData.watchAppRunning = false;
             // Only make audible warning beep if we have not received data for more than mFaultTimerPeriod seconds.
-            if (tdiff > (mDataUpdatePeriod + mFaultTimerPeriod) * 1000) {
+            if (tdiff > (mDataUpdatePeriod + mFaultTimerPeriod) * 1000L) {
                 Log.v(TAG, "getStatus() - Watch App Not Running");
                 mUtil.writeToSysLogFile("SDDataSource.getStatus() - Watch App not Running");
                 //mDataStatusTime.setToNow();
@@ -718,7 +713,7 @@ public abstract class SdDataSource {
         //Log.v(TAG, "faultCheck() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout
         //        + ", combined = " + (mDataUpdatePeriod + mAppRestartTimeout) * 1000);
         if (!mWatchAppRunningCheck &&
-                (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000)) {
+                (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000L)) {
             //Log.v(TAG, "faultCheck() - watch app not running so not doing anything");
             mAlarmCount = 0;
         }
@@ -774,12 +769,12 @@ public abstract class SdDataSource {
 
             prefStr = SP.getString("PebbleDebug", "SET_FROM_XML");
             if (prefStr != null) {
-                mDebug = (short) Integer.parseInt(prefStr);
+                short mDebug = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() Debug = " + mDebug);
                 mUtil.writeToSysLogFile( "updatePrefs() Debug = " + mDebug);
 
                 prefStr = SP.getString("PebbleDisplaySpectrum", "SET_FROM_XML");
-                mDisplaySpectrum = (short) Integer.parseInt(prefStr);
+                short mDisplaySpectrum = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() DisplaySpectrum = " + mDisplaySpectrum);
                 mUtil.writeToSysLogFile( "updatePrefs() DisplaySpectrum = " + mDisplaySpectrum);
 
@@ -789,17 +784,17 @@ public abstract class SdDataSource {
                 mUtil.writeToSysLogFile( "updatePrefs() DataUpdatePeriod = " + mDataUpdatePeriod);
 
                 prefStr = SP.getString("MutePeriod", "SET_FROM_XML");
-                mMutePeriod = (short) Integer.parseInt(prefStr);
+                short mMutePeriod = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() MutePeriod = " + mMutePeriod);
                 mUtil.writeToSysLogFile( "updatePrefs() MutePeriod = " + mMutePeriod);
 
                 prefStr = SP.getString("ManAlarmPeriod", "SET_FROM_XML");
-                mManAlarmPeriod = (short) Integer.parseInt(prefStr);
+                short mManAlarmPeriod = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() ManAlarmPeriod = " + mManAlarmPeriod);
                 mUtil.writeToSysLogFile( "updatePrefs() ManAlarmPeriod = " + mManAlarmPeriod);
 
                 prefStr = SP.getString("PebbleSdMode", "SET_FROM_XML");
-                mPebbleSdMode = (short) Integer.parseInt(prefStr);
+                short mPebbleSdMode = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() PebbleSdMode = " + mPebbleSdMode);
                 mUtil.writeToSysLogFile( "updatePrefs() PebbleSdMode = " + mPebbleSdMode);
 

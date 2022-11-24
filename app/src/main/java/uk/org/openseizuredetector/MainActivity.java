@@ -25,13 +25,14 @@
 
 package uk.org.openseizuredetector;
 
+import android.app.PendingIntent;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -49,6 +50,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.MenuCompat;
 
 import com.github.mikephil.charting.charts.BarChart;
@@ -57,7 +59,6 @@ import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.utils.ValueFormatter;
 import com.rohitss.uceh.UCEHandler;
 
 import java.lang.reflect.Field;
@@ -70,22 +71,477 @@ import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
     static final String TAG = "MainActivity";
-    private int okColour = Color.BLUE;
-    private int warnColour = Color.MAGENTA;
-    private int alarmColour = Color.RED;
-    private int okTextColour = Color.WHITE;
-    private int warnTextColour = Color.WHITE;
-    private int alarmTextColour = Color.BLACK;
+    final Handler serverStatusHandler = new Handler();
+    /*
+     * serverStatusRunnable - called by serverStatus - updates the
+     * user interface to reflect the current status received from the server.
+     */
+    final Runnable serverStatusRunnable = new Runnable() {
+        public void run() {
+            Log.v(TAG, "serverStatusRunnable()");
+
+            TextView tv;
+            int warnTextColour = Color.WHITE;
+            int okTextColour = Color.WHITE;
+            int warnColour = Color.MAGENTA;
+            int okColour = Color.BLUE;
+            if (mUtil.isServerRunning()) {
+                tv = (TextView) findViewById(R.id.serverStatusTv);
+                if (mConnection.mBound)
+                    if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
+                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)");
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    } else {
+                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
+                        tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+                    }
+                tv = (TextView) findViewById(R.id.serverIpTv);
+                tv.setText(getString(R.string.AccessServerAt) + " http://"
+                        + mUtil.getLocalIpAddress()
+                        + ":8080");
+                tv.setBackgroundColor(okColour);
+                tv.setTextColor(okTextColour);
+            } else {
+                tv = (TextView) findViewById(R.id.serverStatusTv);
+                tv.setText(R.string.ServerStopped);
+                tv.setBackgroundColor(warnColour);
+                tv.setTextColor(warnTextColour);
+                tv = (TextView) findViewById(R.id.serverIpTv);
+                tv.setText("--");
+                tv.setBackgroundColor(warnColour);
+                tv.setTextColor(warnTextColour);
+            }
+
+
+            int alarmColour = Color.RED;
+            try {
+                if (mConnection.mBound) {
+                    tv = (TextView) findViewById(R.id.alarmTv);
+                    if ((mConnection.mSdServer.mSdData.alarmState == 0)
+                            && !mConnection.mSdServer.mSdData.alarmStanding
+                            && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
+                        tv.setText(getString(R.string.okBtnTxt));
+                        tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+                    }
+                    if ((mConnection.mSdServer.mSdData.alarmState == 1)
+                            && !mConnection.mSdServer.mSdData.alarmStanding
+                            && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
+                        tv.setText(R.string.Warning);
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+                    if (mConnection.mSdServer.mSdData.alarmState == 6) {
+                        tv.setText(R.string.Mute);
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+                    int alarmTextColour = Color.BLACK;
+                    if (mConnection.mSdServer.mSdData.alarmStanding) {
+                        tv.setText(R.string.Alarm);
+                        tv.setBackgroundColor(alarmColour);
+                        tv.setTextColor(alarmTextColour);
+                    }
+                    if (mConnection.mSdServer.mSdData.fallAlarmStanding) {
+                        tv.setText(R.string.Fall);
+                        tv.setBackgroundColor(alarmColour);
+                        tv.setTextColor(alarmTextColour);
+                    }
+
+                    tv = (TextView) findViewById(R.id.pebTimeTv);
+                    tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+
+                    // Pebble Connected Phrase - use for HR if active instead.
+                    tv = (TextView) findViewById(R.id.pebbleTv);
+                    if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
+                        if (mConnection.mSdServer.mSdData.mO2Sat>0) {
+                            tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
+                                    + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
+                        } else {
+                            tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
+                                    + "O2 Sat = ---%");
+                        }
+                        if (mConnection.mSdServer.mSdData.mHRAlarmStanding || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
+                            tv.setBackgroundColor(alarmColour);
+                            tv.setTextColor(alarmTextColour);
+                        } else if (mConnection.mSdServer.mSdData.mHRFaultStanding || mConnection.mSdServer.mSdData.mO2SatFaultStanding) {
+                            tv.setBackgroundColor(warnColour);
+                            tv.setTextColor(warnTextColour);
+                        } else {
+                            tv.setBackgroundColor(okColour);
+                            tv.setTextColor(okTextColour);
+                        }
+                    } else {
+                        if (mConnection.mSdServer.mSdData.watchConnected) {
+                            tv.setText(R.string.HRAlarmOff);
+                            tv.setBackgroundColor(okColour);
+                            tv.setTextColor(okTextColour);
+
+                        } else {
+                            tv.setText(getString(R.string.WatchNotConnected));
+                            tv.setBackgroundColor(warnColour);
+                            tv.setTextColor(warnTextColour);
+                        }
+                    }
+                    tv = (TextView) findViewById(R.id.appTv);
+                    if (mConnection.mSdServer.mSdData.watchAppRunning) {
+                        tv.setText(R.string.WatchAppOK);
+                        tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+                    } else {
+                        tv.setText(R.string.WatchAppNotRunning);
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+                    tv = (TextView) findViewById(R.id.battTv);
+                    tv.setText(getString(R.string.WatchBatteryEquals) + String.valueOf(mConnection.mSdServer.mSdData.batteryPc) + "%");
+                    if (mConnection.mSdServer.mSdData.batteryPc <= 10) {
+                        tv.setBackgroundColor(alarmColour);
+                        tv.setTextColor(alarmTextColour);
+                    }
+                    if (mConnection.mSdServer.mSdData.batteryPc > 10) {
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+                    if (mConnection.mSdServer.mSdData.batteryPc >= 20) {
+                        tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+                    }
+
+                    ////////////////////////////////////////////////////////////
+                    // Populate the Data Sharing Status Box
+                    // We start off with it set to OK, then check for several different abnormal conditions
+                    // in turn - the last one that is active is the one that is displayed.
+                    tv = (TextView) findViewById(R.id.remoteDbTv);
+                    tv.setText(getString(R.string.data_sharing_status)
+                            + ": "
+                            + getString(R.string.data_sharing_setup_ok));
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+
+                    if (!mConnection.mSdServer.mLm.mWac.checkServerConnection()) {
+                        // Problem connecting to server
+                        tv = (TextView) findViewById(R.id.remoteDbTv);
+                        tv.setText(getString(R.string.data_sharing_status)
+                                + ": "
+                                + getString(R.string.error_connecting_to_server));
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+
+                    if (!mConnection.mSdServer.mLogDataRemoteMobile && mUtil.isMobileDataActive()) {
+                        // We are on mobile internet but we are set to not upload over mobile data.
+                        tv.setText(getString(R.string.data_sharing_status)
+                                + ": "
+                                + getString(R.string.not_updating_mobile));
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+
+                    if (!mUtil.isNetworkConnected()) {
+                        // No network connection
+                        tv.setText(getString(R.string.data_sharing_status)
+                                + ": "
+                                + getString(R.string.not_updating_no_network));
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+
+                    if (!mConnection.mSdServer.mLm.mWac.isLoggedIn()) {
+                        // Not Logged In
+                        tv.setText(getString(R.string.data_sharing_status)
+                                + ": "
+                                + getString(R.string.not_logged_in));
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+
+                    if (!mConnection.mSdServer.mLogData) {
+                        // Not set to share data
+                        tv.setText(getString(R.string.data_sharing_status)
+                                + ": "
+                                + getString(R.string.not_sharing_logged_data));
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+
+                    /////////////////////////////////////////////////////
+                    // Set ProgressBars to show margin to alarm.
+                    long powerPc;
+                    if (mConnection.mSdServer.mSdData.alarmThresh != 0)
+                        powerPc = mConnection.mSdServer.mSdData.roiPower * 100 /
+                                mConnection.mSdServer.mSdData.alarmThresh;
+                    else
+                        powerPc = 0;
+
+                    long specPc;
+                    if (mConnection.mSdServer.mSdData.specPower != 0 &&
+                            mConnection.mSdServer.mSdData.alarmRatioThresh != 0)
+                        specPc = 100 * (mConnection.mSdServer.mSdData.roiPower * 10 /
+                                mConnection.mSdServer.mSdData.specPower) /
+                                mConnection.mSdServer.mSdData.alarmRatioThresh;
+                    else
+                        specPc = 0;
+
+                    long specRatio;
+                    if (mConnection.mSdServer.mSdData.specPower != 0) {
+                        specRatio = 10 * mConnection.mSdServer.mSdData.roiPower /
+                                mConnection.mSdServer.mSdData.specPower;
+                    } else
+                        specRatio = 0;
+
+                    ((TextView) findViewById(R.id.powerTv)).setText(getString(R.string.PowerEquals) + mConnection.mSdServer.mSdData.roiPower +
+                            " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
+                    ((TextView) findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
+                            " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
+
+                    //changes in this block done upon catched exceptions due to API>=22
+                    //https://stackoverflow.com/questions/29041027/android-getresources-getdrawable-deprecated-api-22
+                    ProgressBar pb;
+                    Drawable pbDrawable;
+                    pb = ((ProgressBar) findViewById(R.id.powerProgressBar));
+                    pb.setMax(100);
+                    pb.setProgress((int) powerPc);
+                    pbDrawable = ContextCompat.getDrawable(mContext, R.drawable.progress_bar_blue);
+                    if (powerPc > 75)
+                        pbDrawable = ContextCompat.getDrawable(mContext, R.drawable.progress_bar_yellow);
+                    if (powerPc > 100)
+                        pbDrawable = ContextCompat.getDrawable(mContext, R.drawable.progress_bar_red);
+
+                    //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
+
+                    pb.setProgressDrawable(pbDrawable);
+
+                    pb = ((ProgressBar) findViewById(R.id.spectrumProgressBar));
+                    pb.setMax(100);
+                    pb.setProgress((int) specPc);
+                    pbDrawable = ContextCompat.getDrawable(mContext, R.drawable.progress_bar_blue);
+                    if (specPc > 75)
+                        pbDrawable = ContextCompat.getDrawable(mContext, R.drawable.progress_bar_yellow);
+                    if (specPc > 100)
+                        pbDrawable = ContextCompat.getDrawable(mContext, R.drawable.progress_bar_red);
+                    //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
+                    pb.setProgressDrawable(pbDrawable);
+
+
+                    // Fault Conditions - We override the values in the UI because we do not know
+                    // if the stored ones are correct or not with a fault present.
+                    if ((mConnection.mSdServer.mSdData.alarmState == 4) ||
+                            (mConnection.mSdServer.mSdData.alarmState == 7)) {
+                        tv = (TextView) findViewById(R.id.alarmTv);
+                        if (mConnection.mSdServer.mSdData.alarmState == 4) {
+                            tv.setText(R.string.Fault);
+                            tv.setBackgroundColor(warnColour);
+                            tv.setTextColor(warnTextColour);
+                        }
+                        if (mConnection.mSdServer.mSdData.alarmState == 7) {
+                            tv.setText(R.string.NetFault);
+                            tv.setBackgroundColor(warnColour);
+                            tv.setTextColor(warnTextColour);
+                        }
+                        tv = (TextView) findViewById(R.id.pebTimeTv);
+                        tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
+                        tv.setBackgroundColor(okColour);
+                        tv.setTextColor(okTextColour);
+
+                        tv = (TextView) findViewById(R.id.pebTimeTv);
+                        tv.setText("--:--:--");
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+
+                        tv = (TextView) findViewById(R.id.pebbleTv);
+                        tv.setText(getString(R.string.HR_Equals) + " --- bpm\nO2 Sat = --- %");
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+
+                        tv = (TextView) findViewById(R.id.appTv);
+                        tv.setText(getString(R.string.WatchApp) + " ----");
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+
+                        tv = (TextView) findViewById(R.id.battTv);
+                        tv.setText(getString(R.string.WatchBatteryEquals) + " ---%");
+                        tv.setBackgroundColor(warnColour);
+                        tv.setTextColor(warnTextColour);
+                    }
+                } else {   // Not bound to server
+                    tv = (TextView) findViewById(R.id.alarmTv);
+                    tv.setText(R.string.Dashes);
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+                    tv = (TextView) findViewById(R.id.pebTimeTv);
+                    tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+
+                    tv = (TextView) findViewById(R.id.pebTimeTv);
+                    tv.setText("--:--:--");
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+
+                    tv = (TextView) findViewById(R.id.pebbleTv);
+                    tv.setText(getString(R.string.HR_Equals) + "---");
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+
+                    tv = (TextView) findViewById(R.id.appTv);
+                    tv.setText(getString(R.string.WatchApp) + " -----");
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+
+                    tv = (TextView) findViewById(R.id.battTv);
+                    tv.setText(getString(R.string.WatchBatteryEquals) + " ---%");
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+
+                    tv = (TextView) findViewById(R.id.remoteDbTv);
+                    tv.setText("---");
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "ServerStatusRunnable: Exception - ");
+                e.printStackTrace();
+            }
+
+            // deal with latch alarms button
+            Button acceptAlarmButton = (Button) findViewById(R.id.acceptAlarmButton);
+
+            if (mConnection.mBound) {
+                if ((mConnection.mSdServer.mSmsTimer != null)
+                        && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0)) {
+                    acceptAlarmButton.setText(getString(R.string.SMSWillBeSentIn) + " " +
+                            mConnection.mSdServer.mSmsTimer.mTimeLeft / 1000 +
+                            " s - " + getString(R.string.Cancel));
+                    acceptAlarmButton.setBackgroundColor(alarmColour);
+                    acceptAlarmButton.setEnabled(true);
+                } else {
+                    acceptAlarmButton.setText(R.string.AcceptAlarm);
+                    acceptAlarmButton.setBackgroundColor(Color.GRAY);
+                    if (mConnection.mBound)
+                        if ((mConnection.mSdServer.isLatchAlarms())
+                                || mConnection.mSdServer.mSdData.mFallActive) {
+                            acceptAlarmButton.setEnabled(true);
+                        } else {
+                            acceptAlarmButton.setEnabled(false);
+                        }
+                }
+            } else {
+                acceptAlarmButton.setText(getString(R.string.AcceptAlarm));
+                acceptAlarmButton.setBackgroundColor(Color.DKGRAY);
+                acceptAlarmButton.setEnabled(false);
+            }
+
+            // Deal with Cancel Audible button
+            Button cancelAudibleButton =
+                    (Button) findViewById(R.id.cancelAudibleButton);
+            if (mConnection.mBound)
+                if (mConnection.mSdServer.isAudibleCancelled()) {
+                    cancelAudibleButton.setText(getString(R.string.AudibleAlarmsCancelledFor)
+                            + " " + mConnection.mSdServer.
+                            cancelAudibleTimeRemaining()
+                            + " sec");
+                    cancelAudibleButton.setEnabled(true);
+                } else {
+                    if (mConnection.mSdServer.mAudibleAlarm) {
+                        cancelAudibleButton.setText(R.string.CancelAudibleAlarms);
+                        cancelAudibleButton.setEnabled(true);
+                    } else {
+                        cancelAudibleButton.setText(R.string.AudibleAlarmsOff);
+                        cancelAudibleButton.setEnabled(false);
+                    }
+                }
+
+            ////////////////////////////////////////////////////////////
+            // Produce graph
+            BarChart mChart = (BarChart) findViewById(R.id.chart1);
+            mChart.setDrawBarShadow(false);
+            mChart.setNoDataTextDescription("You need to provide data for the chart.");
+            mChart.setDescription("");
+
+            // X and Y Values
+            ArrayList<String> xVals = new ArrayList<>();
+            ArrayList<BarEntry> yBarVals = new ArrayList<>();
+            for (int i = 0; i < 10; i++) {
+                xVals.add(i + "-" + (i + 1) + " Hz");
+                if (mConnection.mSdServer != null) {
+                    yBarVals.add(new BarEntry(mConnection.mSdServer.mSdData.simpleSpec[i], i));
+                } else {
+                    yBarVals.add(new BarEntry(i, i));
+                }
+            }
+
+            // create a dataset and give it a type
+            BarDataSet barDataSet = new BarDataSet(yBarVals, "Spectrum");
+            try {
+                int[] barColours = new int[10];
+                for (int i = 0; i < 10; i++) {
+                    if ((i < mConnection.mSdServer.mSdData.alarmFreqMin) ||
+                            (i > mConnection.mSdServer.mSdData.alarmFreqMax)) {
+                        barColours[i] = Color.GRAY;
+                    } else {
+                        barColours[i] = Color.RED;
+                    }
+                }
+                barDataSet.setColors(barColours);
+            } catch (NullPointerException e) {
+                Log.e(TAG, "Null pointer exception setting bar colours");
+            }
+            barDataSet.setBarSpacePercent(20f);
+            barDataSet.setBarShadowColor(Color.WHITE);
+            BarData barData = new BarData(xVals, barDataSet);
+            barData.setValueFormatter(v -> {
+                DecimalFormat format = new DecimalFormat("####");
+                return format.format(v);
+            });
+            mChart.setData(barData);
+
+            // format the axes
+            XAxis xAxis = mChart.getXAxis();
+            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+            xAxis.setTextSize(10f);
+            xAxis.setDrawAxisLine(true);
+            xAxis.setDrawLabels(true);
+            // Note:  the default text colour is BLACK, so does not show up on black background!!!
+            //  This took a lot of finding....
+            xAxis.setTextColor(Color.WHITE);
+            xAxis.setDrawGridLines(false);
+
+            YAxis yAxis = mChart.getAxisLeft();
+            yAxis.setAxisMinValue(0f);
+            yAxis.setAxisMaxValue(3000f);
+            yAxis.setDrawGridLines(true);
+            yAxis.setDrawLabels(true);
+            yAxis.setTextColor(Color.WHITE);
+            yAxis.setValueFormatter(v -> {
+                DecimalFormat format = new DecimalFormat("#####");
+                return format.format(v);
+            });
+
+            YAxis yAxis2 = mChart.getAxisRight();
+            yAxis2.setDrawGridLines(false);
+
+            try {
+                mChart.getLegend().setEnabled(false);
+            } catch (NullPointerException e) {
+                Log.e(TAG, "Null Pointer Exception setting legend");
+            }
+
+            mChart.invalidate();
+        }
+    };
+    public int Flag_Intend = PendingIntent.FLAG_UPDATE_CURRENT;
+    Messenger messenger = new Messenger(new ResponseHandler());
     private OsdUtil mUtil;
     private SdServiceConnection mConnection;
     private Menu mOptionsMenu;
-
     private Intent sdServerIntent;
-
-    final Handler serverStatusHandler = new Handler();
-    Messenger messenger = new Messenger(new ResponseHandler());
-    Timer mUiTimer;
     private Context mContext;
+    Timer mUiTimer;
 
     /**
      * Called when the activity is first created.
@@ -102,30 +558,46 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         //int i = 5/0;  // Force exception to test handler.
-        mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
-        mConnection = new SdServiceConnection(getApplicationContext());
+
+
+        //set mContext
+        mContext = this;
+        //create OsdUtil
+        mUtil = new OsdUtil(mContext, serverStatusHandler);
         mUtil.writeToSysLogFile("");
         mUtil.writeToSysLogFile("* MainActivity Started     *");
         mUtil.writeToSysLogFile("MainActivity.onCreate()");
-        mContext = this;
+
+        mConnection = new SdServiceConnection(mContext);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Flag_Intend = PendingIntent.FLAG_IMMUTABLE;
+        }
 
         // Initialise the User Interface
         setContentView(R.layout.main);
 
         /* Force display of overflow menu - from stackoverflow
          * "how to force use of..."
+         * https://commonsware.com/blog/2013/12/09/menu-key-dead-again.html
+         * https://developer.android.com/reference/android/view/ViewConfiguration
          */
         try {
             Log.v(TAG, "trying menubar fiddle...");
             ViewConfiguration config = ViewConfiguration.get(this);
-            Field menuKeyField =
-                    ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
-            if (menuKeyField != null) {
+            //TODO: After API>33 remove next lines and strip until
+            Field menuKeyField = null;
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                menuKeyField =
+                        ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+            } // TODO: here before ! config. start new if( before.
+            if ((menuKeyField != null) || !config.hasPermanentMenuKey()) {
                 Log.v(TAG, "menuKeyField is not null - configuring....");
                 menuKeyField.setAccessible(true);
                 menuKeyField.setBoolean(config, false);
             } else {
-                Log.v(TAG, "menuKeyField is null - doing nothing...");
+                Log.v(TAG, "menuKeyField is null or config.hasPermanentMenuKey() is true");
+                menuKeyField.setAccessible(false);
+                menuKeyField.setBoolean(config, true);
             }
         } catch (Exception e) {
             Log.v(TAG, "menubar fiddle exception: " + e.toString());
@@ -136,65 +608,59 @@ public class MainActivity extends AppCompatActivity {
 
         // Deal with the 'AcceptAlarm Button'
         Button button = (Button) findViewById(R.id.acceptAlarmButton);
-        button.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                Log.v(TAG, "acceptAlarmButton.onClick()");
-                if (mConnection.mBound) {
-                    if ((mConnection.mSdServer.mSmsTimer != null)
-                            && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0)) {
-                        Log.i(TAG, "acceptAlarmButton.onClick() - Stopping SMS Timer");
-                        mUtil.showToast(getString(R.string.SMSAlarmCancelledMsg));
-                        mConnection.mSdServer.stopSmsTimer();
-                    } else {
-                        Log.v(TAG, "acceptAlarmButton.onClick() - Accepting Alarm");
-                        mConnection.mSdServer.acceptAlarm();
-                    }
+        button.setOnClickListener(v -> {
+            Log.v(TAG, "acceptAlarmButton.onClick()");
+            if (mConnection.mBound) {
+                if ((mConnection.mSdServer.mSmsTimer != null)
+                        && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0)) {
+                    Log.i(TAG, "acceptAlarmButton.onClick() - Stopping SMS Timer");
+                    mUtil.showToast(getString(R.string.SMSAlarmCancelledMsg));
+                    mConnection.mSdServer.stopSmsTimer();
+                } else {
+                    Log.v(TAG, "acceptAlarmButton.onClick() - Accepting Alarm");
+                    mConnection.mSdServer.acceptAlarm();
                 }
             }
         });
 
         // Deal with the 'Cancel Audible Button'
         button = (Button) findViewById(R.id.cancelAudibleButton);
-        button.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                Log.v(TAG, "cancelAudibleButton.onClick()");
-                if (mConnection.mBound) {
-                    mConnection.mSdServer.cancelAudible();
-                }
+        button.setOnClickListener(v -> {
+            Log.v(TAG, "cancelAudibleButton.onClick()");
+            if (mConnection.mBound) {
+                mConnection.mSdServer.cancelAudible();
             }
         });
 
         // Deal with the 'Raise Alarm'
         button = (Button) findViewById(R.id.manualAlarmButton);
-        button.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                Log.v(TAG, "manualAlarmButton.onClick()");
-                // Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
-                //AlertDialog.Builder builder = new AlertDialog.Builder(getBaseContext());
-                //builder.setTitle("Raise Alarm");
-                //builder.setMessage(String.format("Raise a Seizure Detected Alarm NOW?"));
-                //builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
-                //    @Override
-                //    public void onClick(DialogInterface dialog, int which) {
-                if (mConnection.mBound) {
-                    mConnection.mSdServer.raiseManualAlarm();
-                }
-                //        dialog.dismiss();
-                //    }
-                //});
-                //builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
-                //    @Override
-                //    public void onClick(DialogInterface dialog, int which) {
-                //        dialog.dismiss();
-                //    }
-                //});
-                //AlertDialog alert = builder.create();
-                //if (!(this).isFinishing()) {
-                //    alert.show();
-                //}
-
-
+        button.setOnClickListener(v -> {
+            Log.v(TAG, "manualAlarmButton.onClick()");
+            // Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
+            //AlertDialog.Builder builder = new AlertDialog.Builder(getBaseContext());
+            //builder.setTitle("Raise Alarm");
+            //builder.setMessage(String.format("Raise a Seizure Detected Alarm NOW?"));
+            //builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+            //    @Override
+            //    public void onClick(DialogInterface dialog, int which) {
+            if (mConnection.mBound) {
+                mConnection.mSdServer.raiseManualAlarm();
             }
+            //        dialog.dismiss();
+            //    }
+            //});
+            //builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+            //    @Override
+            //    public void onClick(DialogInterface dialog, int which) {
+            //        dialog.dismiss();
+            //    }
+            //});
+            //AlertDialog alert = builder.create();
+            //if (!(this).isFinishing()) {
+            //    alert.show();
+            //}
+
+
         });
         // The background service might ask us to show the data sharing dialog if data sharing is not working correctly
         String actionStr = getIntent().getAction();
@@ -205,32 +671,6 @@ public class MainActivity extends AppCompatActivity {
             }
         } else {
             Log.i(TAG, "onCreate - action is null - starting normally");
-        }
-    }
-
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        String actionStr;
-        Log.i(TAG, "onNewIntent");
-        Bundle extras = intent.getExtras();
-        // The background service might ask us to show the data sharing dialog if data sharing is not working correctly
-        actionStr = getIntent().getAction();
-        if (actionStr != null) {
-            Log.i(TAG, "onNewIntent() - action=" + actionStr);
-            if (actionStr.equals("showDataSharingDialog")) {
-                showDataSharingDialog();
-            }
-        } else {
-            if (extras != null) {
-                actionStr = extras.getString("action");
-                if (actionStr.equals("showDataSharingDialog")) {
-                    showDataSharingDialog();
-                }
-                Log.i(TAG, "onNewIntent - extra actionstr is "+actionStr);
-            } else {
-                Log.i(TAG, "onNewIntent - extra actionstr is null - starting normally");
-            }
         }
     }
 
@@ -411,37 +851,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-        Log.i(TAG, "onStart()");
-        mUtil.writeToSysLogFile("MainActivity.onStart()");
-        SharedPreferences SP = PreferenceManager
-                .getDefaultSharedPreferences(getBaseContext());
-        boolean audibleAlarm = SP.getBoolean("AudibleAlarm", true);
-        Log.v(TAG, "onStart - auidbleAlarm = " + audibleAlarm);
-
-        TextView tv;
-        tv = (TextView) findViewById(R.id.versionTv);
-        String versionName = mUtil.getAppVersionName();
-        tv.setText(getString(R.string.AppTitleText) + " " + versionName);
-
-        if (mUtil.isServerRunning()) {
-            mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
-            mUtil.bindToServer(getApplicationContext(), mConnection);
-        } else {
-            Log.i(TAG, "onStart() - Server Not Running");
-            mUtil.writeToSysLogFile("MainActivity.onStart - Server Not Running");
-        }
-        // start timer to refresh user interface every second.
-        mUiTimer = new Timer();
-        mUiTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                updateServerStatus();
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        String actionStr;
+        Log.i(TAG, "onNewIntent");
+        Bundle extras = intent.getExtras();
+        // The background service might ask us to show the data sharing dialog if data sharing is not working correctly
+        actionStr = getIntent().getAction();
+        if (actionStr != null) {
+            Log.i(TAG, "onNewIntent() - action=" + actionStr);
+            if (actionStr.equals("showDataSharingDialog")) {
+                showDataSharingDialog();
             }
-        }, 0, 1000);
-
-
+        } else {
+            if (extras != null) {
+                actionStr = extras.getString("action");
+                if (actionStr.equals("showDataSharingDialog")) {
+                    showDataSharingDialog();
+                }
+                Log.i(TAG, "onNewIntent - extra actionstr is " + actionStr);
+            } else {
+                Log.i(TAG, "onNewIntent - extra actionstr is null - starting normally");
+            }
+        }
     }
 
     @Override
@@ -492,466 +924,41 @@ public class MainActivity extends AppCompatActivity {
         serverStatusHandler.post(serverStatusRunnable);
     }
 
-    /*
-     * serverStatusRunnable - called by serverStatus - updates the
-     * user interface to reflect the current status received from the server.
-     */
-    final Runnable serverStatusRunnable = new Runnable() {
-        public void run() {
-            Log.v(TAG, "serverStatusRunnable()");
+    @Override
+    protected void onStart() {
 
-            TextView tv;
-            if (mUtil.isServerRunning()) {
-                tv = (TextView) findViewById(R.id.serverStatusTv);
-                if (mConnection.mBound)
-                    if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
-                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone"+"\n"+"(Demo Mode)");
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-                    } else {
-                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
-                        tv.setBackgroundColor(okColour);
-                        tv.setTextColor(okTextColour);
-                    }
-                tv = (TextView) findViewById(R.id.serverIpTv);
-                tv.setText(getString(R.string.AccessServerAt) + " http://"
-                        + mUtil.getLocalIpAddress()
-                        + ":8080");
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
-            } else {
-                tv = (TextView) findViewById(R.id.serverStatusTv);
-                tv.setText(R.string.ServerStopped);
-                tv.setBackgroundColor(warnColour);
-                tv.setTextColor(warnTextColour);
-                tv = (TextView) findViewById(R.id.serverIpTv);
-                tv.setText("--");
-                tv.setBackgroundColor(warnColour);
-                tv.setTextColor(warnTextColour);
-            }
+        super.onStart();
+        Log.i(TAG, "onStart()");
 
+        mUtil.writeToSysLogFile("MainActivity.onStart()");
+        SharedPreferences SP = PreferenceManager
+                .getDefaultSharedPreferences(getBaseContext());
+        boolean audibleAlarm = SP.getBoolean("AudibleAlarm", true);
+        Log.v(TAG, "onStart - auidbleAlarm = " + audibleAlarm);
 
-            try {
-                if (mConnection.mBound) {
-                    tv = (TextView) findViewById(R.id.alarmTv);
-                    if ((mConnection.mSdServer.mSdData.alarmState == 0)
-                            && !mConnection.mSdServer.mSdData.alarmStanding
-                            && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
-                        tv.setText(getString(R.string.okBtnTxt));
-                        tv.setBackgroundColor(okColour);
-                        tv.setTextColor(okTextColour);
-                    }
-                    if ((mConnection.mSdServer.mSdData.alarmState == 1)
-                            && !mConnection.mSdServer.mSdData.alarmStanding
-                            && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
-                        tv.setText(R.string.Warning);
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-                    }
-                    if (mConnection.mSdServer.mSdData.alarmState == 6) {
-                        tv.setText(R.string.Mute);
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-                    }
-                    if (mConnection.mSdServer.mSdData.alarmStanding) {
-                        tv.setText(R.string.Alarm);
-                        tv.setBackgroundColor(alarmColour);
-                        tv.setTextColor(alarmTextColour);
-                    }
-                    if (mConnection.mSdServer.mSdData.fallAlarmStanding) {
-                        tv.setText(R.string.Fall);
-                        tv.setBackgroundColor(alarmColour);
-                        tv.setTextColor(alarmTextColour);
-                    }
+        TextView tv;
+        tv = (TextView) findViewById(R.id.versionTv);
+        String versionName = mUtil.getAppVersionName();
+        tv.setText(getString(R.string.AppTitleText) + " " + versionName);
 
-                    tv = (TextView) findViewById(R.id.pebTimeTv);
-                    tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
-                    tv.setBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
-
-                    // Pebble Connected Phrase - use for HR if active instead.
-                    tv = (TextView) findViewById(R.id.pebbleTv);
-                    if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
-                        if (mConnection.mSdServer.mSdData.mO2Sat>0) {
-                            tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
-                                    + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
-                        } else {
-                            tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
-                                    + "O2 Sat = ---%");
-                        }
-                        if (mConnection.mSdServer.mSdData.mHRAlarmStanding || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
-                            tv.setBackgroundColor(alarmColour);
-                            tv.setTextColor(alarmTextColour);
-                        } else if (mConnection.mSdServer.mSdData.mHRFaultStanding || mConnection.mSdServer.mSdData.mO2SatFaultStanding) {
-                            tv.setBackgroundColor(warnColour);
-                            tv.setTextColor(warnTextColour);
-                        } else {
-                            tv.setBackgroundColor(okColour);
-                            tv.setTextColor(okTextColour);
-                        }
-                    } else {
-                        if (mConnection.mSdServer.mSdData.watchConnected) {
-                            tv.setText(R.string.HRAlarmOff);
-                            tv.setBackgroundColor(okColour);
-                            tv.setTextColor(okTextColour);
-
-                        } else {
-                            tv.setText(getString(R.string.WatchNotConnected));
-                            tv.setBackgroundColor(warnColour);
-                            tv.setTextColor(warnTextColour);
-                        }
-                    }
-                    tv = (TextView) findViewById(R.id.appTv);
-                    if (mConnection.mSdServer.mSdData.watchAppRunning) {
-                        tv.setText(R.string.WatchAppOK);
-                        tv.setBackgroundColor(okColour);
-                        tv.setTextColor(okTextColour);
-                    } else {
-                        tv.setText(R.string.WatchAppNotRunning);
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-                    }
-                    tv = (TextView) findViewById(R.id.battTv);
-                    tv.setText(getString(R.string.WatchBatteryEquals) + String.valueOf(mConnection.mSdServer.mSdData.batteryPc) + "%");
-                    if (mConnection.mSdServer.mSdData.batteryPc <= 10) {
-                        tv.setBackgroundColor(alarmColour);
-                        tv.setTextColor(alarmTextColour);
-                    }
-                    if (mConnection.mSdServer.mSdData.batteryPc > 10) {
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-                    }
-                    if (mConnection.mSdServer.mSdData.batteryPc >= 20) {
-                        tv.setBackgroundColor(okColour);
-                        tv.setTextColor(okTextColour);
-                    }
-
-                    ////////////////////////////////////////////////////////////
-                    // Populate the Data Sharing Status Box
-                    // We start off with it set to OK, then check for several different abnormal conditions
-                    // in turn - the last one that is active is the one that is displayed.
-                    tv = (TextView) findViewById(R.id.remoteDbTv);
-                    tv.setText(getString(R.string.data_sharing_status)
-                            + ": "
-                            + getString(R.string.data_sharing_setup_ok));
-                    tv.setBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
-
-                    if (!mConnection.mSdServer.mLm.mWac.checkServerConnection()) {
-                        // Problem connecting to server
-                        tv = (TextView) findViewById(R.id.remoteDbTv);
-                        tv.setText(getString(R.string.data_sharing_status)
-                                + ": "
-                                + getString(R.string.error_connecting_to_server));
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-                    }
-
-                    if (!mConnection.mSdServer.mLogDataRemoteMobile && mUtil.isMobileDataActive()) {
-                        // We are on mobile internet but we are set to not upload over mobile data.
-                        tv.setText(getString(R.string.data_sharing_status)
-                                + ": "
-                                + getString(R.string.not_updating_mobile));
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-                    }
-
-                    if (!mUtil.isNetworkConnected()) {
-                        // No network connection
-                        tv.setText(getString(R.string.data_sharing_status)
-                                + ": "
-                                + getString(R.string.not_updating_no_network));
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-                    }
-
-                    if (!mConnection.mSdServer.mLm.mWac.isLoggedIn()) {
-                        // Not Logged In
-                        tv.setText(getString(R.string.data_sharing_status)
-                                + ": "
-                                + getString(R.string.not_logged_in));
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-                    }
-
-                    if (!mConnection.mSdServer.mLogData) {
-                        // Not set to share data
-                        tv.setText(getString(R.string.data_sharing_status)
-                                + ": "
-                                + getString(R.string.not_sharing_logged_data));
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-                    }
-
-                    /////////////////////////////////////////////////////
-                    // Set ProgressBars to show margin to alarm.
-                    long powerPc;
-                    if (mConnection.mSdServer.mSdData.alarmThresh != 0)
-                        powerPc = mConnection.mSdServer.mSdData.roiPower * 100 /
-                                mConnection.mSdServer.mSdData.alarmThresh;
-                    else
-                        powerPc = 0;
-
-                    long specPc;
-                    if (mConnection.mSdServer.mSdData.specPower != 0 &&
-                            mConnection.mSdServer.mSdData.alarmRatioThresh != 0)
-                        specPc = 100 * (mConnection.mSdServer.mSdData.roiPower * 10 /
-                                mConnection.mSdServer.mSdData.specPower) /
-                                mConnection.mSdServer.mSdData.alarmRatioThresh;
-                    else
-                        specPc = 0;
-
-                    long specRatio;
-                    if (mConnection.mSdServer.mSdData.specPower != 0) {
-                        specRatio = 10 * mConnection.mSdServer.mSdData.roiPower /
-                                mConnection.mSdServer.mSdData.specPower;
-                    } else
-                        specRatio = 0;
-
-                    ((TextView) findViewById(R.id.powerTv)).setText(getString(R.string.PowerEquals) + mConnection.mSdServer.mSdData.roiPower +
-                            " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
-                    ((TextView) findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
-                            " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
-
-                    ProgressBar pb;
-                    Drawable pbDrawable;
-                    pb = ((ProgressBar) findViewById(R.id.powerProgressBar));
-                    pb.setMax(100);
-                    pb.setProgress((int) powerPc);
-                    pbDrawable = getResources().getDrawable(R.drawable.progress_bar_blue);
-                    if (powerPc > 75)
-                        pbDrawable = getResources().getDrawable(R.drawable.progress_bar_yellow);
-                    if (powerPc > 100)
-                        pbDrawable = getResources().getDrawable(R.drawable.progress_bar_red);
-
-                    //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
-
-                    pb.setProgressDrawable(pbDrawable);
-
-                    pb = ((ProgressBar) findViewById(R.id.spectrumProgressBar));
-                    pb.setMax(100);
-                    pb.setProgress((int) specPc);
-                    pbDrawable = getResources().getDrawable(R.drawable.progress_bar_blue);
-                    if (specPc > 75)
-                        pbDrawable = getResources().getDrawable(R.drawable.progress_bar_yellow);
-                    if (specPc > 100)
-                        pbDrawable = getResources().getDrawable(R.drawable.progress_bar_red);
-                    //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
-                    pb.setProgressDrawable(pbDrawable);
-
-
-                    // Fault Conditions - We override the values in the UI because we do not know
-                    // if the stored ones are correct or not with a fault present.
-                    if ((mConnection.mSdServer.mSdData.alarmState == 4) ||
-                            (mConnection.mSdServer.mSdData.alarmState == 7)) {
-                        tv = (TextView) findViewById(R.id.alarmTv);
-                        if (mConnection.mSdServer.mSdData.alarmState == 4) {
-                            tv.setText(R.string.Fault);
-                            tv.setBackgroundColor(warnColour);
-                            tv.setTextColor(warnTextColour);
-                        }
-                        if (mConnection.mSdServer.mSdData.alarmState == 7) {
-                            tv.setText(R.string.NetFault);
-                            tv.setBackgroundColor(warnColour);
-                            tv.setTextColor(warnTextColour);
-                        }
-                        tv = (TextView) findViewById(R.id.pebTimeTv);
-                        tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
-                        tv.setBackgroundColor(okColour);
-                        tv.setTextColor(okTextColour);
-
-                        tv = (TextView) findViewById(R.id.pebTimeTv);
-                        tv.setText("--:--:--");
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-
-                        tv = (TextView) findViewById(R.id.pebbleTv);
-                        tv.setText(getString(R.string.HR_Equals) + " --- bpm\nO2 Sat = --- %");
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-
-                        tv = (TextView) findViewById(R.id.appTv);
-                        tv.setText(getString(R.string.WatchApp) + " ----");
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-
-                        tv = (TextView) findViewById(R.id.battTv);
-                        tv.setText(getString(R.string.WatchBatteryEquals) + " ---%");
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-                    }
-                } else {   // Not bound to server
-                    tv = (TextView) findViewById(R.id.alarmTv);
-                    tv.setText(R.string.Dashes);
-                    tv.setBackgroundColor(warnColour);
-                    tv.setTextColor(warnTextColour);
-                    tv = (TextView) findViewById(R.id.pebTimeTv);
-                    tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
-                    tv.setBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
-
-                    tv = (TextView) findViewById(R.id.pebTimeTv);
-                    tv.setText("--:--:--");
-                    tv.setBackgroundColor(warnColour);
-                    tv.setTextColor(warnTextColour);
-
-                    tv = (TextView) findViewById(R.id.pebbleTv);
-                    tv.setText(getString(R.string.HR_Equals) + "---");
-                    tv.setBackgroundColor(warnColour);
-                    tv.setTextColor(warnTextColour);
-
-                    tv = (TextView) findViewById(R.id.appTv);
-                    tv.setText(getString(R.string.WatchApp) + " -----");
-                    tv.setBackgroundColor(warnColour);
-                    tv.setTextColor(warnTextColour);
-
-                    tv = (TextView) findViewById(R.id.battTv);
-                    tv.setText(getString(R.string.WatchBatteryEquals) + " ---%");
-                    tv.setBackgroundColor(warnColour);
-                    tv.setTextColor(warnTextColour);
-
-                    tv = (TextView) findViewById(R.id.remoteDbTv);
-                    tv.setText("---");
-                    tv.setBackgroundColor(warnColour);
-                    tv.setTextColor(warnTextColour);
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "ServerStatusRunnable: Exception - ");
-                e.printStackTrace();
-            }
-
-            // deal with latch alarms button
-            Button acceptAlarmButton = (Button) findViewById(R.id.acceptAlarmButton);
-
-            if (mConnection.mBound) {
-                if ((mConnection.mSdServer.mSmsTimer != null)
-                        && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0)) {
-                    acceptAlarmButton.setText(getString(R.string.SMSWillBeSentIn) + " " +
-                            mConnection.mSdServer.mSmsTimer.mTimeLeft / 1000 +
-                            " s - " + getString(R.string.Cancel));
-                    acceptAlarmButton.setBackgroundColor(alarmColour);
-                    acceptAlarmButton.setEnabled(true);
-                } else {
-                    acceptAlarmButton.setText(R.string.AcceptAlarm);
-                    acceptAlarmButton.setBackgroundColor(Color.GRAY);
-                    if (mConnection.mBound)
-                        if ((mConnection.mSdServer.isLatchAlarms())
-                                || mConnection.mSdServer.mSdData.mFallActive) {
-                            acceptAlarmButton.setEnabled(true);
-                        } else {
-                            acceptAlarmButton.setEnabled(false);
-                        }
-                }
-            } else {
-                acceptAlarmButton.setText(getString(R.string.AcceptAlarm));
-                acceptAlarmButton.setBackgroundColor(Color.DKGRAY);
-                acceptAlarmButton.setEnabled(false);
-            }
-
-            // Deal with Cancel Audible button
-            Button cancelAudibleButton =
-                    (Button) findViewById(R.id.cancelAudibleButton);
-            if (mConnection.mBound)
-                if (mConnection.mSdServer.isAudibleCancelled()) {
-                    cancelAudibleButton.setText(getString(R.string.AudibleAlarmsCancelledFor)
-                            + " " + mConnection.mSdServer.
-                            cancelAudibleTimeRemaining()
-                            + " sec");
-                    cancelAudibleButton.setEnabled(true);
-                } else {
-                    if (mConnection.mSdServer.mAudibleAlarm) {
-                        cancelAudibleButton.setText(R.string.CancelAudibleAlarms);
-                        cancelAudibleButton.setEnabled(true);
-                    } else {
-                        cancelAudibleButton.setText(R.string.AudibleAlarmsOff);
-                        cancelAudibleButton.setEnabled(false);
-                    }
-                }
-
-            ////////////////////////////////////////////////////////////
-            // Produce graph
-            BarChart mChart = (BarChart) findViewById(R.id.chart1);
-            mChart.setDrawBarShadow(false);
-            mChart.setNoDataTextDescription("You need to provide data for the chart.");
-            mChart.setDescription("");
-
-            // X and Y Values
-            ArrayList<String> xVals = new ArrayList<String>();
-            ArrayList<BarEntry> yBarVals = new ArrayList<BarEntry>();
-            for (int i = 0; i < 10; i++) {
-                xVals.add(i + "-" + (i + 1) + " Hz");
-                if (mConnection.mSdServer != null) {
-                    yBarVals.add(new BarEntry(mConnection.mSdServer.mSdData.simpleSpec[i], i));
-                } else {
-                    yBarVals.add(new BarEntry(i, i));
-                }
-            }
-
-            // create a dataset and give it a type
-            BarDataSet barDataSet = new BarDataSet(yBarVals, "Spectrum");
-            try {
-                int[] barColours = new int[10];
-                for (int i = 0; i < 10; i++) {
-                    if ((i < mConnection.mSdServer.mSdData.alarmFreqMin) ||
-                            (i > mConnection.mSdServer.mSdData.alarmFreqMax)) {
-                        barColours[i] = Color.GRAY;
-                    } else {
-                        barColours[i] = Color.RED;
-                    }
-                }
-                barDataSet.setColors(barColours);
-            } catch (NullPointerException e) {
-                Log.e(TAG, "Null pointer exception setting bar colours");
-            }
-            barDataSet.setBarSpacePercent(20f);
-            barDataSet.setBarShadowColor(Color.WHITE);
-            BarData barData = new BarData(xVals, barDataSet);
-            barData.setValueFormatter(new ValueFormatter() {
-                @Override
-                public String getFormattedValue(float v) {
-                    DecimalFormat format = new DecimalFormat("####");
-                    return format.format(v);
-                }
-            });
-            mChart.setData(barData);
-
-            // format the axes
-            XAxis xAxis = mChart.getXAxis();
-            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-            xAxis.setTextSize(10f);
-            xAxis.setDrawAxisLine(true);
-            xAxis.setDrawLabels(true);
-            // Note:  the default text colour is BLACK, so does not show up on black background!!!
-            //  This took a lot of finding....
-            xAxis.setTextColor(Color.WHITE);
-            xAxis.setDrawGridLines(false);
-
-            YAxis yAxis = mChart.getAxisLeft();
-            yAxis.setAxisMinValue(0f);
-            yAxis.setAxisMaxValue(3000f);
-            yAxis.setDrawGridLines(true);
-            yAxis.setDrawLabels(true);
-            yAxis.setTextColor(Color.WHITE);
-            yAxis.setValueFormatter(new ValueFormatter() {
-                @Override
-                public String getFormattedValue(float v) {
-                    DecimalFormat format = new DecimalFormat("#####");
-                    return format.format(v);
-                }
-            });
-
-            YAxis yAxis2 = mChart.getAxisRight();
-            yAxis2.setDrawGridLines(false);
-
-            try {
-                mChart.getLegend().setEnabled(false);
-            } catch (NullPointerException e) {
-                Log.e(TAG, "Null Pointer Exception setting legend");
-            }
-
-            mChart.invalidate();
+        if (mUtil.isServerRunning()) {
+            mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
+            mUtil.bindToServer(getApplicationContext(), mConnection);
+        } else {
+            Log.i(TAG, "onStart() - Server Not Running");
+            mUtil.writeToSysLogFile("MainActivity.onStart - Server Not Running");
         }
-    };
+        // start timer to refresh user interface every second.
+        mUiTimer = new Timer();
+        mUiTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                updateServerStatus();
+            }
+        }, 0, 1000);
+
+
+    }
 
 
     @Override
@@ -968,7 +975,6 @@ public class MainActivity extends AppCompatActivity {
         mUtil.writeToSysLogFile("MainActivity.onResume()");
     }
 
-
     private void showAbout() {
         mUtil.writeToSysLogFile("MainActivity.showAbout()");
         View aboutView = getLayoutInflater().inflate(R.layout.about_layout, null, false);
@@ -977,30 +983,22 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setIcon(R.drawable.icon_24x24);
         builder.setTitle("OpenSeizureDetector V" + versionName);
-        builder.setNeutralButton(getString(R.string.closeBtnTxt), new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int id) {
-                dialog.cancel();
-            }
+        builder.setNeutralButton(getString(R.string.closeBtnTxt), (dialog, id) -> dialog.cancel());
+        builder.setPositiveButton("Privacy Policy", (dialog, id) -> {
+            dialog.cancel();
+            String url = OsdUtil.PRIVACY_POLICY_URL;
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setData(Uri.parse(url));
+            startActivity(i);
+            dialog.cancel();
         });
-        builder.setPositiveButton("Privacy Policy", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                        String url = OsdUtil.PRIVACY_POLICY_URL;
-                        Intent i = new Intent(Intent.ACTION_VIEW);
-                        i.setData(Uri.parse(url));
-                        startActivity(i);
-                        dialog.cancel();
-                    }
-                });
-        builder.setNegativeButton("Data Sharing", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                        String url = OsdUtil.DATA_SHARING_URL;
-                        Intent i = new Intent(Intent.ACTION_VIEW);
-                        i.setData(Uri.parse(url));
-                        startActivity(i);
-                        dialog.cancel();
-                    }
+        builder.setNegativeButton("Data Sharing", (dialog, id) -> {
+            dialog.cancel();
+            String url = OsdUtil.DATA_SHARING_URL;
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setData(Uri.parse(url));
+            startActivity(i);
+            dialog.cancel();
         });
         builder.setView(aboutView);
         builder.create();
@@ -1014,20 +1012,17 @@ public class MainActivity extends AppCompatActivity {
         builder.setIcon(R.drawable.datasharing_fault_24x24);
         builder.setTitle("OpenSeizureDetector Data Sharing");
         builder.setNegativeButton(getString(R.string.cancel), null);
-        builder.setPositiveButton(getString(R.string.login), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Log.i(TAG, "dataSharingDialog.positiveButton.onClick()");
-                try {
-                    Intent i = new Intent(
-                            MainActivity.this,
-                            AuthenticateActivity.class);
-                    mContext.startActivity(i);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting activity " + ex.toString());
-                }
-
+        builder.setPositiveButton(getString(R.string.login), (dialog, which) -> {
+            Log.i(TAG, "dataSharingDialog.positiveButton.onClick()");
+            try {
+                Intent i = new Intent(
+                        MainActivity.this,
+                        AuthenticateActivity.class);
+                mContext.startActivity(i);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting activity " + ex.toString());
             }
+
         });
         builder.setView(aboutView);
         builder.create();

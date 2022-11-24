@@ -2,7 +2,6 @@ package uk.org.openseizuredetector;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -123,40 +122,30 @@ public class OsdUncaughtExceptionHandler implements Thread.UncaughtExceptionHand
                 builder.setTitle("Sorry...OpenSeizureDetector Crashed!");
                 builder.create();
                 builder.setNegativeButton("Cancel",
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog,
-                                                int which) {
-                                System.exit(0);
-                            }
-                        });
+                        (dialog, which) -> System.exit(0));
                 builder.setPositiveButton("Report by Email",
-                        new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog,
-                                                int which) {
-                                Intent sendIntent = new Intent(
-                                        Intent.ACTION_SEND);
-                                sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                String subject = "OpenSeizureDetector Crash report";
-                                StringBuilder body = new StringBuilder("Crash Report:");
-                                body.append('\n').append('\n');
-                                body.append(errorContent).append('\n')
-                                        .append('\n');
-                                // sendIntent.setType("text/plain");
-                                sendIntent.setType("message/rfc822");
-                                sendIntent.putExtra(Intent.EXTRA_EMAIL,
-                                        new String[]{reportEmail});
-                                sendIntent.putExtra(Intent.EXTRA_TEXT,
-                                        body.toString());
-                                sendIntent.putExtra(Intent.EXTRA_SUBJECT,
-                                        subject);
-                                sendIntent.setType("message/rfc822");
-                                Log.e("sendEmail", "starting activity...");
-                                mStaticContext.startActivity(sendIntent);
-                                Log.e("sendEmail", "exiting...");
-                                System.exit(0);
-                            }
+                        (dialog, which) -> {
+                            Intent sendIntent = new Intent(
+                                    Intent.ACTION_SEND);
+                            sendIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            String subject = "OpenSeizureDetector Crash report";
+                            StringBuilder body = new StringBuilder("Crash Report:");
+                            body.append('\n').append('\n');
+                            body.append(errorContent).append('\n')
+                                    .append('\n');
+                            // sendIntent.setType("text/plain");
+                            sendIntent.setType("message/rfc822");
+                            sendIntent.putExtra(Intent.EXTRA_EMAIL,
+                                    new String[]{reportEmail});
+                            sendIntent.putExtra(Intent.EXTRA_TEXT,
+                                    body.toString());
+                            sendIntent.putExtra(Intent.EXTRA_SUBJECT,
+                                    subject);
+                            sendIntent.setType("message/rfc822");
+                            Log.e("sendEmail", "starting activity...");
+                            mStaticContext.startActivity(sendIntent);
+                            Log.e("sendEmail", "exiting...");
+                            System.exit(0);
                         });
                 builder.setMessage("Please report the " +
                         "problem by email using the button below so we can fix it.\n" +

@@ -1,16 +1,11 @@
 package uk.org.openseizuredetector;
 
-import android.app.Activity;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+
 import android.os.Handler;
 
-import org.junit.Before;
 import org.junit.Test;
-import java.util.regex.Pattern;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.hamcrest.Matchers.is;
-
-import static org.junit.Assert.*;
 
 /**
  * Created by graham on 01/01/16.

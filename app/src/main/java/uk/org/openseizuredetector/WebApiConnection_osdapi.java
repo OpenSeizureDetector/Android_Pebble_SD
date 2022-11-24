@@ -1,14 +1,11 @@
 package uk.org.openseizuredetector;
 
 import android.content.Context;
-import android.os.Handler;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
@@ -65,34 +62,28 @@ public class WebApiConnection_osdapi extends WebApiConnection {
         Log.v(TAG, "urlStr=" + urlStr);
 
         StringRequest req = new StringRequest(Request.Method.POST, urlStr,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        String tokenStr = null;
-                        Log.v(TAG, "Response is: " + response);
-                        try {
-                            JSONObject jo = new JSONObject(response);
-                            tokenStr = jo.getString("token");
-                            mServerConnectionOk = true;
-                        } catch (JSONException e) {
-                            tokenStr = "Error Parsing Rsponse";
-                        }
-                        setStoredToken(tokenStr);
-                        callback.accept(tokenStr);
+                response -> {
+                    String tokenStr = null;
+                    Log.v(TAG, "Response is: " + response);
+                    try {
+                        JSONObject jo = new JSONObject(response);
+                        tokenStr = jo.getString("token");
+                        mServerConnectionOk = true;
+                    } catch (JSONException e) {
+                        tokenStr = "Error Parsing Rsponse";
                     }
+                    setStoredToken(tokenStr);
+                    callback.accept(tokenStr);
                 },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        if (error != null) {
-                            Log.e(TAG, "Login Error: " + error.toString() + ", message:" + error.getMessage());
-                        } else {
-                            Log.e(TAG, "Login Error:  Returned null response");
-                        }
-                        mServerConnectionOk = false;
-                        setStoredToken(null);
-                        callback.accept(null);
+                error -> {
+                    if (error != null) {
+                        Log.e(TAG, "Login Error: " + error.toString() + ", message:" + error.getMessage());
+                    } else {
+                        Log.e(TAG, "Login Error:  Returned null response");
                     }
+                    mServerConnectionOk = false;
+                    setStoredToken(null);
+                    callback.accept(null);
                 }) {
             // Note, this is overriding part of StringRequest, not one of the sub-classes above!
             @Override
@@ -154,34 +145,28 @@ public class WebApiConnection_osdapi extends WebApiConnection {
         Log.v(TAG, "createEvent - data=" + dataStr);
 
         StringRequest req = new StringRequest(Request.Method.POST, urlStr,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.v(TAG, "createEvent.onResponse - Response is: " + response);
-                        mServerConnectionOk = true;
-                        // we return just the eventId to be consistent with the firebase version of WebApiConnection.
-                        String retVal = null;
-                        try {
-                            JSONObject retObj = new JSONObject(response);
-                            retVal = retObj.getString("id");
-                        } catch (JSONException e) {
-                            Log.e(TAG, "createEvent.onResponse(): Error: " + e.getMessage() + "," + e.toString());
-                            retVal = null;
-                        }
-                        callback.accept(retVal);
+                response -> {
+                    Log.v(TAG, "createEvent.onResponse - Response is: " + response);
+                    mServerConnectionOk = true;
+                    // we return just the eventId to be consistent with the firebase version of WebApiConnection.
+                    String retVal = null;
+                    try {
+                        JSONObject retObj = new JSONObject(response);
+                        retVal = retObj.getString("id");
+                    } catch (JSONException e) {
+                        Log.e(TAG, "createEvent.onResponse(): Error: " + e.getMessage() + "," + e.toString());
+                        retVal = null;
                     }
+                    callback.accept(retVal);
                 },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        mServerConnectionOk = false;
-                        if (error != null) {
-                            Log.e(TAG, "createEvent Error: " + error.toString() + ", message:" + error.getMessage());
-                            callback.accept(null);
-                        } else {
-                            Log.e(TAG, "createEvent Error - null response");
-                            callback.accept(null);
-                        }
+                error -> {
+                    mServerConnectionOk = false;
+                    if (error != null) {
+                        Log.e(TAG, "createEvent Error: " + error.toString() + ", message:" + error.getMessage());
+                        callback.accept(null);
+                    } else {
+                        Log.e(TAG, "createEvent Error - null response");
+                        callback.accept(null);
                     }
                 }) {
             // Note, this is overriding part of StringRequest, not one of the sub-classes above!
@@ -197,7 +182,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
 
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<String, String>();
+                Map<String, String> params = new HashMap<>();
                 params.put("Content-Type", "application/json; charset=UTF-8");
                 params.put("Authorization", "Token " + getStoredToken());
                 return params;
@@ -230,37 +215,31 @@ public class WebApiConnection_osdapi extends WebApiConnection {
         }
 
         StringRequest req = new StringRequest(Request.Method.GET, urlStr,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.v(TAG, "Response is: " + response);
-                        try {
-                            JSONObject retObj = new JSONObject(response);
-                            retObj.put("alarmStateStr", mUtil.alarmStatusToString(retObj.getInt("osdAlarmState")));
-                            callback.accept(retObj);
-                        } catch (JSONException e) {
-                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
-                            callback.accept(null);
-                        }
-                        mServerConnectionOk = true;
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        if (error != null) {
-                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage());
-                        } else {
-                            Log.e(TAG, "Create Event Error: returned null response");
-                        }
-                        mServerConnectionOk = false;
+                response -> {
+                    Log.v(TAG, "Response is: " + response);
+                    try {
+                        JSONObject retObj = new JSONObject(response);
+                        retObj.put("alarmStateStr", mUtil.alarmStatusToString(retObj.getInt("osdAlarmState")));
+                        callback.accept(retObj);
+                    } catch (JSONException e) {
+                        Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
                         callback.accept(null);
                     }
+                    mServerConnectionOk = true;
+                },
+                error -> {
+                    if (error != null) {
+                        Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage());
+                    } else {
+                        Log.e(TAG, "Create Event Error: returned null response");
+                    }
+                    mServerConnectionOk = false;
+                    callback.accept(null);
                 }) {
 
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<String, String>();
+                Map<String, String> params = new HashMap<>();
                 params.put("Content-Type", "application/json; charset=UTF-8");
                 params.put("Authorization", "Token " + getStoredToken());
                 return params;
@@ -288,43 +267,37 @@ public class WebApiConnection_osdapi extends WebApiConnection {
         }
 
         StringRequest req = new StringRequest(Request.Method.GET, urlStr,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.v(TAG, "Response is: " + response);
-                        mServerConnectionOk = true;
-                        try {
-                            JSONObject retObj = new JSONObject();
-                            JSONArray eventArray = new JSONArray(response);
-                            retObj.put("events", eventArray);
-                            callback.accept(retObj);
-                        } catch (JSONException e) {
-                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
-                            callback.accept(null);
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        //if ((error != null) && (error.networkResponse != null) && (error.networkResponse.data != null)) {#
-                        mServerConnectionOk = false;
-                        if (error != null) {
-                            if (error.networkResponse != null) {
-                                Log.e(TAG, "getEvents(): Error: " + error.toString() + ", message:" + error.getMessage());
-                            } else {
-                                Log.e(TAG, "getEvents(): Error: - request returned null networkResponse");
-                            }
-                        } else{
-                            Log.e(TAG, "getEvents(): Error: - request returned null response");
-                        }
+                response -> {
+                    Log.v(TAG, "Response is: " + response);
+                    mServerConnectionOk = true;
+                    try {
+                        JSONObject retObj = new JSONObject();
+                        JSONArray eventArray = new JSONArray(response);
+                        retObj.put("events", eventArray);
+                        callback.accept(retObj);
+                    } catch (JSONException e) {
+                        Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
                         callback.accept(null);
                     }
+                },
+                error -> {
+                    //if ((error != null) && (error.networkResponse != null) && (error.networkResponse.data != null)) {#
+                    mServerConnectionOk = false;
+                    if (error != null) {
+                        if (error.networkResponse != null) {
+                            Log.e(TAG, "getEvents(): Error: " + error.toString() + ", message:" + error.getMessage());
+                        } else {
+                            Log.e(TAG, "getEvents(): Error: - request returned null networkResponse");
+                        }
+                    } else {
+                        Log.e(TAG, "getEvents(): Error: - request returned null response");
+                    }
+                    callback.accept(null);
                 }) {
 
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<String, String>();
+                Map<String, String> params = new HashMap<>();
                 params.put("Content-Type", "application/json; charset=UTF-8");
                 params.put("Authorization", "Token " + getStoredToken());
                 return params;
@@ -368,31 +341,25 @@ public class WebApiConnection_osdapi extends WebApiConnection {
         }
 
         StringRequest req = new StringRequest(reqMethod, urlStr,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.v(TAG, "Response is: " + response);
-                        mServerConnectionOk = true;
-                        try {
-                            JSONObject retObj = new JSONObject(response);
-                            callback.accept(retObj);
-                        } catch (JSONException e) {
-                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
-                            callback.accept(null);
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        mServerConnectionOk = false;
-                        if (error != null) {
-                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage());
-                        } else {
-                            Log.e(TAG, "Create Event Error - returned null response");
-                        }
+                response -> {
+                    Log.v(TAG, "Response is: " + response);
+                    mServerConnectionOk = true;
+                    try {
+                        JSONObject retObj = new JSONObject(response);
+                        callback.accept(retObj);
+                    } catch (JSONException e) {
+                        Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
                         callback.accept(null);
                     }
+                },
+                error -> {
+                    mServerConnectionOk = false;
+                    if (error != null) {
+                        Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage());
+                    } else {
+                        Log.e(TAG, "Create Event Error - returned null response");
+                    }
+                    callback.accept(null);
                 }) {
             // Note, this is overriding part of StringRequest, not one of the sub-classes above!
             @Override
@@ -410,7 +377,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
 
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<String, String>();
+                Map<String, String> params = new HashMap<>();
                 params.put("Content-Type", "application/json; charset=UTF-8");
                 params.put("Authorization", "Token " + getStoredToken());
                 return params;
@@ -459,25 +426,19 @@ public class WebApiConnection_osdapi extends WebApiConnection {
 
 
         StringRequest req = new StringRequest(Request.Method.POST, urlStr,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.v(TAG, "Response is: " + response);
-                        mServerConnectionOk = true;
-                        callback.accept(response);
-                    }
+                response -> {
+                    Log.v(TAG, "Response is: " + response);
+                    mServerConnectionOk = true;
+                    callback.accept(response);
                 },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        mServerConnectionOk = false;
-                        if (error != null) {
-                            Log.e(TAG, "Create Datapoint Error: " + error.toString() + ", message:" + error.getMessage());
-                            callback.accept(null);
-                        } else {
-                            Log.e(TAG, "Create Datapoint Error - returned null respones");
-                            callback.accept(null);
-                        }
+                error -> {
+                    mServerConnectionOk = false;
+                    if (error != null) {
+                        Log.e(TAG, "Create Datapoint Error: " + error.toString() + ", message:" + error.getMessage());
+                        callback.accept(null);
+                    } else {
+                        Log.e(TAG, "Create Datapoint Error - returned null respones");
+                        callback.accept(null);
                     }
                 }) {
             // Note, this is overriding part of StringRequest, not one of the sub-classes above!
@@ -493,7 +454,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
 
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<String, String>();
+                Map<String, String> params = new HashMap<>();
                 params.put("Content-Type", "application/json; charset=UTF-8");
                 params.put("Authorization", "Token " + getStoredToken());
                 return params;
@@ -532,36 +493,30 @@ public class WebApiConnection_osdapi extends WebApiConnection {
         }
 
         StringRequest req = new StringRequest(Request.Method.GET, urlStr,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.v(TAG, "Response is: " + response);
-                        try {
-                            JSONObject retObj = new JSONObject(response);
-                            callback.accept(retObj);
-                        } catch (JSONException e) {
-                            Log.e(TAG, "getUserProfile.onResponse(): Error: " + e.getMessage() + "," + e.toString());
-                            callback.accept(null);
-                        }
-                        mServerConnectionOk = true;
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        if (error != null) {
-                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage());
-                        } else {
-                            Log.e(TAG, "Create Event Error: returned null response");
-                        }
-                        mServerConnectionOk = false;
+                response -> {
+                    Log.v(TAG, "Response is: " + response);
+                    try {
+                        JSONObject retObj = new JSONObject(response);
+                        callback.accept(retObj);
+                    } catch (JSONException e) {
+                        Log.e(TAG, "getUserProfile.onResponse(): Error: " + e.getMessage() + "," + e.toString());
                         callback.accept(null);
                     }
+                    mServerConnectionOk = true;
+                },
+                error -> {
+                    if (error != null) {
+                        Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage());
+                    } else {
+                        Log.e(TAG, "Create Event Error: returned null response");
+                    }
+                    mServerConnectionOk = false;
+                    callback.accept(null);
                 }) {
 
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<String, String>();
+                Map<String, String> params = new HashMap<>();
                 params.put("Content-Type", "application/json; charset=UTF-8");
                 params.put("Authorization", "Token " + getStoredToken());
                 return params;
@@ -592,36 +547,30 @@ public class WebApiConnection_osdapi extends WebApiConnection {
         }
 
         StringRequest req = new StringRequest(Request.Method.GET, urlStr,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.v(TAG, "getEventTypes.onResponse(): Response is: " + response);
-                        mServerConnectionOk = true;
-                        try {
-                            JSONObject retObj = new JSONObject(response);
-                            callback.accept(retObj);
-                        } catch (JSONException e) {
-                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
-                            callback.accept(null);
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        mServerConnectionOk = false;
-                        if (error != null) {
-                            Log.e(TAG, "getEventTypes.onErrorResponse(): " + error.toString() + ", message:" + error.getMessage());
-                        } else {
-                            Log.e(TAG, "getEventTypes.onErrorResponse() - returned null response");
-                        }
+                response -> {
+                    Log.v(TAG, "getEventTypes.onResponse(): Response is: " + response);
+                    mServerConnectionOk = true;
+                    try {
+                        JSONObject retObj = new JSONObject(response);
+                        callback.accept(retObj);
+                    } catch (JSONException e) {
+                        Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
                         callback.accept(null);
                     }
+                },
+                error -> {
+                    mServerConnectionOk = false;
+                    if (error != null) {
+                        Log.e(TAG, "getEventTypes.onErrorResponse(): " + error.toString() + ", message:" + error.getMessage());
+                    } else {
+                        Log.e(TAG, "getEventTypes.onErrorResponse() - returned null response");
+                    }
+                    callback.accept(null);
                 }) {
             // Note, this is overriding part of StringRequest, not one of the sub-classes above!
             @Override
             public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> params = new HashMap<String, String>();
+                Map<String, String> params = new HashMap<>();
                 params.put("Content-Type", "application/json; charset=UTF-8");
                 params.put("Authorization", "Token " + getStoredToken());
                 return params;
@@ -644,19 +593,13 @@ public class WebApiConnection_osdapi extends WebApiConnection {
         Log.v(TAG, "urlStr=" + urlStr);
 
         StringRequest req = new StringRequest(Request.Method.GET, urlStr,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.v(TAG, "checkServerConnection.onResponse(): Response is: " + response);
-                        mServerConnectionOk = true;
-                    }
+                response -> {
+                    Log.v(TAG, "checkServerConnection.onResponse(): Response is: " + response);
+                    mServerConnectionOk = true;
                 },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.v(TAG, "checkServerConnection.onErrorResponse");
-                        mServerConnectionOk = false;
-                    }
+                error -> {
+                    Log.v(TAG, "checkServerConnection.onErrorResponse");
+                    mServerConnectionOk = false;
                 });
 
         mQueue.add(req);

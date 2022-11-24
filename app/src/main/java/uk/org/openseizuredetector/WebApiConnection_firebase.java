@@ -1,25 +1,15 @@
 package uk.org.openseizuredetector;
 
 import android.content.Context;
-import android.os.Handler;
 import android.util.Log;
-import android.widget.TextView;
-
-import androidx.annotation.NonNull;
 
 import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.Volley;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -147,20 +137,14 @@ public class WebApiConnection_firebase extends WebApiConnection {
 
         mDb.collection("Events")
                 .add(event)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                    @Override
-                    public void onSuccess(DocumentReference documentReference) {
-                        Log.d(TAG, "createEvent.onSuccess() - DocumentSnapshot added with ID: " + documentReference.getId());
-                        mServerConnectionOk = true;
-                        callback.accept(documentReference.getId());
-                    }
+                .addOnSuccessListener(documentReference -> {
+                    Log.d(TAG, "createEvent.onSuccess() - DocumentSnapshot added with ID: " + documentReference.getId());
+                    mServerConnectionOk = true;
+                    callback.accept(documentReference.getId());
                 })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w(TAG, "createEvent.onFailure() - Error adding document", e);
-                        callback.accept(null);
-                    }
+                .addOnFailureListener(e -> {
+                    Log.w(TAG, "createEvent.onFailure() - Error adding document", e);
+                    callback.accept(null);
                 });
         return (true);
     }
@@ -175,25 +159,22 @@ public class WebApiConnection_firebase extends WebApiConnection {
 
         DocumentReference docRef = mDb
                 .collection("Events").document(eventId);
-        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                if (task.isSuccessful()) {
-                    DocumentSnapshot document = task.getResult();
-                    if (document.exists()) {
-                        Log.d(TAG, "getEvent.onComplete(): DocumentSnapshot data: " + document.getData());
-                        if (document.getData() == null) {
-                            callback.accept(null);
-                        } else
-                            callback.accept(new JSONObject(document.getData()));
-                    } else {
-                        Log.d(TAG, "No such document");
+        docRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    Log.d(TAG, "getEvent.onComplete(): DocumentSnapshot data: " + document.getData());
+                    if (document.getData() == null) {
                         callback.accept(null);
-                    }
+                    } else
+                        callback.accept(new JSONObject(document.getData()));
                 } else {
-                    Log.d(TAG, "get failed with ", task.getException());
+                    Log.d(TAG, "No such document");
                     callback.accept(null);
                 }
+            } else {
+                Log.d(TAG, "get failed with ", task.getException());
+                callback.accept(null);
             }
         });
 
@@ -224,32 +205,29 @@ public class WebApiConnection_firebase extends WebApiConnection {
                 .whereEqualTo("userId", userId)
                 .orderBy("dataTime", Query.Direction.ASCENDING)
                 .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if (task.isSuccessful()) {
-                            try {
-                                JSONObject retObj = new JSONObject();
-                                JSONArray eventArray = new JSONArray();
-                                Log.d(TAG, "getEvents() - returned " + task.getResult().size());
-                                for (QueryDocumentSnapshot document : task.getResult()) {
-                                    Log.d(TAG, "getEvents() - " + document.getId() + " => " + document.getData());
-                                    JSONObject eventObj = new JSONObject(document.getData());
-                                    // Add the event id into the event data because firebase does not include it as part of the document.
-                                    eventObj.put("id", document.getId());
-                                    eventArray.put(eventObj);
-                                }
-                                retObj.put("events", eventArray);
-                                callback.accept(retObj);
-                            } catch (JSONException e) {
-                                Log.e(TAG, "getEvents.onResponse(): Error: " + e.getMessage() + "," + e.toString());
-                                callback.accept(null);
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        try {
+                            JSONObject retObj = new JSONObject();
+                            JSONArray eventArray = new JSONArray();
+                            Log.d(TAG, "getEvents() - returned " + task.getResult().size());
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                Log.d(TAG, "getEvents() - " + document.getId() + " => " + document.getData());
+                                JSONObject eventObj = new JSONObject(document.getData());
+                                // Add the event id into the event data because firebase does not include it as part of the document.
+                                eventObj.put("id", document.getId());
+                                eventArray.put(eventObj);
                             }
-
-                        } else {
-                            Log.d(TAG, "Error getting documents: ", task.getException());
+                            retObj.put("events", eventArray);
+                            callback.accept(retObj);
+                        } catch (JSONException e) {
+                            Log.e(TAG, "getEvents.onResponse(): Error: " + e.getMessage() + "," + e.toString());
                             callback.accept(null);
                         }
+
+                    } else {
+                        Log.d(TAG, "Error getting documents: ", task.getException());
+                        callback.accept(null);
                     }
                 });
         return (true);
@@ -290,24 +268,18 @@ public class WebApiConnection_firebase extends WebApiConnection {
         try {
             DocumentReference docRef = mDb.collection("Events").document(eventId);
             docRef.set(eventMap)
-                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void aVoid) {
-                            JSONObject retObj;
-                            try {
-                                retObj = new JSONObject("{\"status\":\"OK\"}");
-                            } catch (Exception e) {
-                                retObj = null;
-                            }
-                            callback.accept(retObj);
+                    .addOnSuccessListener(aVoid -> {
+                        JSONObject retObj;
+                        try {
+                            retObj = new JSONObject("{\"status\":\"OK\"}");
+                        } catch (Exception e) {
+                            retObj = null;
                         }
+                        callback.accept(retObj);
                     })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.w(TAG, "Error updating document", e);
-                            callback.accept(null);
-                        }
+                    .addOnFailureListener(e -> {
+                        Log.w(TAG, "Error updating document", e);
+                        callback.accept(null);
                     });
             return (true);
         } catch (Exception e) {
@@ -341,20 +313,14 @@ public class WebApiConnection_firebase extends WebApiConnection {
 
         mDb.collection("Datapoints")
                 .add(datapoint)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                    @Override
-                    public void onSuccess(DocumentReference documentReference) {
-                        Log.d(TAG, "createDatapoint.onSuccess() - DocumentSnapshot added with ID: " + documentReference.getId());
-                        mServerConnectionOk = true;
-                        callback.accept(documentReference.getId());
-                    }
+                .addOnSuccessListener(documentReference -> {
+                    Log.d(TAG, "createDatapoint.onSuccess() - DocumentSnapshot added with ID: " + documentReference.getId());
+                    mServerConnectionOk = true;
+                    callback.accept(documentReference.getId());
                 })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w(TAG, "createDatapoint.onFailure() - Error adding document", e);
-                        callback.accept(null);
-                    }
+                .addOnFailureListener(e -> {
+                    Log.w(TAG, "createDatapoint.onFailure() - Error adding document", e);
+                    callback.accept(null);
                 });
         return (true);
     }
@@ -375,28 +341,25 @@ public class WebApiConnection_firebase extends WebApiConnection {
 
         mDb.collection("EventTypes")
                 .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if (task.isSuccessful()) {
-                            try {
-                                JSONObject retObj = new JSONObject();
-                                for (QueryDocumentSnapshot document : task.getResult()) {
-                                    Log.d(TAG, "getEventTypes.onComplete(): " + document.getId() + " => " + document.getData());
-                                    Log.v(TAG, "getEventTypes.onComplete() - subtypes=" + document.getData().get("subTypes"));
-                                    JSONArray subTypesArray = listToJSONArray((List) document.getData().get("subTypes"));
-                                    retObj.put(document.getData().get("type").toString(), subTypesArray);
-                                }
-                                Log.d(TAG, "getEventTypes.onComplete() - retObj=" + retObj.toString());
-                                callback.accept(retObj);
-                            } catch (JSONException e) {
-                                Log.e(TAG, "getEventTypes.onResponse(): Error: " + e.getMessage() + "," + e.toString());
-                                callback.accept(null);
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        try {
+                            JSONObject retObj = new JSONObject();
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                Log.d(TAG, "getEventTypes.onComplete(): " + document.getId() + " => " + document.getData());
+                                Log.v(TAG, "getEventTypes.onComplete() - subtypes=" + document.getData().get("subTypes"));
+                                JSONArray subTypesArray = listToJSONArray((List) document.getData().get("subTypes"));
+                                retObj.put(document.getData().get("type").toString(), subTypesArray);
                             }
-                        } else {
-                            Log.d(TAG, "Error getting documents: ", task.getException());
+                            Log.d(TAG, "getEventTypes.onComplete() - retObj=" + retObj.toString());
+                            callback.accept(retObj);
+                        } catch (JSONException e) {
+                            Log.e(TAG, "getEventTypes.onResponse(): Error: " + e.getMessage() + "," + e.toString());
                             callback.accept(null);
                         }
+                    } else {
+                        Log.d(TAG, "Error getting documents: ", task.getException());
+                        callback.accept(null);
                     }
                 });
         return (true);

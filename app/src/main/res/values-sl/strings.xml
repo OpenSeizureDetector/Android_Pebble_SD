@@ -36,13 +36,13 @@
     <string name="AppPermissionsOk">App dovoljenja OK</string>
     <string name="AppPermissionsWarning">Problem z App dovoljenji</string>
     <string name="BoundToServiceOk">Povezava na storitev OK</string>
-    <string name="BindingToService">Povezovanje na storitev v ozadnju ...</string>
+    <string name="BindingToService">Povezovanje na storitev v ozadnju …</string>
     <string name="WatchConnectedOk">Ura povezana OK</string>
     <string name="WatchNotConnected">Ura NI povezana</string>
     <string name="SeizureDetectorDataReceived">Podatki detektorja napadov sprejeti OK</string>
-    <string name="WaitingForSeizureDetectorData">Čakanje podatkov detektorja napadov ...</string>
+    <string name="WaitingForSeizureDetectorData">Čakanje podatkov detektorja napadov …</string>
     <string name="SeizureDetectorSettingsReceived">Nastavitve detektorja napadov sprejeti OK</string>
-    <string name="WaitingForSeizureDetectorSettings">Čakanje nastavitev detektorja napadov ...</string>
+    <string name="WaitingForSeizureDetectorSettings">Čakanje nastavitev detektorja napadov …</string>
     <string name="DataSource">Vir podatkov</string>
     <string name="AppTitleText">OpenSeizureDetector Android App Verzija </string>
     <string name="ServerRunningOK">Strežnik deluje OK\n</string>
@@ -84,7 +84,7 @@
     <string name="invalid_password">Geslo mora biti >5 znakov</string>
     <string name="login_failed">"Prijava neuspešna"</string>
     <string name="AdvancedModeTitle">Napredni Način</string>
-    <string name="AdvancedModeSummary">Omogoči Napredni način (prikaže mnogo dodatnih nastavitev ...)</string>
+    <string name="AdvancedModeSummary">Omogoči Napredni način (prikaže mnogo dodatnih nastavitev …)</string>
     <string name="AutoStartTitle">Samodejni Zagon</string>
     <string name="AutoStartSummary">OpenSeizureDetector se samodejno zažene ob zagonu telefona</string>
     <string name="DataSourceTitle">Izberi Vir Podatkov</string>
@@ -122,7 +122,7 @@
     <string name="view_log_entries">Pregled podatkov logiranja</string>
     <string name="export_data">Izvažanje podatkov</string>
     <string name="settings">Nastavitve</string>
-    <string name="about">O appu ...</string>
+    <string name="about">O appu …</string>
     <string name="about_text">OpenSeizureDetector je detektor epileptičnih (konvulzivnih) napadov in sistem alarmov. Uporablja pametno uro za detekcijo tresenja povezanega z napadom, nakar sproži glasovna in SMS opozorila za skrbnike. Sistem je brezplačen in odprtokoden - več na http://openseizuredetector.org.uk. Prosim sporočite težave na graham@openseizuredetector.org.uk\n ali prijavite težavo na github projektu odprte kode, repozitorij - https://github.com/OpenSeizureDetector</string> <!-- preveri "konvulzivnost" z Grahamom  -->
     <string name="credits_text">App glavne ure in Android App \n copyright Graham Jones, 2015.\n Uporabljene so sledeče knjižnice :\n - SYLT-FFT - https://github.com/stg/SYLT-FFT by D. Taylor.\n - NanoHTTPD - https://github.com/NanoHttpd/nanohttpd\n - jQuery - http://jquery.org\n - jBeep - http://www.ultraduz.com.br\n - Chartjs - http://www.chartjs.org\n - MPAndroidChart - https://github.com/PhilJay/MPAndroidChart\n - UCE-Handler - https://github.com/RohitSurwase/UCE-Handler\n \n Logotip temelji na Star of life2, avtorja Verdy P, \n Licensed under Public Domain via\n Wikimedia Commons (http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).</string>
     <string name="edit_settings">Urejanje nastavitev</string>
@@ -323,7 +323,7 @@
     <string name="event_type">Tip dogodka:</string>
     <string name="event_sub_type">"Pod-tip dogodka: "</string>
     <string name="selectFromOptionselow">"-- izberi možnost --"</string>
-    <string name="waitingForData">...čakanje na podatke...</string>
+    <string name="waitingForData">…čakanje na podatke...</string>
     <string name="refreshBtn">Osveži</string>
     <string name="back">Nazaj</string>
     <string name="unvalidatedEventsTitle">Nepotrjeni Dogodki Napadov</string>

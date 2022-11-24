@@ -9,13 +9,14 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.util.HashMap;
 
@@ -26,9 +27,7 @@ public class RemoteDbActivity extends AppCompatActivity {
     private LogManager mLm;
     private WebView mWebView;
     private SdServiceConnection mConnection;
-    private OsdUtil mUtil;
     final Handler serverStatusHandler = new Handler();
-    private String TOKEN_ID = "webApiAuthToken";
     private String mRemtoteUrl = "https://osdapi.ddns.net/";
 
 
@@ -38,7 +37,7 @@ public class RemoteDbActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         mContext = this;
         setContentView(R.layout.activity_remote_db);
-        mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
+        OsdUtil mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
         mConnection = new SdServiceConnection(getApplicationContext());
         mUtil.bindToServer(getApplicationContext(), mConnection);
 
@@ -75,12 +74,7 @@ public class RemoteDbActivity extends AppCompatActivity {
             initialiseServiceConnection();
         } else {
             Log.v(TAG, "waitForConnection - waiting...");
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    waitForConnection();
-                }
-            }, 100);
+            new Handler().postDelayed(() -> waitForConnection(), 100);
         }
     }
 
@@ -120,6 +114,7 @@ public class RemoteDbActivity extends AppCompatActivity {
 
     public String getAuthToken() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+        String TOKEN_ID = "webApiAuthToken";
         String authToken = prefs.getString(TOKEN_ID, null);
         return authToken;
     }

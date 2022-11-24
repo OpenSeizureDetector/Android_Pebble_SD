@@ -18,6 +18,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ems="10"
+            android:autofillHints=""
+            android:inputType="text"
             android:text="(end date)" />
         <Button
             android:layout_width="wrap_content"
@@ -38,6 +40,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ems="10"
+            android:autofillHints=""
+            android:inputType="text"
             android:text="(end time)" />
         <Button
             android:layout_width="wrap_content"
@@ -59,6 +63,7 @@
         android:layout_height="wrap_content"
         android:inputType="numberDecimal"
         android:ems="10"
+        android:autofillHints=""
         android:text="1.0" />
 
     <Button

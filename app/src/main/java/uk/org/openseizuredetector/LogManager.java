@@ -71,7 +71,6 @@ public class LogManager {
     final static private String mEventsTableName = "events";
     private boolean mLogRemote;
     private boolean mLogRemoteMobile;
-    private String mAuthToken;
     static private SQLiteDatabase mOsdDb = null;   // SQLite Database for data and log entries.
     private RemoteLogTimer mRemoteLogTimer;
     private static Context mContext;
@@ -87,9 +86,8 @@ public class LogManager {
     private String mCurrentEventRemoteId;
     private long mCurrentEventLocalId = -1;
     private int mCurrentDatapointId;
-    private long mAutoPrunePeriod = 3600;  // Prune the database every hour
-    private boolean mAutoPruneDb;
     private AutoPruneTimer mAutoPruneTimer;
+
 
     public interface CursorCallback {
         void accept(Cursor retVal);
@@ -109,15 +107,13 @@ public class LogManager {
 
         mLogRemote = logRemote;
         mLogRemoteMobile = logRemoteMobile;
-        mAuthToken = authToken;
         mEventDuration = eventDuration;
-        mAutoPruneDb = autoPruneDb;
         mDataRetentionPeriod = dataRetentionPeriod;
         mRemoteLogPeriod = remoteLogPeriod;
         Log.v(TAG, "mLogRemote=" + mLogRemote);
         Log.v(TAG, "mLogRemoteMobile=" + mLogRemoteMobile);
         Log.v(TAG, "mEventDuration=" + mEventDuration);
-        Log.v(TAG, "mAutoPruneDb=" + mAutoPruneDb);
+        Log.v(TAG, "mAutoPruneDb=" + autoPruneDb);
         Log.v(TAG, "mDataRetentionPeriod=" + mDataRetentionPeriod);
         Log.v(TAG, "mRemoteLogPeriod=" + mRemoteLogPeriod);
 
@@ -130,7 +126,7 @@ public class LogManager {
             mWac = new WebApiConnection_osdapi(mContext);
         }
 
-        mWac.setStoredToken(mAuthToken);
+        mWac.setStoredToken(authToken);
 
         if (mLogRemote) {
             Log.i(TAG, "Starting Remote Log Timer");
@@ -139,7 +135,7 @@ public class LogManager {
             Log.i(TAG, "mLogRemote is false - not starting remote log timer");
         }
 
-        if (mAutoPruneDb) {
+        if (autoPruneDb) {
             Log.i(TAG, "Starting Auto Prune Timer");
             startAutoPruneTimer();
         } else {
@@ -564,9 +560,7 @@ public class LogManager {
         String whereClause = whereClauseStatus + " AND " + whereClauseUploaded + " AND " + whereClauseDate;
 
         String[] whereArgs = new String[whereArgsStatus.length + 1];
-        for (int i = 0; i < whereArgsStatus.length; i++) {
-            whereArgs[i] = whereArgsStatus[i];
-        }
+        System.arraycopy(whereArgsStatus, 0, whereArgs, 0, whereArgsStatus.length);
         whereArgs[whereArgsStatus.length] = endDateStr;
         new SelectQueryTask(mEventsTableName, columns, whereClause, whereArgs,
                 null, null, "dataTime DESC", (Cursor cursor) -> {
@@ -608,7 +602,7 @@ public class LogManager {
                 cursor.moveToFirst();
                 if (cursor.getCount() == 0) {
                     Log.v(TAG, "getNearestDatapointToDate() - no events to Upload - exiting");
-                    recordId = new Long(-1);
+                    recordId = Long.valueOf(-1);
                 } else {
                     String recordStr = cursor.getString(3);
                     recordId = cursor.getLong(0);
@@ -881,64 +875,61 @@ public class LogManager {
     public void createEventCallback(String eventId) {
         Log.v(TAG, "createEventCallback(): " + eventId);
         Log.v(TAG, "createEventCallback(): Retrieving remote event details");
-        mWac.getEvent(eventId, new WebApiConnection.JSONObjectCallback() {
-            @Override
-            public void accept(JSONObject eventObj) {
-                if (eventObj == null) {
-                    Log.e(TAG, "createEventCallback() - eventObj is null - failed to create event");
-                    mUtil.showToast("Error Creating Remote Event");
-                } else {
-                    Log.v(TAG, "createEventCallback() - eventObj=" + eventObj.toString());
-                    Date eventDate;
-                    String eventDateStr = "";
-                    try {
-                        String dateStr = eventObj.getString("dataTime");
-                        eventDate = mUtil.string2date(dateStr);
-                    } catch (JSONException | NullPointerException e) {
-                        Log.e(TAG, "createEventCallback() - Error parsing JSONObject: " + eventObj.toString());
-                        finishUpload();
-                        return;
-                    }
-                    if (eventDate != null) {
-                        Log.v(TAG, "createEventCallback() EventId=" + eventId + ", eventDateStr=" + eventDateStr + ", eventDate=" + eventDate);
-                        mUploadInProgress = true;
-                        long eventDateMillis = eventDate.getTime();
-                        long startDateMillis = eventDateMillis - 1000 * mEventDuration / 2;
-                        long endDateMillis = eventDateMillis + 1000 * mEventDuration / 2;
-                        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        mWac.getEvent(eventId, eventObj -> {
+            if (eventObj == null) {
+                Log.e(TAG, "createEventCallback() - eventObj is null - failed to create event");
+                mUtil.showToast("Error Creating Remote Event");
+            } else {
+                Log.v(TAG, "createEventCallback() - eventObj=" + eventObj.toString());
+                Date eventDate;
+                String eventDateStr = "";
+                try {
+                    String dateStr = eventObj.getString("dataTime");
+                    eventDate = mUtil.string2date(dateStr);
+                } catch (JSONException | NullPointerException e) {
+                    Log.e(TAG, "createEventCallback() - Error parsing JSONObject: " + eventObj.toString());
+                    finishUpload();
+                    return;
+                }
+                if (eventDate != null) {
+                    Log.v(TAG, "createEventCallback() EventId=" + eventId + ", eventDateStr=" + eventDateStr + ", eventDate=" + eventDate);
+                    mUploadInProgress = true;
+                    long eventDateMillis = eventDate.getTime();
+                    long startDateMillis = eventDateMillis - 1000 * mEventDuration / 2;
+                    long endDateMillis = eventDateMillis + 1000 * mEventDuration / 2;
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-                        getDatapointsByDate(
-                                dateFormat.format(new Date(startDateMillis)),
-                                dateFormat.format(new Date(endDateMillis)),
-                                (String datapointsJsonStr) -> {
-                                    //Log.v(TAG, "createEventCallback() - datapointsJsonStr=" + datapointsJsonStr);
-                                    JSONArray dataObj;
-                                    mDatapointsToUploadList = new ArrayList<JSONObject>();
+                    getDatapointsByDate(
+                            dateFormat.format(new Date(startDateMillis)),
+                            dateFormat.format(new Date(endDateMillis)),
+                            (String datapointsJsonStr) -> {
+                                //Log.v(TAG, "createEventCallback() - datapointsJsonStr=" + datapointsJsonStr);
+                                JSONArray dataObj;
+                                mDatapointsToUploadList = new ArrayList<JSONObject>();
 
-                                    try {
-                                        //DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-                                        dataObj = new JSONArray(datapointsJsonStr);
-                                        Log.v(TAG, "createEventCallback() - datapointsObj length=" + dataObj.length());
-                                        for (int i = 0; i < dataObj.length(); i++) {
-                                            mDatapointsToUploadList.add(dataObj.getJSONObject(i));
-                                        }
-                                    } catch (JSONException | NullPointerException e) {
-                                        Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string " + datapointsJsonStr);
-                                        dataObj = null;
-                                        finishUpload();
+                                try {
+                                    //DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+                                    dataObj = new JSONArray(datapointsJsonStr);
+                                    Log.v(TAG, "createEventCallback() - datapointsObj length=" + dataObj.length());
+                                    for (int i = 0; i < dataObj.length(); i++) {
+                                        mDatapointsToUploadList.add(dataObj.getJSONObject(i));
                                     }
-                                    // This starts the process of uploading the datapoints, one at a time.
-                                    mCurrentEventRemoteId = eventId;
-                                    Log.v(TAG, "createEventCallback() - starting datapoints upload with eventId " + mCurrentEventRemoteId +
-                                            " Uploading " + mDatapointsToUploadList.size() + " datapoints");
-                                    uploadNextDatapoint();
+                                } catch (JSONException | NullPointerException e) {
+                                    Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string " + datapointsJsonStr);
+                                    dataObj = null;
+                                    finishUpload();
+                                }
+                                // This starts the process of uploading the datapoints, one at a time.
+                                mCurrentEventRemoteId = eventId;
+                                Log.v(TAG, "createEventCallback() - starting datapoints upload with eventId " + mCurrentEventRemoteId +
+                                        " Uploading " + mDatapointsToUploadList.size() + " datapoints");
+                                uploadNextDatapoint();
 
-                                });
-                    } else {
-                        Log.e(TAG, "createEventCallback() - Error - event date is null - not doing anything");
-                        mUtil.showToast("Error uploading event - date is null");
-                        finishUpload();
-                    }
+                            });
+                } else {
+                    Log.e(TAG, "createEventCallback() - Error - event date is null - not doing anything");
+                    mUtil.showToast("Error uploading event - date is null");
+                    finishUpload();
                 }
             }
         });
@@ -1050,6 +1041,8 @@ public class LogManager {
             mAutoPruneTimer = null;
         }
         Log.i(TAG, "startAutoPruneTimer() - starting AutoPruneTimer");
+        // Prune the database every hour
+        long mAutoPrunePeriod = 3600;
         mAutoPruneTimer =
                 new AutoPruneTimer(mAutoPrunePeriod * 1000, 1000);
         mAutoPruneTimer.start();

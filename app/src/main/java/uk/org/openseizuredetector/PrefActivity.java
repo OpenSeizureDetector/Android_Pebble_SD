@@ -28,22 +28,20 @@ package uk.org.openseizuredetector;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceActivity;
-import android.os.Bundle;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
 
 import java.util.List;
 
 public class PrefActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener {
     private String TAG = "PreferenceActivity";
     private OsdUtil mUtil;
-    private boolean mPrefChanged = false;
     private Context mContext;
     private Handler mHandler;
     private Button mSelectBLEButton;
@@ -76,7 +74,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         String dataSourceStr = SP.getString("DataSource", "Pebble");
         Log.i(TAG, "onBuildHeaders DataSource = " + dataSourceStr);
         //Boolean advancedMode = SP.getBoolean("advancedMode", false);
-        Boolean advancedMode = true;
+        boolean advancedMode = true;
         Log.i(TAG, "onBuildHeaders advancedMode = " + advancedMode);
 
         if (advancedMode) {
@@ -161,14 +159,10 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         }
         // For all other preference changes we just restart SdServer so it is not as alarming for the user!
         //mUtil.showToast("Setting " + s + " Changed - restarting server");
-        mPrefChanged = true;
+        boolean mPrefChanged = true;
         mUtil.stopServer();
         // Wait 0.1 second to give the server chance to shutdown, then re-start it
-        mHandler.postDelayed(new Runnable() {
-            public void run() {
-                mUtil.startServer();
-            }
-        }, 100);
+        mHandler.postDelayed(() -> mUtil.startServer(), 100);
 
         if (s.equals("DataSource") || s.equals("advancedMode")) {
             Log.i(TAG, "Re-starting PrefActivity to refresh list");
@@ -185,11 +179,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         //mUtil.showToast("Permissions Changed - restarting server");
         mUtil.stopServer();
         // Wait 0.1 second to give the server chance to shutdown, then re-start it
-        mHandler.postDelayed(new Runnable() {
-            public void run() {
-                mUtil.startServer();
-            }
-        }, 100);
+        mHandler.postDelayed(() -> mUtil.startServer(), 100);
 
     }
 
@@ -320,6 +310,16 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
 
             // Load the preferences from an XML resource
             addPreferencesFromResource(R.xml.network_datasource_prefs);
+        }
+    }
+
+    public static class WearDatasourcePrefsFragment extends PreferenceFragment {
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            // Load the preferences from an XML resource
+            addPreferencesFromResource(R.xml.wear_datasource_prefs);
         }
     }
 

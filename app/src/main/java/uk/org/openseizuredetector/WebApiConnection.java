@@ -4,42 +4,12 @@ import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.VolleyLog;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.firestore.core.OrderBy;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 
 // This class is intended to handle all interactions with the OSD WebAPI
@@ -142,42 +112,36 @@ public abstract class WebApiConnection {
      */
     private boolean markEventsAsUnknown(ArrayList<String>eventList) {
         if (eventList.size()>0) {
-            Log.i(TAG,"markEventsAsUnknown - eventList.size()="+eventList.size());
-            Log.i(TAG,"markEventsAsUnknown - eventList(0) = "+eventList.get(0));
-            getEvent(eventList.get(0), new WebApiConnection.JSONObjectCallback() {
-                @Override
-                public void accept(JSONObject eventObj) {
-                    Log.v(TAG, "markEventsAsUnknown.getEvent.callback: "+eventObj);
-                    if (eventObj != null) {
-                        Log.v(TAG, "markEventsAsUnknown.getEvent.callback:  eventObj=" + eventObj.toString());
-                        try {
-                            eventObj.put("type", "Unknown");
-                            String notesStr = eventObj.getString("desc");
-                            if (notesStr == null) notesStr = new String("");
-                            notesStr = notesStr + " Set to Unknown automatically by OSD Android App";
-                            eventObj.put("desc", notesStr);
-                            updateEvent(eventObj,new WebApiConnection.JSONObjectCallback() {
-                                @Override
-                                public void accept(JSONObject eventObj) {
-                                    if (eventObj != null) {
-                                        Log.i(TAG, "markEventsAsUnknown.updateEvent.callback" + eventObj.toString());
-                                        // Remove the first item from the list,then call this whole procedure again to modify the next one on the list.
-                                        eventList.remove(0);
-                                        markEventsAsUnknown(eventList);
-                                    } else {
-                                        Log.e(TAG, "markEventsAsUnknown.updateEvent.callback - eventObj is null");
-                                        mUtil.showToast("markEventsAsUnknown.updateEvent.callback - eventObj is null");
-                                    }
-                                }
-                            });
-                        } catch (JSONException e) {
-                            Log.e(TAG,"markEventsAsUnknown.getEvent.callback: Error editing eventObj");
-                            mUtil.showToast("markEventsAsUnknown.getEvent.callback: Error editing eventObj");
-                        }
-                    } else {
-                        mUtil.showToast("Failed to Retrieve Event from Remote Database");
-                        return;
+            Log.i(TAG, "markEventsAsUnknown - eventList.size()=" + eventList.size());
+            Log.i(TAG, "markEventsAsUnknown - eventList(0) = " + eventList.get(0));
+            getEvent(eventList.get(0), eventObj -> {
+                Log.v(TAG, "markEventsAsUnknown.getEvent.callback: " + eventObj);
+                if (eventObj != null) {
+                    Log.v(TAG, "markEventsAsUnknown.getEvent.callback:  eventObj=" + eventObj.toString());
+                    try {
+                        eventObj.put("type", "Unknown");
+                        String notesStr = eventObj.getString("desc");
+                        if (notesStr == null) notesStr = new String("");
+                        notesStr = notesStr + " Set to Unknown automatically by OSD Android App";
+                        eventObj.put("desc", notesStr);
+                        updateEvent(eventObj, eventObj1 -> {
+                            if (eventObj1 != null) {
+                                Log.i(TAG, "markEventsAsUnknown.updateEvent.callback" + eventObj1.toString());
+                                // Remove the first item from the list,then call this whole procedure again to modify the next one on the list.
+                                eventList.remove(0);
+                                markEventsAsUnknown(eventList);
+                            } else {
+                                Log.e(TAG, "markEventsAsUnknown.updateEvent.callback - eventObj is null");
+                                mUtil.showToast("markEventsAsUnknown.updateEvent.callback - eventObj is null");
+                            }
+                        });
+                    } catch (JSONException e) {
+                        Log.e(TAG, "markEventsAsUnknown.getEvent.callback: Error editing eventObj");
+                        mUtil.showToast("markEventsAsUnknown.getEvent.callback: Error editing eventObj");
                     }
+                } else {
+                    mUtil.showToast("Failed to Retrieve Event from Remote Database");
+                    return;
                 }
             });
         } else {
@@ -196,13 +160,13 @@ public abstract class WebApiConnection {
     public boolean markUnverifiedEventsAsUnknown() {
         if (getEvents((JSONObject remoteEventsObj) -> {
             Log.v(TAG, "markUnverifiedEventsAsUnknown.getEvents.Callback()");
-            Boolean haveUnvalidatedEvent = false;
+            boolean haveUnvalidatedEvent = false;
             if (remoteEventsObj == null) {
                 Log.e(TAG, "markUnverifiedEventsAsUnknown.getEvents.Callback:  Error Retrieving events");
             } else {
                 try {
                     JSONArray eventsArray = remoteEventsObj.getJSONArray("events");
-                    ArrayList<String> unvalidatedEventsList = new ArrayList<String>();
+                    ArrayList<String> unvalidatedEventsList = new ArrayList<>();
                     for (int i = eventsArray.length() - 1; i >= 0; i--) {
                         JSONObject eventObj = eventsArray.getJSONObject(i);
                         String typeStr = eventObj.getString("type");

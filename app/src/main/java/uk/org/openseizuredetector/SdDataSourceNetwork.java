@@ -22,15 +22,13 @@ import java.util.TimerTask;
  * Created by graham on 22/11/15.
  */
 public class SdDataSourceNetwork extends SdDataSource {
-    private String TAG = "SdDataSourceNetwork";
-    private Time mStatusTime;
+    private static String TAG = "SdDataSourceNetwork";
+    private static Time mStatusTime;
     private Timer mDataUpdateTimer;
     private int mDataUpdatePeriod = 2000;
-    private int mConnnectTimeoutPeriod = 5000;
-    private int mReadTimeoutPeriod = 5000;
+    private static int mConnnectTimeoutPeriod = 5000;
+    private static int mReadTimeoutPeriod = 5000;
     private String mServerIP = "unknown";
-
-    private int ALARM_STATE_NETFAULT = 7;
 
 
     public SdDataSourceNetwork(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
@@ -38,29 +36,39 @@ public class SdDataSourceNetwork extends SdDataSource {
         mName = "Network";
     }
 
-    @Override public void start() {
-        // Update preferences.
-        Log.v(TAG,"start(): calling updatePrefs()");
-        mUtil.writeToSysLogFile("SdDataSourceNetwork().start()");
-        updatePrefs();
+    // Given a URL, establishes an HttpUrlConnection and retrieves
+    // the web page content as a InputStream, which it returns as
+    // a string.
+    private static String downloadUrl(String myurl) throws IOException {
+        InputStream is = null;
+        // Only retrieve the first 2048 characters of the retrieved
+        // web page content.
+        int len = 2048;
 
-        // Start timer to retrieve seizure detector data regularly.
-        mStatusTime = new Time(Time.getCurrentTimezone());
-        mStatusTime.setToNow();
-        if (mDataUpdateTimer ==null) {
-            Log.v(TAG,"start(): starting data update timer");
-            mDataUpdateTimer = new Timer();
-            mDataUpdateTimer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    downloadSdData();
-                }
-            }, 0, mDataUpdatePeriod);
-        } else {
-            Log.v(TAG,"start(): data update timer already running.");
+        try {
+            URL url = new URL(myurl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setReadTimeout(mReadTimeoutPeriod /* milliseconds */);
+            conn.setConnectTimeout(mConnnectTimeoutPeriod /* milliseconds */);
+            conn.setRequestMethod("GET");
+            conn.setDoInput(true);
+            // Starts the query
+            conn.connect();
+            int response = conn.getResponseCode();
+            Log.d(TAG, "downloadUrl(): The response is: " + response);
+            is = conn.getInputStream();
+
+            // Convert the InputStream into a string
+            String contentAsString = readInputStream(is, len);
+            return contentAsString;
+
+            // Makes sure that the InputStream is closed after the app is
+            // finished using it.
+        } finally {
+            if (is != null) {
+                is.close();
+            }
         }
-
-
     }
 
     @Override public void stop() {
@@ -115,22 +123,66 @@ public class SdDataSourceNetwork extends SdDataSource {
         new DownloadSdDataTask().execute("http://" + mServerIP + ":8080/data");
     }
 
-    private class DownloadSdDataTask extends AsyncTask<String, Void, SdData> {
-        private SdData sdData;
+    // Reads an InputStream and converts it to a String.
+    public static String readInputStream(InputStream stream, int len) throws IOException, UnsupportedEncodingException {
+        Reader reader = null;
+        reader = new InputStreamReader(stream, "UTF-8");
+        char[] buffer = new char[len];
+        reader.read(buffer);
+        return new String(buffer);
+    }
+
+    @Override
+    public void start() {
+        // Update preferences.
+        Log.v(TAG, "start(): calling updatePrefs()");
+        mUtil.writeToSysLogFile("SdDataSourceNetwork().start()");
+        updatePrefs();
+
+        // Start timer to retrieve seizure detector data regularly.
+        mStatusTime = new Time(Time.getCurrentTimezone());
+        mStatusTime.setToNow();
+        if (mDataUpdateTimer == null) {
+            Log.v(TAG, "start(): starting data update timer");
+            mDataUpdateTimer = new Timer();
+            mDataUpdateTimer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    downloadSdData();
+                }
+            }, 0, mDataUpdatePeriod);
+        } else {
+            Log.v(TAG, "start(): data update timer already running.");
+        }
+
+
+    }
+
+    /**
+     * Accept an alarm remotely using a http GET request.
+     */
+    @Override
+    public void acceptAlarm() {
+        Log.v(TAG, "acceptAlarm()");
+        new AcceptAlarmTask().execute("http://" + mServerIP + ":8080/acceptalarm");
+    }
+
+    private static class DownloadSdDataTask extends AsyncTask<String, Void, SdData> {
         @Override
         protected SdData doInBackground(String... urls) {
             // params comes from the execute() call: params[0] is the url.
-            sdData = new SdData();
+            SdData sdData = new SdData();
+            int ALARM_STATE_NETFAULT = 7;
             try {
                 String result = downloadUrl(urls[0]);
                 if (result.startsWith("Unable to retrieve web page")) {
-                    Log.v(TAG,"doInBackground() - Unable to retrieve data");
+                    Log.v(TAG, "doInBackground() - Unable to retrieve data");
                     sdData.serverOK = false;
                     sdData.watchConnected = false;
                     sdData.watchAppRunning = false;
                     sdData.alarmState = ALARM_STATE_NETFAULT;
                     sdData.alarmPhrase = "Warning - No Connection to Server";
-                    Log.v(TAG,"doInBackground(): No Connection to Server - sdData = "+sdData.toString());
+                    Log.v(TAG, "doInBackground(): No Connection to Server - sdData = " + sdData.toString());
                 } else {
                     Log.v(TAG,"doInBackground - result = "+result);
                     sdData.fromJSON(result);
@@ -140,7 +192,7 @@ public class SdDataSourceNetwork extends SdDataSource {
                         sdData.haveSettings = true;
                     }
                     mStatusTime.setToNow();
-                    Log.v(TAG,"doInBackground(): sdData = "+sdData.toString());
+                    Log.v(TAG, "doInBackground(): sdData = " + sdData.toString());
                 }
                 return (sdData);
 
@@ -162,25 +214,16 @@ public class SdDataSourceNetwork extends SdDataSource {
         }
     }
 
-    /**
-     * Accept an alarm remotely using a http GET request.
-     */
-    @Override
-    public void acceptAlarm() {
-        Log.v(TAG, "acceptAlarm()");
-        new AcceptAlarmTask().execute("http://" + mServerIP + ":8080/acceptalarm");
-    }
-
-    private class AcceptAlarmTask extends AsyncTask<String, Void, String> {
+    private static class AcceptAlarmTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... urls) {
             // params comes from the execute() call: params[0] is the url.
             try {
                 String result = downloadUrl(urls[0]);
                 if (result.startsWith("Unable to retrieve web page")) {
-                    Log.v(TAG,"doInBackground() - Error accepting alarm");
+                    Log.v(TAG, "doInBackground() - Error accepting alarm");
                 } else {
-                    Log.v(TAG,"doInBackground(): Alarm Accepted");
+                    Log.v(TAG, "doInBackground(): Alarm Accepted");
                 }
             } catch (IOException e) {
                 Log.v(TAG,"doInBackground(): IOException - "+e.toString());
@@ -192,52 +235,6 @@ public class SdDataSourceNetwork extends SdDataSource {
         protected void onPostExecute(String s) {
             Log.v(TAG,"onPostExecute() - s="+s);
         }
-    }
-
-
-
-    // Given a URL, establishes an HttpUrlConnection and retrieves
-    // the web page content as a InputStream, which it returns as
-    // a string.
-    private String downloadUrl(String myurl) throws IOException {
-        InputStream is = null;
-        // Only retrieve the first 2048 characters of the retrieved
-        // web page content.
-        int len = 2048;
-
-        try {
-            URL url = new URL(myurl);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setReadTimeout(mReadTimeoutPeriod /* milliseconds */);
-            conn.setConnectTimeout(mConnnectTimeoutPeriod /* milliseconds */);
-            conn.setRequestMethod("GET");
-            conn.setDoInput(true);
-            // Starts the query
-            conn.connect();
-            int response = conn.getResponseCode();
-            Log.d(TAG, "downloadUrl(): The response is: " + response);
-            is = conn.getInputStream();
-
-            // Convert the InputStream into a string
-            String contentAsString = readInputStream(is, len);
-            return contentAsString;
-
-            // Makes sure that the InputStream is closed after the app is
-            // finished using it.
-        } finally {
-            if (is != null) {
-                is.close();
-            }
-        }
-    }
-
-    // Reads an InputStream and converts it to a String.
-    public String readInputStream(InputStream stream, int len) throws IOException, UnsupportedEncodingException {
-        Reader reader = null;
-        reader = new InputStreamReader(stream, "UTF-8");
-        char[] buffer = new char[len];
-        reader.read(buffer);
-        return new String(buffer);
     }
 
 

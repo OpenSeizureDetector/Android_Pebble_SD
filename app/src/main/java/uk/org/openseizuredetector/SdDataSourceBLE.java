@@ -39,11 +39,6 @@ import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -57,7 +52,6 @@ public class SdDataSourceBLE extends SdDataSource {
     private String TAG = "SdDataSourceBLE";
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;
-    private String mBluetoothDeviceAddress;
     private BluetoothGatt mBluetoothGatt;
     private int mConnectionState = STATE_DISCONNECTED;
 
@@ -91,7 +85,6 @@ public class SdDataSourceBLE extends SdDataSource {
     public static String CHAR_OSD_BATT_DATA = "000085eb-0000-1000-8000-00805f9b34fb";
 
     public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID.fromString(CHAR_HEART_RATE_MEASUREMENT);
-    private BluetoothGatt mGatt;
     private BluetoothGattCharacteristic mBattChar;
     private BluetoothGattCharacteristic mOsdChar;
 
@@ -165,7 +158,7 @@ public class SdDataSourceBLE extends SdDataSource {
             // parameter to false.
             mBluetoothGatt = device.connectGatt(mContext, true, mGattCallback);
             Log.d(TAG, "bleConnect(): Trying to create a new connection.");
-            mBluetoothDeviceAddress = mBleDeviceAddr;
+            String mBluetoothDeviceAddress = mBleDeviceAddr;
             mConnectionState = STATE_CONNECTING;
         }
     }
@@ -203,8 +196,55 @@ public class SdDataSourceBLE extends SdDataSource {
         super.stop();
     }
 
+    /**
+     * Enables or disables notification on a give characteristic.
+     *
+     * @param characteristic Characteristic to act on.
+     * @param enabled        If true, enable notification.  False otherwise.
+     */
+    public void setCharacteristicNotification(final BluetoothGattCharacteristic characteristic, final boolean enabled) {
+        Log.w(TAG, "setCharacteristicNotification " + characteristic.getUuid());
 
-    // Implements callback methods for GATT events that the app cares about.  For example,
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+
+        if (waitForDescriptorWrite) {
+            // Apparently if you try to write multiple descriptors too quickly then only
+            // one is processed, hence why this waiting logic is necessary
+            Log.w(TAG, "waitForDescriptor " + characteristic.getUuid());
+            mHandler.postDelayed(() -> {
+                Log.w(TAG, "delayed");
+                setCharacteristicNotification(characteristic, enabled);
+            }, 500);
+            return;
+        }
+
+        if (enabled) {
+            Log.v(TAG, "setCharacteristicNotification - Requesting notifications");
+            mBluetoothGatt.setCharacteristicNotification(characteristic, true);
+
+            // Tell the device we want notifications?   The sample from Google said we only need this for Heart Rate, but the
+            // BangleJS widget did not work without it so do it for everything.
+            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
+                    UUID.fromString(GattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
+            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            mBluetoothGatt.writeDescriptor(descriptor);
+        } else {
+            Log.v(TAG, "setCharacteristicNotification - De-registering notifications");
+            mBluetoothGatt.setCharacteristicNotification(characteristic, false);
+
+            // Tell the device we want notifications?   The sample from Google said we only need this for Heart Rate, but the
+            // BangleJS widget did not work without it so do it for everything.
+            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
+                    UUID.fromString(GattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
+            descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+            mBluetoothGatt.writeDescriptor(descriptor);
+        }
+
+        waitForDescriptorWrite = true;
+    }    // Implements callback methods for GATT events that the app cares about.  For example,
     // connection change and services discovered.
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         @Override
@@ -222,11 +262,7 @@ public class SdDataSourceBLE extends SdDataSource {
                 Log.i(TAG, "onConnectionStateChange(): Disconnected from GATT server - reconnecting after delay...");
                 //bleDisconnect();  // Tidy up connections
                 // Wait 2 seconds to give the server chance to shutdown, then re-start it
-                mHandler.postDelayed(new Runnable() {
-                    public void run() {
-                        bleConnect();
-                    }
-                }, 2000);
+                mHandler.postDelayed(() -> bleConnect(), 2000);
             }
         }
 
@@ -271,16 +307,11 @@ public class SdDataSourceBLE extends SdDataSource {
                     }
                 }
                 if (foundOsdService) {
-                    mGatt = gatt;
                 } else {
                     Log.v(TAG, "device is not offering the OSD Gatt Service - re-trying connection");
                     bleDisconnect();
                     // Wait 1 second to give the server chance to shutdown, then re-start it
-                    mHandler.postDelayed(new Runnable() {
-                        public void run() {
-                            bleConnect();
-                        }
-                    }, 1000);
+                    mHandler.postDelayed(() -> bleConnect(), 1000);
                 }
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
@@ -303,7 +334,7 @@ public class SdDataSourceBLE extends SdDataSource {
                     Log.d(TAG, "Heart rate format UINT8.");
                 }
                 final int heartRate = characteristic.getIntValue(format, 1);
-                mSdData.mHR = (double) heartRate;
+                mSdData.mHR = (short) heartRate;
                 Log.d(TAG, String.format("Received heart rate: %d", heartRate));
             }
             else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_DATA)) {
@@ -367,57 +398,7 @@ public class SdDataSourceBLE extends SdDataSource {
         }
     };
 
-    /**
-     * Enables or disables notification on a give characteristic.
-     *
-     * @param characteristic Characteristic to act on.
-     * @param enabled        If true, enable notification.  False otherwise.
-     */
-    public void setCharacteristicNotification(final BluetoothGattCharacteristic characteristic, final boolean enabled) {
-        Log.w(TAG, "setCharacteristicNotification " + characteristic.getUuid());
 
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
-
-        if (waitForDescriptorWrite) {
-            // Apparently if you try to write multiple descriptors too quickly then only
-            // one is processed, hence why this waiting logic is necessary
-            Log.w(TAG, "waitForDescriptor " + characteristic.getUuid());
-            mHandler.postDelayed(new Runnable() {
-                public void run() {
-                    Log.w(TAG, "delayed");
-                    setCharacteristicNotification(characteristic, enabled);
-                }
-            }, 500);
-            return;
-        }
-
-        if (enabled) {
-            Log.v(TAG, "setCharacteristicNotification - Requesting notifications");
-            mBluetoothGatt.setCharacteristicNotification(characteristic, true);
-
-            // Tell the device we want notifications?   The sample from Google said we only need this for Heart Rate, but the
-            // BangleJS widget did not work without it so do it for everything.
-            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
-                    UUID.fromString(GattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
-            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-            mBluetoothGatt.writeDescriptor(descriptor);
-        } else {
-            Log.v(TAG, "setCharacteristicNotification - De-registering notifications");
-            mBluetoothGatt.setCharacteristicNotification(characteristic, false);
-
-            // Tell the device we want notifications?   The sample from Google said we only need this for Heart Rate, but the
-            // BangleJS widget did not work without it so do it for everything.
-            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
-                    UUID.fromString(GattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
-            descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-            mBluetoothGatt.writeDescriptor(descriptor);
-        }
-
-        waitForDescriptorWrite = true;
-    }
 
     /**
      * Retrieves a list of supported GATT services on the connected device. This should be

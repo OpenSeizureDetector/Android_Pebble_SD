@@ -35,13 +35,13 @@
     <string name="AppPermissionsOk">Uprawnienia apki OK</string>
     <string name="AppPermissionsWarning">Problem z uprawnieniami apki</string>
     <string name="BoundToServiceOk">Połączenie z usługą OK</string>
-    <string name="BindingToService">Łączę z usługą w tle...</string>
+    <string name="BindingToService">Łączę z usługą w tle…</string>
     <string name="WatchConnectedOk">Połączenie z zegarkiem OK</string>
     <string name="WatchNotConnected">Brak połączenia z zegarkiem</string>
     <string name="SeizureDetectorDataReceived">Odbiór danych czujnika drgawek OK</string>
-    <string name="WaitingForSeizureDetectorData">Czekam na dane czujnika drgawek...</string>
+    <string name="WaitingForSeizureDetectorData">Czekam na dane czujnika drgawek…</string>
     <string name="SeizureDetectorSettingsReceived">Odbiór ustawień czujnika drgawek OK</string>
-    <string name="WaitingForSeizureDetectorSettings">Czekam na ustawienia czujnika drgawek...</string>
+    <string name="WaitingForSeizureDetectorSettings">Czekam na ustawienia czujnika drgawek…</string>
     <string name="DataSource">Źródło danych</string>
     <string name="AppTitleText">OpenSeizureDetector Android wersja </string>
     <string name="ServerRunningOK">Serwer działa OK\n</string>
@@ -121,7 +121,7 @@
     <string name="view_log_entries">Wyświetl dziennik danych</string>
     <string name="export_data">Eksport danych</string>
     <string name="settings">Ustawienia</string>
-    <string name="about">O apce...</string>
+    <string name="about">O apce…</string>
     <string name="about_text">OpenSeizureDetector system\n alarmowania i wykrywania drgawek epileptycznych (toniczno-klonicznych) \n Używa zegarka Pebble Smart\n do wykrywania drgawek związanych z atakiem \n informując opiekunów za pomocą\n alarmów dźwiękowych oraz SMS.\n System jest darmowy oraz otwarty - odwiedź \n http://openseizuredetector.org.uk aby dowiedzieć się więcej. Wszelkie uwagi proszę zgłaszać do graham@openseizuredetector.org.uk\n lub na repozytorium github projektu \n - https://github.com/OpenSeizureDetector</string>
     <string name="credits_text">Apka Android i na zegarek \n copyright Graham Jones, 2015.\n Używa następujących bibliotek:\n - SYLT-FFT - https://github.com/stg/SYLT-FFT by D. Taylor.\n - NanoHTTPD - https://github.com/NanoHttpd/nanohttpd\n - jQuery - http://jquery.org\n - jBeep - http://www.ultraduz.com.br\n - Chartjs - http://www.chartjs.org\n - MPAndroidChart - https://github.com/PhilJay/MPAndroidChart\n - UCE-Handler - https://github.com/RohitSurwase/UCE-Handler\n \n Logo wzorowane jest na Star of life2 by Verdy P, \n Licencja Public Domain via\n Wikimedia Commons (http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).</string>
     <string name="edit_settings">Zmień ustawienia</string>
@@ -267,7 +267,7 @@
     <string name="SMSAlarmCancelledMsg">Anulowano alarmy SMS</string>
     <string name="StopServerTitle">Zatrzymaj serwer</string>
     <string name="StartServerTitle">Uruchom serwer</string>
-    <string name="StartingTitle">Uruchamiam...</string>
+    <string name="StartingTitle">Uruchamiam…</string>
     <string name="AcceptAlarmBtnTxt">Zaakceptuj alarm</string>
     <string name="CancelAudibleButtonTxt">Wycisz (tymczasowo)</string>
     <string name="DataLoggingSettingsTitle">Ustawienia dziennika danych</string>

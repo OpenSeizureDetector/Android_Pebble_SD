@@ -10,3 +10,5 @@ app/release/output-metadata.json
 app/google-services.json
 *#
 
+/app/src/Debug/google-services.json
+/app/src/google-services.json

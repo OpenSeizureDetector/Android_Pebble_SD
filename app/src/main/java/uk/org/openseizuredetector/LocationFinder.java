@@ -1,7 +1,7 @@
 package uk.org.openseizuredetector;
 
 
-/**
+/*
  */
 
 import android.content.Context;
@@ -82,12 +82,12 @@ public class LocationFinder implements LocationListener
         mTimeoutTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                Log.v(TAG,"mTimeOutTimer expired - returning last location");
+                Log.v(TAG, "mTimeOutTimer expired - returning last location");
                 //mUtil.showToast("mTimeOutTimer expired - returning last location");
                 mLocationManager.removeUpdates(mLocationListener);
                 mSdLocationReceiver.onSdLocationReceived(mLastLocation);
             }
-        }, mTimeoutPeriod * 1000);
+        }, mTimeoutPeriod * 1000L);
 
     }
 

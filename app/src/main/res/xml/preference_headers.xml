@@ -1,38 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<preference-headers
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!--<header android:fragment="uk.org.openseizuredetector.PrefActivity$BasicPrefsFragment"
+    <header
+        android:fragment="uk.org.openseizuredetector.PrefActivity$BasicPrefsFragment"
         android:icon="@drawable/icon_24x24"
         android:title="@string/basic_settings_title"
-        android:summary="@string/basic_settings_summary" />-->
+        android:summary="@string/basic_settings_summary" />
 
-    <header android:fragment="uk.org.openseizuredetector.PrefActivity$GeneralPrefsFragment"
+    <header
+        android:fragment="uk.org.openseizuredetector.PrefActivity$GeneralPrefsFragment"
         android:icon="@drawable/icon_24x24"
         android:title="@string/general_settings_title"
         android:summary="@string/general_settings_summary" />
 
-    <header android:fragment="uk.org.openseizuredetector.PrefActivity$AlarmPrefsFragment"
+    <header
+        android:fragment="uk.org.openseizuredetector.PrefActivity$AlarmPrefsFragment"
         android:icon="@drawable/icon_24x24"
         android:title="@string/alarms_settings_title"
         android:summary="@string/alarms_settings_summary" />
 
-    <header android:fragment="uk.org.openseizuredetector.PrefActivity$LoggingPrefsFragment"
+    <header
+        android:fragment="uk.org.openseizuredetector.PrefActivity$LoggingPrefsFragment"
         android:icon="@drawable/icon_24x24"
         android:title="@string/logging_settings_title"
         android:summary="@string/logging_settings_summary" />
 
-    <header android:fragment="uk.org.openseizuredetector.PrefActivity$SeizureDetectorPrefsFragment"
+    <header
+        android:fragment="uk.org.openseizuredetector.PrefActivity$SeizureDetectorPrefsFragment"
         android:icon="@drawable/icon_24x24"
         android:title="@string/seizure_detector_settings_title"
         android:summary="@string/seizure_detector_settings_summary" />
 
-    <header android:fragment="uk.org.openseizuredetector.PrefActivity$PebbleDatasourcePrefsFragment"
+    <header
+        android:fragment="uk.org.openseizuredetector.PrefActivity$PebbleDatasourcePrefsFragment"
         android:icon="@drawable/icon_24x24"
         android:title="@string/pebble_datasource_title"
         android:summary="@string/pebble_datasource_summary" />
 
-    <header android:fragment="uk.org.openseizuredetector.PrefActivity$NetworkDatasourcePrefsFragment"
+    <header
+        android:fragment="uk.org.openseizuredetector.PrefActivity$NetworkDatasourcePrefsFragment"
         android:icon="@drawable/icon_24x24"
         android:title="@string/network_datasource_title"
         android:summary="@string/network_datasource_summary" />

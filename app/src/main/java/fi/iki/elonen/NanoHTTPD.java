@@ -1,6 +1,19 @@
 package fi.iki.elonen;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.PushbackInputStream;
+import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -90,7 +103,7 @@ public abstract class NanoHTTPD {
     private final String hostname;
     private final int myPort;
     private ServerSocket myServerSocket;
-    private Set<Socket> openConnections = new HashSet<Socket>();
+    private Set<Socket> openConnections = new HashSet<>();
     private Thread myThread;
     /**
      * Pluggable strategy for asynchronously executing requests.
@@ -118,7 +131,7 @@ public abstract class NanoHTTPD {
         setAsyncRunner(new DefaultAsyncRunner());
     }
 
-    private static final void safeClose(Closeable closeable) {
+    private static void safeClose(Closeable closeable) {
         if (closeable != null) {
             try {
                 closeable.close();
@@ -127,7 +140,7 @@ public abstract class NanoHTTPD {
         }
     }
 
-    private static final void safeClose(Socket closeable) {
+    private static void safeClose(Socket closeable) {
         if (closeable != null) {
             try {
                 closeable.close();
@@ -136,7 +149,7 @@ public abstract class NanoHTTPD {
         }
     }
 
-    private static final void safeClose(ServerSocket closeable) {
+    private static void safeClose(ServerSocket closeable) {
         if (closeable != null) {
             try {
                 closeable.close();
@@ -154,44 +167,38 @@ public abstract class NanoHTTPD {
         myServerSocket = new ServerSocket();
         myServerSocket.bind((hostname != null) ? new InetSocketAddress(hostname, myPort) : new InetSocketAddress(myPort));
 
-        myThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                do {
-                    try {
-                        final Socket finalAccept = myServerSocket.accept();
-                        registerConnection(finalAccept);
-                        finalAccept.setSoTimeout(SOCKET_READ_TIMEOUT);
-                        final InputStream inputStream = finalAccept.getInputStream();
-                        asyncRunner.exec(new Runnable() {
-                            @Override
-                            public void run() {
-                                OutputStream outputStream = null;
-                                try {
-                                    outputStream = finalAccept.getOutputStream();
-                                    TempFileManager tempFileManager = tempFileManagerFactory.create();
-                                    HTTPSession session = new HTTPSession(tempFileManager, inputStream, outputStream, finalAccept.getInetAddress());
-                                    while (!finalAccept.isClosed()) {
-                                        session.execute();
-                                    }
-                                } catch (Exception e) {
-                                    // When the socket is closed by the client, we throw our own SocketException
-                                    // to break the  "keep alive" loop above.
-                                    if (!(e instanceof SocketException && "NanoHttpd Shutdown".equals(e.getMessage()))) {
-                                        e.printStackTrace();
-                                    }
-                                } finally {
-                                    safeClose(outputStream);
-                                    safeClose(inputStream);
-                                    safeClose(finalAccept);
-                                    unRegisterConnection(finalAccept);
-                                }
+        myThread = new Thread(() -> {
+            do {
+                try {
+                    final Socket finalAccept = myServerSocket.accept();
+                    registerConnection(finalAccept);
+                    finalAccept.setSoTimeout(SOCKET_READ_TIMEOUT);
+                    final InputStream inputStream = finalAccept.getInputStream();
+                    asyncRunner.exec(() -> {
+                        OutputStream outputStream = null;
+                        try {
+                            outputStream = finalAccept.getOutputStream();
+                            TempFileManager tempFileManager = tempFileManagerFactory.create();
+                            HTTPSession session = new HTTPSession(tempFileManager, inputStream, outputStream, finalAccept.getInetAddress());
+                            while (!finalAccept.isClosed()) {
+                                session.execute();
                             }
-                        });
-                    } catch (IOException e) {
-                    }
-                } while (!myServerSocket.isClosed());
-            }
+                        } catch (Exception e) {
+                            // When the socket is closed by the client, we throw our own SocketException
+                            // to break the  "keep alive" loop above.
+                            if (!(e instanceof SocketException && "NanoHttpd Shutdown".equals(e.getMessage()))) {
+                                e.printStackTrace();
+                            }
+                        } finally {
+                            safeClose(outputStream);
+                            safeClose(inputStream);
+                            safeClose(finalAccept);
+                            unRegisterConnection(finalAccept);
+                        }
+                    });
+                } catch (IOException e) {
+                }
+            } while (!myServerSocket.isClosed());
         });
         myThread.setDaemon(true);
         myThread.setName("NanoHttpd Main Listener");
@@ -281,7 +288,7 @@ public abstract class NanoHTTPD {
      * @return HTTP response, see class Response for details
      */
     public Response serve(IHTTPSession session) {
-        Map<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<>();
         Method method = session.getMethod();
         if (Method.PUT.equals(method) || Method.POST.equals(method)) {
             try {
@@ -334,7 +341,7 @@ public abstract class NanoHTTPD {
      * @return a map of <code>String</code> (parameter name) to <code>List&lt;String&gt;</code> (a list of the values supplied).
      */
     protected Map<String, List<String>> decodeParameters(String queryString) {
-        Map<String, List<String>> parms = new HashMap<String, List<String>>();
+        Map<String, List<String>> parms = new HashMap<>();
         if (queryString != null) {
             StringTokenizer st = new StringTokenizer(queryString, "&");
             while (st.hasMoreTokens()) {
@@ -342,7 +349,7 @@ public abstract class NanoHTTPD {
                 int sep = e.indexOf('=');
                 String propertyName = (sep >= 0) ? decodePercent(e.substring(0, sep)).trim() : decodePercent(e).trim();
                 if (!parms.containsKey(propertyName)) {
-                    parms.put(propertyName, new ArrayList<String>());
+                    parms.put(propertyName, new ArrayList<>());
                 }
                 String propertyValue = (sep >= 0) ? decodePercent(e.substring(sep + 1)) : null;
                 if (propertyValue != null) {
@@ -462,40 +469,34 @@ public abstract class NanoHTTPD {
     }
 
     /**
-     * Default strategy for creating and cleaning up temporary files.
-     * <p/>
-     * <p></p>This class stores its files in the standard location (that is,
-     * wherever <code>java.io.tmpdir</code> points to).  Files are added
-     * to an internal list, and deleted when no longer needed (that is,
-     * when <code>clear()</code> is invoked at the end of processing a
-     * request).</p>
+     * Handles one session, i.e. parses the HTTP request and returns the response.
      */
-    public static class DefaultTempFileManager implements TempFileManager {
-        private final String tmpdir;
-        private final List<TempFile> tempFiles;
+    public interface IHTTPSession {
+        void execute() throws IOException;
 
-        public DefaultTempFileManager() {
-            tmpdir = System.getProperty("java.io.tmpdir");
-            tempFiles = new ArrayList<TempFile>();
-        }
+        Map<String, String> getParms();
 
-        @Override
-        public TempFile createTempFile() throws Exception {
-            DefaultTempFile tempFile = new DefaultTempFile(tmpdir);
-            tempFiles.add(tempFile);
-            return tempFile;
-        }
+        Map<String, String> getHeaders();
 
-        @Override
-        public void clear() {
-            for (TempFile file : tempFiles) {
-                try {
-                    file.delete();
-                } catch (Exception ignored) {
-                }
-            }
-            tempFiles.clear();
-        }
+        /**
+         * @return the path part of the URL.
+         */
+        String getUri();
+
+        String getQueryParameterString();
+
+        Method getMethod();
+
+        InputStream getInputStream();
+
+        CookieHandler getCookies();
+
+        /**
+         * Adds the files in the request body to the files map.
+         *
+         * @arg files - map to modify
+         */
+        void parseBody(Map<String, String> files) throws IOException, ResponseException;
     }
 
     /**
@@ -531,6 +532,62 @@ public abstract class NanoHTTPD {
     }
 
     /**
+     * Default strategy for creating and cleaning up temporary files.
+     * <p/>
+     * <p></p>This class stores its files in the standard location (that is,
+     * wherever <code>java.io.tmpdir</code> points to).  Files are added
+     * to an internal list, and deleted when no longer needed (that is,
+     * when <code>clear()</code> is invoked at the end of processing a
+     * request).</p>
+     */
+    public static class DefaultTempFileManager implements TempFileManager {
+        private final String tmpdir;
+        private final List<TempFile> tempFiles;
+
+        public DefaultTempFileManager() {
+            tmpdir = System.getProperty("java.io.tmpdir");
+            tempFiles = new ArrayList<>();
+        }
+
+        @Override
+        public TempFile createTempFile() throws Exception {
+            DefaultTempFile tempFile = new DefaultTempFile(tmpdir);
+            tempFiles.add(tempFile);
+            return tempFile;
+        }
+
+        @Override
+        public void clear() {
+            for (TempFile file : tempFiles) {
+                try {
+                    file.delete();
+                } catch (Exception ignored) {
+                }
+            }
+            tempFiles.clear();
+        }
+    }
+
+    public static final class ResponseException extends Exception {
+
+        private final Response.Status status;
+
+        public ResponseException(Response.Status status, String message) {
+            super(message);
+            this.status = status;
+        }
+
+        public ResponseException(Response.Status status, String message, Exception e) {
+            super(message, e);
+            this.status = status;
+        }
+
+        public Response.Status getStatus() {
+            return status;
+        }
+    }
+
+    /**
      * HTTP response. Return one of these from serve().
      */
     public static class Response {
@@ -549,7 +606,7 @@ public abstract class NanoHTTPD {
         /**
          * Headers for the HTTP response. Use addHeader() to add lines.
          */
-        private Map<String, String> header = new HashMap<String, String>();
+        private Map<String, String> header = new HashMap<>();
         /**
          * The request method that spawned this response.
          */
@@ -680,7 +737,7 @@ public abstract class NanoHTTPD {
                 outputStream.write(buff, 0, read);
                 outputStream.write(CRLF);
             }
-            outputStream.write(String.format("0\r\n\r\n").getBytes());
+            outputStream.write("0\r\n\r\n".getBytes());
         }
 
         private void sendAsFixedLength(OutputStream outputStream, int pending) throws IOException {
@@ -767,29 +824,10 @@ public abstract class NanoHTTPD {
         }
     }
 
-    public static final class ResponseException extends Exception {
-
-        private final Response.Status status;
-
-        public ResponseException(Response.Status status, String message) {
-            super(message);
-            this.status = status;
-        }
-
-        public ResponseException(Response.Status status, String message, Exception e) {
-            super(message, e);
-            this.status = status;
-        }
-
-        public Response.Status getStatus() {
-            return status;
-        }
-    }
-
     /**
      * Default strategy for creating and cleaning up temporary files.
      */
-    private class DefaultTempFileManagerFactory implements TempFileManagerFactory {
+    private static class DefaultTempFileManagerFactory implements TempFileManagerFactory {
         @Override
         public TempFileManager create() {
             return new DefaultTempFileManager();
@@ -797,33 +835,111 @@ public abstract class NanoHTTPD {
     }
 
     /**
-     * Handles one session, i.e. parses the HTTP request and returns the response.
+     * Provides rudimentary support for cookies.
+     * Doesn't support 'path', 'secure' nor 'httpOnly'.
+     * Feel free to improve it and/or add unsupported features.
+     *
+     * @author LordFokas
      */
-    public interface IHTTPSession {
-        void execute() throws IOException;
+    public static class CookieHandler implements Iterable<String> {
+        private HashMap<String, String> cookies = new HashMap<>();
+        private ArrayList<Cookie> queue = new ArrayList<>();
 
-        Map<String, String> getParms();
+        public CookieHandler(Map<String, String> httpHeaders) {
+            String raw = httpHeaders.get("cookie");
+            if (raw != null) {
+                String[] tokens = raw.split(";");
+                for (String token : tokens) {
+                    String[] data = token.trim().split("=");
+                    if (data.length == 2) {
+                        cookies.put(data[0], data[1]);
+                    }
+                }
+            }
+        }
 
-        Map<String, String> getHeaders();
+        @Override
+        public Iterator<String> iterator() {
+            return cookies.keySet().iterator();
+        }
 
         /**
-         * @return the path part of the URL.
+         * Read a cookie from the HTTP Headers.
+         *
+         * @param name The cookie's name.
+         * @return The cookie's value if it exists, null otherwise.
          */
-        String getUri();
-
-        String getQueryParameterString();
-
-        Method getMethod();
-
-        InputStream getInputStream();
-
-        CookieHandler getCookies();
+        public String read(String name) {
+            return cookies.get(name);
+        }
 
         /**
-         * Adds the files in the request body to the files map.
-         * @arg files - map to modify
+         * Sets a cookie.
+         *
+         * @param name    The cookie's name.
+         * @param value   The cookie's value.
+         * @param expires How many days until the cookie expires.
          */
-        void parseBody(Map<String, String> files) throws IOException, ResponseException;
+        public void set(String name, String value, int expires) {
+            queue.add(new Cookie(name, value, Cookie.getHTTPTime(expires)));
+        }
+
+        public void set(Cookie cookie) {
+            queue.add(cookie);
+        }
+
+        /**
+         * Set a cookie with an expiration date from a month ago, effectively deleting it on the client side.
+         *
+         * @param name The cookie name.
+         */
+        public void delete(String name) {
+            set(name, "-delete-", -30);
+        }
+
+        /**
+         * Internally used by the webserver to add all queued cookies into the Response's HTTP Headers.
+         *
+         * @param response The Response object to which headers the queued cookies will be added.
+         */
+        public void unloadQueue(Response response) {
+            for (Cookie cookie : queue) {
+                response.addHeader("Set-Cookie", cookie.getHTTPHeader());
+            }
+        }
+    }
+
+    public static class Cookie {
+        private String n, v, e;
+
+        public Cookie(String name, String value, String expires) {
+            n = name;
+            v = value;
+            e = expires;
+        }
+
+        public Cookie(String name, String value) {
+            this(name, value, 30);
+        }
+
+        public Cookie(String name, String value, int numDays) {
+            n = name;
+            v = value;
+            e = getHTTPTime(numDays);
+        }
+
+        public static String getHTTPTime(int days) {
+            Calendar calendar = Calendar.getInstance();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
+            dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+            calendar.add(Calendar.DAY_OF_MONTH, days);
+            return dateFormat.format(calendar.getTime());
+        }
+
+        public String getHTTPHeader() {
+            String fmt = "%s=%s; expires=%s";
+            return String.format(fmt, n, v, e);
+        }
     }
 
     protected class HTTPSession implements IHTTPSession {
@@ -851,7 +967,7 @@ public abstract class NanoHTTPD {
             this.inputStream = new PushbackInputStream(inputStream, BUFSIZE);
             this.outputStream = outputStream;
             String remoteIp = inetAddress.isLoopbackAddress() || inetAddress.isAnyLocalAddress() ? "127.0.0.1" : inetAddress.getHostAddress().toString();
-            headers = new HashMap<String, String>();
+            headers = new HashMap<>();
 
             headers.put("remote-addr", remoteIp);
             headers.put("http-client-ip", remoteIp);
@@ -895,16 +1011,16 @@ public abstract class NanoHTTPD {
                     inputStream.unread(buf, splitbyte, rlen - splitbyte);
                 }
 
-                parms = new HashMap<String, String>();
+                parms = new HashMap<>();
                 if(null == headers) {
-                    headers = new HashMap<String, String>();
+                    headers = new HashMap<>();
                 }
 
                 // Create a BufferedReader for parsing the header.
                 BufferedReader hin = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(buf, 0, rlen)));
 
                 // Decode the header into parms and header java properties
-                Map<String, String> pre = new HashMap<String, String>();
+                Map<String, String> pre = new HashMap<>();
                 decodeHeader(hin, pre, parms, headers);
 
                 method = Method.lookup(pre.get("method"));
@@ -925,11 +1041,9 @@ public abstract class NanoHTTPD {
                     r.setRequestMethod(method);
                     r.send(outputStream);
                 }
-            } catch (SocketException e) {
+            } catch (SocketException | SocketTimeoutException e) {
                 // throw it out to close socket object (finalAccept)
                 throw e;
-            } catch (SocketTimeoutException ste) {
-            	throw ste;
             } catch (IOException ioe) {
                 Response r = new Response(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT, "SERVER INTERNAL ERROR: IOException: " + ioe.getMessage());
                 r.send(outputStream);
@@ -1102,7 +1216,7 @@ public abstract class NanoHTTPD {
                         throw new ResponseException(Response.Status.BAD_REQUEST, "BAD REQUEST: Content type is multipart/form-data but next chunk does not start with boundary. Usage: GET /example/file.html");
                     }
                     boundarycount++;
-                    Map<String, String> item = new HashMap<String, String>();
+                    Map<String, String> item = new HashMap<>();
                     mpline = in.readLine();
                     while (mpline != null && mpline.trim().length() > 0) {
                         int p = mpline.indexOf(':');
@@ -1117,7 +1231,7 @@ public abstract class NanoHTTPD {
                             throw new ResponseException(Response.Status.BAD_REQUEST, "BAD REQUEST: Content type is multipart/form-data but no content-disposition info found. Usage: GET /example/file.html");
                         }
                         StringTokenizer st = new StringTokenizer(contentDisposition, ";");
-                        Map<String, String> disposition = new HashMap<String, String>();
+                        Map<String, String> disposition = new HashMap<>();
                         while (st.hasMoreTokens()) {
                             String token = st.nextToken().trim();
                             int p = token.indexOf('=');
@@ -1182,7 +1296,7 @@ public abstract class NanoHTTPD {
         private int[] getBoundaryPositions(ByteBuffer b, byte[] boundary) {
             int matchcount = 0;
             int matchbyte = -1;
-            List<Integer> matchbytes = new ArrayList<Integer>();
+            List<Integer> matchbytes = new ArrayList<>();
             for (int i = 0; i < b.limit(); i++) {
                 if (b.get(i) == boundary[matchcount]) {
                     if (matchcount == 0)
@@ -1308,113 +1422,6 @@ public abstract class NanoHTTPD {
         @Override
         public CookieHandler getCookies() {
             return cookies;
-        }
-    }
-
-    public static class Cookie {
-        private String n, v, e;
-
-        public Cookie(String name, String value, String expires) {
-            n = name;
-            v = value;
-            e = expires;
-        }
-
-        public Cookie(String name, String value) {
-            this(name, value, 30);
-        }
-
-        public Cookie(String name, String value, int numDays) {
-            n = name;
-            v = value;
-            e = getHTTPTime(numDays);
-        }
-
-        public String getHTTPHeader() {
-            String fmt = "%s=%s; expires=%s";
-            return String.format(fmt, n, v, e);
-        }
-
-        public static String getHTTPTime(int days) {
-            Calendar calendar = Calendar.getInstance();
-            SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
-            dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-            calendar.add(Calendar.DAY_OF_MONTH, days);
-            return dateFormat.format(calendar.getTime());
-        }
-    }
-
-    /**
-     * Provides rudimentary support for cookies.
-     * Doesn't support 'path', 'secure' nor 'httpOnly'.
-     * Feel free to improve it and/or add unsupported features.
-     *
-     * @author LordFokas
-     */
-    public class CookieHandler implements Iterable<String> {
-        private HashMap<String, String> cookies = new HashMap<String, String>();
-        private ArrayList<Cookie> queue = new ArrayList<Cookie>();
-
-        public CookieHandler(Map<String, String> httpHeaders) {
-            String raw = httpHeaders.get("cookie");
-            if (raw != null) {
-                String[] tokens = raw.split(";");
-                for (String token : tokens) {
-                    String[] data = token.trim().split("=");
-                    if (data.length == 2) {
-                        cookies.put(data[0], data[1]);
-                    }
-                }
-            }
-        }
-
-        @Override public Iterator<String> iterator() {
-            return cookies.keySet().iterator();
-        }
-
-        /**
-         * Read a cookie from the HTTP Headers.
-         *
-         * @param name The cookie's name.
-         * @return The cookie's value if it exists, null otherwise.
-         */
-        public String read(String name) {
-            return cookies.get(name);
-        }
-
-        /**
-         * Sets a cookie.
-         *
-         * @param name    The cookie's name.
-         * @param value   The cookie's value.
-         * @param expires How many days until the cookie expires.
-         */
-        public void set(String name, String value, int expires) {
-            queue.add(new Cookie(name, value, Cookie.getHTTPTime(expires)));
-        }
-
-        public void set(Cookie cookie) {
-            queue.add(cookie);
-        }
-
-        /**
-         * Set a cookie with an expiration date from a month ago, effectively deleting it on the client side.
-         *
-         * @param name The cookie name.
-         */
-        public void delete(String name) {
-            set(name, "-delete-", -30);
-        }
-
-        /**
-         * Internally used by the webserver to add all queued cookies into the Response's HTTP Headers.
-         *
-         * @param response The Response object to which headers the queued cookies will be added.
-         */
-        public void unloadQueue(Response response) {
-            for (Cookie cookie : queue) {
-                response.addHeader("Set-Cookie", cookie.getHTTPHeader());
-            }
         }
     }
 }

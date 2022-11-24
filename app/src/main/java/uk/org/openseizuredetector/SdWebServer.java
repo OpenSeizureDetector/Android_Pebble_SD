@@ -29,7 +29,6 @@ public class SdWebServer extends NanoHTTPD {
     private SdData mSdData;
     private SdServer mSdServer;
     private Context mContext;
-    private Handler mHandler;
     private OsdUtil mUtil;
 
     public SdWebServer(Context context, SdData sdData, SdServer sdServer) {
@@ -38,7 +37,7 @@ public class SdWebServer extends NanoHTTPD {
         mSdData = sdData;
         mContext = context;
         mSdServer = sdServer;
-        mHandler = new Handler();
+        Handler mHandler = new Handler();
         mUtil = new OsdUtil(mContext, mHandler);
     }
 
@@ -53,7 +52,7 @@ public class SdWebServer extends NanoHTTPD {
         Method method;
         Map<String, String> header;
         Map<String, String> parameters;
-        Map<String, String> files = new HashMap<String, String>();
+        Map<String, String> files = new HashMap<>();
         NanoHTTPD.Response res = null;
         String responseMimeType = "application/json";
 

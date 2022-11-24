@@ -24,13 +24,13 @@
 */
 package uk.org.openseizuredetector;
 
-import android.os.Parcelable;
 import android.os.Parcel;
+import android.os.Parcelable;
 import android.text.format.Time;
 import android.util.Log;
 
-import org.json.JSONObject;
 import org.json.JSONArray;
+import org.json.JSONObject;
 
 /* based on http://stackoverflow.com/questions/2139134/how-to-send-an-object-from-one-android-activity-to-another-using-intents */
 
@@ -64,8 +64,8 @@ public class SdData implements Parcelable {
     /* Heart Rate Alarm Settings */
     public boolean mHRAlarmActive = false;
     public boolean mHRNullAsAlarm = false;
-    public double mHRThreshMin = 40.0;
-    public double mHRThreshMax = 150.0;
+    public short mHRThreshMin = 40;
+    public short mHRThreshMax = 150;
 
     /* Oxygen Saturation Alarm Settings */
     public boolean mO2SatAlarmActive = false;
@@ -101,11 +101,11 @@ public class SdData implements Parcelable {
 
     public boolean mHRAlarmStanding = false;
     public boolean mHRFaultStanding = false;
-    public double mHR = 0;
+    public short mHR = 0;
 
     public boolean mO2SatAlarmStanding = false;
     public boolean mO2SatFaultStanding = false;
-    public double mO2Sat = 0;
+    public double mO2Sat;
 
 
     public SdData() {
@@ -145,9 +145,9 @@ public class SdData implements Parcelable {
             alarmRatioThresh = jo.optInt("alarmRatioThresh");
             mHRAlarmActive = jo.optBoolean("hrAlarmActive");
             mHRAlarmStanding = jo.optBoolean("hrAlarmStanding");
-            mHRThreshMin = jo.optDouble("hrThreshMin");
-            mHRThreshMax = jo.optDouble("hrThreshMax");
-            mHR = jo.optDouble("hr");
+            mHRThreshMax = (short) jo.optInt("hrThreshMin");
+            mHRThreshMin = (short) jo.optInt("hrThreshMax");
+            mHR = (short) jo.optInt("hr");
             if (mHR >= 0.0) {
                 mHRAlarmActive = true;
             }
@@ -255,12 +255,12 @@ public class SdData implements Parcelable {
             jsonObj.put("o2SatAlarmStanding", mO2SatAlarmStanding);
             jsonObj.put("o2SatThreshMin", mO2SatThreshMin);
             jsonObj.put("dataSourceName", dataSourceName);
-            Log.v(TAG,"phoneAppVersion="+phoneAppVersion);
             jsonObj.put("phoneAppVersion", phoneAppVersion);
             jsonObj.put("watchPartNo", watchPartNo);
             jsonObj.put("watchSdName", watchSdName);
             jsonObj.put("watchFwVersion", watchFwVersion);
             jsonObj.put("watchSdVersion", watchSdVersion);
+            Log.v(TAG, "phoneAppVersion=" + phoneAppVersion);
 
             retval = jsonObj.toString();
         } catch (Exception ex) {

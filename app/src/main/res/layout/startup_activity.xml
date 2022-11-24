@@ -16,6 +16,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/imageView"
         android:layout_gravity="center_horizontal"
+        android:contentDescription="TODO"
         app:srcCompat="@drawable/star_of_life_48x48" />
 
     <TextView

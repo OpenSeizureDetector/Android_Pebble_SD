@@ -129,6 +129,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            style="?android:attr/buttonBarButtonStyle"
             android:text="@string/AcceptAlarmBtnTxt" />
 
         <Button
@@ -136,6 +137,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            style="?android:attr/buttonBarButtonStyle"
             android:text="@string/CancelAudibleButtonTxt" />
 
         <Button
@@ -144,6 +146,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:backgroundTint="#ff0000"
+            style="?android:attr/buttonBarButtonStyle"
             android:text="@string/ManualAlarmBtnTxt" />
     </LinearLayout>
 
