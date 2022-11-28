@@ -67,8 +67,6 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
-import kotlin.coroutines.CoroutineContext;
-import kotlinx.coroutines.CoroutineDispatcher;
 import kotlinx.coroutines.Dispatchers;
 import kotlinx.coroutines.GlobalScope;
 
@@ -222,7 +220,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         super(context, handler, sdDataReceiver);
         mContext = context;
         lckContext = context;
-        Log.e(TAG, "starting to init cntexts");
+        Log.e(TAG, "starting to init contexts");
         mName = "Android Wear";
         // Set default settings from XML files (mContext is set by super().
         PreferenceManager.setDefaultValues(mContext,
@@ -234,8 +232,8 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
 
 
         try {
-            CoroutineContext coroutineContext = GlobalScope.INSTANCE.getCoroutineContext();
-            CoroutineDispatcher a = Dispatchers.getDefault();
+            var coroutineContext = GlobalScope.INSTANCE.getCoroutineContext();
+            var a = Dispatchers.getDefault();
             a.dispatch(coroutineContext, () -> {
                 try {
                     mNodeClient = Wearable.getNodeClient(mContext);
@@ -485,14 +483,11 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 mCapabilityClientOsdAW = Wearable.getCapabilityClient(mContext);
                 Wearable.getMessageClient(mContext).addListener(this);
                 findAllWearDevices();
-                if (!mWearableDeviceConnected) {
+                if (!mSdData.watchConnected) {
                     findWearDevicesWithApp();
-                }
-
-                if (wearNodesWithApp instanceof Set) {
+                } else if (wearNodesWithApp instanceof Set) {
 
                     if (!wearNodesWithApp.isEmpty()) {
-                        mWearableDeviceConnected = true;
                         mSdData.watchConnected = true;
                     } else if ((allConnectedNodes instanceof Node) && !allConnectedNodes.isEmpty()) {
                         //TODO installer
@@ -813,52 +808,55 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         );
         //Send back a message back to the source node
         //This acknowledges that the receiver activity is open
-        if (Objects.equals(messageEventPath, APP_OPEN_WEARABLE_PAYLOAD_PATH) && (!mWearableDeviceConnected)) {
-            // Get the node id of the node that created the data item from the host portion of
-            // the uri.
-            final String nodeId = messageEvent.getSourceNodeId();
-            // Set the data of the message to be the bytes of the Uri.
+        if (Objects.equals(messageEventPath, APP_OPEN_WEARABLE_PAYLOAD_PATH)) {
+            if (!mSdData.watchConnected) {
+                // Get the node id of the node that created the data item from the host portion of
+                // the uri.
+                final String nodeId = messageEvent.getSourceNodeId();
+                // Set the data of the message to be the bytes of the Uri.
 
-            currentAckFromWearForAppOpenCheck = s;
-            Log.d(
-                    TAG_MESSAGE_RECEIVED,
-                    "Acknowledgement message successfully with payload : " + wearableAppCheckPayloadReturnACK
-            );
-            mMessageEvent = messageEvent;
-            mWearableNodeUri = messageEvent.getSourceNodeId();
-            mSdData.watchConnected = true;
-            sendMessage(MESSAGE_ITEM_OSD_DATA_RECEIVED, wearableAppCheckPayloadReturnACK);
-            try {
-                Log.d(TAG_MESSAGE_RECEIVED, s);
+                currentAckFromWearForAppOpenCheck = s;
+                Log.d(
+                        TAG_MESSAGE_RECEIVED,
+                        "Acknowledgement message successfully with payload : " + wearableAppCheckPayloadReturnACK
+                );
+                mMessageEvent = messageEvent;
+                mWearableNodeUri = messageEvent.getSourceNodeId();
+                mSdData.watchConnected = true;
+                sendMessage(MESSAGE_ITEM_OSD_DATA_RECEIVED, wearableAppCheckPayloadReturnACK);
+                try {
+                    Log.d(TAG_MESSAGE_RECEIVED, s);
 
-            } catch (Exception e) {
-                e.printStackTrace();
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception in updating msddata", e);
+                }
+            } else {
+                Log.v(TAG, "onMessageReceived() - if mSdData.watchConnected: Connected and");
             }
+
+
         } else if (!messageEventPath.isEmpty() && messageEventPath.equals(MESSAGE_ITEM_OSD_DATA)) {
 
             try {
-                mWearableDeviceConnected = true;
                 Log.v(TAG, "Got SDData: " + messageEvent.getData());
                 mSdData.fromJSON(s);
                 if (!mSdData.haveSettings) sendWatchSdSettings();
-                mSdData.watchConnected = mWearableDeviceConnected;
-                mSdData.watchAppRunning = true;
                 mSdDataReceiver.onSdDataReceived(mSdData);
             } catch (Exception e) {
-                Log.e(TAG, "Exception in updating msddata");
+                Log.e(TAG, "Exception in updating msddata", e);
             }
         } else if (!messageEventPath.isEmpty() && messageEventPath.equals(MESSAGE_ITEM_OSD_DATA_RECEIVED) && processingSdSettings) {
             try {
-                processingSdSettings = false;
-                mWearableDeviceConnected = true;
-                Log.v(TAG, "Got SDData: " + messageEvent.getData());
-                mSdData.fromJSON(s);
-                mSdData.watchConnected = mWearableDeviceConnected;
-                mSdData.watchAppRunning = true;
-                mSdData.haveSettings = checkWatchSettings();
-                mSdDataReceiver.onSdDataReceived(mSdData);
+                SdData mSdDataIn = new SdData();
+                mSdDataIn.fromJSON(s);
+                if (mSdDataIn.watchConnected != mSdData.watchConnected) {
+                    Log.v(TAG, "Got SDData: " + messageEvent.getData());
+                    mSdDataReceiver.onSdDataReceived(mSdDataIn);
+                    findWearDevicesWithApp();
+                }
+                mSdDataIn = null;
             } catch (Exception e) {
-                Log.e(TAG, "Exception in updating msddata");
+                Log.e(TAG, "Exception in updating msddata", e);
             }
         }
 
@@ -1003,12 +1001,8 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
     public void getWatchSdSettings() {
         Log.v(TAG, "getWatchSdSettings() - sending required settings to pebble");
         mUtil.writeToSysLogFile("SdDataSourceAw.getWatchSdSettings()");
-        if (!(processingSdSettings && processingSdSettingsPfMarker)) {
-            processingSdSettings = true;
-            sendMessage(MESSAGE_ITEM_OSD_DATA_REQUESTED, "Would you please give me your settings?");
-        } else if (processingSdSettings) {
-            processingSdSettingsPfMarker = true;
-        } else processingSdSettingsPfMarker = false;
+        sendMessage(MESSAGE_ITEM_OSD_DATA_REQUESTED, "Would you please give me your settings?");
+
 
         //Log.v(TAG, "getWatchSdSettings() - requesting settings from pebble");
         //mUtil.writeToSysLogFile("SdDataSourceAw.getWatchSdSettings() - and request settings from pebble");
@@ -1075,8 +1069,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
     public void sendWatchSdSettings() {
         Log.v(TAG, "sendWatchSdSettings() - preparing settings dictionary.. mSampleFreq=" + mSampleFreq);
         mUtil.writeToSysLogFile("SdDataSourceAw.sendWatchSdSettings()");
-        mSdData.haveSettings = checkWatchSettings();
-        sendMessage(MESSAGE_ITEM_OSD_DATA_REQUESTED, mSdData.toDataString(true));
+        sendMessage(MESSAGE_ITEM_OSD_DATA_REQUESTED, mSdData.toSettingsJSON());
     }
 
     /**
