@@ -55,7 +55,6 @@ import com.google.android.gms.wearable.WearableListenerService;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -234,7 +233,9 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         try {
             var coroutineContext = GlobalScope.INSTANCE.getCoroutineContext();
             var a = Dispatchers.getDefault();
+            Log.v(TAG, "Created coroutine");
             a.dispatch(coroutineContext, () -> {
+                Log.v(TAG, "Entered coroutine");
                 try {
                     mNodeClient = Wearable.getNodeClient(mContext);
 
@@ -271,13 +272,14 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 } catch (CancellationException e) {
                     Log.e(TAG, "Task get connected Nodes failed due cancellation in try");
                 } catch (Throwable throwable) {
-                    Log.d(TAG, "Node request failed to return any results.");
+                    Log.e(TAG, "Node request failed to return any results.", throwable);
                 }
+                Log.v(TAG, "Exiting Coroutine");
             });
 
 
         } catch (Exception e) {
-
+            Log.e(TAG, "Node request failed to return any results.", e);
         }
     }
 
@@ -305,18 +307,22 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                     sendWatchSdSettings();
                     getWatchSdSettings();
                 } else {
-                    mWearableDeviceConnected = false;
                     mSdData.watchConnected = false;
+                    mSdDataReceiver.onSdDataReceived(mSdData);
 
                 }
             } else {
                 //no Wearable devices found
-                Log.e(TAG, "No Wearables found.");
+                Log.e(TAG, "initialiseDevicePairing() - No Wearables found.");
+                mSdData.watchConnected = false;
+                mSdDataReceiver.onSdDataReceived(mSdData);
             }
 
 
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "initialiseDevicePairing () - No Wearables found.", e);
+            mSdData.watchConnected = false;
+            mSdDataReceiver.onSdDataReceived(mSdData);
         }
 
     }
@@ -337,14 +343,15 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
 
                 try {
                     result = Tasks.await(sendMessageTask);
-                    Log.d(TAG, "Send message result: " + sendMessageTask.getResult().toString());
+                    Log.d(TAG, "Send message result: " + String.valueOf(result));
                     resBool[0] = true;
+
 
                     if (!Objects.equals(currentAckFromWearForAppOpenCheck, wearableAppCheckPayloadReturnACK)) {
                         try {
                             Thread.sleep(100);
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            Log.e(TAG, "getNodes () - Task Interrupted: Sleep canceled.", e);
                         }
                         Log.d(TAG_GET_NODES, "ACK thread sleep 1");
                     }
@@ -358,7 +365,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                         try {
                             Thread.sleep(200);
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            Log.e(TAG, "getNodes () - Task Interrupted: Sleep canceled.", e);
                         }
                         Log.d(TAG_GET_NODES, "ACK thread sleep 3");
                     } else if (Objects.equals(currentAckFromWearForAppOpenCheck, wearableAppCheckPayloadReturnACK)) {
@@ -371,7 +378,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                         try {
                             Thread.sleep(250);
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            Log.e(TAG, "getNodes () - Task Interrupted: Sleep canceled.", e);
                         }
                         Log.d(TAG_GET_NODES, "ACK thread sleep 4");
                     } else if (Objects.equals(currentAckFromWearForAppOpenCheck, wearableAppCheckPayloadReturnACK)) {
@@ -384,7 +391,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                         try {
                             Thread.sleep(350);
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            Log.e(TAG, "getNodes () - Task Interrupted: Sleep canceled.", e);
                         }
                         Log.d(TAG_GET_NODES, "ACK thread sleep 5");
                     } else if (Objects.equals(currentAckFromWearForAppOpenCheck, wearableAppCheckPayloadReturnACK)) {
@@ -400,15 +407,15 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
 
 
                 } catch (Exception e) {
-                    Log.e(TAG, "Exception in getting results: " + e.getLocalizedMessage());
+                    Log.e(TAG, "Exception in getting results: " + e, e);
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "getNodes () - No Wearables found.", e);
             }
 
         } catch (Exception e) {
-            Log.e(TAG, "Exception in getting results: " + e.getLocalizedMessage());
+            Log.e(TAG, "getNodes () - No Wearables found.", e);
         }
 
         return resBool;
@@ -477,7 +484,11 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
 
         try {
             if (mContext != null) {
-
+                Wearable.getCapabilityClient(mContext)
+                        .addListener(
+                                this,
+                                Uri.parse("wear://"), CapabilityClient.FILTER_REACHABLE
+                        );
                 mNodeClient = Wearable.getNodeClient(mContext);
                 mCapabilityClientWear = Wearable.getCapabilityClient(mContext);
                 mCapabilityClientOsdAW = Wearable.getCapabilityClient(mContext);
@@ -488,7 +499,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 } else if (wearNodesWithApp instanceof Set) {
 
                     if (!wearNodesWithApp.isEmpty()) {
-                        mSdData.watchConnected = true;
+                        Log.v(TAG, "Logging success of filling wearable lists.");
                     } else if ((allConnectedNodes instanceof Node) && !allConnectedNodes.isEmpty()) {
                         //TODO installer
                     } else {
@@ -522,7 +533,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
 //                Log.v(TAG, "start(): status timer already running.");
 //                mUtil.writeToSysLogFile("SdDataSourceAw.start() - status timer already running??");
 //            }
-            if (mWearableDeviceConnected) {
+            if (mSdData.watchConnected) {
                 final String nodeId = mMessageEvent.getSourceNodeId();
                 //set the data f the message to the butes of the Uri.
                 final byte[] payload = "connect_init".getBytes(StandardCharsets.UTF_8);
@@ -534,15 +545,12 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 } catch (ExecutionException | InterruptedException ex) {
                     ex.printStackTrace();
                 }
-                if (sendMessageTask.isSuccessful()) {
-                    mWearableDeviceConnected = true;
+                if (!sendMessageTask.isSuccessful()) {
+                    mSdData.watchConnected = false;
+                    mSdDataReceiver.onSdDataReceived(mSdData);
+                    return;
 
-                } else {
-                    Log.e(TAG_MESSAGE_RECEIVED, "Failed to send message " + Arrays.toString(payload));
                 }
-
-
-                Log.d(TAG_MESSAGE_RECEIVED, "");
 
 
                 // make sure we get some data when we first start.
@@ -568,7 +576,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 mUtil.writeToSysLogFile("SdDataSourceAw.start() - settings timer already running??");
             }
         } catch (Exception e) {
-            Log.e(TAG, "Start failed completly" + e);
+            Log.e(TAG, "Start failed completly", e);
         }
 
 
@@ -794,6 +802,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
+        if (mSdData == null) mSdData = new SdData();
         Log.d(TAG_MESSAGE_RECEIVED, "onMessageReceived event received");
         final String s = new String(messageEvent.getData(), StandardCharsets.UTF_8);
         final String messageEventPath = messageEvent.getPath();
@@ -840,6 +849,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
             try {
                 Log.v(TAG, "Got SDData: " + messageEvent.getData());
                 mSdData.fromJSON(s);
+                //updateFromJSON(s);
                 if (!mSdData.haveSettings) sendWatchSdSettings();
                 mSdDataReceiver.onSdDataReceived(mSdData);
             } catch (Exception e) {
@@ -854,6 +864,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                     mSdDataReceiver.onSdDataReceived(mSdDataIn);
                     findWearDevicesWithApp();
                 }
+                //updateFromJSON(s);
                 mSdDataIn = null;
             } catch (Exception e) {
                 Log.e(TAG, "Exception in updating msddata", e);
@@ -1069,7 +1080,11 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
     public void sendWatchSdSettings() {
         Log.v(TAG, "sendWatchSdSettings() - preparing settings dictionary.. mSampleFreq=" + mSampleFreq);
         mUtil.writeToSysLogFile("SdDataSourceAw.sendWatchSdSettings()");
-        sendMessage(MESSAGE_ITEM_OSD_DATA_REQUESTED, mSdData.toSettingsJSON());
+        SdData mSdDataOut = getSdData();
+        if (!mSdDataOut.haveSettings)
+            Log.v(TAG, "sendWatchSdSettings returning without mSdData.HaveSettings");
+        else Log.v(TAG, "sendWatchSdSettings returning with mSdData.HaveSettings");
+        sendMessage(MESSAGE_ITEM_OSD_DATA_REQUESTED, mSdDataOut.toSettingsJSON());
     }
 
     /**
