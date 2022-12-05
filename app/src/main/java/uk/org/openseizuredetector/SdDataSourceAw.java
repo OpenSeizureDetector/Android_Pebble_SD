@@ -803,6 +803,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         if (mSdData == null) mSdData = new SdData();
+        if (mWearableNodeUri == null) mWearableNodeUri = messageEvent.getSourceNodeId();
         Log.d(TAG_MESSAGE_RECEIVED, "onMessageReceived event received");
         final String s = new String(messageEvent.getData(), StandardCharsets.UTF_8);
         final String messageEventPath = messageEvent.getPath();
@@ -830,7 +831,6 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                         "Acknowledgement message successfully with payload : " + wearableAppCheckPayloadReturnACK
                 );
                 mMessageEvent = messageEvent;
-                mWearableNodeUri = messageEvent.getSourceNodeId();
                 mSdData.watchConnected = true;
                 sendMessage(MESSAGE_ITEM_OSD_DATA_RECEIVED, wearableAppCheckPayloadReturnACK);
                 try {
@@ -848,6 +848,8 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
 
             try {
                 Log.v(TAG, "Got SDData: " + messageEvent.getData());
+                var a = updateFromJSON(s);
+                Log.v(TAG, a);
                 mSdData.fromJSON(s);
                 //updateFromJSON(s);
                 if (!mSdData.haveSettings) sendWatchSdSettings();
@@ -1050,7 +1052,8 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                                 } else {
                                     // Log an error
                                     Log.e(TAG, "ERROR: failed to send Message to :" + mWearableNodeUri);
-                                    mWearableDeviceConnected = false;
+                                    mSdData.watchConnected = false;
+                                    mSdDataReceiver.onSdDataReceived(mSdData);
                                     mWearableNodeUri = null;
                                 }
                             }
@@ -1062,12 +1065,14 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
             }
 
         } else {
-            Log.e(TAG, "SendMessageFailed: No node-Id initialized");
+            Log.e(TAG, "SendMessageFailed(): No node-Id initialized");
             Wearable.getCapabilityClient(mContext)
                     .addListener(
                             this,
                             Uri.parse("wear://"), CapabilityClient.FILTER_REACHABLE
                     );
+            mSdData.watchConnected = false;
+            mSdDataReceiver.onSdDataReceived(mSdData);
             Wearable.getMessageClient(mContext).addListener(this);
         }
 
@@ -1081,10 +1086,14 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         Log.v(TAG, "sendWatchSdSettings() - preparing settings dictionary.. mSampleFreq=" + mSampleFreq);
         mUtil.writeToSysLogFile("SdDataSourceAw.sendWatchSdSettings()");
         SdData mSdDataOut = getSdData();
-        if (!mSdDataOut.haveSettings)
+
+        mSdDataOut.serverOK = mUtil.isServerRunning();
+
+        if (!mUtil.isServerRunning())
             Log.v(TAG, "sendWatchSdSettings returning without mSdData.HaveSettings");
         else Log.v(TAG, "sendWatchSdSettings returning with mSdData.HaveSettings");
-        sendMessage(MESSAGE_ITEM_OSD_DATA_REQUESTED, mSdDataOut.toSettingsJSON());
+        String text = mSdDataOut.toSettingsJSON();
+        sendMessage(MESSAGE_ITEM_OSD_DATA_REQUESTED, text);
     }
 
     /**

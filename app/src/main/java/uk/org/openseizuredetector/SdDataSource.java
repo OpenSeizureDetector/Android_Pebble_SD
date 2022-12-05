@@ -97,6 +97,7 @@ public abstract class SdDataSource {
         mHandler = handler;
         mUtil = new OsdUtil(mContext, mHandler);
         mSdDataReceiver = sdDataReceiver;
+        mSdDataReceiver.toString();
         mSdData = new SdData();
     }
 
@@ -251,6 +252,7 @@ public abstract class SdDataSource {
             JSONObject mainObject = new JSONObject(jsonStr);
             //JSONObject dataObject = mainObject.getJSONObject("dataObj");
             JSONObject dataObject = mainObject;
+
             String dataTypeStr = dataObject.getString("dataType");
             Log.v(TAG, "updateFromJSON - dataType=" + dataTypeStr);
             if (dataTypeStr.equals("raw")) {

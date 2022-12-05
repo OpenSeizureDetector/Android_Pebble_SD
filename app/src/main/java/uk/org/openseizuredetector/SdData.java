@@ -106,6 +106,7 @@ public class SdData implements Parcelable {
     public boolean mO2SatAlarmStanding = false;
     public boolean mO2SatFaultStanding = false;
     public double mO2Sat;
+    public String mDataType;
 
 
     public SdData() {
@@ -147,6 +148,7 @@ public class SdData implements Parcelable {
             mHRAlarmStanding = jo.optBoolean("hrAlarmStanding");
             mHRThreshMax = (short) jo.optInt("hrThreshMin");
             mHRThreshMin = (short) jo.optInt("hrThreshMax");
+            mDataType = jo.optString("dataType", "raw");
             mHR = (short) jo.optInt("hr");
             if (mHR >= 0.0) {
                 mHRAlarmActive = true;
@@ -156,10 +158,10 @@ public class SdData implements Parcelable {
                 simpleSpec[i] = specArr.optInt(i);
             }
             haveData = true;
-            Log.v(TAG, "fromJSON(): sdData = " + this.toString());
+            Log.v(TAG, "fromJSON(): sdData returning with haveData= true and = " + jo);
             return true;
         } catch (Exception e) {
-            Log.v(TAG, "fromJSON() - error parsing result" + e.toString());
+            Log.e(TAG, "fromJSON() - error parsing result", e);
             haveData = false;
             return false;
         }
@@ -260,6 +262,7 @@ public class SdData implements Parcelable {
             jsonObj.put("watchSdName", watchSdName);
             jsonObj.put("watchFwVersion", watchFwVersion);
             jsonObj.put("watchSdVersion", watchSdVersion);
+            jsonObj.put("dataType", "settings");
             Log.v(TAG, "phoneAppVersion=" + phoneAppVersion);
 
             retval = jsonObj.toString();
