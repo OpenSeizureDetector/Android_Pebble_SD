@@ -973,6 +973,9 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         Log.i(TAG, "onResume()");
         mUtil.writeToSysLogFile("MainActivity.onResume()");
+        if (!mUtil.isServerRunning()) {
+            mUtil.startServer();
+        }
     }
 
     private void showAbout() {

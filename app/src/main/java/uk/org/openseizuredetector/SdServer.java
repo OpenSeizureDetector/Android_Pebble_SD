@@ -72,6 +72,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Based on example at:
@@ -451,15 +452,14 @@ public class SdServer extends Service implements SdDataReceiver {
         if (dataLogTimer == null) {
             Log.v(TAG, "onStartCommand(): starting dataLog timer");
             mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting dataLog timer");
-            /*dataLogTimer = new Timer();
+            dataLogTimer = new Timer();
             dataLogTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    Log.v(TAG,"dataLogTimer.run()");
+                    Log.v(TAG, "dataLogTimer.run()");
                     logData();
                 }
             }, 0, 1000 * 60);
-            */
         } else {
             Log.v(TAG, "onStartCommand(): dataLog timer already running.");
             mUtil.writeToSysLogFile("SdServer.onStartCommand() - dataLog timer already running???");
@@ -933,12 +933,12 @@ public class SdServer extends Service implements SdDataReceiver {
         // flag.
         if (mFaultTimerCompleted) {
             faultWarningBeep();
-//            mSdDataSource.stop();
-//            mHandler.postDelayed(new Runnable() {
-//                public void run() {
-//                    mSDDataThread.start()
-//                }
-//            }, 190);
+            mSdDataSource.stop();
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    mSDDataThread.start();
+                }
+            }, 190);
         } else {
             startFaultTimer();
             Log.v(TAG, "onSdDataFault() - starting Fault Timer");

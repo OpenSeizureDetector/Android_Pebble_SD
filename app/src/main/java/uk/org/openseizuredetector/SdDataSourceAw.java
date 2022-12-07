@@ -819,7 +819,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         //Send back a message back to the source node
         //This acknowledges that the receiver activity is open
         if (Objects.equals(messageEventPath, APP_OPEN_WEARABLE_PAYLOAD_PATH)) {
-            if (!mSdData.watchConnected) {
+            if (!mSdData.serverOK) {
                 // Get the node id of the node that created the data item from the host portion of
                 // the uri.
                 final String nodeId = messageEvent.getSourceNodeId();
@@ -852,7 +852,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 Log.v(TAG, a);
                 mSdData.fromJSON(s);
                 //updateFromJSON(s);
-                if (!mSdData.haveSettings) sendWatchSdSettings();
+                if (wearNodesWithApp.isEmpty()) sendWatchSdSettings();
                 mSdDataReceiver.onSdDataReceived(mSdData);
             } catch (Exception e) {
                 Log.e(TAG, "Exception in updating msddata", e);
