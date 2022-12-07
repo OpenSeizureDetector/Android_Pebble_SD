@@ -311,7 +311,7 @@ public abstract class SdDataSource {
 
                 mWatchAppRunningCheck = true;
                 doAnalysis();
-
+                if (mSdData.mHR != 0) mSdData.haveSettings = true;
                 if (mSdData.haveSettings == false) {
                     retVal = "sendSettings";
                 } else {
