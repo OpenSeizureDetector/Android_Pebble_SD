@@ -24,6 +24,7 @@
 */
 package uk.org.openseizuredetector;
 
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.text.format.Time;
@@ -267,6 +268,7 @@ public class SdData implements Parcelable {
             jsonObj.put("watchFwVersion", watchFwVersion);
             jsonObj.put("watchSdVersion", watchSdVersion);
             jsonObj.put("dataType", "settings");
+            jsonObj.put("phoneName", Build.HOST);
             Log.v(TAG, "phoneAppVersion=" + phoneAppVersion);
 
             retval = jsonObj.toString();

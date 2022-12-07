@@ -382,9 +382,9 @@ public abstract class SdDataSource {
      * and populate the output data structure mSdData
      */
     protected void doAnalysis() {
-        int nMin = 0;
-        int nMax = 0;
-        int nFreqCutoff = 0;
+        double nMin = 0;
+        double nMax = 0;
+        double nFreqCutoff = 0;
         double[] fft = null;
         try {
             // FIXME - Use specified sampleFreq, not this hard coded one
@@ -392,13 +392,13 @@ public abstract class SdDataSource {
             double freqRes = 1.0 * mSampleFreq / mSdData.mNsamp;
             Log.v(TAG, "doAnalysis(): mSampleFreq=" + mSampleFreq + " mNSamp=" + mSdData.mNsamp + ": freqRes=" + freqRes);
             // Set the frequency bounds for the analysis in fft output bin numbers.
-            nMin = (int) (mAlarmFreqMin / freqRes);
-            nMax = (int) (mAlarmFreqMax / freqRes);
+            nMin = mAlarmFreqMin / freqRes;
+            nMax = mAlarmFreqMax / freqRes;
             Log.v(TAG, "doAnalysis(): mAlarmFreqMin=" + mAlarmFreqMin + ", nMin=" + nMin
                     + ", mAlarmFreqMax=" + mAlarmFreqMax + ", nMax=" + nMax);
             // Calculate the bin number of the cutoff frequency
             short mFreqCutoff = 12;
-            nFreqCutoff = (int) (mFreqCutoff / freqRes);
+            nFreqCutoff = mFreqCutoff / freqRes;
             Log.v(TAG, "mFreqCutoff = " + mFreqCutoff + ", nFreqCutoff=" + nFreqCutoff);
 
             DoubleFFT_1D fftDo = new DoubleFFT_1D(mSdData.mNsamp);
@@ -425,7 +425,7 @@ public abstract class SdDataSource {
 
             // Calculate the Region of Interest power and power ratio.
             double roiPower = 0;
-            for (int i = nMin; i < nMax; i++) {
+            for (int i = (int) Math.floor(nMin); i < (int) Math.ceil(nMax); i++) {
                 roiPower = roiPower + getMagnitude(fft, i);
             }
             roiPower = roiPower / (nMax - nMin);
