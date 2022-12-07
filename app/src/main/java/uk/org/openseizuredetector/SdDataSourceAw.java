@@ -849,10 +849,14 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
             try {
                 Log.v(TAG, "Got SDData: " + messageEvent.getData());
                 var a = updateFromJSON(s);
-                Log.v(TAG, a);
+                Log.v(TAG, "result from updateFromJSON(): " + a);
+                if (a == "sendSettings") {
+                    sendWatchSdSettings();
+                    getWatchSdSettings();
+                }
                 mSdData.fromJSON(s);
-                if (wearNodesWithApp != null) {
-                    if (wearNodesWithApp.isEmpty()) sendWatchSdSettings();
+                if (mWearableNodeUri != null) {
+                    if (mWearableNodeUri.isEmpty()) sendWatchSdSettings();
                 } else sendWatchSdSettings();
                 mSdDataReceiver.onSdDataReceived(mSdData);
             } catch (Exception e) {
