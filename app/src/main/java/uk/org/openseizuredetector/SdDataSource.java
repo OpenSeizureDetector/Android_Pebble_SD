@@ -99,6 +99,7 @@ public abstract class SdDataSource {
         mSdDataReceiver = sdDataReceiver;
         mSdDataReceiver.toString();
         mSdData = new SdData();
+
     }
 
     /**
@@ -452,7 +453,9 @@ public abstract class SdDataSource {
             }
 
             // Populate the mSdData structure to communicate with the main SdServer service.
-            mDataStatusTime.setToNow();
+            if (mSdData.dataTime == null) mSdData.dataTime = new Time();
+            mSdData.dataTime.setToNow();
+            mDataStatusTime = mSdData.dataTime;
             // Amount by which to reduce analysis results to scale to be comparable to analysis on Pebble.
             int ACCEL_SCALE_FACTOR = 1000;
             mSdData.specPower = (long) specPower / ACCEL_SCALE_FACTOR;
