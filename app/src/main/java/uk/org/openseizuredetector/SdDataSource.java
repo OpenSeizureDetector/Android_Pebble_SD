@@ -258,7 +258,8 @@ public abstract class SdDataSource {
             if (dataTypeStr.equals("raw")) {
                 Log.v(TAG, "updateFromJSON - processing raw data");
                 try {
-                    mSdData.mHR = (short) dataObject.getInt("HR");
+                    mSdData.mHR = (short) dataObject.getInt("hr");
+                    mSdData.curHeartAvg = (short) dataObject.getInt("curHeartAvg");
                 } catch (JSONException e) {
                     // if we get 'null' HR (For example if the heart rate is not working)
                     mSdData.mHR = -1;
@@ -351,7 +352,7 @@ public abstract class SdDataSource {
         } catch (Exception e) {
             Log.e(TAG, "updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.toString());
             mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.toString());
-            mUtil.writeToSysLogFile("updateFromJSON: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
+            //mUtil.writeToSysLogFile("updateFromJSON: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
             if (accelVals == null) {
                 mUtil.writeToSysLogFile("updateFromJSON: accelVals is null when exception thrown");
             } else {

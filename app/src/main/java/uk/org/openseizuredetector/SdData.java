@@ -102,6 +102,7 @@ public class SdData implements Parcelable {
     public boolean mHRAlarmStanding = false;
     public boolean mHRFaultStanding = false;
     public short mHR = 0;
+    public short curHeartAvg = 0;
 
     public boolean mO2SatAlarmStanding = false;
     public boolean mO2SatFaultStanding = false;
@@ -240,6 +241,9 @@ public class SdData implements Parcelable {
                 jsonObj.put("dataTime", "00-00-00 00:00:00");
             }
             jsonObj.put("batteryPc", batteryPc);
+            jsonObj.put("watchConnected", watchConnected);
+            jsonObj.put("watchAppRunning", watchAppRunning);
+            jsonObj.put("haveSettings", haveSettings);
             jsonObj.put("alarmState", alarmState);
             jsonObj.put("alarmPhrase", alarmPhrase);
             jsonObj.put("sdMode", mSdMode);
