@@ -388,7 +388,11 @@ public abstract class SdDataSource {
         double[] fft = null;
         try {
             // FIXME - Use specified sampleFreq, not this hard coded one
-            mSampleFreq = 25;
+            int sampleFreq;
+            if (mSdData.mSampleFreq != 0) mSampleFreq = (short) mSdData.mSampleFreq;
+            else {
+                sampleFreq = (int) (mSdData.mNsamp / mSdData.dT);
+            }
             double freqRes = 1.0 * mSampleFreq / mSdData.mNsamp;
             Log.v(TAG, "doAnalysis(): mSampleFreq=" + mSampleFreq + " mNSamp=" + mSdData.mNsamp + ": freqRes=" + freqRes);
             // Set the frequency bounds for the analysis in fft output bin numbers.
