@@ -276,7 +276,7 @@ public abstract class SdDataSource {
                     // if we get 'null' HR (For example if the heart rate is not working)
                     mMute = 0;
                 }
-                accelVals = dataObject.getJSONArray("data");
+                accelVals = dataObject.getJSONArray("rawData");
                 Log.v(TAG, "Received " + accelVals.length() + " acceleration values, rawData Length is " + mSdData.rawData.length);
                 if (accelVals.length() > mSdData.rawData.length) {
                     mUtil.writeToSysLogFile("ERROR:  Received " + accelVals.length() + " acceleration values, but rawData storage length is "
@@ -289,7 +289,7 @@ public abstract class SdDataSource {
                 mSdData.mNsamp = accelVals.length();
                 //Log.d(TAG,"accelVals[0]="+accelVals.getDouble(0)+", mSdData.rawData[0]="+mSdData.rawData[0]);
                 try {
-                    accelVals3D = dataObject.getJSONArray("data3D");
+                    accelVals3D = dataObject.getJSONArray("rawData3D");
                     Log.v(TAG, "Received " + accelVals3D.length() + " acceleration 3D values, rawData Length is " + mSdData.rawData3D.length);
                     if (accelVals3D.length() > mSdData.rawData3D.length) {
                         mUtil.writeToSysLogFile("ERROR:  Received " + accelVals3D.length() + " 3D acceleration values, but rawData3D storage length is "

@@ -852,14 +852,16 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 Log.v(TAG, a);
                 mSdData.fromJSON(s);
                 //updateFromJSON(s);
-                if (wearNodesWithApp.isEmpty()) sendWatchSdSettings();
+                if (wearNodesWithApp != null) {
+                    if (wearNodesWithApp.isEmpty()) sendWatchSdSettings();
+                } else sendWatchSdSettings();
                 mSdDataReceiver.onSdDataReceived(mSdData);
             } catch (Exception e) {
                 Log.e(TAG, "Exception in updating msddata", e);
             }
         } else if (!messageEventPath.isEmpty() && messageEventPath.equals(MESSAGE_ITEM_OSD_DATA_RECEIVED) && processingSdSettings) {
             try {
-                SdData mSdDataIn = new SdData();
+                var mSdDataIn = new SdData();
                 mSdDataIn.fromJSON(s);
                 if (mSdDataIn.watchConnected != mSdData.watchConnected) {
                     Log.v(TAG, "Got SDData: " + messageEvent.getData());
