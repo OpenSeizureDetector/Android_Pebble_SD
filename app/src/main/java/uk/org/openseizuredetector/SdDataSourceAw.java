@@ -832,7 +832,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 );
                 mMessageEvent = messageEvent;
                 mSdData.watchConnected = true;
-                sendMessage(MESSAGE_ITEM_OSD_DATA_RECEIVED, wearableAppCheckPayloadReturnACK);
+                sendMessage(APP_OPEN_WEARABLE_PAYLOAD_PATH, wearableAppCheckPayloadReturnACK);
                 try {
                     Log.d(TAG_MESSAGE_RECEIVED, s);
 
@@ -851,7 +851,6 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 var a = updateFromJSON(s);
                 Log.v(TAG, a);
                 mSdData.fromJSON(s);
-                //updateFromJSON(s);
                 if (wearNodesWithApp != null) {
                     if (wearNodesWithApp.isEmpty()) sendWatchSdSettings();
                 } else sendWatchSdSettings();
@@ -868,7 +867,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                     mSdDataReceiver.onSdDataReceived(mSdDataIn);
                     findWearDevicesWithApp();
                 }
-                //updateFromJSON(s);
+                var a = updateFromJSON(s);
                 mSdDataIn = null;
             } catch (Exception e) {
                 Log.e(TAG, "Exception in updating msddata", e);
@@ -1095,7 +1094,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
             Log.v(TAG, "sendWatchSdSettings returning without mSdData.HaveSettings");
         else Log.v(TAG, "sendWatchSdSettings returning with mSdData.HaveSettings");
         String text = mSdDataOut.toSettingsJSON();
-        sendMessage(MESSAGE_ITEM_OSD_DATA_REQUESTED, text);
+        sendMessage(MESSAGE_ITEM_OSD_DATA_RECEIVED, text);
     }
 
     /**
