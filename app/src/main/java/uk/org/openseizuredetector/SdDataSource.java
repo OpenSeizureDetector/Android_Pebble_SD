@@ -120,7 +120,9 @@ public abstract class SdDataSource {
         mUtil.writeToSysLogFile("SdDataSource.start()");
         updatePrefs();
         // Start timer to check status of watch regularly.
-        mDataStatusTime = new Time(Time.getCurrentTimezone());
+        if (mSdData.dataTime == null) mSdData.dataTime = new Time();
+        mSdData.dataTime.setToNow();
+        mDataStatusTime = mSdData.dataTime;
         // use a timer to check the status of the pebble app on the same frequency
         // as we get app data.
         if (mStatusTimer == null) {
@@ -473,7 +475,7 @@ public abstract class SdDataSource {
             // Because we have received data, set flag to show watch app running.
             mWatchAppRunningCheck = true;
         } catch (Exception e) {
-            Log.e(TAG, "doAnalysis - Exception during Analysis");
+            Log.e(TAG, "doAnalysis - Exception during Analysis", e);
             mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e.toString());
             mUtil.writeToSysLogFile("doAnalysis: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
             mUtil.writeToSysLogFile("doAnalysis: mSdData.mNsamp="+mSdData.mNsamp);
