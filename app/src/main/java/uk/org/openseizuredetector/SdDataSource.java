@@ -311,7 +311,7 @@ public abstract class SdDataSource {
 
                 mWatchAppRunningCheck = true;
                 doAnalysis();
-                if (mSdData.mHR != 0) mSdData.haveSettings = true;
+                if (mSdData.mHR != 0 || dataTypeStr == "settings") mSdData.haveSettings = true;
                 if (mSdData.haveSettings == false) {
                     retVal = "sendSettings";
                 } else {
@@ -339,7 +339,7 @@ public abstract class SdDataSource {
                     mSdData.watchSdVersion = sdVersion;
                     mSdData.watchSdName = sdName;
                 } catch (Exception e) {
-                    Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString());
+                    Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString(), e);
                     mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - " + jsonStr + " - " + e.toString());
                     mUtil.writeToSysLogFile("          This is probably because of an out of date watch app - please upgrade!");
                     e.printStackTrace();
@@ -353,7 +353,7 @@ public abstract class SdDataSource {
                 retVal = "ERROR";
             }
         } catch (Exception e) {
-            Log.e(TAG, "updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.toString());
+            Log.e(TAG, "updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.toString(), e);
             mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.toString());
             //mUtil.writeToSysLogFile("updateFromJSON: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
             if (accelVals == null) {
@@ -566,7 +566,7 @@ public abstract class SdDataSource {
         Log.v(TAG, "hrCheck()");
         /* Check Heart Rate against alarm settings */
         if (mSdData.mHRAlarmActive) {
-            if (mSdData.mHR < 0) {
+            if (((short) mSdData.mHR) < 0) {
                 if (mSdData.mHRNullAsAlarm) {
                     Log.i(TAG, "Heart Rate Null - Alarming");
                     mSdData.mHRFaultStanding = false;
@@ -576,8 +576,8 @@ public abstract class SdDataSource {
                     mSdData.mHRFaultStanding = true;
                     mSdData.mHRAlarmStanding = false;
                 }
-            } else if ((mSdData.mHR > mSdData.mHRThreshMax) || (mSdData.mHR < mSdData.mHRThreshMin)) {
-                Log.i(TAG, "Heart Rate Abnormal - " + mSdData.mHR + " bpm");
+            } else if ((((short) mSdData.mHR) > mSdData.mHRThreshMax) || (((short) mSdData.mHR) < mSdData.mHRThreshMin)) {
+                Log.i(TAG, "Heart Rate Abnormal - " + ((short) mSdData.mHR) + " bpm");
                 mSdData.mHRFaultStanding = false;
                 mSdData.mHRAlarmStanding = true;
             } else {
