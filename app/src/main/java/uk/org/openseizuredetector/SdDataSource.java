@@ -576,7 +576,7 @@ public abstract class SdDataSource {
                     mSdData.mHRFaultStanding = true;
                     mSdData.mHRAlarmStanding = false;
                 }
-            } else if ((((short) mSdData.mHR) > mSdData.mHRThreshMax) || (((short) mSdData.mHR) < mSdData.mHRThreshMin)) {
+            } else if ((mSdData.mHR < mSdData.mHRThreshMin) || (mSdData.mHR > mSdData.mHRThreshMax)) {
                 Log.i(TAG, "Heart Rate Abnormal - " + ((short) mSdData.mHR) + " bpm");
                 mSdData.mHRFaultStanding = false;
                 mSdData.mHRAlarmStanding = true;

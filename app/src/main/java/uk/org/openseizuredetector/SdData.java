@@ -155,8 +155,8 @@ public class SdData implements Parcelable {
             alarmRatioThresh = jo.optInt("alarmRatioThresh");
             mHRAlarmActive = jo.optBoolean("hrAlarmActive");
             mHRAlarmStanding = jo.optBoolean("hrAlarmStanding");
-            mHRThreshMax = (short) jo.optInt("hrThreshMin");
-            mHRThreshMin = (short) jo.optInt("hrThreshMax");
+            mHRThreshMax = (short) jo.optInt("hrThreshMax");
+            mHRThreshMin = (short) jo.optInt("hrThreshMin");
             mDataType = jo.optString("dataType", "raw");
             phoneName = jo.optString("phoneName");
             mHR = (short) jo.optInt("hr");
