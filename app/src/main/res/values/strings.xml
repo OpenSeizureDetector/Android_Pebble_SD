@@ -459,4 +459,6 @@
     <string name="NDATimeRemaining">"NDA Logging Time Remaining (hours): "</string>
     <string name="stop_nda_menu_title">Stop NDA Logging</string>
     <string name="start_nda_menu_title">Start NDA Logging</string>
+    <string name="aw_app_not_installed_dialog_text">Please Install the OpenSeizureDetector Android Wear App</string>
+    <string name="aw_app_not_installed_dialog_title">ERROR:  OpenSeizureDetector Android Wear App Not Installed</string>
 </resources>
