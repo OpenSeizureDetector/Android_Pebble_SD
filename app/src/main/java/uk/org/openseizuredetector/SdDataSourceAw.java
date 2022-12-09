@@ -854,25 +854,29 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                     sendWatchSdSettings();
                     getWatchSdSettings();
                 }
-                mSdData.fromJSON(s);
-                if (mWearableNodeUri != null) {
-                    if (mWearableNodeUri.isEmpty()) sendWatchSdSettings();
-                } else sendWatchSdSettings();
-                mSdDataReceiver.onSdDataReceived(mSdData);
+                //mSdData.fromJSON(s);
+                //if (mWearableNodeUri != null) {
+                //    if (mWearableNodeUri.isEmpty()) sendWatchSdSettings();
+                //} else sendWatchSdSettings();
+                //mSdDataReceiver.onSdDataReceived(mSdData);
             } catch (Exception e) {
                 Log.e(TAG, "Exception in updating msddata", e);
             }
         } else if (!messageEventPath.isEmpty() && messageEventPath.equals(MESSAGE_ITEM_OSD_DATA_RECEIVED) && processingSdSettings) {
             try {
-                var mSdDataIn = new SdData();
-                mSdDataIn.fromJSON(s);
-                if (mSdDataIn.watchConnected != mSdData.watchConnected) {
-                    Log.v(TAG, "Got SDData: " + messageEvent.getData());
-                    mSdDataReceiver.onSdDataReceived(mSdDataIn);
-                    findWearDevicesWithApp();
-                }
+                //var mSdDataIn = new SdData();
+                //mSdDataIn.fromJSON(s);
+                //if (mSdDataIn.watchConnected != mSdData.watchConnected) {
+                Log.v(TAG, "Got SDData: " + messageEvent.getData());
+                //    mSdDataReceiver.onSdDataReceived(mSdDataIn);
+                //    findWearDevicesWithApp();
+                //}
                 var a = updateFromJSON(s);
-                mSdDataIn = null;
+                if (a == "sendSettings") {
+                    sendWatchSdSettings();
+                    getWatchSdSettings();
+                }
+                //mSdDataIn = null;
             } catch (Exception e) {
                 Log.e(TAG, "Exception in updating msddata", e);
             }
