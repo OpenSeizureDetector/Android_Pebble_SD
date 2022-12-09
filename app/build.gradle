@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 android {
-    compileSdkVersion 31
+    compileSdkVersion 33
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
         applicationId "uk.org.openseizuredetector"
         minSdkVersion 23
-        targetSdkVersion 30
+        targetSdkVersion 31
         multiDexEnabled true
     }
 
@@ -28,6 +28,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    namespace 'uk.org.openseizuredetector'
 }
 
 dependencies {
@@ -40,18 +41,18 @@ dependencies {
     implementation 'com.github.PhilJay:MPAndroidChart:v2.1.3'
     implementation 'com.getpebble:pebblekit:3.1.0@aar'
     // Unit testing dependencies
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.3'
-    implementation 'com.google.android.material:material:1.4.0'
-    implementation 'com.google.firebase:firebase-auth:19.2.0'
-    implementation 'androidx.test:core:1.4.0'
-    implementation 'com.google.android.gms:play-services-tflite-java:16.0.0'
-    implementation 'com.google.android.gms:play-services-tflite-support:16.0.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'com.google.android.material:material:1.7.0'
+    implementation 'com.google.firebase:firebase-auth:21.1.0'
+    implementation 'androidx.test:core:1.5.0'
+    implementation 'com.google.android.gms:play-services-tflite-java:16.0.1'
+    implementation 'com.google.android.gms:play-services-tflite-support:16.0.1'
     testImplementation 'junit:junit:4.13.2'
     // Set this dependency if you want to use Mockito
-    testImplementation 'org.mockito:mockito-core:4.3.1'
+    testImplementation 'org.mockito:mockito-core:4.9.0'
     // Set this dependency if you want to use Hamcrest matching
     testImplementation 'org.hamcrest:hamcrest-library:2.2'
-    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'org.apache.commons:commons-math3:3.6.1'
     // google play services used for location finding for SMS alerts.
@@ -60,11 +61,11 @@ dependencies {
     implementation 'com.github.wendykierp:JTransforms:3.1'
     implementation 'com.google.android.gms:play-services-location:+'
     //implementation 'com.github.RohitSurwase.UCE-Handler:uce_handler:1.3'
-    testImplementation 'org.robolectric:robolectric:4.7.3'
+    testImplementation 'org.robolectric:robolectric:4.9'
     implementation 'com.android.volley:volley:1.2.1'
     implementation platform('com.google.firebase:firebase-bom:29.2.0')
     implementation 'com.google.firebase:firebase-analytics'
-    implementation 'com.firebaseui:firebase-ui-auth:7.2.0'
+    implementation 'com.firebaseui:firebase-ui-auth:8.0.2'
     implementation 'com.google.firebase:firebase-firestore'
 
 }
