@@ -312,7 +312,7 @@ public abstract class SdDataSource {
                 try {
                     mSdData.watchConnected = dataObject.getBoolean("watchConnected");
                     mSdData.watchAppRunning = dataObject.getBoolean("watchAppRunning");
-                    mSdData.batteryPc = (short) dataObject.getInt("battery");
+                    mSdData.batteryPc = (short) dataObject.getInt("batteryPc");
                 } catch (Exception e) {
                     Log.e(TAG, "UpdateFromJSON()", e);
                 }
@@ -328,7 +328,7 @@ public abstract class SdDataSource {
                 Log.v(TAG, "updateFromJSON - processing settings");
                 mSamplePeriod = (short) dataObject.getInt("analysisPeriod");
                 mSampleFreq = (short) dataObject.getInt("sampleFreq");
-                mSdData.batteryPc = (short) dataObject.getInt("battery");
+                mSdData.batteryPc = (short) dataObject.getInt("batteryPc");
                 Log.v(TAG, "updateFromJSON - mSamplePeriod=" + mSamplePeriod + " mSampleFreq=" + mSampleFreq);
                 mUtil.writeToSysLogFile("SDDataSource.updateFromJSON - Settings Received");
                 mUtil.writeToSysLogFile("    * mSamplePeriod=" + mSamplePeriod + " mSampleFreq=" + mSampleFreq);
