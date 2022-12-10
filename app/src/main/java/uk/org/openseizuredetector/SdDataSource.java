@@ -28,6 +28,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.format.Time;
@@ -116,12 +117,12 @@ public abstract class SdDataSource {
      * make sure any changes to preferences are taken into account.
      */
     public void start() {
-
         Log.v(TAG, "start()");
         mUtil.writeToSysLogFile("SdDataSource.start()");
         updatePrefs();
         // Start timer to check status of watch regularly.
         if (mSdData.dataTime == null) mSdData.dataTime = new Time();
+        mSdData.phoneName = Build.HOST;
         mSdData.dataTime.setToNow();
         mDataStatusTime = mSdData.dataTime;
         // use a timer to check the status of the pebble app on the same frequency
@@ -303,12 +304,18 @@ public abstract class SdDataSource {
                     }
                 } catch (JSONException e) {
                     // If we get an error, just set rawData3D to zero
-                    Log.i(TAG,"updateFromJSON - error parsing 3D data - setting it to zero");
+                    Log.i(TAG, "updateFromJSON - error parsing 3D data - setting it to zero");
                     for (i = 0; i < mSdData.rawData3D.length; i++) {
-                        mSdData.rawData3D[i] = 0.;
+                        mSdData.rawData3D[i] = 0d;
                     }
                 }
-
+                try {
+                    mSdData.watchConnected = dataObject.getBoolean("watchConnected");
+                    mSdData.watchAppRunning = dataObject.getBoolean("watchAppRunning");
+                    mSdData.batteryPc = (short) dataObject.getInt("battery");
+                } catch (Exception e) {
+                    Log.e(TAG, "UpdateFromJSON()", e);
+                }
                 mWatchAppRunningCheck = true;
                 doAnalysis();
                 if (mSdData.mHR != 0 || dataTypeStr == "settings") mSdData.haveSettings = true;
@@ -347,6 +354,12 @@ public abstract class SdDataSource {
                 mSdData.haveSettings = true;
                 mSdData.mSampleFreq = mSampleFreq;
                 mWatchAppRunningCheck = true;
+                try {
+                    mSdData.watchConnected = dataObject.getBoolean("watchConnected");
+                    mSdData.watchAppRunning = dataObject.getBoolean("watchAppRunning");
+                } catch (Exception e) {
+                    Log.e(TAG, "UpdateFromJSON()", e);
+                }
                 retVal = "OK";
             } else {
                 Log.e(TAG, "updateFromJSON - unrecognised dataType " + dataTypeStr);
