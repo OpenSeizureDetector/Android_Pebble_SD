@@ -361,6 +361,19 @@ public abstract class SdDataSource {
                     Log.e(TAG, "UpdateFromJSON()", e);
                 }
                 retVal = "OK";
+            } else if (dataTypeStr.equals("watchConnected")) {
+                mSdData.watchConnected = dataObject.getBoolean("watchConnected");
+                mSdData.watchAppRunning = dataObject.getBoolean("watchAppRunning");
+                retVal = dataTypeStr;
+                // TODO: give me here a question: reconnect or quit
+                //       Let me give here give a update to StartActivity or MainActivity
+            } else if (dataTypeStr.equals("watchDisconnect")) {
+                mSdData.watchConnected = dataObject.getBoolean("watchConnected");
+                mSdData.watchAppRunning = dataObject.getBoolean("watchAppRunning");
+                retVal = dataTypeStr;
+
+                // TODO: give me here a question: reconnect or quit
+                //       Let me give here give a update to StartActivity or MainActivity
             } else {
                 Log.e(TAG, "updateFromJSON - unrecognised dataType " + dataTypeStr);
                 retVal = "ERROR";

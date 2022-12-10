@@ -613,8 +613,16 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
 
         } catch (Exception e) {
             Log.v(TAG, "Error in stop() - " + e.toString());
-            mUtil.writeToSysLogFile("SdDataSourceAw.stop() - error - "+e.toString());
+            mUtil.writeToSysLogFile("SdDataSourceAw.stop() - error - " + e.toString());
         }
+    }
+
+    public boolean isWearConnected() {
+        boolean result = false;
+        Task<List<Node>> resultNodeList = mNodeClient.getConnectedNodes();
+        if (resultNodeList.isSuccessful()) if (!resultNodeList.getResult().isEmpty())
+            if (resultNodeList.getResult().contains(mWearableNodeUri)) result = true;
+        return result;
     }
 
     /**
@@ -862,7 +870,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
             } catch (Exception e) {
                 Log.e(TAG, "Exception in updating msddata", e);
             }
-        } else if (!messageEventPath.isEmpty() && messageEventPath.equals(MESSAGE_ITEM_OSD_DATA_RECEIVED) && processingSdSettings) {
+        } else if (!messageEventPath.isEmpty() && messageEventPath.equals(MESSAGE_ITEM_OSD_DATA_RECEIVED)) {
             try {
                 //var mSdDataIn = new SdData();
                 //mSdDataIn.fromJSON(s);
@@ -875,6 +883,13 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 if (a == "sendSettings") {
                     sendWatchSdSettings();
                     getWatchSdSettings();
+                }
+                if (a == "watchConnected") {
+                    findWearDevicesWithApp();
+                }
+                if (a == "watchDisconnect") {
+                    Log.i(TAG, "onMessageReceived(): watchDisconnect");
+                    //TODO: reconnect??
                 }
                 //mSdDataIn = null;
             } catch (Exception e) {
