@@ -85,7 +85,7 @@ public abstract class SdDataSource {
     private short mFallThreshMax;
     private short mFallWindow;
     private int mMute;  // !=0 means muted by keypress on watch.
-    boolean prefValmHrAlarmActive;
+    public boolean prefValmHrAlarmActive;
 
 
     private int mAlarmCount;
@@ -263,7 +263,7 @@ public abstract class SdDataSource {
             if (dataTypeStr.equals("raw")) {
                 Log.v(this.TAG, "updateFromJSON - processing raw data");
                 try {
-                    this.mSdData.mHR = (short) dataObject.getInt("hr");
+                    this.mSdData.mHR = dataObject.getDouble("hr");
                     this.mSdData.curHeartAvg = (short) dataObject.getInt("curHeartAvg");
                     if (this.mSdData.mHR >= 0d) {
                         if (!prefValmHrAlarmActive)

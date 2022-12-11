@@ -94,7 +94,6 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
     // TODO: Replace with your links/packages.
     static final String APP_STORE_APP_URI =
             "https://itunes.apple.com/us/app/android-wear/id986496028?mt=8";
-    private static Context lckContext;
     private final String TAG = "SdDataSourceAw";
     private Timer mSettingsTimer;
     private Timer mStatusTimer;
@@ -218,7 +217,6 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                           SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
         mContext = context;
-        lckContext = context;
         Log.e(TAG, "starting to init contexts");
         mName = "Android Wear";
         // Set default settings from XML files (mContext is set by super().
