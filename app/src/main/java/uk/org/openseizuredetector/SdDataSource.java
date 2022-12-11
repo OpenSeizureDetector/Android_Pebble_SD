@@ -45,9 +45,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 interface SdDataReceiver {
-    public void onSdDataReceived(SdData sdData);
+    void onSdDataReceived(SdData sdData);
 
-    public void onSdDataFault(SdData sdData);
+    void onSdDataFault(SdData sdData);
 }
 
 /**
@@ -60,7 +60,7 @@ public abstract class SdDataSource {
     private Timer mSettingsTimer;
     private Timer mFaultCheckTimer;
     protected Time mDataStatusTime;
-    protected boolean mWatchAppRunningCheck = false;
+    private final String TAG = "SdDataSource";
     private int mAppRestartTimeout = 10;  // Timeout before re-starting watch app (sec) if we have not received
     // data after mDataUpdatePeriod
     private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
@@ -69,7 +69,7 @@ public abstract class SdDataSource {
     protected OsdUtil mUtil;
     protected Context mContext;
     protected static SdDataReceiver mSdDataReceiver;
-    private String TAG = "SdDataSource";
+    protected boolean mWatchAppRunningCheck;
 
     private short mDataUpdatePeriod;
     private short mSampleFreq;
@@ -85,6 +85,7 @@ public abstract class SdDataSource {
     private short mFallThreshMax;
     private short mFallWindow;
     private int mMute;  // !=0 means muted by keypress on watch.
+    boolean prefValmHrAlarmActive;
 
 
     private int mAlarmCount;
@@ -92,14 +93,14 @@ public abstract class SdDataSource {
     protected String mBleDeviceName;
 
 
-    public SdDataSource(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
-        Log.v(TAG, "SdDataSource() Constructor");
-        mContext = context;
-        mHandler = handler;
-        mUtil = new OsdUtil(mContext, mHandler);
-        mSdDataReceiver = sdDataReceiver;
-        mSdDataReceiver.toString();
-        mSdData = new SdData();
+    public SdDataSource(final Context context, final Handler handler, final SdDataReceiver sdDataReceiver) {
+        Log.v(this.TAG, "SdDataSource() Constructor");
+        this.mContext = context;
+        this.mHandler = handler;
+        this.mUtil = new OsdUtil(this.mContext, this.mHandler);
+        SdDataSource.mSdDataReceiver = sdDataReceiver;
+        SdDataSource.mSdDataReceiver.toString();
+        this.mSdData = new SdData();
 
     }
 
@@ -109,7 +110,7 @@ public abstract class SdDataSource {
      * @return
      */
     public SdData getSdData() {
-        return mSdData;
+        return this.mSdData;
     }
 
     /**
@@ -117,60 +118,60 @@ public abstract class SdDataSource {
      * make sure any changes to preferences are taken into account.
      */
     public void start() {
-        Log.v(TAG, "start()");
-        mUtil.writeToSysLogFile("SdDataSource.start()");
-        updatePrefs();
+        Log.v(this.TAG, "start()");
+        this.mUtil.writeToSysLogFile("SdDataSource.start()");
+        this.updatePrefs();
         // Start timer to check status of watch regularly.
-        if (mSdData.dataTime == null) mSdData.dataTime = new Time();
-        mSdData.phoneName = Build.HOST;
-        mSdData.dataTime.setToNow();
-        mDataStatusTime = mSdData.dataTime;
+        if (this.mSdData.dataTime == null) this.mSdData.dataTime = new Time();
+        this.mSdData.phoneName = Build.HOST;
+        this.mSdData.dataTime.setToNow();
+        this.mDataStatusTime = this.mSdData.dataTime;
         // use a timer to check the status of the pebble app on the same frequency
         // as we get app data.
-        if (mStatusTimer == null) {
-            Log.v(TAG, "start(): starting status timer");
-            mUtil.writeToSysLogFile("SdDataSource.start() - starting status timer");
-            mStatusTimer = new Timer();
-            mStatusTimer.schedule(new TimerTask() {
+        if (this.mStatusTimer == null) {
+            Log.v(this.TAG, "start(): starting status timer");
+            this.mUtil.writeToSysLogFile("SdDataSource.start() - starting status timer");
+            this.mStatusTimer = new Timer();
+            this.mStatusTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    getStatus();
+                    SdDataSource.this.getStatus();
                 }
-            }, 0, mDataUpdatePeriod * 1000);
+            }, 0, this.mDataUpdatePeriod * 1000);
         } else {
-            Log.v(TAG, "start(): status timer already running.");
-            mUtil.writeToSysLogFile("SdDataSource.start() - status timer already running??");
+            Log.v(this.TAG, "start(): status timer already running.");
+            this.mUtil.writeToSysLogFile("SdDataSource.start() - status timer already running??");
         }
-        if (mFaultCheckTimer == null) {
-            Log.v(TAG, "start(): starting alarm check timer");
-            mUtil.writeToSysLogFile("SdDataSource.start() - starting alarm check timer");
-            mFaultCheckTimer = new Timer();
-            mFaultCheckTimer.schedule(new TimerTask() {
+        if (this.mFaultCheckTimer == null) {
+            Log.v(this.TAG, "start(): starting alarm check timer");
+            this.mUtil.writeToSysLogFile("SdDataSource.start() - starting alarm check timer");
+            this.mFaultCheckTimer = new Timer();
+            this.mFaultCheckTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    faultCheck();
+                    SdDataSource.this.faultCheck();
                 }
             }, 0, 1000);
         } else {
-            Log.v(TAG, "start(): alarm check timer already running.");
-            mUtil.writeToSysLogFile("SDDataSource.start() - alarm check timer already running??");
+            Log.v(this.TAG, "start(): alarm check timer already running.");
+            this.mUtil.writeToSysLogFile("SDDataSource.start() - alarm check timer already running??");
         }
 
-        if (mSettingsTimer == null) {
-            Log.v(TAG, "start(): starting settings timer");
-            mUtil.writeToSysLogFile("SDDataSource.start() - starting settings timer");
-            mSettingsTimer = new Timer();
+        if (this.mSettingsTimer == null) {
+            Log.v(this.TAG, "start(): starting settings timer");
+            this.mUtil.writeToSysLogFile("SDDataSource.start() - starting settings timer");
+            this.mSettingsTimer = new Timer();
             // period between requesting settings in seconds.
-            int mSettingsPeriod = 60;
-            mSettingsTimer.schedule(new TimerTask() {
+            final int mSettingsPeriod = 60;
+            this.mSettingsTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    mSdData.haveSettings = false;
+                    SdDataSource.this.mSdData.haveSettings = false;
                 }
             }, 0, 1000L * mSettingsPeriod);  // ask for settings less frequently than we get data
         } else {
-            Log.v(TAG, "start(): settings timer already running.");
-            mUtil.writeToSysLogFile("SDDataSource.start() - settings timer already running??");
+            Log.v(this.TAG, "start(): settings timer already running.");
+            this.mUtil.writeToSysLogFile("SDDataSource.start() - settings timer already running??");
         }
 
     }
@@ -179,37 +180,37 @@ public abstract class SdDataSource {
      * Stop the datasource from updating
      */
     public void stop() {
-        Log.v(TAG, "stop()");
-        mUtil.writeToSysLogFile("SDDataSource.stop()");
+        Log.v(this.TAG, "stop()");
+        this.mUtil.writeToSysLogFile("SDDataSource.stop()");
         try {
             // Stop the status timer
-            if (mStatusTimer != null) {
-                Log.v(TAG, "stop(): cancelling status timer");
-                mUtil.writeToSysLogFile("SDDataSource.stop() - cancelling status timer");
-                mStatusTimer.cancel();
-                mStatusTimer.purge();
-                mStatusTimer = null;
+            if (this.mStatusTimer != null) {
+                Log.v(this.TAG, "stop(): cancelling status timer");
+                this.mUtil.writeToSysLogFile("SDDataSource.stop() - cancelling status timer");
+                this.mStatusTimer.cancel();
+                this.mStatusTimer.purge();
+                this.mStatusTimer = null;
             }
             // Stop the settings timer
-            if (mSettingsTimer != null) {
-                Log.v(TAG, "stop(): cancelling settings timer");
-                mUtil.writeToSysLogFile("SDDataSource.stop() - cancelling settings timer");
-                mSettingsTimer.cancel();
-                mSettingsTimer.purge();
-                mSettingsTimer = null;
+            if (this.mSettingsTimer != null) {
+                Log.v(this.TAG, "stop(): cancelling settings timer");
+                this.mUtil.writeToSysLogFile("SDDataSource.stop() - cancelling settings timer");
+                this.mSettingsTimer.cancel();
+                this.mSettingsTimer.purge();
+                this.mSettingsTimer = null;
             }
             // Stop the alarm check timer
-            if (mFaultCheckTimer != null) {
-                Log.v(TAG, "stop(): cancelling alarm check timer");
-                mUtil.writeToSysLogFile("SDDataSource.stop() - cancelling alarm check timer");
-                mFaultCheckTimer.cancel();
-                mFaultCheckTimer.purge();
-                mFaultCheckTimer = null;
+            if (this.mFaultCheckTimer != null) {
+                Log.v(this.TAG, "stop(): cancelling alarm check timer");
+                this.mUtil.writeToSysLogFile("SDDataSource.stop() - cancelling alarm check timer");
+                this.mFaultCheckTimer.cancel();
+                this.mFaultCheckTimer.purge();
+                this.mFaultCheckTimer = null;
             }
 
-        } catch (Exception e) {
-            Log.v(TAG, "Error in stop() - " + e.toString());
-            mUtil.writeToSysLogFile("SDDataSource.stop() - error - " + e.toString());
+        } catch (final Exception e) {
+            Log.v(this.TAG, "Error in stop() - " + e);
+            this.mUtil.writeToSysLogFile("SDDataSource.stop() - error - " + e);
         }
 
     }
@@ -218,179 +219,178 @@ public abstract class SdDataSource {
      * Install the watch app on the watch.
      */
     public void installWatchApp() {
-        Log.v(TAG, "installWatchApp");
+        Log.v(this.TAG, "installWatchApp");
         try {
-            String url = "http://www.openseizuredetector.org.uk/?page_id=1207";
-            Intent i = new Intent(Intent.ACTION_VIEW);
+            final String url = "http://www.openseizuredetector.org.uk/?page_id=1207";
+            final Intent i = new Intent(Intent.ACTION_VIEW);
             i.setData(Uri.parse(url));
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(i);
-        } catch (Exception ex) {
-            Log.i(TAG, "exception starting install watch app activity " + ex.toString());
-            showToast("Error Displaying Installation Instructions - try http://www.openseizuredetector.org.uk/?page_id=1207 instead");
+            this.mContext.startActivity(i);
+        } catch (final Exception ex) {
+            Log.i(this.TAG, "exception starting install watch app activity " + ex);
+            this.showToast("Error Displaying Installation Instructions - try http://www.openseizuredetector.org.uk/?page_id=1207 instead");
         }
     }
 
     public void startPebbleApp() {
-        Log.v(TAG, "startPebbleApp()");
+        Log.v(this.TAG, "startPebbleApp()");
     }
 
     public void acceptAlarm() {
-        Log.v(TAG, "acceptAlarm()");
+        Log.v(this.TAG, "acceptAlarm()");
     }
 
     // Force the data stored in this datasource to update in line with the JSON string encoded data provided.
     // Used by webServer to update the GarminDatasource.
     // Returns a message string that is passed back to the watch.
-    public String updateFromJSON(String jsonStr) {
+    public String updateFromJSON(final String jsonStr) {
         String retVal = "undefined";
-        String watchPartNo;
-        String watchFwVersion;
-        String sdVersion;
-        String sdName;
+        final String watchPartNo;
+        final String watchFwVersion;
+        final String sdVersion;
+        final String sdName;
         JSONArray accelVals = null;
         JSONArray accelVals3D = null;
-        Log.v(TAG, "updateFromJSON - " + jsonStr);
+        Log.v(this.TAG, "updateFromJSON - " + jsonStr);
 
         try {
-            JSONObject mainObject = new JSONObject(jsonStr);
+            final JSONObject mainObject = new JSONObject(jsonStr);
             //JSONObject dataObject = mainObject.getJSONObject("dataObj");
-            JSONObject dataObject = mainObject;
+            final JSONObject dataObject = mainObject;
 
-            String dataTypeStr = dataObject.getString("dataType");
-            Log.v(TAG, "updateFromJSON - dataType=" + dataTypeStr);
+            final String dataTypeStr = dataObject.getString("dataType");
+            Log.v(this.TAG, "updateFromJSON - dataType=" + dataTypeStr);
             if (dataTypeStr.equals("raw")) {
-                Log.v(TAG, "updateFromJSON - processing raw data");
+                Log.v(this.TAG, "updateFromJSON - processing raw data");
                 try {
-                    mSdData.mHR = (short) dataObject.getInt("hr");
-                    mSdData.curHeartAvg = (short) dataObject.getInt("curHeartAvg");
-                } catch (JSONException e) {
+                    this.mSdData.mHR = (short) dataObject.getInt("hr");
+                    this.mSdData.curHeartAvg = (short) dataObject.getInt("curHeartAvg");
+                    if (this.mSdData.mHR >= 0d) {
+                        if (!prefValmHrAlarmActive)
+                            Log.v(TAG, "updateFromJSON(): prefValmHrAlarmActive unset!");
+                        this.mSdData.mHRAlarmActive = prefValmHrAlarmActive;
+                    }
+                } catch (final JSONException e) {
                     // if we get 'null' HR (For example if the heart rate is not working)
-                    mSdData.mHR = -1;
+                    this.mSdData.mHR = -1;
+                    this.mSdData.mHRAlarmActive = false;
                 }
                 try {
-                    mSdData.mO2Sat = dataObject.getDouble("O2sat");
-                } catch (JSONException e) {
+                    this.mSdData.mO2Sat = dataObject.getDouble("O2sat");
+                } catch (final JSONException e) {
                     // if we get 'null' O2 Saturation (For example if the oxygen sensor is not working)
-                    mSdData.mO2Sat = -1;
+                    this.mSdData.mO2Sat = -1;
                 }
                 try {
-                    mMute = dataObject.getInt("Mute");
-                } catch (JSONException e) {
+                    this.mMute = dataObject.getInt("Mute");
+                } catch (final JSONException e) {
                     // if we get 'null' HR (For example if the heart rate is not working)
-                    mMute = 0;
+                    this.mMute = 0;
                 }
                 accelVals = dataObject.getJSONArray("rawData");
-                Log.v(TAG, "Received " + accelVals.length() + " acceleration values, rawData Length is " + mSdData.rawData.length);
-                if (accelVals.length() > mSdData.rawData.length) {
-                    mUtil.writeToSysLogFile("ERROR:  Received " + accelVals.length() + " acceleration values, but rawData storage length is "
-                            + mSdData.rawData.length);
-                }
+                Log.v(this.TAG, "Received " + accelVals.length() + " acceleration values, rawData Length is " + this.mSdData.rawData.length);
+                if (accelVals.length() > this.mSdData.rawData.length)
+                    this.mUtil.writeToSysLogFile("ERROR:  Received " + accelVals.length() + " acceleration values, but rawData storage length is "
+                            + this.mSdData.rawData.length);
                 int i;
-                for (i = 0; i < accelVals.length(); i++) {
-                    mSdData.rawData[i] = accelVals.getDouble(i);
-                }
-                mSdData.mNsamp = accelVals.length();
+                for (i = 0; i < accelVals.length(); i++)
+                    this.mSdData.rawData[i] = accelVals.getDouble(i);
+                this.mSdData.mNsamp = accelVals.length();
                 //Log.d(TAG,"accelVals[0]="+accelVals.getDouble(0)+", mSdData.rawData[0]="+mSdData.rawData[0]);
                 try {
                     accelVals3D = dataObject.getJSONArray("rawData3D");
-                    Log.v(TAG, "Received " + accelVals3D.length() + " acceleration 3D values, rawData Length is " + mSdData.rawData3D.length);
-                    if (accelVals3D.length() > mSdData.rawData3D.length) {
-                        mUtil.writeToSysLogFile("ERROR:  Received " + accelVals3D.length() + " 3D acceleration values, but rawData3D storage length is "
-                                + mSdData.rawData3D.length);
-                    }
-                    for (i = 0; i < accelVals3D.length(); i++) {
-                        mSdData.rawData3D[i] = accelVals3D.getDouble(i);
-                    }
-                } catch (JSONException e) {
+                    Log.v(this.TAG, "Received " + accelVals3D.length() + " acceleration 3D values, rawData Length is " + this.mSdData.rawData3D.length);
+                    if (accelVals3D.length() > this.mSdData.rawData3D.length)
+                        this.mUtil.writeToSysLogFile("ERROR:  Received " + accelVals3D.length() + " 3D acceleration values, but rawData3D storage length is "
+                                + this.mSdData.rawData3D.length);
+                    for (i = 0; i < accelVals3D.length(); i++)
+                        this.mSdData.rawData3D[i] = accelVals3D.getDouble(i);
+                } catch (final JSONException e) {
                     // If we get an error, just set rawData3D to zero
-                    Log.i(TAG, "updateFromJSON - error parsing 3D data - setting it to zero");
-                    for (i = 0; i < mSdData.rawData3D.length; i++) {
-                        mSdData.rawData3D[i] = 0d;
-                    }
+                    Log.i(this.TAG, "updateFromJSON - error parsing 3D data - setting it to zero");
+                    for (i = 0; i < this.mSdData.rawData3D.length; i++)
+                        this.mSdData.rawData3D[i] = 0d;
                 }
                 try {
-                    mSdData.watchConnected = dataObject.getBoolean("watchConnected");
-                    mSdData.watchAppRunning = dataObject.getBoolean("watchAppRunning");
-                    mSdData.batteryPc = (short) dataObject.getInt("batteryPc");
-                } catch (Exception e) {
-                    Log.e(TAG, "UpdateFromJSON()", e);
+                    this.mSdData.watchConnected = dataObject.getBoolean("watchConnected");
+                    this.mSdData.watchAppRunning = dataObject.getBoolean("watchAppRunning");
+                    this.mSdData.batteryPc = (short) dataObject.getInt("batteryPc");
+                } catch (final Exception e) {
+                    Log.e(this.TAG, "UpdateFromJSON()", e);
                 }
-                mWatchAppRunningCheck = true;
-                doAnalysis();
-                if (mSdData.mHR != 0 || dataTypeStr == "settings") mSdData.haveSettings = true;
-                if (mSdData.haveSettings == false) {
-                    retVal = "sendSettings";
-                } else {
-                    retVal = "OK";
-                }
+                this.mWatchAppRunningCheck = true;
+                this.doAnalysis();
+                if (this.mSdData.mHR != 0d || dataTypeStr == "settings")
+                    this.mSdData.haveSettings = true;
+                if (!this.mSdData.haveSettings) retVal = "sendSettings";
+                else retVal = "OK";
             } else if (dataTypeStr.equals("settings")) {
-                Log.v(TAG, "updateFromJSON - processing settings");
-                mSamplePeriod = (short) dataObject.getInt("analysisPeriod");
-                mSampleFreq = (short) dataObject.getInt("sampleFreq");
-                mSdData.batteryPc = (short) dataObject.getInt("batteryPc");
-                Log.v(TAG, "updateFromJSON - mSamplePeriod=" + mSamplePeriod + " mSampleFreq=" + mSampleFreq);
-                mUtil.writeToSysLogFile("SDDataSource.updateFromJSON - Settings Received");
-                mUtil.writeToSysLogFile("    * mSamplePeriod=" + mSamplePeriod + " mSampleFreq=" + mSampleFreq);
-                mUtil.writeToSysLogFile("    * batteryPc = " + mSdData.batteryPc);
+                Log.v(this.TAG, "updateFromJSON - processing settings");
+                this.mSamplePeriod = (short) dataObject.getInt("analysisPeriod");
+                this.mSampleFreq = (short) dataObject.getInt("sampleFreq");
+                this.mSdData.batteryPc = (short) dataObject.getInt("batteryPc");
+                Log.v(this.TAG, "updateFromJSON - mSamplePeriod=" + this.mSamplePeriod + " mSampleFreq=" + this.mSampleFreq);
+                this.mUtil.writeToSysLogFile("SDDataSource.updateFromJSON - Settings Received");
+                this.mUtil.writeToSysLogFile("    * mSamplePeriod=" + this.mSamplePeriod + " mSampleFreq=" + this.mSampleFreq);
+                this.mUtil.writeToSysLogFile("    * batteryPc = " + this.mSdData.batteryPc);
 
                 try {
                     watchPartNo = dataObject.getString("watchPartNo");
                     watchFwVersion = dataObject.getString("watchFwVersion");
                     sdVersion = dataObject.getString("sdVersion");
                     sdName = dataObject.getString("sdName");
-                    mUtil.writeToSysLogFile("    * sdName = " + sdName + " version " + sdVersion);
-                    mUtil.writeToSysLogFile("    * watchPartNo = " + watchPartNo + " fwVersion " + watchFwVersion);
-                    mSdData.watchPartNo = watchPartNo;
-                    mSdData.watchFwVersion = watchFwVersion;
-                    mSdData.watchSdVersion = sdVersion;
-                    mSdData.watchSdName = sdName;
-                } catch (Exception e) {
-                    Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString(), e);
-                    mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - " + jsonStr + " - " + e.toString());
-                    mUtil.writeToSysLogFile("          This is probably because of an out of date watch app - please upgrade!");
+                    this.mUtil.writeToSysLogFile("    * sdName = " + sdName + " version " + sdVersion);
+                    this.mUtil.writeToSysLogFile("    * watchPartNo = " + watchPartNo + " fwVersion " + watchFwVersion);
+                    this.mSdData.watchPartNo = watchPartNo;
+                    this.mSdData.watchFwVersion = watchFwVersion;
+                    this.mSdData.watchSdVersion = sdVersion;
+                    this.mSdData.watchSdName = sdName;
+                } catch (final Exception e) {
+                    Log.e(this.TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e, e);
+                    this.mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - " + jsonStr + " - " + e);
+                    this.mUtil.writeToSysLogFile("          This is probably because of an out of date watch app - please upgrade!");
                     e.printStackTrace();
                 }
-                mSdData.haveSettings = true;
-                mSdData.mSampleFreq = mSampleFreq;
-                mWatchAppRunningCheck = true;
+                this.mSdData.haveSettings = true;
+                this.mSdData.mSampleFreq = this.mSampleFreq;
+                this.mWatchAppRunningCheck = true;
                 try {
-                    mSdData.watchConnected = dataObject.getBoolean("watchConnected");
-                    mSdData.watchAppRunning = dataObject.getBoolean("watchAppRunning");
-                } catch (Exception e) {
-                    Log.e(TAG, "UpdateFromJSON()", e);
+                    this.mSdData.watchConnected = dataObject.getBoolean("watchConnected");
+                    this.mSdData.watchAppRunning = dataObject.getBoolean("watchAppRunning");
+                } catch (final Exception e) {
+                    Log.e(this.TAG, "UpdateFromJSON()", e);
                 }
+                updatePrefs();
                 retVal = "OK";
             } else if (dataTypeStr.equals("watchConnect")) {
-                mSdData.watchConnected = dataObject.getBoolean("watchConnected");
-                mSdData.watchAppRunning = dataObject.getBoolean("watchAppRunning");
+                this.mSdData.watchConnected = dataObject.getBoolean("watchConnected");
+                this.mSdData.watchAppRunning = dataObject.getBoolean("watchAppRunning");
                 retVal = dataTypeStr;
                 // TODO: give me here a question: reconnect or quit
                 //       Let me give here give a update to StartActivity or MainActivity
             } else if (dataTypeStr.equals("watchDisconnect")) {
-                mSdData.watchConnected = dataObject.getBoolean("watchConnected");
-                mSdData.watchAppRunning = dataObject.getBoolean("watchAppRunning");
+                this.mSdData.watchConnected = dataObject.getBoolean("watchConnected");
+                this.mSdData.watchAppRunning = dataObject.getBoolean("watchAppRunning");
                 retVal = dataTypeStr;
 
                 // TODO: give me here a question: reconnect or quit
                 //       Let me give here give a update to StartActivity or MainActivity
             } else {
-                Log.e(TAG, "updateFromJSON - unrecognised dataType " + dataTypeStr);
+                Log.e(this.TAG, "updateFromJSON - unrecognised dataType " + dataTypeStr);
                 retVal = "ERROR";
             }
-        } catch (Exception e) {
-            Log.e(TAG, "updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.toString(), e);
-            mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.toString());
+        } catch (final Exception e) {
+            Log.e(this.TAG, "updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e, e);
+            this.mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e);
             //mUtil.writeToSysLogFile("updateFromJSON: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
-            if (accelVals == null) {
-                mUtil.writeToSysLogFile("updateFromJSON: accelVals is null when exception thrown");
-            } else {
-                mUtil.writeToSysLogFile("updateFromJSON: Received " + accelVals.length() + " acceleration values");
-            }
+            if (accelVals == null)
+                this.mUtil.writeToSysLogFile("updateFromJSON: accelVals is null when exception thrown");
+            else
+                this.mUtil.writeToSysLogFile("updateFromJSON: Received " + accelVals.length() + " acceleration values");
             e.printStackTrace();
             retVal = "ERROR";
         }
-        return (retVal);
+        return retVal;
     }
 
     /**
@@ -400,9 +400,9 @@ public abstract class SdDataSource {
      * @param i
      * @return magnitude ( Re*Re + Im*Im )
      */
-    private double getMagnitude(double[] fft, int i) {
-        double mag;
-        mag = (fft[2 * i] * fft[2 * i] + fft[2 * i + 1] * fft[2 * i + 1]);
+    private double getMagnitude(final double[] fft, final int i) {
+        final double mag;
+        mag = fft[2 * i] * fft[2 * i] + fft[2 * i + 1] * fft[2 * i + 1];
         return mag;
     }
 
@@ -417,113 +417,106 @@ public abstract class SdDataSource {
         double[] fft = null;
         try {
             // FIXME - Use specified sampleFreq, not this hard coded one
-            int sampleFreq;
-            if (mSdData.mSampleFreq != 0) mSampleFreq = (short) mSdData.mSampleFreq;
-            else {
-                sampleFreq = (int) (mSdData.mNsamp / mSdData.dT);
-            }
-            double freqRes = 1.0 * mSampleFreq / mSdData.mNsamp;
-            Log.v(TAG, "doAnalysis(): mSampleFreq=" + mSampleFreq + " mNSamp=" + mSdData.mNsamp + ": freqRes=" + freqRes);
+            final int sampleFreq;
+            if (this.mSdData.mSampleFreq != 0) this.mSampleFreq = (short) this.mSdData.mSampleFreq;
+            else sampleFreq = (int) (this.mSdData.mNsamp / this.mSdData.dT);
+            final double freqRes = 1.0 * this.mSampleFreq / this.mSdData.mNsamp;
+            Log.v(this.TAG, "doAnalysis(): mSampleFreq=" + this.mSampleFreq + " mNSamp=" + this.mSdData.mNsamp + ": freqRes=" + freqRes);
             // Set the frequency bounds for the analysis in fft output bin numbers.
-            nMin = mAlarmFreqMin / freqRes;
-            nMax = mAlarmFreqMax / freqRes;
-            Log.v(TAG, "doAnalysis(): mAlarmFreqMin=" + mAlarmFreqMin + ", nMin=" + nMin
-                    + ", mAlarmFreqMax=" + mAlarmFreqMax + ", nMax=" + nMax);
+            nMin = this.mAlarmFreqMin / freqRes;
+            nMax = this.mAlarmFreqMax / freqRes;
+            Log.v(this.TAG, "doAnalysis(): mAlarmFreqMin=" + this.mAlarmFreqMin + ", nMin=" + nMin
+                    + ", mAlarmFreqMax=" + this.mAlarmFreqMax + ", nMax=" + nMax);
             // Calculate the bin number of the cutoff frequency
-            short mFreqCutoff = 12;
+            final short mFreqCutoff = 12;
             nFreqCutoff = mFreqCutoff / freqRes;
-            Log.v(TAG, "mFreqCutoff = " + mFreqCutoff + ", nFreqCutoff=" + nFreqCutoff);
+            Log.v(this.TAG, "mFreqCutoff = " + mFreqCutoff + ", nFreqCutoff=" + nFreqCutoff);
 
-            DoubleFFT_1D fftDo = new DoubleFFT_1D(mSdData.mNsamp);
-            fft = new double[mSdData.mNsamp * 2];
+            final DoubleFFT_1D fftDo = new DoubleFFT_1D(this.mSdData.mNsamp);
+            fft = new double[this.mSdData.mNsamp * 2];
             ///System.arraycopy(mAccData, 0, fft, 0, mNsamp);
-            System.arraycopy(mSdData.rawData, 0, fft, 0, mSdData.mNsamp);
+            System.arraycopy(this.mSdData.rawData, 0, fft, 0, this.mSdData.mNsamp);
             fftDo.realForward(fft);
 
             // Calculate the whole spectrum power (well a value equivalent to it that avoids square root calculations
             // and zero any readings that are above the frequency cutoff.
             double specPower = 0;
-            for (int i = 1; i < mSdData.mNsamp / 2; i++) {
-                if (i <= nFreqCutoff) {
-                    specPower = specPower + getMagnitude(fft, i);
-                } else {
+            for (int i = 1; i < this.mSdData.mNsamp / 2; i++)
+                if (i <= nFreqCutoff) specPower = specPower + this.getMagnitude(fft, i);
+                else {
                     fft[2 * i] = 0.;
                     fft[2 * i + 1] = 0.;
                 }
-            }
             //Log.v(TAG,"specPower = "+specPower);
             //specPower = specPower/(mSdData.mNsamp/2);
-            specPower = specPower / mSdData.mNsamp / 2;
+            specPower = specPower / this.mSdData.mNsamp / 2;
             //Log.v(TAG,"specPower = "+specPower);
 
             // Calculate the Region of Interest power and power ratio.
             double roiPower = 0;
-            for (int i = (int) Math.floor(nMin); i < (int) Math.ceil(nMax); i++) {
-                roiPower = roiPower + getMagnitude(fft, i);
-            }
+            for (int i = (int) Math.floor(nMin); i < (int) Math.ceil(nMax); i++)
+                roiPower = roiPower + this.getMagnitude(fft, i);
             roiPower = roiPower / (nMax - nMin);
-            double roiRatio = 10 * roiPower / specPower;
+            final double roiRatio = 10 * roiPower / specPower;
 
             // Calculate the simplified spectrum - power in 1Hz bins.
             // Values for SD_MODE
-            int SIMPLE_SPEC_FMAX = 10;
-            double[] simpleSpec = new double[SIMPLE_SPEC_FMAX + 1];
+            final int SIMPLE_SPEC_FMAX = 10;
+            final double[] simpleSpec = new double[SIMPLE_SPEC_FMAX + 1];
             for (int ifreq = 0; ifreq < SIMPLE_SPEC_FMAX; ifreq++) {
-                int binMin = (int) (1 + ifreq / freqRes);    // add 1 to loose dc component
-                int binMax = (int) (1 + (ifreq + 1) / freqRes);
+                final int binMin = (int) (1 + ifreq / freqRes);    // add 1 to loose dc component
+                final int binMax = (int) (1 + (ifreq + 1) / freqRes);
                 simpleSpec[ifreq] = 0;
-                for (int i = binMin; i < binMax; i++) {
-                    simpleSpec[ifreq] = simpleSpec[ifreq] + getMagnitude(fft, i);
-                }
+                for (int i = binMin; i < binMax; i++)
+                    simpleSpec[ifreq] = simpleSpec[ifreq] + this.getMagnitude(fft, i);
                 simpleSpec[ifreq] = simpleSpec[ifreq] / (binMax - binMin);
             }
 
             // Populate the mSdData structure to communicate with the main SdServer service.
-            if (mSdData.dataTime == null) mSdData.dataTime = new Time();
-            mSdData.dataTime.setToNow();
-            mDataStatusTime = mSdData.dataTime;
+            if (this.mSdData.dataTime == null) this.mSdData.dataTime = new Time();
+            this.mSdData.dataTime.setToNow();
+            this.mDataStatusTime = this.mSdData.dataTime;
             // Amount by which to reduce analysis results to scale to be comparable to analysis on Pebble.
-            int ACCEL_SCALE_FACTOR = 1000;
-            mSdData.specPower = (long) specPower / ACCEL_SCALE_FACTOR;
-            mSdData.roiPower = (long) roiPower / ACCEL_SCALE_FACTOR;
-            mSdData.dataTime.setToNow();
-            mSdData.maxVal = 0;   // not used
-            mSdData.maxFreq = 0;  // not used
-            mSdData.haveData = true;
-            mSdData.alarmThresh = mAlarmThresh;
-            mSdData.alarmRatioThresh = mAlarmRatioThresh;
-            mSdData.alarmFreqMin = mAlarmFreqMin;
-            mSdData.alarmFreqMax = mAlarmFreqMax;
+            final int ACCEL_SCALE_FACTOR = 1000;
+            this.mSdData.specPower = (long) specPower / ACCEL_SCALE_FACTOR;
+            this.mSdData.roiPower = (long) roiPower / ACCEL_SCALE_FACTOR;
+            this.mSdData.dataTime.setToNow();
+            this.mSdData.maxVal = 0;   // not used
+            this.mSdData.maxFreq = 0;  // not used
+            this.mSdData.haveData = true;
+            this.mSdData.alarmThresh = this.mAlarmThresh;
+            this.mSdData.alarmRatioThresh = this.mAlarmRatioThresh;
+            this.mSdData.alarmFreqMin = this.mAlarmFreqMin;
+            this.mSdData.alarmFreqMax = this.mAlarmFreqMax;
             // note mSdData.batteryPc is set from settings data in updateFromJSON()
             // FIXME - I haven't worked out why dividing by 1000 seems necessary to get the graph on scale - we don't seem to do that with the Pebble.
-            for (int i = 0; i < SIMPLE_SPEC_FMAX; i++) {
-                mSdData.simpleSpec[i] = (int) simpleSpec[i] / ACCEL_SCALE_FACTOR;
-            }
-            Log.v(TAG, "simpleSpec = " + Arrays.toString(mSdData.simpleSpec));
+            for (int i = 0; i < SIMPLE_SPEC_FMAX; i++)
+                this.mSdData.simpleSpec[i] = (int) simpleSpec[i] / ACCEL_SCALE_FACTOR;
+            Log.v(this.TAG, "simpleSpec = " + Arrays.toString(this.mSdData.simpleSpec));
 
             // Because we have received data, set flag to show watch app running.
-            mWatchAppRunningCheck = true;
-        } catch (Exception e) {
-            Log.e(TAG, "doAnalysis - Exception during Analysis", e);
-            mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e.toString());
-            mUtil.writeToSysLogFile("doAnalysis: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
-            mUtil.writeToSysLogFile("doAnalysis: mSdData.mNsamp="+mSdData.mNsamp);
-            mUtil.writeToSysLogFile("doAnalysis: alarmFreqMin="+mAlarmFreqMin+" nMin="+nMin);
-            mUtil.writeToSysLogFile("doAnalysis: alarmFreqMax="+mAlarmFreqMax+" nMax="+nMax);
-            mUtil.writeToSysLogFile("doAnalysis: nFreqCutoff.="+nFreqCutoff);
-            mUtil.writeToSysLogFile("doAnalysis: fft.length="+fft.length);
-            mWatchAppRunningCheck = false;
+            this.mWatchAppRunningCheck = true;
+        } catch (final Exception e) {
+            Log.e(this.TAG, "doAnalysis - Exception during Analysis", e);
+            this.mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e);
+            this.mUtil.writeToSysLogFile("doAnalysis: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
+            this.mUtil.writeToSysLogFile("doAnalysis: mSdData.mNsamp=" + this.mSdData.mNsamp);
+            this.mUtil.writeToSysLogFile("doAnalysis: alarmFreqMin=" + this.mAlarmFreqMin + " nMin=" + nMin);
+            this.mUtil.writeToSysLogFile("doAnalysis: alarmFreqMax=" + this.mAlarmFreqMax + " nMax=" + nMax);
+            this.mUtil.writeToSysLogFile("doAnalysis: nFreqCutoff.=" + nFreqCutoff);
+            this.mUtil.writeToSysLogFile("doAnalysis: fft.length=" + fft.length);
+            this.mWatchAppRunningCheck = false;
         }
 
         // Check this data to see if it represents an alarm state.
-        alarmCheck();
-        hrCheck();
-        o2SatCheck();
-        fallCheck();
-        muteCheck();
-        Log.v(TAG,"after fallCheck, mSdData.fallAlarmStanding="+mSdData.fallAlarmStanding);
+        this.alarmCheck();
+        this.hrCheck();
+        this.o2SatCheck();
+        this.fallCheck();
+        this.muteCheck();
+        Log.v(this.TAG, "after fallCheck, mSdData.fallAlarmStanding=" + this.mSdData.fallAlarmStanding);
 
-        mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
+        SdDataSource.mSdDataReceiver.onSdDataReceived(this.mSdData);  // and tell SdServer we have received data.
     }
 
 
@@ -534,52 +527,43 @@ public abstract class SdDataSource {
      * Sets mSdData.alarmState and mSdData.hrAlarmStanding
      */
     private void alarmCheck() {
-        boolean inAlarm;
+        final boolean inAlarm;
         // Avoid potential divide by zero issue
-        if (mSdData.specPower == 0)
-            mSdData.specPower = 1;
-        Log.v(TAG, "alarmCheck() - roiPower="+mSdData.roiPower+" specPower="+ mSdData.specPower+" ratio="+10*mSdData.roiPower/ mSdData.specPower);
+        if (this.mSdData.specPower == 0)
+            this.mSdData.specPower = 1;
+        Log.v(this.TAG, "alarmCheck() - roiPower=" + this.mSdData.roiPower + " specPower=" + this.mSdData.specPower + " ratio=" + 10 * this.mSdData.roiPower / this.mSdData.specPower);
         // Is the current set of data representing an alarm state?
-        if ((mSdData.roiPower > mAlarmThresh) && ((10 * mSdData.roiPower / mSdData.specPower) > mAlarmRatioThresh)) {
-            inAlarm = true;
-        } else {
-            inAlarm = false;
-        }
+        inAlarm = this.mSdData.roiPower > this.mAlarmThresh && 10 * this.mSdData.roiPower / this.mSdData.specPower > this.mAlarmRatioThresh;
 
         // set the alarmState to Alarm, Warning or OK, depending on the current state and previous ones.
+        // If we are not in an ALARM state, revert back to WARNING, otherwise
+        // revert back to OK.
         if (inAlarm) {
-            mAlarmCount += mSamplePeriod;
-            if (mAlarmCount > mAlarmTime) {
-                // full alarm
-                mSdData.alarmState = 2;
-            } else if (mAlarmCount > mWarnTime) {
-                // warning
-                mSdData.alarmState = 1;
-            }
+            this.mAlarmCount += this.mSamplePeriod;
+            // full alarm
+            if (this.mAlarmCount > this.mAlarmTime) this.mSdData.alarmState = 2;
+            else // warning
+                if (this.mAlarmCount > this.mWarnTime) this.mSdData.alarmState = 1;
+        } else if (this.mSdData.alarmState == 2) {
+            // revert to warning
+            this.mSdData.alarmState = 1;
+            this.mAlarmCount = this.mWarnTime + 1;  // pretend we have only just entered warning state.
         } else {
-            // If we are not in an ALARM state, revert back to WARNING, otherwise
-            // revert back to OK.
-            if (mSdData.alarmState == 2) {
-                // revert to warning
-                mSdData.alarmState = 1;
-                mAlarmCount = mWarnTime + 1;  // pretend we have only just entered warning state.
-            } else {
-                // revert to OK
-                mSdData.alarmState = 0;
-                mAlarmCount = 0;
-            }
+            // revert to OK
+            this.mSdData.alarmState = 0;
+            this.mAlarmCount = 0;
         }
 
-        Log.v(TAG, "alarmCheck(): inAlarm=" + inAlarm + ", alarmState = " + mSdData.alarmState + " alarmCount=" + mAlarmCount + " mWarnTime=" + mWarnTime+ " mAlarmTime=" + mAlarmTime);
+        Log.v(this.TAG, "alarmCheck(): inAlarm=" + inAlarm + ", alarmState = " + this.mSdData.alarmState + " alarmCount=" + this.mAlarmCount + " mWarnTime=" + this.mWarnTime + " mAlarmTime=" + this.mAlarmTime);
 
     }
 
     public void muteCheck() {
-        if (mMute != 0) {
-            Log.v(TAG, "Mute Active - setting alarms to mute");
-            mSdData.alarmState = 6;
-            mSdData.alarmPhrase = "MUTE";
-            mSdData.mHRAlarmStanding = false;
+        if (this.mMute != 0) {
+            Log.v(this.TAG, "Mute Active - setting alarms to mute");
+            this.mSdData.alarmState = 6;
+            this.mSdData.alarmPhrase = "MUTE";
+            this.mSdData.mHRAlarmStanding = false;
         }
 
     }
@@ -589,28 +573,26 @@ public abstract class SdDataSource {
      * Sets mSdData.mHRAlarmStanding
      */
     public void hrCheck() {
-        Log.v(TAG, "hrCheck()");
+        Log.v(this.TAG, "hrCheck()");
         /* Check Heart Rate against alarm settings */
-        if (mSdData.mHRAlarmActive) {
-            if (((short) mSdData.mHR) < 0) {
-                if (mSdData.mHRNullAsAlarm) {
-                    Log.i(TAG, "Heart Rate Null - Alarming");
-                    mSdData.mHRFaultStanding = false;
-                    mSdData.mHRAlarmStanding = true;
-                } else {
-                    Log.i(TAG, "Heart Rate Fault (HR<0)");
-                    mSdData.mHRFaultStanding = true;
-                    mSdData.mHRAlarmStanding = false;
-                }
-            } else if ((mSdData.mHR < mSdData.mHRThreshMin) || (mSdData.mHR > mSdData.mHRThreshMax)) {
-                Log.i(TAG, "Heart Rate Abnormal - " + ((short) mSdData.mHR) + " bpm");
-                mSdData.mHRFaultStanding = false;
-                mSdData.mHRAlarmStanding = true;
+        if (this.mSdData.mHRAlarmActive)
+            if ((short) this.mSdData.mHR < 0) if (this.mSdData.mHRNullAsAlarm) {
+                Log.i(this.TAG, "Heart Rate Null - Alarming");
+                this.mSdData.mHRFaultStanding = false;
+                this.mSdData.mHRAlarmStanding = true;
             } else {
-                mSdData.mHRFaultStanding = false;
-                mSdData.mHRAlarmStanding = false;
+                Log.i(this.TAG, "Heart Rate Fault (HR<0)");
+                this.mSdData.mHRFaultStanding = true;
+                this.mSdData.mHRAlarmStanding = false;
             }
-        }
+            else if (this.mSdData.mHR < this.mSdData.mHRThreshMin || this.mSdData.mHR > this.mSdData.mHRThreshMax) {
+                Log.i(this.TAG, "Heart Rate Abnormal - " + (short) this.mSdData.mHR + " bpm");
+                this.mSdData.mHRFaultStanding = false;
+                this.mSdData.mHRAlarmStanding = true;
+            } else {
+                this.mSdData.mHRFaultStanding = false;
+                this.mSdData.mHRAlarmStanding = false;
+            }
     }
 
     /**
@@ -618,28 +600,26 @@ public abstract class SdDataSource {
      * Sets mSdData.mHRAlarmStanding
      */
     public void o2SatCheck() {
-        Log.v(TAG, "o2SatCheck()");
+        Log.v(this.TAG, "o2SatCheck()");
         /* Check Oxygen Saturation against alarm settings */
-        if (mSdData.mO2SatAlarmActive) {
-            if (mSdData.mO2Sat < 0) {
-                if (mSdData.mO2SatNullAsAlarm) {
-                    Log.i(TAG, "Oxygen Saturation Null - Alarming");
-                    mSdData.mO2SatFaultStanding = false;
-                    mSdData.mO2SatAlarmStanding = true;
-                } else {
-                    Log.i(TAG, "Oxygen Saturation Fault (O2Sat<0)");
-                    mSdData.mO2SatFaultStanding = true;
-                    mSdData.mO2SatAlarmStanding = false;
-                }
-            } else if  (mSdData.mO2Sat < mSdData.mO2SatThreshMin) {
-                Log.i(TAG, "Oxygen Saturation Abnormal - " + mSdData.mO2Sat + " %");
-                mSdData.mO2SatFaultStanding = false;
-                mSdData.mO2SatAlarmStanding = true;
+        if (this.mSdData.mO2SatAlarmActive)
+            if (this.mSdData.mO2Sat < 0) if (this.mSdData.mO2SatNullAsAlarm) {
+                Log.i(this.TAG, "Oxygen Saturation Null - Alarming");
+                this.mSdData.mO2SatFaultStanding = false;
+                this.mSdData.mO2SatAlarmStanding = true;
             } else {
-                mSdData.mO2SatFaultStanding = false;
-                mSdData.mO2SatAlarmStanding = false;
+                Log.i(this.TAG, "Oxygen Saturation Fault (O2Sat<0)");
+                this.mSdData.mO2SatFaultStanding = true;
+                this.mSdData.mO2SatAlarmStanding = false;
             }
-        }
+            else if (this.mSdData.mO2Sat < this.mSdData.mO2SatThreshMin) {
+                Log.i(this.TAG, "Oxygen Saturation Abnormal - " + this.mSdData.mO2Sat + " %");
+                this.mSdData.mO2SatFaultStanding = false;
+                this.mSdData.mO2SatAlarmStanding = true;
+            } else {
+                this.mSdData.mO2SatFaultStanding = false;
+                this.mSdData.mO2SatAlarmStanding = false;
+            }
 
     }
 
@@ -652,37 +632,37 @@ public abstract class SdDataSource {
         int i, j;
         double minAcc, maxAcc;
 
-        long fallWindowSamp = (mFallWindow * mSdData.mSampleFreq) / 1000; // Convert ms to samples.
-        Log.v(TAG, "check_fall() - fallWindowSamp=" + fallWindowSamp);
+        final long fallWindowSamp = this.mFallWindow * this.mSdData.mSampleFreq / 1000; // Convert ms to samples.
+        Log.v(this.TAG, "check_fall() - fallWindowSamp=" + fallWindowSamp);
         // Move window through sample buffer, checking for fall.
         // Note - not resetting fallAlarmStanding means that fall alarms will always latch until the 'Accept Alarm' button
         // is pressed.
         //mSdData.fallAlarmStanding = false;
-        if (mFallActive) {
-            mSdData.mFallActive = true;
-            for (i = 0; i < mSdData.mNsamp - fallWindowSamp; i++) {  // i = window start point
+        if (this.mFallActive) {
+            this.mSdData.mFallActive = true;
+            for (i = 0; i < this.mSdData.mNsamp - fallWindowSamp; i++) {  // i = window start point
                 // Find max and min acceleration within window.
-                minAcc = mSdData.rawData[i];
-                maxAcc = mSdData.rawData[i];
+                minAcc = this.mSdData.rawData[i];
+                maxAcc = this.mSdData.rawData[i];
                 for (j = 0; j < fallWindowSamp; j++) {  // j = position within window
-                    if (mSdData.rawData[i + j] < minAcc) minAcc = mSdData.rawData[i + j];
-                    if (mSdData.rawData[i + j] > maxAcc) maxAcc = mSdData.rawData[i + j];
+                    if (this.mSdData.rawData[i + j] < minAcc) minAcc = this.mSdData.rawData[i + j];
+                    if (this.mSdData.rawData[i + j] > maxAcc) maxAcc = this.mSdData.rawData[i + j];
                 }
-                Log.d(TAG, "check_fall() - minAcc=" + minAcc +" (mFallThreshMin="+mFallThreshMin+ "), maxAcc=" + maxAcc+" (mFallThreshMax="+mFallThreshMax+")") ;
-                if ((minAcc < mFallThreshMin) && (maxAcc > mFallThreshMax)) {
-                    Log.d(TAG, "check_fall() ****FALL DETECTED***** minAcc=" + minAcc + ", maxAcc=" + maxAcc);
-                    Log.d(TAG, "check_fall() - ****FALL DETECTED****");
-                    mSdData.fallAlarmStanding = true;
+                Log.d(this.TAG, "check_fall() - minAcc=" + minAcc + " (mFallThreshMin=" + this.mFallThreshMin + "), maxAcc=" + maxAcc + " (mFallThreshMax=" + this.mFallThreshMax + ")");
+                if (minAcc < this.mFallThreshMin && maxAcc > this.mFallThreshMax) {
+                    Log.d(this.TAG, "check_fall() ****FALL DETECTED***** minAcc=" + minAcc + ", maxAcc=" + maxAcc);
+                    Log.d(this.TAG, "check_fall() - ****FALL DETECTED****");
+                    this.mSdData.fallAlarmStanding = true;
                     return;
                 }
-                if (mMute != 0) {
-                    Log.v(TAG, "Mute Active - setting fall alarm to mute");
-                    mSdData.fallAlarmStanding = false;
+                if (this.mMute != 0) {
+                    Log.v(this.TAG, "Mute Active - setting fall alarm to mute");
+                    this.mSdData.fallAlarmStanding = false;
                 }
             }
         } else {
-            mSdData.mFallActive = false;
-            Log.v(TAG, "check_fall - mFallActive is false - doing nothing");
+            this.mSdData.mFallActive = false;
+            Log.v(this.TAG, "check_fall - mFallActive is false - doing nothing");
         }
         //if (debug) APP_LOG(APP_LOG_LEVEL_DEBUG,"check_fall() - minAcc=%d, maxAcc=%d",
         //	  minAcc,maxAcc);
@@ -694,67 +674,61 @@ public abstract class SdDataSource {
      * and sets class variables for use by other functions.
      */
     public void getStatus() {
-        Time tnow = new Time(Time.getCurrentTimezone());
-        long tdiff;
+        final Time tnow = new Time(Time.getCurrentTimezone());
+        final long tdiff;
         tnow.setToNow();
         // get time since the last data was received from the Pebble watch.
-        tdiff = (tnow.toMillis(false) - mDataStatusTime.toMillis(false));
-        Log.v(TAG, "getStatus() - mWatchAppRunningCheck=" + mWatchAppRunningCheck + " tdiff=" + tdiff);
-        Log.v(TAG, "getStatus() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout);
+        tdiff = tnow.toMillis(false) - this.mDataStatusTime.toMillis(false);
+        Log.v(this.TAG, "getStatus() - mWatchAppRunningCheck=" + this.mWatchAppRunningCheck + " tdiff=" + tdiff);
+        Log.v(this.TAG, "getStatus() - tdiff=" + tdiff + ", mDataUpatePeriod=" + this.mDataUpdatePeriod + ", mAppRestartTimeout=" + this.mAppRestartTimeout);
 
-        mSdData.watchConnected = true;  // We can't check connection for passive network connection, so set it to true to avoid errors.
+        this.mSdData.watchConnected = true;  // We can't check connection for passive network connection, so set it to true to avoid errors.
         // And is the watch app running?
         // set mWatchAppRunningCheck has been false for more than 10 seconds
         // the app is not talking to us
         // mWatchAppRunningCheck is set to true in the receiveData handler.
-        if (!mWatchAppRunningCheck &&
-                (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000L)) {
-            Log.v(TAG, "getStatus() - tdiff = " + tdiff);
-            mSdData.watchAppRunning = false;
+        if (!this.mWatchAppRunningCheck &&
+                tdiff > (this.mDataUpdatePeriod + this.mAppRestartTimeout) * 1000L) {
+            Log.v(this.TAG, "getStatus() - tdiff = " + tdiff);
+            this.mSdData.watchAppRunning = false;
             // Only make audible warning beep if we have not received data for more than mFaultTimerPeriod seconds.
-            if (tdiff > (mDataUpdatePeriod + mFaultTimerPeriod) * 1000L) {
-                Log.v(TAG, "getStatus() - Watch App Not Running");
-                mUtil.writeToSysLogFile("SDDataSource.getStatus() - Watch App not Running");
+            if (tdiff > (this.mDataUpdatePeriod + this.mFaultTimerPeriod) * 1000L) {
+                Log.v(this.TAG, "getStatus() - Watch App Not Running");
+                this.mUtil.writeToSysLogFile("SDDataSource.getStatus() - Watch App not Running");
                 //mDataStatusTime.setToNow();
-                mSdData.roiPower = -1;
-                mSdData.specPower = -1;
-                mSdDataReceiver.onSdDataFault(mSdData);
-            } else {
-                Log.v(TAG, "getStatus() - Waiting for mFaultTimerPeriod before issuing audible warning...");
-            }
-        } else {
-            mSdData.watchAppRunning = true;
-        }
+                this.mSdData.roiPower = -1;
+                this.mSdData.specPower = -1;
+                SdDataSource.mSdDataReceiver.onSdDataFault(this.mSdData);
+            } else
+                Log.v(this.TAG, "getStatus() - Waiting for mFaultTimerPeriod before issuing audible warning...");
+        } else this.mSdData.watchAppRunning = true;
 
         // if we have confirmation that the app is running, reset the
         // status time to now and initiate another check.
-        if (mWatchAppRunningCheck) {
-            mWatchAppRunningCheck = false;
-            mDataStatusTime.setToNow();
+        if (this.mWatchAppRunningCheck) {
+            this.mWatchAppRunningCheck = false;
+            this.mDataStatusTime.setToNow();
         }
 
-        if (!mSdData.haveSettings) {
-            Log.v(TAG, "getStatus() - no settings received yet");
-        }
+        if (!this.mSdData.haveSettings) Log.v(this.TAG, "getStatus() - no settings received yet");
     }
 
     /**
      * faultCheck - determines alarm state based on seizure detector data SdData.   Called every second.
      */
     private void faultCheck() {
-        Time tnow = new Time(Time.getCurrentTimezone());
-        long tdiff;
+        final Time tnow = new Time(Time.getCurrentTimezone());
+        final long tdiff;
         tnow.setToNow();
 
         // get time since the last data was received from the watch.
-        tdiff = (tnow.toMillis(false) - mDataStatusTime.toMillis(false));
+        tdiff = tnow.toMillis(false) - this.mDataStatusTime.toMillis(false);
         //Log.v(TAG, "faultCheck() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout
         //        + ", combined = " + (mDataUpdatePeriod + mAppRestartTimeout) * 1000);
-        if (!mWatchAppRunningCheck &&
-                (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000L)) {
-            //Log.v(TAG, "faultCheck() - watch app not running so not doing anything");
-            mAlarmCount = 0;
-        }
+        //Log.v(TAG, "faultCheck() - watch app not running so not doing anything");
+        if (!this.mWatchAppRunningCheck &&
+                tdiff > (this.mDataUpdatePeriod + this.mAppRestartTimeout) * 1000L)
+            this.mAlarmCount = 0;
     }
 
     /**
@@ -762,34 +736,34 @@ public abstract class SdDataSource {
      * - defined in res/xml/SdDataSourceNetworkPassivePrefs.xml
      */
     public void updatePrefs() {
-        Log.v(TAG, "updatePrefs()");
-        mUtil.writeToSysLogFile("SDDataSource.updatePrefs()");
-        SharedPreferences SP = PreferenceManager
-                .getDefaultSharedPreferences(mContext);
+        Log.v(this.TAG, "updatePrefs()");
+        this.mUtil.writeToSysLogFile("SDDataSource.updatePrefs()");
+        final SharedPreferences SP = PreferenceManager
+                .getDefaultSharedPreferences(this.mContext);
         try {
             // Parse the AppRestartTimeout period setting.
             try {
-                String appRestartTimeoutStr = SP.getString("AppRestartTimeout", "10");
-                mAppRestartTimeout = Integer.parseInt(appRestartTimeoutStr);
-                Log.v(TAG, "updatePrefs() - mAppRestartTimeout = " + mAppRestartTimeout);
-                mUtil.writeToSysLogFile( "updatePrefs() - mAppRestartTimeout = " + mAppRestartTimeout);
-            } catch (Exception ex) {
-                Log.v(TAG, "updatePrefs() - Problem with AppRestartTimeout preference!");
-                mUtil.writeToSysLogFile( "updatePrefs() - Problem with AppRestartTimeout preference!");
-                Toast toast = Toast.makeText(mContext, "Problem Parsing AppRestartTimeout Preference", Toast.LENGTH_SHORT);
+                final String appRestartTimeoutStr = SP.getString("AppRestartTimeout", "10");
+                this.mAppRestartTimeout = Integer.parseInt(appRestartTimeoutStr);
+                Log.v(this.TAG, "updatePrefs() - mAppRestartTimeout = " + this.mAppRestartTimeout);
+                this.mUtil.writeToSysLogFile("updatePrefs() - mAppRestartTimeout = " + this.mAppRestartTimeout);
+            } catch (final Exception ex) {
+                Log.v(this.TAG, "updatePrefs() - Problem with AppRestartTimeout preference!");
+                this.mUtil.writeToSysLogFile("updatePrefs() - Problem with AppRestartTimeout preference!");
+                final Toast toast = Toast.makeText(this.mContext, "Problem Parsing AppRestartTimeout Preference", Toast.LENGTH_SHORT);
                 toast.show();
             }
 
             // Parse the FaultTimer period setting.
             try {
-                String faultTimerPeriodStr = SP.getString("FaultTimerPeriod", "30");
-                mFaultTimerPeriod = Integer.parseInt(faultTimerPeriodStr);
-                Log.v(TAG, "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
-                mUtil.writeToSysLogFile( "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
-            } catch (Exception ex) {
-                Log.v(TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!");
-                mUtil.writeToSysLogFile( "updatePrefs() - Problem with FaultTimerPeriod preference!");
-                Toast toast = Toast.makeText(mContext, "Problem Parsing FaultTimerPeriod Preference", Toast.LENGTH_SHORT);
+                final String faultTimerPeriodStr = SP.getString("FaultTimerPeriod", "30");
+                this.mFaultTimerPeriod = Integer.parseInt(faultTimerPeriodStr);
+                Log.v(this.TAG, "updatePrefs() - mFaultTimerPeriod = " + this.mFaultTimerPeriod);
+                this.mUtil.writeToSysLogFile("updatePrefs() - mFaultTimerPeriod = " + this.mFaultTimerPeriod);
+            } catch (final Exception ex) {
+                Log.v(this.TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!");
+                this.mUtil.writeToSysLogFile("updatePrefs() - Problem with FaultTimerPeriod preference!");
+                final Toast toast = Toast.makeText(this.mContext, "Problem Parsing FaultTimerPeriod Preference", Toast.LENGTH_SHORT);
                 toast.show();
             }
 
@@ -797,146 +771,147 @@ public abstract class SdDataSource {
             // Watch Settings
             String prefStr;
             prefStr = SP.getString("BLE_Device_Addr", "SET_FROM_XML");
-            mBleDeviceAddr = prefStr;
-            Log.v(TAG, "mBLEDeviceAddr=" + mBleDeviceAddr);
-            mUtil.writeToSysLogFile( "mBLEDeviceAddr=" + mBleDeviceAddr);
+            this.mBleDeviceAddr = prefStr;
+            Log.v(this.TAG, "mBLEDeviceAddr=" + this.mBleDeviceAddr);
+            this.mUtil.writeToSysLogFile("mBLEDeviceAddr=" + this.mBleDeviceAddr);
             prefStr = SP.getString("BLE_Device_Name", "SET_FROM_XML");
-            mBleDeviceName = prefStr;
-            Log.v(TAG, "mBLEDeviceName=" + mBleDeviceName);
-            mUtil.writeToSysLogFile( "mBLEDeviceName=" + mBleDeviceName);
+            this.mBleDeviceName = prefStr;
+            Log.v(this.TAG, "mBLEDeviceName=" + this.mBleDeviceName);
+            this.mUtil.writeToSysLogFile("mBLEDeviceName=" + this.mBleDeviceName);
 
             prefStr = SP.getString("PebbleDebug", "SET_FROM_XML");
             if (prefStr != null) {
-                short mDebug = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() Debug = " + mDebug);
-                mUtil.writeToSysLogFile( "updatePrefs() Debug = " + mDebug);
+                final short mDebug = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() Debug = " + mDebug);
+                this.mUtil.writeToSysLogFile("updatePrefs() Debug = " + mDebug);
 
                 prefStr = SP.getString("PebbleDisplaySpectrum", "SET_FROM_XML");
-                short mDisplaySpectrum = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() DisplaySpectrum = " + mDisplaySpectrum);
-                mUtil.writeToSysLogFile( "updatePrefs() DisplaySpectrum = " + mDisplaySpectrum);
+                final short mDisplaySpectrum = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() DisplaySpectrum = " + mDisplaySpectrum);
+                this.mUtil.writeToSysLogFile("updatePrefs() DisplaySpectrum = " + mDisplaySpectrum);
 
                 prefStr = SP.getString("PebbleUpdatePeriod", "SET_FROM_XML");
-                mDataUpdatePeriod = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() DataUpdatePeriod = " + mDataUpdatePeriod);
-                mUtil.writeToSysLogFile( "updatePrefs() DataUpdatePeriod = " + mDataUpdatePeriod);
+                this.mDataUpdatePeriod = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() DataUpdatePeriod = " + this.mDataUpdatePeriod);
+                this.mUtil.writeToSysLogFile("updatePrefs() DataUpdatePeriod = " + this.mDataUpdatePeriod);
 
                 prefStr = SP.getString("MutePeriod", "SET_FROM_XML");
-                short mMutePeriod = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() MutePeriod = " + mMutePeriod);
-                mUtil.writeToSysLogFile( "updatePrefs() MutePeriod = " + mMutePeriod);
+                final short mMutePeriod = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() MutePeriod = " + mMutePeriod);
+                this.mUtil.writeToSysLogFile("updatePrefs() MutePeriod = " + mMutePeriod);
 
                 prefStr = SP.getString("ManAlarmPeriod", "SET_FROM_XML");
-                short mManAlarmPeriod = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() ManAlarmPeriod = " + mManAlarmPeriod);
-                mUtil.writeToSysLogFile( "updatePrefs() ManAlarmPeriod = " + mManAlarmPeriod);
+                final short mManAlarmPeriod = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() ManAlarmPeriod = " + mManAlarmPeriod);
+                this.mUtil.writeToSysLogFile("updatePrefs() ManAlarmPeriod = " + mManAlarmPeriod);
 
                 prefStr = SP.getString("PebbleSdMode", "SET_FROM_XML");
-                short mPebbleSdMode = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() PebbleSdMode = " + mPebbleSdMode);
-                mUtil.writeToSysLogFile( "updatePrefs() PebbleSdMode = " + mPebbleSdMode);
+                final short mPebbleSdMode = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() PebbleSdMode = " + mPebbleSdMode);
+                this.mUtil.writeToSysLogFile("updatePrefs() PebbleSdMode = " + mPebbleSdMode);
 
                 prefStr = SP.getString("SampleFreq", "SET_FROM_XML");
-                mSampleFreq = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() SampleFreq = " + mSampleFreq);
-                mUtil.writeToSysLogFile( "updatePrefs() SampleFreq = " + mSampleFreq);
+                this.mSampleFreq = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() SampleFreq = " + this.mSampleFreq);
+                this.mUtil.writeToSysLogFile("updatePrefs() SampleFreq = " + this.mSampleFreq);
 
                 prefStr = SP.getString("SamplePeriod", "SET_FROM_XML");
-                mSamplePeriod = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() AnalysisPeriod = " + mSamplePeriod);
-                mUtil.writeToSysLogFile( "updatePrefs() AnalysisPeriod = " + mSamplePeriod);
+                this.mSamplePeriod = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() AnalysisPeriod = " + this.mSamplePeriod);
+                this.mUtil.writeToSysLogFile("updatePrefs() AnalysisPeriod = " + this.mSamplePeriod);
 
                 prefStr = SP.getString("AlarmFreqMin", "SET_FROM_XML");
-                mAlarmFreqMin = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() AlarmFreqMin = " + mAlarmFreqMin);
-                mUtil.writeToSysLogFile( "updatePrefs() AlarmFreqMin = " + mAlarmFreqMin);
+                this.mAlarmFreqMin = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() AlarmFreqMin = " + this.mAlarmFreqMin);
+                this.mUtil.writeToSysLogFile("updatePrefs() AlarmFreqMin = " + this.mAlarmFreqMin);
 
                 prefStr = SP.getString("AlarmFreqMax", "SET_FROM_XML");
-                mAlarmFreqMax = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() AlarmFreqMax = " + mAlarmFreqMax);
-                mUtil.writeToSysLogFile("updatePrefs() AlarmFreqMax = " + mAlarmFreqMax);
+                this.mAlarmFreqMax = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() AlarmFreqMax = " + this.mAlarmFreqMax);
+                this.mUtil.writeToSysLogFile("updatePrefs() AlarmFreqMax = " + this.mAlarmFreqMax);
 
                 prefStr = SP.getString("WarnTime", "SET_FROM_XML");
-                mWarnTime = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() WarnTime = " + mWarnTime);
-                mUtil.writeToSysLogFile( "updatePrefs() WarnTime = " + mWarnTime);
+                this.mWarnTime = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() WarnTime = " + this.mWarnTime);
+                this.mUtil.writeToSysLogFile("updatePrefs() WarnTime = " + this.mWarnTime);
 
                 prefStr = SP.getString("AlarmTime", "SET_FROM_XML");
-                mAlarmTime = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() AlarmTime = " + mAlarmTime);
-                mUtil.writeToSysLogFile( "updatePrefs() AlarmTime = " + mAlarmTime);
+                this.mAlarmTime = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() AlarmTime = " + this.mAlarmTime);
+                this.mUtil.writeToSysLogFile("updatePrefs() AlarmTime = " + this.mAlarmTime);
 
                 prefStr = SP.getString("AlarmThresh", "SET_FROM_XML");
-                mAlarmThresh = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() AlarmThresh = " + mAlarmThresh);
-                mUtil.writeToSysLogFile( "updatePrefs() AlarmThresh = " + mAlarmThresh);
+                this.mAlarmThresh = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() AlarmThresh = " + this.mAlarmThresh);
+                this.mUtil.writeToSysLogFile("updatePrefs() AlarmThresh = " + this.mAlarmThresh);
 
                 prefStr = SP.getString("AlarmRatioThresh", "SET_FROM_XML");
-                mAlarmRatioThresh = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() AlarmRatioThresh = " + mAlarmRatioThresh);
-                mUtil.writeToSysLogFile( "updatePrefs() AlarmRatioThresh = " + mAlarmRatioThresh);
+                this.mAlarmRatioThresh = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() AlarmRatioThresh = " + this.mAlarmRatioThresh);
+                this.mUtil.writeToSysLogFile("updatePrefs() AlarmRatioThresh = " + this.mAlarmRatioThresh);
 
-                mFallActive = SP.getBoolean("FallActive", false);
-                Log.v(TAG, "updatePrefs() FallActive = " + mFallActive);
-                mUtil.writeToSysLogFile( "updatePrefs() FallActive = " + mFallActive);
+                this.mFallActive = SP.getBoolean("FallActive", false);
+                Log.v(this.TAG, "updatePrefs() FallActive = " + this.mFallActive);
+                this.mUtil.writeToSysLogFile("updatePrefs() FallActive = " + this.mFallActive);
 
                 prefStr = SP.getString("FallThreshMin", "SET_FROM_XML");
-                mFallThreshMin = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() FallThreshMin = " + mFallThreshMin);
-                mUtil.writeToSysLogFile( "updatePrefs() FallThreshMin = " + mFallThreshMin);
+                this.mFallThreshMin = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() FallThreshMin = " + this.mFallThreshMin);
+                this.mUtil.writeToSysLogFile("updatePrefs() FallThreshMin = " + this.mFallThreshMin);
 
                 prefStr = SP.getString("FallThreshMax", "SET_FROM_XML");
-                mFallThreshMax = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() FallThreshMax = " + mFallThreshMax);
-                mUtil.writeToSysLogFile( "updatePrefs() FallThreshMax = " + mFallThreshMax);
+                this.mFallThreshMax = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() FallThreshMax = " + this.mFallThreshMax);
+                this.mUtil.writeToSysLogFile("updatePrefs() FallThreshMax = " + this.mFallThreshMax);
 
                 prefStr = SP.getString("FallWindow", "SET_FROM_XML");
-                mFallWindow = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() FallWindow = " + mFallWindow);
-                mUtil.writeToSysLogFile( "updatePrefs() FallWindow = " + mFallWindow);
+                this.mFallWindow = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() FallWindow = " + this.mFallWindow);
+                this.mUtil.writeToSysLogFile("updatePrefs() FallWindow = " + this.mFallWindow);
 
-                mSdData.mHRAlarmActive = SP.getBoolean("HRAlarmActive", false);
-                Log.v(TAG, "updatePrefs() HRAlarmActive = " + mSdData.mHRAlarmActive);
-                mUtil.writeToSysLogFile( "updatePrefs() HRAlarmActive = " + mSdData.mHRAlarmActive);
+                this.prefValmHrAlarmActive = SP.getBoolean("HRAlarmActive", false);
+                // this.mSdData.mHRAlarmActive = prefValmHrAlarmActive;
+                Log.v(this.TAG, "updatePrefs() HRAlarmActive = " + this.mSdData.mHRAlarmActive);
+                this.mUtil.writeToSysLogFile("updatePrefs() HRAlarmActive = " + this.mSdData.mHRAlarmActive);
 
-                mSdData.mHRNullAsAlarm = SP.getBoolean("HRNullAsAlarm", false);
-                Log.v(TAG, "updatePrefs() HRNullAsAlarm = " + mSdData.mHRNullAsAlarm);
-                mUtil.writeToSysLogFile( "updatePrefs() HRNullAsAlarm = " + mSdData.mHRNullAsAlarm);
+                this.mSdData.mHRNullAsAlarm = SP.getBoolean("HRNullAsAlarm", false);
+                Log.v(this.TAG, "updatePrefs() HRNullAsAlarm = " + this.mSdData.mHRNullAsAlarm);
+                this.mUtil.writeToSysLogFile("updatePrefs() HRNullAsAlarm = " + this.mSdData.mHRNullAsAlarm);
 
                 prefStr = SP.getString("HRThreshMin", "SET_FROM_XML");
-                mSdData.mHRThreshMin = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() HRThreshMin = " + mSdData.mHRThreshMin);
-                mUtil.writeToSysLogFile( "updatePrefs() HRThreshMin = " + mSdData.mHRThreshMin);
+                this.mSdData.mHRThreshMin = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() HRThreshMin = " + this.mSdData.mHRThreshMin);
+                this.mUtil.writeToSysLogFile("updatePrefs() HRThreshMin = " + this.mSdData.mHRThreshMin);
 
                 prefStr = SP.getString("HRThreshMax", "SET_FROM_XML");
-                mSdData.mHRThreshMax = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() HRThreshMax = " + mSdData.mHRThreshMax);
-                mUtil.writeToSysLogFile( "updatePrefs() HRThreshMax = " + mSdData.mHRThreshMax);
+                this.mSdData.mHRThreshMax = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() HRThreshMax = " + this.mSdData.mHRThreshMax);
+                this.mUtil.writeToSysLogFile("updatePrefs() HRThreshMax = " + this.mSdData.mHRThreshMax);
 
-                mSdData.mO2SatAlarmActive = SP.getBoolean("O2SatAlarmActive", false);
-                Log.v(TAG, "updatePrefs() O2SatAlarmActive = " + mSdData.mO2SatAlarmActive);
-                mUtil.writeToSysLogFile( "updatePrefs() O2SatAlarmActive = " + mSdData.mO2SatAlarmActive);
+                this.mSdData.mO2SatAlarmActive = SP.getBoolean("O2SatAlarmActive", false);
+                Log.v(this.TAG, "updatePrefs() O2SatAlarmActive = " + this.mSdData.mO2SatAlarmActive);
+                this.mUtil.writeToSysLogFile("updatePrefs() O2SatAlarmActive = " + this.mSdData.mO2SatAlarmActive);
 
-                mSdData.mO2SatNullAsAlarm = SP.getBoolean("O2SatNullAsAlarm", false);
-                Log.v(TAG, "updatePrefs() O2SatNullAsAlarm = " + mSdData.mO2SatNullAsAlarm);
-                mUtil.writeToSysLogFile( "updatePrefs() O2SatNullAsAlarm = " + mSdData.mO2SatNullAsAlarm);
+                this.mSdData.mO2SatNullAsAlarm = SP.getBoolean("O2SatNullAsAlarm", false);
+                Log.v(this.TAG, "updatePrefs() O2SatNullAsAlarm = " + this.mSdData.mO2SatNullAsAlarm);
+                this.mUtil.writeToSysLogFile("updatePrefs() O2SatNullAsAlarm = " + this.mSdData.mO2SatNullAsAlarm);
 
                 prefStr = SP.getString("O2SatThreshMin", "SET_FROM_XML");
-                mSdData.mO2SatThreshMin = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() O2SatThreshMin = " + mSdData.mO2SatThreshMin);
-                mUtil.writeToSysLogFile( "updatePrefs() O2SatThreshMin = " + mSdData.mO2SatThreshMin);
+                this.mSdData.mO2SatThreshMin = (short) Integer.parseInt(prefStr);
+                Log.v(this.TAG, "updatePrefs() O2SatThreshMin = " + this.mSdData.mO2SatThreshMin);
+                this.mUtil.writeToSysLogFile("updatePrefs() O2SatThreshMin = " + this.mSdData.mO2SatThreshMin);
 
             } else {
-                Log.v(TAG, "updatePrefs() - prefStr is null - WHY????");
-                mUtil.writeToSysLogFile("SDDataSource.updatePrefs() - prefStr is null - WHY??");
-                Toast toast = Toast.makeText(mContext, "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
+                Log.v(this.TAG, "updatePrefs() - prefStr is null - WHY????");
+                this.mUtil.writeToSysLogFile("SDDataSource.updatePrefs() - prefStr is null - WHY??");
+                final Toast toast = Toast.makeText(this.mContext, "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
                 toast.show();
             }
 
-        } catch (Exception ex) {
-            Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
-            mUtil.writeToSysLogFile("SDDataSource.updatePrefs() - ERROR " + ex.toString());
-            Toast toast = Toast.makeText(mContext, "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
+        } catch (final Exception ex) {
+            Log.v(this.TAG, "updatePrefs() - Problem parsing preferences!");
+            this.mUtil.writeToSysLogFile("SDDataSource.updatePrefs() - ERROR " + ex);
+            final Toast toast = Toast.makeText(this.mContext, "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
             toast.show();
         }
     }
@@ -947,8 +922,8 @@ public abstract class SdDataSource {
      *
      * @param msg - message to display.
      */
-    public void showToast(String msg) {
-        Toast.makeText(mContext, msg,
+    public void showToast(final String msg) {
+        Toast.makeText(this.mContext, msg,
                 Toast.LENGTH_LONG).show();
     }
 
@@ -957,11 +932,11 @@ public abstract class SdDataSource {
         //private String TAG = "SdDataBroadcastReceiver";
 
         @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.v(TAG, "SdDataBroadcastReceiver.onReceive()");
-            String jsonStr = intent.getStringExtra("data");
-            Log.v(TAG, "SdDataBroadcastReceiver.onReceive() - data=" + jsonStr);
-            updateFromJSON(jsonStr);
+        public void onReceive(final Context context, final Intent intent) {
+            Log.v(SdDataSource.this.TAG, "SdDataBroadcastReceiver.onReceive()");
+            final String jsonStr = intent.getStringExtra("data");
+            Log.v(SdDataSource.this.TAG, "SdDataBroadcastReceiver.onReceive() - data=" + jsonStr);
+            SdDataSource.this.updateFromJSON(jsonStr);
         }
     }
 

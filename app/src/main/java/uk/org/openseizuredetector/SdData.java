@@ -160,7 +160,7 @@ public class SdData implements Parcelable {
             mDataType = jo.optString("dataType", "raw");
             phoneName = jo.optString("phoneName");
             mHR = (short) jo.optInt("hr");
-            if (mHR >= 0.0) {
+            if (mHR >= 0) {
                 mHRAlarmActive = true;
             }
             JSONArray specArr = jo.optJSONArray("simpleSpec");

@@ -619,9 +619,9 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
 
     public boolean isWearConnected() {
         boolean result = false;
-        Task<List<Node>> resultNodeList = mNodeClient.getConnectedNodes();
-        if (resultNodeList.isSuccessful()) if (!resultNodeList.getResult().isEmpty())
-            if (resultNodeList.getResult().contains(mWearableNodeUri)) result = true;
+        TaskAllConnectedNodes = mNodeClient.getConnectedNodes();
+        if (TaskAllConnectedNodes.isSuccessful()) if (!TaskAllConnectedNodes.getResult().isEmpty())
+            if (TaskAllConnectedNodes.getResult().contains(mWearableNodeUri)) result = true;
         return result;
     }
 
@@ -1075,7 +1075,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
 
                                 } else {
                                     // Log an error
-                                    Log.e(TAG, "ERROR: failed to send Message to :" + mWearableNodeUri);
+                                    Log.e(TAG, "sendMessage() sendMessageTask.addOnCompleteListener(): ERROR: failed to send Message to :" + mWearableNodeUri);
                                     mSdData.watchConnected = false;
                                     mSdDataReceiver.onSdDataReceived(mSdData);
                                     mWearableNodeUri = null;
