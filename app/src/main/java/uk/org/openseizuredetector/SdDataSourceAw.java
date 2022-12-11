@@ -274,7 +274,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 } catch (Throwable throwable) {
                     Log.e(TAG, "Node request failed to return any results.", throwable);
                 }
-                Log.v(TAG, "Exiting Coroutine");
+                Log.v(TAG, "findWearDevicesWithApp(): Exiting Coroutine ");
             });
 
 
@@ -297,7 +297,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 Wearable.getMessageClient(mContext).addListener(this);
                 Log.v(TAG, "onRebind()");
             } catch (Exception e) {
-                e.printStackTrace();
+                Log.e(TAG, "initialiseDevicePairing(): Node request failed to return any results.", e);
             }
 
             getNodesResBool[0] = getNodes(nodeId);
@@ -884,7 +884,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                     sendWatchSdSettings();
                     getWatchSdSettings();
                 }
-                if (a == "watchConnected") {
+                if (a == "watchConnect") {
                     findWearDevicesWithApp();
                 }
                 if (a == "watchDisconnect") {

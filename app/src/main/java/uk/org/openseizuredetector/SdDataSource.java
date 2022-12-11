@@ -361,7 +361,7 @@ public abstract class SdDataSource {
                     Log.e(TAG, "UpdateFromJSON()", e);
                 }
                 retVal = "OK";
-            } else if (dataTypeStr.equals("watchConnected")) {
+            } else if (dataTypeStr.equals("watchConnect")) {
                 mSdData.watchConnected = dataObject.getBoolean("watchConnected");
                 mSdData.watchAppRunning = dataObject.getBoolean("watchAppRunning");
                 retVal = dataTypeStr;
