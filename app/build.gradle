@@ -52,7 +52,7 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:4.9.0'
     // Set this dependency if you want to use Hamcrest matching
     testImplementation 'org.hamcrest:hamcrest-library:2.2'
-    implementation 'androidx.appcompat:appcompat:1.4.2'
+    implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'org.apache.commons:commons-math3:3.6.1'
     // google play services used for location finding for SMS alerts.
@@ -80,7 +80,7 @@ dependencies {
     implementation "androidx.wear:wear-ongoing:1.0.0"
 
     // Use to implement support for interactions from the Wearables to Phones
-    implementation 'androidx.wear:wear-phone-interactions:1.0.0'
+    implementation 'androidx.wear:wear-phone-interactions:1.0.1'
     // Use to implement support for interactions between the Wearables and Phones
     implementation "androidx.wear:wear-remote-interactions:1.0.0"
 

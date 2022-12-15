@@ -883,11 +883,13 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                     getWatchSdSettings();
                 }
                 if (a == "watchConnect") {
-                    findWearDevicesWithApp();
+                    if (mUtil.isServerRunning()) mUtil.stopServer();
+                    mUtil.startServer();
                 }
                 if (a == "watchDisconnect") {
                     Log.i(TAG, "onMessageReceived(): watchDisconnect");
                     //TODO: reconnect??
+                    if (mUtil.isServerRunning()) mUtil.stopServer();
                 }
                 //mSdDataIn = null;
             } catch (Exception e) {

@@ -159,10 +159,10 @@ public class MainActivity extends AppCompatActivity {
                     tv = (TextView) findViewById(R.id.pebbleTv);
                     if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
                         if (mConnection.mSdServer.mSdData.mO2Sat>0) {
-                            tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
+                            tv.setText(getString(R.string.HR_Equals) + (short) mConnection.mSdServer.mSdData.mHR + " bpm\n"
                                     + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
                         } else {
-                            tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
+                            tv.setText(getString(R.string.HR_Equals) + (short) mConnection.mSdServer.mSdData.mHR + " bpm\n"
                                     + "O2 Sat = ---%");
                         }
                         if (mConnection.mSdServer.mSdData.mHRAlarmStanding || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {

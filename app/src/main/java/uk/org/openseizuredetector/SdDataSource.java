@@ -266,13 +266,16 @@ public abstract class SdDataSource {
                     this.mSdData.mHR = dataObject.getDouble("hr");
                     this.mSdData.curHeartAvg = (short) dataObject.getInt("curHeartAvg");
                     if (this.mSdData.mHR >= 0d) {
+                        // TODO: FIX next line. It should be the correct version
+                        // from
+                        prefValmHrAlarmActive = true;
                         if (!prefValmHrAlarmActive)
                             Log.v(TAG, "updateFromJSON(): prefValmHrAlarmActive unset!");
                         this.mSdData.mHRAlarmActive = prefValmHrAlarmActive;
                     }
                 } catch (final JSONException e) {
                     // if we get 'null' HR (For example if the heart rate is not working)
-                    this.mSdData.mHR = -1;
+                    this.mSdData.mHR = -1d;
                     this.mSdData.mHRAlarmActive = false;
                 }
                 try {
@@ -585,7 +588,7 @@ public abstract class SdDataSource {
                 this.mSdData.mHRFaultStanding = true;
                 this.mSdData.mHRAlarmStanding = false;
             }
-            else if (this.mSdData.mHR < this.mSdData.mHRThreshMin || this.mSdData.mHR > this.mSdData.mHRThreshMax) {
+            else if (this.mSdData.mHR < this.mSdData.mHRThreshMin || (short) this.mSdData.mHR > this.mSdData.mHRThreshMax) {
                 Log.i(this.TAG, "Heart Rate Abnormal - " + (short) this.mSdData.mHR + " bpm");
                 this.mSdData.mHRFaultStanding = false;
                 this.mSdData.mHRAlarmStanding = true;
