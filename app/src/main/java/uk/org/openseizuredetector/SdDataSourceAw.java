@@ -130,6 +130,8 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
     private NodeClient mNodeClient;
     private RemoteActivityHelper remoteActivityHelper;
     private Set<Node> wearNodesWithApp = null;
+    private int ALARM_STATE_NETFAULT = 7;
+    private StartupActivity startUpActivity;
 
 
     private UUID SD_UUID = UUID.fromString("03930f26-377a-4a3d-aa3e-f3b19e421c9d");
@@ -183,6 +185,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
     private int SD_MODE_FFT = 0;     // The original OpenSeizureDetector mode (FFT based)
     private int SD_MODE_FILTER = 2;  // Use digital filter rather than FFT.
 
+    private SdDataReceiver mSdDataReceiver;
     private short mDataUpdatePeriod;
     private short mMutePeriod;
     private short mManAlarmPeriod;
@@ -217,6 +220,8 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                           SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
         mContext = context;
+        mHandler = handler;
+        mSdDataReceiver = sdDataReceiver;
         Log.e(TAG, "starting to init contexts");
         mName = "Android Wear";
         // Set default settings from XML files (mContext is set by super().
@@ -304,16 +309,16 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 if (getNodesResBool[0][1]) {
                     sendWatchSdSettings();
                     getWatchSdSettings();
+                    if (startUpActivity == null) startUpActivity = new StartupActivity();
+                    mHandler.post(startUpActivity.serverStatusRunnable);
                 } else {
                     mSdData.watchConnected = false;
-                    mSdDataReceiver.onSdDataReceived(mSdData);
 
                 }
             } else {
                 //no Wearable devices found
                 Log.e(TAG, "initialiseDevicePairing() - No Wearables found.");
                 mSdData.watchConnected = false;
-                mSdDataReceiver.onSdDataReceived(mSdData);
             }
 
 
@@ -355,6 +360,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                     }
                     if (Objects.equals(currentAckFromWearForAppOpenCheck, wearableAppCheckPayloadReturnACK)) {
                         mWearableNodeUri = nodeId;
+
                         resBool[1] = true;
                         return resBool;
                     }
@@ -461,7 +467,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
     public void start() {
 
         Log.v(TAG, "start()");
-
+        updatePrefs();
         try {
             this.activityContext = this.mContext;
 
@@ -471,7 +477,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                     .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
 
 
-            updatePrefs();
+
 
             remoteActivityHelper = new RemoteActivityHelper(
                     mContext,
@@ -544,8 +550,12 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                     ex.printStackTrace();
                 }
                 if (!sendMessageTask.isSuccessful()) {
+                    mSdData.serverOK = false;
                     mSdData.watchConnected = false;
-                    mSdDataReceiver.onSdDataReceived(mSdData);
+                    mSdData.watchAppRunning = false;
+                    mSdData.alarmState = ALARM_STATE_NETFAULT;
+                    mSdData.alarmPhrase = "Warning - No Connection to Server";
+                    Log.v(TAG, "doInBackground(): No Connection to Server - sdData = " + mSdData.toString());
                     return;
 
                 }
@@ -882,19 +892,27 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                     sendWatchSdSettings();
                     getWatchSdSettings();
                 }
-                if (a == "watchConnect") {
+                if (Objects.equals(a, "watchConnect")) {
                     if (mUtil.isServerRunning()) mUtil.stopServer();
                     mUtil.startServer();
+
+
                 }
                 if (a == "watchDisconnect") {
                     Log.i(TAG, "onMessageReceived(): watchDisconnect");
                     //TODO: reconnect??
                     if (mUtil.isServerRunning()) mUtil.stopServer();
                 }
+
                 //mSdDataIn = null;
             } catch (Exception e) {
                 Log.e(TAG, "Exception in updating msddata", e);
             }
+        }
+        try {
+            if (mSdData.mNsamp != 0) doAnalysis();
+        } catch (Exception e) {
+            Log.e(TAG, "onMessageReceived(): doAnalysis() failed with: ", e);
         }
 
     }
@@ -1083,7 +1101,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                             }
                     );
                 } catch (Exception e) {
-                    Log.e(TAG, "Error encoding string to bytes");
+                    Log.e(TAG, "sendMessage(): Error encoding string to bytes", e);
                     e.printStackTrace();
                 }
             }
@@ -1096,7 +1114,11 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                             Uri.parse("wear://"), CapabilityClient.FILTER_REACHABLE
                     );
             mSdData.watchConnected = false;
-            mSdDataReceiver.onSdDataReceived(mSdData);
+            try {
+                mSdDataReceiver.onSdDataReceived(mSdData);
+            } catch (Exception e) {
+                Log.e(TAG, "sendMessage() allready Failed, cannot push back new SdData: ", e);
+            }
             Wearable.getMessageClient(mContext).addListener(this);
         }
 
@@ -1110,7 +1132,8 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         Log.v(TAG, "sendWatchSdSettings() - preparing settings dictionary.. mSampleFreq=" + mSampleFreq);
         mUtil.writeToSysLogFile("SdDataSourceAw.sendWatchSdSettings()");
         SdData mSdDataOut = getSdData();
-
+        mSdDataOut.dataTime.setToNow();
+        mSdDataOut.mDataType = "settings";
         mSdDataOut.serverOK = mUtil.isServerRunning();
 
         if (!mUtil.isServerRunning())

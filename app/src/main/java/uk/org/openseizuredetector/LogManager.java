@@ -1015,7 +1015,7 @@ public class LogManager {
         Log.i(TAG, "startRemoteLogTimer() - starting RemoteLogTimer");
         mRemoteLogTimer =
                 new RemoteLogTimer(mRemoteLogPeriod * 1000, 1000);
-        mRemoteLogTimer.start();
+        if (mLogRemote) mRemoteLogTimer.start();
     }
 
 

@@ -414,16 +414,16 @@ public abstract class SdDataSource {
      * and populate the output data structure mSdData
      */
     protected void doAnalysis() {
-        double nMin = 0;
-        double nMax = 0;
-        double nFreqCutoff = 0;
+        double nMin = 0d;
+        double nMax = 0d;
+        double nFreqCutoff = 0d;
         double[] fft = null;
         try {
             // FIXME - Use specified sampleFreq, not this hard coded one
             final int sampleFreq;
             if (this.mSdData.mSampleFreq != 0) this.mSampleFreq = (short) this.mSdData.mSampleFreq;
-            else sampleFreq = (int) (this.mSdData.mNsamp / this.mSdData.dT);
-            final double freqRes = 1.0 * this.mSampleFreq / this.mSdData.mNsamp;
+            else sampleFreq = (int) ((double) this.mSdData.mNsamp / this.mSdData.dT);
+            final double freqRes = 1.0d * this.mSampleFreq / ((double) this.mSdData.mNsamp);
             Log.v(this.TAG, "doAnalysis(): mSampleFreq=" + this.mSampleFreq + " mNSamp=" + this.mSdData.mNsamp + ": freqRes=" + freqRes);
             // Set the frequency bounds for the analysis in fft output bin numbers.
             nMin = this.mAlarmFreqMin / freqRes;
@@ -432,8 +432,8 @@ public abstract class SdDataSource {
                     + ", mAlarmFreqMax=" + this.mAlarmFreqMax + ", nMax=" + nMax);
             // Calculate the bin number of the cutoff frequency
             final short mFreqCutoff = 12;
-            nFreqCutoff = mFreqCutoff / freqRes;
-            Log.v(this.TAG, "mFreqCutoff = " + mFreqCutoff + ", nFreqCutoff=" + nFreqCutoff);
+            nFreqCutoff = (double) mFreqCutoff / freqRes;
+            Log.v(this.TAG, "mFreqCutoff = " + ((short) mFreqCutoff) + ", nFreqCutoff=" + nFreqCutoff);
 
             final DoubleFFT_1D fftDo = new DoubleFFT_1D(this.mSdData.mNsamp);
             fft = new double[this.mSdData.mNsamp * 2];
@@ -502,7 +502,8 @@ public abstract class SdDataSource {
         } catch (final Exception e) {
             Log.e(this.TAG, "doAnalysis - Exception during Analysis", e);
             this.mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e);
-            this.mUtil.writeToSysLogFile("doAnalysis: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
+            if (e.getCause() != null) if (e.getCause().getStackTrace() != null)
+                this.mUtil.writeToSysLogFile("doAnalysis: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
             this.mUtil.writeToSysLogFile("doAnalysis: mSdData.mNsamp=" + this.mSdData.mNsamp);
             this.mUtil.writeToSysLogFile("doAnalysis: alarmFreqMin=" + this.mAlarmFreqMin + " nMin=" + nMin);
             this.mUtil.writeToSysLogFile("doAnalysis: alarmFreqMax=" + this.mAlarmFreqMax + " nMax=" + nMax);

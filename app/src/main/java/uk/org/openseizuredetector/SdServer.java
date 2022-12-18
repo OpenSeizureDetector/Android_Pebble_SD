@@ -372,7 +372,6 @@ public class SdServer extends Service implements SdDataReceiver {
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceNetwork");
                 mSdDataSource = new SdDataSourceNetwork(mContext, mHandler, this);
                 Log.i(TAG, "Disabling remote logging when using network data source");
-                mLogDataRemote = false;
                 break;
             case "Garmin":
                 Log.v(TAG, "Selecting Garmin DataSource");
@@ -1231,12 +1230,10 @@ public class SdServer extends Service implements SdDataReceiver {
             mLogAlarms = SP.getBoolean("LogAlarms", true);
             Log.v(TAG, "updatePrefs() - mLogAlarms = " + mLogAlarms);
             mUtil.writeToSysLogFile("updatePrefs() - mLogAlarms = " + mLogAlarms);
-            //mLogData = SP.getBoolean("LogData", true);
-            mLogData = true;
+            mLogData = SP.getBoolean("LogData", true);
             Log.v(TAG, "SdServer.updatePrefs() - mLogData = " + mLogData);
             mUtil.writeToSysLogFile("updatePrefs() - mLogData = " + mLogData);
-            //mLogDataRemote = SP.getBoolean("LogDataRemote", false);
-            mLogDataRemote = true;
+            mLogDataRemote = SP.getBoolean("LogDataRemote", false);
             Log.v(TAG, "updatePrefs() - mLogDataRemote = " + mLogDataRemote);
             mUtil.writeToSysLogFile("updatePrefs() - mLogDataRemote = " + mLogDataRemote);
             mLogDataRemoteMobile = SP.getBoolean("LogDataRemoteMobile", false);
