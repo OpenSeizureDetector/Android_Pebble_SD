@@ -150,7 +150,7 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                             //Log.v(TAG,"i="+i+", rawData="+mSdData.rawData[i]+","+mSdData.rawData[i/2]);
                         }
                         mSdData.mNsamp /= 2;
-                        //doAnalysis();
+                        doAnalysis();
                         mSdData.mNsamp = 0;
                         mStartTs = event.timestamp;
                     } else if (mSdData.mNsamp > NSAMP) {
