@@ -222,6 +222,9 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         mContext = context;
         mHandler = handler;
         mSdDataReceiver = sdDataReceiver;
+        mSdData = new SdData();
+        updatePrefs();
+
         Log.e(TAG, "starting to init contexts");
         mName = "Android Wear";
         // Set default settings from XML files (mContext is set by super().
@@ -537,29 +540,28 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
 //                Log.v(TAG, "start(): status timer already running.");
 //                mUtil.writeToSysLogFile("SdDataSourceAw.start() - status timer already running??");
 //            }
-            if (mSdData.watchConnected) {
-                final String nodeId = mMessageEvent.getSourceNodeId();
-                //set the data f the message to the butes of the Uri.
-                final byte[] payload = "connect_init".getBytes(StandardCharsets.UTF_8);
-                final Task<Integer> sendMessageTask = Wearable.getMessageClient(mContext)
-                        .sendMessage(nodeId, MESSAGE_ITEM_RECEIVED_PATH, payload);
+
+            if (mSdData.serverOK && !mSdData.watchConnected && !mSdData.haveSettings) {
                 try {
-                    // Block on a task and get the result synchronously (because this is on a background thread).
-                    Tasks.await(sendMessageTask);
-                } catch (ExecutionException | InterruptedException ex) {
-                    ex.printStackTrace();
-                }
-                if (!sendMessageTask.isSuccessful()) {
+                    if (!mSdData.watchAppRunning) {
+                        mSdData.serverOK = false;
+                        mSdData.watchConnected = false;
+                        mSdData.watchAppRunning = false;
+                        mSdData.alarmState = ALARM_STATE_NETFAULT;
+                        mSdData.alarmPhrase = "Warning - No Connection to Server";
+                        Log.v(TAG, "doInBackground(): No Connection to Server - sdData = " + mSdData.toString());
+                        return;
+
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "onStart() trying to initialize connection", e);
                     mSdData.serverOK = false;
                     mSdData.watchConnected = false;
                     mSdData.watchAppRunning = false;
                     mSdData.alarmState = ALARM_STATE_NETFAULT;
                     mSdData.alarmPhrase = "Warning - No Connection to Server";
                     Log.v(TAG, "doInBackground(): No Connection to Server - sdData = " + mSdData.toString());
-                    return;
-
                 }
-
 
                 // make sure we get some data when we first start.
                 getWatchData();
@@ -750,7 +752,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
 
     @Override
     public void onDataChanged(DataEventBuffer dataEventBuffer) {
-
+        Log.v(TAG, "onDataChanged() Connection to wear changed ");
     }
 
 
@@ -946,6 +948,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
     public void onCapabilityChanged(CapabilityInfo capabilityInfo) {
         boolean capabilityInfoPopulated;
         try {
+            Log.v(TAG, "onCapabilityChanged()" + capabilityInfo);
             capabilityInfoPopulated = CheckIsWearClient(capabilityInfo);
         } catch (Exception e) {
             capabilityInfoPopulated = false;

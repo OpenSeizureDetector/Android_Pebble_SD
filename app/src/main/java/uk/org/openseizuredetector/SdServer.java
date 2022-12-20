@@ -484,8 +484,8 @@ public class SdServer extends Service implements SdDataReceiver {
         }
 
         checkEvents();
-
-        return START_STICKY;
+        if (intent == null) return START_NOT_STICKY;
+        return super.onStartCommand(intent, flags, startId);
     }
 
     // Show the main activity on the user's screen.
