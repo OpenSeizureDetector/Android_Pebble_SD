@@ -132,6 +132,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
     private Set<Node> wearNodesWithApp = null;
     private int ALARM_STATE_NETFAULT = 7;
     private StartupActivity startUpActivity;
+    private SdServiceConnection mConnection;
 
 
     private UUID SD_UUID = UUID.fromString("03930f26-377a-4a3d-aa3e-f3b19e421c9d");
@@ -213,7 +214,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
     private Activity tempAct;
     private boolean processingSdSettings;
     private boolean processingSdSettingsPfMarker;
-
+    private OsdUtil mUtil;
 
     @SuppressLint("SetTextI18n")
     public SdDataSourceAw(Context context, Handler handler,
@@ -223,6 +224,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         mHandler = handler;
         mSdDataReceiver = sdDataReceiver;
         mSdData = new SdData();
+
         updatePrefs();
 
         Log.e(TAG, "starting to init contexts");
@@ -480,11 +482,13 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                     .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
 
 
-
-
             remoteActivityHelper = new RemoteActivityHelper(
                     mContext,
                     Executors.newSingleThreadExecutor());
+            if (mHandler == null) mHandler = new Handler();
+            if (mUtil == null) mUtil = new OsdUtil(mContext, mHandler);
+
+
         } catch (Exception e) {
             Log.e(TAG, "Failed to get initiate remoteActivityHelper" + e);
         }
@@ -641,6 +645,9 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
      */
     public void updatePrefs() {
         Log.v(TAG, "updatePrefs()");
+        if (mHandler == null) mHandler = new Handler();
+        if (mUtil == null) mUtil = new OsdUtil(mContext, mHandler);
+
         mUtil.writeToSysLogFile("SdDataSourceAw.updatePrefs()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(mContext);
@@ -820,6 +827,8 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
+        if (mHandler == null) mHandler = new Handler();
+        if (mUtil == null) mUtil = new OsdUtil(mContext, mHandler);
         if (mSdData == null) mSdData = new SdData();
         if (mWearableNodeUri == null) mWearableNodeUri = messageEvent.getSourceNodeId();
         Log.d(TAG_MESSAGE_RECEIVED, "onMessageReceived event received");
@@ -894,16 +903,30 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                     sendWatchSdSettings();
                     getWatchSdSettings();
                 }
-                if (Objects.equals(a, "watchConnect")) {
-                    if (mUtil.isServerRunning()) mUtil.stopServer();
-                    mUtil.startServer();
+                /*if (Objects.equals(a, "watchConnect")) {
+                    if (mUtil.isServerRunning()) {
+                        Log.i(TAG, "onStart() - server running - stopping it - isServerRunning=" + mUtil.isServerRunning());
+                        mUtil.writeToSysLogFile("StartupActivity.onStart() - server already running - stopping it.");
+                        mUtil.stopServer();
+                    } else {
+                        Log.i(TAG, "onStart() - server not running - isServerRunning=" + mUtil.isServerRunning());
+                    }
+                    // Wait 0.1 second to give the server chance to shutdown in case we have just shut it down below, then start it
+                    mHandler.postDelayed(() -> {
+                        mUtil.writeToSysLogFile("StartupActivity.onStart() - starting server after delay - isServerRunning=" + mUtil.isServerRunning());
+                        Log.i(TAG, "onStart() - starting server after delay -isServerRunning=" + mUtil.isServerRunning());
+                        mUtil.startServer();
+                        // Bind to the service.
+                        Log.i(TAG, "onStart() - binding to server");
+                        mUtil.writeToSysLogFile("StartupActivity.onStart() - binding to server");
+                        mUtil.bindToServer(mContext, mConnection);
+                    }, 100);
+                }*/
 
-
-                }
                 if (a == "watchDisconnect") {
                     Log.i(TAG, "onMessageReceived(): watchDisconnect");
                     //TODO: reconnect??
-                    if (mUtil.isServerRunning()) mUtil.stopServer();
+                    //if (mUtil.isServerRunning()) mUtil.stopServer();
                 }
 
                 //mSdDataIn = null;

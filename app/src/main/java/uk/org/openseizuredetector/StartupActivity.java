@@ -374,7 +374,7 @@ public class StartupActivity extends AppCompatActivity {
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
         ;
-        String dataSourceName = SP.getString("DataSource", "Pebble");
+        String dataSourceName = SP.getString("DataSource", "Phone");
         tv = (TextView) findViewById(R.id.dataSourceTextView);
         tv.setText(String.format("%s = %s", getString(R.string.DataSource), dataSourceName));
 
