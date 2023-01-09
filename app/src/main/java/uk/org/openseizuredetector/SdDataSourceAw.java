@@ -1165,6 +1165,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         if (!mUtil.isServerRunning())
             Log.v(TAG, "sendWatchSdSettings returning without mSdData.HaveSettings");
         else Log.v(TAG, "sendWatchSdSettings returning with mSdData.HaveSettings");
+        if (mSdData.phoneName)
         String text = mSdDataOut.toSettingsJSON();
         sendMessage(MESSAGE_ITEM_OSD_DATA_RECEIVED, text);
     }
