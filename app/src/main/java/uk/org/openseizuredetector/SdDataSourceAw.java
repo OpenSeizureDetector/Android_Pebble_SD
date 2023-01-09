@@ -29,6 +29,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -1165,7 +1166,8 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         if (!mUtil.isServerRunning())
             Log.v(TAG, "sendWatchSdSettings returning without mSdData.HaveSettings");
         else Log.v(TAG, "sendWatchSdSettings returning with mSdData.HaveSettings");
-        if (mSdData.phoneName)
+        if ((mSdDataOut.phoneName == null) || (mSdDataOut.phoneName == ""))
+            mSdDataOut.phoneName = Build.HOST;
         String text = mSdDataOut.toSettingsJSON();
         sendMessage(MESSAGE_ITEM_OSD_DATA_RECEIVED, text);
     }
