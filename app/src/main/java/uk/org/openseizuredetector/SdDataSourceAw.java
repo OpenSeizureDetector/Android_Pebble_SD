@@ -958,8 +958,11 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         if (capabilityInfo.equals(Uri.parse("wear://"))) {
             CapabilityInfo mMobileNodesWithCompatibility = capabilityInfo;
             if (mMobileNodesWithCompatibility.getNodes().isEmpty()) {
-                Wearable.getMessageClient(mContext).removeListener(this);
                 capabilityInfoPopulated = false;
+                mUtil.stopServer();
+                // Wait 0.1 second to give the server chance to shutdown, then re-start it
+                mHandler.postDelayed(() -> mUtil.startServer(), 100);
+
             } else {
                 Wearable.getMessageClient(mContext).addListener(this);
                 capabilityInfoPopulated = true;
@@ -974,6 +977,9 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         try {
             Log.v(TAG, "onCapabilityChanged()" + capabilityInfo);
             capabilityInfoPopulated = CheckIsWearClient(capabilityInfo);
+            if (!capabilityInfoPopulated)
+                Log.e(TAG, "onCapabilityChanged() lost wear, actionUI: suspend");
+            else Log.e(TAG, "onCapabilityChanged()  wear connected, actionUI: resume");
         } catch (Exception e) {
             capabilityInfoPopulated = false;
             Log.e(TAG, "Failed with " + e + " in check is Wear Client");

@@ -19,16 +19,7 @@
         android:key="LogData"
         android:summary="@string/log_data_summary"
         android:title="@string/log_data_title" />
-    <CheckBoxPreference
-        android:defaultValue="false"
-        android:key="LogDataRemote"
-        android:summary="@string/log_data_remote_summary"
-        android:title="@string/log_data_remote_title" />
-    <CheckBoxPreference
-        android:defaultValue="false"
-        android:key="LogDataRemoteMobile"
-        android:summary="@string/log_data_remote_mobile_summary"
-        android:title="@string/log_data_remote_mobile_title" />
+
     <EditTextPreference
         android:defaultValue="user_name"
         android:key="OSDUname"

@@ -265,14 +265,6 @@ public abstract class SdDataSource {
                 try {
                     this.mSdData.mHR = dataObject.getDouble("hr");
                     this.mSdData.curHeartAvg = (short) dataObject.getInt("curHeartAvg");
-                    if (this.mSdData.mHR >= 0d) {
-                        // TODO: FIX next line. It should be the correct version
-                        // from
-                        prefValmHrAlarmActive = true;
-                        if (!prefValmHrAlarmActive)
-                            Log.v(TAG, "updateFromJSON(): prefValmHrAlarmActive unset!");
-                        this.mSdData.mHRAlarmActive = prefValmHrAlarmActive;
-                    }
                 } catch (final JSONException e) {
                     // if we get 'null' HR (For example if the heart rate is not working)
                     this.mSdData.mHR = -1d;
@@ -456,7 +448,7 @@ public abstract class SdDataSource {
             //Log.v(TAG,"specPower = "+specPower);
 
             // Calculate the Region of Interest power and power ratio.
-            double roiPower = 0;
+            double roiPower = 0d;
             for (int i = (int) Math.floor(nMin); i < (int) Math.ceil(nMax); i++)
                 roiPower = roiPower + this.getMagnitude(fft, i);
             roiPower = roiPower / (nMax - nMin);
