@@ -79,6 +79,7 @@ public class SdServiceConnection implements ServiceConnection {
         return false;
     }
 
+
     /**
      * Check if the service has received seizure detector settings.
      * @return true if settings have been received.

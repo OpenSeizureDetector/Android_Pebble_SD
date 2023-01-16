@@ -236,7 +236,7 @@ public class SdData implements Parcelable {
             retval = jsonObj.toString();
             Log.v(TAG, "retval rawData=" + retval);
         } catch (Exception ex) {
-            Log.e(TAG, "toSettingsJSON(): Error Creating Data Object - " + ex.toString());
+            Log.e(TAG, "toDatapointJSON(): Error Creating Data Object - " + ex.toString(), ex);
 
             Log.v(TAG, "Error Creating Data Object - " + ex.toString());
 
@@ -270,7 +270,7 @@ public class SdData implements Parcelable {
                 jsonObj.put("dataTimeStr", "00000000T000000");
                 jsonObj.put("dataTime", "00-00-00 00:00:00");
             }
-            jsonObj.put("dataType", "settings");
+            //jsonObj.put("dataType", "settings");
             jsonObj.put("batteryPc", batteryPc);
             jsonObj.put("watchConnected", watchConnected);
             jsonObj.put("watchAppRunning", watchAppRunning);
@@ -303,7 +303,7 @@ public class SdData implements Parcelable {
 
             retval = jsonObj.toString();
         } catch (Exception ex) {
-            Log.e(TAG, "toSettingsJSON(): Error Creating Data Object - " + ex.toString());
+            Log.e(TAG, "toSettingsJSON(): Error Creating Data Object - " + ex.toString(), ex);
             retval = "Error Creating Data Object - " + ex.toString();
         }
         arr = null;
@@ -382,7 +382,7 @@ public class SdData implements Parcelable {
 
             retval = jsonObj.toString();
         } catch (Exception ex) {
-            Log.v(TAG, "Error Creating Data Object - " + ex.toString());
+            Log.v(TAG, "Error Creating Data Object - " + ex.toString(), ex);
             retval = "Error Creating Data Object - " + ex.toString();
         }
 

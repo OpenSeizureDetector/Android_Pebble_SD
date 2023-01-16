@@ -268,6 +268,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                         if (toThrow) {
                             Log.e(TAG, "I should throw an exception; no nodes found");
                         } else {
+                            Log.v(TAG, "Found " + allConnectedNodes.size() + " connected nodes");
                             for (Node node : allConnectedNodes
                             ) {
                                 Log.d(TAG, "initiation of device Paring with id " + node.getId() + " " + node.getDisplayName());
@@ -275,7 +276,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                             }
                         }
                     }
-                    Log.v(TAG, "Found " + allConnectedNodes.size() + " connected nodes");
+
 
 
                 } catch (CancellationException e) {
@@ -646,6 +647,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
      */
     public void updatePrefs() {
         Log.v(TAG, "updatePrefs()");
+        super.updatePrefs();
         if (mHandler == null) mHandler = new Handler();
         if (mUtil == null) mUtil = new OsdUtil(mContext, mHandler);
 
@@ -879,6 +881,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 var a = updateFromJSON(s);
                 Log.v(TAG, "result from updateFromJSON(): " + a);
                 if (a == "sendSettings") {
+                    updatePrefs();
                     sendWatchSdSettings();
                     getWatchSdSettings();
                 }
@@ -901,6 +904,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 //}
                 var a = updateFromJSON(s);
                 if (a == "sendSettings") {
+                    updatePrefs();
                     sendWatchSdSettings();
                     getWatchSdSettings();
                 }
@@ -950,6 +954,14 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         Log.v(TAG, "stopWatchApp()");
         mUtil.writeToSysLogFile("SdDataSourceAw.stopWatchApp()");
         // FIXME - Make this work with Android Wear
+        SdData mSdDataOut = getSdData();
+        if (mSdDataOut.mHRAlarmActive != prefValmHrAlarmActive)
+            mSdDataOut.mHRAlarmActive = prefValmHrAlarmActive;
+        mSdDataOut.dataTime.setToNow();
+        mSdDataOut.mDataType = "stopService";
+
+        String text = mSdDataOut.toSettingsJSON();
+        sendMessage(MESSAGE_ITEM_OSD_DATA_RECEIVED, text);
     }
 
     private Boolean CheckIsWearClient(CapabilityInfo capabilityInfo) {
@@ -1165,6 +1177,8 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         Log.v(TAG, "sendWatchSdSettings() - preparing settings dictionary.. mSampleFreq=" + mSampleFreq);
         mUtil.writeToSysLogFile("SdDataSourceAw.sendWatchSdSettings()");
         SdData mSdDataOut = getSdData();
+        if (mSdDataOut.mHRAlarmActive != prefValmHrAlarmActive)
+            mSdDataOut.mHRAlarmActive = prefValmHrAlarmActive;
         mSdDataOut.dataTime.setToNow();
         mSdDataOut.mDataType = "settings";
         mSdDataOut.serverOK = mUtil.isServerRunning();

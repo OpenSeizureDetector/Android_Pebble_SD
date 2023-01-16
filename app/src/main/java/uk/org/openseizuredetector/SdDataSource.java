@@ -265,6 +265,7 @@ public abstract class SdDataSource {
                 try {
                     this.mSdData.mHR = dataObject.getDouble("hr");
                     this.mSdData.curHeartAvg = (short) dataObject.getInt("curHeartAvg");
+                    this.mSdData.mHRAlarmActive = prefValmHrAlarmActive;
                 } catch (final JSONException e) {
                     // if we get 'null' HR (For example if the heart rate is not working)
                     this.mSdData.mHR = -1d;
@@ -396,7 +397,7 @@ public abstract class SdDataSource {
      * @return magnitude ( Re*Re + Im*Im )
      */
     private double getMagnitude(final double[] fft, final int i) {
-        final double mag;
+        double mag;
         mag = fft[2 * i] * fft[2 * i] + fft[2 * i + 1] * fft[2 * i + 1];
         return mag;
     }
