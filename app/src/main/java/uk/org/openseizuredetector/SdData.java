@@ -209,7 +209,10 @@ public class SdData implements Parcelable {
             jsonObj.put("sampleFreq", mSampleFreq);
             jsonObj.put("specPower", specPower);
             jsonObj.put("roiPower", roiPower);
-            jsonObj.put("roiRatio", 10 * roiPower / specPower);
+            if (specPower != 0)
+                jsonObj.put("roiRatio", 10 * roiPower / specPower);
+            else
+                jsonObj.put("roiRatio", 0);
             jsonObj.put("alarmState", alarmState);
             jsonObj.put("alarmPhrase", alarmPhrase);
             jsonObj.put("hr", heartCur);

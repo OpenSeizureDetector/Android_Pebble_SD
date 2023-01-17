@@ -867,7 +867,7 @@ public abstract class SdDataSource {
                 this.mUtil.writeToSysLogFile("updatePrefs() FallWindow = " + this.mFallWindow);
 
                 this.prefValmHrAlarmActive = SP.getBoolean("HRAlarmActive", false);
-                // this.mSdData.mHRAlarmActive = prefValmHrAlarmActive;
+                this.mSdData.mHRAlarmActive = prefValmHrAlarmActive;
                 Log.v(this.TAG, "updatePrefs() HRAlarmActive = " + this.mSdData.mHRAlarmActive);
                 this.mUtil.writeToSysLogFile("updatePrefs() HRAlarmActive = " + this.mSdData.mHRAlarmActive);
 

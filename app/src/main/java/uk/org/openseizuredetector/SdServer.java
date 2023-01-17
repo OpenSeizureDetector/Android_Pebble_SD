@@ -411,8 +411,7 @@ public class SdServer extends Service implements SdDataReceiver {
 //        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
 //        context.startActivity(intent);
 //    }
-        mSDDataThread = new Thread(() -> mSdDataSource.start(), TAG + "_SDSource");
-        mSDDataThread.start();
+        mSdDataSource.start();
 
         // Initialise Notification channel for API level 26 and over
         // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26

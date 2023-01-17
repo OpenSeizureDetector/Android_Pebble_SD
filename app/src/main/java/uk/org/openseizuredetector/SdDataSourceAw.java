@@ -474,7 +474,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
     public void start() {
 
         Log.v(TAG, "start()");
-        updatePrefs();
+        super.updatePrefs();
         try {
             this.activityContext = this.mContext;
 
@@ -648,10 +648,11 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
     public void updatePrefs() {
         Log.v(TAG, "updatePrefs()");
         super.updatePrefs();
-        if (mHandler == null) mHandler = new Handler();
-        if (mUtil == null) mUtil = new OsdUtil(mContext, mHandler);
-
-        mUtil.writeToSysLogFile("SdDataSourceAw.updatePrefs()");
+        if (mSdData.mHRAlarmActive != prefValmHrAlarmActive) {
+            Log.d(TAG, "UpdatePrefs() inconsistemt mHRAlarmActive");
+            mSdData.mHRAlarmActive = prefValmHrAlarmActive;
+        }
+        super.mUtil.writeToSysLogFile("SdDataSourceAw.updatePrefs()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(mContext);
         try {
@@ -830,9 +831,6 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
-        if (mHandler == null) mHandler = new Handler();
-        if (mUtil == null) mUtil = new OsdUtil(mContext, mHandler);
-        if (mSdData == null) mSdData = new SdData();
         if (mWearableNodeUri == null) mWearableNodeUri = messageEvent.getSourceNodeId();
         Log.d(TAG_MESSAGE_RECEIVED, "onMessageReceived event received");
         final String s = new String(messageEvent.getData(), StandardCharsets.UTF_8);
@@ -855,14 +853,16 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 final String nodeId = messageEvent.getSourceNodeId();
                 // Set the data of the message to be the bytes of the Uri.
 
-                currentAckFromWearForAppOpenCheck = s;
                 Log.d(
                         TAG_MESSAGE_RECEIVED,
                         "Acknowledgement message successfully with payload : " + wearableAppCheckPayloadReturnACK
                 );
                 mMessageEvent = messageEvent;
                 mSdData.watchConnected = true;
-                sendMessage(APP_OPEN_WEARABLE_PAYLOAD_PATH, wearableAppCheckPayloadReturnACK);
+                if (Objects.equals(s, wearableAppCheckPayloadReturnACK)) {
+                    currentAckFromWearForAppOpenCheck = s;
+                    sendMessage(APP_OPEN_WEARABLE_PAYLOAD_PATH, wearableAppCheckPayloadReturnACK);
+                }
                 try {
                     Log.d(TAG_MESSAGE_RECEIVED, s);
 
@@ -881,7 +881,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 var a = updateFromJSON(s);
                 Log.v(TAG, "result from updateFromJSON(): " + a);
                 if (a == "sendSettings") {
-                    updatePrefs();
+                    super.updatePrefs();
                     sendWatchSdSettings();
                     getWatchSdSettings();
                 }
@@ -904,7 +904,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 //}
                 var a = updateFromJSON(s);
                 if (a == "sendSettings") {
-                    updatePrefs();
+                    super.updatePrefs();
                     sendWatchSdSettings();
                     getWatchSdSettings();
                 }
@@ -994,7 +994,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
             else Log.e(TAG, "onCapabilityChanged()  wear connected, actionUI: resume");
         } catch (Exception e) {
             capabilityInfoPopulated = false;
-            Log.e(TAG, "Failed with " + e + " in check is Wear Client");
+            Log.e(TAG, "Failed with " + e + " in check is Wear Client", e);
         }
         if (capabilityInfoPopulated) {
             mCapabilitityInfo = capabilityInfo;
