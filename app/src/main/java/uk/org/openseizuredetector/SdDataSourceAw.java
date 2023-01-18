@@ -296,7 +296,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
     private void initialiseDevicePairing(String nodeId) {
 
         final boolean[][] getNodesResBool = {new boolean[0]};
-        Log.d(TAG, "Current context in initDevsP: " + nodeId);
+        Log.d(TAG, "initialiseDevicePairing(): Current context in initDevsP: " + nodeId);
         try {
             try {
                 Wearable.getCapabilityClient(mContext)
@@ -316,8 +316,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                 if (getNodesResBool[0][1]) {
                     sendWatchSdSettings();
                     getWatchSdSettings();
-                    if (startUpActivity == null) startUpActivity = new StartupActivity();
-                    mHandler.post(startUpActivity.serverStatusRunnable);
+
                 } else {
                     mSdData.watchConnected = false;
 
@@ -343,7 +342,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         //resBool[0]: nodePresent
         //resBook[1]: wearableReturnAckReceived
 
-        Log.v(TAG, "Task fetched nodes");
+        Log.v(TAG, "getNodes() Task fetched nodes");
         try {
             Integer result;
             byte[] payload = wearableAppCheckPayload.getBytes(StandardCharsets.UTF_8);
@@ -353,7 +352,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
 
                 try {
                     result = Tasks.await(sendMessageTask);
-                    Log.d(TAG, "Send message result: " + String.valueOf(result));
+                    Log.d(TAG, "getNodes() Send message result: " + String.valueOf(result));
                     resBool[0] = true;
 
 
@@ -369,6 +368,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                         mWearableNodeUri = nodeId;
 
                         resBool[1] = true;
+                        Log.d(TAG, "getNodes(): status of resBool: " + resBool);
                         return resBool;
                     }
                     //Wait 3
@@ -381,6 +381,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                         Log.d(TAG_GET_NODES, "ACK thread sleep 3");
                     } else if (Objects.equals(currentAckFromWearForAppOpenCheck, wearableAppCheckPayloadReturnACK)) {
                         resBool[1] = true;
+                        Log.d(TAG, "getNodes(): status of resBool: " + resBool);
                         mWearableNodeUri = nodeId;
                         return resBool;
                     }
@@ -391,9 +392,10 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                         } catch (InterruptedException e) {
                             Log.e(TAG, "getNodes () - Task Interrupted: Sleep canceled.", e);
                         }
-                        Log.d(TAG_GET_NODES, "ACK thread sleep 4");
+                        Log.d(TAG_GET_NODES, "getNodes() ACK thread sleep 4");
                     } else if (Objects.equals(currentAckFromWearForAppOpenCheck, wearableAppCheckPayloadReturnACK)) {
                         resBool[1] = true;
+                        Log.d(TAG, "getNodes(): status of resBool: " + resBool);
                         mWearableNodeUri = nodeId;
                         return resBool;
                     } else if (!Objects.equals(currentAckFromWearForAppOpenCheck, wearableAppCheckPayloadReturnACK)) {
@@ -404,16 +406,17 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
                         } catch (InterruptedException e) {
                             Log.e(TAG, "getNodes () - Task Interrupted: Sleep canceled.", e);
                         }
-                        Log.d(TAG_GET_NODES, "ACK thread sleep 5");
+                        Log.d(TAG_GET_NODES, "getNodes() ACK thread sleep 5");
                     } else if (Objects.equals(currentAckFromWearForAppOpenCheck, wearableAppCheckPayloadReturnACK)) {
                         resBool[1] = true;
+                        Log.d(TAG, "getNodes(): status of resBool: " + resBool);
                         mWearableNodeUri = nodeId;
                         return resBool;
                     }
                     //resBool[1] = false; redundant stays false
                     Log.d(
                             TAG_GET_NODES,
-                            "ACK thread timeout, no message received from the wearable "
+                            "getNodes(): ACK thread timeout, no message received from the wearable "
                     );
 
 
@@ -428,7 +431,7 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         } catch (Exception e) {
             Log.e(TAG, "getNodes () - No Wearables found.", e);
         }
-
+        Log.d(TAG, "getNodes(): status of resBool: " + resBool);
         return resBool;
     }
 
@@ -847,32 +850,35 @@ public class SdDataSourceAw extends SdDataSource implements DataClient.OnDataCha
         //Send back a message back to the source node
         //This acknowledges that the receiver activity is open
         if (Objects.equals(messageEventPath, APP_OPEN_WEARABLE_PAYLOAD_PATH)) {
-            if (!mSdData.serverOK) {
-                // Get the node id of the node that created the data item from the host portion of
-                // the uri.
-                final String nodeId = messageEvent.getSourceNodeId();
-                // Set the data of the message to be the bytes of the Uri.
+            if (Objects.equals(s, wearableAppCheckPayloadReturnACK)) {
+                if (!mSdData.serverOK) {
+                    // Get the node id of the node that created the data item from the host portion of
+                    // the uri.
+                    final String nodeId = messageEvent.getSourceNodeId();
+                    // Set the data of the message to be the bytes of the Uri.
 
-                Log.d(
-                        TAG_MESSAGE_RECEIVED,
-                        "Acknowledgement message successfully with payload : " + wearableAppCheckPayloadReturnACK
-                );
-                mMessageEvent = messageEvent;
-                mSdData.watchConnected = true;
-                if (Objects.equals(s, wearableAppCheckPayloadReturnACK)) {
-                    currentAckFromWearForAppOpenCheck = s;
-                    sendMessage(APP_OPEN_WEARABLE_PAYLOAD_PATH, wearableAppCheckPayloadReturnACK);
-                }
-                try {
-                    Log.d(TAG_MESSAGE_RECEIVED, s);
+                    Log.d(
+                            TAG_MESSAGE_RECEIVED,
+                            "Acknowledgement message successfully with payload : " + wearableAppCheckPayloadReturnACK
+                    );
+                    mMessageEvent = messageEvent;
+                    mSdData.watchConnected = true;
+                    if (Objects.equals(s, wearableAppCheckPayloadReturnACK)) {
+                        currentAckFromWearForAppOpenCheck = s;
+                        sendMessage(APP_OPEN_WEARABLE_PAYLOAD_PATH, wearableAppCheckPayloadReturnACK);
+                    }
+                    try {
+                        Log.d(TAG_MESSAGE_RECEIVED, s);
 
-                } catch (Exception e) {
-                    Log.e(TAG, "Exception in updating msddata", e);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Exception in updating msddata", e);
+                    }
+                } else {
+                    Log.v(TAG, "onMessageReceived() - if mSdData.watchConnected: Connected and");
                 }
             } else {
-                Log.v(TAG, "onMessageReceived() - if mSdData.watchConnected: Connected and");
+                Log.v(TAG, "onMessageReceived(): inconsistent wearableAppCheckPayloadReturnACK");
             }
-
 
         } else if (!messageEventPath.isEmpty() && messageEventPath.equals(MESSAGE_ITEM_OSD_DATA)) {
 
