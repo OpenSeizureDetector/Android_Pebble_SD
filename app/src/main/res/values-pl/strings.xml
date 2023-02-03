@@ -281,4 +281,5 @@
     <string name="WarnTimeTitle">Opóźnienie ostrzeżenia (sek)</string>
     <string name="AlarmTimeSummary">Czas oczekiwania przed włączeniem alarmu (domyślnie = 10 sek)</string>
     <string name="AlarmTimeTitle">Opóźnienie alarmu (sek)</string>
+    <string name="ManualAlarmBtnTxt">Włącz alarm</string>
 </resources>
