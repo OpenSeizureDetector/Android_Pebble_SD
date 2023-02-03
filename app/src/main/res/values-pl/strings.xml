@@ -282,6 +282,16 @@
     <string name="AlarmTimeSummary">Czas oczekiwania przed włączeniem alarmu (domyślnie = 10 sek)</string>
     <string name="AlarmTimeTitle">Opóźnienie alarmu (sek)</string>
     <string name="ManualAlarmBtnTxt">Włącz alarm</string>
-    <string name="seizure_probability">Prawdopodobieństwo napadu</string>
+    <string name="seizure_probability">Prawdopodobieństwo ataku</string>
     <string name="data_sharing_status">Udostępnianie danych</string>
+    <string name="logging_settings_title">Ustawienia Rejestracji Danych</string>
+    <string name="logging_settings_summary">Ustawienia zapisu danych na telefonie i wysyłania</string>
+    <string name="eventDurationTitle">Czas Trwania Zdarzenia (sekundy)</string>
+    <string name="eventDurationSummary">Czas zapisu danych (w sekundach) przed i po zdarzeniu ataku</string>
+    <string name="AutoPruneDbTitle">Automatycznie Czyść (Skracaj) Bazę Danych</string>
+    <string name="AutoPruneDbSummary">Okresowo Automatycznie Czyść (Skracaj) Bazę Danych, aby zapobiec nadmiernemu wykorzystaniu pamięci</string>
+    <string name="dataRetentionPeriodTitle">Okres Przechowywania Danych (dni)</string>
+    <string name="dataRetentionPeriodSummary">Okres (w dniach), przez który dane będą przechowywane i chronione przed usunięciem przez funkcję \'Automatyczne Czyszczenie Bazy Danych\'.</string>
+    <string name="LogNDATitle">Zapisuj Normalne Dzienne Aktywności (NDA)</string>
+    <string name="LogNDASummary">Cały czas rejestruj dane w systemie udostępniania danych, aby dostarczać w tle dane dotyczące \'NDA\', w celu zmniejszenia liczby fałszywych alarmów.</string>
 </resources>
