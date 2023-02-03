@@ -123,7 +123,7 @@ public class SdData implements Parcelable {
 
     /*
      * Intialise this SdData object from a JSON String
-     * FIXME - add O2saturation with checking in case it is not included in the data
+     *
      */
     public boolean fromJSON(String jsonStr) {
         Log.v(TAG, "fromJSON() - parsing jsonString - " + jsonStr);
@@ -160,6 +160,13 @@ public class SdData implements Parcelable {
             JSONArray specArr = jo.optJSONArray("simpleSpec");
             for (int i = 0; i < specArr.length(); i++) {
                 simpleSpec[i] = specArr.optInt(i);
+            }
+
+            try {
+                mO2Sat = jo.optDouble("o2Sat");
+            } catch (Exception e) {
+                Log.w(TAG,"Error parsing o2Sat value");
+                mO2Sat = -1;
             }
             haveData = true;
             Log.v(TAG, "fromJSON(): sdData = " + this.toString());

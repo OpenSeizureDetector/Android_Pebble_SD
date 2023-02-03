@@ -294,4 +294,5 @@
     <string name="dataRetentionPeriodSummary">Okres (w dniach), przez który dane będą przechowywane i chronione przed usunięciem przez funkcję \'Automatyczne Czyszczenie Bazy Danych\'.</string>
     <string name="LogNDATitle">Zapisuj Normalne Dzienne Aktywności (NDA)</string>
     <string name="LogNDASummary">Cały czas rejestruj dane w systemie udostępniania danych, aby dostarczać w tle dane dotyczące \'NDA\', w celu zmniejszenia liczby fałszywych alarmów.</string>
+    <string name="cancelBtnTxt">Anuluj</string>
 </resources>
