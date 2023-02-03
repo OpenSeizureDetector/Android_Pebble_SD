@@ -282,4 +282,6 @@
     <string name="AlarmTimeSummary">Czas oczekiwania przed włączeniem alarmu (domyślnie = 10 sek)</string>
     <string name="AlarmTimeTitle">Opóźnienie alarmu (sek)</string>
     <string name="ManualAlarmBtnTxt">Włącz alarm</string>
+    <string name="seizure_probability">Prawdopodobieństwo napadu</string>
+    <string name="data_sharing_status">Udostępnianie danych</string>
 </resources>

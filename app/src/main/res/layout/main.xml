@@ -186,7 +186,7 @@
         android:id="@+id/pSeizureTv"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Seizure Probability (%)" />
+        android:text="@string/seizure_probability" />
 
     <ProgressBar
         android:id="@+id/pSeizureProgressBar"

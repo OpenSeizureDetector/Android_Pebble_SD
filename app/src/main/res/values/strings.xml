@@ -459,4 +459,5 @@
     <string name="NDATimeRemaining">"NDA Logging Time Remaining (hours): "</string>
     <string name="stop_nda_menu_title">Stop NDA</string>
     <string name="start_nda_menu_title">Start NDA</string>
+    <string name="seizure_probability">Seizure Probability (%)</string>
 </resources>
