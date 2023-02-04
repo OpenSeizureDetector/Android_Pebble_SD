@@ -34,6 +34,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
@@ -106,6 +107,7 @@ public class StartupActivity extends AppCompatActivity {
             Manifest.permission.READ_PHONE_STATE,
     };
 
+    // Additional permission required by Android 10 (API 29) and higher.
     public final String[] LOCATION_PERMISSIONS_2 = {
             Manifest.permission.ACCESS_BACKGROUND_LOCATION,
     };
@@ -310,7 +312,7 @@ public class StartupActivity extends AppCompatActivity {
                     requestLocationPermissions1();
                     allOk = false;
                 } else if (smsAlarmsActive && !areLocationPermissions2OK()) {
-                    Log.i(TAG,"SMS permissions2 NOT OK");
+                    Log.i(TAG,"Location permissions2 NOT OK");
                     tv.setText(getString(R.string.SmsPermissionWarning));
                     tv.setBackgroundColor(alarmColour);
                     tv.setTextColor(alarmTextColour);
@@ -647,12 +649,17 @@ public class StartupActivity extends AppCompatActivity {
 
     public boolean areLocationPermissions2OK() {
         boolean allOk = true;
-        Log.v(TAG, "areSMSPermissions2OK()");
-        for (int i = 0; i < LOCATION_PERMISSIONS_2.length; i++) {
-            if (ContextCompat.checkSelfPermission(this, LOCATION_PERMISSIONS_2[i])
-                    != PackageManager.PERMISSION_GRANTED) {
-                Log.i(TAG, LOCATION_PERMISSIONS_2[i] + " Permission Not Granted");
-                allOk = false;
+        Log.v(TAG, "areSMSPermissions2OK() - SDK="+android.os.Build.VERSION.SDK_INT);
+        if (android.os.Build.VERSION.SDK_INT < 29) {
+            Log.d(TAG, "areLocationPermission2OK() - SDK <29 (Android 10) so  permission not required");
+            allOk = true;
+        } else {
+            for (int i = 0; i < LOCATION_PERMISSIONS_2.length; i++) {
+                if (ContextCompat.checkSelfPermission(this, LOCATION_PERMISSIONS_2[i])
+                        != PackageManager.PERMISSION_GRANTED) {
+                    Log.i(TAG, LOCATION_PERMISSIONS_2[i] + " Permission Not Granted");
+                    allOk = false;
+                }
             }
         }
         return allOk;

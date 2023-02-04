@@ -339,8 +339,8 @@
     <string name="remoteLogPeriodTitle">Remote Log Period (seconds)</string>
     <string name="ManualAlarmBtnTxt">Raise Alarm</string>
     <string name="save">Save</string>
-    <string name="event_type">Event Type:</string>
-    <string name="event_sub_type">"Event Sub-Type: "</string>
+    <string name="event_type">Event Type</string>
+    <string name="event_sub_type">Event Sub-Type</string>
     <string name="selectFromOptionselow">"-- select option --"</string>
     <string name="waitingForData">...waiting for data...</string>
     <string name="refreshBtn">Refresh</string>
@@ -461,4 +461,8 @@
     <string name="stop_nda_menu_title">Stop NDA</string>
     <string name="start_nda_menu_title">Start NDA</string>
     <string name="seizure_probability">Seizure Probability (%)</string>
+    <string name="eventid">EventId</string>
+    <string name="event_date">Event Date</string>
+    <string name="alarm_state">Alarm State</string>
+    <string name="notes_about_event">notes about event</string>
 </resources>

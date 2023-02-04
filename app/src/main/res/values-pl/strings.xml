@@ -295,4 +295,14 @@
     <string name="LogNDATitle">Zapisuj Normalne Dzienne Aktywności (NDA)</string>
     <string name="LogNDASummary">Cały czas rejestruj dane w systemie udostępniania danych, aby dostarczać w tle dane dotyczące \'NDA\', w celu zmniejszenia liczby fałszywych alarmów.</string>
     <string name="cancelBtnTxt">Anuluj</string>
+    <string name="local_database">Menadżer dziennika danych</string>
+    <string name="save">ZAPISZ</string>
+    <string name="date">Data</string>
+    <string name="eventid">IdZdarzenia</string>
+    <string name="event_date">Data Zdarzenia</string>
+    <string name="alarm_state">Status Alarmu</string>
+    <string name="event_type">Typ zdarzenia</string>
+    <string name="event_sub_type">Podtyp Zdarzenia</string>
+    <string name="notes_about_event">" informacje o zdarzeniu"</string>
+    <string name="not_logged_in">Nieuwierzytelniony</string>
 </resources>
