@@ -304,7 +304,7 @@
     <string name="AlarmTimeSummary">Time to wait before initiating alarm (Default = 10 sec)</string>
     <string name="AlarmTimeTitle">AlarmTime (sec)</string>
     <string name="O2SatSettingsTitle">Blood Oxygen Saturation Alarm Settigs</string>
-    <string name="O2Sat_enabled_summary">O2Sat_enabled_summary</string>
+    <string name="O2Sat_enabled_summary">Generate alarm if low Blood Oxygen Saturation is detected</string>
     <string name="O2Sat_enabled_title">Enable O2 Saturation Alarm</string>
     <string name="O2SatNullAlarmSummary">Treat an error condition (null value of oxygen saturation reading) as an alarm condition</string>
     <string name="O2SatNullAlarmTitle">Treat Null Value as Alarm</string>
@@ -465,4 +465,5 @@
     <string name="event_date">Event Date</string>
     <string name="alarm_state">Alarm State</string>
     <string name="notes_about_event">notes about event</string>
+    <string name="SpO2">O2 Sat</string>
 </resources>

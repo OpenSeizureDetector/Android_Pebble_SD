@@ -647,7 +647,7 @@ public class MainActivity extends AppCompatActivity {
                     //if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
                     if (mConnection.mSdServer.mSdData.mO2Sat > 0) {
                         tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
-                                + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
+                                + getString(R.string.SpO2)+" = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
                     } else {
                         tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
                                 + "O2 Sat = ---%");
