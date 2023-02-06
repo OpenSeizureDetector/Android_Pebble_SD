@@ -42,10 +42,9 @@
     <string name="WaitingForSeizureDetectorData">Czekam na dane czujnika drgawek...</string>
     <string name="SeizureDetectorSettingsReceived">Odbiór ustawień czujnika drgawek OK</string>
     <string name="WaitingForSeizureDetectorSettings">Czekam na ustawienia czujnika drgawek...</string>
-    <string name="DataSource">Źródło danych</string>
     <string name="AppTitleText">OpenSeizureDetector Android wersja </string>
     <string name="ServerRunningOK">Serwer działa OK\n</string>
-    <string name="AccessServerAt">Dostęp do serwera: </string>
+    <string name="AccessServerAt">IP serwera:</string>
     <string name="ServerStopped">Serwer zatrzymany</string>
     <string name="Warning">OSTRZEŻENIE</string>
     <string name="Mute">WYCISZ</string>
@@ -69,7 +68,7 @@
     <string name="PressToReEnable"> Naciśnij by włączyć ponownie</string>
     <string name="CancelAudibleAlarms">Wycisz alarmy dźwiękowe (tymczasowo)</string>
     <string name="AudibleAlarmsOff">Alarmy dźwiękowe WYŁĄCZONE</string>
-    <string name="Fault">USTERKA</string>
+    <string name="Fault">BŁĄD</string>
     <string name="authenticate">ZALOGUJ</string>
     <string name="not_authenticated">Nieuwierzytelniony</string>
     <string name="cancel">Anuluj</string>
@@ -184,9 +183,9 @@
     <string name="latch_alarms_title">Alarm ciągły</string>
     <string name="latch_timer_period_title">Czas trwania alarmu ciągłego (s)</string>
     <string name="latch_timer_period_summary">Czas w sekundach trwania alarmu nim zostanie on automatycznie wyciszony</string>
-    <string name="enable_audible_alarm_summary">Alarmuje dźwiękiem gdy zostanie wykryty atak</string>
+    <string name="enable_audible_alarm_summary">Alarmuje dźwiękiem gdy zostanie wykryty napad</string>
     <string name="enable_audible_alarm_title">Włącz alarmy dźwiękowe</string>
-    <string name="enable_audible_warning_summary">Ostrzega dźwiękiem gdy wystąpi podejrzenie początku ataku</string>
+    <string name="enable_audible_warning_summary">Ostrzega dźwiękiem gdy wystąpi podejrzenie początku napadu</string>
     <string name="enable_audible_warning_title">Włącz ostrzeżenia dźwiękowe</string>
     <string name="enable_audible_fault_summary">Informuje dźwiękiem gdy wystąpi awaria (np. brak komunikacji z zegarkiem)</string>
     <string name="enable_audible_fault_title">Informuj dźwiękiem o awariach</string>
@@ -198,7 +197,7 @@
     <string name="enable_sms_alarm_title">Włącz powiadomienia SMS</string>
     <string name="sms_numbers_summary">Numery telefonów (oddzielone przecinkiem) na które będą wysyłane SMS</string>
     <string name="sms_numbers_title">Numery telefonów</string>
-    <string name="sms_message_summary">Treść SMS gdy zostanie wykryty atak</string>
+    <string name="sms_message_summary">Treść SMS gdy zostanie wykryty napadu</string>
     <string name="sms_message_title">Treść SMS</string>
     <string name="server_ip_summary">Adres IP serwera OpenSeizureDetector (np. 192.168.1.175).</string>
     <string name="server_ip_title">Adres IP serwera</string>
@@ -214,7 +213,7 @@
     <string name="user_interface_settings_title">Ustawienia interfejsu użytkownika</string>
     <string name="pebble_update_period_summary">Jak często dane są przesyłane do telefonu (nie wpływa na częstość analizy - do tego służy Częstość próbkowania)</string>
     <string name="mute_period_summary">Na jak długo są wyciszane alarmy po przytrzymaniu przycisku w górę</string>
-    <string name="pebble_update_period_title">Częstość przesyłu danych (s)</string>
+    <string name="pebble_update_period_title">Jeśli chcesz uzyskać więcej informacji na temat systemu udostępniania danych i polityki prywatności, odwiedź stronę Udostępniania Danych (https://www.openseizuredetector.org.uk/?page_id=1818).</string>
     <string name="mute_period_title">Czas wyciszenia (s)</string>
     <string name="manual_alarm_period_summary">Na jak długo włączany jest alarm po przytrzymaniu przycisku w dół</string>
     <string name="manual_alarm_period_title">Czas trwania alarmu ręcznego (s)</string>
@@ -288,14 +287,13 @@
     <string name="logging_settings_summary">Ustawienia wysyłania i rejestracji danych na telefonie</string>
     <string name="eventDurationTitle">Czas Trwania Zdarzenia (sekundy)</string>
     <string name="eventDurationSummary">Czas zapisu danych (w sekundach) przed i po zdarzeniu ataku</string>
-    <string name="AutoPruneDbTitle">Automatycznie Czyść (Skracaj) Bazę Danych</string>
+    <string name="AutoPruneDbTitle">Automatycznie Czyść Bazę Danych</string>
     <string name="AutoPruneDbSummary">Okresowo Automatycznie Czyść (Skracaj) Bazę Danych, aby zapobiec nadmiernemu wykorzystaniu pamięci</string>
     <string name="dataRetentionPeriodTitle">Okres Przechowywania Danych (dni)</string>
     <string name="dataRetentionPeriodSummary">Okres (w dniach), przez który dane będą przechowywane i chronione przed usunięciem przez funkcję \'Automatyczne Czyszczenie Bazy Danych\'.</string>
     <string name="LogNDATitle">Rejestruj Normalne Dzienne Aktywności (NDA)</string>
-    <string name="LogNDASummary">Cały czas rejestruj dane w systemie udostępniania danych, aby dostarczać w tle dane dotyczące \'NDA\', w celu zmniejszenia liczby fałszywych alarmów.</string>
+    <string name="LogNDASummary">Cały czas udostępniaj dane o \'NDA\'. Pozwoli to rozwijać OpenSeizureDetector w obszarze ograniczania liczby fałszywych alarmów</string>
     <string name="cancelBtnTxt">Anuluj</string>
-    <string name="local_database">Menadżer dziennika danych</string>
     <string name="save">ZAPISZ</string>
     <string name="date">Data</string>
     <string name="eventid">IdZdarzenia</string>
@@ -310,7 +308,7 @@
     <string name="back">WRÓĆ</string>
     <string name="register">ZAREJESTRUJ NOWEGO UŻYTKOWNIKA</string>
     <string name="reset_password">RESETUJ HASŁO</string>
-    <string name="privacy_policy">POLITYKA PRYWATNOŚCI</string>
+    <string name="privacy_policy">POLTYKA PRYWATNOŚCI</string>
     <string name="about_data_sharing">O UDOSTĘPNIANIU DANYCH</string>
     <string name="logged_in_as_user_id">Zalogowany jako:</string>
     <string name="logout">WYLOGUJ</string>
@@ -320,11 +318,11 @@
     <string name="mark_unverified_events_false_alarm_dialog_title">Oznacz Wszystkie Niezweryfikowane Zdarzenia jako Fałszywe Alarmy</string>
     <string name="mark_unverified_events_as_false_alarm">Oznacz Wszystkie Niezweryfikowane Zdarzenia jako Fałszywe Alarmy</string>
     <string name="report_seizure">Zgłoś Napad</string>
-    <string name="data_sharing_log_in">" Logowanie do Udostępniania Danych"</string>
+    <string name="data_sharing_log_in">Zarejestruj się w celu Udostępniania Danych i Zaloguj się za pomocą menu aplikacji lub przycisku poniżej.</string>
     <string name="start_nda">Włącz Rejestrację Zdarzeń NDA</string>
     <string name="start_nda_logging_dialog_title">Włącz Rejestrację Zdarzeń NDA</string>
     <string name="start_nda_menu_title">Włącz Rejestrację Zdarzeń NDA</string>
-    <string name="data_sharing_setup_ok">Ustawienia Udostępniania Danych OK</string>
+    <string name="data_sharing_setup_ok">Udostepnianie Danych OK</string>
     <string name="SpO2">SpO2</string>
     <string name="AlgorithmSelectionTitle">Wybór Algorytmów Wykrywania Napadu</string>
     <string name="OsdAlarmEnabledTitle">" Włącz Oryginalny Algorytm OSD"</string>
@@ -345,4 +343,10 @@
     <string name="refreshBtn">ODŚWIEŹ</string>
     <string name="include_warnings">Pokaż ostrzeżenia</string>
     <string name="include_nda">Pokaż NDA</string>
-</resources>
+    <string name="not_sharing_logged_data">Wycisz</string>
+    <string name="unvalidatedEventsTitle">Niepotwierdzone Zdarzenia Napadu</string>
+    <string name="please_confirm_seizure_events">Sprawdź Udostępnione Dane</string>
+    <string name="logged_in_with_token">UDOSTĘPNIANIE DANYCH</string>
+    <string name="data_sharing">Menadżer dziennika danych</string>
+    <string name="datasharing_about_text">Udostępnianie Danych nie działa poprawnie. Może to być spowodowane tym, że nie zarejestrowałeś konta i nie zalogowałeś się do systemu udostępniania danych lub może to być problem z siecią.</string>
+    </resources>

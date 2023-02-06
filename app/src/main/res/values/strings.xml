@@ -466,4 +466,5 @@
     <string name="alarm_state">Alarm State</string>
     <string name="notes_about_event">notes about event</string>
     <string name="SpO2">O2 Sat</string>
+    <string name="data_sharing">Data Sharing</string>
 </resources>

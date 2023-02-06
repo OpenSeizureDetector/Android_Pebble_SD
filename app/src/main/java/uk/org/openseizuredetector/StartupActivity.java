@@ -499,7 +499,7 @@ public class StartupActivity extends AppCompatActivity {
                             //MainActivity.this.finish();
                         }
                     })
-                    .setPositiveButton("Privacy Policy", new DialogInterface.OnClickListener() {
+                    .setPositiveButton(R.string.privacy_policy, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.cancel();
                             mDialogDisplayed = false;
@@ -511,7 +511,7 @@ public class StartupActivity extends AppCompatActivity {
                             mDialogDisplayed = false;
                         }
                     })
-                    .setNegativeButton("Data Sharing", new DialogInterface.OnClickListener() {
+                    .setNegativeButton(R.string.data_sharing, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.cancel();
                             mDialogDisplayed = false;

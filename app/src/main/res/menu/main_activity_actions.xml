@@ -41,7 +41,7 @@
             android:enabled="true"
             android:icon="@drawable/ic_action_settings"
             app:showAsAction="never|withText"
-            android:title="About Data Sharing..." />
+            android:title="@string/about_data_sharing" />
 
     </group>
     <group android:id="@+id/grp4">

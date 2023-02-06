@@ -796,7 +796,7 @@ public class MainActivity extends AppCompatActivity {
                             " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
                     ((TextView) findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
                             " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
-                    ((TextView) findViewById(R.id.pSeizureTv)).setText("Seizure Probability = " + pSeizurePc + "%");
+                    ((TextView) findViewById(R.id.pSeizureTv)).setText(getString(R.string.seizure_probability)+" = " + pSeizurePc + "%");
 
                     ProgressBar pb;
                     Drawable pbDrawable;
