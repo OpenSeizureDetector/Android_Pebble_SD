@@ -229,9 +229,14 @@ public class StartupActivity extends AppCompatActivity {
             Log.i(TAG, "Power Management OK - we are ignoring Battery Optimizations");
             mBatteryOptDialogDisplayed = false;
         } else {
-            Log.e(TAG, "Power Management Problem - not ignoring Battery Optimisations");
-            //mUtil.showToast("WARNING - Phone is Optimising OpenSeizureDetector Battery Usage - this is likely to prevent it working correctly when running on battery!");
-            if (!mBatteryOptDialogDisplayed) showBatteryOptimisationWarningDialog();
+            boolean preventBatteryOptWarning = SP.getBoolean("PreventBatteryOptWarning", false);
+            if (preventBatteryOptWarning) {
+                Log.i(TAG,"PreventBatteryOptWarning is true, so not displaying battery optimisation dialog");
+            } else {
+                Log.e(TAG, "Power Management Problem - not ignoring Battery Optimisations");
+                //mUtil.showToast("WARNING - Phone is Optimising OpenSeizureDetector Battery Usage - this is likely to prevent it working correctly when running on battery!");
+                if (!mBatteryOptDialogDisplayed) showBatteryOptimisationWarningDialog();
+            }
         }
 
 

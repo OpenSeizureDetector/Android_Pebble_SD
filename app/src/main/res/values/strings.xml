@@ -364,7 +364,8 @@
     <string name="battery_usage_optimisation_dialog_text">
         <b>WARNING:  The Android System Battery Optimisation Settings are configured to \'Optimise\' OpenSeizureDetector.</b>\n\n
         This means it is likely to be shutdown when operating on battery power, so will not work correctly\n\n
-        Please go into the Phone Settings and select <b>Apps->OpenSeizureDetector->Battery->Optimise battery usage</b> and set it so that OpenSeizureDetector is NOT optimised</string>
+        Please go into the Phone Settings and select <b>Apps->OpenSeizureDetector->Battery->Optimise battery usage</b> and set it so
+        that OpenSeizureDetector is NOT optimised (on Older versions of Andoroid this option is in  </string>
     <string name="local_data">Local Data</string>
     <string name="shared_data">Shared Data</string>
     <string name="prune_database">Prune Database</string>
@@ -467,4 +468,6 @@
     <string name="notes_about_event">notes about event</string>
     <string name="SpO2">O2 Sat</string>
     <string name="data_sharing">Data Sharing</string>
+    <string name="prevent_bat_opt_summary">Do not display the battery optimisation dialog on start-up (some phones report that OpenSeizureDetector is optimised, even if it is not, so the dialog is a nuissance)</string>
+    <string name="prevent_bat_opt_title">Inhibit Battery Optimisation Warning Dialog</string>
 </resources>
