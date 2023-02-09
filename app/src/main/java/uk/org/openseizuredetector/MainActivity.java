@@ -575,7 +575,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
                     }
                     tv = (TextView) findViewById(R.id.fallAlgTv);
-                    tv.setText("Fall");
+                    tv.setText("Fall ");
                     if (mConnection.mSdServer.mSdData.mFallActive) {
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
@@ -650,7 +650,7 @@ public class MainActivity extends AppCompatActivity {
                                 + getString(R.string.SpO2)+" = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
                     } else {
                         tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
-                                + "O2 Sat = ---%");
+                                + getString(R.string.SpO2)+" = ---%");
                     }
                     if (mConnection.mSdServer.mSdData.mHRAlarmStanding || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
                         tv.setBackgroundColor(alarmColour);
@@ -710,7 +710,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setText(getString(R.string.data_sharing_status)
                                 + ": "
                                 + getString(R.string.data_sharing_setup_ok)
-                                + ": " + "NDA Logging");
+                                + ": " + getString(R.string.nda_logging));
                     else
                         tv.setText(getString(R.string.data_sharing_status)
                                 + ": "
