@@ -862,7 +862,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(warnTextColour);
 
                         tv = (TextView) findViewById(R.id.pebbleTv);
-                        tv.setText(getString(R.string.HR_Equals) + " --- bpm\nO2 Sat = --- %");
+                        tv.setText(getString(R.string.HR_Equals) + " --- bpm\n"+getString(R.string.o2_sat)+" = --- %");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
 
