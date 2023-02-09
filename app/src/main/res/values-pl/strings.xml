@@ -17,11 +17,11 @@
         abym w razie potrzeby mógł się skontaktować.\nDziękuję!  Graham \ngraham@openseizuredetector.org.uk
         \n\nZmiany w tej wersji:
     </string>
-    <string name="ask_for_error_log">Przykro mi, OpenSeizureDetector zepsuł się.  Proszę prześlij nam emailem ten plik abyśmy mogli zobaczyć co się stało i go naprawić.\nDzięki, Graham.</string>
+    <string name="ask_for_error_log">Przykro mi, OpenSeizureDetector zepsuł się. Proszę prześlij nam emailem ten plik abyśmy mogli zobaczyć co się stało i go naprawić.\nDzięki, Graham.</string>
     <string name="email_welcome_note">Drogi OpenSeizureDetector,\n\nAplikacja właśnie uległa awarii. Sprawdź dziennik błędów, aby uzyskać więcej informacji.\n\n\n</string>
     <string name="copyright_info">OpenSeizureDetector (Używa UCE Handler\nCopyright © 2018 Rohit Sahebrao Surwase.)</string>
     <string name="okBtnTxt">OK</string>
-	<string name="closeBtnTxt">ZAMKNIJ</string>
+	<string name="closeBtnTxt">Zamknij</string>
     <string name="UpdateDialogTitleTxt">Dziękujemy za zaktualizowanie OpenSeizureDetector</string>
     <string name="FirstRunDlgTitle">Witaj w OpenSeizureDetector</string>
     <string name="SmsPermissionWarning">Problem z uprawnieniami SMS</string>
@@ -50,7 +50,7 @@
     <string name="WatchAppNotRunning">Aplikacja zegarka WYŁĄCZONA</string>
     <string name="WatchBatteryEquals">Bateria zegarka = </string>
     <string name="PowerEquals">Moc = </string>
-    <string name="SpectrumRatioEquals">Współczynnik spektrum = </string>
+    <string name="SpectrumRatioEquals">Współczynnik widma = </string>
     <string name="Threshold">próg</string>
     <string name="NetFault">BŁĄD SIECI</string>
     <string name="WatchApp">Aplikacja zegarka -----</string>
@@ -64,7 +64,7 @@
     <string name="AudibleAlarmsOff">Alarmy dźwiękowe WYŁĄCZONE</string>
     <string name="Fault">BŁĄD</string>
     <string name="authenticate">ZALOGUJ</string>
-    <string name="not_authenticated">NIE ZALOGOWANY</string>
+    <string name="not_authenticated">NIEZALOGOWANY</string>
     <string name="cancel">Anuluj</string>
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>
@@ -158,7 +158,7 @@
     <string name="log_data_title">Zapisz dane</string>
 	<string name="log_data_remote_summary">Zapisuje dane w centralnej bazie systemu udostępniania danych</string>
     <string name="log_data_remote_title">Udostępniaj dane</string>
-	<string name="log_data_remote_mobile_summary">Używa internetu mobilnego w celu udost. danych</string>
+	<string name="log_data_remote_mobile_summary">Używa internetu mobilnego w celu udostępniania danych</string>
     <string name="log_data_remote_mobile_title">Użyj internetu mobilnego</string>
 	<string name="remote_uname_title">Nazwa użytkownika</string>
     <string name="remote_uname_summary">Nazwa użytkownia w systemie udost. danych</string>
@@ -284,9 +284,9 @@
 	<string name="O2SatThreshMinSummary">Dolny próg (%) włączający alarm niskiego poziomu saturacji</string>
     <string name="title_activity_authenticate">Zaloguj do systemu udost. danych</string>
     <string name="logout">Wyloguj</string>
-    <string name="logged_in_with_token">Zalogowany do\nsystemu udost. danych</string>
-    <string name="local_database">Menadżer udost. danych</string>
-    <string name="remote_database">Udost. dane</string>
+    <string name="logged_in_with_token">ZALOGOWANY</string>
+    <string name="local_database">Menadżer udostępniania danych</string>
+    <string name="remote_database">Udostępnione dane</string>
     <string name="num_local_events">Liczba zdarzeń zapisana w telefonie: </string>
     <string name="num_local_datapoints">"Liczba punktów pomiarowych zapisanych w telefonie: "</string>
     <string name="view_remote_db_btn">Podgląd zdalnej b. danych</string>
@@ -326,9 +326,9 @@
     <string name="not_logging_data">Nie zapisuję danych</string>
     <string name="not_sharing_logged_data">Nie udost. zapisanych danych</string>
     <string name="not_logged_in">Niezalogowany</string>
-    <string name="data_sharing_setup_ok">OK</string>
+    <string name="data_sharing_setup_ok">zalogowany</string>
     <string name="please_confirm_seizure_events">Sprawdź udost. zdarzenia napadów</string>
-    <string name="data_sharing_log_in">Zaloguj się do systemu udostępniania danych za pomocą menu aplikacji lub przycisku poniżej.</string>
+    <string name="data_sharing_log_in">Zaloguj się do systemu udost. danych</string>
     <string name="not_updating_mobile">Nie aktualizuję korzystając z internetu mobilnego</string>
     <string name="not_updating_no_network">Brak połączenia z siecią</string>
     <string name="error_connecting_to_server">Błąd połączenia z serwerem</string>
@@ -342,12 +342,12 @@
     <string name="shared_data">Udost. dane</string>
     <string name="prune_database">Czyść bazę danych</string>
     <string name="check_seizures_message">Zdecyduj czy zdarzenia oznaczone na różowo były prawdziwymi napadami drgawkowymi czy fałszywymi alarmami</string>
-    <string name="error_server_not_running">BŁĄD: Serwer OpenSeizureDetector nie działa - zrestaruj serwer</string>
-    <string name="system_logs">Logi systemowe</string>
+    <string name="error_server_not_running">BŁĄD: Serwer OpenSeizureDetector nie działa - zrestartuj serwer</string>
+    <string name="system_logs">Logi systemu</string>
     <string name="logged_in_as_user_id">Zalogowany jako: </string>
     <string name="datasharing_notification_text">Wybierz aby uzyskać więcej informacji</string>
-    <string name="datasharing_notification_title">Problem z udost. danych OpenSeizureDetector</string>
-    <string name="datasharing_about_title">Udost. danych OpenSeizureDetector</string>
+    <string name="datasharing_notification_title">Problem z udostępnianiem danych</string>
+    <string name="datasharing_about_title">Udostępnianie danych</string>
     <string name="datasharing_about_text">
         Udostępnianie danych nie działa poprawnie.   \n
         Może być to spowodowane tym, że nie zarejestrowałeś konta i nie zalogowałeś się do systemu udostępniania danych,\n
@@ -413,13 +413,13 @@
     <string name="mark_unverified_events_as_unknown">Oznacz niezweryfikowane zdarzenia jako nieokreślone</string>
     <string name="mark_unverified_events_unknown_dialog_title">Oznacz wszystkie niezweryfikowane zdarzenia jako nieokreślone</string>
     <string name="mark_unverified_events_unknown_dialog_message">Zanim oznaczysz wszystkie niezweryfikowane zdarzenia jako \'nieokreślone\' potwierdź że zweryfikowano wszystkie prawdziwe napady.\n\nCzy nadal oznaczać niezweryfikowane zdarzenia jako nieokreślone?</string>
-    <string name="not_logged_in_dialog_title">Nie zalogowany do systemu udost. danych</string>
+    <string name="not_logged_in_dialog_title">Niezalogowany do systemu udost. danych</string>
     <string name="not_logged_in_dialog_message">Aby móc zgłaszać napady, musisz być zalogowany do systemu udost. danych.</string>
     <string name="include_warnings">Pokaż ostrzeżenia</string>
-    <string name="OsdAlarmEnabledSummary">Włącz oryginalny, deterministyczny algorytm OpenSeizureDetector w celu wykrywania alarmów. ***Wyłączenie tej opcji nie jest zalecane za wyjątkiem testów***</string>
+    <string name="OsdAlarmEnabledSummary">Włącz oryginalny deterministyczny algorytm OpenSeizureDetector w celu wykrywania alarmów. ***Wyłączenie tej opcji nie jest zalecane za wyjątkiem testów***</string>
     <string name="OsdAlarmEnabledTitle">Włącz oryginalny algorytm OSD</string>
     <string name="CnnAlarmEnabledTitle">Włącz algorytm SI (na sieci neuronowej)</string>
-    <string name="CnnAlarmEnabledSummary">Włącz algorytm sztucznej inteligencji (na Sieci neuronowej) do wykrywania alarmów.</string>
+    <string name="CnnAlarmEnabledSummary">Włącz algorytm sztucznej inteligencji (na sieci neuronowej) do wykrywania alarmów.</string>
     <string name="AlgorithmSelectionTitle">Wybór algorytmu wykrywania napadów</string>
     <string name="mark_unverified_events_false_alarm_dialog_title">Oznacz wszystkie niezweryfikowane zdarzenia jako fałszywe alarmy</string>
     <string name="mark_unverified_events_false_alarm_dialog_message">Przed oznaczeniem wszystkich niezweryfikowanych zdarzeń jako \'fałszywe alarmy\' potwierdź że wszystkie prawdziwe napady zostały zweryfikowane. \n\nCzy nadal oznaczać niezweryfikowane zdarzenia jako fałszywy alarm?</string>
@@ -445,6 +445,6 @@
     <string name="SpO2">SpO2</string>
     <string name="data_sharing">Udostępnianie danych</string>
     <string name="prevent_bat_opt_summary">Nie wyświetlaj okna dialogowego optymalizacji baterii podczas uruchamiania (niektóre telefony pracujące na starszych wersjach Androida zgłaszają że OpenSeizureDetector jest zoptymalizowany nawet jeśli tak nie jest więc okno dialogowe jest uciążliwe)</string>
-    <string name="prevent_bat_opt_title">Wyłącz okno dialogowe ostrzeżenia o optymalizacji baterii</string>
+    <string name="prevent_bat_opt_title">Wyłącz monit optym. baterii</string>
     <string name="o2_sat">SpO2</string>
 </resources>
