@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+     <string name="UpgradeMsg">
+        OpenSeizureDetector nie zbiera żadnych danych osobowych.
+        Oznacza to że nie mam możliwości kontaktu z użytkownikami jeśli znajdę w
+		apce błąd o którym powinni wiedzieć.   \nProszę zasubskrybuj newsletter na
+        http://openseizuredetector.org.uk, lub profil apki na Facebooku https://www.facebook.com/openseizuredetector.
+        abym w razie potrzeby mógł się skontaktować.\nDziękuję!  Graham \ngraham@openseizuredetector.org.uk
+        \n\nZmiany w tej wersji:
+        \n
+    </string>
+    <string name="FirstRunDlgMsg">
+        OpenSeizureDetector nie zbiera żadnych danych osobowych.
+        Oznacza to że nie mam możliwości kontaktu z użytkownikami jeśli znajdę w
+		apce błąd o którym powinni wiedzieć.   \nProszę zasubskrybuj newsletter na
+        http://openseizuredetector.org.uk, lub profil apki na Facebooku https://www.facebook.com/openseizuredetector.
+        abym w razie potrzeby mógł się skontaktować.\nDziękuję!  Graham \ngraham@openseizuredetector.org.uk
+        \n\nZmiany w tej wersji:
+    </string>
     <string name="ask_for_error_log">Przykro mi, OpenSeizureDetector zepsuł się.  Proszę prześlij nam emailem ten plik abyśmy mogli zobaczyć co się stało i go naprawić.\nDzięki, Graham.</string>
     <string name="email_welcome_note">Drogi OpenSeizureDetector,\n\nAplikacja właśnie uległa awarii. Sprawdź dziennik błędów, aby uzyskać więcej informacji.\n\n\n</string>
     <string name="copyright_info">OpenSeizureDetector (Używa UCE Handler\nCopyright © 2018 Rohit Sahebrao Surwase.)</string>
