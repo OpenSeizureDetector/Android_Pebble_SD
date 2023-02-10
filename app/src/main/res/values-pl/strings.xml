@@ -1,24 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-     <string name="UpgradeMsg">
+ <resources>
+    <string name="app_name">OpenSeizureDetector</string>
+    <string name="changelog">
+        \n V3.6 - Dodano obsługę czujników telefonu w celu wykrywania drgawek bez zegarka
+        \n V3.5 - Dodano obsługę alarmowego telefonowania używając osobnej aplikacji OpenSeizureDetector Dialler App
+        \n      - Dodano Uniwersalny Unikalny Identyfikator (UUID) do alarmów SMS tak że mogą być widoczne u odbiorcy jako przysłane od OpenSeizureDetector.
+        \n V3.4.0 - Sie 2020
+        \n    - Dodano obsługę źródeł danych BLE
+    </string>
+    <string name="UpgradeMsg">
         OpenSeizureDetector nie zbiera żadnych danych osobowych.
-        Oznacza to że nie mam możliwości kontaktu z użytkownikami jeśli znajdę w
-		apce błąd o którym powinni wiedzieć.   \nProszę zasubskrybuj newsletter na
-        http://openseizuredetector.org.uk, lub profil apki na Facebooku https://www.facebook.com/openseizuredetector.
-        abym w razie potrzeby mógł się skontaktować.\nDziękuję!  Graham \ngraham@openseizuredetector.org.uk
+        Oznacza to że nie mam możliwości kontaktu z użytkownikami jeśli znajdę
+		błąd w aplikacji o którym powinni wiedzieć. \nProszę zasubskrybuj newsletter na
+        http://openseizuredetector.org.uk lub profil aplikacji na Facebooku https://www.facebook.com/openseizuredetector
+        abym w razie potrzeby mógł się skontaktować.\nDziękuję! Graham \ngraham@openseizuredetector.org.uk
         \n\nZmiany w tej wersji:
         \n
     </string>
     <string name="FirstRunDlgMsg">
         OpenSeizureDetector nie zbiera żadnych danych osobowych.
         Oznacza to że nie mam możliwości kontaktu z użytkownikami jeśli znajdę w
-		apce błąd o którym powinni wiedzieć.   \nProszę zasubskrybuj newsletter na
-        http://openseizuredetector.org.uk, lub profil apki na Facebooku https://www.facebook.com/openseizuredetector.
-        abym w razie potrzeby mógł się skontaktować.\nDziękuję!  Graham \ngraham@openseizuredetector.org.uk
+		aplikacji błąd o którym powinni wiedzieć. \nProszę zasubskrybuj newsletter na
+        http://openseizuredetector.org.uk lub profil aplikacji na Facebooku https://www.facebook.com/openseizuredetector
+        abym w razie potrzeby mógł się skontaktować.\nDziękuję! Graham \ngraham@openseizuredetector.org.uk
         \n\nZmiany w tej wersji:
     </string>
-    <string name="ask_for_error_log">Przykro mi, OpenSeizureDetector zepsuł się. Proszę prześlij nam emailem ten plik abyśmy mogli zobaczyć co się stało i go naprawić.\nDzięki, Graham.</string>
-    <string name="email_welcome_note">Drogi OpenSeizureDetector,\n\nAplikacja właśnie uległa awarii. Sprawdź dziennik błędów, aby uzyskać więcej informacji.\n\n\n</string>
+	<string name="ask_for_error_log">Przykro mi, OpenSeizureDetector zepsuł się. Proszę prześlij nam emailem ten plik abyśmy mogli zobaczyć co się stało i go naprawić.\nDzięki Graham.</string>
+    <string name="email_welcome_note">Drogi OpenSeizureDetector\n\nAplikacja właśnie uległa awarii. Sprawdź dziennik błędów aby uzyskać więcej informacji.\n\n\n</string>
     <string name="copyright_info">OpenSeizureDetector (Używa UCE Handler\nCopyright © 2018 Rohit Sahebrao Surwase.)</string>
     <string name="okBtnTxt">OK</string>
 	<string name="closeBtnTxt">Zamknij</string>
@@ -26,7 +34,7 @@
     <string name="FirstRunDlgTitle">Witaj w OpenSeizureDetector</string>
     <string name="SmsPermissionWarning">Problem z uprawnieniami SMS</string>
     <string name="AppPermissionsOk">Uprawnienia aplikacji OK</string>
-    <string name="AppPermissionsWarning">Problem z uprawnieniami apki</string>
+    <string name="AppPermissionsWarning">Problem z uprawnieniami aplikacji</string>
     <string name="BoundToServiceOk">Połączenie z usługą OK</string>
     <string name="BindingToService">Łączę z usługą w tle...</string>
     <string name="WatchConnectedOk">Połączenie z zegarkiem OK</string>
@@ -110,7 +118,7 @@
     <string name="test_alarm_beep">Test alarmu dźwiękowego</string>
     <string name="test_warning_beep">Test dźwięku ostrzeżeń</string>
     <string name="test_sms_alarm_notification">Wyślij próbny alarm SMS</string>
-    <string name="data_log_manager">Menadżer zapisu danych</string>
+    <string name="data_log_manager">Menadżer udost. danych</string>
     <string name="view_log_entries">Podgląd wpisów</string>
     <string name="export_data">Eksport danych</string>
     <string name="settings">Ustawienia</string>
@@ -126,11 +134,11 @@
     <string name="no_active_network">Stan sieci zmieniony - brak aktywnych sieci</string>
     <string name="problem_parsing_preferences">Problem z ustawieniami - to nie zadziała - wróć do ustawień i popraw je!</string>
     <string name="send_sms_last_location">Wysyłka SMS - ostatnia lokalizacja to </string>
-    <string name="failed_to_send_sms">BŁĄD: NIE UDAŁO SIĘ WYSŁAĆ SMSa</string>
+    <string name="failed_to_send_sms">BŁĄD: NIE UDAŁO SIĘ WYSŁAĆ SMS-a</string>
     <string name="sms_alarms_disabled">Wyłączono alarmy SMS</string>
     <string name="phone_alarm_disabled">Alarmy telefoniczne wyłączone</string>
     <string name="test_phone_alarm_notification">Test alarmu telefonicznego</string>
-    <string name="DiallerNotInstalledWarning"><a href="https://github.com/OpenSeizureDetector/Dialler/tree/master/app/release/app-release.apk">OpenSeizureDetector Dialer App</a> niezainstalowana - wymagana dla alarmów telefonicznych.</string>
+    <string name="DiallerNotInstalledWarning"><a href="https://github.com/OpenSeizureDetector/Dialler/tree/master/app/release/app-release.apk">OpenSeizureDetector Dialer App</a> niezainstalowana - aplikacja wymagana dla alarmów telefonicznych.</string>
     <string name="title_devices">Urządzenia BLE</string>
     <string name="ble_not_supported">BLE nieobsługiwane</string>
     <string name="error_bluetooth_not_supported">Bluetooth nieobsługiwany</string>
@@ -140,6 +148,7 @@
     <string name="select_ble_device_title">Wybierz urządzenie BLE (tylko dla źródeł danych Bluetooth)</string>
     <string name="select_ble_device_desc">Wybierz urządzenie Bluetooth Low Energy (BLE) gdy używasz Bluetooth jako źródła danych wykrywania napadów (akcelerometr i tętno).</string>
     <string name="basic_settings_title">Podstawowe</string>
+    <string name="basic_settings_summary">Ustawienia podstawowe</string>
 	<string name="general_settings_title">Ogólne</string>
     <string name="general_settings_summary">Ustawienia ogólne</string>
     <string name="alarms_settings_title">Alarmy</string>
@@ -161,8 +170,8 @@
 	<string name="log_data_remote_mobile_summary">Używa internetu mobilnego w celu udostępniania danych</string>
     <string name="log_data_remote_mobile_title">Użyj internetu mobilnego</string>
 	<string name="remote_uname_title">Nazwa użytkownika</string>
-    <string name="remote_uname_summary">Nazwa użytkownia w systemie udost. danych</string>
-    <string name="remote_passwd_summary">Hasło w systemie udost. danych</string>
+    <string name="remote_uname_summary">Nazwa użytkownia w systemie udostępniania danych</string>
+    <string name="remote_passwd_summary">Hasło w systemie udostępniania danych</string>
     <string name="remote_passwd_title">Hasło</string>
 	<string name="wearer_id_summary">ID użytkownika</string>
     <string name="wearer_id_title">ID użytkownika noszącego zegarek (z OSD Web API)</string>
@@ -192,10 +201,10 @@
     <string name="use_mp3_alarm_title">Używaj alarmów MP3</string>
     <string name="enable_sms_alarm_summary">Wysyła SMS wystąpienia alarmu. UWAGA: SMS zawiera lokalizację użytkownika. Wyłącz tę opcję jeśli udostępnianie lokalizacji jest niepożądane.</string>
     <string name="enable_sms_alarm_title">Włącz powiadomienia SMS o alarmach</string>
-    <string name="sms_numbers_summary">Numery telefonów (oddzielone przecinkiem) na które będą wysyłane SMSy</string>
+    <string name="sms_numbers_summary">Numery telefonów (oddzielone przecinkiem) na które będą wysyłane SMS-y</string>
     <string name="sms_numbers_title">Numery telefonów</string>
-    <string name="sms_message_summary">Treść SMSa gdy zostanie wykryty napad</string>
-    <string name="sms_message_title">Treść SMSa</string>
+    <string name="sms_message_summary">Treść SMS-a gdy zostanie wykryty napad</string>
+    <string name="sms_message_title">Treść SMS-a</string>
     <string name="server_ip_summary">Adres IP serwera OpenSeizureDetector (np. 192.168.1.175).</string>
     <string name="server_ip_title">Adres IP serwera</string>
     <string name="network_update_period_summary">Czas w milisekundach pomiędzy żądaniami wysłania danych z serwera</string>
@@ -232,7 +241,7 @@
     <string name="sample_period_title">Czas trwania próbki (s)</string>
     <string name="seizure_detect_mode_summary">Wybierz jeden z trzech dostępnych trybów pracy</string>
     <string name="seizure_detect_mode_title">Tryb wykrywania drgawek</string>
-    <string name="sample_freq_summary">Większa częstość jest dokładniejsza, ale szybciej zużywa baterię</string>
+    <string name="sample_freq_summary">Większa częstość jest dokładniejsza ale szybciej zużywa baterię</string>
 	<string name="sample_freq_title">Częstość próbkowania</string>
     <string name="fall_detect_title">Ustawienia wykrywania upadków</string>
     <string name="fall_detect_active_title">Włącz funkcję wykrywania upadków</string>
@@ -251,11 +260,11 @@
     <string name="ParsePreferenceWarning">Problem z ustawieniami - coś nie będzie działać - wróć do ustawień i popraw je!</string>
     <string name="ErrorWritingLogFileWarning">Błąd zapisu pliku dziennika</string>
     <string name="RestartingServerMsg">Zmieniono uprawnienia - restartuję serwer</string>
-    <string name="ErrorReleasingWakelockMsg">Problem ze zwolnieniem Wakelock\'a</string>
+    <string name="ErrorReleasingWakelockMsg">Problem ze uwolnieniem Wakelock\'a</string>
     <string name="SMSAlarmAlreadySentMsg">Alarm SMS już wysłany - nie wysyłam ponownie</string>
     <string name="SMSAlarmDisabledNotSendingMsg">Alarmy SMS wyłączone - nie wysyłam alarmu SMS</string>
     <string name="PleaseForceStopOSDorRebootMsg">Błąd - OpenSeizureDetector nie uruchomił się poprawnie - wymuś zatrzymanie OSD lub uruchom ponownie telefon.</string>
-    <string name="SMSPermissionsDeniedMsg">Błąd - odmówiono uprawnień do wysyłania wiadomości SMS lub lokalizacji - nie wysyłam wiadomości SMS</string>
+    <string name="SMSPermissionsDeniedMsg">Błąd - odmówiono uprawnień do wysyłania SMS-ów lub lokalizacji - nie wysyłam SMS-a</string>
     <string name="DatasourceTitle">\"Źródło danych\"</string>
     <string name="DefaultingToPhoneMsg">\" nie rozpoznano - domyślny wybór -> Telefon\"</string>
     <string name="SMSAlarmCancelledMsg">Anulowano alarm SMS</string>
@@ -287,8 +296,8 @@
     <string name="logged_in_with_token">ZALOGOWANY</string>
     <string name="local_database">Menadżer udostępniania danych</string>
     <string name="remote_database">Udostępnione dane</string>
-    <string name="num_local_events">Liczba zdarzeń zapisana w telefonie: </string>
-    <string name="num_local_datapoints">"Liczba punktów pomiarowych zapisanych w telefonie: "</string>
+    <string name="num_local_events">Liczba zdarzeń zapisanych w telefonie: </string>
+    <string name="num_local_datapoints">"Liczba p. pomiarowych zapisanych w telefonie: "</string>
     <string name="view_remote_db_btn">Podgląd zdalnej b. danych</string>
     <string name="report_seizure">Zgłoś napad</string>
     <string name="date">"Data: "</string>
@@ -298,9 +307,9 @@
     <string name="select_time">Wybierz godzinę</string>
     <string name="EventsInLocalDb">Zdarzenia zapisane w telefonie</string>
     <string name="createdNewEvent">Wygenerowane ręcznie nowe zdarzenie alarmu</string>
-    <string name="DatapointNotFound">Nie znaleziono punktu pomiarowego - nie podejmuję dalszych czynności</string>
+    <string name="DatapointNotFound">Nie znaleziono p. pomiarowego - nie podejmuję dalszych czynności</string>
     <string name="logging_settings_title">Ustawienia zapisu danych</string>
-    <string name="logging_settings_summary">Ustawienia zapisu danych na telefonie i uploadowania do centralnej bazy systemu udost. danych</string>
+    <string name="logging_settings_summary">Ustawienia udostępniania danych oraz ich zapisu w telefonie</string>
     <string name="eventDurationSummary">Czas zapisu danych (w sekundach) przed i po zdarzeniu napadu</string>
 	<string name="eventDurationTitle">Czas trwania zdarzenia (s)</string>
 	<string name="dataRetentionPeriodTitle">Czas przechowywania danych (dni)</string>
@@ -326,7 +335,7 @@
     <string name="not_logging_data">Nie zapisuję danych</string>
     <string name="not_sharing_logged_data">Nie udost. zapisanych danych</string>
     <string name="not_logged_in">Niezalogowany</string>
-    <string name="data_sharing_setup_ok">zalogowany</string>
+    <string name="data_sharing_setup_ok">Zalogowany</string>
     <string name="please_confirm_seizure_events">Sprawdź udost. zdarzenia napadów</string>
     <string name="data_sharing_log_in">Zaloguj się do systemu udost. danych</string>
     <string name="not_updating_mobile">Nie aktualizuję korzystając z internetu mobilnego</string>
@@ -341,15 +350,15 @@
     <string name="local_data">Lokalne dane</string>
     <string name="shared_data">Udost. dane</string>
     <string name="prune_database">Czyść bazę danych</string>
-    <string name="check_seizures_message">Zdecyduj czy zdarzenia oznaczone na różowo były prawdziwymi napadami drgawkowymi czy fałszywymi alarmami</string>
+    <string name="check_seizures_message">Czy zdarzenia oznaczone na różowo były prawdziwymi napadami czy fałszywymi alarmami?</string>
     <string name="error_server_not_running">BŁĄD: Serwer OpenSeizureDetector nie działa - zrestartuj serwer</string>
-    <string name="system_logs">Logi systemu</string>
+    <string name="system_logs">Logi syst.</string>
     <string name="logged_in_as_user_id">Zalogowany jako: </string>
     <string name="datasharing_notification_text">Wybierz aby uzyskać więcej informacji</string>
     <string name="datasharing_notification_title">Problem z udostępnianiem danych</string>
     <string name="datasharing_about_title">Udostępnianie danych</string>
     <string name="datasharing_about_text">
-        Udostępnianie danych nie działa poprawnie.   \n
+        Udostępnianie danych nie działa poprawnie.   \n\n
         Może być to spowodowane tym, że nie zarejestrowałeś konta i nie zalogowałeś się do systemu udostępniania danych,\n
         lub przyczyną może być problem z siecią. \n\n
         <b>Zarejestruj się i zaloguj w systemie udostepniania danych korzystając z menu aplikacji lub przycisku poniżej.</b>\n\n
@@ -366,8 +375,8 @@
 	
 	
     <string name="sms_permissions_rationale_1">
-        OpenSeizureDetector wymaga uprawnień do <b>odczytywania stanu telefonu i wysyłania wiadomości SMS</b> aby wysyłać alerty SMS po wykryciu zdarzenia napadu.\n\n
-        Po nadaniu odpowiednich uprawnień apka <b>wyśle wiadomość SMS na numery telefonów wprowadzone na stronie ustawień alarmu gdy wykryje napad</b>.\n\n
+        OpenSeizureDetector wymaga uprawnień do <b>odczytywania stanu telefonu i wysyłania SMS-a</b> aby wysyłać alerty SMS po wykryciu zdarzenia napadu.\n\n
+        Po nadaniu odpowiednich uprawnień aplikacja <b>wyśle SMS-a na numery telefonów wprowadzone na stronie ustawień alarmu gdy wykryje napad</b>.\n\n
         Naciśnij \'OK\' i nadaj uprawnienia na kolejno pojawiających się ekranach...\n\n
         Możesz to zrobić później przechodząc do ustawień telefonu i wybierając <b>Aplikacje -> OpenSeizureDetector -> Uprawnienia</b>
     </string>
@@ -376,7 +385,7 @@
         aby <b>alarmy SMS</b>
         zawierały informację o Twojej lokalizacji
         <b>gdy aplikacja jest zamknięta lub nie jest używana</b>.\n\n
-        Oznacza to, że będzie w stanie wysyłać <b>wiadomości SMS</b> zawierające
+        Oznacza to, że aplikacja będzie w stanie wysyłać <b>SMS-y</b> zawierające
         <b>Twoją lokalizację</b>
         na <b>numery telefonów wprowadzone</b> w ustawieniach alarmu
         w przypadku wykrycia napadu podczas pracy <b>w tle</b>,
@@ -395,7 +404,7 @@
         aby <b>alarmy SMS</b>
         zawierały informację o Twojej lokalizacji
         <b>gdy aplikacja jest zamknięta lub nie jest używana</b>.\n\n
-        Oznacza to, że aplikacja będzie w stanie wysyłać <b>wiadomości SMS</b> zawierające
+        Oznacza to, że aplikacja będzie w stanie wysyłać <b>SMS-y</b> zawierające
         <b>Twoją lokalizację</b>
         na <b>numery telefonów wprowadzone</b> w ustawieniach alarmu
         w przypadku wykrycia napadu podczas pracy <b>w tle</b>,
@@ -446,5 +455,4 @@
     <string name="data_sharing">Udostępnianie danych</string>
     <string name="prevent_bat_opt_summary">Nie wyświetlaj okna dialogowego optymalizacji baterii podczas uruchamiania (niektóre telefony pracujące na starszych wersjach Androida zgłaszają że OpenSeizureDetector jest zoptymalizowany nawet jeśli tak nie jest więc okno dialogowe jest uciążliwe)</string>
     <string name="prevent_bat_opt_title">Wyłącz monit optym. baterii</string>
-    <string name="o2_sat">SpO2</string>
 </resources>

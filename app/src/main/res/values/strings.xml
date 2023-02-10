@@ -473,4 +473,5 @@
     <string name="o2_sat">O2 Sat</string>
     <string name="fall">Fall</string>
     <string name="nda_logging">NDA Logging</string>
+    <string name="data_sharing_dialog_title">OpenSeizureDetector Data Sharing</string>
 </resources>

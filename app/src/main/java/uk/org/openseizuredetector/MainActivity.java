@@ -1108,7 +1108,7 @@ public class MainActivity extends AppCompatActivity {
         View aboutView = getLayoutInflater().inflate(R.layout.data_sharing_dialog_layout, null, false);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setIcon(R.drawable.datasharing_fault_24x24);
-        builder.setTitle("OpenSeizureDetector Data Sharing");
+        builder.setTitle(R.string.data_sharing_dialog_title);
         builder.setNegativeButton(getString(R.string.cancel), null);
         builder.setPositiveButton(getString(R.string.login), new DialogInterface.OnClickListener() {
             @Override
