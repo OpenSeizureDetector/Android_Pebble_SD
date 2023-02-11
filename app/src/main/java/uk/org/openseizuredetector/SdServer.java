@@ -679,7 +679,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
-                mUtil.showToast("mSMSAlarm is false - not sending");
+                mUtil.showToast(getString(R.string.msmsalarm_false_msg));
                 Log.v(TAG, "mSMSAlarm is false - not sending");
             }
 
@@ -709,7 +709,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     sendSMSAlarm();
                     mSMSTime = tnow;
                 } else {
-                    mUtil.showToast("SMS Alarm already sent - not re-sending");
+                    mUtil.showToast(getString(R.string.sms_alarm_already_sent_msg));
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
@@ -743,7 +743,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     sendSMSAlarm();
                     mSMSTime = tnow;
                 } else {
-                    mUtil.showToast("SMS Alarm already sent - not re-sending");
+                    mUtil.showToast(getString(R.string.sms_alarm_already_sent_msg));
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
@@ -1313,7 +1313,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 }
             } else {
                 Log.e(TAG,"SmsTimer.onFinish - mLocationFinder is null - this should not happen!");
-                mUtil.showToast("SmsTimer.onFinish - mLocationFinder is null - this should not happen! - Please report this issue!");
+                mUtil.showToast(getString(R.string.mLocationFinder_is_null_msg));
             }
             Log.i(TAG, "SmsTimer.onFinish() - Sending to " + mSMSNumbers.length + " Numbers");
             mUtil.writeToSysLogFile("SdServer.SmsTimer.onFinish()");

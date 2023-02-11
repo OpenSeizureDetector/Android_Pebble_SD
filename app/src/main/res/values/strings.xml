@@ -474,4 +474,9 @@
     <string name="fall">Fall</string>
     <string name="nda_logging">NDA Logging</string>
     <string name="data_sharing_dialog_title">OpenSeizureDetector Data Sharing</string>
+    <string name="msmsalarm_false_msg">mSMSAlarm is false - not sending</string>
+    <string name="sms_alarm_already_sent_msg">SMS Alarm already sent - not re-sending</string>
+    <string name="mLocationFinder_is_null_msg">SmsTimer.onFinish - mLocationFinder is null - this should not happen! - Please report this issue!</string>
+    <string name="error_creating_remote_event_msg">Error Creating Remote Event</string>
+    <string name="error_uploading_event_msg">Error uploading event - date is null</string>
 </resources>
