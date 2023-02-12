@@ -1078,7 +1078,7 @@ public class MainActivity extends AppCompatActivity {
                 dialog.cancel();
             }
         });
-        builder.setPositiveButton("Privacy Policy", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(R.string.privacy_policy_button_title, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 dialog.cancel();
                 String url = OsdUtil.PRIVACY_POLICY_URL;
@@ -1088,7 +1088,7 @@ public class MainActivity extends AppCompatActivity {
                 dialog.cancel();
             }
         });
-        builder.setNegativeButton("Data Sharing", new DialogInterface.OnClickListener() {
+        builder.setNegativeButton(R.string.data_sharing_button_title, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 dialog.cancel();
                 String url = OsdUtil.DATA_SHARING_URL;

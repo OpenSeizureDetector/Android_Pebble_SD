@@ -479,4 +479,10 @@
     <string name="mLocationFinder_is_null_msg">SmsTimer.onFinish - mLocationFinder is null - this should not happen! - Please report this issue!</string>
     <string name="error_creating_remote_event_msg">Error Creating Remote Event</string>
     <string name="error_uploading_event_msg">Error uploading event - date is null</string>
+    <string name="prune_database_title">Prune Database</string>
+    <string name="prune_database_dialog_msg">This will remove all data from the database that is more than %d days old.\nThis can NOT be undone.\nAre you sure?</string>
+    <string name="yes_button_title">YES</string>
+    <string name="no_button_title">NO</string>
+    <string name="privacy_policy_button_title">Privacy Policy</string>
+    <string name="data_sharing_button_title">Data Sharing</string>
 </resources>

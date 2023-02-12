@@ -105,12 +105,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         Button authBtn =
                 (Button) findViewById(R.id.auth_button);
         authBtn.setOnClickListener(onAuth);
-        //Button pruneBtn =
-        //        (Button) findViewById(R.id.pruneDatabaseBtn);
-        //pruneBtn.setOnClickListener(onPruneBtn);
-        //Button reportSeizureBtn =
-        //        (Button) findViewById(R.id.reportSeizureBtn);
-        //reportSeizureBtn.setOnClickListener(onReportSeizureBtn);
+
         Button remoteDbBtn =
                 (Button) findViewById(R.id.refresh_button);
         remoteDbBtn.setOnClickListener(onRefreshBtn);
@@ -555,17 +550,16 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     Log.v(TAG, "onPruneBtn");
                     // Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
                     AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
-                    builder.setTitle("Prune Database");
-                    builder.setMessage(String.format("This will remove all data from the database that is more than %d days old."
-                            + "\nThis can NOT be undone.\nAre you sure?", mLm.mDataRetentionPeriod));
-                    builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                    builder.setTitle(R.string.prune_database_title);
+                    builder.setMessage(String.format(getString(R.string.prune_database_dialog_msg) , mLm.mDataRetentionPeriod));
+                    builder.setPositiveButton(R.string.yes_button_title, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             mLm.pruneLocalDb();
                             dialog.dismiss();
                         }
                     });
-                    builder.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                    builder.setNegativeButton(R.string.no_button_title, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             dialog.dismiss();
