@@ -264,8 +264,11 @@
     <string name="sample_freq_title">Select Sample Frequency</string>
     <string name="fall_detect_title">Fall Detector Settings</string>
     <string name="fall_detect_active_title">Enable Fall Detection Function</string>
+    <string name="fall_detect_active_summary">Enable Fall Detection Function</string>
     <string name="fall_thresh_min_title">Fall Detection Lower Threshold (milli-g)</string>
     <string name="fall_thresh_max_title">Fall Detection Upper Threshold (milli-g)</string>
+    <string name="fall_thresh_min_summary">Fall Detection Lower Threshold (milli-g)</string>
+    <string name="fall_thresh_max_summary">Fall Detection Upper Threshold (milli-g)</string>
     <string name="fall_window_title">Fall Detection Window (milli-seconds)</string>
     <string name="watch_comms_title">Watch Communications Settings</string>
     <string name="debug_mode_summary">Set Debug mode on or off.</string>
