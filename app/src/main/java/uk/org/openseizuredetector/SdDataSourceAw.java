@@ -24,6 +24,7 @@
 package uk.org.openseizuredetector;
 
 import android.app.Activity;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -32,6 +33,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.SpannableString;
+import android.text.format.Time;
 import android.text.util.Linkify;
 import android.util.Log;
 
@@ -39,15 +41,22 @@ import androidx.appcompat.app.AlertDialog;
 
 
 /**
- * A Passive data source that expects a device to send it data periodically by sending a POST request.
- * The POST network request is handled in the SDWebServer class, which calls the 'updateFrom JSON()'
- * function to send the data to this datasource.
- * SdWebServer expects POST requests to /data and /settings URLs to send data or watch settings.
+ * SdDataSource AW
+ * A data source that uses an Android Wear Device.   This data source is simple, with the
+ * communication with the Android Wear device taking place via a separate companion app.
+ * This data source and the companion app communicate via INTENTS.
+ *
+ * Bram Regtien, 2023
+ *
  */
 public class SdDataSourceAw extends SdDataSource {
     private String TAG = "SdDataSourceAw";
     private final String mAppPackageName = "uk.org.openseizuredetector.aw.mobile";
     //private final String mAppPackageName = "uk.org.openseizuredetector";
+    private int mNrawdata = 0;
+    private static int MAX_RAW_DATA = 125;
+    private int nRawData = 0;
+    private double[] rawData = new double[MAX_RAW_DATA];
 
     public SdDataSourceAw(Context context, Handler handler,
                           SdDataReceiver sdDataReceiver) {
@@ -60,13 +69,14 @@ public class SdDataSourceAw extends SdDataSource {
 
 
     /**
-     * Start the datasource updating - initialises from sharedpreferences first to
-     * make sure any changes to preferences are taken into account.
+     * Start the datasource updating
      */
     public void start() {
         Log.i(TAG, "start()");
         mUtil.writeToSysLogFile("SdDataSourceAw.start()");
         super.start();
+        mNrawdata = 0;
+
 
         // Now start the AndroidWear companion app
         Intent i = new Intent(Intent.ACTION_MAIN);
@@ -78,6 +88,8 @@ public class SdDataSourceAw extends SdDataSource {
         } else {
             i.addCategory(Intent.CATEGORY_LAUNCHER);
             mContext.startActivity(i);
+            // FIXME:  The android wear companion app should now start to send us data via intents.
+            // FIXME: Register the onDataReceived() method to receive intents from the companion app.
         }
     }
 
@@ -88,9 +100,11 @@ public class SdDataSourceAw extends SdDataSource {
         Log.i(TAG, "stop()");
         mUtil.writeToSysLogFile("SdDataSourceAw.stop()");
         super.stop();
+        // FIXME - send an intent to tell the Android Wear companion app to shutdown.
     }
 
     private void installAwApp() {
+        // FIXME - I don't think this works!
         // from https://stackoverflow.com/questions/11753000/how-to-open-the-google-play-store-directly-from-my-android-application
         // First tries to open Play Store, then uses URL if play store is not installed.
         try {
@@ -104,7 +118,57 @@ public class SdDataSourceAw extends SdDataSource {
         }
     }
 
-    
+    /**
+     * onDataReceived(Intent i)
+     * FIXME - this does not do anything!
+     * This method should be registered as a receiver for intents in the onStart() method and de-registered
+     * in the onStop() method.
+     * @param i - received intent.
+     */
+    public void onDataReceived(Intent intent) {
+        Log.v(TAG, "onDataReceived");
+
+        // FIXME - Check the type of data received.
+
+        // If data is heart rate {
+        final int heartRate = -1; // FIXME - read the heart rate from the intent.
+        mSdData.mHR = (double) heartRate;
+        Log.d(TAG, String.format("Received heart rate: %d", heartRate));
+        // }
+
+        // else if data is acceleration {
+        byte[] rawDataBytes = { 0, 1 };  // FIXME - read the accelerometer data from the intent.
+        Log.v(TAG, "CHAR_OSD_ACC_DATA: numSamples = " + rawDataBytes.length);
+        for (int i = 0; i < rawDataBytes.length;i++) {
+            if (mNrawdata < MAX_RAW_DATA) {
+                rawData[mNrawdata] = 1000 * rawDataBytes[i] / 64;   // Scale to mg
+                mNrawdata++;
+            } else {
+                Log.i(TAG, "RawData Buffer Full - processing data");
+                // Re-start collecting raw data.
+                mSdData.watchAppRunning = true;
+                for (i = 0; i < rawData.length; i++) {
+                    mSdData.rawData[i] = rawData[i];
+                    //Log.v(TAG,"onDataReceived() i="+i+", "+rawData[i]);
+                }
+                mSdData.mNsamp = rawData.length;
+                mWatchAppRunningCheck = true;
+                mDataStatusTime = new Time(Time.getCurrentTimezone());
+                doAnalysis();
+                mNrawdata = 0;
+            }
+        }
+        // }
+        // else if (data is battery level) {
+        byte batteryPc = -1;   // FIXME - read battery level from intent.
+        mSdData.batteryPc = batteryPc;
+        Log.v(TAG,"Received Battery Data" + String.format("%d", batteryPc));
+        mSdData.haveSettings = true;
+        // }
+        // else {
+            Log.v(TAG,"Unrecognised intent data type");
+        //}
+    }
 
 }
 
