@@ -28,6 +28,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public class AuthenticateActivity extends AppCompatActivity {
     private String TAG = "AuthenticateActivity";
@@ -68,7 +69,7 @@ public class AuthenticateActivity extends AppCompatActivity {
         // Components required only for osdapi backend
         if (LogManager.USE_FIREBASE_BACKEND) { }
         else {
-            mConnection = new SdServiceConnection(getApplicationContext());
+            mConnection = new SdServiceConnection(this);
 
             Button registerBtn = (Button) findViewById(R.id.RegisterBtn);
             registerBtn.setOnClickListener(onRegister);
@@ -115,7 +116,8 @@ public class AuthenticateActivity extends AppCompatActivity {
         if (LogManager.USE_FIREBASE_BACKEND) {
             updateUi();
         } else {
-            mUtil.bindToServer(getApplicationContext(), mConnection);
+            if (Objects.nonNull(mConnection))
+                if (!mConnection.mBound) mUtil.bindToServer(this, mConnection);
             waitForConnection();
         }
     }

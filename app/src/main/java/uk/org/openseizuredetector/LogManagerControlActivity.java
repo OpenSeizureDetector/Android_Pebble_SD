@@ -46,6 +46,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class LogManagerControlActivity extends AppCompatActivity {
     private String TAG = "LogManagerControlActivity";
@@ -153,7 +154,8 @@ public class LogManagerControlActivity extends AppCompatActivity {
     protected void onStart() {
         Log.v(TAG, "onStart()");
         super.onStart();
-        mUtil.bindToServer(getApplicationContext(), mConnection);
+        if (Objects.nonNull(mConnection))
+            if (!mConnection.mBound) mUtil.bindToServer(this, mConnection);
         waitForConnection();
         startUiTimer(mUiTimerPeriodFast);
     }

@@ -68,6 +68,7 @@ import com.rohitss.uceh.UCEHandler;
 import java.lang.reflect.Field;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -116,6 +117,27 @@ public class MainActivity extends AppCompatActivity {
 
         // Initialise the User Interface
         setContentView(R.layout.main);
+        //getWindow().getDecorView().setBackgroundColor(okColour);
+
+        /* Force display of overflow menu - from stackoverflow
+         * "how to force use of..."
+         * https://itecnote.com/tecnote/android-how-to-force-use-of-overflow-menu-on-devices-with-menu-button/
+         */
+        try {
+            Log.v(TAG, "trying menubar fiddle...");
+            ViewConfiguration config = ViewConfiguration.get(this);
+            Field menuKeyField =
+                    ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+            if (menuKeyField != null) {
+                Log.v(TAG, "menuKeyField is not null - configuring....");
+                menuKeyField.setAccessible(true);
+                menuKeyField.setBoolean(config, false);
+            } else {
+                Log.v(TAG, "menuKeyField is null - doing nothing...");
+            }
+        } catch (Exception e) {
+            Log.v(TAG, "menubar fiddle exception: " + e.toString());
+        }
 
         // Force the screen to stay on when the app is running
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -197,7 +219,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onNewIntent(Intent intent) {
-        //execute mandatory super.onNewIntent
         super.onNewIntent(intent);
         String actionStr;
         Log.i(TAG, "onNewIntent");
@@ -232,53 +253,7 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "onCreateOptionsMenu()");
         getMenuInflater().inflate(R.menu.main_activity_actions, menu);
         MenuCompat.setGroupDividerEnabled(menu, true);
-
-
-
-        /*
-        *   @Override
-            public void onViewCreated(View view, Bundle savedInstanceState) {
-                super.onViewCreated(view, savedInstanceState);
-                setHasOptionsMenu(true);
-            }
-            *
-            * // Initialise the User Interface
-        setContentView(R.layout.main);
-        //getWindow().getDecorView().setBackgroundColor(okColour);
-        // Setting in Aroon version of menuKeyFieldFiddle:
-        //first create config as ViewConfiguration and get
-        // ViewConfiguration of this.
-        // than create Field menuKeyField with value null.
-        // if Version.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH
-        // run fiddle else check if config.hasPermanentMenuKey() returns inverted false
-        /* Force display of overflow menu - from stackoverflow
-         * "how to force use of..."
-         *--/
-        try {
-            Log.v(TAG, "trying menubar fiddle...");
-            ViewConfiguration config = ViewConfiguration.get(this);
-            //TODO: After API>33 remove next lines and strip until
-            Field menuKeyField = null;
-            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-                menuKeyField =
-                        ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
-            } // TODO: here before ! config. start new if( before.
-            if ((menuKeyField != null) ) {
-                Log.v(TAG, "menuKeyField is not null - configuring....");
-                menuKeyField.setAccessible(true);
-                menuKeyField.setBoolean(config, false);
-            } else if (config.hasPermanentMenuKey()) {
-                Log.v(TAG, "menuKeyField is null or config.hasPermanentMenuKey() is true");
-                menuKeyField = getV;
-                        .setAccessible(false);
-                menuKeyField.setBoolean(config, true);
-            }
-        } catch (Exception e) {
-            Log.v(TAG, "menubar fiddle exception: " + e.toString());
-        }
-        */
-
-
+        //https://itecnote.com/tecnote/android-how-to-force-use-of-overflow-menu-on-devices-with-menu-button/
         //mOptionsMenu = menu;
         //if (mConnection.mSdServer.mSdDataSourceName != "Pebble") {
         //    Log.v(TAG,"Disabling Pebble Specific Menu Items");
@@ -320,7 +295,8 @@ public class MainActivity extends AppCompatActivity {
                     startServer();
                     // and bind to it so we can see its data
                     Log.i(TAG, "Binding to Server");
-                    mUtil.bindToServer(getApplicationContext(), mConnection);
+                    if (Objects.nonNull(mConnection))
+                        if (!mConnection.mBound) mUtil.bindToServer(this, mConnection);
                 }
                 return true;
             /* fault beep test does not work with fault timer, so disable test option.
@@ -466,7 +442,8 @@ public class MainActivity extends AppCompatActivity {
 
         if (mUtil.isServerRunning()) {
             mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
-            mUtil.bindToServer(getApplicationContext(), mConnection);
+            if (Objects.nonNull(mConnection))
+                if (!mConnection.mBound) mUtil.bindToServer(this, mConnection);
         } else {
             Log.i(TAG, "onStart() - Server Not Running");
             mUtil.writeToSysLogFile("MainActivity.onStart - Server Not Running");

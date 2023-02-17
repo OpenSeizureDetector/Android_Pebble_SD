@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 public class EditEventActivity extends AppCompatActivity {
     private String TAG = "EditEventActivity";
@@ -83,7 +84,8 @@ public class EditEventActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         Log.i(TAG, "onStart()");
-        mUtil.bindToServer(getApplicationContext(), mConnection);
+        if (Objects.nonNull(mConnection))
+            if (!mConnection.mBound) mUtil.bindToServer(this, mConnection);
         waitForConnection();
 
         updateUi();
