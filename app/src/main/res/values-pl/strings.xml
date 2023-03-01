@@ -123,7 +123,7 @@
     <string name="test_alarm_beep">Test alarmu dźwiękowego</string>
     <string name="test_warning_beep">Test dźwięku ostrzeżeń</string>
     <string name="test_sms_alarm_notification">Wyślij próbny alarm SMS</string>
-    <string name="data_log_manager">Menadżer udost. danych</string>
+    <string name="data_log_manager">Menedżer udost. danych</string>
     <string name="view_log_entries">Podgląd wpisów</string>
     <string name="export_data">Eksport danych</string>
     <string name="settings">Ustawienia</string>
@@ -172,7 +172,7 @@
     <string name="log_data_title">Zapisz dane</string>
 	<string name="log_data_remote_summary">Zapisuje dane w centralnej bazie systemu udostępniania danych</string>
     <string name="log_data_remote_title">Udostępniaj dane</string>
-	<string name="log_data_remote_mobile_summary">Używa internetu mobilnego w celu udo-\nstępniania danych</string>
+	<string name="log_data_remote_mobile_summary">Używa internetu mobilnego w celu udostę-\npniania danych</string>
     <string name="log_data_remote_mobile_title">Użyj internetu mobilnego</string>
 	<string name="remote_uname_title">Nazwa użytkownika</string>
     <string name="remote_uname_summary">Nazwa użytkownia w systemie udostępniania danych</string>
@@ -204,7 +204,7 @@
     <string name="fault_timer_period_summary">Czas przez jaki alarmy o awariach są wyciszone nim zostaną włączone</string>
     <string name="use_mp3_alarm_summary">Wydaje dźwięki za pomocą plików MP3 zamiast wbudowanego generatora tonów</string>
     <string name="use_mp3_alarm_title">Używaj alarmów MP3</string>
-    <string name="enable_sms_alarm_summary">Wysyła SMS wystąpienia alarmu.\nUWAGA: SMS zawiera lokalizację użytko-\nwnika. Wyłącz tę opcję jeśli udostę-\npnianie lokalizacji jest niepożądane.</string>
+    <string name="enable_sms_alarm_summary">Wysyła SMS wystąpienia alarmu.\nUWAGA: SMS zawiera lokalizację użytkowni-\nka. Wyłącz tę opcję jeśli udostęnianie lokalizacji jest niepożądane.</string>
     <string name="enable_sms_alarm_title">Włącz powiadomienia SMS o alarmach</string>
     <string name="sms_numbers_summary">Numery telefonów (oddzielone przecinkiem) na które będą wysyłane SMS-y</string>
     <string name="sms_numbers_title">Numery telefonów</string>
@@ -302,7 +302,7 @@
     <string name="title_activity_authenticate">Zaloguj do systemu udost. danych</string>
     <string name="logout">Wyloguj</string>
     <string name="logged_in_with_token">ZALOGOWANY</string>
-    <string name="local_database">Menadżer udostępniania danych</string>
+    <string name="local_database">Menedżer udostępniania danych</string>
     <string name="remote_database">Udostępnione dane</string>
     <string name="num_local_events">Liczba zdarzeń zapisanych w telefonie: </string>
     <string name="num_local_datapoints">"Liczba p. pom. zapisanych w telefonie: "</string>
@@ -321,7 +321,7 @@
     <string name="eventDurationSummary">Czas zapisu danych (w sekundach) przed\ni po zdarzeniu napadu</string>
 	<string name="eventDurationTitle">Czas trwania zdarzenia (s)</string>
 	<string name="dataRetentionPeriodTitle">Czas przechowywania danych (dni)</string>
-    <string name="dataRetentionPeriodSummary">Czas (w dniach) przez który dane będą prze-\nchowywane i chronione przed usunięciem funkcją \'Automatycznie czyść bazę danych\'</string>
+    <string name="dataRetentionPeriodSummary">Czas (w dniach) przez który dane będą przecho-\nwywane i chronione przed usunięciem funkcją \'Automatycznie czyść bazę danych\'</string>
     <string name="AutoPruneDbTitle">Automatycznie czyść bazę danych</string>
     <string name="AutoPruneDbSummary">Okresowo automatycznie czyść (skracaj) bazę danych aby zapobiec nadmiernemu wykorzystaniu pamięci</string>
     <string name="remoteLogPeriodSummary">Czas (w sekundach) między próbami przesłania danych na zdalny serwer. Każda próba powoduje przesłanie tylko jednego zdarzenia a nie wszystkich dostępnych danych.</string>
@@ -405,9 +405,9 @@
     <string name="privacy_policy">Polityka prywatności</string>
     <string name="mark_unverified_events_as_unknown">Oznacz niezweryfikowane zdarzenia jako nieokreślone</string>
     <string name="mark_unverified_events_unknown_dialog_title">Oznacz wszystkie niezwe-\nryfikowane zdarzenia jako nieokreślone</string>
-    <string name="mark_unverified_events_unknown_dialog_message">Przed oznaczeniem wszystkich nie-\nzweryfikowanych zdarzeń jako \'nieokreślone\' potwierdź że zwe-\nryfikowano wszystkie prawdziwe napady.\n\nCzy nadal oznaczać niezweryfiko-\nwane zdarzenia jako nieokreślone?</string>
+    <string name="mark_unverified_events_unknown_dialog_message">Przed oznaczeniem wszystkich nie-\nzweryfikowanych zdarzeń jako \'nieo-\nkreślone\' potwierdź że zweryfi-n\kowano wszystkie prawdziwe napady.\n\nCzy nadal oznaczać niezweryfiko-\nwane zdarzenia jako nieokreślone?</string>
     <string name="not_logged_in_dialog_title">Niezalogowany do systemu udostępniania danych</string>
-    <string name="not_logged_in_dialog_message">Aby móc zgłaszać napady, musisz być zalogowany do systemu udo-\nstępniania danych.</string>
+    <string name="not_logged_in_dialog_message">Aby móc zgłaszać napady, musisz być zalogowany do systemu udostę-\npniania danych.</string>
     <string name="include_warnings">Pokaż ostrzeżenia</string>
     <string name="OsdAlarmEnabledSummary">Włącz oryginalny deterministyczny algorytm OpenSeizureDetector w celu wykrywania alarmów. ***Wyłączenie tej opcji nie jest zalecane za wyjątkiem testów***</string>
     <string name="OsdAlarmEnabledTitle">Włącz oryginalny algorytm OSD</string>
@@ -415,7 +415,7 @@
     <string name="CnnAlarmEnabledSummary">Włącz algorytm sztucznej inteligencji (sieć neuronowa) do wykrywania alarmów.</string>
     <string name="AlgorithmSelectionTitle">Wybór algorytmu wykrywania napadów</string>
     <string name="mark_unverified_events_false_alarm_dialog_title">Oznacz wszystkie niezweryfikowane zdarzenia jako fałszywe alarmy</string>
-    <string name="mark_unverified_events_false_alarm_dialog_message">Przed oznaczeniem wszystkich nie-\nzweryfikowanych zdarzeń jako \'fałszywe alarmy\' potwierdź że zwe-\nryfikowano wszystkie prawdziwe napady.\n\nCzy nadal oznaczać niezweryfiko-\nwane zdarzenia jako fałszywy alarm?</string>
+    <string name="mark_unverified_events_false_alarm_dialog_message">Przed oznaczeniem wszystkich nie-\nzweryfikowanych zdarzeń jako \'fał-\nszywe alarmy\' potwierdź że zwery-\nfikowano wszystkie prawdziwe napady.\n\nCzy nadal oznaczać niezweryfikowa-\nne zdarzenia jako fałszywy alarm?</string>
     <string name="mark_unverified_events_as_false_alarm">Oznacz wszystkie niezweryfikowane zdarzenia jako fałszywe alarmy</string>
     <string name="LogNDASummary">Cały czas udostępniaj dane o \'NDA\'. Pozwoli to rozwijać OpenSeizureDetector w obszarze ograniczania liczby fałszywych alarmów.</string>
     <string name="LogNDATitle">Zapisuj Norm. Dzienne Aktywności (NDA)</string>
@@ -437,7 +437,7 @@
     <string name="notes_about_event">Informacje o zdarzeniu</string>
     <string name="SpO2">SpO2</string>
     <string name="data_sharing">Udostępnianie danych</string>
-    <string name="prevent_bat_opt_summary">Nie wyświetlaj okna dialogowego optymalizacji baterii podczas uruchamiania (niektóre telefony pracujące na starszych wersjach Androida zgłaszają że OpenSeizureDetector jest zoptymalizowany nawet jeśli tak nie jest więc okno dialogowe jest uciążliwe)</string>
+    <string name="prevent_bat_opt_summary">Nie wyświetlaj okna dialogowego optyma-\nlizacji baterii podczas uruchamiania (nie-\nktóre telefony pracujące na starszych wer-\nsjach Androida zgłaszają że OpenSeizu-\nreDetector jest zoptymalizowany nawet jeśli tak nie jest więc okno dialogowe jest uciążliwe)</string>
     <string name="prevent_bat_opt_title">Wyłącz monit optymalizacji baterii</string>
 	<string name="data_sharing_dialog_title">OpenSeizureDetector Udostępnianie danych</string>
     <string name="msmsalarm_false_msg">mSMSAlarm is false - not sending</string>

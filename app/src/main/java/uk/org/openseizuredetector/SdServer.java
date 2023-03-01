@@ -546,16 +546,22 @@ public class SdServer extends Service implements SdDataReceiver {
 
         ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
         List<ActivityManager.RunningTaskInfo> runningTaskInfo = manager.getRunningTasks(1);
-        ComponentName componentInfo = runningTaskInfo.get(0).topActivity;
 
-        if (componentInfo.getPackageName().equals("uk.org.openseizuredetector")) {
-            Log.i(TAG, "showMainActivity(): OpenSeizureDetector Activity is already shown on top - not doing anything");
-            mUtil.writeToSysLogFile("SdServer.showMainActivity - Activity is already shown on top, not doing anything");
+        if (runningTaskInfo.size() > 0) {
+            ComponentName componentInfo = runningTaskInfo.get(0).topActivity;
+
+            if (componentInfo.getPackageName().equals("uk.org.openseizuredetector")) {
+                Log.i(TAG, "showMainActivity(): OpenSeizureDetector Activity is already shown on top - not doing anything");
+                mUtil.writeToSysLogFile("SdServer.showMainActivity - Activity is already shown on top, not doing anything");
+            } else {
+                Log.i(TAG, "showMainActivity(): Showing Main Activity");
+                Intent i = new Intent(getApplicationContext(), MainActivity.class);
+                i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
+                this.startActivity(i);
+            }
         } else {
-            Log.i(TAG, "showMainActivity(): Showing Main Activity");
-            Intent i = new Intent(getApplicationContext(), MainActivity.class);
-            i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
-            this.startActivity(i);
+            mUtil.showToast("OpenSeizureDetector: showMainActvity Failed to Display Activity");
+            Log.e(TAG,"OpenSeizureDetector: showMainActvity Failed to Display Activity");
         }
     }
 
