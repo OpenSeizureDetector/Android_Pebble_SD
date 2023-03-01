@@ -90,6 +90,43 @@
             android:key="HRThreshMax"
             android:summary="@string/HRThreshMaxSummary"
             android:title="@string/HRThreshMaxTitle" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="HRAdaptiveAlarmActive"
+            android:summary="@string/HRAlarmEnabledSummary"
+            android:title="@string/HRAdaptiveAlarmEnabledTitle" />
+        <EditTextPreference
+            android:defaultValue="30"
+            android:key="HRAdaptiveAlarmWindowSecs"
+            android:summary="@string/HRAdaptiveAlarmWindowSummary"
+            android:title="@string/HRAdaptiveAlarmWindowTitle" />
+        <EditTextPreference
+            android:defaultValue="20"
+            android:key="HRAdaptiveAlarmThresh"
+            android:summary="@string/HRAdaptiveThreshSummary"
+            android:title="@string/HRAdaptiveThreshTitle" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="HRAverageAlarmActive"
+            android:summary="@string/HRAverageAlarmEnabledSummary"
+            android:title="@string/HRAverageAlarmEnabledTitle" />
+        <EditTextPreference
+            android:defaultValue="40"
+            android:key="HRAverageAlarmThreshMin"
+            android:summary="@string/HRAverageThreshMinSummary"
+            android:title="@string/HRAverageThreshMinTitle" />
+        <EditTextPreference
+            android:defaultValue="120"
+            android:key="HRAverageAlarmThreshMax"
+            android:summary="@string/HRAverageThreshMaxSummary"
+            android:title="@string/HRAverageThreshMaxTitle" />
+        <EditTextPreference
+            android:defaultValue="120"
+            android:key="HRAverageAlarmWindowSecs"
+            android:summary="@string/HRAverageAlarmWindowSummary"
+            android:title="@string/HRAverageAlarmWindowTitle" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/O2SatSettingsTitle">
