@@ -107,7 +107,7 @@
     <string name="AlarmFreqMaxSummary">Maximum Frequency of ROI (Hz) (Default = 8 Hz)</string>
     <string name="AlarmFreqMinTitle">AlarmFreqMin (Hz)</string>
     <string name="AlarmFreqMinSummary">Minimum Frequency of ROI (Hz) (Default = 3 Hz)</string>
-    <string name="HRAlarmEnabledTitle">Enable Heart Rate Alarm</string>
+    <string name="HRAlarmEnabledTitle">Enable Simple Heart Rate Alarm</string>
     <string name="HRAlarmEnabledSummary" />
     <string name="HRNullAlarmTitle">Treat a Null heart rate as an alarm condition</string>
     <string name="HRNullAlarmSummary" />
@@ -296,7 +296,7 @@
     <string name="AcceptAlarmBtnTxt">Accept Alarm</string>
     <string name="CancelAudibleButtonTxt">Cancel Audible (temporarily)</string>
     <string name="DataLoggingSettingsTitle">Data Logging Settings</string>
-    <string name="HeartRateAlarmSettingsTitle">Heart Rate Alarm Settings</string>
+    <string name="HeartRateAlarmSettingsTitle">Simple Heart Rate Alarm Settings</string>
     <string name="AlarmFunctionalitySettingsTitle">Alarm Functionality Settings</string>
     <string name="AudibleAlarmSettingsTitle">Audible Alarm Settings</string>
     <string name="SMSAlarmSettingsTitle">SMS Alarm Settings</string>
@@ -489,16 +489,18 @@
     <string name="privacy_policy_button_title">Privacy Policy</string>
     <string name="data_sharing_button_title">Data Sharing</string>
     <string name="HRAdaptiveAlarmEnabledTitle">Enable Adaptive Threshold Heart Rate Alarm</string>
-    <string name="HRAdaptiveAlarmWindowTitle">Moving Average Time Window (seconds)</string>
-    <string name="HRAdaptiveAlarmWindowSummary">Window must be a multiple of 5 seconds</string>
+    <string name="HRAdaptiveAlarmWindowTitle">Window Size for Adaptive Threshold Calculation</string>
+    <string name="HRAdaptiveAlarmWindowSummary">Moving Average Time Window (seconds) must be a multiple of 5 seconds</string>
     <string name="HRAdaptiveThreshTitle">Adaptive Threshold Offset (bpm)</string>
     <string name="HRAdaptiveThreshSummary">The alarm threshold offset from the average measured Heart Rate (bpm)</string>
-    <string name="HRAverageAlarmEnabledTitle">Enable Alarm based on rolling average heart rate</string>
+    <string name="HRAverageAlarmEnabledTitle">Enable Rolling Average Heart Rate Alarm</string>
     <string name="HRAverageAlarmEnabledSummary" />
     <string name="HRAverageThreshMinSummary">Lower Heart Rate Threshold for Average Heart Rate Alarm</string>
     <string name="HRAverageThreshMinTitle">Lower Threshold for Average Heart Rate Alarm</string>
     <string name="HRAverageThreshMaxSummary">Upper Heart Rate Threshold for Average Heart Rate Alarm</string>
     <string name="HRAverageThreshMaxTitle">Upper Threshold for Average Heart Rate Alarm</string>
-    <string name="HRAverageAlarmWindowTitle">Window size (in seconds) for Average Heart Rate Calculation</string>
+    <string name="HRAverageAlarmWindowTitle">Window size for Average Heart Rate Calculation</string>
     <string name="HRAverageAlarmWindowSummary">Window size (in seconds) for Average Heart Rate Calculation - must be a factor of 5 seconds.</string>
+    <string name="HeartRateAdaptiveAlarmSettingsTitle">Adaptive Heart Rate Alarm Settings</string>
+    <string name="HeartRateAverageAlarmSettingsTitle">Average Heart Rate Alarm Settings</string>
 </resources>

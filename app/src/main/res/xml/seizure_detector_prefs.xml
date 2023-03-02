@@ -1,7 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- The ListPreference data is defined in pebble_datasource_values.xml -->
-<PreferenceScreen
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<?xml version="1.0" encoding="utf-8"?><!-- The ListPreference data is defined in pebble_datasource_values.xml -->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="@string/AlgorithmSelectionTitle">
         <CheckBoxPreference
             android:defaultValue="true"
@@ -18,6 +16,16 @@
             android:key="HRAlarmActive"
             android:summary="@string/HRAlarmEnabledSummary"
             android:title="@string/HRAlarmEnabledTitle" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="HRAdaptiveAlarmActive"
+            android:summary="@string/HRAlarmEnabledSummary"
+            android:title="@string/HRAdaptiveAlarmEnabledTitle" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="HRAverageAlarmActive"
+            android:summary="@string/HRAverageAlarmEnabledSummary"
+            android:title="@string/HRAverageAlarmEnabledTitle" />
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="O2SatAlarmActive"
@@ -90,7 +98,8 @@
             android:key="HRThreshMax"
             android:summary="@string/HRThreshMaxSummary"
             android:title="@string/HRThreshMaxTitle" />
-
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/HeartRateAdaptiveAlarmSettingsTitle">
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="HRAdaptiveAlarmActive"
@@ -106,6 +115,8 @@
             android:key="HRAdaptiveAlarmThresh"
             android:summary="@string/HRAdaptiveThreshSummary"
             android:title="@string/HRAdaptiveThreshTitle" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/HeartRateAverageAlarmSettingsTitle">
 
         <CheckBoxPreference
             android:defaultValue="false"
@@ -169,7 +180,6 @@
             android:summary=""
             android:title="@string/fall_window_title" />
     </PreferenceCategory>
-
 
 
 </PreferenceScreen>

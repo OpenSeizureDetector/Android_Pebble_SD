@@ -92,6 +92,7 @@ public abstract class SdDataSource {
     private short mFallWindow;
     private int mMute;  // !=0 means muted by keypress on watch.
     private SdAlgNn mSdAlgNn;
+    private SdAlgHr mSdAlgHr;
 
     // Values for SD_MODE
     private int SIMPLE_SPEC_FMAX = 10;
@@ -133,11 +134,15 @@ public abstract class SdDataSource {
         mUtil.writeToSysLogFile("SdDataSource.start()");
         updatePrefs();
 
+        mSdAlgHr = new SdAlgHr(mContext);
+
         if (mSdData.mCnnAlarmActive) {
             mSdAlgNn = new SdAlgNn(mContext);
         } else {
             mSdData.mPseizure = 0;
         }
+
+
 
         // Start timer to check status of watch regularly.
         mDataStatusTime = new Time(Time.getCurrentTimezone());
