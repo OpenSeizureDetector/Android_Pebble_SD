@@ -25,13 +25,15 @@ public class SdAlgHr {
     private double mAverageHrAlarmThreshMin;
     private double mAverageHrAlarmThreshMax;
 
-    private ArrayList<Double> mHrHist;
+    private CircBuf mAdaptiveHrBuff;
+    private CircBuf mAverageHrBuff;
 
     public SdAlgHr(Context context) {
         Log.i(TAG, "SdAlgHr Constructor");
         mContext = context;
-        mHrHist = new ArrayList<Double>();
         updatePrefs();
+        mAdaptiveHrBuff = new CircBuf(mAdaptiveHrAlarmWindowDp, -1.0);
+        mAverageHrBuff = new CircBuf(mAverageHrAlarmWindowDp, -1.0);
     }
 
     public void close() {
@@ -93,15 +95,7 @@ public class SdAlgHr {
 
     }
 
-    private void addToHist(double hrVal) {
-        /**
-         * Add value hrVal to the heart rate history list, truncating the list if it is
-         * longer than the required length.
-         */
-        Log.d(TAG,"addToHist() - length before="+mHrHist.size());
-        mHrHist.add(hrVal);
-        Log.d(TAG,"addToHist() - length before="+mHrHist.size());
-    }
+
 
     private boolean checkSimpleHr(double hrVal) {
         /**
@@ -118,32 +112,41 @@ public class SdAlgHr {
     }
 
     private boolean checkAdaptiveHr(double hrVal) {
-        // FIXME Make this do something
-        return(false);
+        boolean retVal;
+        double hrThreshMin;
+        double hrThreshMax;
+        double avHr = mAdaptiveHrBuff.getAverageVal();
+        hrThreshMin = avHr - mAdaptiveHrAlarmThresh;
+        hrThreshMax = avHr + mAdaptiveHrAlarmThresh;
+
+        retVal = false;
+        if (hrVal < hrThreshMin) {
+            retVal = true;
+        }
+        if (hrVal > hrThreshMax) {
+            retVal = true;
+        }
+        Log.d(TAG, "checkAdaptiveHr() - hrVal="+hrVal+", avHr="+avHr+", thresholds=("+hrThreshMin+", "+hrThreshMax+"): Alarm="+retVal);
+
+        return(retVal);
     }
 
     private boolean checkAverageHr(double hrVal) {
-        // FIXME Make this do something
-        return(false);
-    }
+        boolean retVal;
+        double avHr = mAdaptiveHrBuff.getAverageVal();
 
-    public double getAverageHrVal() {
-        double hrSum = 0.;
-        int hrCount = 0;
-        double retVal;
-        for (int n=0; n<mHrHist.size(); n++) {
-            if (mHrHist.get(n) > -1) {
-                hrSum += mHrHist.get(n);
-                hrCount++;
-            }
+        retVal = false;
+        if (hrVal < mAverageHrAlarmThreshMin) {
+            retVal = true;
         }
-        if (hrCount>0) {
-            retVal = hrSum / hrCount;
-        } else {
-            retVal = -1;
+        if (hrVal > mAverageHrAlarmThreshMax) {
+            retVal = true;
         }
+        Log.d(TAG, "checkAverageHr() - hrVal="+hrVal+", avHr="+avHr+", thresholds=("+mAverageHrAlarmThreshMin+", "+mAverageHrAlarmThreshMin+"): Alarm="+retVal);
         return(retVal);
     }
+
+
 
     public ArrayList<Boolean> checkHr(double hrVal) {
         /**
@@ -153,7 +156,8 @@ public class SdAlgHr {
          * true=ALARM, false=OK.
          */
         Log.v(TAG, "checkHr("+hrVal+")");
-        addToHist(hrVal);
+        mAdaptiveHrBuff.add(hrVal);
+        mAverageHrBuff.add(hrVal);
         ArrayList<Boolean> retVal = new ArrayList<Boolean>();
         retVal.add(checkSimpleHr(hrVal));
         retVal.add(checkAdaptiveHr(hrVal));
