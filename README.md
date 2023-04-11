@@ -14,7 +14,7 @@ rhythmic movements associated with a seizure, but not normal day to day
 activities.
 
 If the acceleration within the given frequency band is more than a
-threshod value, it starts a timer.  If the acceleration remains above
+threshold value, it starts a timer.  If the acceleration remains above
 the threshold for a given period, it issues a warning beep.
 If it remains above the threshold for a longer specified period, the unit
 alarms (continuous tone rather than beep).
