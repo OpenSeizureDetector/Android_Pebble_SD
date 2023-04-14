@@ -52,11 +52,13 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
-import org.apache.http.conn.util.InetAddressUtils;
+//uncommented due to deprication
+//import org.apache.http.conn.util.InetAddressUtils;
 
 import java.io.File;
 import java.io.FileWriter;
+//instead of InetAddressUtils use
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.text.ParseException;
@@ -66,6 +68,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+//use java.Util.Objects as comparetool.
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -98,6 +102,8 @@ public class OsdUtil {
     private static Long mLastPruneMillis = new Long(0);   // Record of the last time we pruned the syslog db.
 
     private static int mNbound = 0;
+    //save startId of SdServer
+    private int wearReceiverStartId;
 
     public OsdUtil(Context context, Handler handler) {
         mContext = context;
@@ -154,17 +160,20 @@ public class OsdUtil {
                 nServers = nServers + 1;
             }
         }
-        if (nServers != 0) {
-            //Log.v(TAG, "isServerRunning() - " + nServers + " instances are running");
-            return true;
-        } else
-            return false;
+
+        //simplify statement:
+        return nServers != 0;
     }
 
     /**
      * Start the SdServer service
+     * without parameters always sends Uri://Start
      */
-    public void startServer() {
+    public void  startServer(){
+        startServer(Constants.GLOBAL_CONSTANTS.mStartUri);
+    }
+    //overload startServer without parameters
+    public void startServer(Uri setData ) {
         // Start the server
         Log.d(TAG, "OsdUtil.startServer()");
         writeToSysLogFile("startServer() - starting server");
@@ -273,12 +282,13 @@ public class OsdUtil {
                     //Log.v(TAG,"ip1--:" + inetAddress);
                     //Log.v(TAG,"ip2--:" + inetAddress.getHostAddress());
 
+                    //updated from https://stackoverflow.com/questions/32141785/android-api-23-inetaddressutils-replacement
                     // for getting IPV4 format
                     if (!inetAddress.isLoopbackAddress()
-                            && InetAddressUtils.isIPv4Address(
-                            inetAddress.getHostAddress())) {
+                            && inetAddress instanceof Inet4Address
+                    ) {
 
-                        String ip = inetAddress.getHostAddress().toString();
+                        String ip = inetAddress.getHostAddress();
                         //Log.v(TAG,"ip---::" + ip);
                         return ip;
                     }
@@ -313,18 +323,15 @@ public class OsdUtil {
         }
     }
 
+    // simplifying text
     /**
      * Display a Toast message on screen.
      *
      * @param msg - message to display.
      */
     public void showToast(final String msg) {
-        runOnUiThread(new Runnable() {
-            public void run() {
-                Toast.makeText(mContext, msg,
-                        Toast.LENGTH_LONG).show();
-            }
-        });
+        runOnUiThread(() -> Toast.makeText(mContext, msg,
+                Toast.LENGTH_LONG).show());
     }
 
 
@@ -391,9 +398,7 @@ public class OsdUtil {
                     if (msgStr != null) {
                         String dateTimeStr = tnow.format("%Y-%m-%d %H:%M:%S");
                         //Log.v(TAG, "writing msgStr");
-                        of.append(dateTimeStr + ", "
-                                + tnow.toMillis(true) + ", "
-                                + msgStr + "<br/>\n");
+                        of.append(dateTimeStr).append(", ").append(String.valueOf(tnow.toMillis(true))).append(", ").append(msgStr).append("<br/>\n");
                     }
                     of.close();
                 } catch (Exception ex) {
