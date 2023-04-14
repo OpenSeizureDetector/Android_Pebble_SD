@@ -478,7 +478,7 @@ public class OsdUtil {
     public Date string2date(String dateStr) {
         Date dataTime = null;
         try {
-            Long tstamp = Long.parseLong(dateStr);
+            long tstamp = Long.parseLong(dateStr);
             dataTime = new Date(tstamp);
         } catch (NumberFormatException e) {
             Log.v(TAG, "remoteEventsAdapter.getView: Error Parsing dataDate as Long: " + e.getLocalizedMessage()+" trying as string");
@@ -608,16 +608,23 @@ public class OsdUtil {
                 while (!cursor.isAfterLast()) {
                     HashMap<String, String> event = new HashMap<>();
                     //event.put("id", cursor.getString(cursor.getColumnIndex("id")));
-                    event.put("dataTime", cursor.getString(cursor.getColumnIndex("dataTime")));
-                    String loglevel = cursor.getString(cursor.getColumnIndex("logLevel"));
-                    event.put("loglevel", loglevel);
-                    event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
-                    //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
-                    eventsList.add(event);
+                    try {
+                        event.put("dataTime", cursor.getString(cursor.getColumnIndexOrThrow("dataTime")));
+                        String loglevel = cursor.getString(cursor.getColumnIndexOrThrow("logLevel"));
+                        event.put("loglevel", loglevel);
+                        event.put("dataJSON", cursor.getString(cursor.getColumnIndexOrThrow("dataJSON")));
+                        //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
+                        eventsList.add(event);
+                    }catch (IllegalArgumentException illegalArgumentException){
+                        Log.e(TAG,"getSysLogList(): Ignoring current event: Result of Cursor.getString: -1");
+                    }
                     cursor.moveToNext();
                 }
             }
-            callback.accept(eventsList);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                callback.accept(eventsList); // .accept requires API_SDK_LEVEL >= ANDROID.VERSION_N
+            }
+            else showToast("Not supported action at this version of Android. Please concider upgrading.");
         }).execute();
         return (true);
     }
@@ -677,8 +684,12 @@ public class OsdUtil {
 
         @Override
         protected void onPostExecute(final Cursor result) {
-            mCallback.accept(result);
-        }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                mCallback.accept(result);
+            }
+            else Toast.makeText(mContext,"Not supported action at this version of Android. Please concider upgrading.", Toast.LENGTH_SHORT).show();
+            //OsdUtil.showToast call will not be available in this function. Recreate new one.
+        } // .accept requires API_SDK_LEVEL >= ANDROID.VERSION_N
     }
 
 
