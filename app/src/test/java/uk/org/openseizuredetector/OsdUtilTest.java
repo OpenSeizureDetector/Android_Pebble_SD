@@ -1,10 +1,18 @@
 package uk.org.openseizuredetector;
 
 import android.app.Activity;
+import android.content.Context;
+import android.os.Build;
 import android.os.Handler;
+import android.os.Looper;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 import java.util.regex.Pattern;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -15,6 +23,8 @@ import static org.junit.Assert.*;
 /**
  * Created by graham on 01/01/16.
  */
+@RunWith(RobolectricTestRunner.class)
+@Config(sdk = {Build.VERSION_CODES.O_MR1}, packageName = "uk.org.openseizuredetector")
 public class OsdUtilTest {
 
     @Test
@@ -25,8 +35,13 @@ public class OsdUtilTest {
     @Test
     public void testStartServer() throws Exception {
         //Activity a = new Activity();
-        Handler handler = new Handler();
-        OsdUtil util = new OsdUtil(null,handler);
+        assertTrue(true);
+        Context testContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        assertEquals("uk.org.openseizuredetector", testContext.getPackageName());
+        Looper looper = testContext.getMainLooper();
+        Handler handler = new Handler(looper);
+        OsdUtil util = new OsdUtil(testContext,handler);
         assertThat(util.isServerRunning(), is(true));
         assertThat(true, is (true));
         //assertThat(true, is(false));
