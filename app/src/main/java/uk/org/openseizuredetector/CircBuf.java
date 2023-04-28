@@ -49,6 +49,9 @@ public class CircBuf {
     }
 
     public int getNumVals() {
+        /**
+         * Returns the total count of values stored in the buffer (including error values).
+         */
         int numElements;
         if (mIsFull) {
             numElements = mBuffLen;
@@ -78,6 +81,10 @@ public class CircBuf {
     }
 
     public double getAverageVal() {
+        /**
+         * Returns the average of the values stored in the buffer, which do not equal the error value mErrVal.
+         * Error values are ignored.
+         */
         double hrSum = 0.;
         int hrCount = 0;
         double valArr[] = getVals();

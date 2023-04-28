@@ -106,6 +106,8 @@ public class SdData implements Parcelable {
 
     public boolean mHRAlarmStanding = false;
     public boolean mHRFaultStanding = false;
+    public boolean mAdaptiveHRAlarmStanding = false;
+    public boolean mAverageHRAlarmStanding = false;
     public double mHR = 0;
 
     public boolean mO2SatAlarmStanding = false;
@@ -317,6 +319,9 @@ public class SdData implements Parcelable {
             jsonObj.put("alarmThresh", alarmThresh);
             jsonObj.put("alarmRatioThresh", alarmRatioThresh);
             jsonObj.put("hrAlarmActive", mHRAlarmActive);
+            jsonObj.put("hrAlarmStanding", mHRAlarmStanding);
+            jsonObj.put("adaptiveHrAlarmStanding", mAdaptiveHRAlarmStanding);
+            jsonObj.put("averageHrAlarmStanding", mAverageHRAlarmStanding);
             jsonObj.put("hrAlarmStanding", mHRAlarmStanding);
             jsonObj.put("hrThreshMin", mHRThreshMin);
             jsonObj.put("hrThreshMax", mHRThreshMax);
