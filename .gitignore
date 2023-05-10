@@ -10,3 +10,4 @@ app/release/output-metadata.json
 app/google-services.json
 *#
 
+/app/src/androidTest/java/uk/org/openseizuredetector/ServiceTestCase.java

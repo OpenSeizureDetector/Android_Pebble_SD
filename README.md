@@ -34,6 +34,7 @@ The following libraries are used:
 * (jBeep)[http://www.ultraduz.com.br]
 * (Chartjs)[http://www.chartjs.org]
 * (MPAndroidChart)[https://github.com/PhilJay/MPAndroidChart]
+* (TestCase) [https://alvinalexander.com/java/jwarehouse/android/test-runner/src/android/test/ServiceTestCase.java.shtml]
 
 Logo based on ["Star of life2" by Verdy p - Own work. Licensed under Public Domain via Wikimedia Commons](http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).
 
