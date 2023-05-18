@@ -38,6 +38,7 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -286,6 +287,7 @@ public class OsdUtil {
                     // for getting IPV4 format
                     if (!inetAddress.isLoopbackAddress()
                             && inetAddress instanceof Inet4Address
+                            && inetAddress.isSiteLocalAddress()
                     ) {
 
                         String ip = inetAddress.getHostAddress();
@@ -303,24 +305,77 @@ public class OsdUtil {
     public boolean isMobileDataActive() {
         // return true if we are using mobile data, otherwise return false
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        if (activeNetwork == null) return false;
-        if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
-            return true;
-        } else {
-            return false;
+        if (cm != null) {
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+
+                NetworkCapabilities capabilities = cm.getNetworkCapabilities(cm.getActiveNetwork());
+                if (capabilities == null) {
+                    return false;
+                }
+
+                if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ) {
+                    return true;
+                }else
+                    return false;
+            }else {
+                /**
+                 * has @Deprecation!
+                 * see https://developer.android.com/reference/android/net/NetworkInfo
+                 * @return
+                 */
+                NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+                if (activeNetwork == null) return false;
+                if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
         }
+        else
+            return  false;
+
     }
 
     public boolean isNetworkConnected() {
         // return true if we have a network connection, otherwise false.
+        // modified because networkInfo is deprecated. Solution:
+        // https://stackoverflow.com/questions/32547006/connectivitymanager-getnetworkinfoint-deprecated
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        if (activeNetwork != null) {
-            return (activeNetwork.isConnected());
-        } else {
-            return (false);
+        if (cm != null) {
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+
+                NetworkCapabilities capabilities = cm.getNetworkCapabilities(cm.getActiveNetwork());
+                if (capabilities == null) {
+                    return false;
+                }
+
+                if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_USB) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_LOWPAN) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
+                    return true;
+                }else
+                    return false;
+            }else {
+                /**
+                 * has @Deprecation!
+                 * see https://developer.android.com/reference/android/net/NetworkInfo
+                 * @return
+                 */
+                NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+                if (activeNetwork != null) {
+                    return (activeNetwork.isConnected());
+                } else {
+                    return (false);
+                }
+            }
         }
+        else
+            return  false;
     }
 
     // simplifying text
