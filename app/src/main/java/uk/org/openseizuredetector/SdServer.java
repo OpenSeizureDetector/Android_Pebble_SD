@@ -196,8 +196,12 @@ public class SdServer extends Service implements SdDataReceiver {
     @Override
     public void onCreate() {
         Log.i(TAG, "onCreate()");
-        Looper.prepareMainLooper();
-        mLooper = ((Context)this).getMainLooper();
+        try{
+            mLooper = ((Context) this).getMainLooper();
+        }catch (Exception e) {
+            Looper.prepareMainLooper();
+            mLooper = ((Context)this).getMainLooper();
+        }
         mHandler = new Handler(mLooper);
         mSdData = new SdData();
         mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
