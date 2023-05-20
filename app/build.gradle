@@ -9,6 +9,7 @@ android {
         minSdkVersion 23
         targetSdkVersion 31
         multiDexEnabled true
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -60,6 +61,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.firebaseui:firebase-ui-auth:8.0.2'
     implementation 'com.google.firebase:firebase-firestore'
+    implementation 'androidx.preference:preference:1.2.0'
     testImplementation 'androidx.test.ext:junit:1.2.0-alpha01'
     testImplementation 'androidx.test:runner:1.6.0-alpha01'
     testImplementation 'junit:junit:4.13.2'
