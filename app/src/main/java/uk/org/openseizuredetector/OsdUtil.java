@@ -200,8 +200,8 @@ public class OsdUtil {
         // then send an Intent to stop the service.
         Intent sdServerIntent;
         sdServerIntent = new Intent(mContext, SdServer.class);
-        sdServerIntent.setData(Uri.parse("Stop"));
-        mContext.stopService(sdServerIntent);
+        sdServerIntent.setData(Constants.GLOBAL_CONSTANTS.mStopUri);
+        mContext.startService(sdServerIntent);
     }
 
     public void restartServer() {
