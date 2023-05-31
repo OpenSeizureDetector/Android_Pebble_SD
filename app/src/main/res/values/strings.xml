@@ -5,11 +5,6 @@
         "\n
         \nV4.1.3 - Fixed display of O2 Saturation in Network Data Source, and added Polish Translations by Jacek Błoniarz-Łuczak.  Fixed crash when displaying main activity during alarm on some devices.  Added adaptive Heart Rate alarms
         \nV4.1.2 - Added Machine Learning (Artificial Intelligence) Detection Algorithm Option (CNN V0.24) and 'Normal Daily Activity (NDA) logging function
-        \nV4.0.7 - Improvements to Data Sharing data log manager screen.
-          - Introduced the &lt;b>Data Sharing&lt;/b> feature to allow users to share their seizure and false alarm data
-        with researchers to help improve the system.&lt;br/>
-          - Fixed &lt;b>SMS Location Alerts&lt;/b> on Android V10+ (new permissions screens)&lt;br/>
-          - Added explicit link to the &lt;b>Privacy Policy&lt;/b> &lt;br/>
           "</string>
     <string name="UpgradeMsg">
         Please enable the new &lt;b>Data Sharing&lt;/b> feature to help improve OpenSeizureDetector!&lt;br/>
