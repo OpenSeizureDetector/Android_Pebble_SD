@@ -7,7 +7,7 @@ android {
     defaultConfig {
         applicationId "uk.org.openseizuredetector"
         minSdkVersion 23
-        targetSdkVersion 30
+        targetSdkVersion 31
         multiDexEnabled true
     }
 
@@ -28,6 +28,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    namespace 'uk.org.openseizuredetector'
 }
 
 dependencies {

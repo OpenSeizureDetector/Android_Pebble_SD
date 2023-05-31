@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="uk.org.openseizuredetector"
-    android:versionCode="116"
+    android:versionCode="117"
     android:versionName="4.1.3">
     <!-- android:allowBackup="false" -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
@@ -39,7 +38,9 @@
         <!-- @android:style/Theme.Holo.Light" -->
         <activity android:name=".BLEScanActivity" />
         <activity android:name=".ExportDataActivity" /> <!-- android:usesCleartextTraffic="true" -->
-        <activity android:name=".StartupActivity">
+        <activity
+            android:name=".StartupActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -69,7 +70,9 @@
 
         <receiver
             android:name=".BootBroadcastReceiver"
-            android:label="BootBroadcastReceiver">
+            android:label="BootBroadcastReceiver"
+            android:exported="true"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
