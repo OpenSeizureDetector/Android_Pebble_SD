@@ -612,6 +612,10 @@ public abstract class SdDataSource {
                 mSdData.mHRAlarmStanding = checkResults.get(0);
                 mSdData.mAdaptiveHRAlarmStanding = checkResults.get(1);
                 mSdData.mAverageHRAlarmStanding = checkResults.get(2);
+                // Show an ALARM state if any of the HR alarms is standing.
+                if (mSdData.mHRAlarmStanding | mSdData.mAdaptiveHRAlarmStanding | mSdData.mAverageHRAlarmStanding) {
+                    mSdData.alarmState = 2;
+                }
             }
         }
     }
