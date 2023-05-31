@@ -33,6 +33,14 @@ android {
 }
 
 dependencies {
+    constraints {
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0") {
+            because("kotlin-stdlib-jdk7 is now a part of kotlin-stdlib")
+        }
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0") {
+            because("kotlin-stdlib-jdk8 is now a part of kotlin-stdlib")
+        }
+    }
     implementation 'androidx.multidex:multidex:2.0.1'
     //implementation files('libs/mpandroidchartlibrary-2-0-7.jar')
     //implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
@@ -86,6 +94,8 @@ dependencies {
     androidTestImplementation 'androidx.test:rules:1.6.0-alpha01'
     androidTestImplementation 'androidx.test.ext:junit:1.2.0-alpha01'
     androidTestImplementation 'androidx.test:monitor:1.7.0-alpha01'
+    debugImplementation 'androidx.fragment:fragment-testing-manifest:1.6.0-rc01'
+    androidTestImplementation 'androidx.fragment:fragment-testing:1.6.0-rc01'
 }
 
 repositories {

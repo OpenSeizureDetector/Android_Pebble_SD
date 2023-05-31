@@ -61,6 +61,7 @@ import android.util.Log;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.NotificationCompat;
+import androidx.core.view.ContentInfoCompat;
 
 import com.rohitss.uceh.UCEHandler;
 
@@ -512,11 +513,19 @@ public class SdServer extends Service implements SdDataReceiver {
             soundUri = null;
         }
 
+        int Flag_Intend;
+
         Intent i = new Intent(getApplicationContext(), MainActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            Flag_Intend = PendingIntent.FLAG_IMMUTABLE;
+        } else {
+            Flag_Intend = PendingIntent.FLAG_UPDATE_CURRENT;
+        }
         PendingIntent contentIntent =
                 PendingIntent.getActivity(this,
-                        0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+                        0, i, Flag_Intend);
+
         String smsStr;
         if (mSMSAlarm) {
             smsStr = getString(R.string.sms_location_alarm_active);

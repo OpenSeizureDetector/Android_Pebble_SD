@@ -199,7 +199,7 @@ public class OsdUtil {
         sdServerIntent = new Intent(mContext, SdServer.class);
         sdServerIntent.setData(Constants.GLOBAL_CONSTANTS.mStopUri);
         sdServerIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
-        mContext.startService(sdServerIntent);
+        mContext.stopService(sdServerIntent);
     }
 
     public void restartServer() {
@@ -236,8 +236,8 @@ public class OsdUtil {
             Log.i(TAG, "unbindFromServer() - unbinding");
             writeToSysLogFile("unbindFromServer() - unbinding");
             try {
-                activity.unbindService(sdServiceConnection);
                 sdServiceConnection.mBound = false;
+                activity.unbindService(sdServiceConnection);
                 mNbound = mNbound - 1;
                 Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
             } catch (Exception ex) {
