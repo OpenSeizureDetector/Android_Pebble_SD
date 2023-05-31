@@ -51,6 +51,7 @@ import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
@@ -147,6 +148,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private String mOSDUrl = "";
 
     private OsdUtil mUtil;
+    private Looper mLooper;
     private Handler mHandler;
     private ToneGenerator mToneGenerator;
 
@@ -177,7 +179,7 @@ public class SdServer extends Service implements SdDataReceiver {
     @Override
     public IBinder onBind(Intent intent) {
         Log.i(TAG, "sdServer.onBind()");
-        return mBinder;
+        return new SdBinder();
     }
 
     /**
@@ -194,7 +196,13 @@ public class SdServer extends Service implements SdDataReceiver {
     @Override
     public void onCreate() {
         Log.i(TAG, "onCreate()");
-        mHandler = new Handler();
+        try{
+            mLooper = ((Context) this).getMainLooper();
+        }catch (Exception e) {
+            Looper.prepareMainLooper();
+            mLooper = ((Context)this).getMainLooper();
+        }
+        mHandler = new Handler(mLooper);
         mSdData = new SdData();
         mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
 
@@ -224,7 +232,6 @@ public class SdServer extends Service implements SdDataReceiver {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "onStartCommand() - SdServer service starting");
         mUtil.writeToSysLogFile("SdServer.onStartCommand()");
-
         // Update preferences.
         Log.v(TAG, "onStartCommand() - calling updatePrefs()");
         updatePrefs();

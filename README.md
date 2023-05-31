@@ -14,7 +14,7 @@ rhythmic movements associated with a seizure, but not normal day to day
 activities.
 
 If the acceleration within the given frequency band is more than a
-threshod value, it starts a timer.  If the acceleration remains above
+threshold value, it starts a timer.  If the acceleration remains above
 the threshold for a given period, it issues a warning beep.
 If it remains above the threshold for a longer specified period, the unit
 alarms (continuous tone rather than beep).
@@ -34,6 +34,7 @@ The following libraries are used:
 * (jBeep)[http://www.ultraduz.com.br]
 * (Chartjs)[http://www.chartjs.org]
 * (MPAndroidChart)[https://github.com/PhilJay/MPAndroidChart]
+* (TestCase) [https://alvinalexander.com/java/jwarehouse/android/test-runner/src/android/test/ServiceTestCase.java.shtml]
 
 Logo based on ["Star of life2" by Verdy p - Own work. Licensed under Public Domain via Wikimedia Commons](http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).
 

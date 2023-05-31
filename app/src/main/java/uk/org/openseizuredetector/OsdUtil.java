@@ -38,13 +38,14 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 import android.widget.Toast;
@@ -52,11 +53,13 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
-import org.apache.http.conn.util.InetAddressUtils;
+//uncommented due to deprication
+//import org.apache.http.conn.util.InetAddressUtils;
 
 import java.io.File;
 import java.io.FileWriter;
+//instead of InetAddressUtils use
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.text.ParseException;
@@ -66,6 +69,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+//use java.Util.Objects as comparetool.
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -98,6 +103,8 @@ public class OsdUtil {
     private static Long mLastPruneMillis = new Long(0);   // Record of the last time we pruned the syslog db.
 
     private static int mNbound = 0;
+    //save startId of SdServer
+    private int wearReceiverStartId;
 
     public OsdUtil(Context context, Handler handler) {
         mContext = context;
@@ -145,7 +152,7 @@ public class OsdUtil {
         int nServers = 0;
         /* Log.v(TAG,"isServerRunning()...."); */
         ActivityManager manager =
-                (ActivityManager) mContext.getSystemService(mContext.ACTIVITY_SERVICE);
+                (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service :
                 manager.getRunningServices(Integer.MAX_VALUE)) {
             //Log.v(TAG,"Service: "+service.service.getClassName());
@@ -154,17 +161,20 @@ public class OsdUtil {
                 nServers = nServers + 1;
             }
         }
-        if (nServers != 0) {
-            //Log.v(TAG, "isServerRunning() - " + nServers + " instances are running");
-            return true;
-        } else
-            return false;
+
+        //simplify statement:
+        return nServers != 0;
     }
 
     /**
      * Start the SdServer service
+     * without parameters always sends Uri://Start
      */
-    public void startServer() {
+    public void  startServer(){
+        startServer(Constants.GLOBAL_CONSTANTS.mStartUri);
+    }
+    //overload startServer without parameters
+    public void startServer(Uri setData ) {
         // Start the server
         Log.d(TAG, "OsdUtil.startServer()");
         writeToSysLogFile("startServer() - starting server");
@@ -190,8 +200,8 @@ public class OsdUtil {
         // then send an Intent to stop the service.
         Intent sdServerIntent;
         sdServerIntent = new Intent(mContext, SdServer.class);
-        sdServerIntent.setData(Uri.parse("Stop"));
-        mContext.stopService(sdServerIntent);
+        sdServerIntent.setData(Constants.GLOBAL_CONSTANTS.mStopUri);
+        mContext.startService(sdServerIntent);
     }
 
     public void restartServer() {
@@ -273,12 +283,14 @@ public class OsdUtil {
                     //Log.v(TAG,"ip1--:" + inetAddress);
                     //Log.v(TAG,"ip2--:" + inetAddress.getHostAddress());
 
+                    //updated from https://stackoverflow.com/questions/32141785/android-api-23-inetaddressutils-replacement
                     // for getting IPV4 format
                     if (!inetAddress.isLoopbackAddress()
-                            && InetAddressUtils.isIPv4Address(
-                            inetAddress.getHostAddress())) {
+                            && inetAddress instanceof Inet4Address
+                            && inetAddress.isSiteLocalAddress()
+                    ) {
 
-                        String ip = inetAddress.getHostAddress().toString();
+                        String ip = inetAddress.getHostAddress();
                         //Log.v(TAG,"ip---::" + ip);
                         return ip;
                     }
@@ -293,38 +305,88 @@ public class OsdUtil {
     public boolean isMobileDataActive() {
         // return true if we are using mobile data, otherwise return false
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        if (activeNetwork == null) return false;
-        if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
-            return true;
-        } else {
-            return false;
+        if (cm != null) {
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+
+                NetworkCapabilities capabilities = cm.getNetworkCapabilities(cm.getActiveNetwork());
+                if (capabilities == null) {
+                    return false;
+                }
+
+                if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ) {
+                    return true;
+                }else
+                    return false;
+            }else {
+                /**
+                 * has @Deprecation!
+                 * see https://developer.android.com/reference/android/net/NetworkInfo
+                 * @return
+                 */
+                NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+                if (activeNetwork == null) return false;
+                if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
         }
+        else
+            return  false;
+
     }
 
     public boolean isNetworkConnected() {
         // return true if we have a network connection, otherwise false.
+        // modified because networkInfo is deprecated. Solution:
+        // https://stackoverflow.com/questions/32547006/connectivitymanager-getnetworkinfoint-deprecated
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        if (activeNetwork != null) {
-            return (activeNetwork.isConnected());
-        } else {
-            return (false);
+        if (cm != null) {
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+
+                NetworkCapabilities capabilities = cm.getNetworkCapabilities(cm.getActiveNetwork());
+                if (capabilities == null) {
+                    return false;
+                }
+
+                if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_USB) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_LOWPAN) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) ||
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
+                    return true;
+                }else
+                    return false;
+            }else {
+                /**
+                 * has @Deprecation!
+                 * see https://developer.android.com/reference/android/net/NetworkInfo
+                 * @return
+                 */
+                NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+                if (activeNetwork != null) {
+                    return (activeNetwork.isConnected());
+                } else {
+                    return (false);
+                }
+            }
         }
+        else
+            return  false;
     }
 
+    // simplifying text
     /**
      * Display a Toast message on screen.
      *
      * @param msg - message to display.
      */
     public void showToast(final String msg) {
-        runOnUiThread(new Runnable() {
-            public void run() {
-                Toast.makeText(mContext, msg,
-                        Toast.LENGTH_LONG).show();
-            }
-        });
+        runOnUiThread(() -> Toast.makeText(mContext, msg,
+                Toast.LENGTH_LONG).show());
     }
 
 
@@ -391,9 +453,7 @@ public class OsdUtil {
                     if (msgStr != null) {
                         String dateTimeStr = tnow.format("%Y-%m-%d %H:%M:%S");
                         //Log.v(TAG, "writing msgStr");
-                        of.append(dateTimeStr + ", "
-                                + tnow.toMillis(true) + ", "
-                                + msgStr + "<br/>\n");
+                        of.append(dateTimeStr).append(", ").append(String.valueOf(tnow.toMillis(true))).append(", ").append(msgStr).append("<br/>\n");
                     }
                     of.close();
                 } catch (Exception ex) {
@@ -473,7 +533,7 @@ public class OsdUtil {
     public Date string2date(String dateStr) {
         Date dataTime = null;
         try {
-            Long tstamp = Long.parseLong(dateStr);
+            long tstamp = Long.parseLong(dateStr);
             dataTime = new Date(tstamp);
         } catch (NumberFormatException e) {
             Log.v(TAG, "remoteEventsAdapter.getView: Error Parsing dataDate as Long: " + e.getLocalizedMessage()+" trying as string");
@@ -603,16 +663,23 @@ public class OsdUtil {
                 while (!cursor.isAfterLast()) {
                     HashMap<String, String> event = new HashMap<>();
                     //event.put("id", cursor.getString(cursor.getColumnIndex("id")));
-                    event.put("dataTime", cursor.getString(cursor.getColumnIndex("dataTime")));
-                    String loglevel = cursor.getString(cursor.getColumnIndex("logLevel"));
-                    event.put("loglevel", loglevel);
-                    event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
-                    //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
-                    eventsList.add(event);
+                    try {
+                        event.put("dataTime", cursor.getString(cursor.getColumnIndexOrThrow("dataTime")));
+                        String loglevel = cursor.getString(cursor.getColumnIndexOrThrow("logLevel"));
+                        event.put("loglevel", loglevel);
+                        event.put("dataJSON", cursor.getString(cursor.getColumnIndexOrThrow("dataJSON")));
+                        //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
+                        eventsList.add(event);
+                    }catch (IllegalArgumentException illegalArgumentException){
+                        Log.e(TAG,"getSysLogList(): Ignoring current event: Result of Cursor.getString: -1");
+                    }
                     cursor.moveToNext();
                 }
             }
-            callback.accept(eventsList);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                callback.accept(eventsList); // .accept requires API_SDK_LEVEL >= ANDROID.VERSION_N
+            }
+            else showToast("Not supported action at this version of Android. Please concider upgrading.");
         }).execute();
         return (true);
     }
@@ -672,8 +739,12 @@ public class OsdUtil {
 
         @Override
         protected void onPostExecute(final Cursor result) {
-            mCallback.accept(result);
-        }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                mCallback.accept(result);
+            }
+            else Toast.makeText(mContext,"Not supported action at this version of Android. Please concider upgrading.", Toast.LENGTH_SHORT).show();
+            //OsdUtil.showToast call will not be available in this function. Recreate new one.
+        } // .accept requires API_SDK_LEVEL >= ANDROID.VERSION_N
     }
 
 
