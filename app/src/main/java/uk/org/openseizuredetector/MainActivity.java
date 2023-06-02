@@ -103,17 +103,16 @@ public class MainActivity extends AppCompatActivity {
 
         // Set our custom uncaught exception handler to report issues.
         //Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(MainActivity.this));
-        new UCEHandler.Builder(this)
+        new UCEHandler.Builder(MainActivity.this)
                 .addCommaSeparatedEmailAddresses("crashreports@openseizuredetector.org.uk,")
                 .build();
 
         //int i = 5/0;  // Force exception to test handler.
-        mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
-        mConnection = new SdServiceConnection(getApplicationContext());
+        mUtil = new OsdUtil(MainActivity.this, serverStatusHandler);
+        mConnection = new SdServiceConnection(MainActivity.this);
         mUtil.writeToSysLogFile("");
         mUtil.writeToSysLogFile("* MainActivity Started     *");
         mUtil.writeToSysLogFile("MainActivity.onCreate()");
-        mContext = this;
 
         // Initialise the User Interface
         setContentView(R.layout.main);
@@ -125,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
          */
         try {
             Log.v(TAG, "trying menubar fiddle...");
-            ViewConfiguration config = ViewConfiguration.get(this);
+            ViewConfiguration config = ViewConfiguration.get(MainActivity.this);
             Field menuKeyField =
                     ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
             if (menuKeyField != null) {
@@ -288,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, "action_sart_stop");
                 if (mConnection.mBound) {
                     Log.i(TAG, "Stopping Server");
-                    mUtil.unbindFromServer(getApplicationContext(), mConnection);
+                    mUtil.unbindFromServer(MainActivity.this, mConnection);
                     stopServer();
                 } else {
                     Log.i(TAG, "Starting Server");
@@ -296,7 +295,7 @@ public class MainActivity extends AppCompatActivity {
                     // and bind to it so we can see its data
                     Log.i(TAG, "Binding to Server");
                     if (Objects.nonNull(mConnection))
-                        if (!mConnection.mBound) mUtil.bindToServer(this, mConnection);
+                        if (!mConnection.mBound) mUtil.bindToServer(MainActivity.this, mConnection);
                 }
                 return true;
             /* fault beep test does not work with fault timer, so disable test option.
@@ -408,7 +407,7 @@ public class MainActivity extends AppCompatActivity {
                     Intent prefsIntent = new Intent(
                             MainActivity.this,
                             PrefActivity.class);
-                    this.startActivity(prefsIntent);
+                    MainActivity.this.startActivity(prefsIntent);
                 } catch (Exception ex) {
                     Log.i(TAG, "exception starting settings activity " + ex.toString());
                 }
@@ -443,7 +442,7 @@ public class MainActivity extends AppCompatActivity {
         if (mUtil.isServerRunning()) {
             mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
             if (Objects.nonNull(mConnection))
-                if (!mConnection.mBound) mUtil.bindToServer(this, mConnection);
+                if (!mConnection.mBound) mUtil.bindToServer(MainActivity.this, mConnection);
         } else {
             Log.i(TAG, "onStart() - Server Not Running");
             mUtil.writeToSysLogFile("MainActivity.onStart - Server Not Running");
@@ -465,7 +464,7 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
         Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("MainActivity.onStop()");
-        mUtil.unbindFromServer(getApplicationContext(), mConnection);
+        mUtil.unbindFromServer(MainActivity.this, mConnection);
         mUiTimer.cancel();
     }
 
@@ -1128,7 +1127,7 @@ public class MainActivity extends AppCompatActivity {
                     Intent i = new Intent(
                             MainActivity.this,
                             AuthenticateActivity.class);
-                    mContext.startActivity(i);
+                    MainActivity.this.startActivity(i);
                 } catch (Exception ex) {
                     Log.i(TAG, "exception starting activity " + ex.toString());
                 }

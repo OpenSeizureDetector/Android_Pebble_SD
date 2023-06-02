@@ -73,6 +73,7 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
+import java.util.Objects;
 import java.util.Timer;
 
 /**
@@ -198,22 +199,22 @@ public class SdServer extends Service implements SdDataReceiver {
     public void onCreate() {
         Log.i(TAG, "onCreate()");
         try{
-            mLooper = ((Context) this).getMainLooper();
+            mLooper = ((Context) SdServer.this).getMainLooper();
         }catch (Exception e) {
             Looper.prepareMainLooper();
-            mLooper = ((Context)this).getMainLooper();
+            mLooper = ((Context)SdServer.this).getMainLooper();
         }
         mHandler = new Handler(mLooper);
         mSdData = new SdData();
         mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
 
-        mUtil = new OsdUtil(getApplicationContext(), mHandler);
+        mUtil = new OsdUtil(SdServer.this, mHandler);
         mUtil.writeToSysLogFile("SdServer.onCreate()");
 
         // Set our custom uncaught exception handler to report issues.
         //Thread.setDefaultUncaughtExceptionHandler(
-        //        new OsdUncaughtExceptionHandler(SdServer.this));
-        new UCEHandler.Builder(this)
+        //        new OsdUncaughtExceptionHandler(SdServer.SdServer.this));
+        new UCEHandler.Builder(SdServer.this)
                 .addCommaSeparatedEmailAddresses("crashreports@openseizuredetector.org.uk,")
                 .build();
         //int i = 5/0;  // Force exception to test handler.
@@ -244,58 +245,58 @@ public class SdServer extends Service implements SdDataReceiver {
             case "Pebble":
                 Log.v(TAG, "Selecting Pebble DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePebble");
-                mSdDataSource = new SdDataSourcePebble(this.getApplicationContext(), mHandler, this);
+                mSdDataSource = new SdDataSourcePebble(SdServer.this, mHandler, SdServer.this);
                 break;
             case "AndroidWear":
                 Log.v(TAG, "Selecting Android Wear DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceAw");
-                mSdDataSource = new SdDataSourceAw(this.getApplicationContext(), mHandler, this);
+                mSdDataSource = new SdDataSourceAw(SdServer.this, mHandler, SdServer.this);
                 break;
             case "Network":
                 Log.v(TAG, "Selecting Network DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceNetwork");
-                mSdDataSource = new SdDataSourceNetwork(this.getApplicationContext(), mHandler, this);
+                mSdDataSource = new SdDataSourceNetwork(SdServer.this, mHandler, SdServer.this);
                 Log.i(TAG,"Disabling remote logging when using network data source");
                 mLogDataRemote = false;
                 break;
             case "Garmin":
                 Log.v(TAG, "Selecting Garmin DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceGarmin");
-                mSdDataSource = new SdDataSourceGarmin(this.getApplicationContext(), mHandler, this);
+                mSdDataSource = new SdDataSourceGarmin(SdServer.this, mHandler, SdServer.this);
                 break;
             case "BLE":
                 Log.v(TAG, "Selecting BLE DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceBLE");
-                mSdDataSource = new SdDataSourceBLE(this.getApplicationContext(), mHandler, this);
+                mSdDataSource = new SdDataSourceBLE(SdServer.this, mHandler, SdServer.this);
                 break;
             case "Phone":
                 Log.v(TAG, "Selecting Phone Sensor DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePhone");
-                mSdDataSource = new SdDataSourcePhone(this.getApplicationContext(), mHandler, this);
+                mSdDataSource = new SdDataSourcePhone(SdServer.this, mHandler, SdServer.this);
                 break;
             default:
                 Log.e(TAG, "Datasource " + mSdDataSourceName + " not recognised - Defaulting to Phone");
                 //mUtil.writeToSysLogFile("SdServer.onStartCommand() - Datasource " + mSdDataSourceName + " not recognised - exiting");
                 mUtil.showToast(getString(R.string.DatasourceTitle) + " " + mSdDataSourceName + getString(R.string.DefaultingToPhoneMsg));
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePhone");
-                mSdDataSource = new SdDataSourcePhone(this.getApplicationContext(), mHandler, this);
+                mSdDataSource = new SdDataSourcePhone(SdServer.this, mHandler, SdServer.this);
         }
 
         // Create our log manager.
-        mLm = new LogManager(this, mLogDataRemote, mLogDataRemoteMobile, mAuthToken, mEventDuration,
+        mLm = new LogManager(SdServer.this, mLogDataRemote, mLogDataRemoteMobile, mAuthToken, mEventDuration,
                 mRemoteLogPeriod, mLogNDA ,mAutoPruneDb, mDataRetentionPeriod, mSdData);
 
         if (mSMSAlarm) {
             Log.v(TAG, "Creating LocationFinder");
-            mLocationFinder = new LocationFinder(getApplicationContext());
+            mLocationFinder = new LocationFinder(SdServer.this);
         }
         mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting SdDataSource");
         mSdDataSource.start();
 
         // Initialise Notification channel for API level 26 and over
         // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
-        mNM = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationBuilder = new NotificationCompat.Builder(this, mNotChId);
+        mNM = (NotificationManager) SdServer.this.getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationBuilder = new NotificationCompat.Builder(SdServer.this, mNotChId);
         if (Build.VERSION.SDK_INT >= 26) {
             NotificationChannel channel = new NotificationChannel(mNotChId,
                     mNotChName,
@@ -351,14 +352,18 @@ public class SdServer extends Service implements SdDataReceiver {
         startWebServer();
 
         // Apply the wake-lock to prevent CPU sleeping (very battery intensive!)
-        if (mWakeLock != null) {
-            mWakeLock.acquire();
-            Log.v(TAG, "Applied Wake Lock to prevent device sleeping");
+        if (Objects.nonNull(mWakeLock)) {
+            if (!mWakeLock.isHeld()) {
+                mWakeLock.acquire(24 * 60 * 60 * 1000L /*1 day*/);
+                Log.v(TAG, "Applied Wake Lock to prevent device sleeping");
+
+            } else Log.v(TAG, "onStartCommand(): lock already held");
             mUtil.writeToSysLogFile("SdServer.onStartCommand() - applying wake lock");
         } else {
             Log.d(TAG, "mmm...mWakeLock is null, so not aquiring lock.  This shouldn't happen!");
             mUtil.writeToSysLogFile("SdServer.onStartCommand() - mWakeLock is not null - this shouldn't happen???");
         }
+
 
         checkEvents();
 
@@ -444,7 +449,7 @@ public class SdServer extends Service implements SdDataReceiver {
             mToneGenerator.release();
             mToneGenerator = null;
 
-            this.stopForeground(true);
+            SdServer.this.stopForeground(true);
             // Cancel the notification.
             Log.d(TAG, "onDestroy(): cancelling notification");
             mUtil.writeToSysLogFile("SdServer.onDestroy - cancelling notification");
@@ -515,7 +520,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         int Flag_Intend;
 
-        Intent i = new Intent(getApplicationContext(), MainActivity.class);
+        Intent i = new Intent(SdServer.this, MainActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             Flag_Intend = PendingIntent.FLAG_IMMUTABLE;
@@ -523,7 +528,7 @@ public class SdServer extends Service implements SdDataReceiver {
             Flag_Intend = PendingIntent.FLAG_UPDATE_CURRENT;
         }
         PendingIntent contentIntent =
-                PendingIntent.getActivity(this,
+                PendingIntent.getActivity(SdServer.this,
                         0, i, Flag_Intend);
 
         String smsStr;
@@ -570,9 +575,9 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.writeToSysLogFile("SdServer.showMainActivity - Activity is already shown on top, not doing anything");
         } else {
             Log.i(TAG, "showMainActivity(): Showing Main Activity");
-            Intent i = new Intent(getApplicationContext(), MainActivity.class);
+            Intent i = new Intent(SdServer.this, MainActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
-            this.startActivity(i);
+            SdServer.this.startActivity(i);
         }
     }
 
@@ -1070,7 +1075,7 @@ public class SdServer extends Service implements SdDataReceiver {
         Log.i(TAG, "startWebServer()");
         mUtil.writeToSysLogFile("SdServer.Start Web Server.");
         if (webServer == null) {
-            webServer = new SdWebServer(getApplicationContext(), mSdData, this);
+            webServer = new SdWebServer(SdServer.this, mSdData, SdServer.this);
             try {
                 webServer.start();
             } catch (IOException ioe) {
@@ -1084,7 +1089,7 @@ public class SdServer extends Service implements SdDataReceiver {
         mNetworkBroadcastReceiver = new NetworkBroadcastReceiver();
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
         //filter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
-        getApplicationContext().registerReceiver(mNetworkBroadcastReceiver, filter);
+        SdServer.this.registerReceiver(mNetworkBroadcastReceiver, filter);
     }
 
     /**
@@ -1111,7 +1116,7 @@ public class SdServer extends Service implements SdDataReceiver {
         }
         mUtil.writeToSysLogFile("unregisterig network broadcast receiver");
         Log.v(TAG, "unregistering network broadcast receiver");
-        getApplicationContext().unregisterReceiver(mNetworkBroadcastReceiver);
+        SdServer.this.unregisterReceiver(mNetworkBroadcastReceiver);
     }
 
     private class NetworkBroadcastReceiver extends BroadcastReceiver {
@@ -1663,8 +1668,8 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Initialise Notification channel for API level 26 and over
         // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
-        NotificationManager nM = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(getApplicationContext(), mEventNotChId);
+        NotificationManager nM = (NotificationManager) SdServer.this.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(SdServer.this, mEventNotChId);
         if (Build.VERSION.SDK_INT >= 26) {
             NotificationChannel channel = new NotificationChannel(mEventNotChId,
                     mEventNotChName,
@@ -1676,11 +1681,11 @@ public class SdServer extends Service implements SdDataReceiver {
         iconId = R.drawable.datasharing_query_24x24;
         titleStr = getString(R.string.unvalidatedEventsTitle);
 
-        Intent i = new Intent(getApplicationContext(), LogManagerControlActivity.class);
+        Intent i = new Intent(SdServer.this, LogManagerControlActivity.class);
         i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         i.setAction("None");
         PendingIntent contentIntent =
-                PendingIntent.getActivity(getApplicationContext(),
+                PendingIntent.getActivity(SdServer.this,
                         0, i, PendingIntent.FLAG_UPDATE_CURRENT);
         String contentStr = getString(R.string.please_confirm_seizure_events);
 
@@ -1707,8 +1712,8 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Initialise Notification channel for API level 26 and over
         // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
-        NotificationManager nM = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(getApplicationContext(), mEventNotChId);
+        NotificationManager nM = (NotificationManager) SdServer.this.getSystemService(Context.NOTIFICATION_SERVICE);
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(SdServer.this, mEventNotChId);
         if (Build.VERSION.SDK_INT >= 26) {
             NotificationChannel channel = new NotificationChannel(mEventNotChId,
                     mEventNotChName,
@@ -1720,17 +1725,17 @@ public class SdServer extends Service implements SdDataReceiver {
         iconId = R.drawable.datasharing_fault_24x24;
         titleStr = getString(R.string.datasharing_notification_title);
 
-        Intent i = new Intent(getApplicationContext(), MainActivity.class);
+        Intent i = new Intent(SdServer.this, MainActivity.class);
         i.putExtra("action", "showDataSharingDialog");
         i.setAction("showDataSharingDialog");
         i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent contentIntent =
-                PendingIntent.getActivity(getApplicationContext(),
+                PendingIntent.getActivity(SdServer.this,
                         0, i, PendingIntent.FLAG_UPDATE_CURRENT);
-        Intent loginIntent = new Intent(getApplicationContext(), AuthenticateActivity.class);
+        Intent loginIntent = new Intent(SdServer.this, AuthenticateActivity.class);
         loginIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         PendingIntent loginPendingIntent =
-                PendingIntent.getActivity(getApplicationContext(),
+                PendingIntent.getActivity(SdServer.this,
                         0, loginIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         String contentStr = getString(R.string.datasharing_notification_text);

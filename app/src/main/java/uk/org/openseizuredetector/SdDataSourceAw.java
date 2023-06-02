@@ -123,7 +123,7 @@ public class SdDataSourceAw extends SdDataSource {
      * FIXME - this does not do anything!
      * This method should be registered as a receiver for intents in the onStart() method and de-registered
      * in the onStop() method.
-     * @param i - received intent.
+     * @param intent - received intent.
      */
     public void onDataReceived(Intent intent) {
         Log.v(TAG, "onDataReceived");
