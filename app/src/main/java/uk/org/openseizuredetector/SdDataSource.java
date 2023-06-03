@@ -617,6 +617,12 @@ public abstract class SdDataSource {
                     mSdData.alarmState = 2;
                 }
             }
+        } else {
+            mSdData.mHRFaultStanding = false;
+            mSdData.mHRAlarmStanding = false;
+            mSdData.mAdaptiveHRAlarmStanding = false;
+            mSdData.mAverageHRAlarmStanding = false;
+
         }
     }
 
@@ -646,6 +652,9 @@ public abstract class SdDataSource {
                 mSdData.mO2SatFaultStanding = false;
                 mSdData.mO2SatAlarmStanding = false;
             }
+        } else {
+            mSdData.mO2SatFaultStanding = false;
+            mSdData.mO2SatAlarmStanding = false;
         }
 
     }

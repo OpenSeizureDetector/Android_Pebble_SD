@@ -3,7 +3,7 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
-        \nV4.1.4 - Fixed bug in notifications on Android 12
+        \nV4.1.4 - Fixed bug in notifications on Android 12, added an Export Data function to save heart rate and accelerometer data to a file.
         \nV4.1.3 - Fixed display of O2 Saturation in Network Data Source, and added Polish Translations by Jacek Błoniarz-Łuczak.  Fixed crash when displaying main activity during alarm on some devices.  Added adaptive Heart Rate alarms
         \nV4.1.2 - Added Machine Learning (Artificial Intelligence) Detection Algorithm Option (CNN V0.24) and 'Normal Daily Activity (NDA) logging function
           "</string>
@@ -499,4 +499,7 @@
     <string name="HRAverageAlarmWindowSummary">Window size (in seconds) for Average Heart Rate Calculation - must be a factor of 5 seconds.</string>
     <string name="HeartRateAdaptiveAlarmSettingsTitle">Adaptive Heart Rate Alarm Settings</string>
     <string name="HeartRateAverageAlarmSettingsTitle">Average Heart Rate Alarm Settings</string>
+    <string name="export_data_menuItem">Export Data</string>
+    <string name="data_exported_ok">Data Exported OK</string>
+    <string name="error_exporting_data">*** ERROR Exporting Data ***</string>
 </resources>

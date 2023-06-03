@@ -200,7 +200,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         final CheckBox includeWarningsCb = (CheckBox) findViewById(R.id.include_warnings_cb);
         final CheckBox includeNDACb = (CheckBox) findViewById(R.id.include_nda_cb);
         getRemoteEvents(includeWarningsCb.isChecked(), includeNDACb.isChecked());
-        ProgressBar pb = (ProgressBar)findViewById(R.id.remoteAccessPb);
+        ProgressBar pb = (ProgressBar) findViewById(R.id.remoteAccessPb);
         pb.setIndeterminate(true);
         pb.setVisibility(View.VISIBLE);
         // Populate events list - we only do it once when the activity is created because the query might slow down the UI.
@@ -269,11 +269,11 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         eventHashMap.put("type", typeStr);
                         eventHashMap.put("subType", subType);
                         eventHashMap.put("desc", desc);
-                        if ((osdAlarmState!=1 | includeWarnings) &&
-                            (osdAlarmState!=6 | includeNDA)) {
+                        if ((osdAlarmState != 1 | includeWarnings) &&
+                                (osdAlarmState != 6 | includeNDA)) {
                             mRemoteEventsList.add(eventHashMap);
                         } else {
-                            Log.v(TAG,"getRemoteEvents - skipping warning or NDA record");
+                            Log.v(TAG, "getRemoteEvents - skipping warning or NDA record");
                         }
                     }
                     Log.v(TAG, "getRemoteEvents() - set mRemoteEventsList().  Updating UI");
@@ -304,9 +304,9 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 TextView tv2 = (TextView) findViewById(R.id.num_local_datapoints_tv);
                 tv2.setText(String.format("%d", datapointsCount));
             });
-            TextView tv3 = (TextView)findViewById(R.id.nda_time_remaining_tv);
-            tv3.setText(String.format("%.1f hrs",mLm.mNDATimeRemaining));
-            Log.d(TAG,"mNDATimeRemaining = "+String.format("%.1f hrs",mLm.mNDATimeRemaining));
+            TextView tv3 = (TextView) findViewById(R.id.nda_time_remaining_tv);
+            tv3.setText(String.format("%.1f hrs", mLm.mNDATimeRemaining));
+            Log.d(TAG, "mNDATimeRemaining = " + String.format("%.1f hrs", mLm.mNDATimeRemaining));
         } else {
             stopUpdating = false;
         }
@@ -333,7 +333,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         }
         // Remote Database List View
         if (mRemoteEventsList != null) {
-            ProgressBar pb = (ProgressBar)findViewById(R.id.remoteAccessPb);
+            ProgressBar pb = (ProgressBar) findViewById(R.id.remoteAccessPb);
             pb.setIndeterminate(false);
             pb.setVisibility(View.INVISIBLE);
             ListView lv = (ListView) findViewById(R.id.remoteEventsLv);
@@ -453,7 +453,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 }
                 return true;
             case R.id.start_stop_nda:
-                Log.i(TAG,"start/stop NDA");
+                Log.i(TAG, "start/stop NDA");
                 if (mConnection.mSdServer.mLogNDA) {
                     new AlertDialog.Builder(this)
                             .setTitle(R.string.stop_nda_logging_dialog_title)
@@ -475,7 +475,6 @@ public class LogManagerControlActivity extends AppCompatActivity {
                             })
                             .setNegativeButton(android.R.string.no, null)
                             .show();
-
                 } else {
                     new AlertDialog.Builder(this)
                             .setTitle(R.string.start_nda_logging_dialog_title)
@@ -499,7 +498,6 @@ public class LogManagerControlActivity extends AppCompatActivity {
                             .show();
 
                 }
-
                 return true;
             case R.id.action_mark_unknown:
                 Log.i(TAG, "action_mark_unknown");
@@ -527,6 +525,18 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         })
                         .setNegativeButton(android.R.string.no, null)
                         .show();
+            case R.id.export_data_menuitem:
+                Log.i(TAG, "export data menu item");
+                try {
+                    Intent i = new Intent(
+                            getApplicationContext(),
+                            ExportDataActivity.class);
+                    this.startActivity(i);
+                } catch (Exception ex) {
+                    Log.i(TAG, "exception starting export data activity " + ex.toString());
+                }
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -551,7 +561,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     // Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
                     AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
                     builder.setTitle(R.string.prune_database_title);
-                    builder.setMessage(String.format(getString(R.string.prune_database_dialog_msg) , mLm.mDataRetentionPeriod));
+                    builder.setMessage(String.format(getString(R.string.prune_database_dialog_msg), mLm.mDataRetentionPeriod));
                     builder.setPositiveButton(R.string.yes_button_title, new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
