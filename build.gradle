@@ -21,7 +21,6 @@ allprojects {
             name 'Google'
         }
         google()
-        //maven { url 'https://jitpack.io' }
         maven { url 'https://jitpack.io' }   // for mpandroidchart
     }
     tasks.withType(JavaCompile) {
@@ -29,8 +28,11 @@ allprojects {
     }
 }
 
-
-dependencies {
+//exclude lifecycle-viewmodel-ktx after use of several Androidx libraries
+configurations {
+    all {
+        exclude group: 'androidx.lifecycle', module: 'lifecycle-viewmodel-ktx'
+    }
 }
 
 if (hasProperty('buildScan')) {
@@ -39,3 +41,4 @@ if (hasProperty('buildScan')) {
         termsOfServiceAgree = 'yes'
     }
 }
+
