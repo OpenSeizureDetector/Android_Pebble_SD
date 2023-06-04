@@ -43,7 +43,12 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="EventId: " />
+                    android:text="@string/eventid" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=": " />
 
                 <TextView
                     android:id="@+id/eventIdTv"
@@ -60,7 +65,12 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Event Date: "
+                    android:text="@string/event_date"
+                    android:textSize="20sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=": "
                     android:textSize="20sp" />
 
                 <TextView
@@ -79,7 +89,12 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Alarm State: "
+                    android:text="@string/alarm_state"
+                    android:textSize="20sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=": "
                     android:textSize="20sp" />
 
                 <TextView
@@ -100,6 +115,11 @@
                     android:layout_height="wrap_content"
                     android:text="@string/event_type"
                     android:textSize="20sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=": "
+                    android:textSize="20sp" />
 
                 <RadioGroup
                     android:id="@+id/eventTypeRg"
@@ -118,6 +138,12 @@
                     android:layout_height="wrap_content"
                     android:text="@string/event_sub_type"
                     android:textSize="20sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=": "
+                    android:textSize="20sp" />
+
 
 
                 <RadioGroup
@@ -134,7 +160,7 @@
                 android:layout_marginTop="16dp"
                 android:layout_marginRight="4dp"
                 android:layout_marginBottom="4dp"
-                android:hint="notes about event" />
+                android:hint="@string/notes_about_event" />
 
 
         </LinearLayout>

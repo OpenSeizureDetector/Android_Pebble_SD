@@ -1,39 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+ <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         \n V3.6 - Dodano obsługę czujników telefonu w celu wykrywania drgawek bez zegarka
-        \n V3.5 - Dodano obsługę alarmowego telefonowania używając osobnej apki OpenSeizureDetector Dialler App
+        \n V3.5 - Dodano obsługę alarmowego telefonowania używając osobnej aplikacji OpenSeizureDetector Dialler App
         \n      - Dodano Uniwersalny Unikalny Identyfikator (UUID) do alarmów SMS tak że mogą być widoczne u odbiorcy jako przysłane od OpenSeizureDetector.
         \n V3.4.0 - Sie 2020
         \n    - Dodano obsługę źródeł danych BLE
     </string>
     <string name="UpgradeMsg">
-        OpenSeizureDetector nie zbiera żadnych danych osobowych.
-        Oznacza to że nie mam możliwości kontaktu z użytkownikami jeśli znajdę w
-		apce błąd o którym powinni wiedzieć.   \nProszę zasubskrybuj newsletter na
-        http://openseizuredetector.org.uk, lub profil apki na Facebooku https://www.facebook.com/openseizuredetector.
-        abym w razie potrzeby mógł się skontaktować.\nDziękuję!  Graham \ngraham@openseizuredetector.org.uk
-        \n\nZmiany w tej wersji:
-        \n
+        OpenSeizureDetector nie zbiera żadnych danych osobowych. Oznacza to że nie mam możliwości kontaktu z użytkownikami jeśli znajdę błąd w aplikacji o którym powinni wiedzieć.\n
+		Proszę zasubskrybuj newsletter na\n
+        http://openseizuredetector.org.uk \n
+		lub profil aplikacji na Facebooku\n
+		https://www.facebook.com/openseizuredetector \n
+		abym w razie potrzeby mógł się skontaktować.\n
+		Dziękuję! Graham\n
+		graham@openseizuredetector.org.uk \n\n
+		Zmiany w tej wersji:
     </string>
     <string name="FirstRunDlgMsg">
-        OpenSeizureDetector nie zbiera żadnych danych osobowych.
-        Oznacza to że nie mam możliwości kontaktu z użytkownikami jeśli znajdę w
-		apce błąd o którym powinni wiedzieć.   \nProszę zasubskrybuj newsletter na
-        http://openseizuredetector.org.uk, lub profil apki na Facebooku https://www.facebook.com/openseizuredetector.
-        abym w razie potrzeby mógł się skontaktować.\nDziękuję!  Graham \ngraham@openseizuredetector.org.uk
-        \n\nZmiany w tej wersji:
+        OpenSeizureDetector nie zbiera żadnych danych osobowych. Oznacza to że nie mam możliwości kontaktu z użytkownikami jeśli znajdę błąd w aplikacji o którym powinni wiedzieć.\n
+		Proszę zasubskrybuj newsletter na\n
+        http://openseizuredetector.org.uk \n
+		lub profil aplikacji na Facebooku\n
+		https://www.facebook.com/openseizuredetector \n
+        abym w razie potrzeby mógł się skontaktować.\n
+		Dziękuję! Graham\n
+		graham@openseizuredetector.org.uk\n\n
+		Zmiany w tej wersji:
     </string>
-    <string name="ask_for_error_log">Przykro mi, OpenSeizureDetector zepsuł się.  Proszę prześlij nam emailem ten plik abyśmy mogli zobaczyć co się stało i go naprawić.\nDzięki, Graham.</string>
-    <string name="email_welcome_note">Dear OpenSeizureDetector,\n\nApplication is just crashed, please check following error log for more details.\n\n\n</string>
+	<string name="ask_for_error_log">Przykro mi, OpenSeizureDetector zepsuł się. Proszę prześlij nam emailem ten plik abyśmy mogli zobaczyć co się stało i go naprawić.\nDzięki Graham.</string>
+    <string name="email_welcome_note">Drogi OpenSeizureDetector\n\nAplikacja właśnie uległa awarii. Sprawdź dziennik błędów aby uzyskać więcej informacji.\n\n</string>
     <string name="copyright_info">OpenSeizureDetector (Używa UCE Handler\nCopyright © 2018 Rohit Sahebrao Surwase.)</string>
     <string name="okBtnTxt">OK</string>
+	<string name="closeBtnTxt">Zamknij</string>
     <string name="UpdateDialogTitleTxt">Dziękujemy za zaktualizowanie OpenSeizureDetector</string>
     <string name="FirstRunDlgTitle">Witaj w OpenSeizureDetector</string>
     <string name="SmsPermissionWarning">Problem z uprawnieniami SMS</string>
-    <string name="AppPermissionsOk">Uprawnienia apki OK</string>
-    <string name="AppPermissionsWarning">Problem z uprawnieniami apki</string>
+    <string name="AppPermissionsOk">Uprawnienia aplikacji OK</string>
+    <string name="AppPermissionsWarning">Problem z uprawnieniami aplikacji</string>
     <string name="BoundToServiceOk">Połączenie z usługą OK</string>
     <string name="BindingToService">Łączę z usługą w tle...</string>
     <string name="WatchConnectedOk">Połączenie z zegarkiem OK</string>
@@ -42,10 +48,10 @@
     <string name="WaitingForSeizureDetectorData">Czekam na dane czujnika drgawek...</string>
     <string name="SeizureDetectorSettingsReceived">Odbiór ustawień czujnika drgawek OK</string>
     <string name="WaitingForSeizureDetectorSettings">Czekam na ustawienia czujnika drgawek...</string>
-    <string name="DataSource">Źródło danych</string>
     <string name="AppTitleText">OpenSeizureDetector Android wersja </string>
+	<string name="DataSource">Źródło danych</string>
     <string name="ServerRunningOK">Serwer działa OK\n</string>
-    <string name="AccessServerAt">Dostęp do serwera: </string>
+    <string name="AccessServerAt">IP serwera:</string>
     <string name="ServerStopped">Serwer zatrzymany</string>
     <string name="Warning">UWAGA</string>
     <string name="Mute">WYCISZ</string>
@@ -53,41 +59,41 @@
     <string name="Fall">**UPADEK**</string>
     <string name="HR_Equals">Puls = </string>
     <string name="HRAlarmOff">Alarm tętna WYŁĄCZONY</string>
-    <string name="WatchAppOK">Apka zegarka OK</string>
-    <string name="WatchAppNotRunning">Apka zegarka WYŁĄCZONA</string>
+    <string name="WatchAppOK">Aplikacja zegarka OK</string>
+    <string name="WatchAppNotRunning">Aplikacja zegarka WYŁĄCZONA</string>
     <string name="WatchBatteryEquals">Bateria zegarka = </string>
     <string name="PowerEquals">Moc = </string>
-    <string name="SpectrumRatioEquals">Współczynnik spektrum = </string>
+    <string name="SpectrumRatioEquals">Współczynnik widma = </string>
     <string name="Threshold">próg</string>
     <string name="NetFault">BŁĄD SIECI</string>
-    <string name="WatchApp">Apka zegarka -----</string>
+    <string name="WatchApp">Aplikacja zegarka -----</string>
     <string name="Dashes">------</string>
     <string name="SMSWillBeSentIn">Wyślę SMS za </string>
     <string name="Cancel">ANULOWAĆ?</string>
     <string name="AcceptAlarm">Akceptuję alarm</string>
     <string name="AudibleAlarmsCancelledFor">Alarmy dźwiękowe wyciszone na </string>
     <string name="PressToReEnable"> Naciśnij by włączyć ponownie</string>
-    <string name="CancelAudibleAlarms">Wycisz alarmy dźwiękowe (tymczasowo)</string>
+    <string name="CancelAudibleAlarms">Wycisz alarmy dźwiękowe (na 10 min)</string>
     <string name="AudibleAlarmsOff">Alarmy dźwiękowe WYŁĄCZONE</string>
     <string name="Fault">BŁĄD</string>
-    <string name="authenticate">Uwierzytelnienie</string>
-    <string name="not_authenticated">Nieuwierzytelniony</string>
+    <string name="authenticate">ZALOGUJ</string>
+    <string name="not_authenticated">NIEZALOGOWANY</string>
     <string name="cancel">Anuluj</string>
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Hasło</string>
     <string name="action_sign_in">Zaloguj się lub zarejestruj</string>
-    <string name="action_sign_in_short">Logowanie</string>
+    <string name="action_sign_in_short">Zaloguj</string>
     <string name="welcome">"Witaj!"</string>
     <string name="invalid_username">Nieprawidłowa nazwa użytkownika</string>
     <string name="invalid_password">Hasło musi mieć więcej niż 5 znaków</string>
     <string name="login_failed">"Nieudane logowanie"</string>
     <string name="AdvancedModeTitle">Tryb zaawansowany</string>
-    <string name="AdvancedModeSummary">Włącza zaawansowane opcje (możesz ustawić wiele więcej rzeczy....)</string>
+    <string name="AdvancedModeSummary">Włącz zaawansowane opcje</string>
     <string name="AutoStartTitle">Autostart</string>
-    <string name="AutoStartSummary">Automatycznie włącza OpenSeizureDetector gdy włączasz telefon</string>
+    <string name="AutoStartSummary">Automatycznie włącza OpenSeizureDetector przy uruchamianiu telefonu</string>
     <string name="DataSourceTitle">Wybór źródła danych</string>
-    <string name="DataSourceSummary">Wybierz czy jako źródło danych czujnika drgawek chcesz używać zegarka Garmin, Pebble, czy połączenia sieciowego.</string>
+    <string name="DataSourceSummary">Wybierz zegarek Garmin, Pebble lub urządzenie w sieci jako źródło danych czujnika drgawek.</string>
     <string name="LogRemoteTitle">Zdalny zapis danych</string>
     <string name="LogRemoteSummary">Zapisuje dane w centralnej bazie danych OpenSeizureDetector</string>
     <string name="UseMobileTitle">Używaj internetu mobilnego</string>
@@ -97,18 +103,18 @@
     <string name="AlarmThreshSummary">Próg alarmu (domyślnie = 100)</string>
     <string name="AlarmRatioThreshTitle">Próg współczynnika alarmu</string>
     <string name="AlarmRatioThreshSummary">Próg współczynnika alarmu (domyślnie = 50). Zwiększ aby zmniejszyć czułość.</string>
-    <string name="AlarmFreqMaxTitle">AlarmFreqMax (Hz)</string>
-    <string name="AlarmFreqMaxSummary">Maksymalna częstotliwość ROI (Hz) (domyślnie = 8 Hz)</string>
-    <string name="AlarmFreqMinTitle">AlarmFreqMin (Hz)</string>
-    <string name="AlarmFreqMinSummary">Minimalna częstotliwość ROI (Hz) (domyślnie = 3 Hz)</string>
+    <string name="AlarmFreqMaxTitle">Maksymalna częstotliwość alarmowa (Hz)</string>
+    <string name="AlarmFreqMaxSummary">Maksymalna częstotliwość ROI (Hz)\n(domyślnie = 8 Hz)</string>
+    <string name="AlarmFreqMinTitle">Minimalna częstotliwość alarmowa (Hz)</string>
+    <string name="AlarmFreqMinSummary">Minimalna częstotliwość ROI (Hz)\n(domyślnie = 3 Hz)</string>
     <string name="HRAlarmEnabledTitle">Włącz alarm tętna</string>
-    <string name="HRAlarmEnabledSummary" />
+    <string name="HRAlarmEnabledSummary">Włącza alarm jeśli tętno osiągnie anomalną wartość</string>
     <string name="HRNullAlarmTitle">Alarmuj przy braku tętna</string>
-    <string name="HRNullAlarmSummary" />
+    <string name="HRNullAlarmSummary">Włącza alarm przy zerowym odczycie tętna</string>
     <string name="HRThreshMinTitle">Minimalna wartość tętna (uderzeń/min)</string>
-    <string name="HRThreshMinSummary" />
+    <string name="HRThreshMinSummary">Dolny próg poniżej którego tętno interepretowane jest jako anomalne</string>
     <string name="HRThreshMaxTitle">Maksymalna wartość tętna (uderzeń/min)</string>
-    <string name="HRThreshMaxSummary" />
+    <string name="HRThreshMaxSummary">Górny próg powyżej którego tętno interpretowane jest jako anomalne</string>
     <string name="BasicPrefTitle">Podstawowe</string>
     <string name="BasicPrefSummary">Ustawienia podstawowe</string>
     <string name="accept_alarm">Zaakceptuj alarm</string>
@@ -117,168 +123,332 @@
     <string name="test_alarm_beep">Test alarmu dźwiękowego</string>
     <string name="test_warning_beep">Test dźwięku ostrzeżeń</string>
     <string name="test_sms_alarm_notification">Wyślij próbny alarm SMS</string>
-    <string name="data_log_manager">Menadżer dziennika danych</string>
-    <string name="view_log_entries">Wyświetl dziennik danych</string>
+    <string name="data_log_manager">Menedżer udost. danych</string>
+    <string name="view_log_entries">Podgląd wpisów</string>
     <string name="export_data">Eksport danych</string>
     <string name="settings">Ustawienia</string>
-    <string name="about">O apce...</string>
-    <string name="about_text">OpenSeizureDetector system\n alarmowania i wykrywania drgawek epileptycznych (toniczno-klonicznych) \n Używa zegarka Pebble Smart\n do wykrywania drgawek związanych z atakiem \n informując opiekunów za pomocą\n alarmów dźwiękowych oraz SMS.\n System jest darmowy oraz otwarty - odwiedź \n http://openseizuredetector.org.uk aby dowiedzieć się więcej. Wszelkie uwagi proszę zgłaszać do graham@openseizuredetector.org.uk\n lub na repozytorium github projektu \n - https://github.com/OpenSeizureDetector</string>
-    <string name="credits_text">Apka Android i na zegarek \n copyright Graham Jones, 2015.\n Używa następujących bibliotek:\n - SYLT-FFT - https://github.com/stg/SYLT-FFT by D. Taylor.\n - NanoHTTPD - https://github.com/NanoHttpd/nanohttpd\n - jQuery - http://jquery.org\n - jBeep - http://www.ultraduz.com.br\n - Chartjs - http://www.chartjs.org\n - MPAndroidChart - https://github.com/PhilJay/MPAndroidChart\n - UCE-Handler - https://github.com/RohitSurwase/UCE-Handler\n \n Logo wzorowane jest na Star of life2 by Verdy P, \n Licencja Public Domain via\n Wikimedia Commons (http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).</string>
+    <string name="about">O aplikacji</string>
+    <string name="about_text">OpenSeizureDetector to system alar-\nmowania i wykrywania drgawek epi-\nleptycznych (toniczno-klonicz-\nnych).\nUżywa zegarka Pebble Smart\ndo wykrywania drgawek związanych z napadem informując opiekunów za pomocą alarmów dźwiękowych oraz SMS. System jest darmowy oraz otwarty. Odwiedź\n http://openseizuredetector.org.uk \naby dowiedzieć się więcej.\nWszelkie uwagi proszę zgłaszać do graham@openseizuredetector.org.uk \nlub na repozytorium github projektu\n https://github.com/OpenSeizureDetector</string>
+    <string name="credits_text">Aplikacja na system Android i na zegarek.\nCopyright Graham Jones, 2015.\nUżywa następujących bibliotek:\n- SYLT-FFT - https://github.com/stg/SYLT-FFT by D. Taylor.\n- NanoHTTPD - https://github.com/NanoHttpd/nanohttpd\n- jQuery - http://jquery.org\n- jBeep - http://www.ultraduz.com.br\n- Chartjs - http://www.chartjs.org\n- MPAndroidChart - https://github.com/PhilJay/MPAndroidChart\n- UCE-Handler - https://github.com/RohitSurwase/UCE-Handler\n\nLogo wzorowane jest na Star of life2 by Verdy P, \nLicencja Public Domain via\nWikimedia Commons (http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).</string>
     <string name="edit_settings">Zmień ustawienia</string>
     <string name="sms_location_alarm_active">SMS będzie zawierać lokalizację</string>
     <string name="sms_location_alarm_disabled">SMS nie będzie zawierać lokalizacji</string>
-    <string name="cancel_audible_not_sending_sms">Wyłączono alarmy dźwiękowe - nie wysyłam SMS</string>
+    <string name="cancel_audible_not_sending_sms">Wyłączono alarmy dźwiękowe - nic nie robię!</string>
+	<!--<string name="sms_alarm_disabled">Wyłączono alarmy SMS</string>-->
     <string name="no_wifi_connection">Stan sieci zmieniony - brak połączenia Wifi</string>
     <string name="no_active_network">Stan sieci zmieniony - brak aktywnych sieci</string>
-    <string name="problem_parsing_preferences">Problem z ustawieniami - to nie zadziała - proszę wrócić do ustawień i poprawić to!</string>
+    <string name="problem_parsing_preferences">Problem z ustawieniami - to nie zadziała - wróć do ustawień i popraw je!</string>
     <string name="send_sms_last_location">Wysyłka SMS - ostatnia lokalizacja to </string>
-    <string name="failed_to_send_sms">BŁĄD: NIE UDAŁO SIĘ WYSŁAĆ SMSa</string>
-    <string name="sms_alarms_disabled">Wyłączono alarmy SMS - nic nie zrobię!</string>
+    <string name="failed_to_send_sms">BŁĄD: NIE UDAŁO SIĘ WYSŁAĆ SMS-a</string>
+    <string name="sms_alarms_disabled">Wyłączono alarmy SMS</string>
     <string name="phone_alarm_disabled">Alarmy telefoniczne wyłączone</string>
-    <string name="test_phone_alarm_notification">Sprawdź alarm telefoniczny</string>
-    <string name="DiallerNotInstalledWarning"><a href="https://github.com/OpenSeizureDetector/Dialler/tree/master/app/release/app-release.apk">OpenSeizureDetector Dialer App</a> niezainstalowana - wymagana dla alarmów telefonicznych.</string>
+    <string name="test_phone_alarm_notification">Test alarmu telefonicznego</string>
+    <string name="DiallerNotInstalledWarning"><a href="https://github.com/OpenSeizureDetector/Dialler/tree/master/app/release/app-release.apk">OpenSeizureDetector Dialer App</a> niezainstalowana - aplikacja wymagana dla alarmów telefonicznych.</string>
     <string name="title_devices">Urządzenia BLE</string>
     <string name="ble_not_supported">BLE nieobsługiwane</string>
-    <string name="error_bluetooth_not_supported">Bluetooth nieobsługiwane</string>
-    <string name="menu_stop">STOP</string>
-    <string name="menu_scan">SKANUJ</string>
+    <string name="error_bluetooth_not_supported">Bluetooth nieobsługiwany</string>
+    <string name="menu_stop">Stop</string>
+    <string name="menu_scan">Skanuj</string>
     <string name="unknown_device">Nieznane urządzenie</string>
     <string name="select_ble_device_title">Wybierz urządzenie BLE (tylko dla źródeł danych Bluetooth)</string>
-    <string name="select_ble_device_desc">Wybierz urządzenie Bluetooth Low Energy (BLE) gdy używasz Bluetooth jako źródła danych wykrywania ataków (akcelerometr i tętno).</string>
+    <string name="select_ble_device_desc">Wybierz urządzenie Bluetooth Low Energy (BLE) gdy używasz Bluetooth jako źródła danych wykrywania napadów (akcelerometr i tętno).</string>
     <string name="basic_settings_title">Podstawowe</string>
+    <string name="basic_settings_summary">Ustawienia podstawowe</string>
+	<string name="general_settings_title">Ogólne</string>
     <string name="general_settings_summary">Ustawienia ogólne</string>
     <string name="alarms_settings_title">Alarmy</string>
     <string name="alarms_settings_summary">Ustawienia alarmów</string>
-    <string name="seizure_detector_settings_title">Wykrywanie ataków</string>
-    <string name="seizure_detector_settings_summary">Ustawienia wykrywania ataków</string>
+    <string name="seizure_detector_settings_title">Wykrywanie napadów</string>
+    <string name="seizure_detector_settings_summary">Ustawienia wykrywania napadów</string>
+	<string name="pebble_datasource_summary">Ustawienia źródła danych Pebble</string>
     <string name="network_datasource_title">Sieciowe źródło danych</string>
     <string name="network_datasource_summary">Ustawienia sieciowego źródła danych</string>
     <string name="pebble_datasource_title">Źródło danych Pebble</string>
-    <string name="pebble_datasource_summary">Ustawienia źródła danych Pebble</string>
-    <string name="basic_settings_summary">Ustawienia podstawowe</string>
-    <string name="general_settings_title">Ogólne</string>
-    <string name="log_alarms_summary">Zapisuje alarmy na karcie SD</string>
-    <string name="log_alarms_title">Zapis alarmów na karcie SD</string>
-    <string name="log_data_summary">Regularnie zapisuje wszystkie dane na karcie SD</string>
-    <string name="log_data_title">Zapis danych na karcie SD</string>
-    <string name="log_data_remote_summary">Zapisuje dane w centralnej bazie danych OpenSeizureDetector</string>
-    <string name="log_data_remote_title">Zdalny zapis danych</string>
-    <string name="log_data_remote_mobile_summary">Używa internetu mobilnego do zdalnego zapisu danych</string>
+	<string name="select_datasource_title">Wybierz źródło danych</string>
+	<string name="select_datasource_summary">Wybierz źródło danych dla wykrywania napadów</string>
+    <string name="log_alarms_summary">Zapisuje zdarzenia alarmów w pamięci telefonu</string>
+    <string name="log_alarms_title">Zapisz zdarzenia alarmów</string>
+	<string name="log_data_summary">Zapisuje dane w pamięci telefonu</string>
+    <string name="log_data_title">Zapisz dane</string>
+	<string name="log_data_remote_summary">Zapisuje dane w centralnej bazie systemu udostępniania danych</string>
+    <string name="log_data_remote_title">Udostępniaj dane</string>
+	<string name="log_data_remote_mobile_summary">Używa internetu mobilnego w celu udostę-\npniania danych</string>
     <string name="log_data_remote_mobile_title">Użyj internetu mobilnego</string>
-    <string name="remote_uname_title">Nazwa użytkownika dla zdalnego zapisu danych</string>
-    <string name="remote_uname_summary">Nazwa użytkownika</string>
-    <string name="remote_passwd_summary">Hasło dla zdalnego zapisu danych</string>
+	<string name="remote_uname_title">Nazwa użytkownika</string>
+    <string name="remote_uname_summary">Nazwa użytkownia w systemie udostępniania danych</string>
+    <string name="remote_passwd_summary">Hasło w systemie udostępniania danych</string>
     <string name="remote_passwd_title">Hasło</string>
-    <string name="wearer_id_summary">ID użytkownika</string>
+	<string name="wearer_id_summary">ID użytkownika</string>
     <string name="wearer_id_title">ID użytkownika noszącego zegarek (z OSD Web API)</string>
-    <string name="remote_url_summary">URL dla zdalnego zapisu danych</string>
+	<string name="remote_url_summary">URL dla zdalnego zapisu danych</string>
     <string name="remote_url_title">URL</string>
-    <string name="prevent_sleep_summary">Zapobiega wygaszaniu ekranu gdy aplikacja jest uruchomiona</string>
+	<string name="prevent_sleep_summary">Zapobiega wygaszaniu ekranu gdy aplikacja jest uruchomiona</string>
     <string name="prevent_sleep_title">Zapobiegaj wygaszaniu ekranu</string>
-    <string name="data_update_period_title">Częstość wyświetlania informacji (ms).</string>
+	<string name="data_update_period_summary">Czas (w milisekundach) między wyświetleniami odczytów</string>
+    <string name="data_update_period_title">Częstość odświeżania wyświetlania (ms)</string>
     <string name="auto_start_summary">Automatyczny start aplikacji po włączeniu telefonu</string>
     <string name="auto_start_title">Autostart aplikacji</string>
     <string name="app_version_summary">Numer wersji aplikacji - decyduje czy pokazać ekran powitalny</string>
     <string name="app_version_title">Wersja aplikacji</string>
     <string name="latch_alarms_summary">Wymagaj ręcznego wyciszenia alarmów</string>
-    <string name="latch_alarms_title">Alarm ciągły</string>
+    <string name="latch_alarms_title">Alarmy ciągłe</string>
     <string name="latch_timer_period_title">Czas trwania alarmu ciągłego (s)</string>
-    <string name="latch_timer_period_summary">Czas w sekundach trwania alarmu nim zostanie on automatycznie wyciszony</string>
-    <string name="enable_audible_alarm_summary">Alarmuje dźwiękiem gdy zostanie wykryty atak</string>
+    <string name="latch_timer_period_summary">Czas (w sekundach) trwania alarmu nim zostanie automatycznie wyciszony</string>
+    <string name="enable_audible_alarm_summary">Alarmuje dźwiękiem gdy zostanie wykryty napad</string>
     <string name="enable_audible_alarm_title">Włącz alarmy dźwiękowe</string>
-    <string name="enable_audible_warning_summary">Ostrzega dźwiękiem gdy wystąpi podejrzenie początku ataku</string>
+    <string name="enable_audible_warning_summary">Ostrzega dźwiękiem gdy wystąpi podejrzenie początku napadu</string>
     <string name="enable_audible_warning_title">Włącz ostrzeżenia dźwiękowe</string>
-    <string name="enable_audible_fault_summary">Informuje dźwiękiem gdy wystąpi awaria (np. brak komunikacji z zegarkiem)</string>
+    <string name="enable_audible_fault_summary">Informuje dźwiękiem gdy wystąpi awaria\n(np. brak komunikacji z zegarkiem)</string>
     <string name="enable_audible_fault_title">Informuj dźwiękiem o awariach</string>
     <string name="fault_timer_period_title">Opóźnienie alarmu o awariach (s)</string>
     <string name="fault_timer_period_summary">Czas przez jaki alarmy o awariach są wyciszone nim zostaną włączone</string>
     <string name="use_mp3_alarm_summary">Wydaje dźwięki za pomocą plików MP3 zamiast wbudowanego generatora tonów</string>
     <string name="use_mp3_alarm_title">Używaj alarmów MP3</string>
-    <string name="enable_sms_alarm_summary">Wysyła SMS w wypadku wystąpienia alarmu. UWAGA: SMS ZAWIERA LOKALIZACJĘ UŻYTKOWNIKA. Wyłącz tą opcję jeśli udostępnianie lokalizacji jest niepożądane</string>
-    <string name="enable_sms_alarm_title">Włącz powiadomienia SMS</string>
-    <string name="sms_numbers_summary">Numery telefonów (oddzielone przecinkiem) na które będą wysyłane SMS</string>
+    <string name="enable_sms_alarm_summary">Wysyła SMS wystąpienia alarmu.\nUWAGA: SMS zawiera lokalizację użytkowni-\nka. Wyłącz tę opcję jeśli udostęnianie lokalizacji jest niepożądane.</string>
+    <string name="enable_sms_alarm_title">Włącz powiadomienia SMS o alarmach</string>
+    <string name="sms_numbers_summary">Numery telefonów (oddzielone przecinkiem) na które będą wysyłane SMS-y</string>
     <string name="sms_numbers_title">Numery telefonów</string>
-    <string name="sms_message_summary">Treść SMS gdy zostanie wykryty atak</string>
-    <string name="sms_message_title">Treść SMS</string>
-    <string name="server_ip_summary">Adres IP serwera OpenSeizureDetector (np. 192.168.1.175).</string>
+    <string name="sms_message_summary">Treść SMS-a gdy zostanie wykryty napad</string>
+    <string name="sms_message_title">Treść SMS-a</string>
+    <string name="server_ip_summary">Adres IP serwera OpenSeizureDetector\n(np. 192.168.1.175).</string>
     <string name="server_ip_title">Adres IP serwera</string>
-    <string name="network_update_period_summary">Odstęp w milisekundach pomiędzy żądaniami danych z serwera</string>
-    <string name="network_update_period_title">Częstość aktualizacji danych (ms)</string>
-    <string name="connection_timeout_title">Czas na połączenie z serwerem (ms)</string>
-    <string name="read_timeout_summary" />
-    <string name="read_timeout_title">Czas na odczyt danych (ms)</string>
-    <string name="ble_device_settings_title">Ustawienia urządzeń BLE</string>
-    <string name="ble_mac_addr_title">Adres urządzenia</string>
-    <string name="ble_device_name_summary">Nazwa urządzenia BLE</string>
-    <string name="ble_device_name_title">Nazwa urządzenia</string>
+    <string name="network_update_period_summary">Czas w milisekundach pomiędzy żądaniami wysłania danych z serwera</string>
+    <string name="network_update_period_title">Częstość odświeżania danych (ms)</string>
+    <string name="connection_timeout_summary">Czas oczekiwania na połączenie z serwerem (w milisekundach) powyżej którego następuje rezygnacja z próby połączenia</string>
+	<string name="connection_timeout_title">Czas oczekiwania na poł. z serwerem (ms)</string>
+	<string name="read_timeout_summary"/>Czas oczekiwania na odczyt danych z serwera (w milisekundach) powyżej którego następuje rezygnacja z próby odczytu
+    <string name="read_timeout_title">Czas oczekiwania na odczyt danych (ms)</string>
+    <string name="ble_device_settings_title">Ustawienia urządzenia BLE</string>
+	<string name="ble_mac_addr_summary">MAC adres urządzenia BLE ustawionego jako źródło danych</string>
+    <string name="ble_mac_addr_title">MAC adres urządzenia BLE</string>
+    <string name="ble_device_name_summary">Nazwa urządzenia BLE ustawionego jako źródło danych</string>
+    <string name="ble_device_name_title">Nazwa urządzenia BLE</string>
     <string name="user_interface_settings_title">Ustawienia interfejsu użytkownika</string>
     <string name="pebble_update_period_summary">Jak często dane są przesyłane do telefonu (nie wpływa na częstość analizy - do tego służy Częstość próbkowania)</string>
     <string name="mute_period_summary">Na jak długo są wyciszane alarmy po przytrzymaniu przycisku w górę</string>
-    <string name="pebble_update_period_title">Częstość przesyłu danych (s)</string>
+    <string name="pebble_update_period_title">Częstość wysyłania danych (s)</string>
     <string name="mute_period_title">Czas wyciszenia (s)</string>
     <string name="manual_alarm_period_summary">Na jak długo włączany jest alarm po przytrzymaniu przycisku w dół</string>
     <string name="manual_alarm_period_title">Czas trwania alarmu ręcznego (s)</string>
-    <string name="warn_time_summary">Czas oczekiwania przed włączeniem ostrzeżenia (domyślnie = 5s)</string>
-    <string name="warn_time_title">Zegar ostrzegania (s)</string>
-    <string name="alarm_time_summary">Czas oczekiwania przed włączeniem alarmu (domyślnie = 10s)</string>
-    <string name="alarm_time_title">Zegar alarmu (s)</string>
-    <string name="alarm_threshold_title">Próg alarmu</string>
-    <string name="alarm_ratio_thresh_summary">Próg współczynnika alarmu (domyślnie = 50). Zwiększ tą wartość aby zmniejszyć wrażliwość jeśli występują fałszywe alarmy</string>
+    <string name="warn_time_summary">Czas oczekiwania przed włączeniem ostrzeżenia (domyślnie = 5 s)</string>
+    <string name="warn_time_title">Opóźnienie ostrzeżenia (s)</string>
+    <string name="alarm_time_summary">Czas oczekiwania przed włączeniem alarmu (domyślnie = 10 s)</string>
+    <string name="alarm_time_title">Opóźnienie alarmu (s)</string>
+    <string name="alarm_threshold_summary">Próg alarmu (domyślnie = 100)</string>
+	<string name="alarm_threshold_title">Próg alarmu</string>
+	<string name="alarm_ratio_thresh_summary">Próg współczynnika alarmu (domyślnie = 50). Zwiększ tę wartość aby zmniejszyć czułość jeśli występują fałszywe alarmy</string>
     <string name="alarm_ratio_thresh_title">Próg współczynnika alarmu</string>
-    <string name="alarm_freq_min_summary">Minimalna częstotliwość ROI (Hz) (domyślnie = 3 Hz)</string>
+    <string name="alarm_freq_min_summary">Minimalna częstotliwość ROI (Hz)\n(domyślnie = 3 Hz)</string>
     <string name="alarm_freq_min_title">Minimalna częstotliwość alarmowa (Hz)</string>
-    <string name="alarm_freq_max_summary">Maksymalna częstotliwość ROI (Hz) (domyślnie = 10 Hz)</string>
+    <string name="alarm_freq_max_summary">Maksymalna częstotliwość ROI (Hz)\n(domyślnie = 8 Hz)</string>
     <string name="alarm_freq_max_title">Maksymalna częstotliwość alarmowa (Hz)</string>
-    <string name="sample_period_summary">Odstęp (w sekundach) między analizami danych</string>
-    <string name="sample_period_title">Częstość próbkowania (s)</string>
+    <string name="sample_period_summary">Czas (w sekundach) trwania próbki do analizy</string>
+    <string name="sample_period_title">Czas trwania próbki (s)</string>
     <string name="seizure_detect_mode_summary">Wybierz jeden z trzech dostępnych trybów pracy</string>
     <string name="seizure_detect_mode_title">Tryb wykrywania drgawek</string>
-    <string name="sample_freq_summary">Większa częstość jest dokładniejsza, ale szybciej zużywa baterię</string>
+    <string name="sample_freq_summary">Większa częstość jest dokładniejsza ale szybciej zużywa baterię</string>
+	<string name="sample_freq_title">Częstość próbkowania</string>
     <string name="fall_detect_title">Ustawienia wykrywania upadków</string>
+	<string name="fall_detect_active_summary">Uruchamia alarm upadku dla anomalnych wartości przyspieszenia (odczyt z akcelerometru)</string>
     <string name="fall_detect_active_title">Włącz funkcję wykrywania upadków</string>
-    <string name="fall_thresh_min_title">Dolny próg wykrycia upadku (mg)</string>
+	<string name="fall_thresh_min_summary">Dolny próg wartości przyspieszenia (liczonego w tysięcznych częściach przyspieszenia ziemskiego <b>g</b>) poniżej którego dane z akcelerometru będą ignorowane do analizy zdarzenia upadku</string>
+    <string name="fall_thresh_min_title">Dolny próg wykrycia upadku (g/1000)</string>
+	<string name="fall_thresh_max_summary">Górny próg wartości przyspieszenia (liczonego w tysięcznych częściach przyspieszenia ziemskiego <b>g</b>) powyżej którego dane z akcelerometru będą ignorowane do analizy zdarzenia upadku</string>
+	<string name="fall_thresh_max_title">Górny próg wykrycia upadku (g/1000)</string>
     <string name="fall_window_title">Okno czasowe wykrycia upadku (ms)</string>
     <string name="watch_comms_title">Ustawienia komunikacji z zegarkiem</string>
     <string name="debug_mode_summary">Włączanie i wyłączanie trybu debugowania</string>
-    <string name="app_restart_timeout_summary">Czas (w sekundach) przez jaki czekamy na dane z zegarka nim uznamy że aplikacja na zegarku nie działa więc restartujemy ją</string>
-    <string name="app_restart_timeout_title">Czas (s) oczekiwania na dane nim aplikacja na zegarku zostanie zrestartowana</string>
-    <string name="display_spectrum_mode_title">Wybierz tryb wyświetlania spektrum</string>
-    <string name="display_spectrum_mode_summary">Włącz lub wyłącz wyświetlanie spektrum</string>
+	<string name="debug_mode_title">Tryb debugowania</string>
+    <string name="app_restart_timeout_summary">Czas (w sekundach) oczekiwania na dane z zegarka po którym algorytm uznaje że aplikacja na zegarku nie działa</string>
+    <string name="app_restart_timeout_title">Czas (s) oczekiwania na dane z zegarka</string>
+    <string name="display_spectrum_mode_title">Tryb wyświetlania widma</string>
+    <string name="display_spectrum_mode_summary">Włącz lub wyłącz wyświetlanie widma</string>
     <string name="analysis_prefs_title">Analiza</string>
     <string name="watch_comms_settings_title">Ustawienia komunikacji z zegarkiem</string>
-    <string name="debug_mode_title">Tryb debugowania</string>
-    <string name="fall_thresh_max_title">Górny próg wykrycia upadku (mg)</string>
-    <string name="sample_freq_title">Wybierz częstość próbkowania</string>
-    <string name="alarm_threshold_summary">Próg alarmu (domyślnie = 100)</string>
-    <string name="ble_mac_addr_summary">Adres MAC źródła danych urządzenia BLE</string>
-    <string name="data_update_period_summary">Częstość wyświetlania informacji w milisekundach</string>
-    <string name="select_datasource_title">Wybierz źródło danych</string>
-    <string name="select_datasource_summary">Wybierz które źródło danych wykrywania ataków chcesz używać</string>
-    <string name="ParsePreferenceWarning">Problem z ustawieniami - coś nie będzie działać - proszę wrócić do Ustawień i poprawić!</string>
-    <string name="ErrorWritingLogFileWarning">BŁĄD zapisu pliku dziennika</string>
+    <string name="ParsePreferenceWarning">Problem z ustawieniami - coś nie będzie działać - wróć do ustawień i popraw je!</string>
+    <string name="ErrorWritingLogFileWarning">Błąd zapisu pliku dziennika</string>
     <string name="RestartingServerMsg">Zmieniono uprawnienia - restartuję serwer</string>
-    <string name="ErrorReleasingWakelockMsg">Problem ze zwolnieniem Wakelock\'a</string>
+    <string name="ErrorReleasingWakelockMsg">Problem ze uwolnieniem Wakelock\'a</string>
     <string name="SMSAlarmAlreadySentMsg">Alarm SMS już wysłany - nie wysyłam ponownie</string>
     <string name="SMSAlarmDisabledNotSendingMsg">Alarmy SMS wyłączone - nie wysyłam alarmu SMS</string>
-    <string name="PleaseForceStopOSDorRebootMsg">BŁĄD - OpenSizureDetector nie uruchomił się poprawnie - proszę wyłączyć go na siłę lub uruchomić ponownie telefon.</string>
-    <string name="SMSPermissionsDeniedMsg">BŁĄD - odmówiono uprawnień do SMS\'ów lub lokalizacji - nie wysyłam SMS\'ów</string>
-    <string name="DatasourceTitle">\"Źródło danych: \"</string>
-    <string name="DefaultingToPhoneMsg">\" nie rozpoznano - używam czujnika w telefonie\"</string>
-    <string name="SMSAlarmCancelledMsg">Anulowano alarmy SMS</string>
+    <string name="PleaseForceStopOSDorRebootMsg">Błąd - OpenSeizureDetector nie uruchomił się poprawnie - wymuś zatrzymanie OSD lub uruchom ponownie telefon.</string>
+    <string name="SMSPermissionsDeniedMsg">Błąd - odmówiono uprawnień do wysyłania SMS-ów lub lokalizacji - nie wysyłam SMS-a</string>
+    <string name="DatasourceTitle">\"Źródło danych\"</string>
+    <string name="DefaultingToPhoneMsg">\" nie rozpoznano - domyślny wybór -> Telefon\"</string>
+    <string name="SMSAlarmCancelledMsg">Anulowano alarm SMS</string>
     <string name="StopServerTitle">Zatrzymaj serwer</string>
     <string name="StartServerTitle">Uruchom serwer</string>
     <string name="StartingTitle">Uruchamiam...</string>
-    <string name="AcceptAlarmBtnTxt">Zaakceptuj alarm</string>
-    <string name="CancelAudibleButtonTxt">Wycisz (tymczasowo)</string>
-    <string name="DataLoggingSettingsTitle">Ustawienia dziennika danych</string>
-    <string name="HeartRateAlarmSettingsTitle">Ustawienia tętna</string>
-    <string name="AlarmFunctionalitySettingsTitle">Ustawienia alarmów</string>
-    <string name="AudibleAlarmSettingsTitle">Ustawienia alarmów dźwiękowych</string>
-    <string name="SMSAlarmSettingsTitle">Ustawienia alarmów SMS</string>
+    <string name="AcceptAlarmBtnTxt">Akceptuj alarm</string>
+    <string name="CancelAudibleButtonTxt">Wycisz (na 10 min)</string>
+    <string name="DataLoggingSettingsTitle">Ustawienia zapisu danych</string>
+    <string name="HeartRateAlarmSettingsTitle">Ustawienia alarmu tętna</string>
+    <string name="AlarmFunctionalitySettingsTitle">Ustawienia funkcji alarmu</string>
+    <string name="AudibleAlarmSettingsTitle">Ustawienia alarmu dźwiękowego</string>
+    <string name="SMSAlarmSettingsTitle">Ustawienia alarmu SMS</string>
     <string name="DefaultSMSMsgText">**ALARM! SPRAWDŹ PODOPIECZNEGO!**</string>
-    <string name="AlarmLoggingTitle">Dziennik alarmów</string>
-    <string name="WarnTimeSummary">Czas oczekiwania przed włączeniem ostrzeżenia (domyślnie = 5 sek)</string>
-    <string name="WarnTimeTitle">Opóźnienie ostrzeżenia (sek)</string>
-    <string name="AlarmTimeSummary">Czas oczekiwania przed włączeniem alarmu (domyślnie = 10 sek)</string>
-    <string name="AlarmTimeTitle">Opóźnienie alarmu (sek)</string>
+    <string name="AlarmLoggingTitle">Zapisywanie alarmów</string>
+    <string name="WarnTimeSummary">Czas oczekiwania przed włączeniem ostrzeżenia (domyślnie = 5 s)</string>
+    <string name="WarnTimeTitle">Opóźnienie ostrzeżenia (s)</string>
+    <string name="AlarmTimeSummary">Czas oczekiwania przed włączeniem alarmu (domyślnie = 10 s)</string>
+    <string name="AlarmTimeTitle">Opóźnienie alarmu (s)</string>
+	<string name="O2SatSettingsTitle">Ustawienia alarmu saturacji krwi (SpO2)</string>
+	<string name="O2Sat_enabled_summary">Włącz alarm jeśli zostanie wykryta niska saturacja SpO2</string>
+	<string name="O2Sat_enabled_title">Włącz alarm SpO2</string>
+    <string name="O2SatNullAlarmSummary">Włącz alarm gdy odczyt saturacji jest zerowy</string>
+	<string name="O2SatNullAlarmTitle">Włącz alarm gdy SpO2 = 0</string>
+    <string name="O2SatThreshMinTitle">Próg alarmu niskiego poziomu saturacji (%)</string>
+	<string name="O2SatThreshMinSummary">Dolny próg (%) włączający alarm niskiego poziomu saturacji</string>
+    <string name="title_activity_authenticate">Zaloguj do systemu udost. danych</string>
+    <string name="logout">Wyloguj</string>
+    <string name="logged_in_with_token">ZALOGOWANY</string>
+    <string name="local_database">Menedżer udostępniania danych</string>
+    <string name="remote_database">Udostępnione dane</string>
+    <string name="num_local_events">Liczba zdarzeń zapisanych w telefonie: </string>
+    <string name="num_local_datapoints">"Liczba p. pom. zapisanych w telefonie: "</string>
+    <string name="view_remote_db_btn">Podgląd zdalnej b. danych</string>
+    <string name="report_seizure">Zgłoś napad</string>
+    <string name="date">"Data: "</string>
+    <string name="select_date">Wybierz datę</string>
+    <string name="time">"Godzina: "</string>
+    <string name="cancelBtnTxt">Anuluj</string>
+    <string name="select_time">Wybierz godzinę</string>
+    <string name="EventsInLocalDb">Zdarzenia zapisane w telefonie</string>
+    <string name="createdNewEvent">Wygenerowane ręcznie nowe zdarzenie alarmu</string>
+    <string name="DatapointNotFound">Nie znaleziono p. pomiarowego - nie podejmuję dalszych czynności</string>
+    <string name="logging_settings_title">Ustawienia zapisu danych</string>
+    <string name="logging_settings_summary">Ustawienia udostępniania danych oraz ich zapisu w telefonie</string>
+    <string name="eventDurationSummary">Czas zapisu danych (w sekundach) przed\ni po zdarzeniu napadu</string>
+	<string name="eventDurationTitle">Czas trwania zdarzenia (s)</string>
+	<string name="dataRetentionPeriodTitle">Czas przechowywania danych (dni)</string>
+    <string name="dataRetentionPeriodSummary">Czas (w dniach) przez który dane będą przecho-\nwywane i chronione przed usunięciem funkcją \'Automatycznie czyść bazę danych\'</string>
+    <string name="AutoPruneDbTitle">Automatycznie czyść bazę danych</string>
+    <string name="AutoPruneDbSummary">Okresowo automatycznie czyść (skracaj) bazę danych aby zapobiec nadmiernemu wykorzystaniu pamięci</string>
+    <string name="remoteLogPeriodSummary">Czas (w sekundach) między próbami przesłania danych na zdalny serwer. Każda próba powoduje przesłanie tylko jednego zdarzenia a nie wszystkich dostępnych danych.</string>
+    <string name="remoteLogPeriodTitle">Częstość zapisu zdalnego (s)</string>
+    <string name="ManualAlarmBtnTxt">Włącz alarm</string>
+    <string name="save">Zapisz</string>
+    <string name="event_type">Typ zdarzenia</string>
+    <string name="event_sub_type">Podtyp zdarzenia</string>
+    <string name="selectFromOptionselow">"-- wybierz opcję --"</string>
+    <string name="waitingForData">...oczekuję na dane...</string>
+    <string name="refreshBtn">Odśwież</string>
+    <string name="back">Wróć</string>
+    <string name="unvalidatedEventsTitle">Niepotwierdzone zdarzenia napadów</string>
+    <string name="register">Zarejestruj nowego użytkownika</string>
+    <string name="reset_password">Resetuj hasło</string>
+    <string name="login_to_osdapi">Zaloguj do systemu udost. danych</string>
+    <string name="login">Zaloguj</string>
+    <string name="data_sharing_status">Udostępnianie danych</string>
+    <string name="not_logging_data">Nie zapisuję danych</string>
+    <string name="not_sharing_logged_data">Nie udost. zapisanych danych</string>
+    <string name="not_logged_in">Niezalogowany</string>
+    <string name="data_sharing_setup_ok">Zalogowany</string>
+    <string name="please_confirm_seizure_events">Sprawdź udost. zdarzenia napadów</string>
+    <string name="data_sharing_log_in">Zaloguj się do systemu udost. danych</string>
+    <string name="not_updating_mobile">Nie aktualizuję korzystając z internetu mobilnego</string>
+    <string name="not_updating_no_network">Brak połączenia z siecią</string>
+    <string name="error_connecting_to_server">Błąd połączenia z serwerem</string>
+    <string name="battery_usage_optimisation_dialog_title">UWAGA: Optymalizacja użycia baterii</string>
+    <string name="battery_usage_optimisation_dialog_text">
+        <b>UWAGA: Ustawienia systemowe optymalizacji zużycia baterii są skonfigurowane do „Optymalizowania” aplikacji OpenSeizureDetector.</b>\n
+		Oznacza to, że aplikacja OSD prawdopodobnie zostanie wyłączona przez system podczas pracy na zasilaniu bateryjnym więc nie będzie działać poprawnie.\n
+        Przejdź do Ustawień telefonu i wybierz <b>Aplikacje -> OpenSeizureDetector -> Bateria -> Optymalizuj zużycie baterii</b> i zaznacz aby OpenSeizureDetector NIE był optymalizowany.
+	</string>
+    <string name="local_data">Lokalne dane</string>
+    <string name="shared_data">Udost. dane</string>
+    <string name="prune_database">Czyść bazę danych</string>
+    <string name="check_seizures_message">Czy zdarzenia oznaczone na różowo były prawdziwymi napadami czy fałszywymi alarmami?</string>
+    <string name="error_server_not_running">BŁĄD: Serwer OpenSeizureDetector nie działa - zrestartuj serwer</string>
+    <string name="system_logs">Logi syst.</string>
+    <string name="logged_in_as_user_id">Zalogowany jako: </string>
+    <string name="datasharing_notification_text">Wybierz aby uzyskać więcej informacji</string>
+    <string name="datasharing_notification_title">Problem z udostępnianiem danych</string>
+    <string name="datasharing_about_title">Udostępnianie danych</string>
+    <string name="datasharing_about_text">
+        Udostępnianie danych nie działa poprawnie. Może być to spowodowane tym, że nie zarejestrowałeś konta i nie\nzalogowałeś się do systemu udostępniania danych lub przyczyną może być problem z siecią.\n\n
+        <b>Zarejestruj się i zaloguj w systemie udostepniania danych korzystając\nz menu aplikacji lub przycisku poniżej.</b>\n\n
+        Przyczyni się to do rozowoju OpenSeizureDetector w obszarze zwiększenia niezawodności wykrywania i zmniejszenia liczby fałszywych alarmów.\n
+        Jeśli chcesz uzyskać więcej informacji na temat systemu udostępniania danych i polityki prywatności, odwiedź stronę\n
+		https://www.openseizuredetector.org.uk/?page_id=1818														   
+    </string>
+    <string name="sms_permissions_rationale_1">
+        OpenSeizureDetector wymaga uprawnień do <b>odczytywania stanu telefonu i wysyłania SMS-a</b> aby wysyłać alerty SMS po wykryciu zdarzenia napadu.\n\n
+        Po nadaniu odpowiednich uprawnień aplikacja <b>wyśle SMS-a na numery telefonów wprowadzone na stronie ustawień alarmu gdy wykryje napad</b>.\n\n
+        Naciśnij \'OK\' i nadaj uprawnienia na kolejno pojawiających się ekranach. Możesz to zrobić później przechodząc do ustawień telefonu i wybierając <b>Aplikacje -> OpenSeizureDetector -> Uprawnienia</b>
+    </string>
+    <string name="location_permissions_rationale_1">
+        OpenSeizureDetector <b>zbiera dane o lokalizacji</b> aby alarmy SMS zawierały informację o Twojej lokalizacji <b>gdy aplikacja jest zamknięta lub nie jest używana</b>.\n
+        Oznacza to, że aplikacja będzie w stanie wysyłać SMS-y zawierające twoją lokalizację na numery telefonów wprowadzone w ustawieniach alarmu w przypadku wykrycia napadu podczas pracy w tle, nawet <b>gdy aplikacja jest zamknięta</b>.\n
+        Aplikacja nie przechowuje Twojej lokalizacji ani nie udostępnia jej nikomu poza wskazanymi przez Ciebie numerami telefonów.\n\n
+        Nadaj uprawnienia na kolejno pojawiających się ekranach wybierając opcję <b>Podczas korzystania z aplikacji</b> jeśli chcesz otrzymywać informację o lokalizacji w alarmach SMS. Możesz to zrobić później przechodząc do ustawień telefonu i wybierając <b>Aplikacje -> OpenSeizureDetector -> Uprawnienia</b>.
+    </string>
+    <string name="location_permissions_2_rationale">
+        OpenSeizureDetector <b>zbiera dane o lokalizacji</b>
+        aby <b>alarmy SMS</b>
+        zawierały informację o Twojej lokalizacji
+        <b>gdy aplikacja jest zamknięta lub nie jest używana</b>.\n\n
+        Oznacza to, że aplikacja będzie w stanie wysyłać <b>SMS-y</b> zawierające
+        <b>Twoją lokalizację</b>
+        na <b>numery telefonów wprowadzone</b> w ustawieniach alarmu
+        w przypadku wykrycia napadu podczas pracy <b>w tle</b>,
+        nawet <b>gdy aplikacja jest zamknięta</b>.\n
+        Aplikacja nie przechowuje Twojej lokalizacji ani nie udostępnia jej nikomu poza wskazanymi przez Ciebie
+		numerami telefonów.\n\n
+        Nadaj uprawnienia na kolejno pojawiających się ekranach wybierając opcję <b>Zawsze zezwalaj</b>
+        jeśli chcesz otrzymywać informację o lokalizacji w alarmach SMS.\n\n
+		Możesz to zrobić później przechodząc do ustawień telefonu
+		i wybierając <b>Aplikacje -> OpenSeizureDetector -> Uprawnienia</b>.
+    </string>
+    <string name="permissions_required">Nadanie uprawnień</string>
+    <string name="about_data_sharing">O udostępnianiu danych</string>
+    <string name="privacy_policy">Polityka prywatności</string>
+    <string name="mark_unverified_events_as_unknown">Oznacz niezweryfikowane zdarzenia jako nieokreślone</string>
+    <string name="mark_unverified_events_unknown_dialog_title">Oznacz wszystkie niezwe-\nryfikowane zdarzenia jako nieokreślone</string>
+    <string name="mark_unverified_events_unknown_dialog_message">Przed oznaczeniem wszystkich nie-\nzweryfikowanych zdarzeń jako \'nieo-\nkreślone\' potwierdź że zweryfi-n\kowano wszystkie prawdziwe napady.\n\nCzy nadal oznaczać niezweryfiko-\nwane zdarzenia jako nieokreślone?</string>
+    <string name="not_logged_in_dialog_title">Niezalogowany do systemu udostępniania danych</string>
+    <string name="not_logged_in_dialog_message">Aby móc zgłaszać napady, musisz być zalogowany do systemu udostę-\npniania danych.</string>
+    <string name="include_warnings">Pokaż ostrzeżenia</string>
+    <string name="OsdAlarmEnabledSummary">Włącz oryginalny deterministyczny algorytm OpenSeizureDetector w celu wykrywania alarmów. ***Wyłączenie tej opcji nie jest zalecane za wyjątkiem testów***</string>
+    <string name="OsdAlarmEnabledTitle">Włącz oryginalny algorytm OSD</string>
+    <string name="CnnAlarmEnabledTitle">Włącz algorytm SI (Szt. Inteligencji)</string>
+    <string name="CnnAlarmEnabledSummary">Włącz algorytm sztucznej inteligencji (sieć neuronowa) do wykrywania alarmów.</string>
+    <string name="AlgorithmSelectionTitle">Wybór algorytmu wykrywania napadów</string>
+    <string name="mark_unverified_events_false_alarm_dialog_title">Oznacz wszystkie niezweryfikowane zdarzenia jako fałszywe alarmy</string>
+    <string name="mark_unverified_events_false_alarm_dialog_message">Przed oznaczeniem wszystkich nie-\nzweryfikowanych zdarzeń jako \'fał-\nszywe alarmy\' potwierdź że zwery-\nfikowano wszystkie prawdziwe napady.\n\nCzy nadal oznaczać niezweryfikowa-\nne zdarzenia jako fałszywy alarm?</string>
+    <string name="mark_unverified_events_as_false_alarm">Oznacz wszystkie niezweryfikowane zdarzenia jako fałszywe alarmy</string>
+    <string name="LogNDASummary">Cały czas udostępniaj dane o \'NDA\'. Pozwoli to rozwijać OpenSeizureDetector w obszarze ograniczania liczby fałszywych alarmów.</string>
+    <string name="LogNDATitle">Zapisuj Norm. Dzienne Aktywności (NDA)</string>
+    <string name="NDATimerStartTimeParseError">Błąd NDATimerStartTimeParse</string>
+    <string name="include_nda">Pokaż NDA</string>
+    <string name="start_nda">Włącz zapisywanie NDA</string>
+    <string name="stop_nda">Wyłącz zapisywanie NDA</string>
+    <string name="stop_nda_logging_dialog_title">Wyłączyć zapisywanie NDA?</string>
+    <string name="stop_nda_logging_dialog_meassage">Wyłączyć zapisywanie Normalnych Dziennych Aktywności (NDA)?</string>
+    <string name="start_nda_logging_dialog_title">Włączyć zapisywanie NDA?</string>
+    <string name="start_nda_logging_dialog_meassage">Włączyć zapisywanie Normalnych Dziennych Aktywności (NDA) (automatyczne wyłączenie po 24 godzinach)?</string>
+    <string name="NDATimeRemaining">"Pozostały czas zapisywania NDA (godziny): "</string>
+    <string name="stop_nda_menu_title">Wyłącz NDA</string>
+    <string name="start_nda_menu_title">Włącz NDA</string>
+    <string name="seizure_probability">Prawdopodobieństwo napadu (%)</string>
+    <string name="eventid">IdZdarzenia</string>
+    <string name="event_date">Data zdarzenia</string>
+    <string name="alarm_state">Status alarmu</string>
+    <string name="notes_about_event">Informacje o zdarzeniu</string>
+    <string name="SpO2">SpO2</string>
+    <string name="data_sharing">Udostępnianie danych</string>
+    <string name="prevent_bat_opt_summary">Nie wyświetlaj okna dialogowego optyma-\nlizacji baterii podczas uruchamiania (nie-\nktóre telefony pracujące na starszych wer-\nsjach Androida zgłaszają że OpenSeizu-\nreDetector jest zoptymalizowany nawet jeśli tak nie jest więc okno dialogowe jest uciążliwe)</string>
+    <string name="prevent_bat_opt_title">Wyłącz monit optymalizacji baterii</string>
+	<string name="data_sharing_dialog_title">OpenSeizureDetector Udostępnianie danych</string>
+    <string name="msmsalarm_false_msg">mSMSAlarm is false - not sending</string>
+    <string name="sms_alarm_already_sent_msg">Alarm SMS już wysłany - nie wysyłam ponownie</string>
+    <string name="mLocationFinder_is_null_msg">SmsTimer.onFinish - mLocationFinder is null - this should not happen! - Please report this issue!</string>
+    <string name="error_creating_remote_event_msg">Błąd podczas tworzenia zdalnego zdarzenia</string>
+    <string name="error_uploading_event_msg">Błąd przesyłania zdarzenia - data ma wartość pustą</string>
+    <string name="prune_database_title">Czyść bazę danych</string>
+    <string name="prune_database_dialog_msg">Spowoduje to usunięcie z bazy wszy-\nstkich danych starszych niż %d dni.\nNIE da się cofnąć tej operacji.\nCzy na pewno kontynuować?</string>
+    <string name="yes_button_title">TAK</string>
+    <string name="no_button_title">NIE</string>
+    <string name="privacy_policy_button_title">Polityka prywatności</string>
+    <string name="data_sharing_button_title">Udostępnianie danych</string>
 </resources>

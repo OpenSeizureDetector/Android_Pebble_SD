@@ -63,7 +63,9 @@ public class SdAlgNn {
 
     public void close() {
         Log.d(TAG,"close()");
-        interpreter.close();
+        if (interpreter != null) {
+            interpreter.close();
+        }
     }
 
     public float getPseizure(SdData sdData) {
@@ -72,6 +74,10 @@ public class SdAlgNn {
         float[][] modelOutput = new float[1][2];
         for (int j = 0; j < 125; j++) {
             modelInput[0][j][0] = (float)sdData.rawData[j];
+        }
+        if (interpreter == null) {
+            Log.d(TAG,"getPSeizure() - interpreter is null - returning zero seizure probability");
+            return (0.0f);
         }
         interpreter.run(modelInput, modelOutput);
         Log.d(TAG,"run - pSeizure="+modelOutput[0][1]);

@@ -39,6 +39,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.jtransforms.fft.DoubleFFT_1D;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -92,6 +93,7 @@ public abstract class SdDataSource {
     private short mFallWindow;
     private int mMute;  // !=0 means muted by keypress on watch.
     private SdAlgNn mSdAlgNn;
+    private SdAlgHr mSdAlgHr;
 
     // Values for SD_MODE
     private int SIMPLE_SPEC_FMAX = 10;
@@ -133,11 +135,15 @@ public abstract class SdDataSource {
         mUtil.writeToSysLogFile("SdDataSource.start()");
         updatePrefs();
 
+        mSdAlgHr = new SdAlgHr(mContext);
+
         if (mSdData.mCnnAlarmActive) {
             mSdAlgNn = new SdAlgNn(mContext);
         } else {
             mSdData.mPseizure = 0;
         }
+
+
 
         // Start timer to check status of watch regularly.
         mDataStatusTime = new Time(Time.getCurrentTimezone());
@@ -584,26 +590,39 @@ public abstract class SdDataSource {
      */
     public void hrCheck() {
         Log.v(TAG, "hrCheck()");
-        /* Check Heart Rate against alarm settings */
+        ArrayList<Boolean> checkResults;
+        checkResults = mSdAlgHr.checkHr(mSdData.mHR);
+        /* Check for heart rate fault condition */
         if (mSdData.mHRAlarmActive) {
             if (mSdData.mHR < 0) {
                 if (mSdData.mHRNullAsAlarm) {
                     Log.i(TAG, "Heart Rate Null - Alarming");
                     mSdData.mHRFaultStanding = false;
                     mSdData.mHRAlarmStanding = true;
+                    mSdData.mAdaptiveHRAlarmStanding = false;
+                    mSdData.mAverageHRAlarmStanding = false;
                 } else {
                     Log.i(TAG, "Heart Rate Fault (HR<0)");
                     mSdData.mHRFaultStanding = true;
                     mSdData.mHRAlarmStanding = false;
+                    mSdData.mAdaptiveHRAlarmStanding = false;
+                    mSdData.mAverageHRAlarmStanding = false;
                 }
-            } else if ((mSdData.mHR > mSdData.mHRThreshMax) || (mSdData.mHR < mSdData.mHRThreshMin)) {
-                Log.i(TAG, "Heart Rate Abnormal - " + mSdData.mHR + " bpm");
-                mSdData.mHRFaultStanding = false;
-                mSdData.mHRAlarmStanding = true;
             } else {
-                mSdData.mHRFaultStanding = false;
-                mSdData.mHRAlarmStanding = false;
+                mSdData.mHRAlarmStanding = checkResults.get(0);
+                mSdData.mAdaptiveHRAlarmStanding = checkResults.get(1);
+                mSdData.mAverageHRAlarmStanding = checkResults.get(2);
+                // Show an ALARM state if any of the HR alarms is standing.
+                if (mSdData.mHRAlarmStanding | mSdData.mAdaptiveHRAlarmStanding | mSdData.mAverageHRAlarmStanding) {
+                    mSdData.alarmState = 2;
+                }
             }
+        } else {
+            mSdData.mHRFaultStanding = false;
+            mSdData.mHRAlarmStanding = false;
+            mSdData.mAdaptiveHRAlarmStanding = false;
+            mSdData.mAverageHRAlarmStanding = false;
+
         }
     }
 
@@ -633,6 +652,9 @@ public abstract class SdDataSource {
                 mSdData.mO2SatFaultStanding = false;
                 mSdData.mO2SatAlarmStanding = false;
             }
+        } else {
+            mSdData.mO2SatFaultStanding = false;
+            mSdData.mO2SatAlarmStanding = false;
         }
 
     }

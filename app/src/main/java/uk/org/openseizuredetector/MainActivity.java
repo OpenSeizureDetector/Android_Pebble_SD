@@ -608,7 +608,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
                     }
                     tv = (TextView) findViewById(R.id.fallAlgTv);
-                    tv.setText("Fall");
+                    tv.setText("Fall ");
                     if (mConnection.mSdServer.mSdData.mFallActive) {
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
@@ -680,10 +680,10 @@ public class MainActivity extends AppCompatActivity {
                     //if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
                     if (mConnection.mSdServer.mSdData.mO2Sat > 0) {
                         tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
-                                + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
+                                + getString(R.string.SpO2)+" = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
                     } else {
                         tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
-                                + "O2 Sat = ---%");
+                                + getString(R.string.SpO2)+" = ---%");
                     }
                     if (mConnection.mSdServer.mSdData.mHRAlarmStanding || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
                         tv.setBackgroundColor(alarmColour);
@@ -743,7 +743,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setText(getString(R.string.data_sharing_status)
                                 + ": "
                                 + getString(R.string.data_sharing_setup_ok)
-                                + ": " + "NDA Logging");
+                                + ": " + getString(R.string.nda_logging));
                     else
                         tv.setText(getString(R.string.data_sharing_status)
                                 + ": "
@@ -829,7 +829,7 @@ public class MainActivity extends AppCompatActivity {
                             " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
                     ((TextView) findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
                             " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
-                    ((TextView) findViewById(R.id.pSeizureTv)).setText("Seizure Probability = " + pSeizurePc + "%");
+                    ((TextView) findViewById(R.id.pSeizureTv)).setText(getString(R.string.seizure_probability)+" = " + pSeizurePc + "%");
 
                     ProgressBar pb;
                     Drawable pbDrawable;
@@ -895,7 +895,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(warnTextColour);
 
                         tv = (TextView) findViewById(R.id.pebbleTv);
-                        tv.setText(getString(R.string.HR_Equals) + " --- bpm\nO2 Sat = --- %");
+                        tv.setText(getString(R.string.HR_Equals) + " --- bpm\n"+getString(R.string.o2_sat)+" = --- %");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
 
@@ -1111,7 +1111,7 @@ public class MainActivity extends AppCompatActivity {
                 dialog.cancel();
             }
         });
-        builder.setPositiveButton("Privacy Policy", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(R.string.privacy_policy_button_title, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 dialog.cancel();
                 String url = OsdUtil.PRIVACY_POLICY_URL;
@@ -1121,7 +1121,7 @@ public class MainActivity extends AppCompatActivity {
                 dialog.cancel();
             }
         });
-        builder.setNegativeButton("Data Sharing", new DialogInterface.OnClickListener() {
+        builder.setNegativeButton(R.string.data_sharing_button_title, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 dialog.cancel();
                 String url = OsdUtil.DATA_SHARING_URL;
@@ -1141,7 +1141,7 @@ public class MainActivity extends AppCompatActivity {
         View aboutView = getLayoutInflater().inflate(R.layout.data_sharing_dialog_layout, null, false);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setIcon(R.drawable.datasharing_fault_24x24);
-        builder.setTitle("OpenSeizureDetector Data Sharing");
+        builder.setTitle(R.string.data_sharing_dialog_title);
         builder.setNegativeButton(getString(R.string.cancel), null);
         builder.setPositiveButton(getString(R.string.login), new DialogInterface.OnClickListener() {
             @Override

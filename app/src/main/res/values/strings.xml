@@ -3,12 +3,10 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
-        \nV4.1.3 - Added Machine Learning (Artificial Intelligence) Detection Algorithm Option (CNN V0.24) and 'Normal Daily Activity (NDA) logging function
-        \nV4.0.7 - Improvements to Data Sharing data log manager screen.
-          - Introduced the &lt;b>Data Sharing&lt;/b> feature to allow users to share their seizure and false alarm data
-        with researchers to help improve the system.&lt;br/>
-          - Fixed &lt;b>SMS Location Alerts&lt;/b> on Android V10+ (new permissions screens)&lt;br/>
-          - Added explicit link to the &lt;b>Privacy Policy&lt;/b> &lt;br/>
+        \nV4.2.x - FIXME - ADD V4.2.x changelog.
+        \nV4.1.4 - Fixed bug in notifications on Android 12, added an Export Data function to save heart rate and accelerometer data to a file.
+        \nV4.1.3 - Fixed display of O2 Saturation in Network Data Source, and added Polish Translations by Jacek Błoniarz-Łuczak.  Fixed crash when displaying main activity during alarm on some devices.  Added adaptive Heart Rate alarms
+        \nV4.1.2 - Added Machine Learning (Artificial Intelligence) Detection Algorithm Option (CNN V0.24) and 'Normal Daily Activity (NDA) logging function
           "</string>
     <string name="UpgradeMsg">
         Please enable the new &lt;b>Data Sharing&lt;/b> feature to help improve OpenSeizureDetector!&lt;br/>
@@ -106,7 +104,7 @@
     <string name="AlarmFreqMaxSummary">Maximum Frequency of ROI (Hz) (Default = 8 Hz)</string>
     <string name="AlarmFreqMinTitle">AlarmFreqMin (Hz)</string>
     <string name="AlarmFreqMinSummary">Minimum Frequency of ROI (Hz) (Default = 3 Hz)</string>
-    <string name="HRAlarmEnabledTitle">Enable Heart Rate Alarm</string>
+    <string name="HRAlarmEnabledTitle">Enable Simple Heart Rate Alarm</string>
     <string name="HRAlarmEnabledSummary" />
     <string name="HRNullAlarmTitle">Treat a Null heart rate as an alarm condition</string>
     <string name="HRNullAlarmSummary" />
@@ -263,8 +261,11 @@
     <string name="sample_freq_title">Select Sample Frequency</string>
     <string name="fall_detect_title">Fall Detector Settings</string>
     <string name="fall_detect_active_title">Enable Fall Detection Function</string>
+    <string name="fall_detect_active_summary">Enable Fall Detection Function</string>
     <string name="fall_thresh_min_title">Fall Detection Lower Threshold (milli-g)</string>
     <string name="fall_thresh_max_title">Fall Detection Upper Threshold (milli-g)</string>
+    <string name="fall_thresh_min_summary">Fall Detection Lower Threshold (milli-g)</string>
+    <string name="fall_thresh_max_summary">Fall Detection Upper Threshold (milli-g)</string>
     <string name="fall_window_title">Fall Detection Window (milli-seconds)</string>
     <string name="watch_comms_title">Watch Communications Settings</string>
     <string name="debug_mode_summary">Set Debug mode on or off.</string>
@@ -292,7 +293,7 @@
     <string name="AcceptAlarmBtnTxt">Accept Alarm</string>
     <string name="CancelAudibleButtonTxt">Cancel Audible (temporarily)</string>
     <string name="DataLoggingSettingsTitle">Data Logging Settings</string>
-    <string name="HeartRateAlarmSettingsTitle">Heart Rate Alarm Settings</string>
+    <string name="HeartRateAlarmSettingsTitle">Simple Heart Rate Alarm Settings</string>
     <string name="AlarmFunctionalitySettingsTitle">Alarm Functionality Settings</string>
     <string name="AudibleAlarmSettingsTitle">Audible Alarm Settings</string>
     <string name="SMSAlarmSettingsTitle">SMS Alarm Settings</string>
@@ -303,7 +304,7 @@
     <string name="AlarmTimeSummary">Time to wait before initiating alarm (Default = 10 sec)</string>
     <string name="AlarmTimeTitle">AlarmTime (sec)</string>
     <string name="O2SatSettingsTitle">Blood Oxygen Saturation Alarm Settigs</string>
-    <string name="O2Sat_enabled_summary">O2Sat_enabled_summary</string>
+    <string name="O2Sat_enabled_summary">Generate alarm if low Blood Oxygen Saturation is detected</string>
     <string name="O2Sat_enabled_title">Enable O2 Saturation Alarm</string>
     <string name="O2SatNullAlarmSummary">Treat an error condition (null value of oxygen saturation reading) as an alarm condition</string>
     <string name="O2SatNullAlarmTitle">Treat Null Value as Alarm</string>
@@ -338,8 +339,8 @@
     <string name="remoteLogPeriodTitle">Remote Log Period (seconds)</string>
     <string name="ManualAlarmBtnTxt">Raise Alarm</string>
     <string name="save">Save</string>
-    <string name="event_type">Event Type:</string>
-    <string name="event_sub_type">"Event Sub-Type: "</string>
+    <string name="event_type">Event Type</string>
+    <string name="event_sub_type">Event Sub-Type</string>
     <string name="selectFromOptionselow">"-- select option --"</string>
     <string name="waitingForData">...waiting for data...</string>
     <string name="refreshBtn">Refresh</string>
@@ -363,7 +364,8 @@
     <string name="battery_usage_optimisation_dialog_text">
         <b>WARNING:  The Android System Battery Optimisation Settings are configured to \'Optimise\' OpenSeizureDetector.</b>\n\n
         This means it is likely to be shutdown when operating on battery power, so will not work correctly\n\n
-        Please go into the Phone Settings and select <b>Apps->OpenSeizureDetector->Battery->Optimise battery usage</b> and set it so that OpenSeizureDetector is NOT optimised</string>
+        Please go into the Phone Settings and select <b>Apps->OpenSeizureDetector->Battery->Optimise battery usage</b> and set it so
+        that OpenSeizureDetector is NOT optimised (on Older versions of Andoroid this option is in  </string>
     <string name="local_data">Local Data</string>
     <string name="shared_data">Shared Data</string>
     <string name="prune_database">Prune Database</string>
@@ -461,4 +463,47 @@
     <string name="start_nda_menu_title">Start NDA Logging</string>
     <string name="aw_app_not_installed_dialog_text">Please Install the OpenSeizureDetector Android Wear App</string>
     <string name="aw_app_not_installed_dialog_title">ERROR:  OpenSeizureDetector Android Wear App Not Installed</string>
+    <string name="seizure_probability">Seizure Probability (%)</string>
+    <string name="eventid">EventId</string>
+    <string name="event_date">Event Date</string>
+    <string name="alarm_state">Alarm State</string>
+    <string name="notes_about_event">notes about event</string>
+    <string name="SpO2">O2 Sat</string>
+    <string name="data_sharing">Data Sharing</string>
+    <string name="prevent_bat_opt_summary">Do not display the battery optimisation dialog on start-up (some phones report that OpenSeizureDetector is optimised, even if it is not, so the dialog is a nuissance)</string>
+    <string name="prevent_bat_opt_title">Inhibit Battery Optimisation Warning Dialog</string>
+    <string name="o2_sat">O2 Sat</string>
+    <string name="fall">Fall</string>
+    <string name="nda_logging">NDA Logging</string>
+    <string name="data_sharing_dialog_title">OpenSeizureDetector Data Sharing</string>
+    <string name="msmsalarm_false_msg">mSMSAlarm is false - not sending</string>
+    <string name="sms_alarm_already_sent_msg">SMS Alarm already sent - not re-sending</string>
+    <string name="mLocationFinder_is_null_msg">SmsTimer.onFinish - mLocationFinder is null - this should not happen! - Please report this issue!</string>
+    <string name="error_creating_remote_event_msg">Error Creating Remote Event</string>
+    <string name="error_uploading_event_msg">Error uploading event - date is null</string>
+    <string name="prune_database_title">Prune Database</string>
+    <string name="prune_database_dialog_msg">This will remove all data from the database that is more than %d days old.\nThis can NOT be undone.\nAre you sure?</string>
+    <string name="yes_button_title">YES</string>
+    <string name="no_button_title">NO</string>
+    <string name="privacy_policy_button_title">Privacy Policy</string>
+    <string name="data_sharing_button_title">Data Sharing</string>
+    <string name="HRAdaptiveAlarmEnabledTitle">Enable Adaptive Threshold Heart Rate Alarm</string>
+    <string name="HRAdaptiveAlarmWindowTitle">Window Size for Adaptive Threshold Calculation</string>
+    <string name="HRAdaptiveAlarmWindowSummary">Moving Average Time Window (seconds) must be a multiple of 5 seconds</string>
+    <string name="HRAdaptiveThreshTitle">Adaptive Threshold Offset (bpm)</string>
+    <string name="HRAdaptiveThreshSummary">The alarm threshold offset from the average measured Heart Rate (bpm)</string>
+    <string name="HRAverageAlarmEnabledTitle">Enable Rolling Average Heart Rate Alarm</string>
+    <string name="HRAverageAlarmEnabledSummary" />
+    <string name="HRAverageThreshMinSummary">Lower Heart Rate Threshold for Average Heart Rate Alarm</string>
+    <string name="HRAverageThreshMinTitle">Lower Threshold for Average Heart Rate Alarm</string>
+    <string name="HRAverageThreshMaxSummary">Upper Heart Rate Threshold for Average Heart Rate Alarm</string>
+    <string name="HRAverageThreshMaxTitle">Upper Threshold for Average Heart Rate Alarm</string>
+    <string name="HRAverageAlarmWindowTitle">Window size for Average Heart Rate Calculation</string>
+    <string name="HRAverageAlarmWindowSummary">Window size (in seconds) for Average Heart Rate Calculation - must be a factor of 5 seconds.</string>
+    <string name="HeartRateAdaptiveAlarmSettingsTitle">Adaptive Heart Rate Alarm Settings</string>
+    <string name="HeartRateAverageAlarmSettingsTitle">Average Heart Rate Alarm Settings</string>
+    <string name="export_data_menuItem">Export Data</string>
+    <string name="data_exported_ok">Data Exported OK</string>
+    <string name="error_exporting_data">*** ERROR Exporting Data ***</string>
+>>>>>>> V4.1.x
 </resources>

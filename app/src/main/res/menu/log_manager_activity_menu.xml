@@ -37,6 +37,11 @@
             android:icon="@drawable/ic_action_settings"
             app:showAsAction="never|withText"
             android:title="@string/start_nda" />
-
+        <item
+            android:id="@+id/export_data_menuitem"
+            android:enabled="true"
+            android:icon="@drawable/ic_action_settings"
+            app:showAsAction="never|withText"
+            android:title="@string/export_data_menuItem" />
     </group>
 </menu>

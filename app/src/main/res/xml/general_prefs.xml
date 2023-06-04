@@ -69,6 +69,14 @@
         android:title="@string/auto_start_title"
         android:enabled="true"
         />
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="PreventBatteryOptWarning"
+        android:summary="@string/prevent_bat_opt_summary"
+        android:title="@string/prevent_bat_opt_title"
+        android:enabled="true"
+        />
     <Preference
         android:key="SelectBLEDevice"
         android:title="@string/select_ble_device_title"

@@ -516,7 +516,7 @@ public class SdServer extends Service implements SdDataReceiver {
         i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         PendingIntent contentIntent =
                 PendingIntent.getActivity(this,
-                        0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+                        0, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         String smsStr;
         if (mSMSAlarm) {
             smsStr = getString(R.string.sms_location_alarm_active);
@@ -554,16 +554,22 @@ public class SdServer extends Service implements SdDataReceiver {
 
         ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
         List<ActivityManager.RunningTaskInfo> runningTaskInfo = manager.getRunningTasks(1);
-        ComponentName componentInfo = runningTaskInfo.get(0).topActivity;
 
-        if (componentInfo.getPackageName().equals("uk.org.openseizuredetector")) {
-            Log.i(TAG, "showMainActivity(): OpenSeizureDetector Activity is already shown on top - not doing anything");
-            mUtil.writeToSysLogFile("SdServer.showMainActivity - Activity is already shown on top, not doing anything");
+        if (runningTaskInfo.size() > 0) {
+            ComponentName componentInfo = runningTaskInfo.get(0).topActivity;
+
+            if (componentInfo.getPackageName().equals("uk.org.openseizuredetector")) {
+                Log.i(TAG, "showMainActivity(): OpenSeizureDetector Activity is already shown on top - not doing anything");
+                mUtil.writeToSysLogFile("SdServer.showMainActivity - Activity is already shown on top, not doing anything");
+            } else {
+                Log.i(TAG, "showMainActivity(): Showing Main Activity");
+                Intent i = new Intent(getApplicationContext(), MainActivity.class);
+                i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
+                this.startActivity(i);
+            }
         } else {
-            Log.i(TAG, "showMainActivity(): Showing Main Activity");
-            Intent i = new Intent(getApplicationContext(), MainActivity.class);
-            i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
-            this.startActivity(i);
+            mUtil.showToast("OpenSeizureDetector: showMainActvity Failed to Display Activity");
+            Log.e(TAG,"OpenSeizureDetector: showMainActvity Failed to Display Activity");
         }
     }
 
@@ -687,7 +693,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
-                mUtil.showToast("mSMSAlarm is false - not sending");
+                mUtil.showToast(getString(R.string.msmsalarm_false_msg));
                 Log.v(TAG, "mSMSAlarm is false - not sending");
             }
 
@@ -717,7 +723,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     sendSMSAlarm();
                     mSMSTime = tnow;
                 } else {
-                    mUtil.showToast("SMS Alarm already sent - not re-sending");
+                    mUtil.showToast(getString(R.string.sms_alarm_already_sent_msg));
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
@@ -751,7 +757,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     sendSMSAlarm();
                     mSMSTime = tnow;
                 } else {
-                    mUtil.showToast("SMS Alarm already sent - not re-sending");
+                    mUtil.showToast(getString(R.string.sms_alarm_already_sent_msg));
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
@@ -1321,7 +1327,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 }
             } else {
                 Log.e(TAG,"SmsTimer.onFinish - mLocationFinder is null - this should not happen!");
-                mUtil.showToast("SmsTimer.onFinish - mLocationFinder is null - this should not happen! - Please report this issue!");
+                mUtil.showToast(getString(R.string.mLocationFinder_is_null_msg));
             }
             Log.i(TAG, "SmsTimer.onFinish() - Sending to " + mSMSNumbers.length + " Numbers");
             mUtil.writeToSysLogFile("SdServer.SmsTimer.onFinish()");
@@ -1717,12 +1723,12 @@ public class SdServer extends Service implements SdDataReceiver {
         i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent contentIntent =
                 PendingIntent.getActivity(getApplicationContext(),
-                        0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+                        0, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         Intent loginIntent = new Intent(getApplicationContext(), AuthenticateActivity.class);
         loginIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         PendingIntent loginPendingIntent =
                 PendingIntent.getActivity(getApplicationContext(),
-                        0, loginIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                        0, loginIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         String contentStr = getString(R.string.datasharing_notification_text);
         Notification notification = notificationBuilder

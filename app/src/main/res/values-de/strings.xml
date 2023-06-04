@@ -69,7 +69,6 @@
     <string name="AutoStartTitle">Auto Start</string>
   <string name="AutoStartSummary">Auto start OpenSeizureDetector when phone is started</string>
   <string name="DataSourceSummary">Select whether to use a Garmin Watch, Pebble Watch or network connection as the seizure detector data source.</string>
-  <string name="LogRemoteTitle">Log Data Remotely</string>
   <string name="UseMobileSummary">Use mobile internet to log remote data</string>
   <string name="SeizureDetectorSettingsTitle">Seizure Detector Settings</string>
   <string name="AlarmThreshTitle">Alarm Threshold</string>
@@ -94,22 +93,17 @@
   <string name="test_alarm_beep">Test Alarm Beep</string>
   <string name="test_warning_beep">Test Warning Beep</string>
   <string name="test_sms_alarm_notification">Test SMS Alarm Notification</string>
-  <string name="data_log_manager">Data Log Manager</string>
-  <string name="view_log_entries">View Log Entries</string>
-  <string name="export_data">Export Data</string>
+    <string name="view_log_entries">View Log Entries</string>
   <string name="settings">Settings</string>
   <string name="about">About...</string>
     <string name="about_text">OpenSeizureDetector epileptic\n (tonic-clonic) seizure detector and \n alarm system. Uses a Pebble Smart\n watch to detect the shaking \n associated with a seizure, \n then raises audible and text\n message (SMS) alerts for carers.\n The system is free and open source - see \n http://openseizuredetector.org.uk for details. Please report any issues to graham@openseizuredetector.org.uk\n or raise an issue on the project github source code \n repository - https://github.com/OpenSeizureDetector</string>
   <string name="credits_text">Main Watch App and Android App \n copyright Graham Jones, 2015.\n The following libraries are used:\n - SYLT-FFT - https://github.com/stg/SYLT-FFT by D. Taylor.\n - NanoHTTPD - https://github.com/NanoHttpd/nanohttpd\n - jQuery - http://jquery.org\n - jBeep - http://www.ultraduz.com.br\n - Chartjs - http://www.chartjs.org\n - MPAndroidChart - https://github.com/PhilJay/MPAndroidChart\n - UCE-Handler - https://github.com/RohitSurwase/UCE-Handler\n \n The Logo is based on Star of life2 by Verdy P, \n Licensed under Public Domain via\n Wikimedia Commons (http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).</string>
-  <string name="edit_settings">Edit Settings</string>
-    <string name="sms_location_alarm_active">SMS Location Alarm Active</string>
+  <string name="sms_location_alarm_active">SMS Location Alarm Active</string>
   <string name="sms_location_alarm_disabled">SMS Location Alarm Disabled</string>
-  <string name="cancel_audible_not_sending_sms">Cancel Audible Active - not sending SMS</string>
   <string name="no_wifi_connection">Network State Changed - no Wifi Connection</string>
   <string name="no_active_network">Network State Changed - No Active Network</string>
   <string name="problem_parsing_preferences">Problem Parsing Preferences - Something won\'t work - Please go back to Settings and correct it!</string>
   <string name="send_sms_last_location">"Send SMS - last location is "</string>
-  <string name="failed_to_send_sms">ERROR: FAILED TO SEND SMS MESSAGE</string>
   <string name="sms_alarms_disabled">SMS Alarms Disabled - not doing anything!</string>
 </resources>
 

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:versionCode="118"
+    android:versionCode="119"
     android:versionName="4.2.4d">
+
     <!-- android:allowBackup="false" -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -38,7 +39,9 @@
         <!-- @android:style/Theme.Holo.Light" -->
         <activity android:name=".BLEScanActivity" />
         <activity android:name=".ExportDataActivity" /> <!-- android:usesCleartextTraffic="true" -->
-        <activity android:name=".StartupActivity"
+
+        <activity
+            android:name=".StartupActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -71,6 +74,7 @@
             android:name=".BootBroadcastReceiver"
             android:label="BootBroadcastReceiver"
             android:exported="true">
+
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
