@@ -39,6 +39,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import java.util.List;
+import java.util.Objects;
 
 public class PrefActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener {
     private String TAG = "PreferenceActivity";
@@ -235,14 +236,14 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
 
     @Override
     public void onClick(View view) {
-        switch (view.getId()) {
-            case R.id.selectBLEDeviceButton:
-                Log.v(TAG, "onClick - SelectBLEDeviceButton");
-                final Intent intent = new Intent(this.mContext, BLEScanActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                mContext.startActivity(intent);
-                break;
-            default:
+        if(Objects.equals(R.id.selectBLEDeviceButton,view.getId())) {
+            Log.v(TAG, "onClick - SelectBLEDeviceButton");
+            final Intent intent = new Intent(this.mContext, BLEScanActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(intent);
+
+        }
+        else {
                 Log.e(TAG, "onClick - unrecognised button");
         }
     }

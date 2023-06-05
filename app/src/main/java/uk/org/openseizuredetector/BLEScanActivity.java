@@ -53,6 +53,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.MenuItemCompat;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * Activity for scanning and displaying available Bluetooth LE devices.
@@ -131,15 +132,13 @@ public class BLEScanActivity extends ListActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menu_scan:
-                mLeDeviceListAdapter.clear();
-                scanLeDevice(true);
-                break;
-            case R.id.menu_stop:
-                scanLeDevice(false);
-                break;
+        if (Objects.equals(R.id.menu_scan,item.getItemId())) {
+            mLeDeviceListAdapter.clear();
+            scanLeDevice(true);
+        }else if (Objects.equals( R.id.menu_stop,item.getItemId())) {
+            scanLeDevice(false);
         }
+
         return true;
     }
 

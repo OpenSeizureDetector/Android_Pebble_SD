@@ -18,6 +18,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 public class RemoteDbActivity extends AppCompatActivity {
     private String TAG = "RemoteDbActivity";
@@ -39,8 +40,9 @@ public class RemoteDbActivity extends AppCompatActivity {
         mContext = this;
         setContentView(R.layout.activity_remote_db);
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
-        mConnection = new SdServiceConnection(getApplicationContext());
-        mUtil.bindToServer(getApplicationContext(), mConnection);
+        if (Objects.isNull(mConnection)) mConnection = new SdServiceConnection(this);
+        if (Objects.nonNull(mConnection))
+            if (!mConnection.mBound) mUtil.bindToServer(this, mConnection);
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {

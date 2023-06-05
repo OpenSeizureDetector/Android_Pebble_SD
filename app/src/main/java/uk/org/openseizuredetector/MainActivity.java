@@ -68,6 +68,7 @@ import com.rohitss.uceh.UCEHandler;
 import java.lang.reflect.Field;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -87,6 +88,10 @@ public class MainActivity extends AppCompatActivity {
 
     private Intent sdServerIntent;
 
+    // example of placement of changed data
+    private SdData localSdData;
+
+
     final Handler serverStatusHandler = new Handler();
     Messenger messenger = new Messenger(new ResponseHandler());
     Timer mUiTimer;
@@ -102,20 +107,40 @@ public class MainActivity extends AppCompatActivity {
 
         // Set our custom uncaught exception handler to report issues.
         //Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(MainActivity.this));
-        new UCEHandler.Builder(this)
+        new UCEHandler.Builder(MainActivity.this)
                 .addCommaSeparatedEmailAddresses("crashreports@openseizuredetector.org.uk,")
                 .build();
 
         //int i = 5/0;  // Force exception to test handler.
-        mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
-        mConnection = new SdServiceConnection(getApplicationContext());
+        mUtil = new OsdUtil(MainActivity.this, serverStatusHandler);
+        mConnection = new SdServiceConnection(MainActivity.this);
         mUtil.writeToSysLogFile("");
         mUtil.writeToSysLogFile("* MainActivity Started     *");
         mUtil.writeToSysLogFile("MainActivity.onCreate()");
-        mContext = this;
 
         // Initialise the User Interface
         setContentView(R.layout.main);
+        //getWindow().getDecorView().setBackgroundColor(okColour);
+
+        /* Force display of overflow menu - from stackoverflow
+         * "how to force use of..."
+         * https://itecnote.com/tecnote/android-how-to-force-use-of-overflow-menu-on-devices-with-menu-button/
+         */
+        try {
+            Log.v(TAG, "trying menubar fiddle...");
+            ViewConfiguration config = ViewConfiguration.get(MainActivity.this);
+            Field menuKeyField =
+                    ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+            if (menuKeyField != null) {
+                Log.v(TAG, "menuKeyField is not null - configuring....");
+                menuKeyField.setAccessible(true);
+                menuKeyField.setBoolean(config, false);
+            } else {
+                Log.v(TAG, "menuKeyField is null - doing nothing...");
+            }
+        } catch (Exception e) {
+            Log.v(TAG, "menubar fiddle exception: " + e.toString());
+        }
 
         // Force the screen to stay on when the app is running
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -197,7 +222,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onNewIntent(Intent intent) {
-        //execute mandatory super.onNewIntent
         super.onNewIntent(intent);
         String actionStr;
         Log.i(TAG, "onNewIntent");
@@ -232,53 +256,7 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "onCreateOptionsMenu()");
         getMenuInflater().inflate(R.menu.main_activity_actions, menu);
         MenuCompat.setGroupDividerEnabled(menu, true);
-
-
-
-        /*
-        *   @Override
-            public void onViewCreated(View view, Bundle savedInstanceState) {
-                super.onViewCreated(view, savedInstanceState);
-                setHasOptionsMenu(true);
-            }
-            *
-            * // Initialise the User Interface
-        setContentView(R.layout.main);
-        //getWindow().getDecorView().setBackgroundColor(okColour);
-        // Setting in Aroon version of menuKeyFieldFiddle:
-        //first create config as ViewConfiguration and get
-        // ViewConfiguration of this.
-        // than create Field menuKeyField with value null.
-        // if Version.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH
-        // run fiddle else check if config.hasPermanentMenuKey() returns inverted false
-        /* Force display of overflow menu - from stackoverflow
-         * "how to force use of..."
-         *--/
-        try {
-            Log.v(TAG, "trying menubar fiddle...");
-            ViewConfiguration config = ViewConfiguration.get(this);
-            //TODO: After API>33 remove next lines and strip until
-            Field menuKeyField = null;
-            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-                menuKeyField =
-                        ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
-            } // TODO: here before ! config. start new if( before.
-            if ((menuKeyField != null) ) {
-                Log.v(TAG, "menuKeyField is not null - configuring....");
-                menuKeyField.setAccessible(true);
-                menuKeyField.setBoolean(config, false);
-            } else if (config.hasPermanentMenuKey()) {
-                Log.v(TAG, "menuKeyField is null or config.hasPermanentMenuKey() is true");
-                menuKeyField = getV;
-                        .setAccessible(false);
-                menuKeyField.setBoolean(config, true);
-            }
-        } catch (Exception e) {
-            Log.v(TAG, "menubar fiddle exception: " + e.toString());
-        }
-        */
-
-
+        //https://itecnote.com/tecnote/android-how-to-force-use-of-overflow-menu-on-devices-with-menu-button/
         //mOptionsMenu = menu;
         //if (mConnection.mSdServer.mSdDataSourceName != "Pebble") {
         //    Log.v(TAG,"Disabling Pebble Specific Menu Items");
@@ -291,38 +269,36 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         Log.i(TAG, "onOptionsItemSelected() :  " + item.getItemId() + " selected");
-        switch (item.getItemId()) {
-            /*case R.id.action_launch_pebble_app:
-                Log.i(TAG, "action_launch_pebble_app");
-                mConnection.mSdServer.mSdDataSource.startPebbleApp();
-                return true;
-                */
-            case R.id.action_install_watch_app:
-                Log.i(TAG, "action_install_watch_app");
-                mConnection.mSdServer.mSdDataSource.installWatchApp();
-                return true;
-
-            case R.id.action_accept_alarm:
-                Log.i(TAG, "action_accept_alarm");
-                if (mConnection.mBound) {
-                    mConnection.mSdServer.acceptAlarm();
-                }
-                return true;
-            case R.id.action_start_stop:
-                // Respond to the start/stop server menu item.
-                Log.i(TAG, "action_sart_stop");
-                if (mConnection.mBound) {
-                    Log.i(TAG, "Stopping Server");
-                    mUtil.unbindFromServer(getApplicationContext(), mConnection);
-                    stopServer();
-                } else {
-                    Log.i(TAG, "Starting Server");
-                    startServer();
-                    // and bind to it so we can see its data
-                    Log.i(TAG, "Binding to Server");
-                    mUtil.bindToServer(getApplicationContext(), mConnection);
-                }
-                return true;
+        //since SDK_INT 14 R.id.____ cannot be used in switch-case. Replaced by if else if
+        if (Objects.equals(R.id.action_install_watch_app,item.getItemId())) {
+            Log.i(TAG, "action_install_watch_app");
+            mConnection.mSdServer.mSdDataSource.installWatchApp();
+            return true;
+        }
+        else if (Objects.equals( R.id.action_accept_alarm ,item.getItemId())) {
+            Log.i(TAG, "action_accept_alarm");
+            if (mConnection.mBound) {
+                mConnection.mSdServer.acceptAlarm();
+            }
+            return true;
+        }
+        else if (Objects.equals( R.id.action_start_stop, item.getItemId())) {
+            // Respond to the start/stop server menu item.
+            Log.i(TAG, "action_sart_stop");
+            if (mConnection.mBound) {
+                Log.i(TAG, "Stopping Server");
+                mUtil.unbindFromServer(MainActivity.this, mConnection);
+                stopServer();
+            } else {
+                Log.i(TAG, "Starting Server");
+                startServer();
+                // and bind to it so we can see its data
+                Log.i(TAG, "Binding to Server");
+                if (Objects.nonNull(mConnection))
+                    if (!mConnection.mBound) mUtil.bindToServer(MainActivity.this, mConnection);
+            }
+            return true;
+        }
             /* fault beep test does not work with fault timer, so disable test option.
             case R.id.action_test_fault_beep:
                 Log.i(TAG, "action_test_fault_beep");
@@ -331,24 +307,27 @@ public class MainActivity extends AppCompatActivity {
                 }
                 return true;
                 */
-            case R.id.action_test_alarm_beep:
-                Log.i(TAG, "action_test_alarm_beep");
-                if (mConnection.mBound) {
-                    mConnection.mSdServer.alarmBeep();
-                }
-                return true;
-            case R.id.action_test_warning_beep:
-                Log.i(TAG, "action_test_warning_beep");
-                if (mConnection.mBound) {
-                    mConnection.mSdServer.warningBeep();
-                }
-                return true;
-            case R.id.action_test_sms_alarm:
-                Log.i(TAG, "action_test_sms_alarm");
-                if (mConnection.mBound) {
-                    mConnection.mSdServer.sendSMSAlarm();
-                }
-                return true;
+        else if (Objects.equals( R.id.action_test_alarm_beep, item.getItemId())) {
+            Log.i(TAG, "action_test_alarm_beep");
+            if (mConnection.mBound) {
+                mConnection.mSdServer.alarmBeep();
+            }
+            return true;
+        }
+        else if (Objects.equals(R.id.action_test_warning_beep, item.getItemId())){
+            Log.i(TAG, "action_test_warning_beep");
+            if (mConnection.mBound) {
+                mConnection.mSdServer.warningBeep();
+            }
+            return true;
+        }
+        else if (Objects.equals( R.id.action_test_sms_alarm, item.getItemId())) {
+            Log.i(TAG, "action_test_sms_alarm");
+            if (mConnection.mBound) {
+                mConnection.mSdServer.sendSMSAlarm();
+            }
+            return true;
+        }
 
             /*case R.id.action_test_phone_alarm:
                 Log.i(TAG, "action_test_phone_alarm");
@@ -358,21 +337,23 @@ public class MainActivity extends AppCompatActivity {
                 return true;
                 */
 
-            case R.id.action_authenticate_api:
-                Log.i(TAG, "action_autheticate_api");
-                try {
-                    Intent i = new Intent(
-                            MainActivity.this,
-                            AuthenticateActivity.class);
-                    this.startActivity(i);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting export activity " + ex.toString());
-                }
-                return true;
-            case R.id.action_about_datasharing:
-                Log.i(TAG, "action_about_datasharing");
-                showDataSharingDialog();
-                return true;
+        else if ( Objects.equals(R.id.action_authenticate_api,item.getItemId()) ) {
+            Log.i(TAG, "action_autheticate_api");
+            try {
+                Intent i = new Intent(
+                        MainActivity.this,
+                        AuthenticateActivity.class);
+                this.startActivity(i);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting export activity " + ex.toString());
+            }
+            return true;
+        }
+        else if (Objects.equals( R.id.action_about_datasharing, item.getItemId())) {
+            Log.i(TAG, "action_about_datasharing");
+            showDataSharingDialog();
+            return true;
+        }
             /*
             case R.id.action_export:
                 Log.i(TAG, "action_export");
@@ -404,47 +385,52 @@ public class MainActivity extends AppCompatActivity {
                 }
                 return true;
              */
-            case R.id.action_logmanager:
-                Log.i(TAG, "action_logmanager");
-                try {
-                    Intent intent = new Intent(
-                            MainActivity.this,
-                            LogManagerControlActivity.class);
-                    this.startActivity(intent);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting log manager activity " + ex.toString());
-                }
-                return true;
-            case R.id.action_report_seizure:
-                Log.i(TAG, "action_report_seizure");
-                try {
-                    Intent intent = new Intent(
-                            MainActivity.this,
-                            ReportSeizureActivity.class);
-                    this.startActivity(intent);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting Report Seizure activity " + ex.toString());
-                }
-                return true;
-            case R.id.action_settings:
-                Log.i(TAG, "action_settings");
-                try {
-                    Intent prefsIntent = new Intent(
-                            MainActivity.this,
-                            PrefActivity.class);
-                    this.startActivity(prefsIntent);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting settings activity " + ex.toString());
-                }
-                return true;
-            case R.id.action_about:
-                Log.i(TAG, "action_about");
-                showAbout();
-                return true;
-
-            default:
-                return super.onOptionsItemSelected(item);
+        else if (Objects.equals(R.id.action_logmanager, item.getItemId())) {
+            Log.i(TAG, "action_logmanager");
+            try {
+                Intent intent = new Intent(
+                        MainActivity.this,
+                        LogManagerControlActivity.class);
+                this.startActivity(intent);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting log manager activity " + ex.toString());
+            }
+            return true;
         }
+        else if (Objects.equals(R.id.action_report_seizure, item.getItemId())) {
+            Log.i(TAG, "action_report_seizure");
+            try {
+                Intent intent = new Intent(
+                        MainActivity.this,
+                        ReportSeizureActivity.class);
+                this.startActivity(intent);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting Report Seizure activity " + ex.toString());
+            }
+            return true;
+        }
+        else if (Objects.equals( R.id.action_settings, item.getItemId())) {
+            Log.i(TAG, "action_settings");
+            try {
+                Intent prefsIntent = new Intent(
+                        MainActivity.this,
+                        PrefActivity.class);
+                MainActivity.this.startActivity(prefsIntent);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting settings activity " + ex.toString());
+            }
+            return true;
+        }
+        else if (Objects.equals( R.id.action_about, item.getItemId())) {
+            Log.i(TAG, "action_about");
+            showAbout();
+            return true;
+        }
+
+        else {
+            return super.onOptionsItemSelected(item);
+        }
+
     }
 
     @Override
@@ -466,11 +452,19 @@ public class MainActivity extends AppCompatActivity {
 
         if (mUtil.isServerRunning()) {
             mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
-            mUtil.bindToServer(getApplicationContext(), mConnection);
+            if (Objects.nonNull(mConnection)) {
+                if (!mConnection.mBound) mUtil.bindToServer(MainActivity.this, mConnection);
+                if (!mConnection.mSdServer.uiLiveData.isListeningInContext(this)){
+                    mConnection.mSdServer.uiLiveData.observe(this,this::onChangedObserver);
+                    mConnection.mSdServer.uiLiveData.observeForever(this::onChangedObserver);
+                    mConnection.mSdServer.uiLiveData.addToListening(this);
+                }
+            }
         } else {
             Log.i(TAG, "onStart() - Server Not Running");
             mUtil.writeToSysLogFile("MainActivity.onStart - Server Not Running");
         }
+        /* temporary commented
         // start timer to refresh user interface every second.
         mUiTimer = new Timer();
         mUiTimer.schedule(new TimerTask() {
@@ -479,7 +473,7 @@ public class MainActivity extends AppCompatActivity {
                 updateServerStatus();
             }
         }, 0, 1000);
-
+*/
 
     }
 
@@ -488,8 +482,17 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
         Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("MainActivity.onStop()");
-        mUtil.unbindFromServer(getApplicationContext(), mConnection);
-        mUiTimer.cancel();
+        if (Objects.nonNull(mConnection)) {
+            if (Objects.nonNull(mConnection.mSdServer)){
+                if (mConnection.mSdServer.uiLiveData.isListeningInContext(this)){
+                    mConnection.mSdServer.uiLiveData.removeFromListening(this);
+                    mConnection.mSdServer.uiLiveData.removeObserver(this::onChangedObserver);
+                }
+            }
+            if (mConnection.mBound)
+                mUtil.unbindFromServer(MainActivity.this, mConnection);
+        }
+        //mUiTimer.cancel();
     }
 
 
@@ -608,7 +611,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
                     }
                     tv = (TextView) findViewById(R.id.fallAlgTv);
-                    tv.setText("Fall ");
+                    tv.setText("Fall");
                     if (mConnection.mSdServer.mSdData.mFallActive) {
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
@@ -680,10 +683,10 @@ public class MainActivity extends AppCompatActivity {
                     //if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
                     if (mConnection.mSdServer.mSdData.mO2Sat > 0) {
                         tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
-                                + getString(R.string.SpO2)+" = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
+                                + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
                     } else {
                         tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
-                                + getString(R.string.SpO2)+" = ---%");
+                                + "O2 Sat = ---%");
                     }
                     if (mConnection.mSdServer.mSdData.mHRAlarmStanding || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
                         tv.setBackgroundColor(alarmColour);
@@ -1151,7 +1154,7 @@ public class MainActivity extends AppCompatActivity {
                     Intent i = new Intent(
                             MainActivity.this,
                             AuthenticateActivity.class);
-                    mContext.startActivity(i);
+                    MainActivity.this.startActivity(i);
                 } catch (Exception ex) {
                     Log.i(TAG, "exception starting activity " + ex.toString());
                 }
@@ -1163,6 +1166,20 @@ public class MainActivity extends AppCompatActivity {
         builder.show();
     }
 
+    /**
+     * onChangedObserver is responsible for handling LiveData changed event
+     * (this.postValue(mSdData)
+     * result here is (SdData) from Object o.
+     * Source event line: AWSdService:ServiceLiveData:signalChangedData()
+     */
+    private void onChangedObserver(Object o) {
+        try {
+            localSdData = (SdData) o;
+            serverStatusRunnable.run();
+        } catch (Exception e) {
+            Log.e(getClass().getName(), "onChangedObserver: error: ", e);
+        }
+    }
 
     static class ResponseHandler extends Handler {
         @Override

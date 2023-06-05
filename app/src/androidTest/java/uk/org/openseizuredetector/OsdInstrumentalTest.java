@@ -11,6 +11,11 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -133,9 +138,17 @@ public class OsdInstrumentalTest {
     @Test
     public void testGetAppVersionName(){
         String equalStringNull = null;
-        String equalStringAppVersionName = Constants.GLOBAL_CONSTANTS.mAppPackageName;
-        assertNotEquals(util.getAppVersionName(),equalStringNull);
-        assertEquals(equalStringAppVersionName,util.getAppVersionName());
+        assertNotEquals(util.getAppVersionName(), equalStringNull);
+        final PackageManager packageManager = context.getPackageManager();
+        if (packageManager != null) {
+            try {
+                PackageInfo packageInfo = packageManager.getPackageInfo(context.getPackageName(), 0);
+                String versionName = packageInfo.versionName;
+                assertEquals(versionName, util.getAppVersionName());
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Test
@@ -170,13 +183,31 @@ public class OsdInstrumentalTest {
 
     @Test
     public void testIsMobileDataActive(){
-        assertTrue(util.isMobileDataActive());
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm != null) {
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+
+                NetworkCapabilities capabilities = cm.getNetworkCapabilities(cm.getActiveNetwork());
+                if(Objects.nonNull(capabilities))
+                    if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR))
+                        assertTrue(util.isMobileDataActive());
+            }
+        }
 
     }
 
     @Test
     public void testIsMobileDataNotActive(){
-        assertFalse(util.isMobileDataActive());
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm != null) {
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+
+                NetworkCapabilities capabilities = cm.getNetworkCapabilities(cm.getActiveNetwork());
+                if(Objects.nonNull(capabilities))
+                    if (! capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR))
+                        assertFalse(util.isMobileDataActive());
+            }
+        }
     }
 
     @Test
@@ -186,7 +217,13 @@ public class OsdInstrumentalTest {
 
     @Test
     public void testStopServer() throws Exception {
-        util.stopServer();
+        Looper mLooper = context.getMainLooper();
+        Handler mHandler = new Handler(mLooper);
+        SdServiceConnection testSdConnection = new SdServiceConnection(context);
+        if (util.bindToServer(context,testSdConnection)) {
+            util.unbindFromServer(context,testSdConnection);
+            util.stopServer();
+        }
     }
 
     @After

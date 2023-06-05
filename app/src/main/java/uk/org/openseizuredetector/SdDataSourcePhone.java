@@ -38,6 +38,8 @@ import android.util.Log;
 
 import static java.lang.Math.sqrt;
 
+import java.util.Objects;
+
 
 /**
  * A data source that uses the accelerometer built into the phone to provide seizure detector data for testing purposes.
@@ -56,9 +58,9 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
     private long mStartTs = 0;
     public double mSampleFreq = 0;
 
-
     private PowerManager.WakeLock mWakeLock;
 
+    private SdServer runningSdServer;
 
     public SdDataSourcePhone(Context context, Handler handler,
                              SdDataReceiver sdDataReceiver) {
@@ -80,6 +82,11 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
         mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(this, mSensor , SensorManager.SENSOR_DELAY_GAME);
+        if(!((SdServer)mSdDataReceiver).uiLiveData.isListeningInContext(this)){
+            ((SdServer)mSdDataReceiver).uiLiveData.addToListening(this);
+        }
+
+
         super.start();
     }
 
@@ -90,6 +97,9 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
         Log.i(TAG, "stop()");
         mUtil.writeToSysLogFile("SdDataSourcePhone.stop()");
         mSensorManager.unregisterListener(this);
+        if(((SdServer)mSdDataReceiver).uiLiveData.isListeningInContext(this)){
+            ((SdServer)mSdDataReceiver).uiLiveData.removeFromListening(this);
+        }
 
         super.stop();
     }
@@ -161,6 +171,9 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
             } else {
                 Log.v(TAG,"onSensorChanged(): ERROR - Mode "+mMode+" unrecognised");
             }
+        }
+        if (((SdServer)mSdDataReceiver).uiLiveData.isListeningInContext(this)){
+            ((SdServer)mSdDataReceiver).uiLiveData.signalChangedData();
         }
 
     }

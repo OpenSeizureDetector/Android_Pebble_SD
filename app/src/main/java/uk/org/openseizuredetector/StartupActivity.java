@@ -38,7 +38,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.text.Html;
 import android.text.SpannableString;
 import android.text.util.Linkify;
@@ -57,6 +57,7 @@ import androidx.core.text.HtmlCompat;
 
 import com.rohitss.uceh.UCEHandler;
 
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -138,7 +139,7 @@ public class StartupActivity extends AppCompatActivity {
         PreferenceManager.setDefaultValues(this, R.xml.logging_prefs, true);
 
         mHandler = new Handler();
-        mUtil = new OsdUtil(getApplicationContext(), mHandler);
+        mUtil = new OsdUtil(this, mHandler);
         mUtil.writeToSysLogFile("");
         mUtil.writeToSysLogFile("*******************************");
         mUtil.writeToSysLogFile("* StartUpActivity Started     *");
@@ -179,8 +180,9 @@ public class StartupActivity extends AppCompatActivity {
                 mConnection.mSdServer.mSdDataSource.installWatchApp();
             }
         });
-
-        mConnection = new SdServiceConnection(getApplicationContext());
+        if (Objects.isNull(mConnection)) {
+            mConnection = new SdServiceConnection(this);
+        }
     }
 
     @Override
@@ -196,7 +198,7 @@ public class StartupActivity extends AppCompatActivity {
 
         // Display the DataSource name
         SharedPreferences SP = PreferenceManager
-                .getDefaultSharedPreferences(getBaseContext());
+                .getDefaultSharedPreferences(this);
         ;
         String dataSourceName = SP.getString("DataSource", "Pebble");
         tv = (TextView) findViewById(R.id.dataSourceTextView);
@@ -211,16 +213,15 @@ public class StartupActivity extends AppCompatActivity {
             Log.i(TAG, "onStart() - server not running - isServerRunning="+mUtil.isServerRunning());
         }
         // Wait 0.1 second to give the server chance to shutdown in case we have just shut it down below, then start it
-        mHandler.postDelayed(new Runnable() {
-            public void run() {
-                mUtil.writeToSysLogFile("StartupActivity.onStart() - starting server after delay - isServerRunning="+mUtil.isServerRunning());
-                Log.i(TAG, "onStart() - starting server after delay -isServerRunning="+mUtil.isServerRunning());
-                mUtil.startServer();
-                // Bind to the service.
-                Log.i(TAG, "onStart() - binding to server");
-                mUtil.writeToSysLogFile("StartupActivity.onStart() - binding to server");
-                mUtil.bindToServer(getApplicationContext(), mConnection);
-            }
+        mHandler.postDelayed(() -> {
+            mUtil.writeToSysLogFile("StartupActivity.onStart() - starting server after delay - isServerRunning="+mUtil.isServerRunning());
+            Log.i(TAG, "onStart() - starting server after delay -isServerRunning="+mUtil.isServerRunning());
+            mUtil.startServer();
+            // Bind to the service.
+            Log.i(TAG, "onStart() - binding to server");
+            mUtil.writeToSysLogFile("StartupActivity.onStart() - binding to server");
+            if (Objects.nonNull(mConnection))
+                if (!mConnection.mBound) mUtil.bindToServer(this, mConnection);
         }, 100);
 
         // Check power management settings

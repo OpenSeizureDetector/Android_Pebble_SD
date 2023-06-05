@@ -160,10 +160,11 @@ public class OsdUtil {
                     .equals(service.service.getClassName())) {
                 nServers = nServers + 1;
             }
+
         }
 
         //simplify statement:
-        return nServers != 0;
+        return nServers > 0;
     }
 
     /**
@@ -201,28 +202,34 @@ public class OsdUtil {
         Intent sdServerIntent;
         sdServerIntent = new Intent(mContext, SdServer.class);
         sdServerIntent.setData(Constants.GLOBAL_CONSTANTS.mStopUri);
+        sdServerIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
         mContext.startService(sdServerIntent);
+        mContext.stopService(sdServerIntent);
     }
 
     public void restartServer() {
         stopServer();
         // Wait 1 second to give the server chance to shutdown, then re-start it
-        new Handler().postDelayed(new Runnable() {
-            public void run() {
+        mHandler.postDelayed(() -> {
                 startServer();
             }
-        }, 1000);
+        , 1000);
     }
     /**
      * bind an activity to to an already running server.
+     *
+     * @return
      */
-    public void bindToServer(Context activity, SdServiceConnection sdServiceConnection) {
+    public boolean bindToServer(Context activity, SdServiceConnection sdServiceConnection) {
         Log.i(TAG, "OsdUtil.bindToServer() - binding to SdServer");
         writeToSysLogFile("bindToServer() - binding to SdServer");
         Intent intent = new Intent(sdServiceConnection.mContext, SdServer.class);
-        activity.bindService(intent, sdServiceConnection, Context.BIND_AUTO_CREATE);
+        //because @startServer the service is created, we do not need to create the service @bind
+        //Set bind flag as BIND_ADJUST_WITH_ACTIVITY
+        boolean returnValue = activity.bindService(intent, sdServiceConnection, Context.BIND_ADJUST_WITH_ACTIVITY);
         mNbound = mNbound + 1;
         Log.i(TAG, "OsdUtil.bindToServer() - mNbound = " + mNbound);
+        return returnValue;
     }
 
     /**
@@ -234,8 +241,8 @@ public class OsdUtil {
             Log.i(TAG, "unbindFromServer() - unbinding");
             writeToSysLogFile("unbindFromServer() - unbinding");
             try {
-                activity.unbindService(sdServiceConnection);
                 sdServiceConnection.mBound = false;
+                activity.unbindService(sdServiceConnection);
                 mNbound = mNbound - 1;
                 Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
             } catch (Exception ex) {

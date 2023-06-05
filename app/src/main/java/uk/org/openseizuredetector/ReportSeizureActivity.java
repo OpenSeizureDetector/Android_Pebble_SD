@@ -32,6 +32,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * ReportSeizureActivity - Allows the user to report a seizure manually, which is saved in the database for
@@ -112,7 +113,8 @@ public class ReportSeizureActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        mUtil.bindToServer(getApplicationContext(), mConnection);
+        if (Objects.nonNull(mConnection))
+            if (!mConnection.mBound) mUtil.bindToServer(this, mConnection);
         waitForConnection();
     }
 
