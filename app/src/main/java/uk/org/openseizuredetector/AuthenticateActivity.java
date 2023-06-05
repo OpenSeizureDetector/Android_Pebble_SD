@@ -69,7 +69,7 @@ public class AuthenticateActivity extends AppCompatActivity {
         // Components required only for osdapi backend
         if (LogManager.USE_FIREBASE_BACKEND) { }
         else {
-            mConnection = new SdServiceConnection(this);
+            mConnection = new SdServiceConnection(AuthenticateActivity.this);
 
             Button registerBtn = (Button) findViewById(R.id.RegisterBtn);
             registerBtn.setOnClickListener(onRegister);
@@ -117,7 +117,7 @@ public class AuthenticateActivity extends AppCompatActivity {
             updateUi();
         } else {
             if (Objects.nonNull(mConnection))
-                if (!mConnection.mBound) mUtil.bindToServer(this, mConnection);
+                if (!mConnection.mBound) mUtil.bindToServer(AuthenticateActivity.this, mConnection);
             waitForConnection();
         }
     }

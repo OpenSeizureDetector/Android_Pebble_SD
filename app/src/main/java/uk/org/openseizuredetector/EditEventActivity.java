@@ -85,7 +85,7 @@ public class EditEventActivity extends AppCompatActivity {
         super.onStart();
         Log.i(TAG, "onStart()");
         if (Objects.nonNull(mConnection))
-            if (!mConnection.mBound) mUtil.bindToServer(this, mConnection);
+            if (!mConnection.mBound) mUtil.bindToServer(EditEventActivity.this, mConnection);
         waitForConnection();
 
         updateUi();

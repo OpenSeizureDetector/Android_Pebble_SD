@@ -24,10 +24,12 @@
 package uk.org.openseizuredetector;
 
 import android.app.Activity;
-import android.bluetooth.BluetoothGattCharacteristic;
+import android.app.Application;
+import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
+import android.content.ContextWrapper;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Handler;
@@ -37,6 +39,9 @@ import android.text.format.Time;
 import android.text.util.Linkify;
 import android.util.Log;
 
+import org.checkerframework.checker.units.qual.C;
+
+import java.util.Objects;
 import androidx.appcompat.app.AlertDialog;
 
 
@@ -49,6 +54,21 @@ import androidx.appcompat.app.AlertDialog;
  * Bram Regtien, 2023
  *
  */
+/**
+ * A Passive data source that expects a device to send it data periodically by sending a POST request.
+ * The POST network request is handled in the SDWebServer class, which calls the 'updateFrom JSON()'
+ * function to send the data to this datasource.
+ * SdWebServer expects POST requests to /data and /settings URLs to send data or watch settings.
+ */
+
+/**
+ * order of boolean tracing
+ * mConnection.mBound
+ * mConnection.mWatchConnected
+ * mConnection.hasSdSettings()
+ * mWatchAppRunningCheck
+ * mConnection.hasSdData
+ */
 public class SdDataSourceAw extends SdDataSource {
     private String TAG = "SdDataSourceAw";
     private final String mAppPackageName = "uk.org.openseizuredetector.aw.mobile";
@@ -57,6 +77,15 @@ public class SdDataSourceAw extends SdDataSource {
     private static int MAX_RAW_DATA = 125;
     private int nRawData = 0;
     private double[] rawData = new double[MAX_RAW_DATA];
+    private Intent receivingIntent = null;
+    private Intent aWIntent = null;
+    private Intent aWIntentBase = null;
+    private Intent activityIntent = null;
+    private Intent intentReceiver = null;
+    private Intent receivedIntentByBroadCast = null;
+    private String receivedAction = null;
+    private boolean sdBroadCastReceived;
+    private boolean sdAwBroadCastReceived;
 
     public SdDataSourceAw(Context context, Handler handler,
                           SdDataReceiver sdDataReceiver) {
@@ -65,12 +94,263 @@ public class SdDataSourceAw extends SdDataSource {
         // Set default settings from XML files (mContext is set by super().
         PreferenceManager.setDefaultValues(mContext,
                 R.xml.network_passive_datasource_prefs, true);
+
+        mContext = context;
+
+
+    }
+
+
+    public Activity getActivityFromContext(Context context) {
+        if (context == null) {
+            mUtil.showToast("instantly failing get context wrapped context");
+            return null;
+        } else if (context instanceof ContextWrapper) {
+            if (context instanceof Activity) {
+                mUtil.showToast("instanceFound");
+                return (Activity) context;
+            } else {
+                mUtil.showToast("retrywithWrapper");
+                return getActivityFromContext(((ContextWrapper) context).getBaseContext());
+            }
+        }
+        return null;
     }
 
 
     /**
-     * Start the datasource updating
+     * IntentBroadCastReceiver with coding from:
+     * https://stackoverflow.com/questions/2682043/how-to-check-if-receiver-is-registered-in-android
+     * */
+
+    public class IntentBroadCastReceiver  extends BroadcastReceiver {
+        IntentBroadCastReceiver(){
+            Log.i("IntentBroadCastReceiver","BroadcastReceiverClass() in Constructor");
+        };
+        public boolean isRegistered = false;
+
+        /**
+         * register receiver
+         * @param context - Context
+         * @param filter - Intent Filter
+         * @return see Context.registerReceiver(BroadcastReceiver,IntentFilter)
+         */
+        public Intent register(Context context, IntentFilter filter) {
+            try {
+                // ceph3us note:
+                // here I propose to create
+                // a isRegistered(Context) method
+                // as you can register receiver on different context
+                // so you need to match against the same one :)
+                // example  by storing a list of weak references
+                // see LoadedApk.class - receiver dispatcher
+                // its and ArrayMap there for example
+                receivingIntent = new Intent(context, getClass());
+                return !isRegistered
+                        ? context.registerReceiver(this, filter)
+                        : null;
+            } finally {
+                isRegistered = true;
+            }
+        }
+
+        /**
+         * unregister received
+         * @param context - context
+         * @return true if was registered else false
+         */
+        public boolean unregister(Context context) {
+            // additional work match on context before unregister
+            // eg store weak ref in register then compare in unregister
+            // if match same instance
+            return isRegistered
+                    && unregisterInternal(context);
+        }
+
+        private boolean unregisterInternal(Context context) {
+            context.unregisterReceiver(this);
+            isRegistered = false;
+            return true;
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.i(TAG,"onReceive: received broadcast.");
+            if (!Objects.equals(intent,null))
+                if (Constants.ACTION.BROADCAST_TO_SDSERVER.equals(intent.getAction()))
+                    intentReceivedAction(intent);
+            goAsync();
+        }
+
+    }
+
+    private boolean registeredAllBroadCastIntents(){
+        return sdAwBroadCastReceived && sdBroadCastReceived;
+    }
+
+    private IntentBroadCastReceiver intentBroadCastReceiver = null;
+
+    private void onStartReceived() {
+        try {
+            mHandler = new Handler();
+            mUtil = new OsdUtil(mContext, mHandler);
+            if (Objects.equals(intentBroadCastReceiver, null))
+                intentBroadCastReceiver = new IntentBroadCastReceiver();
+            if (intentBroadCastReceiver.isRegistered)
+                intentBroadCastReceiver.unregister(mContext);
+            IntentFilter broadCastToSdServer = new IntentFilter(Constants.ACTION.BROADCAST_TO_SDSERVER);
+            intentBroadCastReceiver.register(mContext, broadCastToSdServer);
+            Log.i(TAG, "onCreate(): reached");
+            if ( !Objects.equals(receivedIntentByBroadCast, null)) {
+                try {
+
+                    Log.i(TAG, "got intent and count of extras:" + receivedIntentByBroadCast.getExtras().size());
+                } catch (Exception e) {
+                    Log.e(TAG, "onCreate: ", e);
+                }
+
+                if (!Objects.equals(receivedIntentByBroadCast, null))
+                    if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.returnPath)) {
+                        if (Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver.equals(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.returnPath))) {
+                            Log.i(TAG, "inOnStartReceived");
+                            if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.intentAction)) {
+                                receivedAction = receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.intentAction);
+                                Log.d(TAG,"inOnStartReceived(): received action: " +receivedAction);
+                            }
+
+                            if (Constants.ACTION.REGISTERED_START_INTENT.equals(receivedAction))
+                            {
+                                sdBroadCastReceived = true;
+                                if (registeredAllBroadCastIntents()){
+                                    aWIntent = aWIntentBase;
+                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTERED_WEARRECEIVER_INTENT);
+                                    mContext.sendBroadcast(aWIntent);
+                                }
+                            }
+
+                            if (Constants.ACTION.REGISTER_WEARRECEIVER_INTENT.equals(receivedAction)){
+                                if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.wearReceiverServiceIntent)) {
+                                    aWIntentBase = receivedIntentByBroadCast.getParcelableExtra(Constants.GLOBAL_CONSTANTS.wearReceiverServiceIntent);
+                                    aWIntentBase.putExtra(Constants.GLOBAL_CONSTANTS.returnPath, Constants.GLOBAL_CONSTANTS.mAppPackageName);
+                                    aWIntentBase.setAction(Constants.ACTION.BROADCAST_TO_WEARRECEIVER);
+                                    aWIntentBase.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                                    aWIntentBase.setComponent(null);
+                                    sdAwBroadCastReceived = true;
+                                    if (registeredAllBroadCastIntents()){
+                                        aWIntent = aWIntentBase;
+                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentReceiver,receivingIntent);
+                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTERED_WEARRECEIVER_INTENT);
+                                        mContext.sendBroadcast(aWIntent);
+                                    }
+                                }else{
+                                    Log.e(TAG,"onStartReceived(): registering WearReceiverIntent without intent attatched", new Throwable());
+                                }
+                            }
+
+                            if (Constants.ACTION.REGISTERED_WEARRECEIVER_INTENT.equals(receivedAction)) {
+
+                                sdBroadCastReceived = true;
+                                if (registeredAllBroadCastIntents()){
+                                    aWIntent = aWIntentBase;
+                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.CONNECT_WEARABLE_INTENT);
+                                    mContext.sendBroadcast(aWIntent);
+                                }
+                                return;
+                            }
+                            if (Constants.ACTION.REGISTERED_WEAR_LISTENER.equals(receivedAction)) {
+                                ((SdServer)mSdDataReceiver).mSdData.serverOK = true;
+                                mSdData = getSdData();
+
+                                sdBroadCastReceived = true;
+                                if (registeredAllBroadCastIntents()){
+                                    aWIntent = aWIntentBase;
+                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.CONNECT_WEARABLE_INTENT);
+                                    mContext.sendBroadcast(aWIntent);
+                                }
+                                return;
+                            }
+
+
+
+                            if (Constants.ACTION.CONNECTION_WEARABLE_CONNECTED.equals(receivedAction)){
+                                ((SdServer)mSdDataReceiver).mSdData.watchConnected = true;
+
+                                return;
+                            }
+
+                            if (Constants.ACTION.CONNECTION_WEARABLE_RECONNECTED.equals(receivedAction)){
+                                ((SdServer)mSdDataReceiver).mSdData.watchConnected = true;
+                                return;
+                            }
+
+                            if (Constants.ACTION.CONNECTION_WEARABLE_DISCONNECTED.equals(receivedAction)){
+                                ((SdServer)mSdDataReceiver).mSdData.watchConnected = false;
+                                return;
+                            }
+
+                            if (Constants.ACTION.PUSH_SETTINGS_ACTION.equals(receivedAction)) {
+                                calculateStaticTimings();
+                                mHandler.postDelayed(() -> {
+                                    aWIntent = aWIntentBase;
+                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.PUSH_SETTINGS_ACTION);
+                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, getSdData().toSettingsJSON());
+                                    mContext.sendBroadcast(aWIntent);
+                                }, 100);
+                                return;
+                            }
+
+                            if (Constants.ACTION.SDDATA_TRANSFER_TO_SD_SERVER.equals(receivedAction)) {
+                                try {
+                                    if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath)) {
+                                        String a = updateFromJSON(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath));
+
+                                        Log.v(TAG, "result from updateFromJSON(): " + a);
+                                        if (a == "sendSettings") {
+                                            super.updatePrefs();
+                                            sendWatchSdSettings();
+                                            getWatchSdSettings();
+                                        }
+                                        if (a == "ERROR"){
+                                            Log.e(TAG,"Error in updateFromJSON: ");
+                                        }
+                                        if (!getSdData().haveSettings)
+                                            ((SdServer)mSdDataReceiver).mSdData.haveSettings = true;
+                                        if (!getSdData().watchConnected)
+                                            ((SdServer)mSdDataReceiver).mSdData.watchConnected = true;
+
+                                    }
+
+                                } catch (Exception e) {
+                                    Log.e(TAG,"onStartReceived()",e);
+                                }
+                            }
+
+                            if (Constants.ACTION.STOP_WEAR_SD_ACTION.equals(receivedAction)) {
+                                //if (((SdServer)mSdDataReceiver).)Log.i(TAG," fixme: add here liveData from startup and main activity");
+                                ((SdServer)mSdDataReceiver).mSdData.haveSettings = false;
+                                ((SdServer)mSdDataReceiver).mSdData.haveData = false;
+                                ((SdServer)mSdDataReceiver).mSdData.watchConnected = false;
+                                ((SdServer)mSdDataReceiver).mSdData.mDataType = receivedAction;
+                                mUtil.stopServer();
+                            }
+
+
+
+
+                        }
+                    } else
+                        mUtil.showToast("inOnStartWithIntent");
+            }
+        }catch (Exception e){
+            Log.e(TAG,"onStartReceived(): ",e);
+        }
+    }
+
+    /**
+     * Start the datasource updating - initialises from sharedpreferences first to
+     * make sure any changes to preferences are taken into account.
      */
+    @Override
     public void start() {
         Log.i(TAG, "start()");
         mUtil.writeToSysLogFile("SdDataSourceAw.start()");
@@ -78,19 +358,50 @@ public class SdDataSourceAw extends SdDataSource {
         mNrawdata = 0;
 
 
+        //START_WEAR_APP_ACTION.toLower()
         // Now start the AndroidWear companion app
         Intent i = new Intent(Intent.ACTION_MAIN);
         PackageManager manager = mContext.getPackageManager();
-        i = manager.getLaunchIntentForPackage(mAppPackageName);
-        if (i == null) {
+        aWIntent = manager.getLaunchIntentForPackage(Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver);
+        Log.i(TAG,"aWIntent: " + aWIntent);
+        if (aWIntent == null) {
             mUtil.showToast("Error - OpenSeizureDetector Android Wear App is not installed - please install it and run it");
             installAwApp();
         } else {
-            i.addCategory(Intent.CATEGORY_LAUNCHER);
-            mContext.startActivity(i);
-            // FIXME:  The android wear companion app should now start to send us data via intents.
-            // FIXME: Register the onDataReceived() method to receive intents from the companion app.
+            try {
+
+                onStartReceived() ;
+
+                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.returnPath,Constants.GLOBAL_CONSTANTS.mAppPackageName);
+                aWIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES|Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                aWIntentBase = aWIntent;
+                //aWIntent.setClassName(aWIntent.getPackage(),".WearReceiver");
+                //aWIntent = new Intent();
+                //aWIntent.setPackage(Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver);
+                //FIXME: tell me how to incorporate <data ######## /> with:
+                // .setData()
+                // and: launch DebugActivity from debugger.
+                // (this is one way of 2 way communication.)
+                // Also tell me how to use activity without broadcast. In this context is no getActivity() or getIntent()
+                SdData sdData = getSdData();
+                //aWIntent.setData(Constants.GLOBAL_CONSTANTS.mStartUri);
+                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.dataType,Constants.GLOBAL_CONSTANTS.mStartUri);
+                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentReceiver, receivingIntent);
+                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_START_INTENT);
+
+                //aWIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                mContext.startActivity(aWIntent);
+
+            } catch (Exception e){
+                Log.e(TAG,"start() encountered an error",e);
+                mHandler.postDelayed(()->{
+                    aWIntent = new Intent(Constants.ACTION.BROADCAST_TO_WEARRECEIVER);
+                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.returnPath,Constants.GLOBAL_CONSTANTS.mAppPackageName);
+                    mContext.sendBroadcast(aWIntent);
+                },100);
+            }
         }
+
     }
 
     /**
@@ -99,6 +410,17 @@ public class SdDataSourceAw extends SdDataSource {
     public void stop() {
         Log.i(TAG, "stop()");
         mUtil.writeToSysLogFile("SdDataSourceAw.stop()");
+        if (!Objects.equals(aWIntent, null)) {
+            aWIntent.putExtra("data",Constants.GLOBAL_CONSTANTS.mStopUri);
+            mContext.sendBroadcast(aWIntent);
+        }
+        if (!Objects.equals(intentBroadCastReceiver,null)) {
+            if (intentBroadCastReceiver.isRegistered)
+                intentBroadCastReceiver
+                        .unregister(mContext);
+            intentBroadCastReceiver = null;
+        }
+
         super.stop();
         // FIXME - send an intent to tell the Android Wear companion app to shutdown.
     }
@@ -108,66 +430,124 @@ public class SdDataSourceAw extends SdDataSource {
         // from https://stackoverflow.com/questions/11753000/how-to-open-the-google-play-store-directly-from-my-android-application
         // First tries to open Play Store, then uses URL if play store is not installed.
         try {
-            Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + mAppPackageName));
-            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(i);
+            aWIntent = aWIntentBase;
+            aWIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + Constants.GLOBAL_CONSTANTS.mAppPackageName));
+            aWIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(aWIntent);
         } catch (android.content.ActivityNotFoundException anfe) {
-            Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + mAppPackageName));
+            Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + Constants.GLOBAL_CONSTANTS.mAppPackageName));
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             mContext.startActivity(i);
         }
     }
 
-    /**
-     * onDataReceived(Intent i)
-     * FIXME - this does not do anything!
-     * This method should be registered as a receiver for intents in the onStart() method and de-registered
-     * in the onStop() method.
-     * @param intent - received intent.
-     */
-    public void onDataReceived(Intent intent) {
-        Log.v(TAG, "onDataReceived");
-
-        // FIXME - Check the type of data received.
-
-        // If data is heart rate {
-        final int heartRate = -1; // FIXME - read the heart rate from the intent.
-        mSdData.mHR = (double) heartRate;
-        Log.d(TAG, String.format("Received heart rate: %d", heartRate));
-        // }
-
-        // else if data is acceleration {
-        byte[] rawDataBytes = { 0, 1 };  // FIXME - read the accelerometer data from the intent.
-        Log.v(TAG, "CHAR_OSD_ACC_DATA: numSamples = " + rawDataBytes.length);
-        for (int i = 0; i < rawDataBytes.length;i++) {
-            if (mNrawdata < MAX_RAW_DATA) {
-                rawData[mNrawdata] = 1000 * rawDataBytes[i] / 64;   // Scale to mg
-                mNrawdata++;
-            } else {
-                Log.i(TAG, "RawData Buffer Full - processing data");
-                // Re-start collecting raw data.
-                mSdData.watchAppRunning = true;
-                for (i = 0; i < rawData.length; i++) {
-                    mSdData.rawData[i] = rawData[i];
-                    //Log.v(TAG,"onDataReceived() i="+i+", "+rawData[i]);
-                }
-                mSdData.mNsamp = rawData.length;
-                mWatchAppRunningCheck = true;
-                mDataStatusTime = new Time(Time.getCurrentTimezone());
-                doAnalysis();
-                mNrawdata = 0;
-            }
+    public void startWearReceiverApp(){
+        try {
+            aWIntent = aWIntentBase;
+            SdData sdData = getSdData();
+            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction,Constants.ACTION.START_MOBILE_RECEIVER_ACTION);
+            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, sdData.toSettingsJSON());
+            mContext.sendBroadcast(aWIntent);
+        } catch (android.content.ActivityNotFoundException anfe) {
+            aWIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + Constants.GLOBAL_CONSTANTS.mAppPackageName));
+            aWIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(aWIntent);
         }
-        // }
-        // else if (data is battery level) {
-        byte batteryPc = -1;   // FIXME - read battery level from intent.
-        mSdData.batteryPc = batteryPc;
-        Log.v(TAG,"Received Battery Data" + String.format("%d", batteryPc));
-        mSdData.haveSettings = true;
-        // }
-        // else {
-            Log.v(TAG,"Unrecognised intent data type");
-        //}
+
+    }
+
+    public void intentReceivedAction(Intent intent){
+        mHandler.post(()->{
+            receivedIntentByBroadCast = intent;
+            onStartReceived();
+        });
+    }
+
+    public void startWearSDApp(){
+        try{
+            aWIntent = aWIntentBase;
+            SdData sdData = getSdData();
+            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Uri.parse(Constants.ACTION.START_WEAR_APP_ACTION));
+            sdData.mDataType = Constants.GLOBAL_CONSTANTS.mSettingsString;
+            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, sdData.toSettingsJSON());
+            mContext.sendBroadcast(aWIntent);
+        }catch ( Exception e ){
+            Log.e(TAG,"startWearSDApp: Error occoured",e);
+        }
+
+    }
+
+    public void startMobileSD(){
+        try{
+            aWIntent = aWIntentBase;
+            SdData sdData = getSdData();
+            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction,Constants.ACTION.PUSH_SETTINGS_ACTION);
+            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, sdData.toSettingsJSON());
+            mContext.sendBroadcast(aWIntent);
+        }catch ( Exception e ){
+            Log.e(TAG,"startWearSDApp: Error occoured",e);
+        }
+
+
+    }
+
+    public void mobileBatteryPctUpdate(){
+        try{
+            aWIntent = aWIntentBase;
+            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction,Constants.ACTION.BATTERYUPDATE_ACTION);
+            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mPowerLevel, ((SdServer)mSdDataReceiver).batteryPct);
+            mContext.sendBroadcast(aWIntent);
+        }catch ( Exception e ){
+            Log.e(TAG,"startWearSDApp: Error occoured",e);
+        }
+    }
+
+    /**
+     * Send the watch settings that are stored as class member
+     * variables to the watch.
+     */
+    public void sendWatchSdSettings() {
+        Log.v(TAG, "sendWatchSdSettings() - preparing settings dictionary.. mSampleFreq=" + mSampleFreq);
+        mUtil.writeToSysLogFile("SdDataSourceAw.sendWatchSdSettings()");
+        /*SdData mSdDataOut = getSdData();
+        mSdDataOut.dataTime.setToNow();
+        mSdDataOut.mDataType = "settings";
+        mSdDataOut.serverOK = mUtil.isServerRunning();
+
+        if (!mUtil.isServerRunning())
+            Log.v(TAG, "sendWatchSdSettings returning without mSdData.HaveSettings");
+        else Log.v(TAG, "sendWatchSdSettings returning with mSdData.HaveSettings");
+        if ((mSdDataOut.phoneName == null) || (mSdDataOut.phoneName == ""))
+            mSdDataOut.phoneName = Build.HOST;
+        String text = mSdDataOut.toSettingsJSON();
+        sendMessage(MESSAGE_ITEM_OSD_DATA_RECEIVED, text);*/
+    }
+
+    /**
+     * Request Watch App to send us its latest data.
+     * Will be received as a message by the receiveData handler
+     */
+    public void getWatchData() {
+        Log.v(TAG, "getData() - requesting data from watch");
+        mUtil.writeToSysLogFile("SdDataSourceAw.getData() - requesting data from Android Wear");
+
+
+    }
+
+    /**
+     * Send our latest settings to the watch, then request Pebble App to send
+     * us its latest settings so we can check it has been set up correctly..
+     * Will be received as a message by the receiveData handler
+     */
+    public void getWatchSdSettings() {
+        Log.v(TAG, "getWatchSdSettings() - sending required settings to pebble");
+        mUtil.writeToSysLogFile("SdDataSourceAw.getWatchSdSettings()");
+        try {
+            ((SdServer) mSdDataReceiver).mSdData.haveSettings = true;
+        } catch (Exception e) {
+            Log.e(TAG, "startWearSDApp: Error occoured", e);
+        }
+        //sendMessage(Constants.GLOBAL_CONSTANTS.MESSAGE_ITEM_OSD_DATA_REQUESTED, "Would you please give me your settings?");
     }
 
 }

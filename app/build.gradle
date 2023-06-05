@@ -70,6 +70,14 @@ dependencies {
     implementation 'com.firebaseui:firebase-ui-auth:8.0.2'
     implementation 'com.google.firebase:firebase-firestore'
     implementation 'androidx.preference:preference:1.2.0'
+
+    //implementation for Timerless operation:
+    // Work Manager and worker: used instead of Services
+    implementation 'androidx.work:work-runtime:2.8.1'
+    implementation 'androidx.work:work-multiprocess:2.8.1'
+    //implentation for livedata
+    implementation 'androidx.lifecycle:lifecycle-livedata:2.6.1'
+
     testImplementation 'androidx.test.ext:junit:1.2.0-alpha01'
     testImplementation 'androidx.test:runner:1.6.0-alpha01'
     testImplementation 'junit:junit:4.13.2'

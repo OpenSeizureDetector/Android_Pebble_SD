@@ -2,6 +2,7 @@ package uk.org.openseizuredetector;
 
 //import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -90,6 +91,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         try {
             Log.v(TAG, "trying menubar fiddle...");
             ViewConfiguration config = ViewConfiguration.get(this);
+            @SuppressLint("SoonBlockedPrivateApi")
             Field menuKeyField =
                     ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
             if (menuKeyField != null) {
@@ -150,7 +152,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         Log.v(TAG, "onStart()");
         super.onStart();
         if (Objects.nonNull(mConnection))
-            if (!mConnection.mBound) mUtil.bindToServer(this, mConnection);
+            if (!mConnection.mBound) mUtil.bindToServer(LogManagerControlActivity.this, mConnection);
         waitForConnection();
         startUiTimer(mUiTimerPeriodFast);
     }
@@ -392,154 +394,151 @@ public class LogManagerControlActivity extends AppCompatActivity {
         boolean checked = ((RadioButton) view).isChecked();
 
         // Check which radio button was clicked
-        switch (view.getId()) {
-            case R.id.local_data_rb:
-                if (checked) {
-                    // Switch to the local data view
-                    localDataLl.setVisibility(View.VISIBLE);
-                    sharedDataLl.setVisibility(View.GONE);
-                    syslogLl.setVisibility(View.GONE);
-                }
-                break;
-            case R.id.shared_data_rb:
-                if (checked) {
-                    // Switch to the local data view
-                    localDataLl.setVisibility(View.GONE);
-                    sharedDataLl.setVisibility(View.VISIBLE);
-                    syslogLl.setVisibility(View.GONE);
-                }
-                break;
-            case R.id.syslog_rb:
-                if (checked) {
-                    // Switch to the local data view
-                    localDataLl.setVisibility(View.GONE);
-                    sharedDataLl.setVisibility(View.GONE);
-                    syslogLl.setVisibility(View.VISIBLE);
-                }
-                break;
+        if(Objects.equals(R.id.local_data_rb,view.getId())){
+            if (checked) {
+                // Switch to the local data view
+                localDataLl.setVisibility(View.VISIBLE);
+                sharedDataLl.setVisibility(View.GONE);
+                syslogLl.setVisibility(View.GONE);
+            }
+        }else if (Objects.equals(R.id.shared_data_rb,view.getId())) {
+            if (checked) {
+                // Switch to the local data view
+                localDataLl.setVisibility(View.GONE);
+                sharedDataLl.setVisibility(View.VISIBLE);
+                syslogLl.setVisibility(View.GONE);
+            }
+        }else if (Objects.equals(R.id.syslog_rb,view.getId())) {
+            if (checked) {
+                // Switch to the local data view
+                localDataLl.setVisibility(View.GONE);
+                sharedDataLl.setVisibility(View.GONE);
+                syslogLl.setVisibility(View.VISIBLE);
+            }
         }
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         Log.i(TAG, "onOptionsItemSelected() :  " + item.getItemId() + " selected");
-        switch (item.getItemId()) {
-            case R.id.action_authenticate_api:
-                Log.i(TAG, "action_autheticate_api");
-                try {
-                    Intent i = new Intent(
-                            getApplicationContext(),
-                            AuthenticateActivity.class);
-                    this.startActivity(i);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting export activity " + ex.toString());
-                }
-                return true;
-            case R.id.pruneDatabaseMenuItem:
-                Log.i(TAG, "action_pruneDatabase");
-                onPruneBtn.onClick(null);
-                return true;
-            case R.id.action_report_seizure:
-                Log.i(TAG, "action_report_seizure");
-                try {
-                    Intent intent = new Intent(
-                            getApplicationContext(),
-                            ReportSeizureActivity.class);
-                    this.startActivity(intent);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting Report Seizure activity " + ex.toString());
-                }
-                return true;
-            case R.id.action_settings:
-                Log.i(TAG, "action_settings");
-                try {
-                    Intent prefsIntent = new Intent(
-                            getApplicationContext(),
-                            PrefActivity.class);
-                    this.startActivity(prefsIntent);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting settings activity " + ex.toString());
-                }
-                return true;
-            case R.id.start_stop_nda:
+        if (Objects.equals(R.id.action_authenticate_api, item.getItemId())) {
+            Log.i(TAG, "action_autheticate_api");
+            try {
+                Intent i = new Intent(
+                        getApplicationContext(),
+                        AuthenticateActivity.class);
+                this.startActivity(i);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting export activity " + ex.toString());
+            }
+            return true;
+        } else if (Objects.equals(R.id.pruneDatabaseMenuItem, item.getItemId())) {
+            Log.i(TAG, "action_pruneDatabase");
+            onPruneBtn.onClick(null);
+            return true;
+        } else if (Objects.equals(R.id.action_report_seizure, item.getItemId())) {
+            Log.i(TAG, "action_report_seizure");
+            try {
+                Intent intent = new Intent(
+                        getApplicationContext(),
+                        ReportSeizureActivity.class);
+                this.startActivity(intent);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting Report Seizure activity " + ex.toString());
+            }
+            return true;
+        } else if (Objects.equals(R.id.action_settings, item.getItemId())) {
+            Log.i(TAG, "action_settings");
+            try {
+                Intent prefsIntent = new Intent(
+                        getApplicationContext(),
+                        PrefActivity.class);
+                this.startActivity(prefsIntent);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting settings activity " + ex.toString());
+            }
+            return true;
+        } else if (Objects.equals(R.id.start_stop_nda, item.getItemId())) {
 
-                // FIXME: When we use this we get left in a state with two processes running and the system
-                //        alternating between OK and FAULT - I don't know why yet!
-                Log.i(TAG,"start/stop NDA");
-                if (mConnection.mSdServer.mLm.mLogNDA) {
-                    new AlertDialog.Builder(this)
-                            .setTitle(R.string.stop_nda_logging_dialog_title)
-                            .setMessage(R.string.stop_nda_logging_dialog_meassage)
-                            .setIcon(android.R.drawable.ic_dialog_alert)
-                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int whichButton) {
-                                    mLm.disableNDATimer();
-                                    MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
-                                    startStopNDAMenuItem.setTitle(R.string.start_nda_menu_title);
-                                    mUtil.restartServer();
-                                }
-                            })
-                            .setNegativeButton(android.R.string.no, null)
-                            .show();
-                } else {
-                    new AlertDialog.Builder(this)
-                            .setTitle(R.string.start_nda_logging_dialog_title)
-                            .setMessage(R.string.start_nda_logging_dialog_meassage)
-                            .setIcon(android.R.drawable.ic_dialog_alert)
-                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int whichButton) {
-                                    mLm.enableNDATimer();
-                                    MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
-                                    startStopNDAMenuItem.setTitle(R.string.stop_nda_menu_title);
-                                    mUtil.restartServer();
-                                }
-                            })
-                            .setNegativeButton(android.R.string.no, null)
-                            .show();
-
-                }
-                return true;
-            case R.id.action_mark_unknown:
-                Log.i(TAG, "action_mark_unknown");
+            // FIXME: When we use this we get left in a state with two processes running and the system
+            //        alternating between OK and FAULT - I don't know why yet!
+            Log.i(TAG, "start/stop NDA");
+            if (mConnection.mSdServer.mLm.mLogNDA) {
                 new AlertDialog.Builder(this)
-                        .setTitle(R.string.mark_unverified_events_unknown_dialog_title)
-                        .setMessage(R.string.mark_unverified_events_unknown_dialog_message)
+                        .setTitle(R.string.stop_nda_logging_dialog_title)
+                        .setMessage(R.string.stop_nda_logging_dialog_meassage)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
-                                mLm.mWac.markUnverifiedEventsAsUnknown();
+                                mLm.disableNDATimer();
+                                MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
+                                startStopNDAMenuItem.setTitle(R.string.start_nda_menu_title);
+                                mUtil.restartServer();
                             }
                         })
                         .setNegativeButton(android.R.string.no, null)
                         .show();
-            case R.id.action_mark_false_alarm:
-                Log.i(TAG, "action_mark_false_alarm");
+            } else {
                 new AlertDialog.Builder(this)
-                        .setTitle(R.string.mark_unverified_events_false_alarm_dialog_title)
-                        .setMessage(R.string.mark_unverified_events_false_alarm_dialog_message)
+                        .setTitle(R.string.start_nda_logging_dialog_title)
+                        .setMessage(R.string.start_nda_logging_dialog_meassage)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
-                                mLm.mWac.markUnverifiedEventsAsFalseAlarm();
+                                mLm.enableNDATimer();
+                                MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
+                                startStopNDAMenuItem.setTitle(R.string.stop_nda_menu_title);
+                                mUtil.restartServer();
                             }
                         })
                         .setNegativeButton(android.R.string.no, null)
                         .show();
-            case R.id.export_data_menuitem:
-                Log.i(TAG, "export data menu item");
-                try {
-                    Intent i = new Intent(
-                            getApplicationContext(),
-                            ExportDataActivity.class);
-                    this.startActivity(i);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting export data activity " + ex.toString());
-                }
-                return true;
 
-            default:
-                return super.onOptionsItemSelected(item);
+            }
+            return true;
+        } else if (Objects.equals(R.id.action_mark_unknown, item.getItemId())) {
+            Log.i(TAG, "action_mark_unknown");
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.mark_unverified_events_unknown_dialog_title)
+                    .setMessage(R.string.mark_unverified_events_unknown_dialog_message)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            mLm.mWac.markUnverifiedEventsAsUnknown();
+                        }
+                    })
+                    .setNegativeButton(android.R.string.no, null)
+                    .show();
+            return true;
+        } else if (Objects.equals(R.id.action_mark_false_alarm, item.getItemId())) {
+            Log.i(TAG, "action_mark_false_alarm");
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.mark_unverified_events_false_alarm_dialog_title)
+                    .setMessage(R.string.mark_unverified_events_false_alarm_dialog_message)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            mLm.mWac.markUnverifiedEventsAsFalseAlarm();
+                        }
+                    })
+                    .setNegativeButton(android.R.string.no, null)
+                    .show();
+            return true;
+        } else if (Objects.equals(R.id.export_data_menuitem, item.getItemId())) {
+            Log.i(TAG, "export data menu item");
+            try {
+                Intent i = new Intent(
+                        getApplicationContext(),
+                        ExportDataActivity.class);
+                this.startActivity(i);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting export data activity " + ex.toString());
+            }
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
+
     }
 
 

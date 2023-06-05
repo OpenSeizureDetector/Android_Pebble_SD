@@ -25,6 +25,7 @@
 package uk.org.openseizuredetector;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
@@ -49,6 +50,8 @@ import android.text.format.Time;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 //uncommented due to deprication
 //import org.apache.http.conn.util.InetAddressUtils;
@@ -67,6 +70,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 //use java.Util.Objects as comparetool.
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -199,6 +203,7 @@ public class OsdUtil {
         sdServerIntent = new Intent(mContext, SdServer.class);
         sdServerIntent.setData(Constants.GLOBAL_CONSTANTS.mStopUri);
         sdServerIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
+        mContext.startService(sdServerIntent);
         mContext.stopService(sdServerIntent);
     }
 
