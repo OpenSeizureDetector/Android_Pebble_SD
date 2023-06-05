@@ -529,6 +529,11 @@ public abstract class SdDataSource {
         Log.v(TAG,"after fallCheck, mSdData.fallAlarmStanding="+mSdData.fallAlarmStanding);
 
         mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
+
+        //and signal update UI
+        if(((SdServer)mSdDataReceiver).uiLiveData.hasActiveObservers()) {
+            ((SdServer)mSdDataReceiver).uiLiveData.signalChangedData();
+        }
     }
 
 

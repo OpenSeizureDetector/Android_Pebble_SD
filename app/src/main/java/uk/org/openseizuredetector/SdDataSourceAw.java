@@ -317,9 +317,6 @@ public class SdDataSourceAw extends SdDataSource {
                                             ((SdServer)mSdDataReceiver).mSdData.haveSettings = true;
                                         if (!getSdData().watchConnected)
                                             ((SdServer)mSdDataReceiver).mSdData.watchConnected = true;
-                                        if(((SdServer)mSdDataReceiver).uiLiveData.hasActiveObservers()) {
-                                            ((SdServer)mSdDataReceiver).uiLiveData.signalChangedData();
-                                        }
 
                                     }
 
