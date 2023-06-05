@@ -127,6 +127,7 @@ public abstract class SdDataSource {
 
     }
 
+    protected SdData pullSdData() { return ((SdServer)mSdDataReceiver).mSdData; }
     /**
      * Returns the SdData object stored by this class.
      *
