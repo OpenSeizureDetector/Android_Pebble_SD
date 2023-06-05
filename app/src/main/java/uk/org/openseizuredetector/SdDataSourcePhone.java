@@ -25,6 +25,7 @@ package uk.org.openseizuredetector;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -38,6 +39,8 @@ import android.util.Log;
 
 import static java.lang.Math.sqrt;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 
@@ -57,25 +60,94 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
     private SensorEvent mStartEvent = null;
     private long mStartTs = 0;
     public double mSampleFreq = 0;
-
+    private double mSampleTimeUs = -1;
+    private int mCurrentMaxSampleCount = -1;
+    private double mConversionSampleFactor;
+    private SdData mSdDataSettings ;
+    private SdServer sdServer;
     private PowerManager.WakeLock mWakeLock;
 
     private SdServer runningSdServer;
+    private int mChargingState = 0;
+    private boolean mIsCharging = false;
+    private int chargePlug = 0;
+    private boolean usbCharge = false;
+    private boolean acCharge = false;
+    private float batteryPct = -1f;
+    private IntentFilter batteryStatusIntentFilter = null;
+    private Intent batteryStatusIntent;
+    private boolean sensorsActive = false;
+    private Intent sdServerIntent = null;
+    private List<Double> rawDataList;
+    private List<Double> rawDataList3D;
 
+
+
+
+    /**
+     * SdDataSourcePhone Class. This class handles simulation data for
+     * the carrier of the phone.
+     * @param context : Android context, usually actual class of application or given
+     *                  surroundings of parent.
+     * @param handler : Handler handles out-of-activity requests.
+     * @param sdDataReceiver : Through this object will the child objects of this
+     *                         class be available.
+     */
     public SdDataSourcePhone(Context context, Handler handler,
                              SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
+
+
         mName = "Phone";
         // Set default settings from XML files (mContext is set by super().
-        PreferenceManager.setDefaultValues(mContext,
+         PreferenceManager.setDefaultValues(mContext,
                 R.xml.network_passive_datasource_prefs, true);
+        PreferenceManager.setDefaultValues(mContext,
+                R.xml.seizure_detector_prefs, true);
+        rawDataList = new ArrayList();
+        rawDataList3D = new ArrayList();
+        updatePrefs();
+        Log.d(TAG,"logging value of mSdData: "+super.mSdData.mDefaultSampleCount);
+        //mSdDataSettings = sdDataReceiver.mSdData;
+        sdServer = (SdServer) sdDataReceiver;
+        mSdDataSettings = pullSdData();
+        sdServerIntent = new Intent(context,SdDataSource.class);
+        if (!Objects.equals(mSdDataSettings,null))if (mSdDataSettings.mDefaultSampleCount >0d && mSdDataSettings.analysisPeriod > 0d ) {
+            calculateStaticTimings();
+        }
+
     }
 
+
+    private  void bindSensorListeners(){
+        if (mSampleTimeUs < (double) SensorManager.SENSOR_DELAY_NORMAL ||
+                Double.isInfinite(mSampleTimeUs) ||
+                Double.isNaN(mSampleTimeUs))
+        {
+            calculateStaticTimings();
+            if (mSampleTimeUs <= 0d)
+                mSampleTimeUs = SensorManager.SENSOR_DELAY_NORMAL;
+        }
+        mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
+        Sensor mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        // registering listener with reference to (this).onSensorChanged , mSampleTime in MicroSeconds
+        // and bufferingTime , sampleTime * 3 in order to save the battery, calling back to mHandler
+        mSensorManager.registerListener(this, mSensor, (int) mSampleTimeUs,(int) mSampleTimeUs * 3, mHandler);
+        sensorsActive = true;
+
+    }
+
+    private void unBindSensorListeners(){
+        if (sensorsActive)
+            mSensorManager.unregisterListener(this);
+        sensorsActive = false;
+    }
 
     /**
      * Start the datasource updating - initialises from sharedpreferences first to
      * make sure any changes to preferences are taken into account.
      */
+    @Override
     public void start() {
         Log.i(TAG, "start()");
         mUtil.writeToSysLogFile("SdDataSourcePhone.start()");
@@ -88,11 +160,16 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
 
 
         super.start();
+        Log.i(TAG,"onStart(): returned from SdDataSource.onStart");
+        mCurrentMaxSampleCount = getSdData().mDefaultSampleCount;
+        bindSensorListeners();
+        mIsRunning = true;
     }
 
     /**
      * Stop the datasource from updating
      */
+    @Override
     public void stop() {
         Log.i(TAG, "stop()");
         mUtil.writeToSysLogFile("SdDataSourcePhone.stop()");
@@ -102,6 +179,11 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
         }
 
         super.stop();
+        Log.i(TAG,"onStop(): returned from SdDataSource.onStop");
+        unBindSensorListeners();
+        Log.i(TAG,"onStart(): returned from unBindSensorListners");
+
+        mIsRunning = false;
     }
 
 
@@ -122,58 +204,89 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                 } else {
                     mSdData.mNsamp ++;
                 }
-                if (mSdData.mNsamp>=250) {
-                    Log.v(TAG,"onSensorChanged(): Collected Data = final TimeStamp="+event.timestamp+", initial TimeStamp="+mStartTs);
-                    double dT = 1e-9*(event.timestamp - mStartTs);
-                    mSdData.mSampleFreq = (int)(mSdData.mNsamp/dT);
+                if (mSdData.mNsamp >= mSdDataSettings.mDefaultSampleCount) {
+                    Log.v(TAG, "onSensorChanged(): Collected Data = final TimeStamp=" + event.timestamp + ", initial TimeStamp=" + mStartTs);
+                    mSdData.dT = 1.0e-9 * (event.timestamp - mStartTs);
+                    mCurrentMaxSampleCount = mSdData.mNsamp;
+                    mSdData.mSampleFreq = (int) (mSdData.mNsamp / mSdData.dT);
                     mSdData.haveSettings = true;
-                    Log.v(TAG,"onSensorChanged(): Collected data for "+dT+" sec - calculated sample rate as "+ mSampleFreq +" Hz");
+                    Log.v(TAG, "onSensorChanged(): Collected data for " + mSdData.dT + " sec - calculated sample rate as " + mSampleFreq + " Hz");
+                    accelerationCombined = sqrt(event.values[0] * event.values[0] + event.values[1] * event.values[1] + event.values[2] * event.values[2]);
+                    calculateStaticTimings();
                     mMode = 1;
                     mSdData.mNsamp = 0;
                     mStartTs = event.timestamp;
                 }
             } else if (mMode==1) {
                 // mMode=1 is normal operation - collect NSAMP accelerometer data samples, then analyse them by calling doAnalysis().
-                float x = event.values[0];
-                float y = event.values[1];
-                float z = event.values[2];
-                //Log.v(TAG,"Accelerometer Data Received: x="+x+", y="+y+", z="+z);
-                mSdData.rawData[mSdData.mNsamp] = sqrt(x*x + y*y + z*z);
-                mSdData.rawData3D[3*mSdData.mNsamp] = x;
-                mSdData.rawData3D[3*mSdData.mNsamp+1] = y;
-                mSdData.rawData3D[3*mSdData.mNsamp+2] = z;
-                mSdData.mNsamp++;
-                if (mSdData.mNsamp==NSAMP) {
+
+                if (mSdData.mNsamp == mCurrentMaxSampleCount  )
+                {
+
+
                     // Calculate the sample frequency for this sample, but do not change mSampleFreq, which is used for
                     // analysis - this is because sometimes you get a very long delay (e.g. when disconnecting debugger),
                     // which gives a very low frequency which can make us run off the end of arrays in doAnalysis().
                     // FIXME - we should do some sort of check and disregard samples with long delays in them.
-                    double dT = 1e-9*(event.timestamp - mStartTs);
-                    int sampleFreq = (int)(mSdData.mNsamp/dT);
-                    Log.v(TAG,"onSensorChanged(): Collected "+NSAMP+" data points in "+dT+" sec (="+sampleFreq+" Hz) - analysing...");
-                    // DownSample from the 50Hz received frequency to 25Hz and convert to mg.
+                    mSdData.dT = 1e-9 * (event.timestamp - mStartTs);
+                    int sampleFreq = (int) (mSdData.mNsamp / mSdData.dT);
+                    Log.v(TAG, "onSensorChanged(): Collected " + NSAMP + " data points in " + mSdData.dT + " sec (=" + sampleFreq + " Hz) - analysing...");
+
+                    // DownSample from the **Hz received frequency to 25Hz and convert to mg.
                     // FIXME - we should really do this properly rather than assume we are really receiving data at 50Hz.
-                    for (int i=0; i<mSdData.mNsamp; i++) {
-                        mSdData.rawData[i/2] = 1000.*mSdData.rawData[i]/9.81;
-                        mSdData.rawData3D[i/2] = 1000.*mSdData.rawData3D[i]/9.81;
-                        mSdData.rawData3D[i/2 +1] = 1000.*mSdData.rawData3D[i+1]/9.81;
-                        mSdData.rawData3D[i/2 +2] = 1000.*mSdData.rawData3D[i+2]/9.81;
-                        //Log.v(TAG,"i="+i+", rawData="+mSdData.rawData[i]+","+mSdData.rawData[i/2]);
+                    int readPosition = 1;
+
+                    for (int i = 0; i < Constants.SD_SERVICE_CONSTANTS.defaultSampleCount ; i++) {
+                        readPosition = (int) (i / mConversionSampleFactor);
+                        if (readPosition < rawDataList.size() ){
+                            mSdData.rawData[i] = gravityScaleFactor * rawDataList.get(readPosition) / SensorManager.GRAVITY_EARTH;
+                            mSdData.rawData3D[i] = gravityScaleFactor * rawDataList3D.get(readPosition) / SensorManager.GRAVITY_EARTH;
+                            mSdData.rawData3D[i + 1] = gravityScaleFactor * rawDataList3D.get(readPosition + 1) / SensorManager.GRAVITY_EARTH;
+                            mSdData.rawData3D[i + 2] = gravityScaleFactor * rawDataList3D.get(readPosition + 2) / SensorManager.GRAVITY_EARTH;
+                            //Log.v(TAG,"i="+i+", rawData="+mSdData.rawData[i]+","+mSdData.rawData[i/2]);
+                        }
                     }
-                    mSdData.mNsamp /= 2;
+                    rawDataList.clear();
+                    rawDataList3D.clear();
+                    mSdData.mNsamp = Constants.SD_SERVICE_CONSTANTS.defaultSampleCount;
+                    mSdData.mHR = -1d;
+                    mSdData.mHRAlarmActive = false;
+                    mSdData.mHRAlarmStanding = false;
+                    mSdData.mHRNullAsAlarm = false;
                     doAnalysis();
                     mSdData.mNsamp = 0;
                     mStartTs = event.timestamp;
-                } else if (mSdData.mNsamp>NSAMP) {
-                    Log.v(TAG,"onSensorChanged(): Received data during analysis - ignoring sample");
+                    return;
+                }else if (!Objects.equals(rawDataList, null) && rawDataList.size() <= mCurrentMaxSampleCount ) {
+
+                    float x = event.values[0];
+                    float y = event.values[1];
+                    float z = event.values[2];
+                    //Log.v(TAG,"Accelerometer Data Received: x="+x+", y="+y+", z="+z);
+                    rawDataList.add( sqrt(x * x + y * y + z * z));
+                    rawDataList3D.add((double) x);
+                    rawDataList3D.add((double) y);
+                    rawDataList3D.add((double) z);
+                    mSdData.mNsamp++;
+                    return;
+                }else if (mSdData.mNsamp > mCurrentMaxSampleCount - 1) {
+                    Log.v(TAG, "onSensorChanged(): Received data during analysis - ignoring sample");
+                    return;
+                } else if (rawDataList.size() >= mCurrentMaxSampleCount){
+                    Log.v(TAG, "onSensorChanged(): mSdData.mNSamp and mCurrentMaxSampleCount differ in size");
+                    rawDataList.remove(0);
+                    rawDataList3D.remove(0);
+                    rawDataList3D.remove(0);
+                    rawDataList3D.remove(0);
+                    return;
+                }
+                else{
+                    Log.v(TAG, "onSensorChanged(): Received empty data during analysis - ignoring sample");
                 }
 
             } else {
                 Log.v(TAG,"onSensorChanged(): ERROR - Mode "+mMode+" unrecognised");
             }
-        }
-        if (((SdServer)mSdDataReceiver).uiLiveData.isListeningInContext(this)){
-            ((SdServer)mSdDataReceiver).uiLiveData.signalChangedData();
         }
 
     }
