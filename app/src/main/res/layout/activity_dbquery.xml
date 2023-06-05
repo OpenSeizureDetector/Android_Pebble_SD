@@ -6,6 +6,12 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:text="Export Local Data"
+        android:textStyle="bold"
+        />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:text="End Date/Time (dd-mm-yyyy hh:mm)"
         />
     <LinearLayout

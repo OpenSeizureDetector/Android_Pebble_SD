@@ -930,7 +930,7 @@ public class LogManager {
             public void accept(JSONObject eventObj) {
                 if (eventObj == null) {
                     Log.e(TAG, "createEventCallback() - eventObj is null - failed to create event");
-                    mUtil.showToast("Error Creating Remote Event");
+                    mUtil.showToast(mContext.getString(R.string.error_creating_remote_event_msg));
                 } else {
                     Log.v(TAG, "createEventCallback() - eventObj=" + eventObj.toString());
                     Date eventDate;
@@ -980,7 +980,7 @@ public class LogManager {
                                 });
                     } else {
                         Log.e(TAG, "createEventCallback() - Error - event date is null - not doing anything");
-                        mUtil.showToast("Error uploading event - date is null");
+                        mUtil.showToast(mContext.getString(R.string.error_uploading_event_msg));
                         finishUpload();
                     }
                 }
