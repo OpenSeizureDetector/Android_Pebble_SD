@@ -484,7 +484,7 @@ public class MainActivity extends AppCompatActivity {
                 mConnection.mSdServer.uiLiveData.addToListening(this);
             }
         }else {
-            serverStatusHandler.postDelayed(this::connectUiLiveDataRunner,100)
+            serverStatusHandler.postDelayed(this::connectUiLiveDataRunner,100);
         }
     }
 
