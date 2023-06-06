@@ -31,7 +31,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -62,7 +61,6 @@ import android.util.Log;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.NotificationCompat;
-import androidx.core.view.ContentInfoCompat;
 import androidx.lifecycle.LiveData;
 import androidx.work.multiprocess.RemoteWorkerService;
 
@@ -99,7 +97,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     private String mEventNotChId = "OSD Event Notification Channel";
     private CharSequence mEventNotChName = "OSD Event Notification Channel";
     private String mEventNotChDesc = "OSD Event Notification Channel Description";
-    public powerUpdateReceiver mPowerUpdateManager = null;
+    public PowerUpdateReceiver mPowerUpdateManager = null;
 
     private NotificationManager mNM;
     private NotificationCompat.Builder mNotificationBuilder;
@@ -166,6 +164,16 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
     private NetworkBroadcastReceiver mNetworkBroadcastReceiver;
 
+    private IntentFilter batteryStatusIntentFilter = null;
+    private Intent batteryStatusIntent;
+    private Thread mBlockingThread = null;
+    private BroadcastReceiver powerUpdateReceiver = null;
+    private PowerUpdateReceiver powerUpdateReceiverPowerConnected = null;
+    private PowerUpdateReceiver powerUpdateReceiverPowerDisConnected = null;
+    private PowerUpdateReceiver powerUpdateReceiverPowerUpdated = null;
+    private PowerUpdateReceiver powerUpdateReceiverPowerLow = null;
+    private PowerUpdateReceiver powerUpdateReceiverPowerOkay = null;
+
     private final IBinder mBinder = new SdBinder();
 
     public ServiceLiveData uiLiveData;
@@ -177,11 +185,10 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
      * Service calls.
      */
     public class ServiceLiveData extends LiveData {
-
-        private List<Object> connectedList;
+        private List<Object> connectedList = new ArrayList<>();
         public boolean isRegistered = false;
         public boolean isListeningInContext(Object connectedClient){
-            return connectedList.contains(connectedClient);
+                return connectedList.contains(connectedClient);
         }
         public void signalChangedData() {
             this.postValue(mSdData);
@@ -220,8 +227,6 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     public boolean acCharge = false;
     public boolean runPausedByCharger;
     public long batteryPct = -1;
-    public IntentFilter batteryStatusIntentFilter = null;
-    public Intent batteryStatusIntent;
     private boolean serverInitialized = false;
 
 
@@ -386,11 +391,11 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
 
     /**
-     * powerUpdateReceiver with coding from:
+     * PowerUpdateReceiver with coding from:
      * https://stackoverflow.com/questions/2682043/how-to-check-if-receiver-is-registered-in-android
      * */
 
-    public class powerUpdateReceiver  extends BroadcastReceiver {
+    public class PowerUpdateReceiver extends BroadcastReceiver {
         public boolean isRegistered = false;
 
         /**
@@ -444,16 +449,6 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     }
 
 
-    protected void bindBatteryEvents() {
-        batteryStatusIntentFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-        if (mPowerUpdateManager.isRegistered)mPowerUpdateManager.unregister(SdServer.this);
-        batteryStatusIntent = mPowerUpdateManager.register(SdServer.this, batteryStatusIntentFilter);
-        mPowerUpdateManager.register(SdServer.this, new IntentFilter(Intent.ACTION_POWER_CONNECTED));
-        mPowerUpdateManager.register(SdServer.this, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
-        mPowerUpdateManager.register(SdServer.this, new IntentFilter(Intent.ACTION_BATTERY_LOW));
-        mPowerUpdateManager.register(SdServer.this, new IntentFilter(Intent.ACTION_BATTERY_OKAY));
-
-    }
     /**
      * onStartCommand - start the web server and the message loop for
      * communications with other processes.
@@ -461,101 +456,103 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "onStartCommand() - SdServer service starting");
-        mUtil.writeToSysLogFile("SdServer.onStartCommand()");
-        // Update preferences.
-        Log.v(TAG, "onStartCommand() - calling updatePrefs()");
-        updatePrefs();
+        if (Objects.nonNull(intent))
+            if (intent.getData().equals(Constants.GLOBAL_CONSTANTS.mStartUri)) {
+                mUtil.writeToSysLogFile("SdServer.onStartCommand()");
+                // Update preferences.
+                Log.v(TAG, "onStartCommand() - calling updatePrefs()");
+                updatePrefs();
 
-        Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName + ", phoneAppVersion="+mUtil.getAppVersionName());
-        mSdData.dataSourceName = mSdDataSourceName;
-        mSdData.phoneAppVersion = mUtil.getAppVersionName();
-        switch (mSdDataSourceName) {
-            case "Pebble":
-                Log.v(TAG, "Selecting Pebble DataSource");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePebble");
-                mSdDataSource = new SdDataSourcePebble(SdServer.this, mHandler, SdServer.this);
-                break;
-            case "AndroidWear":
-                Log.v(TAG, "Selecting Android Wear DataSource");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceAw");
-                mSdDataSource = new SdDataSourceAw(SdServer.this, mHandler, SdServer.this);
-                break;
-            case "Network":
-                Log.v(TAG, "Selecting Network DataSource");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceNetwork");
-                mSdDataSource = new SdDataSourceNetwork(SdServer.this, mHandler, SdServer.this);
-                Log.i(TAG,"Disabling remote logging when using network data source");
-                mLogDataRemote = false;
-                break;
-            case "Garmin":
-                Log.v(TAG, "Selecting Garmin DataSource");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceGarmin");
-                mSdDataSource = new SdDataSourceGarmin(SdServer.this, mHandler, SdServer.this);
-                break;
-            case "BLE":
-                Log.v(TAG, "Selecting BLE DataSource");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceBLE");
-                mSdDataSource = new SdDataSourceBLE(SdServer.this, mHandler, SdServer.this);
-                break;
-            case "Phone":
-                Log.v(TAG, "Selecting Phone Sensor DataSource");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePhone");
-                mSdDataSource = new SdDataSourcePhone(SdServer.this, mHandler, SdServer.this);
-                break;
-            default:
-                Log.e(TAG, "Datasource " + mSdDataSourceName + " not recognised - Defaulting to Phone");
-                //mUtil.writeToSysLogFile("SdServer.onStartCommand() - Datasource " + mSdDataSourceName + " not recognised - exiting");
-                mUtil.showToast(getString(R.string.DatasourceTitle) + " " + mSdDataSourceName + getString(R.string.DefaultingToPhoneMsg));
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePhone");
-                mSdDataSource = new SdDataSourcePhone(SdServer.this, mHandler, SdServer.this);
-        }
+                Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName + ", phoneAppVersion=" + mUtil.getAppVersionName());
+                mSdData.dataSourceName = mSdDataSourceName;
+                mSdData.phoneAppVersion = mUtil.getAppVersionName();
+                switch (mSdDataSourceName) {
+                    case "Pebble":
+                        Log.v(TAG, "Selecting Pebble DataSource");
+                        mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePebble");
+                        mSdDataSource = new SdDataSourcePebble(SdServer.this, mHandler, SdServer.this);
+                        break;
+                    case "AndroidWear":
+                        Log.v(TAG, "Selecting Android Wear DataSource");
+                        mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceAw");
+                        mSdDataSource = new SdDataSourceAw(SdServer.this, mHandler, SdServer.this);
+                        break;
+                    case "Network":
+                        Log.v(TAG, "Selecting Network DataSource");
+                        mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceNetwork");
+                        mSdDataSource = new SdDataSourceNetwork(SdServer.this, mHandler, SdServer.this);
+                        Log.i(TAG, "Disabling remote logging when using network data source");
+                        mLogDataRemote = false;
+                        break;
+                    case "Garmin":
+                        Log.v(TAG, "Selecting Garmin DataSource");
+                        mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceGarmin");
+                        mSdDataSource = new SdDataSourceGarmin(SdServer.this, mHandler, SdServer.this);
+                        break;
+                    case "BLE":
+                        Log.v(TAG, "Selecting BLE DataSource");
+                        mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceBLE");
+                        mSdDataSource = new SdDataSourceBLE(SdServer.this, mHandler, SdServer.this);
+                        break;
+                    case "Phone":
+                        Log.v(TAG, "Selecting Phone Sensor DataSource");
+                        mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePhone");
+                        mSdDataSource = new SdDataSourcePhone(SdServer.this, mHandler, SdServer.this);
+                        break;
+                    default:
+                        Log.e(TAG, "Datasource " + mSdDataSourceName + " not recognised - Defaulting to Phone");
+                        //mUtil.writeToSysLogFile("SdServer.onStartCommand() - Datasource " + mSdDataSourceName + " not recognised - exiting");
+                        mUtil.showToast(getString(R.string.DatasourceTitle) + " " + mSdDataSourceName + getString(R.string.DefaultingToPhoneMsg));
+                        mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePhone");
+                        mSdDataSource = new SdDataSourcePhone(SdServer.this, mHandler, SdServer.this);
+                }
 
-        // Create our log manager.
-        mLm = new LogManager(SdServer.this, mLogDataRemote, mLogDataRemoteMobile, mAuthToken, mEventDuration,
-                mRemoteLogPeriod, mLogNDA ,mAutoPruneDb, mDataRetentionPeriod, mSdData);
+                // Create our log manager.
+                mLm = new LogManager(SdServer.this, mLogDataRemote, mLogDataRemoteMobile, mAuthToken, mEventDuration,
+                        mRemoteLogPeriod, mLogNDA, mAutoPruneDb, mDataRetentionPeriod, mSdData);
 
-        if (mSMSAlarm) {
-            Log.v(TAG, "Creating LocationFinder");
-            mLocationFinder = new LocationFinder(SdServer.this);
-        }
-        mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting SdDataSource");
-        mSdDataSource.start();
+                if (mSMSAlarm) {
+                    Log.v(TAG, "Creating LocationFinder");
+                    mLocationFinder = new LocationFinder(SdServer.this);
+                }
+                mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting SdDataSource");
+                mSdDataSource.start();
 
-        // Initialise Notification channel for API level 26 and over
-        // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
-        mNM = (NotificationManager) SdServer.this.getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationBuilder = new NotificationCompat.Builder(SdServer.this, mNotChId);
-        if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel channel = new NotificationChannel(mNotChId,
-                    mNotChName,
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setDescription(mNotChDesc);
-            mNM.createNotificationChannel(channel);
-        }
-
-
-        // Display a notification icon in the status bar of the phone to
-        // show the service is running.
-        if (Build.VERSION.SDK_INT >= 26) {
-            Log.v(TAG, "showing Notification and calling startForeground (Android 8 and higher)");
-            mUtil.writeToSysLogFile("SdServer.onStartCommand() - showing Notification and calling startForeground (Android 8 and higher)");
-            showNotification(0);
-            startForeground(NOTIFICATION_ID, mNotification);
-        } else {
-            Log.v(TAG, "showing Notification");
-            mUtil.writeToSysLogFile("SdServer.onStartCommand() - showing Notification");
-            showNotification(0);
-        }
-        // Record last time we sent an SMS so we can limit rate of SMS
-        // sending to one per minute.   We set it to one minute ago (60000 milliseconds)
-        mSMSTime = new Time(Time.getCurrentTimezone());
-        mSMSTime.set(mSMSTime.toMillis(false) - 60000);
+                // Initialise Notification channel for API level 26 and over
+                // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
+                mNM = (NotificationManager) SdServer.this.getSystemService(Context.NOTIFICATION_SERVICE);
+                mNotificationBuilder = new NotificationCompat.Builder(SdServer.this, mNotChId);
+                if (Build.VERSION.SDK_INT >= 26) {
+                    NotificationChannel channel = new NotificationChannel(mNotChId,
+                            mNotChName,
+                            NotificationManager.IMPORTANCE_DEFAULT);
+                    channel.setDescription(mNotChDesc);
+                    mNM.createNotificationChannel(channel);
+                }
 
 
-        // Start timer to log data regularly..
-        if (dataLogTimer == null) {
-            Log.v(TAG, "onStartCommand(): starting dataLog timer");
-            mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting dataLog timer");
+                // Display a notification icon in the status bar of the phone to
+                // show the service is running.
+                if (Build.VERSION.SDK_INT >= 26) {
+                    Log.v(TAG, "showing Notification and calling startForeground (Android 8 and higher)");
+                    mUtil.writeToSysLogFile("SdServer.onStartCommand() - showing Notification and calling startForeground (Android 8 and higher)");
+                    showNotification(0);
+                    startForeground(NOTIFICATION_ID, mNotification);
+                } else {
+                    Log.v(TAG, "showing Notification");
+                    mUtil.writeToSysLogFile("SdServer.onStartCommand() - showing Notification");
+                    showNotification(0);
+                }
+                // Record last time we sent an SMS so we can limit rate of SMS
+                // sending to one per minute.   We set it to one minute ago (60000 milliseconds)
+                mSMSTime = new Time(Time.getCurrentTimezone());
+                mSMSTime.set(mSMSTime.toMillis(false) - 60000);
+
+
+                // Start timer to log data regularly..
+                if (dataLogTimer == null) {
+                    Log.v(TAG, "onStartCommand(): starting dataLog timer");
+                    mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting dataLog timer");
             /*dataLogTimer = new Timer();
             dataLogTimer.schedule(new TimerTask() {
                 @Override
@@ -565,35 +562,39 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 }
             }, 0, 1000 * 60);
             */
-        } else {
-            Log.v(TAG, "onStartCommand(): dataLog timer already running.");
-            mUtil.writeToSysLogFile("SdServer.onStartCommand() - dataLog timer already running???");
-        }
+                } else {
+                    Log.v(TAG, "onStartCommand(): dataLog timer already running.");
+                    mUtil.writeToSysLogFile("SdServer.onStartCommand() - dataLog timer already running???");
+                }
 
-        if (mLogDataRemote) {
-            startEventsTimer();
-        }
-
-
-        // Start the web server
-        mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting web server");
-        startWebServer();
-
-        // Apply the wake-lock to prevent CPU sleeping (very battery intensive!)
-        if (Objects.nonNull(mWakeLock)) {
-            if (!mWakeLock.isHeld()) {
-                mWakeLock.acquire(24 * 60 * 60 * 1000L /*1 day*/);
-                Log.v(TAG, "Applied Wake Lock to prevent device sleeping");
-
-            } else Log.v(TAG, "onStartCommand(): lock already held");
-            mUtil.writeToSysLogFile("SdServer.onStartCommand() - applying wake lock");
-        } else {
-            Log.d(TAG, "mmm...mWakeLock is null, so not aquiring lock.  This shouldn't happen!");
-            mUtil.writeToSysLogFile("SdServer.onStartCommand() - mWakeLock is not null - this shouldn't happen???");
-        }
+                if (mLogDataRemote) {
+                    startEventsTimer();
+                }
 
 
-        checkEvents();
+                // Start the web server
+                mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting web server");
+                startWebServer();
+
+                // Apply the wake-lock to prevent CPU sleeping (very battery intensive!)
+                if (Objects.nonNull(mWakeLock)) {
+                    if (!mWakeLock.isHeld()) {
+                        mWakeLock.acquire(24 * 60 * 60 * 1000L /*1 day*/);
+                        Log.v(TAG, "Applied Wake Lock to prevent device sleeping");
+
+                    } else Log.v(TAG, "onStartCommand(): lock already held");
+                    mUtil.writeToSysLogFile("SdServer.onStartCommand() - applying wake lock");
+                } else {
+                    Log.d(TAG, "mmm...mWakeLock is null, so not aquiring lock.  This shouldn't happen!");
+                    mUtil.writeToSysLogFile("SdServer.onStartCommand() - mWakeLock is not null - this shouldn't happen???");
+                }
+
+
+                checkEvents();
+            }
+            else if (intent.getData().equals(Constants.GLOBAL_CONSTANTS.mStopUri)){
+                stopServiceRunner();
+            }
 
         return START_STICKY;
     }
@@ -702,6 +703,115 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
     }
 
+
+    private void stopServiceRunner(){
+
+        if (!Objects.equals(mPowerUpdateManager, null))
+            if (mPowerUpdateManager.isRegistered)
+                mPowerUpdateManager.unregister(SdServer.this);
+        if (mWakeLock != null) {
+            try {// TODO deside to ask if (mWakeLock.isHeld())
+                if (mWakeLock.isHeld() ) mWakeLock.release();
+                Log.d(TAG, "Released Wake Lock to allow device to sleep.");
+            } catch (Exception e) {
+                Log.e(TAG, "Error Releasing Wakelock - " + e.toString(),e);
+                mUtil.writeToSysLogFile("SdServer.onDestroy() - Error releasing wakelock.");
+                mUtil.showToast(getString(R.string.ErrorReleasingWakelockMsg));
+            }
+        } else {
+            Log.d(TAG, "mmm...mWakeLock is null, so not releasing lock.  This shouldn't happen!");
+            mUtil.writeToSysLogFile("SdServer.onDestroy() - mWakeLock is null so not releasing lock - this Shouldn't happen???");
+        }
+
+        if (mSdDataSource != null) {
+            Log.d(TAG, "stopping mSdDataSource");
+            mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping mSdDataSource");
+            mSdDataSource.stop();
+        } else {
+            Log.e(TAG, "ERROR - mSdDataSource is null - why????");
+            mUtil.writeToSysLogFile("SdServer.onDestroy() - mSdDataSource is null - why???");
+        }
+
+        //unbind batteryevents
+        if (!Objects.equals(batteryStatusIntent,null )) {
+            if (!Objects.equals(mPowerUpdateManager,null))
+                if (mPowerUpdateManager.isRegistered)
+                    mPowerUpdateManager.unregister(SdServer.this);
+            batteryStatusIntent =null;
+        }
+
+        // Stop the Cancel Audible timer
+        if (mCancelAudibleTimer != null) {
+            Log.d(TAG, "onDestroy(): cancelling Cancel_Audible timer");
+            mCancelAudibleTimer.cancel();
+            //mCancelAudibleTimer.purge();
+            mCancelAudibleTimer = null;
+        }
+
+
+        // Stop the Fault timer
+        if (mFaultTimer != null) {
+            Log.d(TAG, "onDestroy(): cancelling fault timer");
+            mFaultTimer.cancel();
+            mFaultTimer = null;
+        }
+
+        // Stop the Event timer
+        if (mEventsTimer != null) {
+            Log.d(TAG, "onDestroy(): Cancelling events timer");
+            stopEventsTimer();
+        }
+
+        // Stop the Cancel Alarm Latch timer
+        Log.d(TAG, "onDestroy(): stopping alarm latch timer");
+        stopLatchTimer();
+
+
+        // Stop the location finder.
+        if (mLocationFinder != null) {
+            Log.d(TAG, "onDestroy(): stopping Location Finder");
+            mLocationFinder.destroy();
+            mLocationFinder = null;
+        }
+
+        if (mLm != null) {
+            Log.d(TAG, "Closing Down Log Manager");
+            mLm.stop();
+            mLm.close();
+        }
+
+        try {
+            // Stop web server
+            Log.d(TAG, "onDestroy(): stopping web server");
+            mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping Web Server");
+            stopWebServer();
+
+            mUtil.writeToSysLogFile("SdServer.onDestroy() - releasing mToneGenerator");
+            mToneGenerator.release();
+            mToneGenerator = null;
+
+            SdServer.this.stopForeground(true);
+            // Cancel the notification.
+            Log.d(TAG, "onDestroy(): cancelling notification");
+            mUtil.writeToSysLogFile("SdServer.onDestroy - cancelling notification");
+            mNM.cancel(NOTIFICATION_ID);
+            mNM.cancel(EVENT_NOTIFICATION_ID);
+            mNM.cancel(DATASHARE_NOTIFICATION_ID);
+
+
+            // stop this service.
+            Log.d(TAG, "onDestroy(): calling stopSelf()");
+            mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping self");
+            stopSelf();
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error in onDestroy() - " + e.toString(),e);
+            mUtil.writeToSysLogFile("SdServer.onDestroy() -error " + e.toString());
+        }
+
+        stopForeground(true);
+        stopSelf();
+    }
 
     /**
      * Show a notification while this service is running.
@@ -1016,7 +1126,8 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
         if (webServer != null) webServer.setSdData(mSdData);
         Log.v(TAG, "onSdDataReceived() - setting mSdData to " + mSdData.toString());
-        mLm.updateSdData(mSdData);
+        if(Objects.nonNull(mLm))
+            mLm.updateSdData(mSdData);
 
         logData();
     }
@@ -1345,6 +1456,75 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         SdServer.this.unregisterReceiver(mNetworkBroadcastReceiver);
     }
 
+    private void unBindBatteryEvents() {
+
+        if (Objects.nonNull(powerUpdateReceiverPowerUpdated)) {
+            if (powerUpdateReceiverPowerUpdated.isRegistered)
+                powerUpdateReceiverPowerUpdated.unregister(this);
+        }
+        if (Objects.nonNull(powerUpdateReceiverPowerLow)) {
+            if (powerUpdateReceiverPowerLow.isRegistered)
+                powerUpdateReceiverPowerLow.unregister(this);
+        }
+        if (Objects.nonNull(powerUpdateReceiverPowerOkay)) {
+            if (powerUpdateReceiverPowerOkay.isRegistered)
+                powerUpdateReceiverPowerOkay.unregister(this);
+        }
+        if (Objects.nonNull(powerUpdateReceiverPowerConnected)) {
+            if (powerUpdateReceiverPowerConnected.isRegistered)
+                powerUpdateReceiverPowerConnected.unregister(this);
+        }
+        if (Objects.nonNull(powerUpdateReceiverPowerDisConnected)) {
+            if (powerUpdateReceiverPowerDisConnected.isRegistered)
+                powerUpdateReceiverPowerDisConnected.unregister(this);
+        }
+        if (Objects.nonNull(powerUpdateReceiver))
+            if (((PowerUpdateReceiver) powerUpdateReceiver).isRegistered)
+                this.unregisterReceiver(powerUpdateReceiver);
+//        if (Objects.nonNull(connectionUpdateReceiver))
+//            if (connectedConnectionUpdates) {
+//                this.unregisterReceiver(connectionUpdateReceiver);
+//                connectedConnectionUpdates = false;
+//            }
+
+        batteryStatusIntent = null;
+    }
+    private void bindBatteryEvents() {
+
+        if (Objects.isNull(powerUpdateReceiverPowerConnected))
+            powerUpdateReceiverPowerConnected = new PowerUpdateReceiver();
+        if (Objects.isNull(powerUpdateReceiverPowerDisConnected))
+            powerUpdateReceiverPowerDisConnected = new PowerUpdateReceiver();
+        if (Objects.isNull(powerUpdateReceiverPowerOkay))
+            powerUpdateReceiverPowerOkay = new PowerUpdateReceiver();
+        if (Objects.isNull(powerUpdateReceiverPowerLow))
+            powerUpdateReceiverPowerLow = new PowerUpdateReceiver();
+        if (Objects.isNull(powerUpdateReceiverPowerUpdated))
+            powerUpdateReceiverPowerUpdated = new PowerUpdateReceiver();
+        if (Objects.isNull(powerUpdateReceiver)) powerUpdateReceiver = new PowerUpdateReceiver();
+        batteryStatusIntentFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+
+
+        if (Objects.isNull(batteryStatusIntent) && !powerUpdateReceiverPowerUpdated.isRegistered) {
+            batteryStatusIntent = powerUpdateReceiverPowerUpdated.register(this, batteryStatusIntentFilter);//this.registerReceiver(PowerUpdateReceiver, batteryStatusIntentFilter);
+            mSdData.batteryPc = (long) ((batteryStatusIntent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) / (float) batteryStatusIntent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)) * 100f);
+            powerUpdateReceiverPowerUpdated.isRegistered = true;
+
+        }
+        powerUpdateReceiverPowerConnected.register(this, new IntentFilter(Intent.ACTION_POWER_CONNECTED));
+        powerUpdateReceiverPowerConnected.isRegistered = true;
+        powerUpdateReceiverPowerDisConnected.register(this, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
+        powerUpdateReceiverPowerDisConnected.isRegistered = true;
+        powerUpdateReceiverPowerOkay.register(this, new IntentFilter(Intent.ACTION_BATTERY_LOW));
+        powerUpdateReceiverPowerLow.register(this, new IntentFilter(Intent.ACTION_BATTERY_OKAY));
+
+//        if (Objects.nonNull(connectionUpdateReceiver) && !connectedConnectionUpdates)
+//            this.registerReceiver(connectionUpdateReceiver, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
+//        connectedConnectionUpdates = true;
+
+
+    }
+
     private class NetworkBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -1488,6 +1668,19 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
             mUtil.writeToSysLogFile("updatePrefs() - mAuthToken = " + mAuthToken);
 
             String prefVal;
+            prefVal = SP.getString("DefaultSampleCount", "250");
+
+            Log.v(TAG, "mDefaultSampleCount=" + mDefaultSampleCount);
+
+            mDefaultSampleCount = Integer.parseInt(prefVal);
+            Log.v(TAG, "mDefaultSampleCount=" + mDefaultSampleCount);
+            mSdData.mDefaultSampleCount = mDefaultSampleCount;
+
+            prefVal = SP.getString("analysisPeriod", "10");
+            mSdData.analysisPeriod = Integer.parseInt(prefVal);
+            Log.v(TAG, "mSdData.analysisPeriod=" + mSdData.analysisPeriod);
+            mEventDuration = Integer.parseInt(prefVal);
+
             prefVal = SP.getString("EventDurationSec", "300");
             mEventDuration = Integer.parseInt(prefVal);
             Log.v(TAG, "mEventDuration=" + mEventDuration);
@@ -1912,7 +2105,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         i.setAction("None");
         PendingIntent contentIntent =
                 PendingIntent.getActivity(SdServer.this,
-                        0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+                        0, i, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         String contentStr = getString(R.string.please_confirm_seizure_events);
 
         Notification notification = notificationBuilder.setContentIntent(contentIntent)

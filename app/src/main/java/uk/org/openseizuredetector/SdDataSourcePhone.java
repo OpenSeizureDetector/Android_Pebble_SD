@@ -52,6 +52,7 @@ import java.util.Objects;
 public class SdDataSourcePhone extends SdDataSource implements SensorEventListener {
     private String TAG = "SdDataSourcePhone";
 
+    private Intent sdServerIntent ;
 
     private final static int NSAMP = 250;
     private SensorManager mSensorManager;
@@ -65,19 +66,8 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
     private double mConversionSampleFactor;
     private SdData mSdDataSettings ;
     private SdServer sdServer;
-    private PowerManager.WakeLock mWakeLock;
 
-    private SdServer runningSdServer;
-    private int mChargingState = 0;
-    private boolean mIsCharging = false;
-    private int chargePlug = 0;
-    private boolean usbCharge = false;
-    private boolean acCharge = false;
-    private float batteryPct = -1f;
-    private IntentFilter batteryStatusIntentFilter = null;
-    private Intent batteryStatusIntent;
     private boolean sensorsActive = false;
-    private Intent sdServerIntent = null;
     private List<Double> rawDataList;
     private List<Double> rawDataList3D;
 
@@ -110,11 +100,9 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
         Log.d(TAG,"logging value of mSdData: "+super.mSdData.mDefaultSampleCount);
         //mSdDataSettings = sdDataReceiver.mSdData;
         sdServer = (SdServer) sdDataReceiver;
-        mSdDataSettings = pullSdData();
+
         sdServerIntent = new Intent(context,SdDataSource.class);
-        if (!Objects.equals(mSdDataSettings,null))if (mSdDataSettings.mDefaultSampleCount >0d && mSdDataSettings.analysisPeriod > 0d ) {
-            calculateStaticTimings();
-        }
+        mSdData = pullSdData();
 
     }
 
@@ -154,8 +142,12 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
         mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(this, mSensor , SensorManager.SENSOR_DELAY_GAME);
-        if(!((SdServer)mSdDataReceiver).uiLiveData.isListeningInContext(this)){
-            ((SdServer)mSdDataReceiver).uiLiveData.addToListening(this);
+
+        if (!Objects.equals(mSdDataSettings,null))if (mSdDataSettings.mDefaultSampleCount >0d && mSdDataSettings.analysisPeriod > 0d ) {
+            calculateStaticTimings();
+        }
+        if(!useSdServerBinding().uiLiveData.isListeningInContext(this)){
+            useSdServerBinding().uiLiveData.addToListening(this);
         }
 
 
@@ -174,8 +166,8 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
         Log.i(TAG, "stop()");
         mUtil.writeToSysLogFile("SdDataSourcePhone.stop()");
         mSensorManager.unregisterListener(this);
-        if(((SdServer)mSdDataReceiver).uiLiveData.isListeningInContext(this)){
-            ((SdServer)mSdDataReceiver).uiLiveData.removeFromListening(this);
+        if(useSdServerBinding().uiLiveData.isListeningInContext(this)){
+            useSdServerBinding().uiLiveData.removeFromListening(this);
         }
 
         super.stop();
@@ -192,6 +184,8 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+        if (Objects.isNull(mSdDataSettings))
+            mSdDataSettings = pullSdData();
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             // we initially start in mMode=0, which calculates the sample frequency returned by the sensor, then enters mMode=1, which is normal operation.
             if (mMode == 0) {

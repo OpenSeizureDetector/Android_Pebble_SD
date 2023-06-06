@@ -26,10 +26,12 @@ package uk.org.openseizuredetector;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
@@ -42,6 +44,7 @@ import org.jtransforms.fft.DoubleFFT_1D;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -72,6 +75,7 @@ public abstract class SdDataSource {
     protected Context mContext;
     protected SdDataReceiver mSdDataReceiver;
     private String TAG = "SdDataSource";
+
     protected boolean mIsRunning = false;
 
     private short mDebug;
@@ -81,7 +85,8 @@ public abstract class SdDataSource {
     private short mMutePeriod;
     private short mManAlarmPeriod;
     private short mPebbleSdMode;
-    short mSampleFreq;
+    private int mDefaultSampleCount;
+    public short mSampleFreq;
     private short mAlarmFreqMin;
     private short mAlarmFreqMax;
     private short mSamplePeriod;
@@ -89,6 +94,9 @@ public abstract class SdDataSource {
     private short mAlarmTime;
     private short mAlarmThresh;
     private short mAlarmRatioThresh;
+    protected double accelerationCombined = -1d;
+    protected double gravityScaleFactor;
+    protected double miliGravityScaleFactor;
     private boolean mFallActive;
     private short mFallThreshMin;
     private short mFallThreshMax;
@@ -96,25 +104,35 @@ public abstract class SdDataSource {
     private int mMute;  // !=0 means muted by keypress on watch.
     private SdAlgNn mSdAlgNn;
     private SdAlgHr mSdAlgHr;
+    double[] fft = null;
+    double[] simpleSpec;
 
     // Values for SD_MODE
     private int SIMPLE_SPEC_FMAX = 10;
 
     private int ACCEL_SCALE_FACTOR = 1000;  // Amount by which to reduce analysis results to scale to be comparable to analysis on Pebble.
 
-    double mSampleTimeUs;
-    double conversionSampleFactor = 1d;
-    int mCurrentMaxSampleCount = -1;
-    double mConversionSampleFactor;
-    private SdData mSdDataSettings;
-
-    protected double accelerationCombined = -1d;
-    protected double gravityScaleFactor;
-    protected double miliGravityScaleFactor;
 
     private int mAlarmCount;
     protected String mBleDeviceAddr;
     protected String mBleDeviceName;
+    double mConversionSampleFactor = 1d;
+    double mSampleTimeUs;
+    int mCurrentMaxSampleCount = -1;
+    private SdData mSdDataSettings;
+
+
+    private PowerManager.WakeLock mWakeLock;
+
+    private SdServer runningSdServer;
+    private int mChargingState = 0;
+    private boolean mIsCharging = false;
+    private int chargePlug = 0;
+    private boolean usbCharge = false;
+    private boolean acCharge = false;
+    private float batteryPct = -1f;
+    private IntentFilter batteryStatusIntentFilter = null;
+    private Intent batteryStatusIntent;
 
 
     public SdDataSource(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
@@ -123,18 +141,69 @@ public abstract class SdDataSource {
         mHandler = handler;
         mUtil = new OsdUtil(mContext, mHandler);
         mSdDataReceiver = sdDataReceiver;
-        mSdData = new SdData();
+        if(Objects.isNull((mSdData)))
+            mSdData = new SdData();
+
 
     }
 
-    protected SdData pullSdData() { return ((SdServer)mSdDataReceiver).mSdData; }
+
+    SdServer useSdServerBinding(){
+        return (((SdServer)mSdDataReceiver));
+    }
+    protected SdData pullSdData() {
+        if (Objects.isNull(useSdServerBinding().mSdData))
+            useSdServerBinding().mSdData = new SdData();
+        return useSdServerBinding().mSdData; }
     /**
      * Returns the SdData object stored by this class.
      *
      * @return
      */
     public SdData getSdData() {
-        return mSdData;
+        return useSdServerBinding().mSdData;
+    }
+
+    /**
+     * Calculate the static values of requested mSdData.mSampleFreq, mSampleTimeUs and factorDownSampling  through
+     * mSdData.analysisPeriod and mSdData.mDefaultSampleCount .
+     */
+    protected void calculateStaticTimings(){
+        // default sampleCount : mSdData.mDefaultSampleCount
+        // default sampleTime  : mSdData.analysisPeriod
+        // sampleFrequency = sampleCount / sampleTime:
+        if (mSdData.mNsamp == 0)
+            mSdData.mSampleFreq = (long) mSdData.mDefaultSampleCount/ mSdDataSettings.analysisPeriod;
+        else
+            mSdData.mSampleFreq = (long) mSdData.mNsamp/ mSdData.analysisPeriod;
+
+        // now we have mSampleFreq in number samples / second (Hz) as default.
+        // to calculate sampleTimeUs: (1 / mSampleFreq) * 1000 [1s == 1000000us]
+        mSampleTimeUs = (1d / (double) mSdData.mSampleFreq) * 1e6d;
+
+        // num samples == fixed final 250 (NSAMP)
+        // time seconds in default == 10 (SIMPLE_SPEC_FMAX)
+        // count samples / time = 25 samples / second == 25 Hz max.
+        // 1 Hz == 1 /s
+        // 25 Hz == 0,04s
+        // 1s == 1.000.000 us (sample interval)
+        // sampleTime = 40.000 uS == (SampleTime (s) * 1000)
+        if (getSdData().rawData.length>0 && getSdData().dT >0d){
+            double mSDDataSampleTimeUs = 1d/(double) (Constants.SD_SERVICE_CONSTANTS.defaultSampleCount / Constants.SD_SERVICE_CONSTANTS.defaultSampleTime) * 1.0e6;
+            mConversionSampleFactor = mSampleTimeUs / mSDDataSampleTimeUs;
+        }
+        else
+            mConversionSampleFactor = 1d;
+        if (accelerationCombined != -1d) {
+            gravityScaleFactor = (Math.round(accelerationCombined / SensorManager.GRAVITY_EARTH) % 10d);
+
+        }
+        else
+        {
+            gravityScaleFactor = 1d;
+        }
+        miliGravityScaleFactor = gravityScaleFactor * 1e3;
+
     }
 
     /**
@@ -142,11 +211,11 @@ public abstract class SdDataSource {
      * make sure any changes to preferences are taken into account.
      */
     public void start() {
-
         Log.v(TAG, "start()");
         mUtil.writeToSysLogFile("SdDataSource.start()");
+        if (!Objects.equals(mSdData,pullSdData())) mSdData = pullSdData();
         updatePrefs();
-
+        mSdDataSettings = mSdData;
         mSdAlgHr = new SdAlgHr(mContext);
 
         if (mSdData.mCnnAlarmActive) {
@@ -154,8 +223,6 @@ public abstract class SdDataSource {
         } else {
             mSdData.mPseizure = 0;
         }
-
-
 
         // Start timer to check status of watch regularly.
         mDataStatusTime = new Time(Time.getCurrentTimezone());
@@ -240,7 +307,7 @@ public abstract class SdDataSource {
             }
 
         } catch (Exception e) {
-            Log.v(TAG, "Error in stop() - " + e.toString());
+            Log.e(TAG, "Error in stop() - " + e.toString(),e);
             mUtil.writeToSysLogFile("SDDataSource.stop() - error - " + e.toString());
         }
 
@@ -262,7 +329,7 @@ public abstract class SdDataSource {
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             mContext.startActivity(i);
         } catch (Exception ex) {
-            Log.i(TAG, "exception starting install watch app activity " + ex.toString());
+            Log.i(TAG, "installWatchApp(): exception starting install watch app activity " + ex.toString(),ex);
             showToast("Error Displaying Installation Instructions - try http://www.openseizuredetector.org.uk/?page_id=1207 instead");
         }
     }
@@ -314,7 +381,12 @@ public abstract class SdDataSource {
                     // if we get 'null' HR (For example if the heart rate is not working)
                     mMute = 0;
                 }
-                accelVals = dataObject.getJSONArray("data");
+                try {
+                    mSdData.batteryPc = (short) dataObject.getInt("batteryPc");
+                }catch(Exception e){
+                    Log.e(TAG,"Error in getting battery percentage",e);
+                }
+                accelVals = dataObject.getJSONArray("rawData");
                 Log.v(TAG, "Received " + accelVals.length() + " acceleration values, rawData Length is " + mSdData.rawData.length);
                 if (accelVals.length() > mSdData.rawData.length) {
                     mUtil.writeToSysLogFile("ERROR:  Received " + accelVals.length() + " acceleration values, but rawData storage length is "
@@ -327,7 +399,7 @@ public abstract class SdDataSource {
                 mSdData.mNsamp = accelVals.length();
                 //Log.d(TAG,"accelVals[0]="+accelVals.getDouble(0)+", mSdData.rawData[0]="+mSdData.rawData[0]);
                 try {
-                    accelVals3D = dataObject.getJSONArray("data3D");
+                    accelVals3D = dataObject.getJSONArray("rawData3D");
                     Log.v(TAG, "Received " + accelVals3D.length() + " acceleration 3D values, rawData Length is " + mSdData.rawData3D.length);
                     if (accelVals3D.length() > mSdData.rawData3D.length) {
                         mUtil.writeToSysLogFile("ERROR:  Received " + accelVals3D.length() + " 3D acceleration values, but rawData3D storage length is "
@@ -338,7 +410,7 @@ public abstract class SdDataSource {
                     }
                 } catch (JSONException e) {
                     // If we get an error, just set rawData3D to zero
-                    Log.i(TAG,"updateFromJSON - error parsing 3D data - setting it to zero");
+                    Log.i(TAG,"updateFromJSON - error parsing 3D data - setting it to zero",e);
                     for (i = 0; i < mSdData.rawData3D.length; i++) {
                         mSdData.rawData3D[i] = 0.;
                     }
@@ -374,7 +446,7 @@ public abstract class SdDataSource {
                     mSdData.watchSdVersion = sdVersion;
                     mSdData.watchSdName = sdName;
                 } catch (Exception e) {
-                    Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString());
+                    Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString(),e);
                     mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - " + jsonStr + " - " + e.toString());
                     mUtil.writeToSysLogFile("          This is probably because of an out of date watch app - please upgrade!");
                     e.printStackTrace();
@@ -423,10 +495,10 @@ public abstract class SdDataSource {
         int nMin = 0;
         int nMax = 0;
         int nFreqCutoff = 0;
-        double[] fft = null;
+        fft = null;
         try {
             // FIXME - Use specified sampleFreq, not this hard coded one
-            mSampleFreq = 25;
+            mSampleFreq = Constants.SD_SERVICE_CONSTANTS.defaultSampleRate;
             double freqRes = 1.0 * mSampleFreq / mSdData.mNsamp;
             Log.v(TAG, "doAnalysis(): mSampleFreq=" + mSampleFreq + " mNSamp=" + mSdData.mNsamp + ": freqRes=" + freqRes);
             Log.v(TAG,"doAnalysis(): rawData=" + Arrays.toString(mSdData.rawData));
@@ -470,7 +542,7 @@ public abstract class SdDataSource {
             double roiRatio = 10 * roiPower / specPower;
 
             // Calculate the simplified spectrum - power in 1Hz bins.
-            double[] simpleSpec = new double[SIMPLE_SPEC_FMAX + 1];
+            simpleSpec = new double[SIMPLE_SPEC_FMAX + 1];
             for (int ifreq = 0; ifreq < SIMPLE_SPEC_FMAX; ifreq++) {
                 int binMin = (int) (1 + ifreq / freqRes);    // add 1 to loose dc component
                 int binMax = (int) (1 + (ifreq + 1) / freqRes);
@@ -481,10 +553,11 @@ public abstract class SdDataSource {
                 simpleSpec[ifreq] = simpleSpec[ifreq] / (binMax - binMin);
             }
 
+            if (gravityScaleFactor == 0) calculateStaticTimings();
             // Populate the mSdData structure to communicate with the main SdServer service.
             mDataStatusTime.setToNow();
-            mSdData.specPower = (long) ((long) specPower / gravityScaleFactor);
-            mSdData.roiPower = (long) ((long) roiPower / gravityScaleFactor);
+            mSdData.specPower = (long) (specPower / gravityScaleFactor);
+            mSdData.roiPower = (long) (roiPower / gravityScaleFactor);
             mSdData.dataTime.setToNow();
             mSdData.maxVal = 0;   // not used
             mSdData.maxFreq = 0;  // not used
@@ -496,14 +569,14 @@ public abstract class SdDataSource {
             // note mSdData.batteryPc is set from settings data in updateFromJSON()
             // FIXME - I haven't worked out why dividing by 1000 seems necessary to get the graph on scale - we don't seem to do that with the Pebble.
             for (int i = 0; i < SIMPLE_SPEC_FMAX; i++) {
-                mSdData.simpleSpec[i] = (int) simpleSpec[i] / ACCEL_SCALE_FACTOR;
+                mSdData.simpleSpec[i] = (int) (simpleSpec[i] / gravityScaleFactor);
             }
             Log.v(TAG, "simpleSpec = " + Arrays.toString(mSdData.simpleSpec));
 
             // Because we have received data, set flag to show watch app running.
             mWatchAppRunningCheck = true;
         } catch (Exception e) {
-            Log.e(TAG, "doAnalysis - Exception during Analysis");
+            Log.e(TAG, "doAnalysis - Exception during Analysis",e);
             mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e.toString());
             mUtil.writeToSysLogFile("doAnalysis: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
             mUtil.writeToSysLogFile("doAnalysis: mSdData.mNsamp="+mSdData.mNsamp);
@@ -528,7 +601,7 @@ public abstract class SdDataSource {
         muteCheck();
         Log.v(TAG,"after fallCheck, mSdData.fallAlarmStanding="+mSdData.fallAlarmStanding);
 
-        mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
+        //mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
 
         //and signal update UI
         if(((SdServer)mSdDataReceiver).uiLiveData.hasActiveObservers()) {
@@ -735,7 +808,7 @@ public abstract class SdDataSource {
         Log.v(TAG, "getStatus() - mWatchAppRunningCheck=" + mWatchAppRunningCheck + " tdiff=" + tdiff);
         Log.v(TAG, "getStatus() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout);
 
-        mSdData.watchConnected = true;  // We can't check connection for passive network connection, so set it to true to avoid errors.
+        if (!((SdServer)mSdDataReceiver).mSdDataSourceName.equals("AndroidWear")) mSdData.watchConnected = true;  // We can't check connection for passive network connection, so set it to true to avoid errors.
         // And is the watch app running?
         // set mWatchAppRunningCheck has been false for more than 10 seconds
         // the app is not talking to us
@@ -820,7 +893,7 @@ public abstract class SdDataSource {
                 Log.v(TAG, "updatePrefs() - mAppRestartTimeout = " + mAppRestartTimeout);
                 mUtil.writeToSysLogFile( "updatePrefs() - mAppRestartTimeout = " + mAppRestartTimeout);
             } catch (Exception ex) {
-                Log.v(TAG, "updatePrefs() - Problem with AppRestartTimeout preference!");
+                Log.e(TAG, "updatePrefs() - Problem with AppRestartTimeout preference!",ex);
                 mUtil.writeToSysLogFile( "updatePrefs() - Problem with AppRestartTimeout preference!");
                 Toast toast = Toast.makeText(mContext, "Problem Parsing AppRestartTimeout Preference", Toast.LENGTH_SHORT);
                 toast.show();
@@ -833,7 +906,7 @@ public abstract class SdDataSource {
                 Log.v(TAG, "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
                 mUtil.writeToSysLogFile( "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
             } catch (Exception ex) {
-                Log.v(TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!");
+                Log.e(TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!",ex);
                 mUtil.writeToSysLogFile( "updatePrefs() - Problem with FaultTimerPeriod preference!");
                 Toast toast = Toast.makeText(mContext, "Problem Parsing FaultTimerPeriod Preference", Toast.LENGTH_SHORT);
                 toast.show();
@@ -855,22 +928,26 @@ public abstract class SdDataSource {
             if (prefStr != null) {
                 mDebug = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() Debug = " + mDebug);
-                mUtil.writeToSysLogFile( "updatePrefs() Debug = " + mDebug);
+                mUtil.writeToSysLogFile("updatePrefs() Debug = " + mDebug);
 
                 prefStr = SP.getString("PebbleDisplaySpectrum", "SET_FROM_XML");
                 mDisplaySpectrum = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() DisplaySpectrum = " + mDisplaySpectrum);
-                mUtil.writeToSysLogFile( "updatePrefs() DisplaySpectrum = " + mDisplaySpectrum);
+                mUtil.writeToSysLogFile("updatePrefs() DisplaySpectrum = " + mDisplaySpectrum);
+
+                prefStr = SP.getString("DefaultSampleCount", "250");
+                mDefaultSampleCount = Integer.parseInt(prefStr);
+                Log.v(TAG, "mDefaultSampleCount=" + mDefaultSampleCount);
 
                 prefStr = SP.getString("PebbleUpdatePeriod", "SET_FROM_XML");
                 mDataUpdatePeriod = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() DataUpdatePeriod = " + mDataUpdatePeriod);
-                mUtil.writeToSysLogFile( "updatePrefs() DataUpdatePeriod = " + mDataUpdatePeriod);
+                mUtil.writeToSysLogFile("updatePrefs() DataUpdatePeriod = " + mDataUpdatePeriod);
 
                 prefStr = SP.getString("MutePeriod", "SET_FROM_XML");
                 mMutePeriod = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() MutePeriod = " + mMutePeriod);
-                mUtil.writeToSysLogFile( "updatePrefs() MutePeriod = " + mMutePeriod);
+                mUtil.writeToSysLogFile("updatePrefs() MutePeriod = " + mMutePeriod);
 
                 prefStr = SP.getString("ManAlarmPeriod", "SET_FROM_XML");
                 mManAlarmPeriod = (short) Integer.parseInt(prefStr);
@@ -989,11 +1066,16 @@ public abstract class SdDataSource {
             }
 
         } catch (Exception ex) {
-            Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
+            Log.e(TAG, "updatePrefs() - Problem parsing preferences!",ex);
             mUtil.writeToSysLogFile("SDDataSource.updatePrefs() - ERROR " + ex.toString());
             Toast toast = Toast.makeText(mContext, "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
             toast.show();
         }
+        mSdDataSettings = mSdData;
+        if(Objects.nonNull(((SdServer)mSdDataReceiver).mLm))
+            mSdDataReceiver.onSdDataReceived(mSdData);
+
+
     }
 
 
@@ -1020,41 +1102,7 @@ public abstract class SdDataSource {
         }
 
     }
-    /**
-     * Calculate the static values of requested mSdData.mSampleFreq, mSampleTimeUs and factorDownSampling  through
-     * mSdData.analysisPeriod and mSdData.mDefaultSampleCount .
-     */
-    void calculateStaticTimings() {
-        // default sampleCount : mSdData.mDefaultSampleCount
-        // default sampleTime  : mSdData.analysisPeriod
-        // sampleFrequency = sampleCount / sampleTime:
-        mSdData.mSampleFreq = (long) mCurrentMaxSampleCount / mSdDataSettings.analysisPeriod;
 
-        // now we have mSampleFreq in number samples / second (Hz) as default.
-        // to calculate sampleTimeUs: (1 / mSampleFreq) * 1000 [1s == 1000000us]
-        mSampleTimeUs = (1d / (double) mSdData.mSampleFreq) * 1e6d;
-
-        // num samples == fixed final 250 (NSAMP)
-        // time seconds in default == 10 (SIMPLE_SPEC_FMAX)
-        // count samples / time = 25 samples / second == 25 Hz max.
-        // 1 Hz == 1 /s
-        // 25 Hz == 0,04s
-        // 1s == 1.000.000 us (sample interval)
-        // sampleTime = 40.000 uS == (SampleTime (s) * 1000)
-        if (mSdDataSettings.rawData.length > 0 && mSdDataSettings.dT > 0d) {
-            double mSDDataSampleTimeUs = 1d / (double) (Constants.SD_SERVICE_CONSTANTS.defaultSampleCount / Constants.SD_SERVICE_CONSTANTS.defaultSampleTime) * 1.0e6;
-            mConversionSampleFactor = mSampleTimeUs / mSDDataSampleTimeUs;
-        } else
-            mConversionSampleFactor = 1d;
-        if (accelerationCombined != -1d) {
-            gravityScaleFactor = (Math.round(accelerationCombined / SensorManager.GRAVITY_EARTH) % 10d);
-
-        } else {
-            gravityScaleFactor = 1d;
-        }
-        miliGravityScaleFactor = gravityScaleFactor * 1e3;
-
-    }
 
 
 }
