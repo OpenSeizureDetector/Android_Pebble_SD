@@ -1670,7 +1670,7 @@ public class SdServer extends Service implements SdDataReceiver {
         i.setAction("None");
         PendingIntent contentIntent =
                 PendingIntent.getActivity(getApplicationContext(),
-                        0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+                        0, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         String contentStr = getString(R.string.please_confirm_seizure_events);
 
         Notification notification = notificationBuilder.setContentIntent(contentIntent)
