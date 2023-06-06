@@ -52,6 +52,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.view.menu.MenuView;
 import androidx.core.view.MenuCompat;
 
@@ -850,11 +851,11 @@ public class MainActivity extends AppCompatActivity {
                     pb = ((ProgressBar) findViewById(R.id.powerProgressBar));
                     pb.setMax(100);
                     pb.setProgress((int) powerPc);
-                    pbDrawable = getResources().getDrawable(R.drawable.progress_bar_blue);
+                    pbDrawable = AppCompatResources.getDrawable(mContext,R.drawable.progress_bar_blue);
                     if (powerPc > 75)
-                        pbDrawable = getResources().getDrawable(R.drawable.progress_bar_yellow);
+                        pbDrawable = AppCompatResources.getDrawable(mContext,R.drawable.progress_bar_yellow);
                     if (powerPc > 100)
-                        pbDrawable = getResources().getDrawable(R.drawable.progress_bar_red);
+                        pbDrawable = AppCompatResources.getDrawable(mContext,R.drawable.progress_bar_red);
 
                     //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
 
@@ -863,22 +864,22 @@ public class MainActivity extends AppCompatActivity {
                     pb = ((ProgressBar) findViewById(R.id.spectrumProgressBar));
                     pb.setMax(100);
                     pb.setProgress((int) specPc);
-                    pbDrawable = getResources().getDrawable(R.drawable.progress_bar_blue);
+                    pbDrawable = AppCompatResources.getDrawable(mContext,R.drawable.progress_bar_blue);
                     if (specPc > 75)
-                        pbDrawable = getResources().getDrawable(R.drawable.progress_bar_yellow);
+                        pbDrawable = AppCompatResources.getDrawable(mContext,R.drawable.progress_bar_yellow);
                     if (specPc > 100)
-                        pbDrawable = getResources().getDrawable(R.drawable.progress_bar_red);
+                        pbDrawable = AppCompatResources.getDrawable(mContext,R.drawable.progress_bar_red);
                     //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
                     pb.setProgressDrawable(pbDrawable);
 
                     pb = ((ProgressBar) findViewById(R.id.pSeizureProgressBar));
                     pb.setMax(100);
                     pb.setProgress((int) pSeizurePc);
-                    pbDrawable = getResources().getDrawable(R.drawable.progress_bar_blue);
+                    pbDrawable = AppCompatResources.getDrawable(mContext,R.drawable.progress_bar_blue);
                     if (pSeizurePc > 30)
-                        pbDrawable = getResources().getDrawable(R.drawable.progress_bar_yellow);
+                        pbDrawable = AppCompatResources.getDrawable(mContext,R.drawable.progress_bar_yellow);
                     if (pSeizurePc > 50)
-                        pbDrawable = getResources().getDrawable(R.drawable.progress_bar_red);
+                        pbDrawable = AppCompatResources.getDrawable(mContext,R.drawable.progress_bar_red);
                     //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
                     pb.setProgressDrawable(pbDrawable);
 
