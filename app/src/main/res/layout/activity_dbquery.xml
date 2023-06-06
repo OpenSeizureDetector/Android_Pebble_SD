@@ -3,17 +3,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Export Local Data"
-        android:textStyle="bold"
-        />
+        android:textStyle="bold" />
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="End Date/Time (dd-mm-yyyy hh:mm)"
-        />
+        android:text="End Date/Time (dd-mm-yyyy hh:mm)" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -25,15 +26,16 @@
             android:layout_height="wrap_content"
             android:ems="10"
             android:text="(end date)" />
+
         <Button
+            android:id="@+id/dateBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Select Date"
-            android:id="@+id/dateBtn"
-        />
+            android:text="Select Date" />
 
 
     </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -45,33 +47,45 @@
             android:layout_height="wrap_content"
             android:ems="10"
             android:text="(end time)" />
+
         <Button
+            android:id="@+id/timeBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Select Time"
-            android:id="@+id/timeBtn"
-            />
+            android:text="Select Time" />
 
 
     </LinearLayout>
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Duration (hrs)"
-        />
+        android:text="Duration (hrs)" />
+
     <EditText
         android:id="@+id/durationText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:inputType="numberDecimal"
         android:ems="10"
+        android:inputType="numberDecimal"
         android:text="1.0" />
 
-    <Button
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Export Data"
-        android:id="@+id/exportBtn"
-        />
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/exportBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Export Data" />
+
+        <ProgressBar
+            android:id="@+id/exportPb"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:visibility="invisible" />
+    </LinearLayout>
 
 </LinearLayout>

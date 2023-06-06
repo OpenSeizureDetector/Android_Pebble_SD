@@ -3,6 +3,7 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
+        \nV4.1.5 - Added progress notification to data export, added header to exported .csv file, fixed another notification bug.
         \nV4.1.4 - Fixed bug in notifications on Android 12, added an Export Data function to save heart rate and accelerometer data to a file.
         \nV4.1.3 - Fixed display of O2 Saturation in Network Data Source, and added Polish Translations by Jacek Błoniarz-Łuczak.  Fixed crash when displaying main activity during alarm on some devices.  Added adaptive Heart Rate alarms
         \nV4.1.2 - Added Machine Learning (Artificial Intelligence) Detection Algorithm Option (CNN V0.24) and 'Normal Daily Activity (NDA) logging function
