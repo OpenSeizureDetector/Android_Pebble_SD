@@ -188,15 +188,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         private List<Object> connectedList = new ArrayList<>();
         public boolean isRegistered = false;
         public boolean isListeningInContext(Object connectedClient){
-            if (Objects.nonNull(connectedList))
-            {
                 return connectedList.contains(connectedClient);
-        	}
-			else {
-            	connectedList= new ArrayList<>();
-				return false;
-            }
-
         }
         public void signalChangedData() {
             this.postValue(mSdData);
