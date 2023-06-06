@@ -31,7 +31,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -62,7 +61,6 @@ import android.util.Log;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.NotificationCompat;
-import androidx.core.view.ContentInfoCompat;
 import androidx.lifecycle.LiveData;
 import androidx.work.multiprocess.RemoteWorkerService;
 
@@ -99,7 +97,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     private String mEventNotChId = "OSD Event Notification Channel";
     private CharSequence mEventNotChName = "OSD Event Notification Channel";
     private String mEventNotChDesc = "OSD Event Notification Channel Description";
-    public powerUpdateReceiver mPowerUpdateManager = null;
+    public PowerUpdateReceiver mPowerUpdateManager = null;
 
     private NotificationManager mNM;
     private NotificationCompat.Builder mNotificationBuilder;
@@ -166,6 +164,16 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
     private NetworkBroadcastReceiver mNetworkBroadcastReceiver;
 
+    private IntentFilter batteryStatusIntentFilter = null;
+    private Intent batteryStatusIntent;
+    private Thread mBlockingThread = null;
+    private BroadcastReceiver powerUpdateReceiver = null;
+    private PowerUpdateReceiver powerUpdateReceiverPowerConnected = null;
+    private PowerUpdateReceiver powerUpdateReceiverPowerDisConnected = null;
+    private PowerUpdateReceiver powerUpdateReceiverPowerUpdated = null;
+    private PowerUpdateReceiver powerUpdateReceiverPowerLow = null;
+    private PowerUpdateReceiver powerUpdateReceiverPowerOkay = null;
+
     private final IBinder mBinder = new SdBinder();
 
     public ServiceLiveData uiLiveData;
@@ -177,8 +185,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
      * Service calls.
      */
     public class ServiceLiveData extends LiveData {
-
-        private List<Object> connectedList;
+        private List<Object> connectedList = new ArrayList<>();
         public boolean isRegistered = false;
         public boolean isListeningInContext(Object connectedClient){
             return connectedList.contains(connectedClient);
@@ -220,8 +227,6 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     public boolean acCharge = false;
     public boolean runPausedByCharger;
     public long batteryPct = -1;
-    public IntentFilter batteryStatusIntentFilter = null;
-    public Intent batteryStatusIntent;
     private boolean serverInitialized = false;
 
 
@@ -386,11 +391,11 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
 
     /**
-     * powerUpdateReceiver with coding from:
+     * PowerUpdateReceiver with coding from:
      * https://stackoverflow.com/questions/2682043/how-to-check-if-receiver-is-registered-in-android
      * */
 
-    public class powerUpdateReceiver  extends BroadcastReceiver {
+    public class PowerUpdateReceiver extends BroadcastReceiver {
         public boolean isRegistered = false;
 
         /**
@@ -444,16 +449,6 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     }
 
 
-    protected void bindBatteryEvents() {
-        batteryStatusIntentFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-        if (mPowerUpdateManager.isRegistered)mPowerUpdateManager.unregister(SdServer.this);
-        batteryStatusIntent = mPowerUpdateManager.register(SdServer.this, batteryStatusIntentFilter);
-        mPowerUpdateManager.register(SdServer.this, new IntentFilter(Intent.ACTION_POWER_CONNECTED));
-        mPowerUpdateManager.register(SdServer.this, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
-        mPowerUpdateManager.register(SdServer.this, new IntentFilter(Intent.ACTION_BATTERY_LOW));
-        mPowerUpdateManager.register(SdServer.this, new IntentFilter(Intent.ACTION_BATTERY_OKAY));
-
-    }
     /**
      * onStartCommand - start the web server and the message loop for
      * communications with other processes.
@@ -1016,7 +1011,8 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
         if (webServer != null) webServer.setSdData(mSdData);
         Log.v(TAG, "onSdDataReceived() - setting mSdData to " + mSdData.toString());
-        mLm.updateSdData(mSdData);
+        if(Objects.nonNull(mLm))
+            mLm.updateSdData(mSdData);
 
         logData();
     }
@@ -1345,6 +1341,75 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         SdServer.this.unregisterReceiver(mNetworkBroadcastReceiver);
     }
 
+    private void unBindBatteryEvents() {
+
+        if (Objects.nonNull(powerUpdateReceiverPowerUpdated)) {
+            if (powerUpdateReceiverPowerUpdated.isRegistered)
+                powerUpdateReceiverPowerUpdated.unregister(this);
+        }
+        if (Objects.nonNull(powerUpdateReceiverPowerLow)) {
+            if (powerUpdateReceiverPowerLow.isRegistered)
+                powerUpdateReceiverPowerLow.unregister(this);
+        }
+        if (Objects.nonNull(powerUpdateReceiverPowerOkay)) {
+            if (powerUpdateReceiverPowerOkay.isRegistered)
+                powerUpdateReceiverPowerOkay.unregister(this);
+        }
+        if (Objects.nonNull(powerUpdateReceiverPowerConnected)) {
+            if (powerUpdateReceiverPowerConnected.isRegistered)
+                powerUpdateReceiverPowerConnected.unregister(this);
+        }
+        if (Objects.nonNull(powerUpdateReceiverPowerDisConnected)) {
+            if (powerUpdateReceiverPowerDisConnected.isRegistered)
+                powerUpdateReceiverPowerDisConnected.unregister(this);
+        }
+        if (Objects.nonNull(powerUpdateReceiver))
+            if (((PowerUpdateReceiver) powerUpdateReceiver).isRegistered)
+                this.unregisterReceiver(powerUpdateReceiver);
+//        if (Objects.nonNull(connectionUpdateReceiver))
+//            if (connectedConnectionUpdates) {
+//                this.unregisterReceiver(connectionUpdateReceiver);
+//                connectedConnectionUpdates = false;
+//            }
+
+        batteryStatusIntent = null;
+    }
+    private void bindBatteryEvents() {
+
+        if (Objects.isNull(powerUpdateReceiverPowerConnected))
+            powerUpdateReceiverPowerConnected = new PowerUpdateReceiver();
+        if (Objects.isNull(powerUpdateReceiverPowerDisConnected))
+            powerUpdateReceiverPowerDisConnected = new PowerUpdateReceiver();
+        if (Objects.isNull(powerUpdateReceiverPowerOkay))
+            powerUpdateReceiverPowerOkay = new PowerUpdateReceiver();
+        if (Objects.isNull(powerUpdateReceiverPowerLow))
+            powerUpdateReceiverPowerLow = new PowerUpdateReceiver();
+        if (Objects.isNull(powerUpdateReceiverPowerUpdated))
+            powerUpdateReceiverPowerUpdated = new PowerUpdateReceiver();
+        if (Objects.isNull(powerUpdateReceiver)) powerUpdateReceiver = new PowerUpdateReceiver();
+        batteryStatusIntentFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+
+
+        if (Objects.isNull(batteryStatusIntent) && !powerUpdateReceiverPowerUpdated.isRegistered) {
+            batteryStatusIntent = powerUpdateReceiverPowerUpdated.register(this, batteryStatusIntentFilter);//this.registerReceiver(PowerUpdateReceiver, batteryStatusIntentFilter);
+            mSdData.batteryPc = (long) ((batteryStatusIntent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) / (float) batteryStatusIntent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)) * 100f);
+            powerUpdateReceiverPowerUpdated.isRegistered = true;
+
+        }
+        powerUpdateReceiverPowerConnected.register(this, new IntentFilter(Intent.ACTION_POWER_CONNECTED));
+        powerUpdateReceiverPowerConnected.isRegistered = true;
+        powerUpdateReceiverPowerDisConnected.register(this, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
+        powerUpdateReceiverPowerDisConnected.isRegistered = true;
+        powerUpdateReceiverPowerOkay.register(this, new IntentFilter(Intent.ACTION_BATTERY_LOW));
+        powerUpdateReceiverPowerLow.register(this, new IntentFilter(Intent.ACTION_BATTERY_OKAY));
+
+//        if (Objects.nonNull(connectionUpdateReceiver) && !connectedConnectionUpdates)
+//            this.registerReceiver(connectionUpdateReceiver, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
+//        connectedConnectionUpdates = true;
+
+
+    }
+
     private class NetworkBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -1488,6 +1553,19 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
             mUtil.writeToSysLogFile("updatePrefs() - mAuthToken = " + mAuthToken);
 
             String prefVal;
+            prefVal = SP.getString("DefaultSampleCount", "250");
+
+            Log.v(TAG, "mDefaultSampleCount=" + mDefaultSampleCount);
+
+            mDefaultSampleCount = Integer.parseInt(prefVal);
+            Log.v(TAG, "mDefaultSampleCount=" + mDefaultSampleCount);
+            mSdData.mDefaultSampleCount = mDefaultSampleCount;
+
+            prefVal = SP.getString("analysisPeriod", "10");
+            mSdData.analysisPeriod = Integer.parseInt(prefVal);
+            Log.v(TAG, "mSdData.analysisPeriod=" + mSdData.analysisPeriod);
+            mEventDuration = Integer.parseInt(prefVal);
+
             prefVal = SP.getString("EventDurationSec", "300");
             mEventDuration = Integer.parseInt(prefVal);
             Log.v(TAG, "mEventDuration=" + mEventDuration);
@@ -1912,7 +1990,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         i.setAction("None");
         PendingIntent contentIntent =
                 PendingIntent.getActivity(SdServer.this,
-                        0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+                        0, i, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         String contentStr = getString(R.string.please_confirm_seizure_events);
 
         Notification notification = notificationBuilder.setContentIntent(contentIntent)
