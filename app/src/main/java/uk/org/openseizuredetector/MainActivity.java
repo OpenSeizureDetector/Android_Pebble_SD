@@ -454,11 +454,9 @@ public class MainActivity extends AppCompatActivity {
             mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
             if (Objects.nonNull(mConnection)) {
                 if (!mConnection.mBound) mUtil.bindToServer(MainActivity.this, mConnection);
-                if (!mConnection.mSdServer.uiLiveData.isListeningInContext(this)){
-                    mConnection.mSdServer.uiLiveData.observe(this,this::onChangedObserver);
-                    mConnection.mSdServer.uiLiveData.observeForever(this::onChangedObserver);
-                    mConnection.mSdServer.uiLiveData.addToListening(this);
-                }
+                mUtil.waitForConnection(mConnection);
+                connectUiLiveDataRunner();
+
             }
         } else {
             Log.i(TAG, "onStart() - Server Not Running");
@@ -475,6 +473,19 @@ public class MainActivity extends AppCompatActivity {
         }, 0, 1000);
 */
 
+    }
+
+    void connectUiLiveDataRunner(){
+        if (mConnection.mBound && Objects.nonNull(mConnection.mSdServer))
+        {
+            if (!mConnection.mSdServer.uiLiveData.isListeningInContext(this)) {
+                mConnection.mSdServer.uiLiveData.observe(this, this::onChangedObserver);
+                mConnection.mSdServer.uiLiveData.observeForever(this::onChangedObserver);
+                mConnection.mSdServer.uiLiveData.addToListening(this);
+            }
+        }else {
+            serverStatusHandler.postDelayed(this::connectUiLiveDataRunner,100)
+        }
     }
 
     @Override

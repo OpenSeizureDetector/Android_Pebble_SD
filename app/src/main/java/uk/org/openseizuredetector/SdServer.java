@@ -276,7 +276,6 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
             mLooper = ((Context)SdServer.this).getMainLooper();
         }
         mHandler = new Handler(mLooper);
-        uiLiveData = new ServiceLiveData();
         mSdData = new SdData();
         mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
 
@@ -296,6 +295,8 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         mWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 "OSD:WakeLock");
+
+        uiLiveData = new ServiceLiveData();
     }
     protected void powerUpdateReceiveAction(Intent intent) {
         try {

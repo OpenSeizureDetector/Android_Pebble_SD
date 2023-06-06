@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Objects;
 
 //import static android.database.sqlite.SQLiteDatabase.openOrCreateDatabase;
 
@@ -1042,11 +1043,13 @@ public class LogManager {
      * unless it was the last instance.
      */
     public static void close() {
-        mOsdDb.close();
-        mOsdDb = null;
-        if (mWac != null) {
-            Log.i(TAG, "Stopping Remote Database Interface");
-            mWac.close();
+        if (Objects.nonNull(mOsdDb)){
+            mOsdDb.close();
+            mOsdDb = null;
+            if (mWac != null) {
+                Log.i(TAG, "Stopping Remote Database Interface");
+                mWac.close();
+            }
         }
     }
 
