@@ -608,8 +608,11 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         // battery drain.
         if (mWakeLock != null) {
             try {
-                mWakeLock.release();
-                Log.d(TAG, "Released Wake Lock to allow device to sleep.");
+                if (mWakeLock.isHeld()) {
+                    mWakeLock.release();
+                    Log.d(TAG, "Released Wake Lock to allow device to sleep.");
+                }else
+                    Log.i(TAG,"Wakelock is not held, so no need to release.");
             } catch (Exception e) {
                 Log.e(TAG, "Error Releasing Wakelock - " + e.toString());
                 mUtil.writeToSysLogFile("SdServer.onDestroy() - Error releasing wakelock.");
