@@ -604,8 +604,8 @@ public abstract class SdDataSource {
         //mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
 
         //and signal update UI
-        if(((SdServer)mSdDataReceiver).uiLiveData.hasActiveObservers()) {
-            ((SdServer)mSdDataReceiver).uiLiveData.signalChangedData();
+        if(useSdServerBinding().uiLiveData.hasActiveObservers()) {
+            useSdServerBinding().uiLiveData.signalChangedData();
         }
     }
 

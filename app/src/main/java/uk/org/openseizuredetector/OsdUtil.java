@@ -224,6 +224,7 @@ public class OsdUtil {
         Log.i(TAG, "OsdUtil.bindToServer() - binding to SdServer");
         writeToSysLogFile("bindToServer() - binding to SdServer");
         Intent intent = new Intent(sdServiceConnection.mContext, SdServer.class);
+        intent.setAction(Constants.ACTION.BIND_ACTION);
         //because @startServer the service is created, we do not need to create the service @bind
         //Set bind flag as BIND_ADJUST_WITH_ACTIVITY
         boolean returnValue = activity.bindService(intent, sdServiceConnection, Context.BIND_ADJUST_WITH_ACTIVITY);
@@ -822,6 +823,23 @@ public class OsdUtil {
         public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             Log.i(TAG,"onDowngrade()");
             onUpgrade(db, oldVersion, newVersion);
+        }
+    }
+
+    public void waitForConnection(SdServiceConnection mConnection) {
+        // We want the UI to update as soon as it is displayed, but it takes a finite time for
+        // the mConnection to bind to the service, so we delay half a second to give it chance
+        // to connect before trying to update the UI for the first time (it happens again periodically using the uiTimer)
+        if (mConnection.mBound) {
+            Log.d(TAG, "waitForConnection - Bound!");
+        } else {
+            Log.v(TAG, "waitForConnection - waiting...");
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    waitForConnection(mConnection);
+                }
+            }, 100);
         }
     }
 
