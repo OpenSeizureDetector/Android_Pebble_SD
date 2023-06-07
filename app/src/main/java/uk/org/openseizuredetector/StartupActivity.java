@@ -90,6 +90,7 @@ public class StartupActivity extends AppCompatActivity {
     private boolean mLocationPermissions2Requested;
     private boolean mSmsPermissionsRequested;
     private boolean mPermissionsRequested;
+    private SdData localSdData;
 
     public final String[] REQUIRED_PERMISSIONS = {
             //Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -220,8 +221,13 @@ public class StartupActivity extends AppCompatActivity {
             // Bind to the service.
             Log.i(TAG, "onStart() - binding to server");
             mUtil.writeToSysLogFile("StartupActivity.onStart() - binding to server");
-            if (Objects.nonNull(mConnection))
-                if (!mConnection.mBound) mUtil.bindToServer(this, mConnection);
+            serverStatusRunnable.run();
+            if (Objects.isNull(mConnection))
+                mConnection = new SdServiceConnection(StartupActivity.this);
+            if (!mConnection.mBound) {
+                mUtil.bindToServer(StartupActivity.this, mConnection);
+            }
+            connectUiLiveDataRunner();
         }, 100);
 
         // Check power management settings
@@ -245,17 +251,46 @@ public class StartupActivity extends AppCompatActivity {
         checkFirstRun();
 
         // start timer to refresh user interface every second.
-        mUiTimer = new Timer();
+        /*mUiTimer = new Timer();
         mUiTimer.schedule(new TimerTask() {
             @Override
             public void run() {
                 mHandler.post(serverStatusRunnable);
                 //updateServerStatus();
             }
-        }, 0, 2000);
+        }, 0, 2000);*/
 
 
     }
+
+    void connectUiLiveDataRunner(){
+        if (mConnection.mBound && Objects.nonNull(mConnection.mSdServer))
+        {
+            if (!mConnection.mSdServer.uiLiveData.isListeningInContext(StartupActivity.this)) {
+                mConnection.mSdServer.uiLiveData.observe(StartupActivity.this, StartupActivity.this::onChangedObserver);
+                mConnection.mSdServer.uiLiveData.observeForever(StartupActivity.this::onChangedObserver);
+                mConnection.mSdServer.uiLiveData.addToListening(StartupActivity.this);
+            }
+        }else {
+            mHandler.postDelayed(StartupActivity.this::connectUiLiveDataRunner,100);
+        }
+    }
+
+    /**
+     * onChangedObserver is responsible for handling LiveData changed event
+     * (this.postValue(mSdData)
+     * result here is (SdData) from Object o.
+     * Source event line: AWSdService:ServiceLiveData:signalChangedData()
+     */
+    private void onChangedObserver(Object o) {
+        try {
+            localSdData = (SdData) o;
+            serverStatusRunnable.run();
+        } catch (Exception e) {
+            Log.e(getClass().getName(), "onChangedObserver: error: ", e);
+        }
+    }
+
 
     @Override
     protected void onStop() {
@@ -263,7 +298,9 @@ public class StartupActivity extends AppCompatActivity {
         Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("StartupActivity.onStop() - unbinding from server");
         mUtil.unbindFromServer(getApplicationContext(), mConnection);
-        mUiTimer.cancel();
+        if (Objects.nonNull(mUiTimer)) {
+            mUiTimer.cancel();
+        }
     }
 
 

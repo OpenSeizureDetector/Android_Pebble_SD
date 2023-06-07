@@ -451,6 +451,8 @@ public class MainActivity extends AppCompatActivity {
         tv.setBackgroundColor(okColour);
         tv.setTextColor(okTextColour);
 
+        serverStatusRunnable.run();
+
         if (mUtil.isServerRunning()) {
             mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
             if (Objects.nonNull(mConnection)) {
