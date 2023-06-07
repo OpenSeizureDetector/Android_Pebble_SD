@@ -264,16 +264,17 @@ public class StartupActivity extends AppCompatActivity {
     }
 
     void connectUiLiveDataRunner(){
-        if (mConnection.mBound && Objects.nonNull(mConnection.mSdServer))
-        {
-            if (!mConnection.mSdServer.uiLiveData.isListeningInContext(StartupActivity.this)) {
-                mConnection.mSdServer.uiLiveData.observe(StartupActivity.this, StartupActivity.this::onChangedObserver);
-                mConnection.mSdServer.uiLiveData.observeForever(StartupActivity.this::onChangedObserver);
-                mConnection.mSdServer.uiLiveData.addToListening(StartupActivity.this);
+        if (Objects.nonNull(mConnection)) {
+            if (mConnection.mBound && Objects.nonNull(mConnection.mSdServer) && !this.isFinishing() && !this.isDestroyed()) {
+                if (!mConnection.mSdServer.uiLiveData.isListeningInContext(StartupActivity.this)) {
+                    mConnection.mSdServer.uiLiveData.observe(StartupActivity.this, StartupActivity.this::onChangedObserver);
+                    mConnection.mSdServer.uiLiveData.observeForever(StartupActivity.this::onChangedObserver);
+                    mConnection.mSdServer.uiLiveData.addToListening(StartupActivity.this);
+                    return;
+                }
             }
-        }else {
-            mHandler.postDelayed(StartupActivity.this::connectUiLiveDataRunner,100);
         }
+        Log.i(TAG,"Letting go connect request");
     }
 
     /**

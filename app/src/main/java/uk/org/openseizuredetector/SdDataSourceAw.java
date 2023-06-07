@@ -372,7 +372,7 @@ public class SdDataSourceAw extends SdDataSource {
 
                 onStartReceived() ;
 
-                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.returnPath,Constants.GLOBAL_CONSTANTS.mAppPackageName);
+                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.returnPath,Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver);
                 aWIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES|Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 aWIntentBase = aWIntent;
                 //aWIntent.setClassName(aWIntent.getPackage(),".WearReceiver");
@@ -431,7 +431,7 @@ public class SdDataSourceAw extends SdDataSource {
         // First tries to open Play Store, then uses URL if play store is not installed.
         try {
             aWIntent = aWIntentBase;
-            aWIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + Constants.GLOBAL_CONSTANTS.mAppPackageName));
+            aWIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver));
             aWIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             mContext.startActivity(aWIntent);
         } catch (android.content.ActivityNotFoundException anfe) {

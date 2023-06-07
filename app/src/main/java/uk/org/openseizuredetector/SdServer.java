@@ -711,8 +711,10 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     private void stopServiceRunner(){
 
         if (!Objects.equals(mPowerUpdateManager, null))
-            if (mPowerUpdateManager.isRegistered)
+            if (mPowerUpdateManager.isRegistered) {
+                unBindBatteryEvents();
                 mPowerUpdateManager.unregister(SdServer.this);
+            }
         if (mWakeLock != null) {
             try {// TODO deside to ask if (mWakeLock.isHeld())
                 if (mWakeLock.isHeld() ) mWakeLock.release();
@@ -914,6 +916,9 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 Intent i = new Intent(SdServer.this, MainActivity.class);
                 i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
                 SdServer.this.startActivity(i);
+                if (Objects.nonNull(uiLiveData))
+                    if (uiLiveData.hasActiveObservers())
+                        uiLiveData.signalChangedData();
             }
         } else {
             mUtil.showToast("OpenSeizureDetector: showMainActivity Failed to Display Activity");
@@ -1430,7 +1435,9 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         mNetworkBroadcastReceiver = new NetworkBroadcastReceiver();
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
         //filter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
-        SdServer.this.registerReceiver(mNetworkBroadcastReceiver, filter);
+        if (!mNetworkBroadcastReceiver.isRegistered) {
+            mNetworkBroadcastReceiver.register(SdServer.this, filter);
+        }
     }
 
     /**
@@ -1457,7 +1464,9 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         }
         mUtil.writeToSysLogFile("unregisterig network broadcast receiver");
         Log.v(TAG, "unregistering network broadcast receiver");
-        SdServer.this.unregisterReceiver(mNetworkBroadcastReceiver);
+        if (mNetworkBroadcastReceiver.isRegistered){
+            mNetworkBroadcastReceiver.unregister(SdServer.this);
+        }
     }
 
     private void unBindBatteryEvents() {
@@ -1530,6 +1539,31 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     }
 
     private class NetworkBroadcastReceiver extends BroadcastReceiver {
+        public boolean isRegistered = false;
+
+        /**
+         * register receiver
+         * @param context - Context
+         * @param filter - Intent Filter
+         * @return see Context.registerReceiver(BroadcastReceiver,IntentFilter)
+         */
+        public Intent register(Context context, IntentFilter filter) {
+            try {
+                // ceph3us note:
+                // here I propose to create
+                // a isRegistered(Context) method
+                // as you can register receiver on different context
+                // so you need to match against the same one :)
+                // example  by storing a list of weak references
+                // see LoadedApk.class - receiver dispatcher
+                // its and ArrayMap there for example
+                return !isRegistered
+                        ? context.registerReceiver(this, filter)
+                        : null;
+            } finally {
+                isRegistered = true;
+            }
+        }
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.v(TAG, "NetworkBroadCastReceiver.onReceive");
@@ -1565,6 +1599,25 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 mUtil.writeToSysLogFile("Network State Changed - No Active Network");
                 mUtil.showToast(getString(R.string.no_active_network));
             }
+        }
+
+        /**
+         * unregister received
+         * @param context - context
+         * @return true if was registered else false
+         */
+        public boolean unregister(Context context) {
+            // additional work match on context before unregister
+            // eg store weak ref in register then compare in unregister
+            // if match same instance
+            return isRegistered
+                    && unregisterInternal(context);
+        }
+
+        private boolean unregisterInternal(Context context) {
+            context.unregisterReceiver(this);
+            isRegistered = false;
+            return true;
         }
     }
 

@@ -141,7 +141,6 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
         mUtil.writeToSysLogFile("SdDataSourcePhone.start()");
         mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mSensorManager.registerListener(this, mSensor , SensorManager.SENSOR_DELAY_GAME);
 
         if (!Objects.equals(mSdDataSettings,null))if (mSdDataSettings.mDefaultSampleCount >0d && mSdDataSettings.analysisPeriod > 0d ) {
             calculateStaticTimings();
@@ -207,6 +206,8 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     Log.v(TAG, "onSensorChanged(): Collected data for " + mSdData.dT + " sec - calculated sample rate as " + mSampleFreq + " Hz");
                     accelerationCombined = sqrt(event.values[0] * event.values[0] + event.values[1] * event.values[1] + event.values[2] * event.values[2]);
                     calculateStaticTimings();
+                    unBindSensorListeners();
+                    bindSensorListeners();
                     mMode = 1;
                     mSdData.mNsamp = 0;
                     mStartTs = event.timestamp;
