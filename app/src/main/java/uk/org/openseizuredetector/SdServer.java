@@ -276,7 +276,6 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
             mLooper = ((Context)SdServer.this).getMainLooper();
         }
         mHandler = new Handler(mLooper);
-        uiLiveData = new ServiceLiveData();
         mSdData = new SdData();
         mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
 
@@ -296,6 +295,8 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         mWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 "OSD:WakeLock");
+
+        uiLiveData = new ServiceLiveData();
     }
     protected void powerUpdateReceiveAction(Intent intent) {
         try {
@@ -607,8 +608,11 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         // battery drain.
         if (mWakeLock != null) {
             try {
-                mWakeLock.release();
-                Log.d(TAG, "Released Wake Lock to allow device to sleep.");
+                if (mWakeLock.isHeld()) {
+                    mWakeLock.release();
+                    Log.d(TAG, "Released Wake Lock to allow device to sleep.");
+                }else
+                    Log.i(TAG,"Wakelock is not held, so no need to release.");
             } catch (Exception e) {
                 Log.e(TAG, "Error Releasing Wakelock - " + e.toString());
                 mUtil.writeToSysLogFile("SdServer.onDestroy() - Error releasing wakelock.");
