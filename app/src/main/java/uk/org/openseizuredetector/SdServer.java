@@ -1139,6 +1139,9 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
             mLm.updateSdData(mSdData);
 
         logData();
+        if (Objects.nonNull(uiLiveData))
+            if (uiLiveData.hasActiveObservers())
+                uiLiveData.signalChangedData();
     }
 
 

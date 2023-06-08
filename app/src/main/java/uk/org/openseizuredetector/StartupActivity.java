@@ -38,6 +38,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
+
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.preference.PreferenceManager;
 import android.text.Html;
 import android.text.SpannableString;
@@ -264,6 +266,7 @@ public class StartupActivity extends AppCompatActivity {
     }
 
     void connectUiLiveDataRunner(){
+        Log.i(TAG,"Connecting mConnection.mSdServer.uiLiveData");
         if (Objects.nonNull(mConnection)) {
             if (mConnection.mBound && Objects.nonNull(mConnection.mSdServer) && !this.isFinishing() && !this.isDestroyed()) {
                 if (!mConnection.mSdServer.uiLiveData.isListeningInContext(StartupActivity.this)) {
@@ -272,6 +275,8 @@ public class StartupActivity extends AppCompatActivity {
                     mConnection.mSdServer.uiLiveData.addToListening(StartupActivity.this);
                     return;
                 }
+            }else if ((!mConnection.mBound || Objects.isNull(mConnection.mSdServer)) && !this.isFinishing() && !this.isDestroyed()) {
+                mHandler.postDelayed(this::connectUiLiveDataRunner,100);
             }
         }
         Log.i(TAG,"Letting go connect request");
@@ -344,8 +349,8 @@ public class StartupActivity extends AppCompatActivity {
                     tv.setText(getString(R.string.SmsPermissionWarning));
                     tv.setBackgroundColor(alarmColour);
                     tv.setTextColor(alarmTextColour);
-                    //pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                    //pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                    //pb.setIndeterminateDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
+                    //pb.setProgressDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
                     requestSMSPermissions();
                     allOk = false;
                 } else if (smsAlarmsActive && !areLocationPermissions1OK()) {
@@ -366,8 +371,8 @@ public class StartupActivity extends AppCompatActivity {
                     tv.setText(getString(R.string.AppPermissionsOk));
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
-                    pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                    pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                    pb.setIndeterminateDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
+                    pb.setProgressDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
                 }
             } else {
                 tv.setText(getString(R.string.AppPermissionsWarning));
@@ -383,8 +388,8 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getText(R.string.DiallerNotInstalledWarning));
                 tv.setBackgroundColor(alarmColour);
                 tv.setTextColor(alarmTextColour);
-                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                pb.setIndeterminateDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
+                pb.setProgressDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
                 allOk = false;
             }
 
@@ -395,8 +400,8 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getString(R.string.BoundToServiceOk));
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
-                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                pb.setIndeterminateDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
+                pb.setProgressDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
             } else {
                 tv.setText(getString(R.string.BindingToService));
                 tv.setBackgroundColor(alarmColour);
@@ -412,8 +417,8 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getString(R.string.WatchConnectedOk));
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
-                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                pb.setIndeterminateDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
+                pb.setProgressDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
             } else {
                 tv.setText(getString(R.string.WatchNotConnected));
                 tv.setBackgroundColor(alarmColour);
@@ -430,8 +435,8 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getString(R.string.SeizureDetectorDataReceived));
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
-                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                pb.setIndeterminateDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
+                pb.setProgressDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
             } else {
                 tv.setText(getString(R.string.WaitingForSeizureDetectorData));
                 tv.setBackgroundColor(alarmColour);
@@ -448,8 +453,8 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getString(R.string.SeizureDetectorSettingsReceived));
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
-                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                pb.setIndeterminateDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
+                pb.setProgressDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
             } else {
                 tv.setText(getString(R.string.WaitingForSeizureDetectorSettings));
                 tv.setBackgroundColor(alarmColour);
