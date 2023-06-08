@@ -251,6 +251,7 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     doAnalysis();
                     mSdData.mNsamp = 0;
                     mStartTs = event.timestamp;
+                    
                     return;
                 }else if (!Objects.equals(rawDataList, null) && rawDataList.size() <= mCurrentMaxSampleCount ) {
 

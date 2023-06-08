@@ -30,6 +30,9 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.util.Log;
 
+import androidx.lifecycle.LiveData;
+
+import java.util.Objects;
 
 
 /**
@@ -55,6 +58,10 @@ public class SdServiceConnection implements ServiceConnection {
         if (mSdServer != null) {
             Log.v(TAG, "onServiceConnected() - Asking server to update its settings");
             mSdServer.updatePrefs();
+            if(Objects.nonNull(mSdServer.uiLiveData)) {
+                if (mSdServer.uiLiveData.hasActiveObservers())
+                    mSdServer.uiLiveData.signalChangedData();
+            }
         } else {
             Log.v(TAG, "onServiceConnected() - mSdServer is null - this is wrong!");
         }

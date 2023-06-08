@@ -2207,12 +2207,12 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent contentIntent =
                 PendingIntent.getActivity(SdServer.this,
-                        0, i, PendingIntent.FLAG_UPDATE_CURRENT);
+                        0, i, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         Intent loginIntent = new Intent(SdServer.this, AuthenticateActivity.class);
         loginIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         PendingIntent loginPendingIntent =
                 PendingIntent.getActivity(SdServer.this,
-                        0, loginIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                        0, loginIntent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
 
         String contentStr = getString(R.string.datasharing_notification_text);
         Notification notification = notificationBuilder
