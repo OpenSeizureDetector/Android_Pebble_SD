@@ -211,6 +211,7 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     mMode = 1;
                     mSdData.mNsamp = 0;
                     mStartTs = event.timestamp;
+                    mSdDataReceiver.onSdDataReceived(mSdData);
                 }
             } else if (mMode==1) {
                 // mMode=1 is normal operation - collect NSAMP accelerometer data samples, then analyse them by calling doAnalysis().
