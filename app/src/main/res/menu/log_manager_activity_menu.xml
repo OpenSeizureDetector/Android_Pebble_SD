@@ -44,4 +44,11 @@
             app:showAsAction="never|withText"
             android:title="@string/export_data_menuItem" />
     </group>
+    <item
+        android:id="@+id/action_about_datasharing"
+        android:enabled="true"
+        android:icon="@drawable/ic_action_settings"
+        app:showAsAction="never|withText"
+        android:title="@string/about_data_sharing" />
+
 </menu>

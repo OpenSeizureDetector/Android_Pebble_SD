@@ -377,9 +377,6 @@
     <string name="datasharing_notification_title">OpenSeizureDetector Data Sharing Problem</string>
     <string name="datasharing_about_title">OpenSeizureDetector Data Sharing</string>
     <string name="datasharing_about_text">
-        Data Sharing is not working correctly.   \n
-        This might be because you have not registered an account and logged in to the data sharing system,\n
-        or it may be a networking problem. \n\n
         <b>Please register for Data Sharing and Log in using the App menu or button below</b>\n\n
         This will help with developing OpenSeizureDetector to increase the
         detection reliability and reduce the false alarm rate\n\n
