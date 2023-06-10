@@ -33,6 +33,11 @@
                 android:layout_height="wrap_content"
                 android:padding="10dp"
                 android:orientation="vertical">
+                <TextView
+                    android:id="@+id/algsTv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Algorithms" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -69,11 +74,13 @@
                         android:layout_height="wrap_content"
                         android:text="---" />
 
-                    <TextView
+                    <!--<TextView
                         android:id="@+id/fallAlgTv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="---" />
+                        android:text=""
+                        android:visibility="gone"/>
+                        -->
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
