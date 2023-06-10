@@ -35,14 +35,14 @@
             android:icon="@drawable/ic_action_settings"
             app:showAsAction="never|withText"
             android:title="@string/data_sharing_log_in" />
--->
+
         <item
             android:id="@+id/action_about_datasharing"
             android:enabled="true"
             android:icon="@drawable/ic_action_settings"
             app:showAsAction="never|withText"
             android:title="@string/about_data_sharing" />
-
+-->
     </group>
     <group android:id="@+id/grp4">
         <item
