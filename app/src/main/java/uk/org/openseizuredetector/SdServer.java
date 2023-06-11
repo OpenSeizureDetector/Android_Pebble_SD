@@ -55,6 +55,7 @@ import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
+import android.service.notification.StatusBarNotification;
 import android.telephony.SmsManager;
 import android.text.format.Time;
 import android.util.Log;
@@ -102,6 +103,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     private NotificationManager mNM;
     private NotificationCompat.Builder mNotificationBuilder;
     private Notification mNotification;
+    private int mCurrentNotificationAlarmLevel = -999;
     private SdWebServer webServer = null;
     private final static String TAG = "SdServer";
     private Timer dataLogTimer = null;
@@ -821,10 +823,16 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
      * Show a notification while this service is running.
      */
     private void showNotification(int alarmLevel) {
-        Log.v(TAG, "showNotification() - alarmLevel=" + alarmLevel);
         int iconId;
         String titleStr;
         Uri soundUri = null;
+
+        if ((alarmLevel == mCurrentNotificationAlarmLevel) && (isNotificationShown(NOTIFICATION_ID))) {
+            Log.v(TAG,"showNotification - notification already shown at specified alarm level - not doing anything");
+            return;
+        }
+        Log.v(TAG, "showNotification() - alarmLevel=" + alarmLevel);
+
         switch (alarmLevel) {
             case 0:
                 iconId = R.drawable.star_of_life_24x24;
@@ -890,6 +898,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 }
             }
             mNM.notify(NOTIFICATION_ID, mNotification);
+            mCurrentNotificationAlarmLevel = alarmLevel;
         } else {
             Log.i(TAG, "showNotification() - notification builder is null, so not showing notification.");
         }
@@ -2089,6 +2098,11 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         String titleStr;
         Uri soundUri = null;
 
+        if (isNotificationShown(EVENT_NOTIFICATION_ID)) {
+            Log.v(TAG,"showEventNotification() - notification is already shown, so not doing anything");
+            return;
+        }
+
         // Initialise Notification channel for API level 26 and over
         // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
         NotificationManager nM = (NotificationManager) SdServer.this.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -2133,6 +2147,11 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         String titleStr;
         Uri soundUri = null;
 
+        if (isNotificationShown(DATASHARE_NOTIFICATION_ID)) {
+            Log.v(TAG,"showDataShareNotification() - notification is already shown, so not doing anything");
+            return;
+        }
+
         // Initialise Notification channel for API level 26 and over
         // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
         NotificationManager nM = (NotificationManager) SdServer.this.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -2176,7 +2195,21 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         nM.notify(DATASHARE_NOTIFICATION_ID, notification);
     }
 
-
+    /**
+     * isNotificationShown - returns true if the specified notificationID is shown, otherwise returns false.
+     * @param notificationId - Notification ID to check
+     * @return true if the specified notification is displayed, otherwise false.
+     */
+    private boolean isNotificationShown(int notificationId) {
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        StatusBarNotification[] notifications = mNotificationManager.getActiveNotifications();
+        for (StatusBarNotification notification : notifications) {
+            if (notification.getId() == notificationId) {
+                return(true);
+            }
+        }
+        return(false);
+    }
 }
 
 
