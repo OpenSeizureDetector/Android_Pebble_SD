@@ -142,7 +142,7 @@ public abstract class SdDataSource {
         mUtil = new OsdUtil(mContext, mHandler);
         mSdDataReceiver = sdDataReceiver;
         if(Objects.isNull((mSdData)))
-            mSdData = new SdData();
+            mSdData = getSdData();
 
 
     }

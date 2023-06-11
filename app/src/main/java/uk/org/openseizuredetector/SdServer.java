@@ -113,6 +113,11 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
     private boolean mFaultTimerCompleted = false;
 
+    boolean mBound;
+
+    Context parentContext;
+    String mWearNodeUri;
+
     private HandlerThread thread;
     private WakeLock mWakeLock = null;
     private LocationFinder mLocationFinder = null;
