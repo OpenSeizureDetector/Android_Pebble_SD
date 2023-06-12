@@ -4,6 +4,11 @@
     android:versionCode="120"
     android:versionName="4.2.4f">
     <!-- android:allowBackup="false" -->
+
+    <queries>
+        <package android:name="uk.org.openseizuredetector.aw" />
+    </queries>
+
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
