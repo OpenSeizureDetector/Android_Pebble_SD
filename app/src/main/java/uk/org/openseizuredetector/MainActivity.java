@@ -92,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
     // example of placement of changed data
     private SdData localSdData;
 
-
     final Handler serverStatusHandler = new Handler();
     Messenger messenger = new Messenger(new ResponseHandler());
     Timer mUiTimer;
@@ -1194,6 +1193,20 @@ public class MainActivity extends AppCompatActivity {
      */
     private void onChangedObserver(Object o) {
         try {
+            if (Constants.ACTION.STOP_WEAR_SD_ACTION.equals(((SdData)o).mDataType))
+                if (Objects.nonNull(mConnection))
+                    if (mConnection.mBound) {
+                        if (Objects.nonNull(mConnection.mSdServer)) {
+                            if (mConnection.mSdServer.uiLiveData.isListeningInContext(MainActivity.this)) {
+                                mConnection.mSdServer.uiLiveData.removeFromListening(MainActivity.this);
+                                mConnection.mSdServer.uiLiveData.removeObserver(MainActivity.this::onChangedObserver);
+                            }
+                            mUtil.unbindFromServer(MainActivity.this, mConnection);
+                            mConnection = null;
+                            mUtil.stopServer();
+                        }
+                        return;
+                    }
             localSdData = (SdData) o;
             serverStatusRunnable.run();
         } catch (Exception e) {

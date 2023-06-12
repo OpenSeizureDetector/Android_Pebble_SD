@@ -209,7 +209,6 @@ public class StartupActivity extends AppCompatActivity {
         tv = (TextView) findViewById(R.id.dataSourceTextView);
         tv.setText(String.format("%s = %s", getString(R.string.DataSource), dataSourceName));
 
-
         if (mUtil.isServerRunning()) {
             Log.i(TAG, "onStart() - server running - stopping it - isServerRunning="+mUtil.isServerRunning());
             mUtil.writeToSysLogFile("StartupActivity.onStart() - server already running - stopping it.");

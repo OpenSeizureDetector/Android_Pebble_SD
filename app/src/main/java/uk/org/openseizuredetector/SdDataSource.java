@@ -188,7 +188,7 @@ public abstract class SdDataSource {
         // 25 Hz == 0,04s
         // 1s == 1.000.000 us (sample interval)
         // sampleTime = 40.000 uS == (SampleTime (s) * 1000)
-        if (getSdData().rawData.length>0 && mSdData.dT >0d){
+        if (getSdData().rawData.length>0 && getSdData().dT >0d){
             double mSDDataSampleTimeUs = 1d/(double) (Constants.SD_SERVICE_CONSTANTS.defaultSampleCount / Constants.SD_SERVICE_CONSTANTS.defaultSampleTime) * 1.0e6;
             mConversionSampleFactor = mSampleTimeUs / mSDDataSampleTimeUs;
         }
@@ -603,7 +603,10 @@ public abstract class SdDataSource {
 
         mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
 
-
+        //and signal update UI
+        if(useSdServerBinding().uiLiveData.hasActiveObservers()) {
+            useSdServerBinding().uiLiveData.signalChangedData();
+        }
     }
 
 
