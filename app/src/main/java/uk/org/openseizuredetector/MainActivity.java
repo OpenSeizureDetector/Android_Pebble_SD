@@ -477,6 +477,7 @@ public class MainActivity extends AppCompatActivity {
 */
 
     }
+    
 
     void connectUiLiveDataRunner(){
         if (mConnection.mBound && Objects.nonNull(mConnection.mSdServer))
@@ -580,6 +581,10 @@ public class MainActivity extends AppCompatActivity {
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
                     }
+                    tv = (TextView) findViewById(R.id.algsTv);
+                    tv.setText("Algorithms");
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
                     tv = (TextView) findViewById(R.id.osdAlgTv);
                     tv.setText("OSD ");
                     if (mConnection.mSdServer.mSdData.mOsdAlarmActive) {
@@ -624,8 +629,8 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(okTextColour);
                         tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
                     }
-                    tv = (TextView) findViewById(R.id.fallAlgTv);
-                    tv.setText("Fall");
+                    /* tv = (TextView) findViewById(R.id.fallAlgTv);
+                    tv.setText("Fall ");
                     if (mConnection.mSdServer.mSdData.mFallActive) {
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
@@ -635,6 +640,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(okTextColour);
                         tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
                     }
+                     */
                 }
                 tv = (TextView) findViewById(R.id.serverIpTv);
                 tv.setText(getString(R.string.AccessServerAt) + " http://"

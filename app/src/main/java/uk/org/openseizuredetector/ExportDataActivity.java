@@ -22,6 +22,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TimePicker;
 import android.os.ParcelFileDescriptor;
 
@@ -208,7 +209,12 @@ public class ExportDataActivity extends AppCompatActivity
             //        mDateTxt.getText().toString(), mTimeTxt.getText().toString(), mDuration));
             Log.d(TAG, String.format("EndDate=%s %s, Duration=%3.1f hrs",
                     mDateTxt.getText().toString(), mTimeTxt.getText().toString(), mDuration));
+            ProgressBar pb = (ProgressBar) findViewById(R.id.exportPb);
+            pb.setIndeterminate(true);
+            pb.setVisibility(View.VISIBLE);
 
+            mExportBtn.setEnabled(false);
+            mExportBtn.setVisibility(View.INVISIBLE);
             this.openFile();
 
         }
@@ -268,8 +274,7 @@ public class ExportDataActivity extends AppCompatActivity
                                 openFileDescriptor(uri, "w");
                         FileOutputStream fileOutputStream =
                                 new FileOutputStream(pfd.getFileDescriptor());
-                        // fileOutputStream.write(("Overwritten at " + System.currentTimeMillis() +
-                        //        "\n").getBytes());
+                        fileOutputStream.write(("# dataTime, alarmState, hr, o2sat, accel*125\n").getBytes());
                         JSONArray dataObj;
                         try {
                             dataObj = new JSONArray(datapointsJsonStr);
@@ -319,6 +324,17 @@ public class ExportDataActivity extends AppCompatActivity
                         mUtil.showToast(getString(R.string.error_exporting_data));
                         Log.e(TAG, "exportToFile() - IOException: " + e.toString());
                     }
+                    runOnUiThread(new Runnable() {
+                        public void run() {
+                            ProgressBar pb = (ProgressBar) findViewById(R.id.exportPb);
+                            pb.setIndeterminate(true);
+                            pb.setVisibility(View.INVISIBLE);
+                            mExportBtn.setEnabled(true);
+                            mExportBtn.setVisibility(View.VISIBLE);
+
+                        }
+                    });
+
                 });
     }
 

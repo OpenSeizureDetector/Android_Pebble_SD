@@ -696,6 +696,7 @@ public abstract class SdDataSource {
                     mSdData.mAverageHRAlarmStanding = false;
                 }
             } else {
+                mSdData.mHRFaultStanding = false;
                 mSdData.mHRAlarmStanding = checkResults.get(0);
                 mSdData.mAdaptiveHRAlarmStanding = checkResults.get(1);
                 mSdData.mAverageHRAlarmStanding = checkResults.get(2);

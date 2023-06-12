@@ -200,6 +200,9 @@ public class AuthenticateActivity extends AppCompatActivity {
                 } catch (JSONException e) {
                     Log.e(TAG, "Error Parsing profileObj: " + e.getMessage());
                     mUtil.showToast("Error Parsing profileObj - this should not happen!!!");
+                } catch (NullPointerException e) {
+                    Log.e(TAG, "Error Retrieving User Information: " + e.getMessage());
+                    mUtil.showToast("Error Reading User Information - please try later.");
                 }
             });
         } else {

@@ -478,7 +478,9 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         })
                         .setNegativeButton(android.R.string.no, null)
                         .show();
-            } else {
+                return true;
+            } else if (Objects.equals(R.id.action_mark_false_alarm, item.getItemId())) {
+                Log.i(TAG, "action_mark_false_alarm");
                 new AlertDialog.Builder(this)
                         .setTitle(R.string.start_nda_logging_dialog_title)
                         .setMessage(R.string.start_nda_logging_dialog_meassage)
@@ -493,6 +495,22 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         })
                         .setNegativeButton(android.R.string.no, null)
                         .show();
+                return true;
+            } else if (Objects.equals(R.id.export_data_menuitem, item.getItemId())) {
+                Log.i(TAG, "export data menu item");
+                try {
+                    Intent i = new Intent(
+                            getApplicationContext(),
+                            ExportDataActivity.class);
+                    this.startActivity(i);
+                } catch (Exception ex) {
+                    Log.i(TAG, "exception starting export data activity " + ex.toString());
+                }
+                return true;
+            } else if (Objects.equals(R.id.action_about_datasharing, item.getItemId())) {
+                Log.i(TAG, "action_about_datasharing");
+                showDataSharingDialog();
+                return true;
 
             }
             return true;
@@ -763,5 +781,33 @@ public class LogManagerControlActivity extends AppCompatActivity {
             return (v);
         }
     }
+
+    private void showDataSharingDialog() {
+        mUtil.writeToSysLogFile("MainActivity.showDataSharingDialog()");
+        View aboutView = getLayoutInflater().inflate(R.layout.data_sharing_dialog_layout, null, false);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setIcon(R.drawable.datasharing_fault_24x24);
+        builder.setTitle(R.string.data_sharing_dialog_title);
+        builder.setNegativeButton(getString(R.string.cancel), null);
+        builder.setPositiveButton(getString(R.string.login), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Log.i(TAG, "dataSharingDialog.positiveButton.onClick()");
+                try {
+                    Intent i = new Intent(
+                            LogManagerControlActivity.this,
+                            AuthenticateActivity.class);
+                    mContext.startActivity(i);
+                } catch (Exception ex) {
+                    Log.i(TAG, "exception starting activity " + ex.toString());
+                }
+
+            }
+        });
+        builder.setView(aboutView);
+        builder.create();
+        builder.show();
+    }
+
 
 }

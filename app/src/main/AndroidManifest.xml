@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:versionCode="120"
-    android:versionName="4.2.4f">
+    android:versionCode="122"
+    android:versionName="4.2.4g">
     <!-- android:allowBackup="false" -->
 
     <queries>

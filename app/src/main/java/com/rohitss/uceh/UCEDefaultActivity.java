@@ -231,8 +231,8 @@ public final class UCEDefaultActivity extends AppCompatActivity {
         if (TextUtils.isEmpty(strCurrentErrorLog)) {
             String LINE_SEPARATOR = "\n";
             StringBuilder errorReport = new StringBuilder();
-            errorReport.append("***** UCE HANDLER Library ");
-            errorReport.append("\n***** by Rohit Surwase \n");
+            errorReport.append("***** OpenSeizureDetector Crash Report ");
+            errorReport.append("\n***** by Graham Jones (using UCE Error handler by Rohit Surwase)\n");
             errorReport.append("\n***** DEVICE INFO \n");
             errorReport.append("Brand: ");
             errorReport.append(Build.BRAND);
@@ -290,6 +290,7 @@ public final class UCEDefaultActivity extends AppCompatActivity {
             }
             errorReport.append("\n***** END OF LOG *****\n");
             strCurrentErrorLog = errorReport.toString();
+            Log.e(TAG,strCurrentErrorLog);
             return strCurrentErrorLog;
         } else {
             return strCurrentErrorLog;
