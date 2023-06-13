@@ -26,6 +26,7 @@ package uk.org.openseizuredetector;
 import android.app.Activity;
 import android.app.Application;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
@@ -389,7 +390,7 @@ public class SdDataSourceAw extends SdDataSource {
                 aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentReceiver, receivingIntent);
                 aWIntent.setAction(Constants.ACTION.START_MOBILE_RECEIVER_ACTION);
                 aWIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-                aWIntent.setComponent(null);
+                aWIntent.setComponent(new ComponentName(Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver,Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver+".WearReceiverBroadCastStart"));
                 aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_START_INTENT);
 
                 //aWIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

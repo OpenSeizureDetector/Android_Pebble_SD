@@ -61,7 +61,6 @@ import android.telephony.SmsManager;
 import android.text.format.Time;
 import android.util.Log;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LiveData;
 import androidx.work.multiprocess.RemoteWorkerService;
@@ -2252,7 +2251,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 .setContentTitle(titleStr)
                 .setContentText(contentStr)
                 .setOnlyAlertOnce(true)
-                .addAction(com.google.android.gms.base.R.drawable.common_google_signin_btn_icon_dark, getString(R.string.login), loginPendingIntent)
+                .addAction(com.firebase.ui.auth.R.drawable.common_google_signin_btn_icon_dark, getString(R.string.login), loginPendingIntent)
                 .setPriority(0)
                 .build();
         nM.notify(DATASHARE_NOTIFICATION_ID, notification);
