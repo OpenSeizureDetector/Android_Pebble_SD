@@ -46,6 +46,7 @@ public class Constants {
         //equals 1/s seconds = 40ms  , 300bpm is unlikely but will translate to 300/60 5Hz
         // 1/5 = 0,2 seconds. 200ms
         public final double getMaxHeartRefreshRate = (1d/(maxHeartRefreshRate/60d))*1000;
+        public final String startUpTime = "startUpTime";
 
     }
 
@@ -64,6 +65,7 @@ public class Constants {
         public static String START_WEAR_SD_ACTION = "uk.org.openseizuredetector.aw.wear.startWearSD";
         public static String STOP_WEAR_SD_ACTION = "uk.org.openseizuredetector.aw.wear.stopWearSD";
         public static String START_MOBILE_RECEIVER_ACTION = "uk.org.openseizuredetector.aw.mobile.startWearReceiver";
+        public static String STOP_MOBILE_RECEIVER_ACTION = "uk.org.openseizuredetector.aw.mobile.stopWearReceiver";
         public static String START_MOBILE_SD_ACTION = "uk.org.openseizuredetector.aw.mobile.startSeizureDetectorServer";
         public static String REGISTER_START_INTENT_AW = "uk.org.openseizuredetector.aw.mobile.registerStartIntents";
         public static String REGISTER_START_INTENT = "uk.org.openseizuredetector.registerStartIntents";

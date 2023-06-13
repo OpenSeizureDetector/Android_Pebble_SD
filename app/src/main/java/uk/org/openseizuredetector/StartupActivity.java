@@ -274,6 +274,7 @@ public class StartupActivity extends AppCompatActivity {
                     mConnection.mSdServer.uiLiveData.observe(StartupActivity.this, StartupActivity.this::onChangedObserver);
                     mConnection.mSdServer.uiLiveData.observeForever(StartupActivity.this::onChangedObserver);
                     mConnection.mSdServer.uiLiveData.addToListening(StartupActivity.this);
+                    serverStatusRunnable.run();
                     return;
                 }
             }else if ((!mConnection.mBound || Objects.isNull(mConnection.mSdServer)) && !this.isFinishing() && !this.isDestroyed()) {

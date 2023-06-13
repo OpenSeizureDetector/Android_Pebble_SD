@@ -374,7 +374,6 @@ public class SdDataSourceAw extends SdDataSource {
                 onStartReceived() ;
 
                 aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.returnPath,Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver);
-                aWIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES|Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 aWIntentBase = aWIntent;
                 //aWIntent.setClassName(aWIntent.getPackage(),".WearReceiver");
                 //aWIntent = new Intent();
@@ -388,10 +387,13 @@ public class SdDataSourceAw extends SdDataSource {
                 //aWIntent.setData(Constants.GLOBAL_CONSTANTS.mStartUri);
                 aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.dataType,Constants.GLOBAL_CONSTANTS.mStartUri);
                 aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentReceiver, receivingIntent);
+                aWIntent.setAction(Constants.ACTION.START_MOBILE_RECEIVER_ACTION);
+                aWIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                aWIntent.setComponent(null);
                 aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_START_INTENT);
 
                 //aWIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                mContext.startActivity(aWIntent);
+                mContext.sendBroadcast(aWIntent);
 
             } catch (Exception e){
                 Log.e(TAG,"start() encountered an error",e);

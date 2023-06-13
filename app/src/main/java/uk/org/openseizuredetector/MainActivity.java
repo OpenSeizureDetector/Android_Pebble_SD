@@ -64,6 +64,7 @@ import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 
 import com.github.mikephil.charting.utils.ValueFormatter;
+import com.google.type.DateTime;
 import com.rohitss.uceh.UCEHandler;
 
 import java.lang.reflect.Field;
@@ -464,6 +465,7 @@ public class MainActivity extends AppCompatActivity {
             Log.i(TAG, "onStart() - Server Not Running");
             mUtil.writeToSysLogFile("MainActivity.onStart - Server Not Running");
         }
+
         /* temporary commented
         // start timer to refresh user interface every second.
         mUiTimer = new Timer();

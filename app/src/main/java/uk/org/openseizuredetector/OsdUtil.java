@@ -238,23 +238,25 @@ public class OsdUtil {
      */
     public void unbindFromServer(Context activity, SdServiceConnection sdServiceConnection) {
         // unbind this activity from the service if it is bound.
-        if (sdServiceConnection.mBound) {
-            Log.i(TAG, "unbindFromServer() - unbinding");
-            writeToSysLogFile("unbindFromServer() - unbinding");
-            try {
-                sdServiceConnection.mBound = false;
-                activity.unbindService(sdServiceConnection);
-                mNbound = mNbound - 1;
-                Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
-            } catch (Exception ex) {
-                Log.e(TAG, "unbindFromServer() - error unbinding service - " + ex.toString());
-                writeToSysLogFile("unbindFromServer() - error unbinding service - " + ex.toString());
+        if (Objects.nonNull(sdServiceConnection)) {
+            if (sdServiceConnection.mBound) {
+                Log.i(TAG, "unbindFromServer() - unbinding");
+                writeToSysLogFile("unbindFromServer() - unbinding");
+                try {
+                    sdServiceConnection.mBound = false;
+                    activity.unbindService(sdServiceConnection);
+                    mNbound = mNbound - 1;
+                    Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
+                } catch (Exception ex) {
+                    Log.e(TAG, "unbindFromServer() - error unbinding service - " + ex.toString());
+                    writeToSysLogFile("unbindFromServer() - error unbinding service - " + ex.toString());
+                    Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
+                }
+            } else {
+                Log.i(TAG, "unbindFromServer() - not bound to server - ignoring");
+                writeToSysLogFile("unbindFromServer() - not bound to server - ignoring");
                 Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
             }
-        } else {
-            Log.i(TAG, "unbindFromServer() - not bound to server - ignoring");
-            writeToSysLogFile("unbindFromServer() - not bound to server - ignoring");
-            Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
         }
     }
 
