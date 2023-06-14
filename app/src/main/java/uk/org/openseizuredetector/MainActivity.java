@@ -64,6 +64,7 @@ import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 
 import com.github.mikephil.charting.utils.ValueFormatter;
+import com.google.type.DateTime;
 import com.rohitss.uceh.UCEHandler;
 
 import java.lang.reflect.Field;
@@ -91,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
 
     // example of placement of changed data
     private SdData localSdData;
-
 
     final Handler serverStatusHandler = new Handler();
     Messenger messenger = new Messenger(new ResponseHandler());
@@ -465,6 +465,7 @@ public class MainActivity extends AppCompatActivity {
             Log.i(TAG, "onStart() - Server Not Running");
             mUtil.writeToSysLogFile("MainActivity.onStart - Server Not Running");
         }
+
         /* temporary commented
         // start timer to refresh user interface every second.
         mUiTimer = new Timer();
@@ -1194,6 +1195,20 @@ public class MainActivity extends AppCompatActivity {
      */
     private void onChangedObserver(Object o) {
         try {
+            if (Constants.ACTION.STOP_WEAR_SD_ACTION.equals(((SdData)o).mDataType))
+                if (Objects.nonNull(mConnection))
+                    if (mConnection.mBound) {
+                        if (Objects.nonNull(mConnection.mSdServer)) {
+                            if (mConnection.mSdServer.uiLiveData.isListeningInContext(MainActivity.this)) {
+                                mConnection.mSdServer.uiLiveData.removeFromListening(MainActivity.this);
+                                mConnection.mSdServer.uiLiveData.removeObserver(MainActivity.this::onChangedObserver);
+                            }
+                            mUtil.unbindFromServer(MainActivity.this, mConnection);
+                            mConnection = null;
+                            mUtil.stopServer();
+                        }
+                        return;
+                    }
             localSdData = (SdData) o;
             serverStatusRunnable.run();
         } catch (Exception e) {

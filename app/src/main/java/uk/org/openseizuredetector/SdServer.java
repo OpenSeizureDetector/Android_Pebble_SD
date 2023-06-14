@@ -27,6 +27,7 @@
 package uk.org.openseizuredetector;
 
 import android.app.ActivityManager;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -60,7 +61,6 @@ import android.telephony.SmsManager;
 import android.text.format.Time;
 import android.util.Log;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LiveData;
 import androidx.work.multiprocess.RemoteWorkerService;
@@ -114,6 +114,11 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     private CheckEventsTimer mEventsTimer = null;
     private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
     private boolean mFaultTimerCompleted = false;
+
+    boolean mBound;
+
+    Context parentContext;
+    String mWearNodeUri;
 
     private HandlerThread thread;
     private WakeLock mWakeLock = null;
@@ -713,8 +718,10 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     private void stopServiceRunner(){
 
         if (!Objects.equals(mPowerUpdateManager, null))
-            if (mPowerUpdateManager.isRegistered)
+            if (mPowerUpdateManager.isRegistered) {
+                unBindBatteryEvents();
                 mPowerUpdateManager.unregister(SdServer.this);
+            }
         if (mWakeLock != null) {
             try {// TODO deside to ask if (mWakeLock.isHeld())
                 if (mWakeLock.isHeld() ) mWakeLock.release();
@@ -823,6 +830,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
      * Show a notification while this service is running.
      */
     private void showNotification(int alarmLevel) {
+        Log.v(TAG, "showNotification() - alarmLevel=" + alarmLevel);
         int iconId;
         String titleStr;
         Uri soundUri = null;
@@ -923,6 +931,9 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 Intent i = new Intent(SdServer.this, MainActivity.class);
                 i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
                 SdServer.this.startActivity(i);
+                if (Objects.nonNull(uiLiveData))
+                    if (uiLiveData.hasActiveObservers())
+                        uiLiveData.signalChangedData();
             }
         } else {
             mUtil.showToast("OpenSeizureDetector: showMainActivity Failed to Display Activity");
@@ -1143,6 +1154,9 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
             mLm.updateSdData(mSdData);
 
         logData();
+        if (Objects.nonNull(uiLiveData))
+            if (uiLiveData.hasActiveObservers())
+                uiLiveData.signalChangedData();
     }
 
 
@@ -1439,7 +1453,9 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         mNetworkBroadcastReceiver = new NetworkBroadcastReceiver();
         IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
         //filter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
-        SdServer.this.registerReceiver(mNetworkBroadcastReceiver, filter);
+        if (!mNetworkBroadcastReceiver.isRegistered) {
+            mNetworkBroadcastReceiver.register(SdServer.this, filter);
+        }
     }
 
     /**
@@ -1466,7 +1482,9 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         }
         mUtil.writeToSysLogFile("unregisterig network broadcast receiver");
         Log.v(TAG, "unregistering network broadcast receiver");
-        SdServer.this.unregisterReceiver(mNetworkBroadcastReceiver);
+        if (mNetworkBroadcastReceiver.isRegistered){
+            mNetworkBroadcastReceiver.unregister(SdServer.this);
+        }
     }
 
     private void unBindBatteryEvents() {
@@ -1539,6 +1557,31 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     }
 
     private class NetworkBroadcastReceiver extends BroadcastReceiver {
+        public boolean isRegistered = false;
+
+        /**
+         * register receiver
+         * @param context - Context
+         * @param filter - Intent Filter
+         * @return see Context.registerReceiver(BroadcastReceiver,IntentFilter)
+         */
+        public Intent register(Context context, IntentFilter filter) {
+            try {
+                // ceph3us note:
+                // here I propose to create
+                // a isRegistered(Context) method
+                // as you can register receiver on different context
+                // so you need to match against the same one :)
+                // example  by storing a list of weak references
+                // see LoadedApk.class - receiver dispatcher
+                // its and ArrayMap there for example
+                return !isRegistered
+                        ? context.registerReceiver(this, filter)
+                        : null;
+            } finally {
+                isRegistered = true;
+            }
+        }
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.v(TAG, "NetworkBroadCastReceiver.onReceive");
@@ -1574,6 +1617,25 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 mUtil.writeToSysLogFile("Network State Changed - No Active Network");
                 mUtil.showToast(getString(R.string.no_active_network));
             }
+        }
+
+        /**
+         * unregister received
+         * @param context - context
+         * @return true if was registered else false
+         */
+        public boolean unregister(Context context) {
+            // additional work match on context before unregister
+            // eg store weak ref in register then compare in unregister
+            // if match same instance
+            return isRegistered
+                    && unregisterInternal(context);
+        }
+
+        private boolean unregisterInternal(Context context) {
+            context.unregisterReceiver(this);
+            isRegistered = false;
+            return true;
         }
     }
 
@@ -2189,7 +2251,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 .setContentTitle(titleStr)
                 .setContentText(contentStr)
                 .setOnlyAlertOnce(true)
-                .addAction(com.google.android.gms.base.R.drawable.common_google_signin_btn_icon_dark, getString(R.string.login), loginPendingIntent)
+                .addAction(com.firebase.ui.auth.R.drawable.common_google_signin_btn_icon_dark, getString(R.string.login), loginPendingIntent)
                 .setPriority(0)
                 .build();
         nM.notify(DATASHARE_NOTIFICATION_ID, notification);

@@ -142,7 +142,7 @@ public abstract class SdDataSource {
         mUtil = new OsdUtil(mContext, mHandler);
         mSdDataReceiver = sdDataReceiver;
         if(Objects.isNull((mSdData)))
-            mSdData = new SdData();
+            mSdData = getSdData();
 
 
     }
@@ -499,7 +499,7 @@ public abstract class SdDataSource {
         try {
             // FIXME - Use specified sampleFreq, not this hard coded one
             mSampleFreq = Constants.SD_SERVICE_CONSTANTS.defaultSampleRate;
-            double freqRes = 1.0 * mSampleFreq / mSdData.mNsamp;
+            double freqRes = 1.0 * mSdData.mSampleFreq / mSdData.mNsamp;
             Log.v(TAG, "doAnalysis(): mSampleFreq=" + mSampleFreq + " mNSamp=" + mSdData.mNsamp + ": freqRes=" + freqRes);
             Log.v(TAG,"doAnalysis(): rawData=" + Arrays.toString(mSdData.rawData));
             // Set the frequency bounds for the analysis in fft output bin numbers.
@@ -601,7 +601,7 @@ public abstract class SdDataSource {
         muteCheck();
         Log.v(TAG,"after fallCheck, mSdData.fallAlarmStanding="+mSdData.fallAlarmStanding);
 
-        //mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
+        mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
 
         //and signal update UI
         if(useSdServerBinding().uiLiveData.hasActiveObservers()) {

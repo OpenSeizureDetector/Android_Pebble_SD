@@ -38,6 +38,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
+
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.preference.PreferenceManager;
 import android.text.Html;
 import android.text.SpannableString;
@@ -90,6 +92,8 @@ public class StartupActivity extends AppCompatActivity {
     private boolean mLocationPermissions2Requested;
     private boolean mSmsPermissionsRequested;
     private boolean mPermissionsRequested;
+
+    private SharedPreferences SP = null;
     private SdData localSdData;
 
     public final String[] REQUIRED_PERMISSIONS = {
@@ -143,7 +147,7 @@ public class StartupActivity extends AppCompatActivity {
         mUtil = new OsdUtil(this, mHandler);
         mUtil.writeToSysLogFile("");
         mUtil.writeToSysLogFile("*******************************");
-        mUtil.writeToSysLogFile("* StartUpActivity Started     *");
+        mUtil.writeToSysLogFile("* StartupActivity Started     *");
         mUtil.writeToSysLogFile("*******************************");
 
         // Force the screen to stay on when the app is running
@@ -205,7 +209,6 @@ public class StartupActivity extends AppCompatActivity {
         tv = (TextView) findViewById(R.id.dataSourceTextView);
         tv.setText(String.format("%s = %s", getString(R.string.DataSource), dataSourceName));
 
-
         if (mUtil.isServerRunning()) {
             Log.i(TAG, "onStart() - server running - stopping it - isServerRunning="+mUtil.isServerRunning());
             mUtil.writeToSysLogFile("StartupActivity.onStart() - server already running - stopping it.");
@@ -264,16 +267,21 @@ public class StartupActivity extends AppCompatActivity {
     }
 
     void connectUiLiveDataRunner(){
-        if (mConnection.mBound && Objects.nonNull(mConnection.mSdServer))
-        {
-            if (!mConnection.mSdServer.uiLiveData.isListeningInContext(StartupActivity.this)) {
-                mConnection.mSdServer.uiLiveData.observe(StartupActivity.this, StartupActivity.this::onChangedObserver);
-                mConnection.mSdServer.uiLiveData.observeForever(StartupActivity.this::onChangedObserver);
-                mConnection.mSdServer.uiLiveData.addToListening(StartupActivity.this);
+        Log.i(TAG,"Connecting mConnection.mSdServer.uiLiveData");
+        if (Objects.nonNull(mConnection)) {
+            if (mConnection.mBound && Objects.nonNull(mConnection.mSdServer) && !this.isFinishing() && !this.isDestroyed()) {
+                if (!mConnection.mSdServer.uiLiveData.isListeningInContext(StartupActivity.this)) {
+                    mConnection.mSdServer.uiLiveData.observe(StartupActivity.this, StartupActivity.this::onChangedObserver);
+                    mConnection.mSdServer.uiLiveData.observeForever(StartupActivity.this::onChangedObserver);
+                    mConnection.mSdServer.uiLiveData.addToListening(StartupActivity.this);
+                    serverStatusRunnable.run();
+                    return;
+                }
+            }else if ((!mConnection.mBound || Objects.isNull(mConnection.mSdServer)) && !this.isFinishing() && !this.isDestroyed()) {
+                mHandler.postDelayed(this::connectUiLiveDataRunner,100);
             }
-        }else {
-            mHandler.postDelayed(StartupActivity.this::connectUiLiveDataRunner,100);
         }
+        Log.i(TAG,"Letting go connect request");
     }
 
     /**
@@ -298,9 +306,30 @@ public class StartupActivity extends AppCompatActivity {
         Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("StartupActivity.onStop() - unbinding from server");
         mUtil.unbindFromServer(getApplicationContext(), mConnection);
-        if (Objects.nonNull(mUiTimer)) {
-            mUiTimer.cancel();
+        if (Objects.nonNull(mConnection)) {
+            if (Objects.nonNull(mConnection.mSdServer)) {
+                if (mConnection.mBound)
+                    if (mConnection.mSdServer.mBound) {
+                        mConnection.mSdServer.parentContext = null;
+                        if (Objects.nonNull(mConnection.mSdServer.mWearNodeUri)) {
+                            if (Objects.isNull(SP))
+                                SP = PreferenceManager
+                                        .getDefaultSharedPreferences(StartupActivity.this);
+
+                            SharedPreferences.Editor editor = SP.edit();
+                            editor.putString(Constants.GLOBAL_CONSTANTS.intentReceiver, mConnection.mSdServer.mWearNodeUri);
+                            editor.apply();
+                        }
+                    }
+                if (Objects.nonNull(mConnection.mSdServer.uiLiveData))
+                    if (mConnection.mSdServer.uiLiveData.hasActiveObservers())
+                        mConnection.mSdServer.uiLiveData.removeObserver(StartupActivity.this::onChangedObserver);
+            }
         }
+        mUtil.unbindFromServer(StartupActivity.this, mConnection);
+        mConnection = null;
+
+        if (Objects.nonNull(mUiTimer)) mUiTimer.cancel();
     }
 
 
@@ -343,8 +372,8 @@ public class StartupActivity extends AppCompatActivity {
                     tv.setText(getString(R.string.SmsPermissionWarning));
                     tv.setBackgroundColor(alarmColour);
                     tv.setTextColor(alarmTextColour);
-                    //pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                    //pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                    //pb.setIndeterminateDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
+                    //pb.setProgressDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
                     requestSMSPermissions();
                     allOk = false;
                 } else if (smsAlarmsActive && !areLocationPermissions1OK()) {
@@ -365,8 +394,8 @@ public class StartupActivity extends AppCompatActivity {
                     tv.setText(getString(R.string.AppPermissionsOk));
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
-                    pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                    pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                    pb.setIndeterminateDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
+                    pb.setProgressDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
                 }
             } else {
                 tv.setText(getString(R.string.AppPermissionsWarning));
@@ -382,82 +411,85 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getText(R.string.DiallerNotInstalledWarning));
                 tv.setBackgroundColor(alarmColour);
                 tv.setTextColor(alarmTextColour);
-                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                pb.setIndeterminateDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
+                pb.setProgressDrawable(AppCompatResources.getDrawable(StartupActivity.this,R.drawable.start_server));
                 allOk = false;
             }
-
-            // Are we Bound to the Service
-            tv = (TextView) findViewById(R.id.textItem2);
-            pb = (ProgressBar) findViewById(R.id.progressBar2);
-            if (mConnection.mBound) {
-                tv.setText(getString(R.string.BoundToServiceOk));
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
-                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
-            } else {
-                tv.setText(getString(R.string.BindingToService));
-                tv.setBackgroundColor(alarmColour);
-                tv.setTextColor(alarmTextColour);
-                pb.setIndeterminate(true);
+            if (Objects.isNull(mConnection))
+            {
                 allOk = false;
+            }else {
+                // Are we Bound to the Service
+                tv = (TextView) findViewById(R.id.textItem2);
+                pb = (ProgressBar) findViewById(R.id.progressBar2);
+                if (mConnection.mBound) {
+                    tv.setText(getString(R.string.BoundToServiceOk));
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+                    pb.setIndeterminateDrawable(AppCompatResources.getDrawable(StartupActivity.this, R.drawable.start_server));
+                    pb.setProgressDrawable(AppCompatResources.getDrawable(StartupActivity.this, R.drawable.start_server));
+                } else {
+                    tv.setText(getString(R.string.BindingToService));
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                    pb.setIndeterminate(true);
+                    allOk = false;
+                }
+
+                // Is Watch Connected?
+                tv = (TextView) findViewById(R.id.textItem3);
+                pb = (ProgressBar) findViewById(R.id.progressBar3);
+                if (mConnection.watchConnected()) {
+                    tv.setText(getString(R.string.WatchConnectedOk));
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+                    pb.setIndeterminateDrawable(AppCompatResources.getDrawable(StartupActivity.this, R.drawable.start_server));
+                    pb.setProgressDrawable(AppCompatResources.getDrawable(StartupActivity.this, R.drawable.start_server));
+                } else {
+                    tv.setText(getString(R.string.WatchNotConnected));
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                    pb.setIndeterminate(true);
+                    allOk = false;
+                }
+
+
+                // Do we have seizure detector data?
+                tv = (TextView) findViewById(R.id.textItem5);
+                pb = (ProgressBar) findViewById(R.id.progressBar5);
+                if (mConnection.hasSdData()) {
+                    tv.setText(getString(R.string.SeizureDetectorDataReceived));
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+                    pb.setIndeterminateDrawable(AppCompatResources.getDrawable(StartupActivity.this, R.drawable.start_server));
+                    pb.setProgressDrawable(AppCompatResources.getDrawable(StartupActivity.this, R.drawable.start_server));
+                } else {
+                    tv.setText(getString(R.string.WaitingForSeizureDetectorData));
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                    pb.setIndeterminate(true);
+                    allOk = false;
+                }
+
+
+                // Do we have seizure detector settings yet?
+                tv = (TextView) findViewById(R.id.textItem6);
+                pb = (ProgressBar) findViewById(R.id.progressBar6);
+                if (mConnection.hasSdSettings()) {
+                    tv.setText(getString(R.string.SeizureDetectorSettingsReceived));
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+                    pb.setIndeterminateDrawable(AppCompatResources.getDrawable(StartupActivity.this, R.drawable.start_server));
+                    pb.setProgressDrawable(AppCompatResources.getDrawable(StartupActivity.this, R.drawable.start_server));
+                } else {
+                    tv.setText(getString(R.string.WaitingForSeizureDetectorSettings));
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                    pb.setIndeterminate(true);
+                    allOk = false;
+                }
+
             }
-
-            // Is Watch Connected?
-            tv = (TextView) findViewById(R.id.textItem3);
-            pb = (ProgressBar) findViewById(R.id.progressBar3);
-            if (mConnection.watchConnected()) {
-                tv.setText(getString(R.string.WatchConnectedOk));
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
-                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
-            } else {
-                tv.setText(getString(R.string.WatchNotConnected));
-                tv.setBackgroundColor(alarmColour);
-                tv.setTextColor(alarmTextColour);
-                pb.setIndeterminate(true);
-                allOk = false;
-            }
-
-
-            // Do we have seizure detector data?
-            tv = (TextView) findViewById(R.id.textItem5);
-            pb = (ProgressBar) findViewById(R.id.progressBar5);
-            if (mConnection.hasSdData()) {
-                tv.setText(getString(R.string.SeizureDetectorDataReceived));
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
-                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
-            } else {
-                tv.setText(getString(R.string.WaitingForSeizureDetectorData));
-                tv.setBackgroundColor(alarmColour);
-                tv.setTextColor(alarmTextColour);
-                pb.setIndeterminate(true);
-                allOk = false;
-            }
-
-
-            // Do we have seizure detector settings yet?
-            tv = (TextView) findViewById(R.id.textItem6);
-            pb = (ProgressBar) findViewById(R.id.progressBar6);
-            if (mConnection.hasSdSettings()) {
-                tv.setText(getString(R.string.SeizureDetectorSettingsReceived));
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
-                pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
-            } else {
-                tv.setText(getString(R.string.WaitingForSeizureDetectorSettings));
-                tv.setBackgroundColor(alarmColour);
-                tv.setTextColor(alarmTextColour);
-                pb.setIndeterminate(true);
-                allOk = false;
-            }
-
-
             // If all the parameters are ok, close this activity and open the main
             // user interface activity instead.
             if (allOk) {
