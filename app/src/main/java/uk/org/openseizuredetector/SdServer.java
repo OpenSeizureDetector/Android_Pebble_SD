@@ -116,6 +116,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     private boolean mFaultTimerCompleted = false;
 
     boolean mBound;
+    int mStartId;
 
     Context parentContext;
     String mWearNodeUri;
@@ -467,6 +468,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         if (Objects.nonNull(intent))
             if (intent.getData().equals(Constants.GLOBAL_CONSTANTS.mStartUri)) {
                 mUtil.writeToSysLogFile("SdServer.onStartCommand()");
+                mStartId = startId;
                 // Update preferences.
                 Log.v(TAG, "onStartCommand() - calling updatePrefs()");
                 updatePrefs();

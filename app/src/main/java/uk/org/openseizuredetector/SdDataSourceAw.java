@@ -23,8 +23,11 @@
 */
 package uk.org.openseizuredetector;
 
+import static androidx.activity.result.ActivityResultCallerKt.registerForActivityResult;
+
 import android.app.Activity;
 import android.app.Application;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -43,6 +46,10 @@ import android.util.Log;
 import org.checkerframework.checker.units.qual.C;
 
 import java.util.Objects;
+
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 
 
@@ -374,7 +381,8 @@ public class SdDataSourceAw extends SdDataSource {
 
                 onStartReceived() ;
 
-                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.returnPath,Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver);
+                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.returnPath,Constants.GLOBAL_CONSTANTS.mAppPackageName);
+                aWIntent.removeCategory(Intent.CATEGORY_LAUNCHER);
                 aWIntentBase = aWIntent;
                 //aWIntent.setClassName(aWIntent.getPackage(),".WearReceiver");
                 //aWIntent = new Intent();
@@ -386,15 +394,19 @@ public class SdDataSourceAw extends SdDataSource {
                 // Also tell me how to use activity without broadcast. In this context is no getActivity() or getIntent()
                 SdData sdData = getSdData();
                 //aWIntent.setData(Constants.GLOBAL_CONSTANTS.mStartUri);
+                //aWIntent = new Intent();
                 aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.dataType,Constants.GLOBAL_CONSTANTS.mStartUri);
                 aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentReceiver, receivingIntent);
                 aWIntent.setAction(Constants.ACTION.START_MOBILE_RECEIVER_ACTION);
                 aWIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+
                 aWIntent.setComponent(new ComponentName(Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver,Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver+".WearReceiverBroadCastStart"));
                 aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_START_INTENT);
 
                 //aWIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                mContext.sendBroadcast(aWIntent);
+
+                PendingIntent pIntent = PendingIntent.getBroadcast(mContext,useSdServerBinding().mStartId,aWIntent, PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+                pIntent.send();
 
             } catch (Exception e){
                 Log.e(TAG,"start() encountered an error",e);
