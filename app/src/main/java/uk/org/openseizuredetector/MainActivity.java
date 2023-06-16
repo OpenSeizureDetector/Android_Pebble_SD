@@ -651,10 +651,16 @@ public class MainActivity extends AppCompatActivity {
                     tv = (TextView) findViewById(R.id.pebbleTv);
                     //if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
                     if (mConnection.mSdServer.mSdData.mO2Sat > 0) {
-                        tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
-                                + getString(R.string.SpO2)+" = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
+                        tv.setText(getString(R.string.HR_Equals) + Math.round(mConnection.mSdServer.mSdData.mHR) + " bpm\n"
+                                +"(av="
+                                +Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage)+","
+                                +Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage)+") bpm\n"
+                                + getString(R.string.SpO2)+" = " + Math.round(mConnection.mSdServer.mSdData.mO2Sat) + "%");
                     } else {
-                        tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
+                        tv.setText(getString(R.string.HR_Equals) + Math.round(mConnection.mSdServer.mSdData.mHR) + " bpm\n"
+                                +"(av="
+                                +Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage)+","
+                                +Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage)+") bpm\n"
                                 + getString(R.string.SpO2)+" = ---%");
                     }
                     if (mConnection.mSdServer.mSdData.mHRAlarmStanding || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {

@@ -111,11 +111,36 @@ public class SdAlgHr {
         return(retVal);
     }
 
+    /**
+     * Returns the average heart rate being used by the Adaptive heart rate algorithm
+     * @return Average Heart reate in bpm.
+     */
+    public double getAdaptiveHrAverage() {
+        return mAdaptiveHrBuff.getAverageVal();
+    }
+
+    public CircBuf getAverageHrBuff() {
+        return mAverageHrBuff;
+    }
+
+    public CircBuf getAdaptiveHrBuff() {
+        return mAdaptiveHrBuff;
+    }
+
+    /**
+     * Returns the average heart rate being used by the Average heart rate algorithm
+     * @return Average Heart rate in bpm.
+     */
+    public double getAverageHrAverage() {
+        return mAverageHrBuff.getAverageVal();
+    }
+
+
     private boolean checkAdaptiveHr(double hrVal) {
         boolean retVal;
         double hrThreshMin;
         double hrThreshMax;
-        double avHr = mAdaptiveHrBuff.getAverageVal();
+        double avHr = getAdaptiveHrAverage();
         hrThreshMin = avHr - mAdaptiveHrAlarmThresh;
         hrThreshMax = avHr + mAdaptiveHrAlarmThresh;
 
@@ -133,7 +158,7 @@ public class SdAlgHr {
 
     private boolean checkAverageHr(double hrVal) {
         boolean retVal;
-        double avHr = mAdaptiveHrBuff.getAverageVal();
+        double avHr = getAverageHrAverage();
 
         retVal = false;
         if (hrVal < mAverageHrAlarmThreshMin) {

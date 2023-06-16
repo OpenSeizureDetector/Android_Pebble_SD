@@ -128,7 +128,7 @@ public class SdWebServer extends NanoHTTPD {
                     case GET:
                         //Log.v(TAG,"WebServer.serve() - Returning settings");
                         try {
-                            JSONObject jsonObj = new JSONObject();
+                            /*JSONObject jsonObj = new JSONObject();
                             jsonObj.put("alarmFreqMin", mSdData.alarmFreqMin);
                             jsonObj.put("alarmFreqMax", mSdData.alarmFreqMax);
                             jsonObj.put("nMin", mSdData.nMin);
@@ -139,6 +139,8 @@ public class SdWebServer extends NanoHTTPD {
                             jsonObj.put("alarmRatioThresh", mSdData.alarmRatioThresh);
                             jsonObj.put("batteryPc", mSdData.batteryPc);
                             answer = jsonObj.toString();
+                             */
+                            answer = mSdData.toSettingsJSON();
                         } catch (Exception ex) {
                             Log.v(TAG, "Error Creating Data Object - " + ex.toString());
                             answer = "{'msg': 'Error Creating Data Object'}";
