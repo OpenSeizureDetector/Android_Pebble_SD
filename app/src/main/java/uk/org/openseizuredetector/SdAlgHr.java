@@ -161,10 +161,10 @@ public class SdAlgHr {
         double avHr = getAverageHrAverage();
 
         retVal = false;
-        if (hrVal < mAverageHrAlarmThreshMin) {
+        if (avHr < mAverageHrAlarmThreshMin) {
             retVal = true;
         }
-        if (hrVal > mAverageHrAlarmThreshMax) {
+        if (avHr > mAverageHrAlarmThreshMax) {
             retVal = true;
         }
         Log.d(TAG, "checkAverageHr() - hrVal="+hrVal+", avHr="+avHr+", thresholds=("+mAverageHrAlarmThreshMin+", "+mAverageHrAlarmThreshMin+"): Alarm="+retVal);

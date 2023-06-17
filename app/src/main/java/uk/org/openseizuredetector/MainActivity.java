@@ -663,7 +663,10 @@ public class MainActivity extends AppCompatActivity {
                                 +Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage)+") bpm\n"
                                 + getString(R.string.SpO2)+" = ---%");
                     }
-                    if (mConnection.mSdServer.mSdData.mHRAlarmStanding || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
+                    if (mConnection.mSdServer.mSdData.mHRAlarmStanding
+                            || mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding
+                            || mConnection.mSdServer.mSdData.mAverageHrAlarmStanding
+                            || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
                         tv.setBackgroundColor(alarmColour);
                         tv.setTextColor(alarmTextColour);
                     } else if (mConnection.mSdServer.mSdData.mHRFaultStanding || mConnection.mSdServer.mSdData.mO2SatFaultStanding) {
