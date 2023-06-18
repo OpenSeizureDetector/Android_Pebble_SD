@@ -216,6 +216,33 @@ public class SdServer extends Service implements SdDataReceiver {
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         mWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 "OSD:WakeLock");
+
+        // Initialise Notification channel for API level 26 and over
+        // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
+        mNM = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationBuilder = new NotificationCompat.Builder(this, mNotChId);
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationChannel channel = new NotificationChannel(mNotChId,
+                    mNotChName,
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            channel.setDescription(mNotChDesc);
+            mNM.createNotificationChannel(channel);
+        }
+
+        // Display a notification icon in the status bar of the phone to
+        // show the service is running.
+        if (Build.VERSION.SDK_INT >= 26) {
+            Log.v(TAG, "showing Notification and calling startForeground (Android 8 and higher)");
+            mUtil.writeToSysLogFile("SdServer.onStartCommand() - showing Notification and calling startForeground (Android 8 and higher)");
+            showNotification(0);
+            startForeground(NOTIFICATION_ID, mNotification);
+        } else {
+            Log.v(TAG, "showing Notification");
+            mUtil.writeToSysLogFile("SdServer.onStartCommand() - showing Notification");
+            showNotification(0);
+        }
+
+
     }
 
     /**
@@ -226,6 +253,7 @@ public class SdServer extends Service implements SdDataReceiver {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "onStartCommand() - SdServer service starting");
         mUtil.writeToSysLogFile("SdServer.onStartCommand()");
+
 
         // Update preferences.
         Log.v(TAG, "onStartCommand() - calling updatePrefs()");
@@ -286,31 +314,8 @@ public class SdServer extends Service implements SdDataReceiver {
         mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting SdDataSource");
         mSdDataSource.start();
 
-        // Initialise Notification channel for API level 26 and over
-        // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
-        mNM = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationBuilder = new NotificationCompat.Builder(this, mNotChId);
-        if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel channel = new NotificationChannel(mNotChId,
-                    mNotChName,
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setDescription(mNotChDesc);
-            mNM.createNotificationChannel(channel);
-        }
 
 
-        // Display a notification icon in the status bar of the phone to
-        // show the service is running.
-        if (Build.VERSION.SDK_INT >= 26) {
-            Log.v(TAG, "showing Notification and calling startForeground (Android 8 and higher)");
-            mUtil.writeToSysLogFile("SdServer.onStartCommand() - showing Notification and calling startForeground (Android 8 and higher)");
-            showNotification(0);
-            startForeground(NOTIFICATION_ID, mNotification);
-        } else {
-            Log.v(TAG, "showing Notification");
-            mUtil.writeToSysLogFile("SdServer.onStartCommand() - showing Notification");
-            showNotification(0);
-        }
         // Record last time we sent an SMS so we can limit rate of SMS
         // sending to one per minute.   We set it to one minute ago (60000 milliseconds)
         mSMSTime = new Time(Time.getCurrentTimezone());
