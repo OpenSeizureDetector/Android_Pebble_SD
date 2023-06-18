@@ -396,10 +396,6 @@ public class SdDataSourceAw extends SdDataSource {
 
         mHandler = new Handler(mContext.getMainLooper());
         mUtil = new OsdUtil(mContext, mHandler);
-        checkAndUnRegisterReceiver();
-
-        IntentFilter broadCastToSdServer = new IntentFilter(Constants.ACTION.BROADCAST_TO_SDSERVER);
-        intentBroadCastReceiver.register(mContext, broadCastToSdServer);
         PackageManager manager = mContext.getPackageManager();
         aWIntent = manager.getLaunchIntentForPackage(Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver);
         Log.i(TAG,"aWIntent: " + aWIntent);
@@ -408,6 +404,7 @@ public class SdDataSourceAw extends SdDataSource {
             installAwApp();
             return false;
         } else {
+
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.returnPath, Constants.GLOBAL_CONSTANTS.mAppPackageName);
             aWIntent.removeCategory(Intent.CATEGORY_LAUNCHER);
             aWIntent.setAction(Constants.ACTION.BROADCAST_TO_WEARRECEIVER_MANIFEST);
@@ -435,6 +432,8 @@ public class SdDataSourceAw extends SdDataSource {
 
         //START_WEAR_APP_ACTION.toLower()
         // Now start the AndroidWear companion app
+        checkAndUnRegisterReceiver();
+        waitReceiverRegistered();
         if (isWearReceiverInstalled()) {
             try {
 
@@ -485,6 +484,17 @@ public class SdDataSourceAw extends SdDataSource {
             if (intentBroadCastReceiver.isRegistered)
                 intentBroadCastReceiver.unregister(mContext);
         }
+        IntentFilter broadCastToSdServer = new IntentFilter(Constants.ACTION.BROADCAST_TO_SDSERVER);
+        intentBroadCastReceiver.register(mContext, broadCastToSdServer);
+
+    }
+
+    void waitReceiverRegistered(){
+        if (Objects.nonNull(intentBroadCastReceiver))
+            if (intentBroadCastReceiver.isRegistered)
+                if (Objects.nonNull(receivingIntent))
+                    return;
+        mHandler.postDelayed(this::waitReceiverRegistered,100);
     }
 
     /**
