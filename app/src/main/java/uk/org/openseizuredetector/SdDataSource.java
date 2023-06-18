@@ -232,12 +232,12 @@ public abstract class SdDataSource {
             Log.v(TAG, "start(): starting status timer");
             mUtil.writeToSysLogFile("SdDataSource.start() - starting status timer");
             mStatusTimer = new Timer();
-            mStatusTimer.schedule(new TimerTask() {
+            /*mStatusTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
                     getStatus();
                 }
-            }, 0, mDataUpdatePeriod * 1000);
+            }, 0, mDataUpdatePeriod * 1000);*/
         } else {
             Log.v(TAG, "start(): status timer already running.");
             mUtil.writeToSysLogFile("SdDataSource.start() - status timer already running??");

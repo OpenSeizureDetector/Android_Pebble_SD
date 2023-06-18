@@ -50,6 +50,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -117,8 +118,9 @@ public class StartupActivity extends AppCompatActivity {
     public final String[] LOCATION_PERMISSIONS_2 = {
             Manifest.permission.ACCESS_BACKGROUND_LOCATION,
     };
-
-
+    private long lastPress;
+    private Toast backpressToast;
+    private boolean activateStopByBack;
 
 
     @Override
@@ -329,8 +331,35 @@ public class StartupActivity extends AppCompatActivity {
         mUtil.unbindFromServer(StartupActivity.this, mConnection);
         mConnection = null;
 
+        if (isFinishing())
+            mUtil.stopServer();
+
         if (Objects.nonNull(mUiTimer)) mUiTimer.cancel();
     }
+    @Override
+    public void onBackPressed() {
+        try {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastPress > 5000) {
+                backpressToast = Toast.makeText(getBaseContext(), "Press back again to exit", Toast.LENGTH_LONG);
+                backpressToast.show();
+                lastPress = currentTime;
+            } else {
+                Log.d(TAG, "onBackPressed: initiating shutdown");
+                if (backpressToast != null) backpressToast.cancel();
+                activateStopByBack = true;
+                if (Objects.nonNull(mConnection))
+                    if (mConnection.mBound)
+                        mUtil.unbindFromServer(StartupActivity.this, mConnection);
+                mUtil.stopServer();
+                mHandler.postDelayed(StartupActivity.this::finishAffinity, 100);
+                super.onBackPressed();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "onBackPressed() Error thrown while processing.");
+        }
+    }
+
 
 
     /*

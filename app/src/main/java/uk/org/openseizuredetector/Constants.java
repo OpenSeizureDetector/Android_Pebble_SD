@@ -34,14 +34,16 @@ public class Constants {
         public final String mSettingsString = "settingsJson";
         public final String mSdServerIntent = "sdServerIntent";
         public final String intentReceiver = "intentReceiver";
-        public final String returnPath = " returnPath";
-        public final String intentAction = " intentAction";
+        public final String returnPath = "returnPath";
+        public final String intentAction = "intentAction";
         public final String wearReceiverServiceIntent = "wearReceiverServiceIntent";
         public final String mSdDataPath ="mSdDataPath";
         public final String dataType = "dataType";
         public final String dataTypeSettings = "settings";
         public final String dataTypeRaw = "raw";
-        public final String startId = "startId";
+        public final String startId = "startId_Sd_Server";
+        public final String startIdWearReceiver = "startId_Sd_Wear_Receiver";
+        public final String startIdWearSd = "startId_Sd_Wear_Sd";
         public final double maxHeartRefreshRate = 300d;//measured in , 60bpm equals 1Hz
         //equals 1/s seconds = 40ms  , 300bpm is unlikely but will translate to 300/60 5Hz
         // 1/5 = 0,2 seconds. 200ms
@@ -57,6 +59,7 @@ public class Constants {
         public static String BIND_ACTION = "uk.org.openseizuredetector.bindAction";
         public static String CONNECTIONUPDATE_ACTION = "uk.org.openseizuredetector.onConnectionUpdate";
         public static String BROADCAST_TO_WEARRECEIVER = "uk.org.openseizuredetector.aw.broadcastToWearReceiver";
+        public static String BROADCAST_TO_WEARRECEIVER_MANIFEST = "uk.org.openseizuredetector.aw.broadcastToWearReceiverAtManifest";
         public static String BROADCAST_TO_SDSERVER = "uk.org.openseizuredetector.broadcastTosdServer";
         public static String PUSH_SETTINGS_ACTION = "uk.org.openseizuredetector.aw.wear.pushSettings";
         public static String PULL_SETTINGS_ACTION = "uk.org.openseizuredetector.aw.wear.pullSettings";
