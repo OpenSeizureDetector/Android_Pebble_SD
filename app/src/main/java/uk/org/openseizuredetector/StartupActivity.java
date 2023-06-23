@@ -307,10 +307,11 @@ public class StartupActivity extends AppCompatActivity {
         super.onStop();
         Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("StartupActivity.onStop() - unbinding from server");
-        mUtil.unbindFromServer(getApplicationContext(), mConnection);
+        mUtil.unbindFromServer(StartupActivity.this, mConnection);
         if (Objects.nonNull(mConnection)) {
-            if (Objects.nonNull(mConnection.mSdServer)) {
-                if (mConnection.mBound)
+            if (mConnection.mBound) {
+                if (Objects.nonNull(mConnection.mSdServer)) {
+
                     if (mConnection.mSdServer.mBound) {
                         mConnection.mSdServer.parentContext = null;
                         if (Objects.nonNull(mConnection.mSdServer.mWearNodeUri)) {
@@ -323,16 +324,18 @@ public class StartupActivity extends AppCompatActivity {
                             editor.apply();
                         }
                     }
-                if (Objects.nonNull(mConnection.mSdServer.uiLiveData))
-                    if (mConnection.mSdServer.uiLiveData.hasActiveObservers())
-                        mConnection.mSdServer.uiLiveData.removeObserver(StartupActivity.this::onChangedObserver);
+                    if (Objects.nonNull(mConnection.mSdServer.uiLiveData))
+                        if (mConnection.mSdServer.uiLiveData.hasActiveObservers())
+                            mConnection.mSdServer.uiLiveData.removeObserver(StartupActivity.this::onChangedObserver);
+                }
+                mUtil.unbindFromServer(StartupActivity.this, mConnection);
             }
         }
-        mUtil.unbindFromServer(StartupActivity.this, mConnection);
         mConnection = null;
 
         if (isFinishing())
-            mUtil.stopServer();
+            if (mUtil.isServerRunning())
+                mUtil.stopServer();
 
         if (Objects.nonNull(mUiTimer)) mUiTimer.cancel();
     }
@@ -351,7 +354,8 @@ public class StartupActivity extends AppCompatActivity {
                 if (Objects.nonNull(mConnection))
                     if (mConnection.mBound)
                         mUtil.unbindFromServer(StartupActivity.this, mConnection);
-                mUtil.stopServer();
+                if (mUtil.isServerRunning())
+                    mUtil.stopServer();
                 mHandler.postDelayed(StartupActivity.this::finishAffinity, 100);
                 super.onBackPressed();
             }

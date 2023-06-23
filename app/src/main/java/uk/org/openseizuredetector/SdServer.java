@@ -688,7 +688,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
             stopWebServer();
 
             mUtil.writeToSysLogFile("SdServer.onDestroy() - releasing mToneGenerator");
-            mToneGenerator.release();
+            if (Objects.nonNull(mToneGenerator)) mToneGenerator.release();
             mToneGenerator = null;
 
             SdServer.this.stopForeground(true);
@@ -1484,8 +1484,11 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         }
         mUtil.writeToSysLogFile("unregisterig network broadcast receiver");
         Log.v(TAG, "unregistering network broadcast receiver");
-        if (mNetworkBroadcastReceiver.isRegistered){
-            mNetworkBroadcastReceiver.unregister(SdServer.this);
+        if (Objects.nonNull(mNetworkBroadcastReceiver)) {
+            if (mNetworkBroadcastReceiver.isRegistered) {
+                mNetworkBroadcastReceiver.unregister(SdServer.this);
+            }
+            mNetworkBroadcastReceiver = null;
         }
     }
 
