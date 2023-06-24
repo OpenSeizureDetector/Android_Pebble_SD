@@ -419,7 +419,7 @@ public abstract class SdDataSource {
                 mWatchAppRunningCheck = true;
                 doAnalysis();
 
-                if (mSdData.haveSettings == false) {
+                if (!mSdData.haveSettings) {
                     retVal = "sendSettings";
                 } else {
                     retVal = "OK";
@@ -446,7 +446,7 @@ public abstract class SdDataSource {
                     mSdData.watchSdVersion = sdVersion;
                     mSdData.watchSdName = sdName;
                 } catch (Exception e) {
-                    Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString(),e);
+                    Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString(), e);
                     mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - " + jsonStr + " - " + e.toString());
                     mUtil.writeToSysLogFile("          This is probably because of an out of date watch app - please upgrade!");
                     e.printStackTrace();
@@ -460,9 +460,11 @@ public abstract class SdDataSource {
                 retVal = "ERROR";
             }
         } catch (Exception e) {
-            Log.e(TAG, "updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.toString());
+            Log.e(TAG, "updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " , e);
             mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.toString());
-            mUtil.writeToSysLogFile("updateFromJSON: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
+            if (Objects.nonNull(e.getCause()))
+                if (Objects.nonNull(e.getCause().getStackTrace()))
+                    mUtil.writeToSysLogFile("updateFromJSON: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
             if (accelVals == null) {
                 mUtil.writeToSysLogFile("updateFromJSON: accelVals is null when exception thrown");
             } else {
@@ -520,7 +522,7 @@ public abstract class SdDataSource {
             // Calculate the whole spectrum power (well a value equivalent to it that avoids square root calculations
             // and zero any readings that are above the frequency cutoff.
             double specPower = 0;
-            for (int i = 1; i < mSdData.mNsamp / 2; i++) {
+            for (int i = 1; i < (mSdData.mNsamp -1 ) / 2; i++) {
                 if (i <= nFreqCutoff) {
                     specPower = specPower + getMagnitude(fft, i);
                 } else {

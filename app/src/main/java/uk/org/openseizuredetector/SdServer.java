@@ -26,6 +26,7 @@
 
 package uk.org.openseizuredetector;
 
+import uk.org.openseizuredetector.R;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Notification;
@@ -277,17 +278,19 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     @Override
     public void onCreate() {
         Log.i(TAG, "onCreate()");
-        try{
-            mLooper = ((Context) SdServer.this).getMainLooper();
-        }catch (Exception e) {
-            Looper.prepareMainLooper();
-            mLooper = ((Context)SdServer.this).getMainLooper();
+        if  (Objects.isNull(mLooper)){
+            try {
+                mLooper = ((Context) SdServer.this).getMainLooper();
+            } catch (Exception e) {
+                Looper.prepareMainLooper();
+                mLooper = ((Context) SdServer.this).getMainLooper();
+            }
         }
-        mHandler = new Handler(mLooper);
-        mSdData = new SdData();
-        mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+        if (Objects.isNull(mHandler)) mHandler = new Handler(mLooper);
+        if (Objects.isNull(mSdData)) mSdData = new SdData();
+        if (Objects.isNull(mToneGenerator)) mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
 
-        mUtil = new OsdUtil(SdServer.this, mHandler);
+        if (Objects.isNull(mUtil)) mUtil = new OsdUtil(SdServer.this, mHandler);
         mUtil.writeToSysLogFile("SdServer.onCreate()");
 
         // Set our custom uncaught exception handler to report issues.
@@ -389,6 +392,9 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
                 mUtil.runOnUiThread(() -> {
                     Log.d(TAG, "onBatteryChanged(): runOnUiThread(): updateUI");
+                    if (Objects.nonNull(uiLiveData))
+                        if (uiLiveData.hasActiveObservers())
+                            uiLiveData.signalChangedData();
                 });
 
             }
@@ -599,6 +605,8 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                     mUtil.writeToSysLogFile("SdServer.onStartCommand() - mWakeLock is not null - this shouldn't happen???");
                 }
 
+                unBindBatteryEvents();
+                mHandler.postDelayed(()->bindBatteryEvents(SdServer.this),100);
 
                 checkEvents();
             }
@@ -606,6 +614,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 stopServiceRunner();
             }
 
+            serverInitialized = true;
         return START_STICKY;
     }
 
@@ -1525,7 +1534,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
         batteryStatusIntent = null;
     }
-    private void bindBatteryEvents() {
+    private void bindBatteryEvents(Context activity) {
 
         if (Objects.isNull(powerUpdateReceiverPowerConnected))
             powerUpdateReceiverPowerConnected = new PowerUpdateReceiver();
@@ -1542,17 +1551,17 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
 
         if (Objects.isNull(batteryStatusIntent) && !powerUpdateReceiverPowerUpdated.isRegistered) {
-            batteryStatusIntent = powerUpdateReceiverPowerUpdated.register(this, batteryStatusIntentFilter);//this.registerReceiver(PowerUpdateReceiver, batteryStatusIntentFilter);
+            batteryStatusIntent = powerUpdateReceiverPowerUpdated.register(activity, batteryStatusIntentFilter);//this.registerReceiver(PowerUpdateReceiver, batteryStatusIntentFilter);
             mSdData.batteryPc = (long) ((batteryStatusIntent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) / (float) batteryStatusIntent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)) * 100f);
             powerUpdateReceiverPowerUpdated.isRegistered = true;
 
         }
-        powerUpdateReceiverPowerConnected.register(this, new IntentFilter(Intent.ACTION_POWER_CONNECTED));
+        powerUpdateReceiverPowerConnected.register(activity, new IntentFilter(Intent.ACTION_POWER_CONNECTED));
         powerUpdateReceiverPowerConnected.isRegistered = true;
-        powerUpdateReceiverPowerDisConnected.register(this, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
+        powerUpdateReceiverPowerDisConnected.register(activity, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
         powerUpdateReceiverPowerDisConnected.isRegistered = true;
-        powerUpdateReceiverPowerOkay.register(this, new IntentFilter(Intent.ACTION_BATTERY_LOW));
-        powerUpdateReceiverPowerLow.register(this, new IntentFilter(Intent.ACTION_BATTERY_OKAY));
+        powerUpdateReceiverPowerOkay.register(activity, new IntentFilter(Intent.ACTION_BATTERY_LOW));
+        powerUpdateReceiverPowerLow.register(activity, new IntentFilter(Intent.ACTION_BATTERY_OKAY));
 
 //        if (Objects.nonNull(connectionUpdateReceiver) && !connectedConnectionUpdates)
 //            this.registerReceiver(connectionUpdateReceiver, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));

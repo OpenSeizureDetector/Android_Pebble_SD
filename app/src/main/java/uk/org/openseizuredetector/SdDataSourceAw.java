@@ -23,8 +23,9 @@
 */
 package uk.org.openseizuredetector;
 
-import static androidx.activity.result.ActivityResultCallerKt.registerForActivityResult;
 
+
+import uk.org.openseizuredetector.R;
 import android.app.Activity;
 import android.app.Application;
 import android.app.PendingIntent;
@@ -53,6 +54,7 @@ import java.util.concurrent.CancellationException;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 
 
@@ -220,7 +222,9 @@ public class SdDataSourceAw extends SdDataSource {
             if (!Objects.equals(intent,null))
                 if (Constants.ACTION.BROADCAST_TO_SDSERVER.equals(intent.getAction()))
                     intentReceivedAction(intent);
-            goAsync();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                goAsync();
+            }
         }
 
     }
@@ -320,12 +324,13 @@ public class SdDataSourceAw extends SdDataSource {
 
                             if (Constants.ACTION.CONNECTION_WEARABLE_CONNECTED.equals(receivedAction)){
                                 useSdServerBinding().mSdData.watchConnected = true;
-
+                                mobileBatteryPctUpdate();
                                 return;
                             }
 
                             if (Constants.ACTION.CONNECTION_WEARABLE_RECONNECTED.equals(receivedAction)){
                                 useSdServerBinding().mSdData.watchConnected = true;
+                                mobileBatteryPctUpdate();
                                 return;
                             }
 
@@ -393,6 +398,7 @@ public class SdDataSourceAw extends SdDataSource {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.CUPCAKE)
     private boolean isWearReceiverInstalled(){
 
         mHandler = new Handler(mContext.getMainLooper());
@@ -519,6 +525,7 @@ public class SdDataSourceAw extends SdDataSource {
             aWIntent = aWIntentBaseManifest;
             //AddComponent only working for implicit BroadCast For explicit (when app is already running and broadcast registered.
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.dataType, Constants.GLOBAL_CONSTANTS.mStopUri);
+            aWIntent.setData(Constants.GLOBAL_CONSTANTS.mStopUri);
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.STOP_MOBILE_RECEIVER_ACTION);
 
             //aWIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -623,7 +630,7 @@ public class SdDataSourceAw extends SdDataSource {
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mPowerLevel, useSdServerBinding().batteryPct);
             mContext.sendBroadcast(aWIntent);
         }catch ( Exception e ){
-            Log.e(TAG,"startWearSDApp: Error occoured",e);
+            Log.e(TAG,"startWearSDApp: Error occurred",e);
         }
     }
 
