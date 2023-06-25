@@ -133,6 +133,11 @@ public abstract class SdDataSource {
     private float batteryPct = -1f;
     private IntentFilter batteryStatusIntentFilter = null;
     private Intent batteryStatusIntent;
+    private JSONArray accelVals;
+    private JSONArray accelVals3D;
+    private JSONObject mainObject;
+    private JSONObject dataObject;
+    private String dataTypeStr;
 
 
     public SdDataSource(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
@@ -351,15 +356,15 @@ public abstract class SdDataSource {
         String watchFwVersion;
         String sdVersion;
         String sdName;
-        JSONArray accelVals = null;
-        JSONArray accelVals3D = null;
+        accelVals = null;
+        accelVals3D = null;
         Log.v(TAG, "updateFromJSON - " + jsonStr);
 
         try {
-            JSONObject mainObject = new JSONObject(jsonStr);
+            mainObject = new JSONObject(jsonStr);
             //JSONObject dataObject = mainObject.getJSONObject("dataObj");
-            JSONObject dataObject = mainObject;
-            String dataTypeStr = dataObject.getString("dataType");
+            dataObject = mainObject;
+            dataTypeStr = dataObject.getString("dataType");
             Log.v(TAG, "updateFromJSON - dataType=" + dataTypeStr);
             if (dataTypeStr.equals("raw")) {
                 Log.v(TAG, "updateFromJSON - processing raw data");
@@ -503,7 +508,7 @@ public abstract class SdDataSource {
             mSampleFreq = Constants.SD_SERVICE_CONSTANTS.defaultSampleRate;
             double freqRes = 1.0 * mSdData.mSampleFreq / mSdData.mNsamp;
             Log.v(TAG, "doAnalysis(): mSampleFreq=" + mSampleFreq + " mNSamp=" + mSdData.mNsamp + ": freqRes=" + freqRes);
-            Log.v(TAG,"doAnalysis(): rawData=" + Arrays.toString(mSdData.rawData));
+            Log.v(TAG, "doAnalysis(): rawData=" + Arrays.toString(mSdData.rawData));
             // Set the frequency bounds for the analysis in fft output bin numbers.
             nMin = (int) (mAlarmFreqMin / freqRes);
             nMax = (int) (mAlarmFreqMax / freqRes);
@@ -522,7 +527,7 @@ public abstract class SdDataSource {
             // Calculate the whole spectrum power (well a value equivalent to it that avoids square root calculations
             // and zero any readings that are above the frequency cutoff.
             double specPower = 0;
-            for (int i = 1; i < (mSdData.mNsamp -1 ) / 2; i++) {
+            for (int i = 1; i < (mSdData.mNsamp - 1) / 2; i++) {
                 if (i <= nFreqCutoff) {
                     specPower = specPower + getMagnitude(fft, i);
                 } else {
@@ -564,6 +569,8 @@ public abstract class SdDataSource {
             mSdData.maxVal = 0;   // not used
             mSdData.maxFreq = 0;  // not used
             mSdData.haveData = true;
+            useSdServerBinding().mSdData.haveData = true;
+            useSdServerBinding().mSdData.haveSettings = true;
             mSdData.alarmThresh = mAlarmThresh;
             mSdData.alarmRatioThresh = mAlarmRatioThresh;
             mSdData.alarmFreqMin = mAlarmFreqMin;
@@ -578,16 +585,21 @@ public abstract class SdDataSource {
             // Because we have received data, set flag to show watch app running.
             mWatchAppRunningCheck = true;
         } catch (Exception e) {
-            Log.e(TAG, "doAnalysis - Exception during Analysis",e);
-            mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e.toString());
-            mUtil.writeToSysLogFile("doAnalysis: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
-            mUtil.writeToSysLogFile("doAnalysis: mSdData.mNsamp="+mSdData.mNsamp);
-            mUtil.writeToSysLogFile("doAnalysis: alarmFreqMin="+mAlarmFreqMin+" nMin="+nMin);
-            mUtil.writeToSysLogFile("doAnalysis: alarmFreqMax="+mAlarmFreqMax+" nMax="+nMax);
-            mUtil.writeToSysLogFile("doAnalysis: nFreqCutoff.="+nFreqCutoff);
-            mUtil.writeToSysLogFile("doAnalysis: fft.length="+fft.length);
-            mWatchAppRunningCheck = false;
+            Log.e(TAG, "doAnalysis - Exception during Analysis", e);
+            if (Objects.nonNull(e.getCause())) {
+                if (Objects.nonNull(e.getCause().getStackTrace())) {
+                    mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e.toString());
+                    mUtil.writeToSysLogFile("doAnalysis: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
+                    mUtil.writeToSysLogFile("doAnalysis: mSdData.mNsamp=" + mSdData.mNsamp);
+                    mUtil.writeToSysLogFile("doAnalysis: alarmFreqMin=" + mAlarmFreqMin + " nMin=" + nMin);
+                    mUtil.writeToSysLogFile("doAnalysis: alarmFreqMax=" + mAlarmFreqMax + " nMax=" + nMax);
+                    mUtil.writeToSysLogFile("doAnalysis: nFreqCutoff.=" + nFreqCutoff);
+                    mUtil.writeToSysLogFile("doAnalysis: fft.length=" + fft.length);
+                    mWatchAppRunningCheck = false;
+                }
+            }
         }
+
 
         // Use the neural network algorithm to calculate the probability of the data
         // being representative of a seizure (sets mSdData.mPseizure)

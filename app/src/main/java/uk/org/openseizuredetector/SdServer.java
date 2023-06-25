@@ -430,7 +430,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 // see LoadedApk.class - receiver dispatcher
                 // its and ArrayMap there for example
                 return !isRegistered
-                        ? context.registerReceiver(this, filter)
+                        ? context.registerReceiver(PowerUpdateReceiver.this, filter)
                         : null;
             } finally {
                 isRegistered = true;
@@ -605,8 +605,10 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                     mUtil.writeToSysLogFile("SdServer.onStartCommand() - mWakeLock is not null - this shouldn't happen???");
                 }
 
-                unBindBatteryEvents();
-                mHandler.postDelayed(()->bindBatteryEvents(SdServer.this),100);
+                if (arePowerUpdateBroadcastsRegistered()){
+                    unBindBatteryEvents();
+                    mHandler.postDelayed(() -> bindBatteryEvents(SdServer.this), 100);
+                }
 
                 checkEvents();
             }
@@ -725,14 +727,30 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
     }
 
+    boolean arePowerUpdateBroadcastsRegistered(){
+        boolean returnValue = false;
+        if (Objects.nonNull(powerUpdateReceiverPowerUpdated) &&
+                Objects.nonNull(powerUpdateReceiver) &&
+                Objects.nonNull(powerUpdateReceiverPowerOkay) &&
+                Objects.nonNull(powerUpdateReceiverPowerLow) &&
+                Objects.nonNull(powerUpdateReceiverPowerConnected) &&
+                Objects.nonNull(powerUpdateReceiverPowerDisConnected) )
+            returnValue = powerUpdateReceiverPowerConnected.isRegistered &&
+                    powerUpdateReceiverPowerDisConnected.isRegistered &&
+                    powerUpdateReceiverPowerLow.isRegistered &&
+                    powerUpdateReceiverPowerOkay.isRegistered &&
+                    powerUpdateReceiverPowerUpdated.isRegistered;
+        return returnValue;
+    }
+
 
     private void stopServiceRunner(){
 
-        if (!Objects.equals(mPowerUpdateManager, null))
-            if (mPowerUpdateManager.isRegistered) {
-                unBindBatteryEvents();
-                mPowerUpdateManager.unregister(SdServer.this);
-            }
+
+        if (arePowerUpdateBroadcastsRegistered()) {
+            unBindBatteryEvents();
+            mPowerUpdateManager.unregister(SdServer.this);
+        }
         if (mWakeLock != null) {
             try {// TODO deside to ask if (mWakeLock.isHeld())
                 if (mWakeLock.isHeld() ) mWakeLock.release();
@@ -1505,23 +1523,23 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
         if (Objects.nonNull(powerUpdateReceiverPowerUpdated)) {
             if (powerUpdateReceiverPowerUpdated.isRegistered)
-                powerUpdateReceiverPowerUpdated.unregister(this);
+                powerUpdateReceiverPowerUpdated.unregister(SdServer.this);
         }
         if (Objects.nonNull(powerUpdateReceiverPowerLow)) {
             if (powerUpdateReceiverPowerLow.isRegistered)
-                powerUpdateReceiverPowerLow.unregister(this);
+                powerUpdateReceiverPowerLow.unregister(SdServer.this);
         }
         if (Objects.nonNull(powerUpdateReceiverPowerOkay)) {
             if (powerUpdateReceiverPowerOkay.isRegistered)
-                powerUpdateReceiverPowerOkay.unregister(this);
+                powerUpdateReceiverPowerOkay.unregister(SdServer.this);
         }
         if (Objects.nonNull(powerUpdateReceiverPowerConnected)) {
             if (powerUpdateReceiverPowerConnected.isRegistered)
-                powerUpdateReceiverPowerConnected.unregister(this);
+                powerUpdateReceiverPowerConnected.unregister(SdServer.this);
         }
         if (Objects.nonNull(powerUpdateReceiverPowerDisConnected)) {
             if (powerUpdateReceiverPowerDisConnected.isRegistered)
-                powerUpdateReceiverPowerDisConnected.unregister(this);
+                powerUpdateReceiverPowerDisConnected.unregister(SdServer.this);
         }
         if (Objects.nonNull(powerUpdateReceiver))
             if (((PowerUpdateReceiver) powerUpdateReceiver).isRegistered)
