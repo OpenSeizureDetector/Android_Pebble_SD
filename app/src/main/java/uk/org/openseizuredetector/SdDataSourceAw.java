@@ -378,7 +378,8 @@ public class SdDataSourceAw extends SdDataSource {
                                             useSdServerBinding().mSdData.haveSettings = true;
                                         if (!getSdData().watchConnected)
                                             useSdServerBinding().mSdData.watchConnected = true;
-
+                                        if (!getSdData().watchAppRunning)
+                                            useSdServerBinding().mSdData.watchAppRunning = true;
                                     }
 
                                 } catch (Exception e) {
