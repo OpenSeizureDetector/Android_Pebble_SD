@@ -105,6 +105,13 @@ dependencies {
     androidTestImplementation 'androidx.test:monitor:1.7.0-alpha01'
     debugImplementation 'androidx.fragment:fragment-testing-manifest:1.6.0-rc01'
     androidTestImplementation 'androidx.fragment:fragment-testing:1.6.0-rc01'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    androidTestImplementation 'org.junit.jupiter:junit-jupiter-engine:5.10.0-M1'
+    androidTestImplementation 'org.junit.jupiter:junit-jupiter-params:5.10.0-M1'
+    testDebugImplementation 'org.junit.platform:junit-platform-runner:1.10.0-M1'
+    androidTestImplementation 'org.junit.jupiter:junit-jupiter:5.10.0-M1'
+    androidTestImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0-M1'
 }
 
 repositories {

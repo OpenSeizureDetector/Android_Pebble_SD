@@ -56,7 +56,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.service.notification.StatusBarNotification;
 import android.telephony.SmsManager;
 import android.text.format.Time;
@@ -1699,7 +1699,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         mUtil.writeToSysLogFile("SdServer.updatePrefs()");
 
         SharedPreferences SP = PreferenceManager
-                .getDefaultSharedPreferences(getBaseContext());
+                .getDefaultSharedPreferences(SdServer.this);
         try {
             mSdDataSourceName = SP.getString("DataSource", "Pebble");
             Log.v(TAG, "updatePrefs() - DataSource = " + mSdDataSourceName);

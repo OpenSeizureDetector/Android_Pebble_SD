@@ -302,6 +302,11 @@ public class SdDataSourceAw extends SdDataSource {
                                 }
                             }
 
+                            //Sending return from function if aWIntent is null. With luck and a retry
+                            //the process can continue.
+                            if (Objects.isNull(aWIntentBase))
+                                return;
+
                             if (Constants.ACTION.REGISTERED_WEARRECEIVER_INTENT.equals(receivedAction)) {
 
                                 sdBroadCastReceived = true;

@@ -277,6 +277,8 @@ public abstract class SdDataSource {
             mUtil.writeToSysLogFile("SDDataSource.start() - settings timer already running??");
         }
 
+        if (!useSdServerBinding().mSdDataSourceName.equals("phone"))
+            mSdData.mHRAlarmActive = mSdAlgHr.mSimpleHrAlarmActive||mSdAlgHr.mAverageHrAlarmActive||mSdAlgHr.mAdaptiveHrAlarmActive;
     }
 
     /**

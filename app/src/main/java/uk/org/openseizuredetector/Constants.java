@@ -6,7 +6,42 @@ public class Constants {
     public interface GLOBAL_CONSTANTS {
         public final int ALARMS_OFF = 6;
         public final int ALARMS_ON = 0;
-        public static final int PERMISSION_REQUEST_BODY_SENSORS = 16;
+        // Request codes
+        // CALENDAR GROUP
+        public final int PERMISSION_REQUEST_READ_CALENDAR = 0;
+        public final int PERMISSION_REQUEST_WRITE_CALENDAR = 1;
+        // CAMERA GROUP
+        public final int PERMISSION_REQUEST_CAMERA = 2;
+        // CONTACTS GROUP
+        public final int PERMISSION_REQUEST_READ_CONTACTS = 3;
+        public final int PERMISSION_REQUEST_WRITE_CONTACTS = 4;
+        public final int PERMISSION_REQUEST_GET_ACCOUNTS = 5;
+        // LOCATION GROUP
+        public final int PERMISSION_REQUEST_ACCESS_FINE_LOCATION = 6;
+        public final int PERMISSION_REQUEST_ACCESS_COARSE_LOCATION = 7;
+        // MICROPHONE GROUP
+        public final int PERMISSION_REQUEST_RECORD_AUDIO = 8;
+        // PHONE GROUP
+        public final int PERMISSION_REQUEST_READ_PHONE_STATE = 9;
+        public final int PERMISSION_REQUEST_CALL_PHONE = 10;
+        public final int PERMISSION_REQUEST_READ_CALL_LOG = 11;
+        public final int PERMISSION_REQUEST_WRITE_CALL_LOG = 12;
+        public final int PERMISSION_REQUEST_ADD_VOICEMAIL = 13;
+        public final int PERMISSION_REQUEST_USE_SIP = 14;
+        public final int PERMISSION_REQUEST_PROCESS_OUTGOING_CALLS = 15;
+        // SENSORS GROUP
+        public final int PERMISSION_REQUEST_BODY_SENSORS = 16;
+        // SMS GROUP
+        public final int PERMISSION_REQUEST_SEND_SMS = 17;
+        public final int PERMISSION_REQUEST_RECEIVE_SMS = 18;
+        public final int PERMISSION_REQUEST_READ_SMS = 19;
+        public final int PERMISSION_REQUEST_RECEIVE_WAP_PUSH = 20;
+        public final int PERMISSION_REQUEST_RECEIVE_MMS = 21;
+        // STORAGE GROUP
+        public final int PERMISSION_REQUEST_READ_EXTERNAL_STORAGE = 22;
+        public final int PERMISSION_REQUEST_WRITE_EXTERNAL_STORAGE = 23;
+        // PROCESS GROUP
+        public final int PERMISSION_REQUEST_START_FOREGROUND_SERVICES_FROM_BACKGROUND = 24;
         static final Uri CAPABILITY_WEAR_APP = Uri.parse("wear://");
         public final String wearableAppCheckPayload = "AppOpenWearable";
         public final String wearableAppCheckPayloadReturnACK = "AppOpenWearableACK";

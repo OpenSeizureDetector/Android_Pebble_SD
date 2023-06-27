@@ -25,6 +25,7 @@
 package uk.org.openseizuredetector;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -725,6 +726,38 @@ public class StartupActivity extends AppCompatActivity {
                 allOk = false;
             }
         }
+
+        if (checkSelfPermission(Manifest.permission.BODY_SENSORS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.BODY_SENSORS}, 1);
+            ActivityCompat.requestPermissions((Activity) this,
+                    new String[]{Manifest.permission.BODY_SENSORS},
+            Constants.GLOBAL_CONSTANTS.PERMISSION_REQUEST_BODY_SENSORS);
+
+        } else {
+            Log.d(TAG, "ALREADY GRANTED");
+        }
+
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+            ActivityCompat.requestPermissions((Activity) this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    Constants.GLOBAL_CONSTANTS.PERMISSION_REQUEST_ACCESS_FINE_LOCATION
+            );
+
+        } else {
+            Log.d(TAG, "ALREADY GRANTED");
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            if (checkSelfPermission(Manifest.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND}, 1);
+                ActivityCompat.requestPermissions((Activity) this,
+                        new String[]{Manifest.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND},
+                        Constants.GLOBAL_CONSTANTS.PERMISSION_REQUEST_START_FOREGROUND_SERVICES_FROM_BACKGROUND
+                );
+
+            } else {
+                Log.d(TAG, "ALREADY GRANTED");
+            }
         return allOk;
     }
 
