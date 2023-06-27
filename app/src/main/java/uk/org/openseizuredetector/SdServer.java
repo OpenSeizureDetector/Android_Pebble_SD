@@ -307,7 +307,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         mWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 "OSD:WakeLock");
 
-        uiLiveData = new ServiceLiveData();
+        if (Objects.isNull(uiLiveData)) uiLiveData = new ServiceLiveData();
     }
     protected void powerUpdateReceiveAction(Intent intent) {
         try {
@@ -479,6 +479,11 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 Log.v(TAG, "onStartCommand() - calling updatePrefs()");
                 updatePrefs();
 
+                if (arePowerUpdateBroadcastsRegistered()){
+                    unBindBatteryEvents();
+                    mHandler.postDelayed(() -> bindBatteryEvents(SdServer.this), 100);
+                }
+
                 Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName + ", phoneAppVersion=" + mUtil.getAppVersionName());
                 mSdData.dataSourceName = mSdDataSourceName;
                 mSdData.phoneAppVersion = mUtil.getAppVersionName();
@@ -605,10 +610,6 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                     mUtil.writeToSysLogFile("SdServer.onStartCommand() - mWakeLock is not null - this shouldn't happen???");
                 }
 
-                if (arePowerUpdateBroadcastsRegistered()){
-                    unBindBatteryEvents();
-                    mHandler.postDelayed(() -> bindBatteryEvents(SdServer.this), 100);
-                }
 
                 checkEvents();
             }
@@ -1581,6 +1582,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         powerUpdateReceiverPowerOkay.register(activity, new IntentFilter(Intent.ACTION_BATTERY_LOW));
         powerUpdateReceiverPowerLow.register(activity, new IntentFilter(Intent.ACTION_BATTERY_OKAY));
 
+        mSdDataSource.initSdServerBindPowerBroadcastComplete();
 //        if (Objects.nonNull(connectionUpdateReceiver) && !connectedConnectionUpdates)
 //            this.registerReceiver(connectionUpdateReceiver, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
 //        connectedConnectionUpdates = true;

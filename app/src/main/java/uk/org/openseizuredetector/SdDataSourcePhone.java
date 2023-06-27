@@ -106,7 +106,12 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
 
     }
 
-
+    @Override
+    public void initSdServerBindPowerBroadcastComplete(){
+        if (sensorsActive)
+            unBindSensorListeners();
+        bindSensorListeners();
+}
     private  void bindSensorListeners(){
         if (mSampleTimeUs < (double) SensorManager.SENSOR_DELAY_NORMAL ||
                 Double.isInfinite(mSampleTimeUs) ||

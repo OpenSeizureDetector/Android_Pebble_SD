@@ -233,6 +233,11 @@ public class SdDataSourceAw extends SdDataSource {
         return sdAwBroadCastReceived && sdBroadCastReceived;
     }
 
+    @Override
+    public void initSdServerBindPowerBroadcastComplete(){
+        mobileBatteryPctUpdate();
+    }
+
     private IntentBroadCastReceiver intentBroadCastReceiver = null;
 
     private void onStartReceived() {

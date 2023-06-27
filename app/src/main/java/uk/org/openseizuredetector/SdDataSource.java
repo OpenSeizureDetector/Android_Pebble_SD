@@ -1104,6 +1104,9 @@ public abstract class SdDataSource {
                 Toast.LENGTH_LONG).show();
     }
 
+    public void initSdServerBindPowerBroadcastComplete() {
+
+    }
 
     public class SdDataBroadcastReceiver extends BroadcastReceiver {
         //private String TAG = "SdDataBroadcastReceiver";
