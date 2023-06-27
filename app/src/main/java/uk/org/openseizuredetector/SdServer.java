@@ -599,7 +599,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
                 // Apply the wake-lock to prevent CPU sleeping (very battery intensive!)
                 if (Objects.nonNull(mWakeLock)) {
-                    if (!mWakeLock.isHeld()) {
+                    if (false&&!mWakeLock.isHeld()) {
                         mWakeLock.acquire(24 * 60 * 60 * 1000L /*1 day*/);
                         Log.v(TAG, "Applied Wake Lock to prevent device sleeping");
 
@@ -754,7 +754,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 mPowerUpdateManager.unregister(SdServer.this);
         }
         if (mWakeLock != null) {
-            try {// TODO deside to ask if (mWakeLock.isHeld())
+            try {// TODO decide to ask if (mWakeLock.isHeld())
                 if (mWakeLock.isHeld() ) mWakeLock.release();
                 Log.d(TAG, "Released Wake Lock to allow device to sleep.");
             } catch (Exception e) {

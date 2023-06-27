@@ -635,6 +635,8 @@ public class SdDataSourceAw extends SdDataSource {
 
     public void mobileBatteryPctUpdate(){
         try{
+            if (Objects.isNull(aWIntentBase))
+                return;
             aWIntent = aWIntentBase;
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction,Constants.ACTION.BATTERYUPDATE_ACTION);
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mPowerLevel, useSdServerBinding().batteryPct);
