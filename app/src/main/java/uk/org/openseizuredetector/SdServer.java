@@ -26,6 +26,7 @@
 
 package uk.org.openseizuredetector;
 
+import uk.org.openseizuredetector.R;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Notification;
@@ -55,7 +56,7 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.service.notification.StatusBarNotification;
 import android.telephony.SmsManager;
 import android.text.format.Time;
@@ -116,6 +117,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     private boolean mFaultTimerCompleted = false;
 
     boolean mBound;
+    int mStartId;
 
     Context parentContext;
     String mWearNodeUri;
@@ -172,7 +174,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     private NetworkBroadcastReceiver mNetworkBroadcastReceiver;
 
     private IntentFilter batteryStatusIntentFilter = null;
-    private Intent batteryStatusIntent;
+    protected Intent batteryStatusIntent;
     private Thread mBlockingThread = null;
     private BroadcastReceiver powerUpdateReceiver = null;
     private PowerUpdateReceiver powerUpdateReceiverPowerConnected = null;
@@ -276,17 +278,19 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     @Override
     public void onCreate() {
         Log.i(TAG, "onCreate()");
-        try{
-            mLooper = ((Context) SdServer.this).getMainLooper();
-        }catch (Exception e) {
-            Looper.prepareMainLooper();
-            mLooper = ((Context)SdServer.this).getMainLooper();
+        if  (Objects.isNull(mLooper)){
+            try {
+                mLooper = ((Context) SdServer.this).getMainLooper();
+            } catch (Exception e) {
+                Looper.prepareMainLooper();
+                mLooper = ((Context) SdServer.this).getMainLooper();
+            }
         }
-        mHandler = new Handler(mLooper);
-        mSdData = new SdData();
-        mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+        if (Objects.isNull(mHandler)) mHandler = new Handler(mLooper);
+        if (Objects.isNull(mSdData)) mSdData = new SdData();
+        if (Objects.isNull(mToneGenerator)) mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
 
-        mUtil = new OsdUtil(SdServer.this, mHandler);
+        if (Objects.isNull(mUtil)) mUtil = new OsdUtil(SdServer.this, mHandler);
         mUtil.writeToSysLogFile("SdServer.onCreate()");
 
         // Set our custom uncaught exception handler to report issues.
@@ -303,7 +307,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         mWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 "OSD:WakeLock");
 
-        uiLiveData = new ServiceLiveData();
+        if (Objects.isNull(uiLiveData)) uiLiveData = new ServiceLiveData();
     }
     protected void powerUpdateReceiveAction(Intent intent) {
         try {
@@ -388,6 +392,9 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
                 mUtil.runOnUiThread(() -> {
                     Log.d(TAG, "onBatteryChanged(): runOnUiThread(): updateUI");
+                    if (Objects.nonNull(uiLiveData))
+                        if (uiLiveData.hasActiveObservers()||uiLiveData.connectedList.contains("MainActivity"))
+                            uiLiveData.signalChangedData();
                 });
 
             }
@@ -423,7 +430,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 // see LoadedApk.class - receiver dispatcher
                 // its and ArrayMap there for example
                 return !isRegistered
-                        ? context.registerReceiver(this, filter)
+                        ? context.registerReceiver(PowerUpdateReceiver.this, filter)
                         : null;
             } finally {
                 isRegistered = true;
@@ -467,10 +474,16 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         if (Objects.nonNull(intent))
             if (intent.getData().equals(Constants.GLOBAL_CONSTANTS.mStartUri)) {
                 mUtil.writeToSysLogFile("SdServer.onStartCommand()");
+                mStartId = startId;
                 // Update preferences.
                 Log.v(TAG, "onStartCommand() - calling updatePrefs()");
                 updatePrefs();
 
+                if (arePowerUpdateBroadcastsRegistered()){
+                    unBindBatteryEvents();
+                }
+
+                bindBatteryEvents(SdServer.this);
                 Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName + ", phoneAppVersion=" + mUtil.getAppVersionName());
                 mSdData.dataSourceName = mSdDataSourceName;
                 mSdData.phoneAppVersion = mUtil.getAppVersionName();
@@ -586,7 +599,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
                 // Apply the wake-lock to prevent CPU sleeping (very battery intensive!)
                 if (Objects.nonNull(mWakeLock)) {
-                    if (!mWakeLock.isHeld()) {
+                    if (false&&!mWakeLock.isHeld()) {
                         mWakeLock.acquire(24 * 60 * 60 * 1000L /*1 day*/);
                         Log.v(TAG, "Applied Wake Lock to prevent device sleeping");
 
@@ -604,6 +617,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 stopServiceRunner();
             }
 
+            serverInitialized = true;
         return START_STICKY;
     }
 
@@ -686,7 +700,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
             stopWebServer();
 
             mUtil.writeToSysLogFile("SdServer.onDestroy() - releasing mToneGenerator");
-            mToneGenerator.release();
+            if (Objects.nonNull(mToneGenerator)) mToneGenerator.release();
             mToneGenerator = null;
 
             SdServer.this.stopForeground(true);
@@ -714,16 +728,33 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
     }
 
+    boolean arePowerUpdateBroadcastsRegistered(){
+        boolean returnValue = false;
+        if (Objects.nonNull(powerUpdateReceiverPowerUpdated) &&
+                Objects.nonNull(powerUpdateReceiver) &&
+                Objects.nonNull(powerUpdateReceiverPowerOkay) &&
+                Objects.nonNull(powerUpdateReceiverPowerLow) &&
+                Objects.nonNull(powerUpdateReceiverPowerConnected) &&
+                Objects.nonNull(powerUpdateReceiverPowerDisConnected) )
+            returnValue = powerUpdateReceiverPowerConnected.isRegistered &&
+                    powerUpdateReceiverPowerDisConnected.isRegistered &&
+                    powerUpdateReceiverPowerLow.isRegistered &&
+                    powerUpdateReceiverPowerOkay.isRegistered &&
+                    powerUpdateReceiverPowerUpdated.isRegistered;
+        return returnValue;
+    }
+
 
     private void stopServiceRunner(){
 
-        if (!Objects.equals(mPowerUpdateManager, null))
-            if (mPowerUpdateManager.isRegistered) {
-                unBindBatteryEvents();
+
+        if (arePowerUpdateBroadcastsRegistered()) {
+            unBindBatteryEvents();
+            if (Objects.nonNull(mPowerUpdateManager))
                 mPowerUpdateManager.unregister(SdServer.this);
-            }
+        }
         if (mWakeLock != null) {
-            try {// TODO deside to ask if (mWakeLock.isHeld())
+            try {// TODO decide to ask if (mWakeLock.isHeld())
                 if (mWakeLock.isHeld() ) mWakeLock.release();
                 Log.d(TAG, "Released Wake Lock to allow device to sleep.");
             } catch (Exception e) {
@@ -1482,8 +1513,11 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         }
         mUtil.writeToSysLogFile("unregisterig network broadcast receiver");
         Log.v(TAG, "unregistering network broadcast receiver");
-        if (mNetworkBroadcastReceiver.isRegistered){
-            mNetworkBroadcastReceiver.unregister(SdServer.this);
+        if (Objects.nonNull(mNetworkBroadcastReceiver)) {
+            if (mNetworkBroadcastReceiver.isRegistered) {
+                mNetworkBroadcastReceiver.unregister(SdServer.this);
+            }
+            mNetworkBroadcastReceiver = null;
         }
     }
 
@@ -1491,23 +1525,23 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
         if (Objects.nonNull(powerUpdateReceiverPowerUpdated)) {
             if (powerUpdateReceiverPowerUpdated.isRegistered)
-                powerUpdateReceiverPowerUpdated.unregister(this);
+                powerUpdateReceiverPowerUpdated.unregister(SdServer.this);
         }
         if (Objects.nonNull(powerUpdateReceiverPowerLow)) {
             if (powerUpdateReceiverPowerLow.isRegistered)
-                powerUpdateReceiverPowerLow.unregister(this);
+                powerUpdateReceiverPowerLow.unregister(SdServer.this);
         }
         if (Objects.nonNull(powerUpdateReceiverPowerOkay)) {
             if (powerUpdateReceiverPowerOkay.isRegistered)
-                powerUpdateReceiverPowerOkay.unregister(this);
+                powerUpdateReceiverPowerOkay.unregister(SdServer.this);
         }
         if (Objects.nonNull(powerUpdateReceiverPowerConnected)) {
             if (powerUpdateReceiverPowerConnected.isRegistered)
-                powerUpdateReceiverPowerConnected.unregister(this);
+                powerUpdateReceiverPowerConnected.unregister(SdServer.this);
         }
         if (Objects.nonNull(powerUpdateReceiverPowerDisConnected)) {
             if (powerUpdateReceiverPowerDisConnected.isRegistered)
-                powerUpdateReceiverPowerDisConnected.unregister(this);
+                powerUpdateReceiverPowerDisConnected.unregister(SdServer.this);
         }
         if (Objects.nonNull(powerUpdateReceiver))
             if (((PowerUpdateReceiver) powerUpdateReceiver).isRegistered)
@@ -1520,7 +1554,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
         batteryStatusIntent = null;
     }
-    private void bindBatteryEvents() {
+    private void bindBatteryEvents(Context activity) {
 
         if (Objects.isNull(powerUpdateReceiverPowerConnected))
             powerUpdateReceiverPowerConnected = new PowerUpdateReceiver();
@@ -1537,18 +1571,20 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
 
         if (Objects.isNull(batteryStatusIntent) && !powerUpdateReceiverPowerUpdated.isRegistered) {
-            batteryStatusIntent = powerUpdateReceiverPowerUpdated.register(this, batteryStatusIntentFilter);//this.registerReceiver(PowerUpdateReceiver, batteryStatusIntentFilter);
+            batteryStatusIntent = powerUpdateReceiverPowerUpdated.register(activity, batteryStatusIntentFilter);//this.registerReceiver(PowerUpdateReceiver, batteryStatusIntentFilter);
             mSdData.batteryPc = (long) ((batteryStatusIntent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) / (float) batteryStatusIntent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)) * 100f);
             powerUpdateReceiverPowerUpdated.isRegistered = true;
 
         }
-        powerUpdateReceiverPowerConnected.register(this, new IntentFilter(Intent.ACTION_POWER_CONNECTED));
+        powerUpdateReceiveAction(batteryStatusIntent);
+        powerUpdateReceiverPowerConnected.register(activity, new IntentFilter(Intent.ACTION_POWER_CONNECTED));
         powerUpdateReceiverPowerConnected.isRegistered = true;
-        powerUpdateReceiverPowerDisConnected.register(this, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
+        powerUpdateReceiverPowerDisConnected.register(activity, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
         powerUpdateReceiverPowerDisConnected.isRegistered = true;
-        powerUpdateReceiverPowerOkay.register(this, new IntentFilter(Intent.ACTION_BATTERY_LOW));
-        powerUpdateReceiverPowerLow.register(this, new IntentFilter(Intent.ACTION_BATTERY_OKAY));
+        powerUpdateReceiverPowerOkay.register(activity, new IntentFilter(Intent.ACTION_BATTERY_LOW));
+        powerUpdateReceiverPowerLow.register(activity, new IntentFilter(Intent.ACTION_BATTERY_OKAY));
 
+        mHandler.postDelayed(()-> mSdDataSource.initSdServerBindPowerBroadcastComplete(),100);
 //        if (Objects.nonNull(connectionUpdateReceiver) && !connectedConnectionUpdates)
 //            this.registerReceiver(connectionUpdateReceiver, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
 //        connectedConnectionUpdates = true;
@@ -1665,7 +1701,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         mUtil.writeToSysLogFile("SdServer.updatePrefs()");
 
         SharedPreferences SP = PreferenceManager
-                .getDefaultSharedPreferences(getBaseContext());
+                .getDefaultSharedPreferences(SdServer.this);
         try {
             mSdDataSourceName = SP.getString("DataSource", "Pebble");
             Log.v(TAG, "updatePrefs() - DataSource = " + mSdDataSourceName);

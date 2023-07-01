@@ -34,7 +34,7 @@ import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 
 import static java.lang.Math.sqrt;
@@ -106,7 +106,12 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
 
     }
 
-
+    @Override
+    public void initSdServerBindPowerBroadcastComplete(){
+        if (sensorsActive)
+            unBindSensorListeners();
+        bindSensorListeners();
+}
     private  void bindSensorListeners(){
         if (mSampleTimeUs < (double) SensorManager.SENSOR_DELAY_NORMAL ||
                 Double.isInfinite(mSampleTimeUs) ||
@@ -154,6 +159,10 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
         Log.i(TAG,"onStart(): returned from SdDataSource.onStart");
         mCurrentMaxSampleCount = getSdData().mDefaultSampleCount;
         bindSensorListeners();
+        useSdServerBinding().mSdData.watchConnected = true;
+        useSdServerBinding().mSdData.watchAppRunning = true;
+        if (useSdServerBinding().arePowerUpdateBroadcastsRegistered())
+            initSdServerBindPowerBroadcastComplete();
         mIsRunning = true;
     }
 

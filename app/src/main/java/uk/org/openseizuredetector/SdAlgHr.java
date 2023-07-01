@@ -3,7 +3,7 @@ package uk.org.openseizuredetector;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -11,15 +11,15 @@ import java.util.ArrayList;
 public class SdAlgHr {
     private final static String TAG = "SdAlgHr";
     private Context mContext;
-    private boolean mSimpleHrAlarmActive;
+    protected boolean mSimpleHrAlarmActive;
     private double mSimpleHrAlarmThreshMin;
     private double mSimpleHrAlarmThreshMax;
 
-    private boolean mAdaptiveHrAlarmActive;
+    protected boolean mAdaptiveHrAlarmActive;
     private double mAdaptiveHrAlarmWindowSecs;
     private int mAdaptiveHrAlarmWindowDp;
     private double mAdaptiveHrAlarmThresh;
-    private boolean mAverageHrAlarmActive;
+    protected boolean mAverageHrAlarmActive;
     private double mAverageHrAlarmWindowSecs;
     private int mAverageHrAlarmWindowDp;
     private double mAverageHrAlarmThreshMin;

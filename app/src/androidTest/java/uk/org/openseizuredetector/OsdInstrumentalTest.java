@@ -23,10 +23,9 @@ import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
+import org.junit.jupiter.api.Test;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.Robolectric;
 import org.robolectric.android.controller.ServiceController;
@@ -39,7 +38,7 @@ import java.util.Random;
 /**
  * Created by graham on 01/01/16.
  */
-@RunWith(AndroidJUnit4.class)
+
 public class OsdInstrumentalTest {
     Context context;
     Application application;

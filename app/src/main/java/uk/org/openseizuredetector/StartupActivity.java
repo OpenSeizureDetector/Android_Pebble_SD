@@ -25,6 +25,7 @@
 package uk.org.openseizuredetector;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -50,6 +51,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -117,8 +119,9 @@ public class StartupActivity extends AppCompatActivity {
     public final String[] LOCATION_PERMISSIONS_2 = {
             Manifest.permission.ACCESS_BACKGROUND_LOCATION,
     };
-
-
+    private long lastPress;
+    private Toast backpressToast;
+    private boolean activateStopByBack;
 
 
     @Override
@@ -305,10 +308,11 @@ public class StartupActivity extends AppCompatActivity {
         super.onStop();
         Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("StartupActivity.onStop() - unbinding from server");
-        mUtil.unbindFromServer(getApplicationContext(), mConnection);
+        mUtil.unbindFromServer(StartupActivity.this, mConnection);
         if (Objects.nonNull(mConnection)) {
-            if (Objects.nonNull(mConnection.mSdServer)) {
-                if (mConnection.mBound)
+            if (mConnection.mBound) {
+                if (Objects.nonNull(mConnection.mSdServer)) {
+
                     if (mConnection.mSdServer.mBound) {
                         mConnection.mSdServer.parentContext = null;
                         if (Objects.nonNull(mConnection.mSdServer.mWearNodeUri)) {
@@ -321,16 +325,46 @@ public class StartupActivity extends AppCompatActivity {
                             editor.apply();
                         }
                     }
-                if (Objects.nonNull(mConnection.mSdServer.uiLiveData))
-                    if (mConnection.mSdServer.uiLiveData.hasActiveObservers())
-                        mConnection.mSdServer.uiLiveData.removeObserver(StartupActivity.this::onChangedObserver);
+                    if (Objects.nonNull(mConnection.mSdServer.uiLiveData))
+                        if (mConnection.mSdServer.uiLiveData.hasActiveObservers())
+                            mConnection.mSdServer.uiLiveData.removeObserver(StartupActivity.this::onChangedObserver);
+                }
+                mUtil.unbindFromServer(StartupActivity.this, mConnection);
             }
         }
-        mUtil.unbindFromServer(StartupActivity.this, mConnection);
         mConnection = null;
+
+        if (isFinishing())
+            if (mUtil.isServerRunning())
+                mUtil.stopServer();
 
         if (Objects.nonNull(mUiTimer)) mUiTimer.cancel();
     }
+    @Override
+    public void onBackPressed() {
+        try {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastPress > 5000) {
+                backpressToast = Toast.makeText(getBaseContext(), "Press back again to exit", Toast.LENGTH_LONG);
+                backpressToast.show();
+                lastPress = currentTime;
+            } else {
+                Log.d(TAG, "onBackPressed: initiating shutdown");
+                if (backpressToast != null) backpressToast.cancel();
+                activateStopByBack = true;
+                if (Objects.nonNull(mConnection))
+                    if (mConnection.mBound)
+                        mUtil.unbindFromServer(StartupActivity.this, mConnection);
+                if (mUtil.isServerRunning())
+                    mUtil.stopServer();
+                mHandler.postDelayed(StartupActivity.this::finishAffinity, 100);
+                super.onBackPressed();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "onBackPressed() Error thrown while processing.");
+        }
+    }
+
 
 
     /*
@@ -692,6 +726,38 @@ public class StartupActivity extends AppCompatActivity {
                 allOk = false;
             }
         }
+
+        if (checkSelfPermission(Manifest.permission.BODY_SENSORS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.BODY_SENSORS}, 1);
+            ActivityCompat.requestPermissions((Activity) this,
+                    new String[]{Manifest.permission.BODY_SENSORS},
+            Constants.GLOBAL_CONSTANTS.PERMISSION_REQUEST_BODY_SENSORS);
+
+        } else {
+            Log.d(TAG, "ALREADY GRANTED");
+        }
+
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+            ActivityCompat.requestPermissions((Activity) this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    Constants.GLOBAL_CONSTANTS.PERMISSION_REQUEST_ACCESS_FINE_LOCATION
+            );
+
+        } else {
+            Log.d(TAG, "ALREADY GRANTED");
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            if (checkSelfPermission(Manifest.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND}, 1);
+                ActivityCompat.requestPermissions((Activity) this,
+                        new String[]{Manifest.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND},
+                        Constants.GLOBAL_CONSTANTS.PERMISSION_REQUEST_START_FOREGROUND_SERVICES_FROM_BACKGROUND
+                );
+
+            } else {
+                Log.d(TAG, "ALREADY GRANTED");
+            }
         return allOk;
     }
 

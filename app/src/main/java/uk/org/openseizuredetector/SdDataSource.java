@@ -133,6 +133,11 @@ public abstract class SdDataSource {
     private float batteryPct = -1f;
     private IntentFilter batteryStatusIntentFilter = null;
     private Intent batteryStatusIntent;
+    private JSONArray accelVals;
+    private JSONArray accelVals3D;
+    private JSONObject mainObject;
+    private JSONObject dataObject;
+    private String dataTypeStr;
 
 
     public SdDataSource(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
@@ -232,12 +237,12 @@ public abstract class SdDataSource {
             Log.v(TAG, "start(): starting status timer");
             mUtil.writeToSysLogFile("SdDataSource.start() - starting status timer");
             mStatusTimer = new Timer();
-            mStatusTimer.schedule(new TimerTask() {
+            /*mStatusTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
                     getStatus();
                 }
-            }, 0, mDataUpdatePeriod * 1000);
+            }, 0, mDataUpdatePeriod * 1000);*/
         } else {
             Log.v(TAG, "start(): status timer already running.");
             mUtil.writeToSysLogFile("SdDataSource.start() - status timer already running??");
@@ -272,6 +277,8 @@ public abstract class SdDataSource {
             mUtil.writeToSysLogFile("SDDataSource.start() - settings timer already running??");
         }
 
+        if (!useSdServerBinding().mSdDataSourceName.equals("phone"))
+            mSdData.mHRAlarmActive = mSdAlgHr.mSimpleHrAlarmActive||mSdAlgHr.mAverageHrAlarmActive||mSdAlgHr.mAdaptiveHrAlarmActive;
     }
 
     /**
@@ -351,15 +358,15 @@ public abstract class SdDataSource {
         String watchFwVersion;
         String sdVersion;
         String sdName;
-        JSONArray accelVals = null;
-        JSONArray accelVals3D = null;
+        accelVals = null;
+        accelVals3D = null;
         Log.v(TAG, "updateFromJSON - " + jsonStr);
 
         try {
-            JSONObject mainObject = new JSONObject(jsonStr);
+            mainObject = new JSONObject(jsonStr);
             //JSONObject dataObject = mainObject.getJSONObject("dataObj");
-            JSONObject dataObject = mainObject;
-            String dataTypeStr = dataObject.getString("dataType");
+            dataObject = mainObject;
+            dataTypeStr = dataObject.getString("dataType");
             Log.v(TAG, "updateFromJSON - dataType=" + dataTypeStr);
             if (dataTypeStr.equals("raw")) {
                 Log.v(TAG, "updateFromJSON - processing raw data");
@@ -419,7 +426,7 @@ public abstract class SdDataSource {
                 mWatchAppRunningCheck = true;
                 doAnalysis();
 
-                if (mSdData.haveSettings == false) {
+                if (!mSdData.haveSettings) {
                     retVal = "sendSettings";
                 } else {
                     retVal = "OK";
@@ -446,7 +453,7 @@ public abstract class SdDataSource {
                     mSdData.watchSdVersion = sdVersion;
                     mSdData.watchSdName = sdName;
                 } catch (Exception e) {
-                    Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString(),e);
+                    Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString(), e);
                     mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - " + jsonStr + " - " + e.toString());
                     mUtil.writeToSysLogFile("          This is probably because of an out of date watch app - please upgrade!");
                     e.printStackTrace();
@@ -460,9 +467,11 @@ public abstract class SdDataSource {
                 retVal = "ERROR";
             }
         } catch (Exception e) {
-            Log.e(TAG, "updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.toString());
+            Log.e(TAG, "updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " , e);
             mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.toString());
-            mUtil.writeToSysLogFile("updateFromJSON: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
+            if (Objects.nonNull(e.getCause()))
+                if (Objects.nonNull(e.getCause().getStackTrace()))
+                    mUtil.writeToSysLogFile("updateFromJSON: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
             if (accelVals == null) {
                 mUtil.writeToSysLogFile("updateFromJSON: accelVals is null when exception thrown");
             } else {
@@ -501,7 +510,7 @@ public abstract class SdDataSource {
             mSampleFreq = Constants.SD_SERVICE_CONSTANTS.defaultSampleRate;
             double freqRes = 1.0 * mSdData.mSampleFreq / mSdData.mNsamp;
             Log.v(TAG, "doAnalysis(): mSampleFreq=" + mSampleFreq + " mNSamp=" + mSdData.mNsamp + ": freqRes=" + freqRes);
-            Log.v(TAG,"doAnalysis(): rawData=" + Arrays.toString(mSdData.rawData));
+            Log.v(TAG, "doAnalysis(): rawData=" + Arrays.toString(mSdData.rawData));
             // Set the frequency bounds for the analysis in fft output bin numbers.
             nMin = (int) (mAlarmFreqMin / freqRes);
             nMax = (int) (mAlarmFreqMax / freqRes);
@@ -520,7 +529,7 @@ public abstract class SdDataSource {
             // Calculate the whole spectrum power (well a value equivalent to it that avoids square root calculations
             // and zero any readings that are above the frequency cutoff.
             double specPower = 0;
-            for (int i = 1; i < mSdData.mNsamp / 2; i++) {
+            for (int i = 1; i < (mSdData.mNsamp - 1) / 2; i++) {
                 if (i <= nFreqCutoff) {
                     specPower = specPower + getMagnitude(fft, i);
                 } else {
@@ -562,6 +571,8 @@ public abstract class SdDataSource {
             mSdData.maxVal = 0;   // not used
             mSdData.maxFreq = 0;  // not used
             mSdData.haveData = true;
+            useSdServerBinding().mSdData.haveData = true;
+            useSdServerBinding().mSdData.haveSettings = true;
             mSdData.alarmThresh = mAlarmThresh;
             mSdData.alarmRatioThresh = mAlarmRatioThresh;
             mSdData.alarmFreqMin = mAlarmFreqMin;
@@ -576,16 +587,21 @@ public abstract class SdDataSource {
             // Because we have received data, set flag to show watch app running.
             mWatchAppRunningCheck = true;
         } catch (Exception e) {
-            Log.e(TAG, "doAnalysis - Exception during Analysis",e);
-            mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e.toString());
-            mUtil.writeToSysLogFile("doAnalysis: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
-            mUtil.writeToSysLogFile("doAnalysis: mSdData.mNsamp="+mSdData.mNsamp);
-            mUtil.writeToSysLogFile("doAnalysis: alarmFreqMin="+mAlarmFreqMin+" nMin="+nMin);
-            mUtil.writeToSysLogFile("doAnalysis: alarmFreqMax="+mAlarmFreqMax+" nMax="+nMax);
-            mUtil.writeToSysLogFile("doAnalysis: nFreqCutoff.="+nFreqCutoff);
-            mUtil.writeToSysLogFile("doAnalysis: fft.length="+fft.length);
-            mWatchAppRunningCheck = false;
+            Log.e(TAG, "doAnalysis - Exception during Analysis", e);
+            if (Objects.nonNull(e.getCause())) {
+                if (Objects.nonNull(e.getCause().getStackTrace())) {
+                    mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e.toString());
+                    mUtil.writeToSysLogFile("doAnalysis: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
+                    mUtil.writeToSysLogFile("doAnalysis: mSdData.mNsamp=" + mSdData.mNsamp);
+                    mUtil.writeToSysLogFile("doAnalysis: alarmFreqMin=" + mAlarmFreqMin + " nMin=" + nMin);
+                    mUtil.writeToSysLogFile("doAnalysis: alarmFreqMax=" + mAlarmFreqMax + " nMax=" + nMax);
+                    mUtil.writeToSysLogFile("doAnalysis: nFreqCutoff.=" + nFreqCutoff);
+                    mUtil.writeToSysLogFile("doAnalysis: fft.length=" + fft.length);
+                    mWatchAppRunningCheck = false;
+                }
+            }
         }
+
 
         // Use the neural network algorithm to calculate the probability of the data
         // being representative of a seizure (sets mSdData.mPseizure)
@@ -1090,6 +1106,9 @@ public abstract class SdDataSource {
                 Toast.LENGTH_LONG).show();
     }
 
+    public void initSdServerBindPowerBroadcastComplete() {
+
+    }
 
     public class SdDataBroadcastReceiver extends BroadcastReceiver {
         //private String TAG = "SdDataBroadcastReceiver";

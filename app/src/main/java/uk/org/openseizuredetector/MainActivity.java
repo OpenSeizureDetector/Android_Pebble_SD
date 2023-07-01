@@ -25,6 +25,7 @@
 
 package uk.org.openseizuredetector;
 
+import uk.org.openseizuredetector.R;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -39,6 +40,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
 import android.preference.PreferenceManager;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -49,6 +51,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -68,8 +71,12 @@ import com.google.type.DateTime;
 import com.rohitss.uceh.UCEHandler;
 
 import java.lang.reflect.Field;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -98,6 +105,10 @@ public class MainActivity extends AppCompatActivity {
     Timer mUiTimer;
     private Context mContext;
 
+    private long lastPress;
+    private Toast backpressToast;
+    private boolean activateStopByBack;
+
     /**
      * Called when the activity is first created.
      */
@@ -113,8 +124,8 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         //int i = 5/0;  // Force exception to test handler.
-        mUtil = new OsdUtil(MainActivity.this, serverStatusHandler);
-        mConnection = new SdServiceConnection(MainActivity.this);
+        if (Objects.isNull(mUtil)) mUtil = new OsdUtil(MainActivity.this, serverStatusHandler);
+        if (Objects.isNull(mConnection)) mConnection = new SdServiceConnection(MainActivity.this);
         mUtil.writeToSysLogFile("");
         mUtil.writeToSysLogFile("* MainActivity Started     *");
         mUtil.writeToSysLogFile("MainActivity.onCreate()");
@@ -152,11 +163,13 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Log.v(TAG, "acceptAlarmButton.onClick()");
                 if (mConnection.mBound) {
-                    if ((mConnection.mSdServer.mSmsTimer != null)
-                            && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0)) {
-                        Log.i(TAG, "acceptAlarmButton.onClick() - Stopping SMS Timer");
-                        mUtil.showToast(getString(R.string.SMSAlarmCancelledMsg));
-                        mConnection.mSdServer.stopSmsTimer();
+                    if (Objects.nonNull(mConnection.mSdServer)) {
+                        if ((mConnection.mSdServer.mSmsTimer != null)
+                                && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0)) {
+                            Log.i(TAG, "acceptAlarmButton.onClick() - Stopping SMS Timer");
+                            mUtil.showToast(getString(R.string.SMSAlarmCancelledMsg));
+                            mConnection.mSdServer.stopSmsTimer();
+                        }
                     } else {
                         Log.v(TAG, "acceptAlarmButton.onClick() - Accepting Alarm");
                         mConnection.mSdServer.acceptAlarm();
@@ -171,7 +184,9 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Log.v(TAG, "cancelAudibleButton.onClick()");
                 if (mConnection.mBound) {
-                    mConnection.mSdServer.cancelAudible();
+                    if (Objects.nonNull(mConnection.mSdServer)) {
+                        mConnection.mSdServer.cancelAudible();
+                    }
                 }
             }
         });
@@ -189,7 +204,9 @@ public class MainActivity extends AppCompatActivity {
                 //    @Override
                 //    public void onClick(DialogInterface dialog, int which) {
                 if (mConnection.mBound) {
-                    mConnection.mSdServer.raiseManualAlarm();
+                    if (Objects.nonNull(mConnection.mSdServer)) {
+                        mConnection.mSdServer.raiseManualAlarm();
+                    }
                 }
                 //        dialog.dismiss();
                 //    }
@@ -285,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
         }
         else if (Objects.equals( R.id.action_start_stop, item.getItemId())) {
             // Respond to the start/stop server menu item.
-            Log.i(TAG, "action_sart_stop");
+            Log.i(TAG, "action_start_stop");
             if (mConnection.mBound) {
                 Log.i(TAG, "Stopping Server");
                 mUtil.unbindFromServer(MainActivity.this, mConnection);
@@ -311,21 +328,27 @@ public class MainActivity extends AppCompatActivity {
         else if (Objects.equals( R.id.action_test_alarm_beep, item.getItemId())) {
             Log.i(TAG, "action_test_alarm_beep");
             if (mConnection.mBound) {
-                mConnection.mSdServer.alarmBeep();
+                if (Objects.nonNull(mConnection.mSdServer)) {
+                    mConnection.mSdServer.alarmBeep();
+                }
             }
             return true;
         }
         else if (Objects.equals(R.id.action_test_warning_beep, item.getItemId())){
             Log.i(TAG, "action_test_warning_beep");
             if (mConnection.mBound) {
-                mConnection.mSdServer.warningBeep();
+                if (Objects.nonNull(mConnection.mSdServer)) {
+                    mConnection.mSdServer.warningBeep();
+                }
             }
             return true;
         }
         else if (Objects.equals( R.id.action_test_sms_alarm, item.getItemId())) {
             Log.i(TAG, "action_test_sms_alarm");
             if (mConnection.mBound) {
-                mConnection.mSdServer.sendSMSAlarm();
+                if (Objects.nonNull(mConnection.mSdServer)) {
+                    mConnection.mSdServer.sendSMSAlarm();
+                }
             }
             return true;
         }
@@ -702,11 +725,14 @@ public class MainActivity extends AppCompatActivity {
                     // Pebble Connected Phrase - use for HR if active instead.
                     tv = (TextView) findViewById(R.id.pebbleTv);
                     //if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
-                    if (mConnection.mSdServer.mSdData.mO2Sat > 0) {
-                        tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
+
+                    if ((int)mConnection.mSdServer.mSdData.mO2Sat > 0) {
+                        tv.setText(getString(R.string.HR_Equals) + ((int) mConnection.mSdServer.mSdData.mHR >0
+                                ? (int) mConnection.mSdServer.mSdData.mHR : " --- " ) + " bpm\n"
                                 + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
                     } else {
-                        tv.setText(getString(R.string.HR_Equals) + mConnection.mSdServer.mSdData.mHR + " bpm\n"
+                        tv.setText(getString(R.string.HR_Equals) + ((int) mConnection.mSdServer.mSdData.mHR >0
+                                ? (int) mConnection.mSdServer.mSdData.mHR : " --- " )+ " bpm\n"
                                 + "O2 Sat = ---%");
                     }
                     if (mConnection.mSdServer.mSdData.mHRAlarmStanding || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
@@ -939,7 +965,8 @@ public class MainActivity extends AppCompatActivity {
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
                     tv = (TextView) findViewById(R.id.pebTimeTv);
-                    tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
+                    Date dtt = Calendar.getInstance().getTime();
+                    tv.setText(DateFormat.getTimeInstance(DateFormat.MEDIUM).format(dtt));
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
 
@@ -1213,6 +1240,31 @@ public class MainActivity extends AppCompatActivity {
             serverStatusRunnable.run();
         } catch (Exception e) {
             Log.e(getClass().getName(), "onChangedObserver: error: ", e);
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        try {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastPress > 5000) {
+                backpressToast = Toast.makeText(getBaseContext(), "Press back again to exit", Toast.LENGTH_LONG);
+                backpressToast.show();
+                lastPress = currentTime;
+            } else {
+                Log.d(TAG, "onBackPressed: initiating shutdown");
+                if (backpressToast != null) backpressToast.cancel();
+                activateStopByBack = true;
+                if (Objects.nonNull(mConnection))
+                    if (mConnection.mBound)
+                        mUtil.unbindFromServer(MainActivity.this, mConnection);
+                if (mUtil.isServerRunning())
+                    mUtil.stopServer();
+                serverStatusHandler.postDelayed(MainActivity.this::finishAffinity, 100);
+                super.onBackPressed();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "onBackPressed() Error thrown while processing.");
         }
     }
 
