@@ -3,10 +3,9 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
-        \nV4.1.x - Added Machine Learning (Artificial Intelligence) Detection Algorithm Option (CNN V0.24).
-        Added Polish Translations by Jacek Błoniarz-Łuczak.
-        Added an Export Data function to save data to a file.
-        Added adaptive heart rate alarms.
+        \nV4.1.9 - Fixed problem with average heart rate alarm
+        Fixed issue with phone data source generating continuous alarms for Heart Rate or O2Sat
+        Fixed a small number of user reported issues (https://github.com/OpenSeizureDetector/Android_Pebble_SD/issues?q=is%3Aissue+milestone%3AV4.1.8)
           "</string>
     <string name="UpgradeMsg">
         Please enable the new &lt;b>Data Sharing&lt;/b> feature to help improve OpenSeizureDetector!&lt;br/>
