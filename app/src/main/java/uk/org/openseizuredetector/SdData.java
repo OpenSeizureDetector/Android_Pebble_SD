@@ -145,7 +145,7 @@ public class SdData implements Parcelable {
     }
 
     /*
-     * Intialise this SdData object from a JSON String
+     * Initialise this SdData object from a JSON String
      * FIXME - add O2saturation with checking in case it is not included in the data
      */
     public boolean fromJSON(String jsonStr) {

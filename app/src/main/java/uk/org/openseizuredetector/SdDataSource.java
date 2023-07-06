@@ -544,7 +544,7 @@ public abstract class SdDataSource {
 
             // Calculate the Region of Interest power and power ratio.
             double roiPower = 0;
-            for (int i = nMin; i < nMax; i++) {
+            for (int i = nMin; i < nMax -1; i++) {
                 roiPower = roiPower + getMagnitude(fft, i);
             }
             roiPower = roiPower / (nMax - nMin);
@@ -552,11 +552,11 @@ public abstract class SdDataSource {
 
             // Calculate the simplified spectrum - power in 1Hz bins.
             simpleSpec = new double[SIMPLE_SPEC_FMAX + 1];
-            for (int ifreq = 0; ifreq < SIMPLE_SPEC_FMAX; ifreq++) {
+            for (int ifreq = 0; ifreq < SIMPLE_SPEC_FMAX -1; ifreq++) {
                 int binMin = (int) (1 + ifreq / freqRes);    // add 1 to loose dc component
                 int binMax = (int) (1 + (ifreq + 1) / freqRes);
                 simpleSpec[ifreq] = 0;
-                for (int i = binMin; i < binMax; i++) {
+                for (int i = binMin; i < binMax -1; i++) {
                     simpleSpec[ifreq] = simpleSpec[ifreq] + getMagnitude(fft, i);
                 }
                 simpleSpec[ifreq] = simpleSpec[ifreq] / (binMax - binMin);
@@ -697,9 +697,9 @@ public abstract class SdDataSource {
     public void hrCheck() {
         Log.v(TAG, "hrCheck()");
         ArrayList<Boolean> checkResults;
-        checkResults = mSdAlgHr.checkHr(mSdData.mHR);
         /* Check for heart rate fault condition */
         if (mSdData.mHRAlarmActive) {
+            checkResults = mSdAlgHr.checkHr(mSdData.mHR);
             if (mSdData.mHR < 0) {
                 if (mSdData.mHRNullAsAlarm) {
                     Log.i(TAG, "Heart Rate Null - Alarming");
@@ -1074,6 +1074,19 @@ public abstract class SdDataSource {
                 mSdData.mO2SatThreshMin = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() O2SatThreshMin = " + mSdData.mO2SatThreshMin);
                 mUtil.writeToSysLogFile( "updatePrefs() O2SatThreshMin = " + mSdData.mO2SatThreshMin);
+
+                if ((mSdData.mO2SatNullAsAlarm||mSdData.mO2SatAlarmActive||
+                        mSdData.mHRAlarmActive||mSdData.mHRNullAsAlarm)
+                        && useSdServerBinding().mSdDataSourceName.equals("phone")) {
+                    mSdData.mHRAlarmActive = false;
+                    mSdData.mHRNullAsAlarm = false;
+                    mSdData.mO2SatNullAsAlarm = false;
+                    mSdData.mO2SatAlarmActive = false;
+                    useSdServerBinding().mSdData.mHRAlarmActive = false;
+                    useSdServerBinding().mSdData.mHRNullAsAlarm = false;
+                    useSdServerBinding().mSdData.mO2SatNullAsAlarm = false;
+                    useSdServerBinding().mSdData.mO2SatAlarmActive = false;
+                }
 
             } else {
                 Log.v(TAG, "updatePrefs() - prefStr is null - WHY????");

@@ -28,6 +28,8 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.BODY_SENSORS" />
+    <!--<uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS" />
+    If needed, uncomment. This line has identification as: most apps don't need this-->
     <uses-permission android:name="uk.org.openseizuredetector.aw.permission.BROADCAST_START" />
 
     <uses-feature
