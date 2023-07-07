@@ -473,6 +473,7 @@ public class LogManager {
             if (cursor != null) {
                 callback.accept(cursor2Json(cursor));
             } else {
+                Log.w(TAG,"getDatapointsByDate() - returned null result");
                 callback.accept(null);
             }
         }).execute();
@@ -974,8 +975,11 @@ public class LogManager {
                                     }
                                     // This starts the process of uploading the datapoints, one at a time.
                                     mCurrentEventRemoteId = eventId;
+                                    int listLen = 0;
+                                    if (mDatapointsToUploadList != null)
+                                        listLen = mDatapointsToUploadList.size();
                                     Log.v(TAG, "createEventCallback() - starting datapoints upload with eventId " + mCurrentEventRemoteId +
-                                            " Uploading " + mDatapointsToUploadList.size() + " datapoints");
+                                            " Uploading " + listLen + " datapoints");
                                     uploadNextDatapoint();
 
                                 });

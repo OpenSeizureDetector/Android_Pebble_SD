@@ -726,16 +726,23 @@ public class MainActivity extends AppCompatActivity {
                     tv = (TextView) findViewById(R.id.pebbleTv);
                     //if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
 
-                    if ((int)mConnection.mSdServer.mSdData.mO2Sat > 0) {
-                        tv.setText(getString(R.string.HR_Equals) + ((int) mConnection.mSdServer.mSdData.mHR >0
-                                ? (int) mConnection.mSdServer.mSdData.mHR : " --- " ) + " bpm\n"
-                                + "O2 Sat = " + mConnection.mSdServer.mSdData.mO2Sat + "%");
+                    if (mConnection.mSdServer.mSdData.mO2Sat > 0) {
+                        tv.setText(getString(R.string.HR_Equals) + Math.round(mConnection.mSdServer.mSdData.mHR) + " bpm\n"
+                                +"(av="
+                                +Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage)+","
+                                +Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage)+") bpm\n"
+                                + getString(R.string.SpO2)+" = " + Math.round(mConnection.mSdServer.mSdData.mO2Sat) + "%");
                     } else {
-                        tv.setText(getString(R.string.HR_Equals) + ((int) mConnection.mSdServer.mSdData.mHR >0
-                                ? (int) mConnection.mSdServer.mSdData.mHR : " --- " )+ " bpm\n"
-                                + "O2 Sat = ---%");
+                        tv.setText(getString(R.string.HR_Equals) + Math.round(mConnection.mSdServer.mSdData.mHR) + " bpm\n"
+                                +"(av="
+                                +Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage)+","
+                                +Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage)+") bpm\n"
+                                + getString(R.string.SpO2)+" = ---%");
                     }
-                    if (mConnection.mSdServer.mSdData.mHRAlarmStanding || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
+                    if (mConnection.mSdServer.mSdData.mHRAlarmStanding
+                            || mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding
+                            || mConnection.mSdServer.mSdData.mAverageHrAlarmStanding
+                            || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
                         tv.setBackgroundColor(alarmColour);
                         tv.setTextColor(alarmTextColour);
                     } else if (mConnection.mSdServer.mSdData.mHRFaultStanding || mConnection.mSdServer.mSdData.mO2SatFaultStanding) {

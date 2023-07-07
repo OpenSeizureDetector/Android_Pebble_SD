@@ -243,10 +243,9 @@ public class BLEScanActivity extends ListActivity {
     protected void onListItemClick(ListView l, View v, int position, long id) {
         final BluetoothDevice device = mLeDeviceListAdapter.getDevice(position);
         if (device == null) return;
-        Log.v(TAG, "onListItemClick: Device=" + device.getName() + ", Addr=" + device.getAddress());
+        Log.v(TAG, "onListItemClick: Device Addr=" + device.getAddress());
         if (mScanning) {
-            mBluetoothLeScanner.stopScan(mLeScanCallback);
-            mScanning = false;
+            stopScan();
         }
         Log.v(TAG, "Saving Device Details");
         SharedPreferences.Editor SPE = PreferenceManager
@@ -258,7 +257,7 @@ public class BLEScanActivity extends ListActivity {
             SPE.commit();
 
             Log.v(TAG, "Saved Device Name=" + device.getName() + " and Address=" + device.getAddress());
-        } catch (Exception ex) {
+        } catch (SecurityException ex) {
             Log.e(TAG, "Error Saving Device Name and Address!");
             Toast toast = Toast.makeText(this, "Problem Saving Device Name and Address", Toast.LENGTH_SHORT);
             toast.show();
@@ -287,6 +286,28 @@ public class BLEScanActivity extends ListActivity {
         }
     }
 
+    private void startScan() {
+        mScanning = true;
+        try {
+            mBluetoothLeScanner.startScan(mLeScanCallback);
+        } catch (SecurityException e) {
+            Log.e(TAG,"startScan - SecurityException while starting scan");
+            Toast toast = Toast.makeText(this, "ERROR Starting Scan - Security Exception", Toast.LENGTH_SHORT);
+            toast.show();
+
+        }
+    }
+
+    private void stopScan() {
+        mScanning = false;
+        try {
+            mBluetoothLeScanner.stopScan(mLeScanCallback);
+        } catch (SecurityException e) {
+            Log.e(TAG,"stopScan - SecurityException while stopping scan");
+            Toast toast = Toast.makeText(this, "ERROR Stopping Scan - Security Exception", Toast.LENGTH_SHORT);
+            toast.show();
+        }
+    }
 
     private void scanLeDevice(final boolean enable) {
         TextView tv;
@@ -296,8 +317,7 @@ public class BLEScanActivity extends ListActivity {
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    mScanning = false;
-                    mBluetoothLeScanner.stopScan(mLeScanCallback);
+                    stopScan();
                     invalidateOptionsMenu();
                     TextView tv = (TextView) (findViewById(R.id.ble_scan_status_tv));
                     tv.setText("Stopped");
@@ -307,16 +327,14 @@ public class BLEScanActivity extends ListActivity {
                 }
             }, SCAN_PERIOD);
 
-            mScanning = true;
-            mBluetoothLeScanner.startScan(mLeScanCallback);
+            startScan();
             tv = (TextView) (findViewById(R.id.ble_scan_status_tv));
             tv.setText("Scanning");
             Button b = (Button) findViewById(R.id.startScanButton);
             b.setEnabled(false);
 
         } else {
-            mScanning = false;
-            mBluetoothLeScanner.stopScan(mLeScanCallback);
+            stopScan();
             tv = (TextView) (findViewById(R.id.ble_scan_status_tv));
             tv.setText("Stopped");
             Button b = (Button) findViewById(R.id.startScanButton);
@@ -338,7 +356,11 @@ public class BLEScanActivity extends ListActivity {
 
         public void addDevice(BluetoothDevice device) {
             if (!mLeDevices.contains(device)) {
-                Log.v(TAG, "addDevice - " + device.getName());
+                try {
+                    Log.v(TAG, "addDevice - " + device.getName());
+                } catch (SecurityException e) {
+                    Log.e(TAG,"addDevice() - security exception getting device name");
+                }
                 mLeDevices.add(device);
             }
         }
@@ -399,7 +421,11 @@ public class BLEScanActivity extends ListActivity {
                 @Override
                 public void onScanResult(int callbackType, ScanResult result) {
                     //super.onScanResult(callbackType, result);
-                    Log.v(TAG, "ScanCallback - " + result.getDevice().getName());
+                    try {
+                        Log.v(TAG, "ScanCallback - " + result.getDevice().getName());
+                    } catch (SecurityException e) {
+                        Log.e(TAG,"ScanCallback - security exception getting device name");
+                    }
                     mLeDeviceListAdapter.addDevice(result.getDevice());
                     mLeDeviceListAdapter.notifyDataSetChanged();
                 }
