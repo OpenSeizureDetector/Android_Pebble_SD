@@ -853,9 +853,9 @@ public class MainActivity extends AppCompatActivity {
                     // Fault Conditions - We override the values in the UI because we do not know
                     // if the stored ones are correct or not with a fault present.
                     if ((mConnection.mSdServer.mSdData.alarmState == 4) ||
-                            (mConnection.mSdServer.mSdData.alarmState == 7)) {
+                            (mConnection.mSdServer.mSdData.alarmState == 7) || mConnection.mSdServer.mSdData.mHrFrozenFaultStanding) {
                         tv = (TextView) findViewById(R.id.alarmTv);
-                        if (mConnection.mSdServer.mSdData.alarmState == 4) {
+                        if (mConnection.mSdServer.mSdData.alarmState == 4 || mConnection.mSdServer.mSdData.mHrFrozenFaultStanding) {
                             tv.setText(R.string.Fault);
                             tv.setBackgroundColor(warnColour);
                             tv.setTextColor(warnTextColour);
@@ -876,7 +876,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(warnTextColour);
 
                         tv = (TextView) findViewById(R.id.pebbleTv);
-                        tv.setText(getString(R.string.HR_Equals) + " --- bpm\n"+getString(R.string.o2_sat)+" = --- %");
+                        //tv.setText(getString(R.string.HR_Equals) + " --- bpm\n"+getString(R.string.o2_sat)+" = --- %");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
 

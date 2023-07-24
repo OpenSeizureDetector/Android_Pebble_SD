@@ -104,6 +104,10 @@ public abstract class SdDataSource {
     private int mAlarmCount;
     protected String mBleDeviceAddr;
     protected String mBleDeviceName;
+    private double mLastHrValue;
+    private Time mHrStatusTime;
+    private double mHrFrozenPeriod = 60; // seconds
+    private boolean mHrFrozenAlarm;
 
 
     public SdDataSource(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
@@ -163,6 +167,12 @@ public abstract class SdDataSource {
             Log.v(TAG, "start(): status timer already running.");
             mUtil.writeToSysLogFile("SdDataSource.start() - status timer already running??");
         }
+
+        // Initialise time we last received a change in HR value.
+        mHrStatusTime = new Time(Time.getCurrentTimezone());
+        mHrStatusTime.setToNow();
+        mLastHrValue = -1;
+
         if (mFaultCheckTimer == null) {
             Log.v(TAG, "start(): starting alarm check timer");
             mUtil.writeToSysLogFile("SdDataSource.start() - starting alarm check timer");
@@ -779,6 +789,21 @@ public abstract class SdDataSource {
             //Log.v(TAG, "faultCheck() - watch app not running so not doing anything");
             mAlarmCount = 0;
         }
+
+        if (mSdData.mHRAlarmActive && mHrFrozenAlarm) {
+            if (mSdData.mHR != mLastHrValue) {
+                mLastHrValue = mSdData.mHR;
+                mHrStatusTime = tnow;
+                mSdData.mHrFrozenFaultStanding = false;
+            } else {
+                tdiff = (tnow.toMillis(false) - mHrStatusTime.toMillis(false));
+                if (tdiff > mHrFrozenPeriod *1000.) {
+                    mSdData.mHrFrozenFaultStanding = true;
+                } else {
+                    mSdData.mHrFrozenFaultStanding = false;
+                }
+            }
+        }
     }
 
     void nnAnalysis() {
@@ -970,6 +995,10 @@ public abstract class SdDataSource {
                 mSdData.mHRNullAsAlarm = SP.getBoolean("HRNullAsAlarm", false);
                 Log.v(TAG, "updatePrefs() HRNullAsAlarm = " + mSdData.mHRNullAsAlarm);
                 mUtil.writeToSysLogFile( "updatePrefs() HRNullAsAlarm = " + mSdData.mHRNullAsAlarm);
+
+                mHrFrozenAlarm = SP.getBoolean("HrFrozenAlarm", true);
+                Log.v(TAG, "updatePrefs() - mHrFrozenAlarm = " + mHrFrozenAlarm);
+                mUtil.writeToSysLogFile("updatePrefs() - mHrFrozenAlarm = " + mHrFrozenAlarm);
 
                 prefStr = SP.getString("HRThreshMin", "SET_FROM_XML");
                 mSdData.mHRThreshMin = (short) Integer.parseInt(prefStr);
