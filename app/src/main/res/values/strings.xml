@@ -4,9 +4,6 @@
     <string name="changelog">
         "\n
         \nV4.2.x - FIXME - ADD V4.2.x changelog.
-        \nV4.1.9 - Fixed problem with average heart rate alarm
-        Fixed issue with phone data source generating continuous alarms for Heart Rate or O2Sat
-        Fixed a small number of user reported issues (https://github.com/OpenSeizureDetector/Android_Pebble_SD/issues?q=is%3Aissue+milestone%3AV4.1.8)
           "</string>
     <string name="UpgradeMsg">
         Please enable the new &lt;b>Data Sharing&lt;/b> feature to help improve OpenSeizureDetector!&lt;br/>
@@ -502,4 +499,6 @@
     <string name="export_data_menuItem">Export Data</string>
     <string name="data_exported_ok">Data Exported OK</string>
     <string name="error_exporting_data">*** ERROR Exporting Data ***</string>
+    <string name="HrFrozenTitle">Heart Rate measurement Frozen Warning</string>
+    <string name="HrFrozenSummary">Produce a fault warning if the heart rate measurement freezes and does not change for more than 1 minute.</string>
 </resources>

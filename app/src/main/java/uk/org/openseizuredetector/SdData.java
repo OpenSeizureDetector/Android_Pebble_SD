@@ -123,6 +123,7 @@ public class SdData implements Parcelable {
 
     public CircBuf mAdaptiveHrBuf;
     public CircBuf mAverageHrBuf;
+    public boolean mHrFrozenFaultStanding = false;
 
     /* Analysis results */
     public Time dataTime = null;

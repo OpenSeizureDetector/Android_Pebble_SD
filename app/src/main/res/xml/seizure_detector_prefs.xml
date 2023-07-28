@@ -84,6 +84,11 @@
             android:summary="@string/HRAlarmEnabledSummary"
             android:title="@string/HRAlarmEnabledTitle" />
         <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="HrFrozenAlarm"
+            android:summary="@string/HrFrozenSummary"
+            android:title="@string/HrFrozenTitle" />
+        <CheckBoxPreference
             android:defaultValue="false"
             android:key="HRNullAsAlarm"
             android:summary="@string/HRNullAlarmSummary"
