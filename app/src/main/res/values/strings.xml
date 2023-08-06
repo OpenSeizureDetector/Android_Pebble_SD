@@ -4,10 +4,6 @@
     <string name="changelog">
         "\n
         \nV4.2.x - FIXME - ADD V4.2.x changelog.
-        \nV4.1.x - Added Machine Learning (Artificial Intelligence) Detection Algorithm Option (CNN V0.24).
-        Added Polish Translations by Jacek Błoniarz-Łuczak.
-        Added an Export Data function to save data to a file.
-        Added adaptive heart rate alarms.
           "</string>
     <string name="UpgradeMsg">
         Please enable the new &lt;b>Data Sharing&lt;/b> feature to help improve OpenSeizureDetector!&lt;br/>
@@ -503,4 +499,6 @@
     <string name="export_data_menuItem">Export Data</string>
     <string name="data_exported_ok">Data Exported OK</string>
     <string name="error_exporting_data">*** ERROR Exporting Data ***</string>
+    <string name="HrFrozenTitle">Heart Rate measurement Frozen Warning</string>
+    <string name="HrFrozenSummary">Produce a fault warning if the heart rate measurement freezes and does not change for more than 1 minute.</string>
 </resources>
