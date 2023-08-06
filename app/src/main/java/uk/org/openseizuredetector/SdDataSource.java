@@ -23,6 +23,8 @@
 */
 package uk.org.openseizuredetector;
 
+import static java.lang.Math.sqrt;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -47,6 +49,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 interface SdDataReceiver {
     public void onSdDataReceived(SdData sdData);
@@ -95,7 +98,7 @@ public abstract class SdDataSource {
     private short mAlarmThresh;
     private short mAlarmRatioThresh;
     protected double accelerationCombined = -1d;
-    protected double gravityScaleFactor;
+    protected double gravityScaleFactor  = 0d;
     protected double miliGravityScaleFactor;
     private boolean mFallActive;
     private short mFallThreshMin;
@@ -184,7 +187,9 @@ public abstract class SdDataSource {
 
         // now we have mSampleFreq in number samples / second (Hz) as default.
         // to calculate sampleTimeUs: (1 / mSampleFreq) * 1000 [1s == 1000000us]
-        mSampleTimeUs = (1d / (double) mSdData.mSampleFreq) * 1e6d;
+        mSampleTimeUs = TimeUnit.SECONDS.toMicros((long)(1d / (double) mSdData.mSampleFreq));
+
+        accelerationCombined = sqrt(mSdData.rawData3D[0] * mSdData.rawData3D[0] + mSdData.rawData3D[1*(mSdData.rawData3D.length/3)] * mSdData.rawData3D[1*(mSdData.rawData3D.length/3)] + mSdData.rawData3D[2*(mSdData.rawData3D.length/3)] * mSdData.rawData3D[2*(mSdData.rawData3D.length/3)]);
 
         // num samples == fixed final 250 (NSAMP)
         // time seconds in default == 10 (SIMPLE_SPEC_FMAX)
@@ -271,7 +276,7 @@ public abstract class SdDataSource {
                 public void run() {
                     mSdData.haveSettings = false;
                 }
-            }, 0, 1000 * mSettingsPeriod);  // ask for settings less frequently than we get data
+            }, 0, 1000  * mSettingsPeriod);  // ask for settings less frequently than we get data
         } else {
             Log.v(TAG, "start(): settings timer already running.");
             mUtil.writeToSysLogFile("SDDataSource.start() - settings timer already running??");
@@ -424,6 +429,15 @@ public abstract class SdDataSource {
                 }
 
                 mWatchAppRunningCheck = true;
+                boolean incorrectmNSamp = mSdData.mNsamp < 1.0;
+                boolean incorrectmSampleFreq = mSdData.mSampleFreq < 1.0;
+                boolean incorrectGravityScaleFactor = gravityScaleFactor == 0d;
+                if (incorrectmSampleFreq|| incorrectmNSamp || incorrectGravityScaleFactor){
+                    if (incorrectmNSamp) mSdData.mNsamp = mSdData.rawData.length;
+                    if (incorrectmSampleFreq) mSdData.mSampleFreq = mSdData.mNsamp / mSdData.analysisPeriod;
+                    calculateStaticTimings();
+                }
+
                 doAnalysis();
 
                 if (!mSdData.haveSettings) {
@@ -433,8 +447,8 @@ public abstract class SdDataSource {
                 }
             } else if (dataTypeStr.equals("settings")) {
                 Log.v(TAG, "updateFromJSON - processing settings");
-                mSamplePeriod = (short) dataObject.getInt("analysisPeriod");
-                mSampleFreq = (short) dataObject.getInt("sampleFreq");
+                mSdData.analysisPeriod = (short) dataObject.getInt("analysisPeriod");
+                mSdData.mSampleFreq = (short) dataObject.getInt("sampleFreq");
                 mSdData.batteryPc = (short) dataObject.getInt("battery");
                 Log.v(TAG, "updateFromJSON - mSamplePeriod=" + mSamplePeriod + " mSampleFreq=" + mSampleFreq);
                 mUtil.writeToSysLogFile("SDDataSource.updateFromJSON - Settings Received");
@@ -442,16 +456,13 @@ public abstract class SdDataSource {
                 mUtil.writeToSysLogFile("    * batteryPc = " + mSdData.batteryPc);
 
                 try {
-                    watchPartNo = dataObject.getString("watchPartNo");
-                    watchFwVersion = dataObject.getString("watchFwVersion");
-                    sdVersion = dataObject.getString("sdVersion");
-                    sdName = dataObject.getString("sdName");
-                    mUtil.writeToSysLogFile("    * sdName = " + sdName + " version " + sdVersion);
-                    mUtil.writeToSysLogFile("    * watchPartNo = " + watchPartNo + " fwVersion " + watchFwVersion);
-                    mSdData.watchPartNo = watchPartNo;
-                    mSdData.watchFwVersion = watchFwVersion;
-                    mSdData.watchSdVersion = sdVersion;
-                    mSdData.watchSdName = sdName;
+                    mSdData.watchPartNo = dataObject.getString("watchPartNo");
+                    mSdData.watchFwVersion = dataObject.getString("watchFwVersion");
+                    mSdData.watchSdVersion = dataObject.getString("sdVersion");
+                    mSdData.watchSdName = dataObject.getString("sdName");
+                    mUtil.writeToSysLogFile("    * sdName = " + mSdData.watchSdName + " version " + mSdData.watchSdVersion);
+                    mUtil.writeToSysLogFile("    * watchPartNo = " + mSdData.watchPartNo + " fwVersion " + mSdData.watchFwVersion);
+
                 } catch (Exception e) {
                     Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString(), e);
                     mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - " + jsonStr + " - " + e.toString());
@@ -459,7 +470,6 @@ public abstract class SdDataSource {
                     e.printStackTrace();
                 }
                 mSdData.haveSettings = true;
-                mSdData.mSampleFreq = mSampleFreq;
                 mWatchAppRunningCheck = true;
                 retVal = "OK";
             } else {
@@ -589,7 +599,7 @@ public abstract class SdDataSource {
         } catch (Exception e) {
             Log.e(TAG, "doAnalysis - Exception during Analysis", e);
             if (Objects.nonNull(e.getCause())) {
-                if (Objects.nonNull(e.getCause().getStackTrace())) {
+                if (Objects.nonNull(Objects.requireNonNull(e.getCause()).getStackTrace())) {
                     mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e.toString());
                     mUtil.writeToSysLogFile("doAnalysis: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
                     mUtil.writeToSysLogFile("doAnalysis: mSdData.mNsamp=" + mSdData.mNsamp);

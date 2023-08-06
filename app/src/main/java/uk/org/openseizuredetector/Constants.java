@@ -2,12 +2,15 @@ package uk.org.openseizuredetector;
 
 import android.net.Uri;
 
+import java.util.concurrent.TimeUnit;
+
 public class Constants {
     public interface GLOBAL_CONSTANTS {
         public final int ALARMS_OFF = 6;
         public final int ALARMS_ON = 0;
         // Request codes
         // CALENDAR GROUP
+
         public final int PERMISSION_REQUEST_READ_CALENDAR = 0;
         public final int PERMISSION_REQUEST_WRITE_CALENDAR = 1;
         // CAMERA GROUP

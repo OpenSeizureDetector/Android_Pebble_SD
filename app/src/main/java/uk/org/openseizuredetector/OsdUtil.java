@@ -71,6 +71,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 //use java.Util.Objects as comparetool.
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -99,7 +100,7 @@ public class OsdUtil {
     private static final String mSysLogTableName = "SysLog";
     //private LogManager mLm;
     static private SQLiteDatabase mSysLogDb = null;   // SQLite Database for data and log entries.
-    private final static Long mMinPruneInterval = new Long(5 * 60 * 1000); // minimum time between syslog pruning is 5 minutes
+    private final static Long mMinPruneInterval = TimeUnit.MINUTES.toMillis(5); // minimum time between syslog pruning is 5 minutes
     private static Long mLastPruneMillis = new Long(0);   // Record of the last time we pruned the syslog db.
 
     private static int mNbound = 0;
@@ -769,7 +770,7 @@ public class OsdUtil {
         if (currentDateMillis > mLastPruneMillis + mMinPruneInterval) {
             mLastPruneMillis = currentDateMillis;
             // FIXME - change this to something sensible like 7 days after testing
-            long endDateMillis = currentDateMillis - 5 * 60 * 1000;
+            long endDateMillis = currentDateMillis - TimeUnit.MINUTES.toMillis(5);
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String endDateStr = dateFormat.format(new Date(endDateMillis));
             Log.v(TAG, "pruneSysLogDb - endDateStr=" + endDateStr);

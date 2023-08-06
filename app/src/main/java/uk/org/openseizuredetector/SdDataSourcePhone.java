@@ -213,7 +213,6 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     mSdData.mSampleFreq = (int) (mSdData.mNsamp / mSdData.dT);
                     mSdData.haveSettings = true;
                     Log.v(TAG, "onSensorChanged(): Collected data for " + mSdData.dT + " sec - calculated sample rate as " + mSampleFreq + " Hz");
-                    accelerationCombined = sqrt(event.values[0] * event.values[0] + event.values[1] * event.values[1] + event.values[2] * event.values[2]);
                     calculateStaticTimings();
                     unBindSensorListeners();
                     bindSensorListeners();
