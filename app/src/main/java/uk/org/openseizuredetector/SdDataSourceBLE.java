@@ -39,11 +39,6 @@ import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -303,7 +298,7 @@ public class SdDataSourceBLE extends SdDataSource {
                     Log.d(TAG, "Heart rate format UINT8.");
                 }
                 final int heartRate = characteristic.getIntValue(format, 1);
-                mSdData.mHR = (double) heartRate;
+                mSdData.mHr = (double) heartRate;
                 Log.d(TAG, String.format("Received heart rate: %d", heartRate));
             }
             else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_DATA)) {

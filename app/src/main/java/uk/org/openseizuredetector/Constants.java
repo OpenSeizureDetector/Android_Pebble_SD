@@ -98,6 +98,7 @@ public class Constants {
         public static String CONNECTIONUPDATE_ACTION = "uk.org.openseizuredetector.onConnectionUpdate";
         public static String BROADCAST_TO_WEARRECEIVER = "uk.org.openseizuredetector.aw.broadcastToWearReceiver";
         public static String BROADCAST_TO_WEARRECEIVER_MANIFEST = "uk.org.openseizuredetector.aw.broadcastToWearReceiverAtManifest";
+        public static String WEARRECEIVER_FOREGROUND_STARTED = "uk.org.openseizuredetector.aw.foregroundServiceWearReceiverStarted";
         public static String BROADCAST_TO_SDSERVER = "uk.org.openseizuredetector.broadcastTosdServer";
         public static String PUSH_SETTINGS_ACTION = "uk.org.openseizuredetector.aw.wear.pushSettings";
         public static String PULL_SETTINGS_ACTION = "uk.org.openseizuredetector.aw.wear.pullSettings";

@@ -25,7 +25,6 @@
 
 package uk.org.openseizuredetector;
 
-import uk.org.openseizuredetector.R;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -34,13 +33,12 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
 import androidx.preference.PreferenceManager;
-import android.text.format.Time;
+
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -56,7 +54,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
-import androidx.appcompat.view.menu.MenuView;
 import androidx.core.view.MenuCompat;
 
 import com.github.mikephil.charting.charts.BarChart;
@@ -67,19 +64,16 @@ import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 
 import com.github.mikephil.charting.utils.ValueFormatter;
-import com.google.type.DateTime;
 import com.rohitss.uceh.UCEHandler;
 
 import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Timer;
-import java.util.TimerTask;
 
 //MPAndroidChart
 
@@ -633,7 +627,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     tv = (TextView) findViewById(R.id.hrAlgTv);
                     tv.setText("HR ");
-                    if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
+                    if (mConnection.mSdServer.mSdData.mHrAlarmActive) {
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
                         tv.setPaintFlags(tv.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
@@ -724,28 +718,28 @@ public class MainActivity extends AppCompatActivity {
 
                     // Pebble Connected Phrase - use for HR if active instead.
                     tv = (TextView) findViewById(R.id.pebbleTv);
-                    //if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
+                    //if (mConnection.mSdServer.mSdData.mHrAlarmActive) {
 
                     if (mConnection.mSdServer.mSdData.mO2Sat > 0) {
-                        tv.setText(getString(R.string.HR_Equals) + " " + Math.round(mConnection.mSdServer.mSdData.mHR) + " bpm\n"
+                        tv.setText(getString(R.string.HR_Equals) + " " + Math.round(mConnection.mSdServer.mSdData.mHr) + " bpm\n"
                                 +"(av = "
                                 +Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage)+", "
                                 +Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage)+" bpm)\n"
                                 + getString(R.string.SpO2)+" = " + Math.round(mConnection.mSdServer.mSdData.mO2Sat) + "%");
                     } else {
-                        tv.setText(getString(R.string.HR_Equals) + " " + Math.round(mConnection.mSdServer.mSdData.mHR) + " bpm\n"
+                        tv.setText(getString(R.string.HR_Equals) + " " + Math.round(mConnection.mSdServer.mSdData.mHr) + " bpm\n"
                                 +"(av = "
                                 +Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage)+", "
                                 +Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage)+" bpm)\n"
                                 + getString(R.string.SpO2)+" = ---%");
                     }
-                    if (mConnection.mSdServer.mSdData.mHRAlarmStanding
+                    if (mConnection.mSdServer.mSdData.mHrAlarmStanding
                             || mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding
                             || mConnection.mSdServer.mSdData.mAverageHrAlarmStanding
                             || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
                         tv.setBackgroundColor(alarmColour);
                         tv.setTextColor(alarmTextColour);
-                    } else if (mConnection.mSdServer.mSdData.mHRFaultStanding || mConnection.mSdServer.mSdData.mO2SatFaultStanding) {
+                    } else if (mConnection.mSdServer.mSdData.mHrFaultStanding || mConnection.mSdServer.mSdData.mO2SatFaultStanding) {
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
                     } else {

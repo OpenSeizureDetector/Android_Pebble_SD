@@ -25,15 +25,12 @@ package uk.org.openseizuredetector;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Binder;
 import android.os.Handler;
-import android.os.IBinder;
-import android.os.PowerManager;
+
 import androidx.preference.PreferenceManager;
 import android.util.Log;
 
@@ -253,14 +250,14 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     rawDataList.clear();
                     rawDataList3D.clear();
                     mSdData.mNsamp = Constants.SD_SERVICE_CONSTANTS.defaultSampleCount;
-                    mSdData.mHR = -1d;
-                    mSdData.mHRAlarmActive = false;
-                    mSdData.mHRAlarmStanding = false;
+                    mSdData.mHr = -1d;
+                    mSdData.mHrAlarmActive = false;
+                    mSdData.mHrAlarmStanding = false;
                     mSdData.mHRNullAsAlarm = false;
                     mSdData.mNsamp /= 2;
 
                     // Set HR and O2Sat values to fault value (-1) to avoid alarms if the user enables HR or O2Sat alarms.
-                    mSdData.mHR = -1;
+                    mSdData.mHr = -1;
                     mSdData.mO2Sat = -1;
                     doAnalysis();
                     mSdData.mNsamp = 0;
