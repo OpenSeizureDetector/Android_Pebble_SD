@@ -3,6 +3,7 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
+        \mV4.1.11 - Changed target Android Version to 13 (SDK33) (Play Store policy).
         \nV4.1.10 - Added warning if heart rate readings freeze and do not change for more than 1 minute.
         \nV4.1.9 - Fixed problem with average heart rate alarm
         Fixed issue with phone data source generating continuous alarms for Heart Rate or O2Sat
