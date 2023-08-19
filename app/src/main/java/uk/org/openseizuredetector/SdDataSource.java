@@ -98,7 +98,7 @@ public abstract class SdDataSource {
     private short mAlarmThresh;
     private short mAlarmRatioThresh;
     protected double accelerationCombined = -1d;
-    protected double gravityScaleFactor  = 0d;
+    protected double gravityScaleFactor  = 1d;
     protected double miliGravityScaleFactor;
     private boolean mFallActive;
     private short mFallThreshMin;
@@ -191,7 +191,7 @@ public abstract class SdDataSource {
 
         // now we have mSampleFreq in number samples / second (Hz) as default.
         // to calculate sampleTimeUs: (1 / mSampleFreq) * 1000 [1s == 1000000us]
-        mSampleTimeUs = TimeUnit.SECONDS.toMicros((long)(1d / (double) mSdData.mSampleFreq));
+        mSampleTimeUs = OsdUtil.convertTimeUnit(1d / (double) mSdData.mSampleFreq,TimeUnit.SECONDS,TimeUnit.MICROSECONDS);
 
         accelerationCombined = sqrt(mSdData.rawData3D[0] * mSdData.rawData3D[0] + mSdData.rawData3D[1*(mSdData.rawData3D.length/3)] * mSdData.rawData3D[1*(mSdData.rawData3D.length/3)] + mSdData.rawData3D[2*(mSdData.rawData3D.length/3)] * mSdData.rawData3D[2*(mSdData.rawData3D.length/3)]);
 
@@ -203,19 +203,22 @@ public abstract class SdDataSource {
         // 1s == 1.000.000 us (sample interval)
         // sampleTime = 40.000 uS == (SampleTime (s) * 1000)
         if (getSdData().rawData.length>0 && getSdData().dT >0d){
-            double mSDDataSampleTimeUs = 1d/(double) (Constants.SD_SERVICE_CONSTANTS.defaultSampleCount / Constants.SD_SERVICE_CONSTANTS.defaultSampleTime) * 1.0e6;
+            double mSDDataSampleTimeUs = OsdUtil.convertTimeUnit(1d/(double) (Constants.SD_SERVICE_CONSTANTS.defaultSampleCount / Constants.SD_SERVICE_CONSTANTS.defaultSampleTime),TimeUnit.SECONDS,TimeUnit.MICROSECONDS);
             mConversionSampleFactor = mSampleTimeUs / mSDDataSampleTimeUs;
+            //remove last line
+            mConversionSampleFactor = 10e18;
         }
         else
             mConversionSampleFactor = 1d;
         if (accelerationCombined != -1d) {
-            gravityScaleFactor = (Math.round(accelerationCombined / SensorManager.GRAVITY_EARTH) % 10d);
+            gravityScaleFactor = (Math.round(accelerationCombined * SensorManager.GRAVITY_EARTH) % SensorManager.GRAVITY_EARTH);
 
         }
         else
         {
             gravityScaleFactor = 1d;
         }
+
         miliGravityScaleFactor = gravityScaleFactor * 1e3;
 
     }
@@ -411,6 +414,13 @@ public abstract class SdDataSource {
                     Log.e(TAG,"Error in getting battery percentage",e);
                 }
                 accelVals = dataObject.getJSONArray("data"); //upstream version has data.
+                try{
+                    mSdData.dT = dataObject.getDouble("dT");
+                }catch (JSONException e)
+                {
+                    Log.e(TAG,"updateFromJSON(): import dT: " ,e);
+                    mSdData.dT = dataObject.getInt("analysisPeriod");
+                }
                 //TODO change rawData in WEAR sddata class to data
                 Log.v(TAG, "Received " + accelVals.length() + " acceleration values, rawData Length is " + mSdData.rawData.length);
                 if (accelVals.length() > mSdData.rawData.length) {
@@ -441,6 +451,11 @@ public abstract class SdDataSource {
                     }
                 }
 
+                try{
+                    mSdData.mSampleFreq = dataObject.getInt("sampleFreq");
+                }catch (JSONException e){
+                    mSdData.mSampleFreq = mSdData.rawData.length / (int) mSdData.dT;
+                }
                 mWatchAppRunningCheck = true;
                 boolean incorrectmNSamp = mSdData.mNsamp < 1.0;
                 boolean incorrectmSampleFreq = mSdData.mSampleFreq < 1.0;
@@ -532,7 +547,7 @@ public abstract class SdDataSource {
             // FIXME - Use specified sampleFreq, not this hard coded one
             mSampleFreq = Constants.SD_SERVICE_CONSTANTS.defaultSampleRate;
             double freqRes = 1.0 * mSdData.mSampleFreq / mSdData.mNsamp;
-            Log.v(TAG, "doAnalysis(): mSampleFreq=" + mSampleFreq + " mNSamp=" + mSdData.mNsamp + ": freqRes=" + freqRes);
+            Log.v(TAG, "doAnalysis(): mSampleFreq=" + mSdData.mSampleFreq + " mNSamp=" + mSdData.mNsamp + ": freqRes=" + freqRes);
             Log.v(TAG, "doAnalysis(): rawData=" + Arrays.toString(mSdData.rawData));
             // Set the frequency bounds for the analysis in fft output bin numbers.
             nMin = (int) (mAlarmFreqMin / freqRes);
@@ -1001,6 +1016,10 @@ public abstract class SdDataSource {
                 toast.show();
             }
 
+            // Start with loading SdServer version of SdData:
+            if (Objects.nonNull(useSdServerBinding()))
+                if (Objects.nonNull(useSdServerBinding().mSdData))
+                    mSdData = useSdServerBinding().mSdData;
 
             // Watch Settings
             String prefStr;

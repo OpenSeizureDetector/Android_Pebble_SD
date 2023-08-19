@@ -534,11 +534,36 @@ public class OsdUtil {
     }
 
     /**
+     * convertTimeUnit -- Convert From TimeUnit to TimeUnit in Double format
+     * @param amount Enter in double format value to convert
+     * @param from Enter TimeUnit Origin like TimeUnit.SECONDS
+     * @param to Enter TimeUnit.MICROSECONDS
+     * <p>
+     * if from equals to, the original value returns.
+     *
+     * @return Double converted value.
+     * */
+
+    public static double convertTimeUnit(double amount, TimeUnit from, TimeUnit to) {
+        // if the same unit is passed, avoid the conversion
+        if (from == to) {
+            return amount;
+        }
+        // is from or to the larger unit?
+        if (from.ordinal() < to.ordinal()) { // from is smaller
+            return amount / from.convert(1, to);
+        } else {
+            return amount * to.convert(1, from);
+        }
+    }
+
+
+    /**
      * string2date - returns a Date object represented by string dateStr
      * It first attempts to parse it as a long integer, in which case it is assumed to
      * be a unix timestamp.
      * If that fails it attempts to parse it as yyyy-MM-dd'T'HH:mm:ss'Z' format.
-     * @param dateStr String reprenting a date
+     * @param dateStr String representing a date
      * @return Date object or null if parsing fails.
      */
     public Date string2date(String dateStr) {

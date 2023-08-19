@@ -219,12 +219,12 @@ public class SdDataSourceAw extends SdDataSource {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.i(TAG,this.getClass().getCanonicalName() + " onReceive: received broadcast.");
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                goAsync();
-            }
             if (!Objects.equals(intent,null))
                 if (Constants.ACTION.BROADCAST_TO_SDSERVER.equals(intent.getAction()))
                     intentReceivedAction(intent);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                goAsync();
+            }
         }
 
     }
@@ -302,12 +302,16 @@ public class SdDataSourceAw extends SdDataSource {
                                 }
                             }
 
-                            //Sending return from function if aWIntent is null. With luck and a retry
-                            //the process can continue.
-                            if (Objects.isNull(aWIntentBase)) {
-                                Intent lAwIntent = aWIntent;
-                                lAwIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_WEARRECEIVER_INTENT);
-                                mContext.sendBroadcast(lAwIntent);
+                            if (Objects.isNull(aWIntentBase)){
+                                if (Objects.nonNull(aWIntentBaseManifest)) {
+                                    aWIntent = aWIntentBaseManifest;
+                                    aWIntent.removeExtra(Constants.GLOBAL_CONSTANTS.intentAction);
+                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_START_INTENT);
+
+                                    PendingIntent pIntent = PendingIntent.getBroadcast(mContext, useSdServerBinding().mStartId, aWIntent,
+                                            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
+                                    pIntent.send();
+                                }
                                 return;
                             }
 
@@ -359,7 +363,7 @@ public class SdDataSourceAw extends SdDataSource {
                                     mHandler.postDelayed(() -> {
                                         aWIntent = aWIntentBase;
                                         aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.PUSH_SETTINGS_ACTION);
-                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, getSdData().toSettingsJSON());
+                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, mSdData.toSettingsJSON()); // send SdDataSource Updated mSdData
                                         mContext.sendBroadcast(aWIntent);
                                     }, 100);
                                 }catch (Exception e){

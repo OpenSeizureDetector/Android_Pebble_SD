@@ -102,7 +102,7 @@ public class SdData implements Parcelable {
     public String watchSdName = "";
 
 
-    public double dT;
+    public double dT = -1d;
     public boolean watchConnected = false;
 
 
@@ -201,6 +201,8 @@ public class SdData implements Parcelable {
                 mHrThreshMax = jo.optDouble("hrThreshMax");
                 mHrThreshMin = jo.optDouble("hrThreshMin");
                 phoneName = jo.optString("phoneName");
+                dT = jo.optDouble("dT",dT);//FIXME
+                //dT = -2; //set -2 as Received, from mobile, pending first round of data.
 
             }
             if (Constants.GLOBAL_CONSTANTS.dataTypeRaw.equals(mDataType)) {
