@@ -32,6 +32,7 @@ public class SdAlgNn {
     private String mUrlBase = "https://osdApi.ddns.net";
     private InterpreterApi interpreter;
     private Context mContext;
+    private MlModelManager mMm;
     RequestQueue mQueue;
 
     private double mSdThresh;  // Acceleration Standard Deviation Threshold required to activate analysis (%)
@@ -42,6 +43,7 @@ public class SdAlgNn {
     public SdAlgNn(Context context) {
         Log.d(TAG, "SdAlgNn Constructor");
         mContext = context;
+        mMm = new MlModelManager(mContext);
 
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(mContext);
