@@ -3,7 +3,7 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
-        \mV4.1.11 - Changed target Android Version to 13 (SDK33) (Play Store policy).
+        \mV4.1.11 - Fixed issue with data export crashing when lots of data requested.  Added simple 'Fidget Detector' to detect if watch has fallen off the wrist.  Changed target Android Version to 13 (SDK33) (Play Store policy).
         \nV4.1.10 - Added warning if heart rate readings freeze and do not change for more than 1 minute.
         \nV4.1.9 - Fixed problem with average heart rate alarm
         Fixed issue with phone data source generating continuous alarms for Heart Rate or O2Sat
@@ -503,4 +503,11 @@
     <string name="error_exporting_data">*** ERROR Exporting Data ***</string>
     <string name="HrFrozenTitle">Heart Rate measurement Frozen Warning</string>
     <string name="HrFrozenSummary">Produce a fault warning if the heart rate measurement freezes and does not change for more than 1 minute.</string>
+    <string name="FidgetSettingsTitle">Fidget Detector Settings</string>
+    <string name="FidgetDetectorEnabledTitle">Enable Fidget Detector</string>
+    <string name="FidgetDetectorEnabledSummary">Generates a fault if no movement has been detected for a specified period (signifying the watch has been removed)</string>
+    <string name="FidgetDetectorThresholdSummary">The threshold (as % standard deviation) applied to each set of accelerometer data to determine if a \'Fidget\' has occurred.</string>
+    <string name="FidgetDetectorThresholdTitle">Fidget Detector Threshold (%)</string>
+    <string name="FidgetDetectorPeriodTitle">Fidget Detector Period (minutes)</string>
+    <string name="FidgetDetectorPeriodSummary">A fault is generated if no movement (fidgets) are detected for more than the Fidget Detector Period.</string>
 </resources>
