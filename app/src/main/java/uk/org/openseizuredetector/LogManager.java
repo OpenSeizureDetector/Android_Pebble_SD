@@ -343,7 +343,7 @@ public class LogManager {
 
             if (sdData.alarmState != 0) {
                 Log.d(TAG, "writeDatapointToLocalDb(): adding event to local DB");
-                createLocalEvent(dateStr,sdData.alarmState,null, null, null, sdData.toSettingsJSON());
+                createLocalEvent(dateStr,sdData.alarmState,null, null, sdData.alarmPhrase, sdData.toSettingsJSON());
             }
         } catch (SQLException e) {
             Log.e(TAG, "writeToLocalDb(): Error Writing Data: " + e.toString());

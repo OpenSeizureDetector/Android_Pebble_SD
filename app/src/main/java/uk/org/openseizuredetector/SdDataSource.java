@@ -46,6 +46,7 @@ import org.jtransforms.fft.DoubleFFT_1D;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -78,6 +79,7 @@ public abstract class SdDataSource {
     protected Context mContext;
     protected SdDataReceiver mSdDataReceiver;
     private String TAG = "SdDataSource";
+    protected List<Double> initialBuffer = new ArrayList<>(0);
 
     protected boolean mIsRunning = false;
 
@@ -145,6 +147,7 @@ public abstract class SdDataSource {
     private Time mHrStatusTime;
     private double mHrFrozenPeriod = 60; // seconds
     private boolean mHrFrozenAlarm;
+    private double accelerationCombinedCubeRoot;
 
 
     public SdDataSource(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
@@ -181,19 +184,25 @@ public abstract class SdDataSource {
      * mSdData.analysisPeriod and mSdData.mDefaultSampleCount .
      */
     protected void calculateStaticTimings(){
+        double averageFromInit = 0d;
         // default sampleCount : mSdData.mDefaultSampleCount
         // default sampleTime  : mSdData.analysisPeriod
         // sampleFrequency = sampleCount / sampleTime:
-        if (mSdData.mNsamp == 0)
-            mSdData.mSampleFreq = (long) mSdData.mDefaultSampleCount/ mSdDataSettings.analysisPeriod;
-        else
-            mSdData.mSampleFreq = (long) mSdData.mNsamp/ mSdData.analysisPeriod;
-
+        if (mSdData.dT > 0d && mSdData.mNsamp >0)
+        {
+            mSdData.mSampleFreq = (long)( (double) mSdData.mNsamp / mSdData.dT);
+        }
+        else{
+            if (mSdData.mNsamp == 0)
+                mSdData.mSampleFreq = (long) mSdData.mDefaultSampleCount / mSdDataSettings.analysisPeriod;
+            else
+                mSdData.mSampleFreq = (long) mSdData.mNsamp / mSdData.analysisPeriod;
+        }
         // now we have mSampleFreq in number samples / second (Hz) as default.
         // to calculate sampleTimeUs: (1 / mSampleFreq) * 1000 [1s == 1000000us]
         mSampleTimeUs = OsdUtil.convertTimeUnit(1d / (double) mSdData.mSampleFreq,TimeUnit.SECONDS,TimeUnit.MICROSECONDS);
-
-        accelerationCombined = sqrt(mSdData.rawData3D[0] * mSdData.rawData3D[0] + mSdData.rawData3D[1*(mSdData.rawData3D.length/3)] * mSdData.rawData3D[1*(mSdData.rawData3D.length/3)] + mSdData.rawData3D[2*(mSdData.rawData3D.length/3)] * mSdData.rawData3D[2*(mSdData.rawData3D.length/3)]);
+        accelerationCombinedCubeRoot = Math.pow(mSdData.rawData3D[0]*mSdData.rawData3D[0]+mSdData.rawData3D[1]*mSdData.rawData3D[1]+mSdData.rawData3D[2]*mSdData.rawData3D[2],1/3);
+        accelerationCombined = sqrt(mSdData.rawData3D[0] * mSdData.rawData3D[0] + mSdData.rawData3D[1] * mSdData.rawData3D[1] + mSdData.rawData3D[2] * mSdData.rawData3D[2]);
 
         // num samples == fixed final 250 (NSAMP)
         // time seconds in default == 10 (SIMPLE_SPEC_FMAX)
@@ -205,14 +214,15 @@ public abstract class SdDataSource {
         if (getSdData().rawData.length>0 && getSdData().dT >0d){
             double mSDDataSampleTimeUs = OsdUtil.convertTimeUnit(1d/(double) (Constants.SD_SERVICE_CONSTANTS.defaultSampleCount / Constants.SD_SERVICE_CONSTANTS.defaultSampleTime),TimeUnit.SECONDS,TimeUnit.MICROSECONDS);
             mConversionSampleFactor = mSampleTimeUs / mSDDataSampleTimeUs;
-            //remove last line
-            mConversionSampleFactor = 10e18;
+
         }
         else
             mConversionSampleFactor = 1d;
         if (accelerationCombined != -1d) {
-            gravityScaleFactor = (Math.round(accelerationCombined * SensorManager.GRAVITY_EARTH) % SensorManager.GRAVITY_EARTH);
-
+            if (accelerationCombined >= SensorManager.GRAVITY_EARTH)
+                gravityScaleFactor = accelerationCombined  / SensorManager.GRAVITY_EARTH;
+            else
+                gravityScaleFactor =1d;
         }
         else
         {
@@ -430,6 +440,8 @@ public abstract class SdDataSource {
                 int i;
                 for (i = 0; i < accelVals.length(); i++) {
                     mSdData.rawData[i] = accelVals.getDouble(i);
+                    if (initialBuffer.size() <= mSdData.mDefaultSampleCount)
+                        initialBuffer.add(accelVals.getDouble(i));
                 }
                 mSdData.mNsamp = accelVals.length();
                 //Log.d(TAG,"accelVals[0]="+accelVals.getDouble(0)+", mSdData.rawData[0]="+mSdData.rawData[0]);
@@ -442,6 +454,9 @@ public abstract class SdDataSource {
                     }
                     for (i = 0; i < accelVals3D.length(); i++) {
                         mSdData.rawData3D[i] = accelVals3D.getDouble(i);
+                        if(i==3){
+                            calculateStaticTimings();
+                        }
                     }
                 } catch (JSONException e) {
                     // If we get an error, just set rawData3D to zero
@@ -456,6 +471,8 @@ public abstract class SdDataSource {
                 }catch (JSONException e){
                     mSdData.mSampleFreq = mSdData.rawData.length / (int) mSdData.dT;
                 }
+                if (initialBuffer.size() == mSdDataSettings.mDefaultSampleCount)
+                    calculateStaticTimings();
                 mWatchAppRunningCheck = true;
                 boolean incorrectmNSamp = mSdData.mNsamp < 1.0;
                 boolean incorrectmSampleFreq = mSdData.mSampleFreq < 1.0;
@@ -680,12 +697,14 @@ public abstract class SdDataSource {
         if (mSdData.mOsdAlarmActive) {
             // Is the current set of data representing an alarm state?
             if ((mSdData.roiPower > mAlarmThresh) && ((10 * mSdData.roiPower / mSdData.specPower) > mAlarmRatioThresh)) {
+                mSdData.alarmPhrase = "roiPower passed threshold or roiPower/specPower passed AlarmTreshold";
                 inAlarm = true;
             }
         }
 
         if (mSdData.mCnnAlarmActive) {
             if (mSdData.mPseizure > 0.5) {
+                mSdData.alarmPhrase = "Probability of Seizure passed threshold of 50%";
                 inAlarm = true;
             }
         }
@@ -711,6 +730,7 @@ public abstract class SdDataSource {
                 // revert to OK
                 mSdData.alarmState = 0;
                 mAlarmCount = 0;
+                mSdData.alarmPhrase = "";
             }
         }
 
@@ -748,11 +768,13 @@ public abstract class SdDataSource {
             if (mSdData.mHr < 0) {
                 if (mSdData.mHRNullAsAlarm) {
                     Log.i(TAG, "Heart Rate Null - Alarming");
+                    mSdData.alarmPhrase = "Heart Rate Null - Alarming";
                     mSdData.mHrFaultStanding = false;
                     mSdData.mHrAlarmStanding = true;
                     mSdData.mAdaptiveHrAlarmStanding = false;
                     mSdData.mAverageHrAlarmStanding = false;
                 } else {
+                    mSdData.alarmPhrase = "Heart Rate Fault (HR<0)";
                     Log.i(TAG, "Heart Rate Fault (HR<0)");
                     mSdData.mHrFaultStanding = true;
                     mSdData.mHrAlarmStanding = false;
@@ -793,11 +815,13 @@ public abstract class SdDataSource {
                     mSdData.mO2SatAlarmStanding = true;
                 } else {
                     Log.i(TAG, "Oxygen Saturation Fault (O2Sat<0)");
+                    mSdData.alarmPhrase = "Oxygen Saturation Fault (O2Sat<0)";
                     mSdData.mO2SatFaultStanding = true;
                     mSdData.mO2SatAlarmStanding = false;
                 }
             } else if  (mSdData.mO2Sat < mSdData.mO2SatThreshMin) {
                 Log.i(TAG, "Oxygen Saturation Abnormal - " + mSdData.mO2Sat + " %");
+                mSdData.alarmPhrase = "Oxygen Saturation Abnormal - " + mSdData.mO2Sat + " %";
                 mSdData.mO2SatFaultStanding = false;
                 mSdData.mO2SatAlarmStanding = true;
             } else {

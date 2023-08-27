@@ -279,12 +279,16 @@ public class ExportDataActivity extends AppCompatActivity
                         try {
                             dataObj = new JSONArray(datapointsJsonStr);
                             Log.v(TAG, "exportToFile() - dataObj length=" + dataObj.length());
+                            JSONObject datapointJsonObj = null;
+                            String dataJsonStr = null;
+                            JSONObject dataJsonObj = null;
+                            JSONArray rawDataArr = null;
                             for (int i = 0; i < dataObj.length(); i++) {
-                                JSONObject datapointJsonObj = dataObj.getJSONObject(i);
-                                String dataJsonStr = datapointJsonObj.getString("dataJSON");
+                                datapointJsonObj = dataObj.getJSONObject(i);
+                                dataJsonStr = datapointJsonObj.getString("dataJSON");
                                 Log.v(TAG, "exportToFile() - i=" + i + "dataJsonStr=" + dataJsonStr);
-                                JSONObject dataJsonObj = new JSONObject(dataJsonStr);
-                                JSONArray rawDataArr = dataJsonObj.getJSONArray("rawData");
+                                dataJsonObj = new JSONObject(dataJsonStr);
+                                rawDataArr = dataJsonObj.getJSONArray("rawData");
                                 try {
                                     fileOutputStream.write(dataJsonObj.getString("dataTime").getBytes(StandardCharsets.UTF_8));
                                     fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
@@ -302,7 +306,10 @@ public class ExportDataActivity extends AppCompatActivity
                                     Log.e(TAG, "exportToFile() - ERROR Writing File: " + e.toString());
                                     //mUtil.showToast("ERROR WRITING FILE");
                                 }
-
+                                datapointJsonObj = null;
+                                dataJsonStr = null;
+                                dataJsonObj = null;
+                                rawDataArr = null;
                             }
                         } catch (JSONException | NullPointerException e) {
                             Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string " + datapointsJsonStr);

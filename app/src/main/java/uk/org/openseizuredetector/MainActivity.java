@@ -595,7 +595,8 @@ public class MainActivity extends AppCompatActivity {
                         if (mConnection.mSdServer.mLogNDA)
                             tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName + "\nNDA Logging");
                         else
-                            tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
+                            tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName +
+                                    (Objects.nonNull(mConnection.mSdServer.mSdData.alarmPhrase) ? "\n"+"(last/current Alarm Phase:\n" + mConnection.mSdServer.mSdData.alarmPhrase:"" ));
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
                     }
