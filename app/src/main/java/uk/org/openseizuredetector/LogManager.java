@@ -105,7 +105,7 @@ public class LogManager {
     public double mNDATimeRemaining; // hours
     public double mNDALogPeriodHours = 24.0;  // hours
     private static Context mContext;
-    private OsdUtil mUtil;
+    private static OsdUtil mUtil;
     public static WebApiConnection mWac;
     public static final boolean USE_FIREBASE_BACKEND = false;
 
@@ -493,109 +493,23 @@ public class LogManager {
     }
 
     /**
-     * exportToFile - export datapoints data to a csv file on the android device.
+     * exportToCsvFile - export datapoints data to a csv file on the android device.
      *
      * @param endDate  end date of period to export (Date type)
      * @param duration duration in hours of period to export (double)
      * @param uri      uri of file to save.
+     * @param callback  function to be called on completion of the task (returns true on success, false on error)
      */
     public void exportToCsvFile(Date endDate, double duration, Uri uri, BooleanCallback callback) {
         Log.v(TAG, "exportToCsvFile(): uri=" + uri.toString());
-        long endDateMillis = endDate.getTime();
-        long durationMillis = (long) (duration * 3600. * 1000);
-        long startDateMillis = endDateMillis - durationMillis;
-        Log.v(TAG, "exportToCsvFile() - endDateMillis=" + endDateMillis + ", startDateMillis=" + startDateMillis + ", durationMillis=" + durationMillis);
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String sDateStr = dateFormat.format(new Date(startDateMillis));
-        String eDateStr = dateFormat.format(new Date(endDateMillis));
-        Log.v(TAG, "exportToFile() - sDateStr=" + sDateStr + " eDateStr=" + eDateStr);
-        String[] columns = {"*"};
-        String whereClause = "DataTime>? AND DataTime<?";
-        String[] whereArgs = {sDateStr, eDateStr};
-        new SelectQueryTask(mDpTableName, columns, whereClause, whereArgs,
-                null, null, "dataTime DESC", (Cursor cursor) -> {
-            Log.v(TAG, "exportToCsvFile - returned " + cursor);
-            if (cursor != null) {
-                Log.d(TAG, "we got a cursor!");
-                try {
-                    ParcelFileDescriptor pfd = mContext.getContentResolver().
-                            openFileDescriptor(uri, "w");
-                    FileOutputStream fileOutputStream =
-                            new FileOutputStream(pfd.getFileDescriptor());
-                    fileOutputStream.write(("# dataTime, alarmState, hr, o2sat, accel*125\n").getBytes());
-                    writeDatapointsToFile(cursor, fileOutputStream);
-                    // Let the document provider know you're done by closing the stream.
-                    fileOutputStream.close();
-                    pfd.close();
-                    callback.accept(true);
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                    mUtil.showToast(mContext.getString(R.string.error_exporting_data));
-                    Log.e(TAG, "exportToFile() - FileNotFoundException: " + e.toString());
-                    callback.accept(false);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    mUtil.showToast(mContext.getString(R.string.error_exporting_data));
-                    Log.e(TAG, "exportToFile() - IOException: " + e.toString());
-                    callback.accept(false);
-                }
-
-            } else {
-                Log.w(TAG, "exportToCsvFile() - returned null result");
-                callback.accept(false);
-            }
+        new ExportDataTask(endDate, duration, uri, (boolean retVal) -> {
+            Log.v(TAG, "exportToCsvFile - returned " + retVal);
+            callback.accept(retVal);
         }).execute();
         return;
     }
 
-    private void writeDatapointsToFile(Cursor c, FileOutputStream fileOutputStream) {
-        Log.v(TAG, "writeDatapointsToFile()");
-        JSONArray dataObj;
-        String dataJsonStr;
-        JSONObject dataJsonObj;
-        JSONArray rawDataArr;
-        Log.d(TAG,"writeDatapointsToFile()" + c.getColumnNames());
-        //for (int i=0;i<c.getColumnCount();i++) {
-        //    Log.d(TAG,"  Column"+i+" = "+c.getColumnName(i));
-        //}
-        try {
-            Log.d(TAG,"writeDatapointsToFile() - writing query result to csv file....");
-            while (c.moveToNext()) {
-                //Log.d(TAG,"writeDatapointsToFile - row="+c.getString(0)+", "+c.getString(1));
-                dataJsonStr = c.getString(3);   // dataJSON is index 3
-                //Log.v(TAG, "exportToFile() - i=" + i + "dataJsonStr=" + dataJsonStr);
-                dataJsonObj = new JSONObject(dataJsonStr);
-                rawDataArr = dataJsonObj.getJSONArray("rawData");
-                try {
-                    //fileOutputStream.write(dataJsonObj.getString("dataTime").getBytes(StandardCharsets.UTF_8));
-                    fileOutputStream.write(c.getString(1).getBytes(StandardCharsets.UTF_8));  // We use the database record date rather than datajson date because it is formatted yyyy-mm-dd
-                    fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
-                    fileOutputStream.write(dataJsonObj.getString("alarmState").getBytes(StandardCharsets.UTF_8));
-                    fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
-                    fileOutputStream.write(dataJsonObj.getString("hr").getBytes(StandardCharsets.UTF_8));
-                    fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
-                    fileOutputStream.write(dataJsonObj.getString("o2Sat").getBytes(StandardCharsets.UTF_8));
-                    for (int j = 0; j < 125; j++) {  // FIXME Hard Coded array length, but rawDataArr.length() is 125*3 so we don't want to use that.
-                        fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
-                        fileOutputStream.write(rawDataArr.getString(j).getBytes(StandardCharsets.UTF_8));
-                    }
-                    fileOutputStream.write("\n".getBytes(StandardCharsets.UTF_8));
-                } catch (IOException e) {
-                    Log.e(TAG, "exportToFile() - ERROR Writing File: " + e.toString());
-                    mUtil.showToast("ERROR WRITING FILE");
-                }
 
-            }
-            Log.d(TAG,"writeDatapointsToFile() - data written to file ok");
-            mUtil.showToast(mContext.getString(R.string.data_exported_ok));
-
-        } catch (JSONException | NullPointerException e) {
-            Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string ");
-            dataObj = null;
-            mUtil.showToast(mContext.getString(R.string.error_exporting_data));
-            Log.e(TAG, "exportToFile() - JSONException: " + e.toString());
-        }
-    }
 
 
     /**
@@ -875,6 +789,158 @@ public class LogManager {
         protected void onPostExecute(final Cursor result) {
             mCallback.accept(result);
         }
+    }
+
+    //query(String table, String[] columns, String selection, String[] selectionArgs,
+    // String groupBy, String having, String orderBy)
+
+    /**
+     * Exports the contents of the local datapoints table between given dates
+     * to a .csv file.
+     * Use as new ExportDataTask(xxx,xxx,xx,xxxx).execute()
+     */
+    static private class ExportDataTask extends AsyncTask<Void, Void, Boolean> {
+        BooleanCallback mCallback;
+        Date mEndDate;
+        double mDuration;
+        Uri mUri;
+
+
+        ExportDataTask(Date endDate, double duration, Uri uri, BooleanCallback callback) {
+            Log.i(TAG,"ExportDataTask constructor()");
+            this.mCallback = callback;
+            mEndDate = endDate;
+            mDuration = duration;
+            mUri = uri;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            Log.v(TAG, "ExportDataTask.doInBackground()");
+            long endDateMillis = mEndDate.getTime();
+            long durationMillis = (long) (mDuration * 3600. * 1000);
+            long startDateMillis = endDateMillis - durationMillis;
+            Log.v(TAG, "exportDataTask() - endDateMillis=" + endDateMillis + ", startDateMillis=" + startDateMillis + ", durationMillis=" + durationMillis);
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String sDateStr = dateFormat.format(new Date(startDateMillis));
+            String eDateStr = dateFormat.format(new Date(endDateMillis));
+            Log.v(TAG, "ExportDataTask.doInBackground - sDateStr=" + sDateStr + " eDateStr=" + eDateStr);
+            String[] columns = {"*"};
+            String whereClause = "DataTime>? AND DataTime<?";
+            String[] whereArgs = {sDateStr, eDateStr};
+
+            try {
+                Cursor cursor = mOsdDb.query(mDpTableName, columns, whereClause,
+                        whereArgs, null, null, "dataTime DESC");
+                cursor.moveToFirst();
+
+                Log.v(TAG, "ExportDataTask.doInBackground()  - returned " + cursor);
+                if (cursor != null) {
+                    Log.d(TAG, "ExportDataTask.doInBackground() - query complete - writing to file....");
+                    try {
+                        ParcelFileDescriptor pfd = mContext.getContentResolver().
+                                openFileDescriptor(mUri, "w");
+                        FileOutputStream fileOutputStream =
+                                new FileOutputStream(pfd.getFileDescriptor());
+                        fileOutputStream.write(("# dataTime, alarmState, hr, o2sat, accel*125\n").getBytes());
+                        int nRec = writeDatapointsToFile(cursor, fileOutputStream);
+                        // Let the document provider know you're done by closing the stream.
+                        fileOutputStream.close();
+                        pfd.close();
+                        Log.d(TAG, "ExportDataTask.doInBackground() - file written ok - notifying callback function....");
+                        mCallback.accept(true);
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                        mUtil.showToast(mContext.getString(R.string.error_exporting_data));
+                        Log.e(TAG, "ExportDataTask.doInBackground() - FileNotFoundException: " + e.toString());
+                        mCallback.accept(false);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        mUtil.showToast(mContext.getString(R.string.error_exporting_data));
+                        Log.e(TAG, "ExportDataTask.doInBackground() - IOException: " + e.toString());
+                        mCallback.accept(false);
+                    }
+
+                } else {
+                    Log.w(TAG, "ExportDataTask.doInBackground() - returned null result");
+                    mCallback.accept(false);
+                }
+
+
+                return (true);
+            } catch (SQLException e) {
+                Log.e(TAG, "ExportDataTask.doInBackground(): Error selecting Data: " + e.toString());
+                return (null);
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "ExportDataTask.doInBackground(): Illegal Argument Exception: " + e.toString());
+                return (null);
+            } catch (NullPointerException e) {
+                Log.e(TAG, "SelectQueryTask.doInBackground(): Null Pointer Exception: " + e.toString());
+                return (null);
+            }
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean result) {
+            Log.i(TAG,"ExportDataTask.onPostExecute() - notifying callback function of result: "+result);
+            mCallback.accept(result);
+        }
+
+        private int writeDatapointsToFile(Cursor c, FileOutputStream fileOutputStream) {
+            Log.v(TAG, "writeDatapointsToFile()");
+            int nRec = 0;
+            JSONArray dataObj;
+            String dataJsonStr;
+            JSONObject dataJsonObj;
+            JSONArray rawDataArr;
+            Log.d(TAG, "writeDatapointsToFile()" + c.getColumnNames());
+            //for (int i=0;i<c.getColumnCount();i++) {
+            //    Log.d(TAG,"  Column"+i+" = "+c.getColumnName(i));
+            //}
+            try {
+                Log.d(TAG, "writeDatapointsToFile() - writing query result to csv file....");
+                while (c.moveToNext()) {
+                    nRec += 1;
+                    //Log.d(TAG,"writeDatapointsToFile - row="+c.getString(0)+", "+c.getString(1));
+                    dataJsonStr = c.getString(3);   // dataJSON is index 3
+                    //Log.v(TAG, "exportToFile() - i=" + i + "dataJsonStr=" + dataJsonStr);
+                    dataJsonObj = new JSONObject(dataJsonStr);
+                    rawDataArr = dataJsonObj.getJSONArray("rawData");
+                    try {
+                        //fileOutputStream.write(dataJsonObj.getString("dataTime").getBytes(StandardCharsets.UTF_8));
+                        fileOutputStream.write(c.getString(1).getBytes(StandardCharsets.UTF_8));  // We use the database record date rather than datajson date because it is formatted yyyy-mm-dd
+                        fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
+                        fileOutputStream.write(dataJsonObj.getString("alarmState").getBytes(StandardCharsets.UTF_8));
+                        fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
+                        fileOutputStream.write(dataJsonObj.getString("hr").getBytes(StandardCharsets.UTF_8));
+                        fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
+                        fileOutputStream.write(dataJsonObj.getString("o2Sat").getBytes(StandardCharsets.UTF_8));
+                        for (int j = 0; j < 125; j++) {  // FIXME Hard Coded array length, but rawDataArr.length() is 125*3 so we don't want to use that.
+                            fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
+                            fileOutputStream.write(rawDataArr.getString(j).getBytes(StandardCharsets.UTF_8));
+                        }
+                        fileOutputStream.write("\n".getBytes(StandardCharsets.UTF_8));
+                    } catch (IOException e) {
+                        Log.e(TAG, "exportToFile() - ERROR Writing File: " + e.toString());
+                        mUtil.showToast("ERROR WRITING FILE");
+                        return(-1);
+                    }
+
+                }
+                Log.d(TAG, "writeDatapointsToFile() - data written to file ok");
+                mUtil.showToast(mContext.getString(R.string.data_exported_ok)+ " "+nRec);
+                return nRec;
+
+            } catch (JSONException | NullPointerException e) {
+                Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string ");
+                dataObj = null;
+                mUtil.showToast(mContext.getString(R.string.error_exporting_data));
+                Log.e(TAG, "exportToFile() - JSONException: " + e.toString());
+                return(-1);
+            }
+        }
+
+
     }
 
 
