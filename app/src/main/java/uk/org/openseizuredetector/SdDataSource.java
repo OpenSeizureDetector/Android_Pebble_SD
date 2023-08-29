@@ -928,7 +928,7 @@ public abstract class SdDataSource {
                 mFidgetDetectorEnabled = SP.getBoolean("FidgetDetectorEnabled", false);
                 mFidgetPeriod = readDoublePref(SP, "FidgetDetectorPeriod", "20"); // minutes
                 Log.v(TAG, "updatePrefs() - mFidgetPeriod = " + mFidgetPeriod);
-                mFidgetThreshold = readDoublePref(SP, "FidgetDetectorThreshold", "5");
+                mFidgetThreshold = readDoublePref(SP, "FidgetDetectorThreshold", "0.6 ");
                 Log.d(TAG,"updatePrefs(): mFidgetThreshold="+mFidgetThreshold);
 
             } catch (Exception ex) {
