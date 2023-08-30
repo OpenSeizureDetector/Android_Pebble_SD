@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:versionCode="128"
     android:versionName="4.2.1b">
+
     <!-- android:allowBackup="false" -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -21,13 +22,10 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <!--
- AD_ID seems to be added automatically as part of google play services.  We don't use ads,
-    so explicitly remove it to keep Google Play store happy.
-    -->
-    <uses-permission
-        android:name="com.google.android.gms.permission.AD_ID"
-        tools:node="remove" />
+
+    <!-- AD_ID seems to be added automatically as part of google play services.  We don't use ads,
+    so explicitly remove it to keep Google Play store happy.  -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove"/>
 
     <uses-feature
         android:name="android.hardware.telephony"
@@ -41,17 +39,6 @@
         android:label="@string/app_name"
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/AppTheme">
-        <activity
-            android:name=".MainActivity2"
-            android:exported="true"
-            android:label="@string/title_activity_main2"
-            android:theme="@style/AppTheme.NoActionBar">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
         <activity
             android:name=".MlModelManager"
             android:exported="false"
