@@ -30,17 +30,25 @@ import android.database.DatabaseUtils;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.ParcelFileDescriptor;
 import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
+import android.view.View;
+import android.widget.ProgressBar;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -66,20 +74,20 @@ import java.util.HashMap;
  * - Query the local database to return all datapoints within +/- EventDuration/2 minutes of the event.
  * - Upload the datapoints, linking them to the new eventID.
  * - Mark all the uploaded datapoints as uploaded.
- *
+ * <p>
  * Event statuses:
- *    0 - OK
- *    1 - WARNING
- *    2 - ALARM
- *    3 - FALL
- *    4 - FAULT
- *    5 - Manual Alarm
- *    6 - NDA (Normal Daily Activities)
- *
- *    NDA Timer creates an event periodically to record Normal Daily Activities (NDA),
- *    irrespective of the alarm state.   This will upload a lot of data, so it will only run
- *    for 24 hours after being activated before shutting down requring the user to re-select
- *    the option to log NDA to re-start it.
+ * 0 - OK
+ * 1 - WARNING
+ * 2 - ALARM
+ * 3 - FALL
+ * 4 - FAULT
+ * 5 - Manual Alarm
+ * 6 - NDA (Normal Daily Activities)
+ * <p>
+ * NDA Timer creates an event periodically to record Normal Daily Activities (NDA),
+ * irrespective of the alarm state.   This will upload a lot of data, so it will only run
+ * for 24 hours after being activated before shutting down requring the user to re-select
+ * the option to log NDA to re-start it.
  */
 public class LogManager {
     static final private String TAG = "LogManager";
@@ -97,7 +105,7 @@ public class LogManager {
     public double mNDATimeRemaining; // hours
     public double mNDALogPeriodHours = 24.0;  // hours
     private static Context mContext;
-    private OsdUtil mUtil;
+    private static OsdUtil mUtil;
     public static WebApiConnection mWac;
     public static final boolean USE_FIREBASE_BACKEND = false;
 
@@ -121,6 +129,11 @@ public class LogManager {
     public interface ArrayListCallback {
         void accept(ArrayList<HashMap<String, String>> retVal);
     }
+
+    public interface BooleanCallback {
+        void accept(boolean retVal);
+    }
+
 
     public LogManager(Context context,
                       boolean logRemote, boolean logRemoteMobile, String authToken,
@@ -242,21 +255,21 @@ public class LogManager {
                 String val;
                 val = c.getString(c.getColumnIndex("id"));
                 // We replace null values with empty string, otherwise they are completely excluded from output JSON.
-                event.put("id", val==null ? "" : val );
+                event.put("id", val == null ? "" : val);
                 val = c.getString(c.getColumnIndex("dataTime"));
-                event.put("dataTime", val==null ? "" : val);
+                event.put("dataTime", val == null ? "" : val);
                 val = c.getString(c.getColumnIndex("status"));
-                event.put("status", val==null ? "" : val);
+                event.put("status", val == null ? "" : val);
                 val = c.getString(c.getColumnIndex("type"));
-                event.put("type", val==null ? "" : val);
+                event.put("type", val == null ? "" : val);
                 val = c.getString(c.getColumnIndex("subType"));
-                event.put("subType", val==null ? "" : val);
+                event.put("subType", val == null ? "" : val);
                 val = c.getString(c.getColumnIndex("notes"));
-                event.put("desc", val==null ? "" : val);
+                event.put("desc", val == null ? "" : val);
                 val = c.getString(c.getColumnIndex("dataJSON"));
-                event.put("dataJSON", val==null ? "" : val);
+                event.put("dataJSON", val == null ? "" : val);
                 val = c.getString(c.getColumnIndex("uploaded"));
-                event.put("uploaded", val==null ? "" : val);
+                event.put("uploaded", val == null ? "" : val);
                 c.moveToNext();
                 eventsArray.put(i, event);
                 i++;
@@ -342,7 +355,7 @@ public class LogManager {
 
             if (sdData.alarmState != 0) {
                 Log.i(TAG, "writeDatapointToLocalDb(): adding event to local DB");
-                createLocalEvent(dateStr,sdData.alarmState,null, null, null, sdData.toSettingsJSON());
+                createLocalEvent(dateStr, sdData.alarmState, null, null, null, sdData.toSettingsJSON());
             }
         } catch (SQLException e) {
             Log.e(TAG, "writeToLocalDb(): Error Writing Data: " + e.toString());
@@ -358,18 +371,18 @@ public class LogManager {
 
     public boolean createLocalEvent(String dataTime, long status, String type, String subType, String desc, String dataJSON) {
         // Expects dataTime to be in format: SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Log.d(TAG, "createLocalEvent() - dataTime=" + dataTime + ", status=" + status + ", dataJSON="+dataJSON);
+        Log.d(TAG, "createLocalEvent() - dataTime=" + dataTime + ", status=" + status + ", dataJSON=" + dataJSON);
         // Write Event to database
         ContentValues values = new ContentValues();
         values.put("dataTime", dataTime);
         values.put("status", status);
         values.put("type", type);
-        values.put("subType",subType);
-        values.put("notes",desc);
+        values.put("subType", subType);
+        values.put("notes", desc);
         values.put("dataJSON", dataJSON);
 
         long newRowId = mOsdDb.insert(mEventsTableName, null, values);
-        Log.d(TAG, "createLocalEvent(): Created Row ID"+newRowId);
+        Log.d(TAG, "createLocalEvent(): Created Row ID" + newRowId);
         return true;
     }
 
@@ -472,12 +485,31 @@ public class LogManager {
             if (cursor != null) {
                 callback.accept(cursor2Json(cursor));
             } else {
-                Log.w(TAG,"getDatapointsByDate() - returned null result");
+                Log.w(TAG, "getDatapointsByDate() - returned null result");
                 callback.accept(null);
             }
         }).execute();
         return (true);
     }
+
+    /**
+     * exportToCsvFile - export datapoints data to a csv file on the android device.
+     *
+     * @param endDate  end date of period to export (Date type)
+     * @param duration duration in hours of period to export (double)
+     * @param uri      uri of file to save.
+     * @param callback  function to be called on completion of the task (returns true on success, false on error)
+     */
+    public void exportToCsvFile(Date endDate, double duration, Uri uri, BooleanCallback callback) {
+        Log.v(TAG, "exportToCsvFile(): uri=" + uri.toString());
+        new ExportDataTask(endDate, duration, uri, (boolean retVal) -> {
+            Log.v(TAG, "exportToCsvFile - returned " + retVal);
+            callback.accept(retVal);
+        }).execute();
+        return;
+    }
+
+
 
 
     /**
@@ -486,7 +518,8 @@ public class LogManager {
      * @param includeWarnings - whether to include warnings in the list of events, or just alarm conditions.
      * @return True on successful start or false if call fails.
      */
-    public boolean getEventsList(boolean includeWarnings, ArrayListCallback callback) {
+    public boolean getEventsList(boolean includeWarnings, ArrayListCallback
+            callback) {
         Log.v(TAG, "getEventsList - includeWarnings=" + includeWarnings);
         ArrayList<HashMap<String, String>> eventsList = new ArrayList<>();
 
@@ -572,7 +605,8 @@ public class LogManager {
      * @param includeWarnings - whether to include warnings in the list of events, or just alarm conditions.
      * @return True on successful start or false if call fails.
      */
-    public boolean getNextEventToUpload(boolean includeWarnings, WebApiConnection.LongCallback callback) {
+    public boolean getNextEventToUpload(boolean includeWarnings, WebApiConnection.
+            LongCallback callback) {
         Log.v(TAG, "getNextEventToUpload - includeWarnings=" + includeWarnings);
 
         String[] whereArgsStatus = getEventWhereArgs(includeWarnings);
@@ -619,7 +653,8 @@ public class LogManager {
      *
      * @return True on successful start or false if call fails.
      */
-    public boolean getNearestDatapointToDate(String dateStr, WebApiConnection.LongCallback callback) {
+    public boolean getNearestDatapointToDate(String
+                                                     dateStr, WebApiConnection.LongCallback callback) {
         Log.v(TAG, "getNextEventToDate - dateStr=" + dateStr);
         String[] columns = {"*", "(julianday(dataTime)-julianday(datetime('" + dateStr + "'))) as ddiff"};
         //SQLStr = "SELECT *, (julianday(dataTime)-julianday(datetime('" + dateStr + "'))) as ddiff from " + mDbTableName + " order by ABS(ddiff) asc;";
@@ -652,7 +687,8 @@ public class LogManager {
      * @param includeWarnings - whether to include warnings in the list of events, or just alarm conditions.
      * @return True on successful start or false if call fails.
      */
-    public boolean getLocalEventsCount(boolean includeWarnings, WebApiConnection.LongCallback callback) {
+    public boolean getLocalEventsCount(boolean includeWarnings, WebApiConnection.
+            LongCallback callback) {
         //Log.v(TAG, "getLocalEventsCount- includeWarnings=" + includeWarnings);
         String[] whereArgs = getEventWhereArgs(includeWarnings);
         String whereClause = getEventWhereClause(includeWarnings);
@@ -753,6 +789,158 @@ public class LogManager {
         protected void onPostExecute(final Cursor result) {
             mCallback.accept(result);
         }
+    }
+
+    //query(String table, String[] columns, String selection, String[] selectionArgs,
+    // String groupBy, String having, String orderBy)
+
+    /**
+     * Exports the contents of the local datapoints table between given dates
+     * to a .csv file.
+     * Use as new ExportDataTask(xxx,xxx,xx,xxxx).execute()
+     */
+    static private class ExportDataTask extends AsyncTask<Void, Void, Boolean> {
+        BooleanCallback mCallback;
+        Date mEndDate;
+        double mDuration;
+        Uri mUri;
+
+
+        ExportDataTask(Date endDate, double duration, Uri uri, BooleanCallback callback) {
+            Log.i(TAG,"ExportDataTask constructor()");
+            this.mCallback = callback;
+            mEndDate = endDate;
+            mDuration = duration;
+            mUri = uri;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            Log.v(TAG, "ExportDataTask.doInBackground()");
+            long endDateMillis = mEndDate.getTime();
+            long durationMillis = (long) (mDuration * 3600. * 1000);
+            long startDateMillis = endDateMillis - durationMillis;
+            Log.v(TAG, "exportDataTask() - endDateMillis=" + endDateMillis + ", startDateMillis=" + startDateMillis + ", durationMillis=" + durationMillis);
+            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String sDateStr = dateFormat.format(new Date(startDateMillis));
+            String eDateStr = dateFormat.format(new Date(endDateMillis));
+            Log.v(TAG, "ExportDataTask.doInBackground - sDateStr=" + sDateStr + " eDateStr=" + eDateStr);
+            String[] columns = {"*"};
+            String whereClause = "DataTime>? AND DataTime<?";
+            String[] whereArgs = {sDateStr, eDateStr};
+
+            try {
+                Cursor cursor = mOsdDb.query(mDpTableName, columns, whereClause,
+                        whereArgs, null, null, "dataTime DESC");
+                cursor.moveToFirst();
+
+                Log.v(TAG, "ExportDataTask.doInBackground()  - returned " + cursor);
+                if (cursor != null) {
+                    Log.d(TAG, "ExportDataTask.doInBackground() - query complete - writing to file....");
+                    try {
+                        ParcelFileDescriptor pfd = mContext.getContentResolver().
+                                openFileDescriptor(mUri, "w");
+                        FileOutputStream fileOutputStream =
+                                new FileOutputStream(pfd.getFileDescriptor());
+                        fileOutputStream.write(("# dataTime, alarmState, hr, o2sat, accel*125\n").getBytes());
+                        int nRec = writeDatapointsToFile(cursor, fileOutputStream);
+                        // Let the document provider know you're done by closing the stream.
+                        fileOutputStream.close();
+                        pfd.close();
+                        Log.d(TAG, "ExportDataTask.doInBackground() - file written ok - notifying callback function....");
+                        mCallback.accept(true);
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                        mUtil.showToast(mContext.getString(R.string.error_exporting_data));
+                        Log.e(TAG, "ExportDataTask.doInBackground() - FileNotFoundException: " + e.toString());
+                        mCallback.accept(false);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        mUtil.showToast(mContext.getString(R.string.error_exporting_data));
+                        Log.e(TAG, "ExportDataTask.doInBackground() - IOException: " + e.toString());
+                        mCallback.accept(false);
+                    }
+
+                } else {
+                    Log.w(TAG, "ExportDataTask.doInBackground() - returned null result");
+                    mCallback.accept(false);
+                }
+
+
+                return (true);
+            } catch (SQLException e) {
+                Log.e(TAG, "ExportDataTask.doInBackground(): Error selecting Data: " + e.toString());
+                return (null);
+            } catch (IllegalArgumentException e) {
+                Log.e(TAG, "ExportDataTask.doInBackground(): Illegal Argument Exception: " + e.toString());
+                return (null);
+            } catch (NullPointerException e) {
+                Log.e(TAG, "SelectQueryTask.doInBackground(): Null Pointer Exception: " + e.toString());
+                return (null);
+            }
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean result) {
+            Log.i(TAG,"ExportDataTask.onPostExecute() - notifying callback function of result: "+result);
+            mCallback.accept(result);
+        }
+
+        private int writeDatapointsToFile(Cursor c, FileOutputStream fileOutputStream) {
+            Log.v(TAG, "writeDatapointsToFile()");
+            int nRec = 0;
+            JSONArray dataObj;
+            String dataJsonStr;
+            JSONObject dataJsonObj;
+            JSONArray rawDataArr;
+            Log.d(TAG, "writeDatapointsToFile()" + c.getColumnNames());
+            //for (int i=0;i<c.getColumnCount();i++) {
+            //    Log.d(TAG,"  Column"+i+" = "+c.getColumnName(i));
+            //}
+            try {
+                Log.d(TAG, "writeDatapointsToFile() - writing query result to csv file....");
+                while (c.moveToNext()) {
+                    nRec += 1;
+                    //Log.d(TAG,"writeDatapointsToFile - row="+c.getString(0)+", "+c.getString(1));
+                    dataJsonStr = c.getString(3);   // dataJSON is index 3
+                    //Log.v(TAG, "exportToFile() - i=" + i + "dataJsonStr=" + dataJsonStr);
+                    dataJsonObj = new JSONObject(dataJsonStr);
+                    rawDataArr = dataJsonObj.getJSONArray("rawData");
+                    try {
+                        //fileOutputStream.write(dataJsonObj.getString("dataTime").getBytes(StandardCharsets.UTF_8));
+                        fileOutputStream.write(c.getString(1).getBytes(StandardCharsets.UTF_8));  // We use the database record date rather than datajson date because it is formatted yyyy-mm-dd
+                        fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
+                        fileOutputStream.write(dataJsonObj.getString("alarmState").getBytes(StandardCharsets.UTF_8));
+                        fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
+                        fileOutputStream.write(dataJsonObj.getString("hr").getBytes(StandardCharsets.UTF_8));
+                        fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
+                        fileOutputStream.write(dataJsonObj.getString("o2Sat").getBytes(StandardCharsets.UTF_8));
+                        for (int j = 0; j < 125; j++) {  // FIXME Hard Coded array length, but rawDataArr.length() is 125*3 so we don't want to use that.
+                            fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
+                            fileOutputStream.write(rawDataArr.getString(j).getBytes(StandardCharsets.UTF_8));
+                        }
+                        fileOutputStream.write("\n".getBytes(StandardCharsets.UTF_8));
+                    } catch (IOException e) {
+                        Log.e(TAG, "exportToFile() - ERROR Writing File: " + e.toString());
+                        mUtil.showToast("ERROR WRITING FILE");
+                        return(-1);
+                    }
+
+                }
+                Log.d(TAG, "writeDatapointsToFile() - data written to file ok");
+                mUtil.showToast(mContext.getString(R.string.data_exported_ok)+ " "+nRec);
+                return nRec;
+
+            } catch (JSONException | NullPointerException e) {
+                Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string ");
+                dataObj = null;
+                mUtil.showToast(mContext.getString(R.string.error_exporting_data));
+                Log.e(TAG, "exportToFile() - JSONException: " + e.toString());
+                return(-1);
+            }
+        }
+
+
     }
 
 
@@ -967,7 +1155,8 @@ public class LogManager {
                                         for (int i = 0; i < dataObj.length(); i++) {
                                             mDatapointsToUploadList.add(dataObj.getJSONObject(i));
                                         }
-                                    } catch (JSONException | NullPointerException e) {
+                                    } catch (JSONException |
+                                             NullPointerException e) {
                                         Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string " + datapointsJsonStr);
                                         dataObj = null;
                                         finishUpload();
@@ -1122,7 +1311,7 @@ public class LogManager {
         timeNow.setToNow();
         long tNow = timeNow.toMillis(true);
         long tDiffMillis = (tNow - mNDATimerStartTime);
-        mNDATimeRemaining = mNDALogPeriodHours - tDiffMillis / (3600.*1000.);
+        mNDATimeRemaining = mNDALogPeriodHours - tDiffMillis / (3600. * 1000.);
 
 
     }
@@ -1183,18 +1372,17 @@ public class LogManager {
 
 
     public void createNDAEvent() {
-        Log.i(TAG,"createNDAEvent()");
+        Log.i(TAG, "createNDAEvent()");
         Date curDate = new Date();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String dateStr = dateFormat.format(curDate);
-        createLocalEvent(dateStr,6,"nda", null, null,
+        createLocalEvent(dateStr, 6, "nda", null, null,
                 mSdSettingsData.toSettingsJSON());
     }
 
     public void updateSdData(SdData sdData) {
         mSdSettingsData = sdData;
     }
-
 
 
     public static class OsdDbHelper extends SQLiteOpenHelper {
@@ -1275,6 +1463,7 @@ public class LogManager {
      */
     private class NDATimer extends CountDownTimer {
         double mNDALogPeriodHours = 0;
+
         public NDATimer(long startTime, long interval, double logPeriod) {
             super(startTime, interval);
             mNDALogPeriodHours = logPeriod;
@@ -1295,7 +1484,7 @@ public class LogManager {
             timeNow.setToNow();
             long tNow = timeNow.toMillis(true);
             long tDiffMillis = (tNow - mNDATimerStartTime);
-            double tDiffHrs = tDiffMillis / (3600.*1000.);
+            double tDiffHrs = tDiffMillis / (3600. * 1000.);
             mNDATimeRemaining = mNDALogPeriodHours - tDiffHrs;
             if (tDiffHrs >= mNDALogPeriodHours) {
                 Log.i(TAG, "mNDATimer - onFinish - NDA logging period completed - switching off NDA Logging");
@@ -1307,8 +1496,8 @@ public class LogManager {
                 editor.apply();
             } else {
                 // Restart this timer.
-                Log.i(TAG,"NDATimer - tDiffMillis="+tDiffMillis+", tdiffHrs = "+tDiffHrs+ ", tnow="+tNow+", tstart="+mNDATimerStartTime+", NDALogPeriod="+mNDALogPeriodHours);
-                Log.i(TAG,"NDATimer - re-starting NDA timer");
+                Log.i(TAG, "NDATimer - tDiffMillis=" + tDiffMillis + ", tdiffHrs = " + tDiffHrs + ", tnow=" + tNow + ", tstart=" + mNDATimerStartTime + ", NDALogPeriod=" + mNDALogPeriodHours);
+                Log.i(TAG, "NDATimer - re-starting NDA timer");
                 start();
             }
         }

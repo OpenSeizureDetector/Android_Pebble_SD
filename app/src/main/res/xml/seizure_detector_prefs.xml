@@ -211,5 +211,22 @@
             android:title="@string/fall_window_title" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/FidgetSettingsTitle">
 
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="FidgetDetectorEnabled"
+            android:summary="@string/FidgetDetectorEnabledSummary"
+            android:title="@string/FidgetDetectorEnabledTitle" />
+        <EditTextPreference
+            android:defaultValue="0.6"
+            android:key="FidgetDetectorThreshold"
+            android:summary="@string/FidgetDetectorThresholdSummary"
+            android:title="@string/FidgetDetectorThresholdTitle" />
+        <EditTextPreference
+            android:defaultValue="20"
+            android:key="FidgetDetectorPeriod"
+            android:summary="@string/FidgetDetectorPeriodSummary"
+            android:title="@string/FidgetDetectorPeriodTitle" />
+    </PreferenceCategory>
 </PreferenceScreen>

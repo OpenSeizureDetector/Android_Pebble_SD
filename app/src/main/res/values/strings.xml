@@ -3,11 +3,7 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
-        \mV4.2.1 - Changed target Android Version to 13 (SDK33) (Play Store policy).
-        \nV4.1.10 - Added warning if heart rate readings freeze and do not change for more than 1 minute.
-        \nV4.1.9 - Fixed problem with average heart rate alarm
-        Fixed issue with phone data source generating continuous alarms for Heart Rate or O2Sat
-        Fixed a small number of user reported issues (https://github.com/OpenSeizureDetector/Android_Pebble_SD/issues?q=is%3Aissue+milestone%3AV4.1.8)
+        \nV4.2.1 - Added Machine Learning Model Manager so models can be updated easily.
           "</string>
     <string name="UpgradeMsg">
         Please enable the new &lt;b>Data Sharing&lt;/b> feature to help improve OpenSeizureDetector!&lt;br/>
@@ -509,6 +505,14 @@
     <string name="ml_sd_modelid_title">AI Model ID</string>
     <string name="ml_sd_modelid_summary">ID number of machine learning (AI) model to be used - users should not edit this, but use the model Manager page instead.</string>
     <string name="title_activity_ml_model_manager">MlModelManager</string>
+    <string name="FidgetSettingsTitle">Fidget Detector Settings</string>
+    <string name="FidgetDetectorEnabledTitle">Enable Fidget Detector</string>
+    <string name="FidgetDetectorEnabledSummary">Generates a fault if no movement has been detected for a specified period (signifying the watch has been removed)</string>
+    <string name="FidgetDetectorThresholdSummary">The threshold (as % standard deviation) applied to each set of accelerometer data to determine if a \'Fidget\' has occurred.</string>
+    <string name="FidgetDetectorThresholdTitle">Fidget Detector Threshold (%)</string>
+    <string name="FidgetDetectorPeriodTitle">Fidget Detector Period (minutes)</string>
+    <string name="FidgetDetectorPeriodSummary">A fault is generated if no movement (fidgets) are detected for more than the Fidget Detector Period.</string>
+
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
     <string name="second_fragment_label">Second Fragment</string>

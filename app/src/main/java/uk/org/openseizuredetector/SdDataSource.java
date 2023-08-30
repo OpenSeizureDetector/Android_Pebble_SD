@@ -108,6 +108,10 @@ public abstract class SdDataSource {
     private Time mHrStatusTime;
     private double mHrFrozenPeriod = 60; // seconds
     private boolean mHrFrozenAlarm;
+    private boolean mFidgetDetectorEnabled;
+    private double mFidgetPeriod;
+    private double mFidgetThreshold;
+    private Time mLastFidget = null;
 
 
     public SdDataSource(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
@@ -723,6 +727,31 @@ public abstract class SdDataSource {
 
     }
 
+    private double calcRawDataStd(SdData sdData) {
+        /**
+         * Calculate the standard deviation in % of the rawData array in the SdData instance provided.
+         * It assumes that rawdata will contain 125 samples.
+         * Returns the standard deviation in %.
+         */
+        // FIXME - assumes length of rawdata array is 125 data points
+        int j;
+        double sum = 0.0;
+        for (j = 0; j < 125; j++) { // FIXME - assumed length!
+            sum += sdData.rawData[j];
+        }
+        double mean = sum / 125;
+
+        double standardDeviation = 0.0;
+        for (j = 0; j < 125; j++) { // FIXME - assumed length!
+            standardDeviation += Math.pow(sdData.rawData[j] - mean, 2);
+        }
+        standardDeviation = Math.sqrt(standardDeviation / 125);  // FIXME - assumed length!
+
+        // Convert standard deviation from milli-g to %
+        standardDeviation = 100. * standardDeviation / mean;
+        return (standardDeviation);
+    }
+
     /**
      * Checks the status of the connection to the watch,
      * and sets class variables for use by other functions.
@@ -758,6 +787,23 @@ public abstract class SdDataSource {
             }
         } else {
             mSdData.watchAppRunning = true;
+
+            // Check we have seen a fidget within the required period, or else assume a fault because watch is not being worn
+            if (mFidgetDetectorEnabled) {
+                if (mLastFidget == null) mLastFidget = tnow;   // Initialise last fidget time on startup.
+
+                double accStd = calcRawDataStd(mSdData);
+                if (accStd > mFidgetThreshold) {
+                    mLastFidget = tnow;
+                } else {
+                    Log.d(TAG,"onStatus() - Fidget Detector - low movement - is watch being worn?");
+                    tdiff = (tnow.toMillis(false) - mLastFidget.toMillis(false));
+                    if (tdiff > (mFidgetPeriod) * 60 * 1000) {
+                        Log.e(TAG, "onStatus() - Fidget Not Detected - is watch being worn?");
+                        mSdDataReceiver.onSdDataFault(mSdData);
+                    }
+                }
+            }
         }
 
         // if we have confirmation that the app is running, reset the
@@ -874,6 +920,20 @@ public abstract class SdDataSource {
                 Log.v(TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!");
                 mUtil.writeToSysLogFile( "updatePrefs() - Problem with FaultTimerPeriod preference!");
                 Toast toast = Toast.makeText(mContext, "Problem Parsing FaultTimerPeriod Preference", Toast.LENGTH_SHORT);
+                toast.show();
+            }
+
+            // Parse the Fidget Detector settings.
+            try {
+                mFidgetDetectorEnabled = SP.getBoolean("FidgetDetectorEnabled", false);
+                mFidgetPeriod = readDoublePref(SP, "FidgetDetectorPeriod", "20"); // minutes
+                Log.v(TAG, "updatePrefs() - mFidgetPeriod = " + mFidgetPeriod);
+                mFidgetThreshold = readDoublePref(SP, "FidgetDetectorThreshold", "0.6 ");
+                Log.d(TAG,"updatePrefs(): mFidgetThreshold="+mFidgetThreshold);
+
+            } catch (Exception ex) {
+                Log.v(TAG, "updatePrefs() - Problem with FidgetDetector preferences!");
+                Toast toast = Toast.makeText(mContext, "Problem Parsing FidgetPeriod Preference", Toast.LENGTH_SHORT);
                 toast.show();
             }
 
