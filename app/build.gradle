@@ -66,6 +66,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore'
     implementation 'androidx.navigation:navigation-fragment:2.5.2'
     implementation 'androidx.navigation:navigation-ui:2.5.2'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.6.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1'
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation "androidx.test:core"
