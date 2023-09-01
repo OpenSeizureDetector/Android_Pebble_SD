@@ -8,6 +8,8 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 public class MainActivity2 extends AppCompatActivity {
     private String TAG = "MainActivity2";
@@ -22,11 +24,14 @@ public class MainActivity2 extends AppCompatActivity {
             mFragmentPager = findViewById(R.id.fragment_pager);
             mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
             mFragmentPager.setAdapter(mFragmentStateAdapter);
-            //getSupportFragmentManager().beginTransaction()
-            //        .setReorderingAllowed(true)
-            //        .add(R.id.fragment_container_view, FragmentOsdAlg.class, null)
-            //        .commit();
+            getSupportFragmentManager().beginTransaction()
+                    .setReorderingAllowed(true)
+                    .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
+                    .commit();
         }
+
+
+
     }
 
     @Override
@@ -58,6 +63,15 @@ public class MainActivity2 extends AppCompatActivity {
                     return new FragmentOsdAlg();
                 case 1:
                     return new FragmentHrAlg();
+                case 2:
+                    return new FragmentMlAlg();
+                case 3:
+                    return new FragmentWebServer();
+                case 4:
+                    return new FragmentDataSharing();
+                case 5:
+                    return new FragmentSystem();
+
                 default:
                     Log.e(TAG,"createFragment() - invalid Position "+position);
                     return null;
@@ -66,7 +80,7 @@ public class MainActivity2 extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return 2;
+            return 6;
         }
     }
 }

@@ -517,7 +517,7 @@ public class SdServer extends Service implements SdDataReceiver {
             soundUri = null;
         }
 
-        Intent i = new Intent(getApplicationContext(), MainActivity.class);
+        Intent i = new Intent(getApplicationContext(), MainActivity2.class);
         i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         PendingIntent contentIntent =
                 PendingIntent.getActivity(this,
@@ -569,7 +569,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 mUtil.writeToSysLogFile("SdServer.showMainActivity - Activity is already shown on top, not doing anything");
             } else {
                 Log.i(TAG, "showMainActivity(): Showing Main Activity");
-                Intent i = new Intent(getApplicationContext(), MainActivity.class);
+                Intent i = new Intent(getApplicationContext(), MainActivity2.class);
                 i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
                 this.startActivity(i);
             }
@@ -1733,7 +1733,7 @@ public class SdServer extends Service implements SdDataReceiver {
         iconId = R.drawable.datasharing_fault_24x24;
         titleStr = getString(R.string.datasharing_notification_title);
 
-        Intent i = new Intent(getApplicationContext(), MainActivity.class);
+        Intent i = new Intent(getApplicationContext(), MainActivity2.class);
         i.putExtra("action", "showDataSharingDialog");
         i.setAction("showDataSharingDialog");
         i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);

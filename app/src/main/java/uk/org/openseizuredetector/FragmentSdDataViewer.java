@@ -1,6 +1,7 @@
 package uk.org.openseizuredetector;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -24,6 +25,14 @@ public class FragmentSdDataViewer extends Fragment {
     final Handler updateUiHandler = new Handler();
     Timer mUiTimer;
     protected View mRootView;
+
+    protected int okColour = Color.BLUE;
+    protected int warnColour = Color.MAGENTA;
+    protected int alarmColour = Color.RED;
+    protected int okTextColour = Color.WHITE;
+    protected int warnTextColour = Color.WHITE;
+    protected int alarmTextColour = Color.BLACK;
+
 
 
     public FragmentSdDataViewer() {
