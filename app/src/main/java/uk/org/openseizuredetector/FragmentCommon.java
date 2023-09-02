@@ -8,10 +8,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
-public class FragmentCommon extends FragmentSdDataViewer {
+public class FragmentCommon extends FragmentOsdBaseClass {
     String TAG = "FragmentCommon";
     public FragmentCommon() {
         // Required empty public constructor
@@ -80,7 +79,7 @@ public class FragmentCommon extends FragmentSdDataViewer {
 
     @Override
     protected void updateUi() {
-        Log.d(TAG,"updateUi()");
+        //Log.d(TAG,"updateUi()");
         TextView tv;
         tv = (TextView)mRootView.findViewById(R.id.fragment_common_tv1);
         if (mConnection.mBound) {
@@ -113,6 +112,39 @@ public class FragmentCommon extends FragmentSdDataViewer {
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
                 }
+
+                tv = (TextView) mRootView.findViewById(R.id.alarmTv);
+                if ((mConnection.mSdServer.mSdData.alarmState == 0)
+                        && !mConnection.mSdServer.mSdData.alarmStanding
+                        && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
+                    tv.setText(getString(R.string.okBtnTxt));
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+                }
+                if ((mConnection.mSdServer.mSdData.alarmState == 1)
+                        && !mConnection.mSdServer.mSdData.alarmStanding
+                        && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
+                    tv.setText(R.string.Warning);
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+                }
+                if (mConnection.mSdServer.mSdData.alarmState == 6) {
+                    tv.setText(R.string.Mute);
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+                }
+                if (mConnection.mSdServer.mSdData.alarmStanding) {
+                    tv.setText(R.string.Alarm);
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                }
+                if (mConnection.mSdServer.mSdData.fallAlarmStanding) {
+                    tv.setText(R.string.Fall);
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                }
+
+
                 tv = (TextView) mRootView.findViewById(R.id.algsTv);
                 tv.setText("Algorithms");
                 tv.setBackgroundColor(okColour);

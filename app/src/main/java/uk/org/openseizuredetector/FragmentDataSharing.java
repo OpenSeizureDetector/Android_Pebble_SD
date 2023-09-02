@@ -7,7 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-public class FragmentDataSharing extends FragmentSdDataViewer {
+public class FragmentDataSharing extends FragmentOsdBaseClass {
     String TAG = "FragmentDataSharing";
     public FragmentDataSharing() {
         // Required empty public constructor

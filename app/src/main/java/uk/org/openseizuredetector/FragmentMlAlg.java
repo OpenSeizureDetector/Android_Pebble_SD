@@ -7,7 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-public class FragmentMlAlg extends FragmentSdDataViewer {
+public class FragmentMlAlg extends FragmentOsdBaseClass {
     String TAG = "FragmentMlAlg";
     public FragmentMlAlg() {
         // Required empty public constructor

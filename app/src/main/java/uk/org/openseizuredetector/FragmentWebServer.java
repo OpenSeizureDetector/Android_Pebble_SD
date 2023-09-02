@@ -7,7 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-public class FragmentWebServer extends FragmentSdDataViewer {
+public class FragmentWebServer extends FragmentOsdBaseClass {
     String TAG = "FragmentWebServer";
     public FragmentWebServer() {
         // Required empty public constructor

@@ -17,8 +17,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 
-public class FragmentSdDataViewer extends Fragment {
-    String TAG = "FragmentSdDataViewer";
+public class FragmentOsdBaseClass extends Fragment {
+    String TAG = "FragmentOsdBaseClass";
     Context mContext;
     OsdUtil mUtil;
     SdServiceConnection mConnection;
@@ -35,7 +35,7 @@ public class FragmentSdDataViewer extends Fragment {
 
 
 
-    public FragmentSdDataViewer() {
+    public FragmentOsdBaseClass() {
         // Required empty public constructor
     }
 
