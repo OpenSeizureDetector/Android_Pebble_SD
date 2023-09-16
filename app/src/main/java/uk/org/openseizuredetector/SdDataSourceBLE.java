@@ -298,7 +298,7 @@ public class SdDataSourceBLE extends SdDataSource {
                     Log.d(TAG, "Heart rate format UINT8.");
                 }
                 final int heartRate = characteristic.getIntValue(format, 1);
-                mSdData.mHr = (double) heartRate;
+                mSdData.mHR = (double) heartRate;
                 Log.d(TAG, String.format("Received heart rate: %d", heartRate));
             }
             else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_DATA)) {

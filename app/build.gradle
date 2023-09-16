@@ -78,6 +78,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore'
     implementation 'androidx.navigation:navigation-fragment:2.5.2'
     implementation 'androidx.navigation:navigation-ui:2.5.2'
+    implementation 'androidx.preference:preference:1.2.1'
 
     //implementation for Timerless operation:
     // Work Manager and worker: used instead of Services

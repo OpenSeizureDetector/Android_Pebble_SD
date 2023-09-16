@@ -250,14 +250,14 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     rawDataList.clear();
                     rawDataList3D.clear();
                     mSdData.mNsamp = Constants.SD_SERVICE_CONSTANTS.defaultSampleCount;
-                    mSdData.mHr = -1d;
-                    mSdData.mHrAlarmActive = false;
-                    mSdData.mHrAlarmStanding = false;
+                    mSdData.mHR = -1d;
+                    mSdData.mHRAlarmActive = false;
+                    mSdData.mHRAlarmStanding = false;
                     mSdData.mHRNullAsAlarm = false;
                     mSdData.mNsamp /= 2;
 
                     // Set HR and O2Sat values to fault value (-1) to avoid alarms if the user enables HR or O2Sat alarms.
-                    mSdData.mHr = -1;
+                    mSdData.mHR = -1;
                     mSdData.mO2Sat = -1;
                     doAnalysis();
                     mSdData.mNsamp = 0;

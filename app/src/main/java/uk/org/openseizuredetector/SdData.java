@@ -78,12 +78,12 @@ public class SdData implements Parcelable {
     private JSONArray specArr;
 
     /* Heart Rate Alarm Settings */
-    public boolean mHrAlarmActive = false;
+    public boolean mHRAlarmActive = false;
     public boolean mHRNullAsAlarm = false;
-    public double mHrThreshMin = 40.0;
-    public double mHrThreshMax = 150.0;
-    public double mHrAvg = -1d;
-    public double mHr = -1d;
+    public double mHRThreshMin = 40.0;
+    public double mHRThreshMax = 150.0;
+    public double mHRAvg = -1d;
+    public double mHR = -1d;
 
     /* Oxygen Saturation Alarm Settings */
     public boolean mO2SatAlarmActive = false;
@@ -123,7 +123,7 @@ public class SdData implements Parcelable {
 
     public CircBuf mAdaptiveHrBuf;
     public CircBuf mAverageHrBuf;
-    public boolean mHrFrozenFaultStanding = false;
+    public boolean mHRFrozenFaultStanding = false;
 
     /* Analysis results */
     public Time dataTime = null;
@@ -143,8 +143,8 @@ public class SdData implements Parcelable {
     public String mDataType;
     public String phoneName = "";
 
-    public boolean mHrAlarmStanding = false;
-    public boolean mHrFaultStanding = false;
+    public boolean mHRAlarmStanding = false;
+    public boolean mHRFaultStanding = false;
     public boolean mAdaptiveHrAlarmStanding = false;
     public boolean mAverageHrAlarmStanding = false;
 
@@ -196,10 +196,10 @@ public class SdData implements Parcelable {
                 alarmPhrase = jo.optString("alarmPhrase");
                 alarmThresh = jo.optInt("alarmThresh");
                 alarmRatioThresh = jo.optInt("alarmRatioThresh");
-                mHrAlarmActive = jo.optBoolean("hrAlarmActive");
-                mHrAlarmStanding = jo.optBoolean("hrAlarmStanding");
-                mHrThreshMax = jo.optDouble("hrThreshMax");
-                mHrThreshMin = jo.optDouble("hrThreshMin");
+                mHRAlarmActive = jo.optBoolean("hrAlarmActive");
+                mHRAlarmStanding = jo.optBoolean("hrAlarmStanding");
+                mHRThreshMax = jo.optDouble("hrThreshMax");
+                mHRThreshMin = jo.optDouble("hrThreshMin");
                 phoneName = jo.optString("phoneName");
                 dT = jo.optDouble("dT",dT);//FIXME
                 //dT = -2; //set -2 as Received, from mobile, pending first round of data.
@@ -208,9 +208,9 @@ public class SdData implements Parcelable {
             if (Constants.GLOBAL_CONSTANTS.dataTypeRaw.equals(mDataType)) {
                 specPower = jo.optInt("specPower");
                 roiPower = jo.optInt("roiPower");
-                mHr = jo.optDouble("hr");
-            /*if (mHr >= 0.0) {
-                mHrAlarmActive = true;
+                mHR = jo.optDouble("hr");
+            /*if (mHR >= 0.0) {
+                mHRAlarmActive = true;
             }*/
 
                 specArr = jo.optJSONArray("simpleSpec");
@@ -261,7 +261,7 @@ public class SdData implements Parcelable {
             jsonObj.put("roiRatio", 10 * roiPower / specPower);
             jsonObj.put("alarmState", alarmState);
             jsonObj.put("alarmPhrase", alarmPhrase);
-            jsonObj.put("hr", mHr);
+            jsonObj.put("hr", mHR);
             jsonObj.put("adaptiveHrAv", mAdaptiveHrAverage);
             jsonObj.put("averageHrAv", mAverageHrAverage);
             jsonObj.put("o2Sat", mO2Sat);
@@ -332,10 +332,10 @@ public class SdData implements Parcelable {
             jsonObj.put("alarmRatioThresh", alarmRatioThresh);
             jsonObj.put("osdAlarmActive", mOsdAlarmActive);
             jsonObj.put("cnnAlarmActive", mCnnAlarmActive);
-            jsonObj.put("hrAlarmActive", mHrAlarmActive);
-            jsonObj.put("hrAlarmStanding", mHrAlarmStanding);
-            jsonObj.put("hrThreshMin", mHrThreshMin);
-            jsonObj.put("hrThreshMax", mHrThreshMax);
+            jsonObj.put("hrAlarmActive", mHRAlarmActive);
+            jsonObj.put("hrAlarmStanding", mHRAlarmStanding);
+            jsonObj.put("hrThreshMin", mHRThreshMin);
+            jsonObj.put("hrThreshMax", mHRThreshMax);
             jsonObj.put("adaptiveHrAlarmActive", mAdaptiveHrAlarmActive);
             jsonObj.put("adaptiveHrAlarmStanding", mAdaptiveHrAlarmStanding);
             jsonObj.put("adaptiveHrAlarmWindow", mAdaptiveHrAlarmWindowSecs);
@@ -414,14 +414,14 @@ public class SdData implements Parcelable {
             jsonObj.put("alarmFreqMax", alarmFreqMax);
             jsonObj.put("alarmThresh", alarmThresh);
             jsonObj.put("alarmRatioThresh", alarmRatioThresh);
-            jsonObj.put("hrAlarmActive", mHrAlarmActive);
-            jsonObj.put("hrAlarmStanding", mHrAlarmStanding);
+            jsonObj.put("hrAlarmActive", mHRAlarmActive);
+            jsonObj.put("hrAlarmStanding", mHRAlarmStanding);
             jsonObj.put("adaptiveHrAlarmStanding", mAdaptiveHrAlarmStanding);
             jsonObj.put("averageHrAlarmStanding", mAverageHrAlarmStanding);
-            jsonObj.put("hrAlarmStanding", mHrAlarmStanding);
-            jsonObj.put("hrThreshMin", mHrThreshMin);
-            jsonObj.put("hrThreshMax", mHrThreshMax);
-            jsonObj.put("hr", mHr);
+            jsonObj.put("hrAlarmStanding", mHRAlarmStanding);
+            jsonObj.put("hrThreshMin", mHRThreshMin);
+            jsonObj.put("hrThreshMax", mHRThreshMax);
+            jsonObj.put("hr", mHR);
             jsonObj.put("adaptiveHrAv", mAdaptiveHrAverage);
             jsonObj.put("averageHrAv", mAverageHrAverage);
             jsonObj.put("o2SatAlarmActive", mO2SatAlarmActive);
@@ -488,7 +488,7 @@ public class SdData implements Parcelable {
         retval = retval + ", " + roiPower;
         retval = retval + ", " + mSampleFreq;
         retval = retval + ", " + alarmPhrase;
-        retval = retval + ", " + mHr;
+        retval = retval + ", " + mHR;
         retval = retval + ", " + mO2Sat;
         if (includeRawData) {
             for (int i = 0; i < mNsamp; i++) {

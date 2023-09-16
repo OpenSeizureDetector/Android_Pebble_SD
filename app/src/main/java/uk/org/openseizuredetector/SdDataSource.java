@@ -144,9 +144,9 @@ public abstract class SdDataSource {
     private JSONObject dataObject;
     private String dataTypeStr;
     private double mLastHrValue;
-    private Time mHrStatusTime;
-    private double mHrFrozenPeriod = 60; // seconds
-    private boolean mHrFrozenAlarm;
+    private Time mHRStatusTime;
+    private double mHRFrozenPeriod = 60; // seconds
+    private boolean mHRFrozenAlarm;
     private boolean mFidgetDetectorEnabled;
     private double mFidgetPeriod;
     private double mFidgetThreshold;
@@ -277,8 +277,8 @@ public abstract class SdDataSource {
         }
 
         // Initialise time we last received a change in HR value.
-        mHrStatusTime = new Time(Time.getCurrentTimezone());
-        mHrStatusTime.setToNow();
+        mHRStatusTime = new Time(Time.getCurrentTimezone());
+        mHRStatusTime.setToNow();
         mLastHrValue = -1;
 
         if (mFaultCheckTimer == null) {
@@ -312,7 +312,7 @@ public abstract class SdDataSource {
         }
 
         if (!useSdServerBinding().mSdDataSourceName.equals("phone"))
-            mSdData.mHrAlarmActive = mSdAlgHr.mSimpleHrAlarmActive||mSdAlgHr.mAverageHrAlarmActive||mSdAlgHr.mAdaptiveHrAlarmActive;
+            mSdData.mHRAlarmActive = mSdAlgHr.mSimpleHrAlarmActive||mSdAlgHr.mAverageHrAlarmActive||mSdAlgHr.mAdaptiveHrAlarmActive;
     }
 
     /**
@@ -406,10 +406,10 @@ public abstract class SdDataSource {
             if (dataTypeStr.equals("raw")) {
                 Log.v(TAG, "updateFromJSON - processing raw data");
                 try {
-                    mSdData.mHr = dataObject.getDouble("hr");
+                    mSdData.mHR = dataObject.getDouble("hr");
                 } catch (JSONException e) {
                     // if we get 'null' HR (For example if the heart rate is not working)
-                    mSdData.mHr = -1;
+                    mSdData.mHR = -1;
                 }
                 try {
                     mSdData.mO2Sat = dataObject.getDouble("O2sat");
@@ -748,19 +748,19 @@ public abstract class SdDataSource {
             Log.v(TAG, "Mute Active - setting alarms to mute");
             mSdData.alarmState = 6;
             mSdData.alarmPhrase = "MUTE";
-            mSdData.mHrAlarmStanding = false;
+            mSdData.mHRAlarmStanding = false;
         }
 
     }
 
     /**
      * hrCheck - check the Heart rate data in mSdData to see if it represents an alarm condition.
-     * Sets mSdData.mHrAlarmStanding
+     * Sets mSdData.mHRAlarmStanding
      */
     public void hrCheck() {
         Log.v(TAG, "hrCheck()");
         ArrayList<Boolean> checkResults;
-        checkResults = mSdAlgHr.checkHr(mSdData.mHr);
+        checkResults = mSdAlgHr.checkHr(mSdData.mHR);
 
         // Populate mSdData so that the heart rate data is logged and is accessible to user interface components.
         mSdData.mAdaptiveHrAverage = mSdAlgHr.getAdaptiveHrAverage();
@@ -769,36 +769,36 @@ public abstract class SdDataSource {
         mSdData.mAverageHrBuf = mSdAlgHr.getAverageHrBuff();
 
         /* Check for heart rate fault condition */
-        if (mSdData.mHrAlarmActive) {
-            if (mSdData.mHr < 0) {
+        if (mSdData.mHRAlarmActive) {
+            if (mSdData.mHR < 0) {
                 if (mSdData.mHRNullAsAlarm) {
                     Log.i(TAG, "Heart Rate Null - Alarming");
                     mSdData.alarmPhrase = "Heart Rate Null - Alarming";
-                    mSdData.mHrFaultStanding = false;
-                    mSdData.mHrAlarmStanding = true;
+                    mSdData.mHRFaultStanding = false;
+                    mSdData.mHRAlarmStanding = true;
                     mSdData.mAdaptiveHrAlarmStanding = false;
                     mSdData.mAverageHrAlarmStanding = false;
                 } else {
                     mSdData.alarmPhrase = "Heart Rate Fault (HR<0)";
                     Log.i(TAG, "Heart Rate Fault (HR<0)");
-                    mSdData.mHrFaultStanding = true;
-                    mSdData.mHrAlarmStanding = false;
+                    mSdData.mHRFaultStanding = true;
+                    mSdData.mHRAlarmStanding = false;
                     mSdData.mAdaptiveHrAlarmStanding = false;
                     mSdData.mAverageHrAlarmStanding = false;
                 }
             } else {
-                mSdData.mHrFaultStanding = false;
-                mSdData.mHrAlarmStanding = checkResults.get(0);
+                mSdData.mHRFaultStanding = false;
+                mSdData.mHRAlarmStanding = checkResults.get(0);
                 mSdData.mAdaptiveHrAlarmStanding = checkResults.get(1);
                 mSdData.mAverageHrAlarmStanding = checkResults.get(2);
                 // Show an ALARM state if any of the HR alarms is standing.
-                if (mSdData.mHrAlarmStanding | mSdData.mAdaptiveHrAlarmStanding | mSdData.mAverageHrAlarmStanding) {
+                if (mSdData.mHRAlarmStanding | mSdData.mAdaptiveHrAlarmStanding | mSdData.mAverageHrAlarmStanding) {
                     mSdData.alarmState = 2;
                 }
             }
         } else {
-            mSdData.mHrFaultStanding = false;
-            mSdData.mHrAlarmStanding = false;
+            mSdData.mHRFaultStanding = false;
+            mSdData.mHRAlarmStanding = false;
             mSdData.mAdaptiveHrAlarmStanding = false;
             mSdData.mAverageHrAlarmStanding = false;
 
@@ -807,7 +807,7 @@ public abstract class SdDataSource {
 
     /**
      * hrCheck - check the Heart rate data in mSdData to see if it represents an alarm condition.
-     * Sets mSdData.mHrAlarmStanding
+     * Sets mSdData.mHRAlarmStanding
      */
     public void o2SatCheck() {
         Log.v(TAG, "o2SatCheck()");
@@ -1000,17 +1000,17 @@ public abstract class SdDataSource {
             mAlarmCount = 0;
         }
 
-        if (mSdData.mHrAlarmActive && mHrFrozenAlarm) {
-            if (mSdData.mHr != mLastHrValue) {
-                mLastHrValue = mSdData.mHr;
-                mHrStatusTime = tnow;
-                mSdData.mHrFrozenFaultStanding = false;
+        if (mSdData.mHRAlarmActive && mHRFrozenAlarm) {
+            if (mSdData.mHR != mLastHrValue) {
+                mLastHrValue = mSdData.mHR;
+                mHRStatusTime = tnow;
+                mSdData.mHRFrozenFaultStanding = false;
             } else {
-                tdiff = (tnow.toMillis(false) - mHrStatusTime.toMillis(false));
-                if (tdiff > mHrFrozenPeriod *1000.) {
-                    mSdData.mHrFrozenFaultStanding = true;
+                tdiff = (tnow.toMillis(false) - mHRStatusTime.toMillis(false));
+                if (tdiff > mHRFrozenPeriod *1000.) {
+                    mSdData.mHRFrozenFaultStanding = true;
                 } else {
-                    mSdData.mHrFrozenFaultStanding = false;
+                    mSdData.mHRFrozenFaultStanding = false;
                 }
             }
         }
@@ -1220,27 +1220,27 @@ public abstract class SdDataSource {
                 mUtil.writeToSysLogFile( "updatePrefs() CnnAlarmActive = " + mSdData.mCnnAlarmActive);
 
 
-                mSdData.mHrAlarmActive = SP.getBoolean("HRAlarmActive", false);
-                Log.v(TAG, "updatePrefs() HRAlarmActive = " + mSdData.mHrAlarmActive);
-                mUtil.writeToSysLogFile( "updatePrefs() HRAlarmActive = " + mSdData.mHrAlarmActive);
+                mSdData.mHRAlarmActive = SP.getBoolean("HRAlarmActive", false);
+                Log.v(TAG, "updatePrefs() HRAlarmActive = " + mSdData.mHRAlarmActive);
+                mUtil.writeToSysLogFile( "updatePrefs() HRAlarmActive = " + mSdData.mHRAlarmActive);
 
                 mSdData.mHRNullAsAlarm = SP.getBoolean("HRNullAsAlarm", false);
                 Log.v(TAG, "updatePrefs() HRNullAsAlarm = " + mSdData.mHRNullAsAlarm);
                 mUtil.writeToSysLogFile( "updatePrefs() HRNullAsAlarm = " + mSdData.mHRNullAsAlarm);
 
-                mHrFrozenAlarm = SP.getBoolean("HrFrozenAlarm", true);
-                Log.v(TAG, "updatePrefs() - mHrFrozenAlarm = " + mHrFrozenAlarm);
-                mUtil.writeToSysLogFile("updatePrefs() - mHrFrozenAlarm = " + mHrFrozenAlarm);
+                mHRFrozenAlarm = SP.getBoolean("HrFrozenAlarm", true);
+                Log.v(TAG, "updatePrefs() - mHRFrozenAlarm = " + mHRFrozenAlarm);
+                mUtil.writeToSysLogFile("updatePrefs() - mHRFrozenAlarm = " + mHRFrozenAlarm);
 
                 prefStr = SP.getString("HRThreshMin", "SET_FROM_XML");
-                mSdData.mHrThreshMin = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() HRThreshMin = " + mSdData.mHrThreshMin);
-                mUtil.writeToSysLogFile( "updatePrefs() HRThreshMin = " + mSdData.mHrThreshMin);
+                mSdData.mHRThreshMin = (short) Integer.parseInt(prefStr);
+                Log.v(TAG, "updatePrefs() HRThreshMin = " + mSdData.mHRThreshMin);
+                mUtil.writeToSysLogFile( "updatePrefs() HRThreshMin = " + mSdData.mHRThreshMin);
 
                 prefStr = SP.getString("HRThreshMax", "SET_FROM_XML");
-                mSdData.mHrThreshMax = (short) Integer.parseInt(prefStr);
-                Log.v(TAG, "updatePrefs() HRThreshMax = " + mSdData.mHrThreshMax);
-                mUtil.writeToSysLogFile( "updatePrefs() HRThreshMax = " + mSdData.mHrThreshMax);
+                mSdData.mHRThreshMax = (short) Integer.parseInt(prefStr);
+                Log.v(TAG, "updatePrefs() HRThreshMax = " + mSdData.mHRThreshMax);
+                mUtil.writeToSysLogFile( "updatePrefs() HRThreshMax = " + mSdData.mHRThreshMax);
 
                 mSdData.mAdaptiveHrAlarmActive = SP.getBoolean("HRAdaptiveAlarmActive", false);
                 mSdData.mAdaptiveHrAlarmWindowSecs = readDoublePref(SP, "HRAdaptiveAlarmWindowSecs", "30");
@@ -1273,13 +1273,13 @@ public abstract class SdDataSource {
                 mUtil.writeToSysLogFile( "updatePrefs() O2SatThreshMin = " + mSdData.mO2SatThreshMin);
 
                 if ((mSdData.mO2SatNullAsAlarm||mSdData.mO2SatAlarmActive||
-                        mSdData.mHrAlarmActive ||mSdData.mHRNullAsAlarm)
+                        mSdData.mHRAlarmActive ||mSdData.mHRNullAsAlarm)
                         && useSdServerBinding().mSdDataSourceName.equals("phone")) {
-                    mSdData.mHrAlarmActive = false;
+                    mSdData.mHRAlarmActive = false;
                     mSdData.mHRNullAsAlarm = false;
                     mSdData.mO2SatNullAsAlarm = false;
                     mSdData.mO2SatAlarmActive = false;
-                    useSdServerBinding().mSdData.mHrAlarmActive = false;
+                    useSdServerBinding().mSdData.mHRAlarmActive = false;
                     useSdServerBinding().mSdData.mHRNullAsAlarm = false;
                     useSdServerBinding().mSdData.mO2SatNullAsAlarm = false;
                     useSdServerBinding().mSdData.mO2SatAlarmActive = false;

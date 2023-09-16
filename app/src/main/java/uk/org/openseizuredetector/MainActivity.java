@@ -624,7 +624,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     tv = (TextView) findViewById(R.id.hrAlgTv);
                     tv.setText("HR ");
-                    if (mConnection.mSdServer.mSdData.mHrAlarmActive) {
+                    if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
                         tv.setPaintFlags(tv.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
@@ -715,28 +715,28 @@ public class MainActivity extends AppCompatActivity {
 
                     // Pebble Connected Phrase - use for HR if active instead.
                     tv = (TextView) findViewById(R.id.pebbleTv);
-                    //if (mConnection.mSdServer.mSdData.mHrAlarmActive) {
+                    //if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
 
                     if (mConnection.mSdServer.mSdData.mO2Sat > 0) {
-                        tv.setText(getString(R.string.HR_Equals) + " " + Math.round(mConnection.mSdServer.mSdData.mHr) + " bpm\n"
+                        tv.setText(getString(R.string.HR_Equals) + " " + Math.round(mConnection.mSdServer.mSdData.mHR) + " bpm\n"
                                 +"(av = "
                                 +Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage)+", "
                                 +Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage)+" bpm)\n"
                                 + getString(R.string.SpO2)+" = " + Math.round(mConnection.mSdServer.mSdData.mO2Sat) + "%");
                     } else {
-                        tv.setText(getString(R.string.HR_Equals) + " " + Math.round(mConnection.mSdServer.mSdData.mHr) + " bpm\n"
+                        tv.setText(getString(R.string.HR_Equals) + " " + Math.round(mConnection.mSdServer.mSdData.mHR) + " bpm\n"
                                 +"(av = "
                                 +Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage)+", "
                                 +Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage)+" bpm)\n"
                                 + getString(R.string.SpO2)+" = ---%");
                     }
-                    if (mConnection.mSdServer.mSdData.mHrAlarmStanding
+                    if (mConnection.mSdServer.mSdData.mHRAlarmStanding
                             || mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding
                             || mConnection.mSdServer.mSdData.mAverageHrAlarmStanding
                             || mConnection.mSdServer.mSdData.mO2SatAlarmStanding) {
                         tv.setBackgroundColor(alarmColour);
                         tv.setTextColor(alarmTextColour);
-                    } else if (mConnection.mSdServer.mSdData.mHrFaultStanding || mConnection.mSdServer.mSdData.mO2SatFaultStanding) {
+                    } else if (mConnection.mSdServer.mSdData.mHRFaultStanding || mConnection.mSdServer.mSdData.mO2SatFaultStanding) {
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
                     } else {
@@ -920,9 +920,9 @@ public class MainActivity extends AppCompatActivity {
                     // Fault Conditions - We override the values in the UI because we do not know
                     // if the stored ones are correct or not with a fault present.
                     if ((mConnection.mSdServer.mSdData.alarmState == 4) ||
-                            (mConnection.mSdServer.mSdData.alarmState == 7) || mConnection.mSdServer.mSdData.mHrFrozenFaultStanding) {
+                            (mConnection.mSdServer.mSdData.alarmState == 7) || mConnection.mSdServer.mSdData.mHRFrozenFaultStanding) {
                         tv = (TextView) findViewById(R.id.alarmTv);
-                        if (mConnection.mSdServer.mSdData.alarmState == 4 || mConnection.mSdServer.mSdData.mHrFrozenFaultStanding) {
+                        if (mConnection.mSdServer.mSdData.alarmState == 4 || mConnection.mSdServer.mSdData.mHRFrozenFaultStanding) {
                             tv.setText(R.string.Fault);
                             tv.setBackgroundColor(warnColour);
                             tv.setTextColor(warnTextColour);
