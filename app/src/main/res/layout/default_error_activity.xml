@@ -35,8 +35,7 @@
                 android:layout_marginTop="16dp"
                 android:text="View Error Log"
                 android:textColor="#212121"
-                android:visibility="gone"
-                />
+                android:visibility="gone"/>
 
             <Button
                 android:id="@+id/button_copy_error_log"
@@ -44,7 +43,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="Copy Error Log"
-                android:textColor="#212121"/>
+                android:textColor="#212121"
+                android:visibility="gone"/>
 
             <Button
                 android:id="@+id/button_share_error_log"
@@ -53,8 +53,7 @@
                 android:layout_marginTop="4dp"
                 android:text="Share Error Log"
                 android:textColor="#212121"
-                android:visibility="gone"
-                />
+                android:visibility="gone"/>
 
             <Button
                 android:id="@+id/button_email_error_log"
@@ -71,8 +70,7 @@
                 android:layout_marginTop="4dp"
                 android:text="Save Error Log"
                 android:textColor="#212121"
-                android:visibility="gone"
-                />
+                android:visibility="gone"/>
 
             <Button
                 android:id="@+id/button_close_app"

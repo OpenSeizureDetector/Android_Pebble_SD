@@ -2295,7 +2295,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 .setContentTitle(titleStr)
                 .setContentText(contentStr)
                 .setOnlyAlertOnce(true)
-                .addAction(com.firebase.ui.auth.R.drawable.common_google_signin_btn_icon_dark, getString(R.string.login), loginPendingIntent)
+                .addAction(R.drawable.common_google_signin_btn_icon_dark, getString(R.string.login), loginPendingIntent)
                 .setPriority(0)
                 .build();
         nM.notify(DATASHARE_NOTIFICATION_ID, notification);

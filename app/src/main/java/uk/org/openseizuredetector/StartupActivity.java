@@ -536,7 +536,7 @@ public class StartupActivity extends AppCompatActivity {
                         try {
                             Intent intent = new Intent(
                                     getApplicationContext(),
-                                    MainActivity.class);
+                                    MainActivity2.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                             startActivity(intent);
                             mStartedMainActivity = true;

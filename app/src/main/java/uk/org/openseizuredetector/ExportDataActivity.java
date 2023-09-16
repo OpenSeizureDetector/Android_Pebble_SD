@@ -209,15 +209,32 @@ public class ExportDataActivity extends AppCompatActivity
             //        mDateTxt.getText().toString(), mTimeTxt.getText().toString(), mDuration));
             Log.d(TAG, String.format("EndDate=%s %s, Duration=%3.1f hrs",
                     mDateTxt.getText().toString(), mTimeTxt.getText().toString(), mDuration));
-            ProgressBar pb = (ProgressBar) findViewById(R.id.exportPb);
-            pb.setIndeterminate(true);
-            pb.setVisibility(View.VISIBLE);
 
-            mExportBtn.setEnabled(false);
-            mExportBtn.setVisibility(View.INVISIBLE);
+            showProgressBar();
             this.openFile();
 
         }
+    }
+
+    public void showProgressBar() {
+        ProgressBar pb = (ProgressBar) findViewById(R.id.exportPb);
+        pb.setIndeterminate(true);
+        pb.setVisibility(View.VISIBLE);
+        mExportBtn.setEnabled(false);
+        mExportBtn.setVisibility(View.INVISIBLE);
+    }
+
+    public void hideProgressBar() {
+        runOnUiThread(new Runnable() {
+                public void run() {
+                    ProgressBar pb = (ProgressBar) findViewById(R.id.exportPb);
+                    pb.setIndeterminate(true);
+                    pb.setVisibility(View.INVISIBLE);
+                    mExportBtn.setEnabled(true);
+                    mExportBtn.setVisibility(View.VISIBLE);
+
+                }
+        });
     }
 
     private void openFile() {
@@ -248,7 +265,10 @@ public class ExportDataActivity extends AppCompatActivity
                 // Perform operations on the document using its URI.
                 //mUtil.showToast("URI="+uri.toString());
                 Log.v(TAG, "onActivityResult() - exporting to file " + uri.toString());
-                exportToFile(uri);
+                mLm.exportToCsvFile(mEndDate, mDuration,uri, (boolean b)-> {
+                    Log.v(TAG,"onActivityResult callback");
+                    hideProgressBar();
+                });
 
             }
         }
@@ -279,16 +299,12 @@ public class ExportDataActivity extends AppCompatActivity
                         try {
                             dataObj = new JSONArray(datapointsJsonStr);
                             Log.v(TAG, "exportToFile() - dataObj length=" + dataObj.length());
-                            JSONObject datapointJsonObj = null;
-                            String dataJsonStr = null;
-                            JSONObject dataJsonObj = null;
-                            JSONArray rawDataArr = null;
                             for (int i = 0; i < dataObj.length(); i++) {
-                                datapointJsonObj = dataObj.getJSONObject(i);
-                                dataJsonStr = datapointJsonObj.getString("dataJSON");
+                                JSONObject datapointJsonObj = dataObj.getJSONObject(i);
+                                String dataJsonStr = datapointJsonObj.getString("dataJSON");
                                 Log.v(TAG, "exportToFile() - i=" + i + "dataJsonStr=" + dataJsonStr);
-                                dataJsonObj = new JSONObject(dataJsonStr);
-                                rawDataArr = dataJsonObj.getJSONArray("rawData");
+                                JSONObject dataJsonObj = new JSONObject(dataJsonStr);
+                                JSONArray rawDataArr = dataJsonObj.getJSONArray("rawData");
                                 try {
                                     fileOutputStream.write(dataJsonObj.getString("dataTime").getBytes(StandardCharsets.UTF_8));
                                     fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
@@ -306,10 +322,7 @@ public class ExportDataActivity extends AppCompatActivity
                                     Log.e(TAG, "exportToFile() - ERROR Writing File: " + e.toString());
                                     //mUtil.showToast("ERROR WRITING FILE");
                                 }
-                                datapointJsonObj = null;
-                                dataJsonStr = null;
-                                dataJsonObj = null;
-                                rawDataArr = null;
+
                             }
                         } catch (JSONException | NullPointerException e) {
                             Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string " + datapointsJsonStr);

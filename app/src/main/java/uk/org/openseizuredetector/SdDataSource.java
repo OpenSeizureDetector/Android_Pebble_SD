@@ -147,6 +147,10 @@ public abstract class SdDataSource {
     private Time mHrStatusTime;
     private double mHrFrozenPeriod = 60; // seconds
     private boolean mHrFrozenAlarm;
+    private boolean mFidgetDetectorEnabled;
+    private double mFidgetPeriod;
+    private double mFidgetThreshold;
+    private Time mLastFidget = null;
     private double accelerationCombinedCubeRoot;
 
 
@@ -250,6 +254,8 @@ public abstract class SdDataSource {
         } else {
             mSdData.mPseizure = 0;
         }
+
+
 
         // Start timer to check status of watch regularly.
         mDataStatusTime = new Time(Time.getCurrentTimezone());
@@ -559,7 +565,7 @@ public abstract class SdDataSource {
         int nMin = 0;
         int nMax = 0;
         int nFreqCutoff = 0;
-        fft = null;
+        double[] fft = null;
         try {
             // FIXME - Use specified sampleFreq, not this hard coded one
             mSampleFreq = Constants.SD_SERVICE_CONSTANTS.defaultSampleRate;
@@ -584,7 +590,7 @@ public abstract class SdDataSource {
             // Calculate the whole spectrum power (well a value equivalent to it that avoids square root calculations
             // and zero any readings that are above the frequency cutoff.
             double specPower = 0;
-            for (int i = 1; i < (mSdData.mNsamp - 1) / 2; i++) {
+            for (int i = 1; i < mSdData.mNsamp / 2; i++) {
                 if (i <= nFreqCutoff) {
                     specPower = specPower + getMagnitude(fft, i);
                 } else {
@@ -599,19 +605,19 @@ public abstract class SdDataSource {
 
             // Calculate the Region of Interest power and power ratio.
             double roiPower = 0;
-            for (int i = nMin; i < nMax -1; i++) {
+            for (int i = nMin; i < nMax; i++) {
                 roiPower = roiPower + getMagnitude(fft, i);
             }
             roiPower = roiPower / (nMax - nMin);
             double roiRatio = 10 * roiPower / specPower;
 
             // Calculate the simplified spectrum - power in 1Hz bins.
-            simpleSpec = new double[SIMPLE_SPEC_FMAX + 1];
-            for (int ifreq = 0; ifreq < SIMPLE_SPEC_FMAX -1; ifreq++) {
+            double[] simpleSpec = new double[SIMPLE_SPEC_FMAX + 1];
+            for (int ifreq = 0; ifreq < SIMPLE_SPEC_FMAX; ifreq++) {
                 int binMin = (int) (1 + ifreq / freqRes);    // add 1 to loose dc component
                 int binMax = (int) (1 + (ifreq + 1) / freqRes);
                 simpleSpec[ifreq] = 0;
-                for (int i = binMin; i < binMax -1; i++) {
+                for (int i = binMin; i < binMax; i++) {
                     simpleSpec[ifreq] = simpleSpec[ifreq] + getMagnitude(fft, i);
                 }
                 simpleSpec[ifreq] = simpleSpec[ifreq] / (binMax - binMin);
@@ -656,7 +662,6 @@ public abstract class SdDataSource {
                 }
             }
         }
-
 
         // Use the neural network algorithm to calculate the probability of the data
         // being representative of a seizure (sets mSdData.mPseizure)
@@ -881,6 +886,31 @@ public abstract class SdDataSource {
 
     }
 
+    private double calcRawDataStd(SdData sdData) {
+        /**
+         * Calculate the standard deviation in % of the rawData array in the SdData instance provided.
+         * It assumes that rawdata will contain 125 samples.
+         * Returns the standard deviation in %.
+         */
+        // FIXME - assumes length of rawdata array is 125 data points
+        int j;
+        double sum = 0.0;
+        for (j = 0; j < 125; j++) { // FIXME - assumed length!
+            sum += sdData.rawData[j];
+        }
+        double mean = sum / 125;
+
+        double standardDeviation = 0.0;
+        for (j = 0; j < 125; j++) { // FIXME - assumed length!
+            standardDeviation += Math.pow(sdData.rawData[j] - mean, 2);
+        }
+        standardDeviation = Math.sqrt(standardDeviation / 125);  // FIXME - assumed length!
+
+        // Convert standard deviation from milli-g to %
+        standardDeviation = 100. * standardDeviation / mean;
+        return (standardDeviation);
+    }
+
     /**
      * Checks the status of the connection to the watch,
      * and sets class variables for use by other functions.
@@ -921,6 +951,23 @@ public abstract class SdDataSource {
             }
         } else {
             mSdData.watchAppRunning = true;
+
+            // Check we have seen a fidget within the required period, or else assume a fault because watch is not being worn
+            if (mFidgetDetectorEnabled) {
+                if (mLastFidget == null) mLastFidget = tnow;   // Initialise last fidget time on startup.
+
+                double accStd = calcRawDataStd(mSdData);
+                if (accStd > mFidgetThreshold) {
+                    mLastFidget = tnow;
+                } else {
+                    Log.d(TAG,"onStatus() - Fidget Detector - low movement - is watch being worn?");
+                    tdiff = (tnow.toMillis(false) - mLastFidget.toMillis(false));
+                    if (tdiff > (mFidgetPeriod) * 60 * 1000) {
+                        Log.e(TAG, "onStatus() - Fidget Not Detected - is watch being worn?");
+                        mSdDataReceiver.onSdDataFault(mSdData);
+                    }
+                }
+            }
         }
 
         // if we have confirmation that the app is running, reset the
@@ -1037,6 +1084,20 @@ public abstract class SdDataSource {
                 Log.e(TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!",ex);
                 mUtil.writeToSysLogFile( "updatePrefs() - Problem with FaultTimerPeriod preference!");
                 Toast toast = Toast.makeText(mContext, "Problem Parsing FaultTimerPeriod Preference", Toast.LENGTH_SHORT);
+                toast.show();
+            }
+
+            // Parse the Fidget Detector settings.
+            try {
+                mFidgetDetectorEnabled = SP.getBoolean("FidgetDetectorEnabled", false);
+                mFidgetPeriod = readDoublePref(SP, "FidgetDetectorPeriod", "20"); // minutes
+                Log.v(TAG, "updatePrefs() - mFidgetPeriod = " + mFidgetPeriod);
+                mFidgetThreshold = readDoublePref(SP, "FidgetDetectorThreshold", "0.6 ");
+                Log.d(TAG,"updatePrefs(): mFidgetThreshold="+mFidgetThreshold);
+
+            } catch (Exception ex) {
+                Log.v(TAG, "updatePrefs() - Problem with FidgetDetector preferences!");
+                Toast toast = Toast.makeText(mContext, "Problem Parsing FidgetPeriod Preference", Toast.LENGTH_SHORT);
                 toast.show();
             }
 
