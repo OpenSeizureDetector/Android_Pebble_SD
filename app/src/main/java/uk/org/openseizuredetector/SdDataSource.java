@@ -223,13 +223,9 @@ public abstract class SdDataSource {
         else
             mConversionSampleFactor = 1d;
         if (accelerationCombined != -1d) {
-            if (accelerationCombined >= SensorManager.GRAVITY_EARTH)
-                gravityScaleFactor = accelerationCombined  / SensorManager.GRAVITY_EARTH;
-            else
-                gravityScaleFactor =1d;
-        }
-        else
-        {
+            gravityScaleFactor = accelerationCombined / SensorManager.GRAVITY_EARTH;
+
+        } else {
             gravityScaleFactor = 1d;
         }
 
@@ -626,8 +622,8 @@ public abstract class SdDataSource {
             if (gravityScaleFactor == 0) calculateStaticTimings();
             // Populate the mSdData structure to communicate with the main SdServer service.
             mDataStatusTime.setToNow();
-            mSdData.specPower = (long) (specPower / gravityScaleFactor);
-            mSdData.roiPower = (long) (roiPower / gravityScaleFactor);
+            mSdData.specPower = (long) (specPower / miliGravityScaleFactor);
+            mSdData.roiPower = (long) (roiPower / miliGravityScaleFactor);
             mSdData.dataTime.setToNow();
             mSdData.maxVal = 0;   // not used
             mSdData.maxFreq = 0;  // not used
@@ -640,8 +636,9 @@ public abstract class SdDataSource {
             mSdData.alarmFreqMax = mAlarmFreqMax;
             // note mSdData.batteryPc is set from settings data in updateFromJSON()
             // FIXME - I haven't worked out why dividing by 1000 seems necessary to get the graph on scale - we don't seem to do that with the Pebble.
+            // DoubleFFT_1D has from 1G values 1mG
             for (int i = 0; i < SIMPLE_SPEC_FMAX; i++) {
-                mSdData.simpleSpec[i] = (int) (simpleSpec[i] / gravityScaleFactor);
+                mSdData.simpleSpec[i] = (int) (simpleSpec[i] / miliGravityScaleFactor);
             }
             Log.v(TAG, "simpleSpec = " + Arrays.toString(mSdData.simpleSpec));
 
