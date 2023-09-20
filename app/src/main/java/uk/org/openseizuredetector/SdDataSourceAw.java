@@ -360,6 +360,7 @@ public class SdDataSourceAw extends SdDataSource {
                             if (Constants.ACTION.PUSH_SETTINGS_ACTION.equals(receivedAction)) {
                                 try{
                                     updatePrefs();
+                                    calculateStaticTimings();
                                     mHandler.postDelayed(() -> {
                                         aWIntent = aWIntentBase;
                                         aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.PUSH_SETTINGS_ACTION);
@@ -488,7 +489,7 @@ public class SdDataSourceAw extends SdDataSource {
                 //aWIntent = new Intent();
                 aWIntent = aWIntentBaseManifest;
                 aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.dataType, Constants.GLOBAL_CONSTANTS.mStartUri);
-                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.STARTFOREGROUND_ACTION);
+                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.START_MOBILE_RECEIVER_ACTION);
 
                 //aWIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.startId, useSdServerBinding().mStartId);
