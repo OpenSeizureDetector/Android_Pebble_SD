@@ -125,6 +125,7 @@ public class Constants {
         public static String CONNECTION_WEARABLE_RECONNECTED = "uk.org.openseizuredetector.aw.wear.wearableReConnected";
         public static String CONNECTION_WEARABLE_DISCONNECTED = "uk.org.openseizuredetector.aw.wear.wearableDisConnected";
         public static String SDDATA_TRANSFER_TO_SD_SERVER = "uk.org.openseizuredetector.sdDataTransfer";
+        public static String WATCH_BODY_DETECTED = "uk.org.openseizuredetector.aw.wear.wearableChangedBodyDetectedValue";
     }
 
     public interface NOTIFICATION_ID {

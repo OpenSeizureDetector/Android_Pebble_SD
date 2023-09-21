@@ -147,6 +147,7 @@ public class SdData implements Parcelable {
     public boolean mHRFaultStanding = false;
     public boolean mAdaptiveHrAlarmStanding = false;
     public boolean mAverageHrAlarmStanding = false;
+    public boolean mWatchOnBody = false;
 
 
     public double mPseizure = 0.;

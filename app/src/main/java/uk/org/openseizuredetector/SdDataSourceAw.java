@@ -402,6 +402,13 @@ public class SdDataSourceAw extends SdDataSource {
                                 }
                             }
 
+                            if (Constants.ACTION.WATCH_BODY_DETECTED.equals(receivedAction)){
+                                useSdServerBinding().mSdData.mWatchOnBody = Boolean.valueOf(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath));
+
+                                if (useSdServerBinding().uiLiveData.hasActiveObservers())
+                                    useSdServerBinding().uiLiveData.signalChangedData();
+                            }
+
                             if (Constants.ACTION.STOP_WEAR_SD_ACTION.equals(receivedAction)) {
                                 //if (useSdServerBinding().)Log.i(TAG," fixme: add here liveData from startup and main activity");
                                 useSdServerBinding().mSdData.haveSettings = false;
