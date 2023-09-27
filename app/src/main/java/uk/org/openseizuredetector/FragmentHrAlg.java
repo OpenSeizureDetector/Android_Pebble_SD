@@ -16,9 +16,9 @@ import java.util.Objects;
 
 public class FragmentHrAlg extends FragmentOsdBaseClass {
     Context context = getContext();
-    Looper looper = context.getMainLooper();
-    Handler mHandler = new Handler(looper);
-    TextView tv = (TextView) mRootView.findViewById(R.id.fragment_hr_alg_tv1);
+    Looper looper = null;
+    Handler mHandler =null;
+    TextView tv = null;
     String TAG = "FragmentOsdAlg";
     public FragmentHrAlg() {
         // Required empty public constructor
@@ -28,10 +28,14 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (Objects.isNull(looper) && Objects.nonNull((Context) this.getActivity()))
+            looper = ((Context) this.getActivity()).getMainLooper();
+        if (Objects.isNull(mHandler) && Objects.nonNull(looper))
+            mHandler = new Handler(looper);
         if (mUtil.isServerRunning()) {
             mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
             if (Objects.nonNull(mConnection)) {
-                if (!mConnection.mBound) mUtil.bindToServer(context, mConnection);
+                if (!mConnection.mBound) mUtil.bindToServer((Context) this.getActivity(), mConnection);
                 mUtil.waitForConnection(mConnection);
                 connectUiLiveDataRunner();
 
@@ -39,6 +43,11 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         } else {
             Log.i(TAG, "onStart() - Server Not Running");
             mUtil.writeToSysLogFile("MainActivity.onStart - Server Not Running");
+        }
+        if (Objects.nonNull(mRootView)){
+            if (Objects.isNull(tv)) {
+                tv = (TextView) mRootView.findViewById(R.id.fragment_hr_alg_tv1);
+            }
         }
     }
 
@@ -56,8 +65,13 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     }
 
     private void onChangedObserver(Object o) {
-        tv.setText("Current HeartRate: " + mConnection.mSdServer.mSdData.mHR +
-                "\nCurrent average: " + mConnection.mSdServer.mSdData.mHRAvg);
+        if (Objects.nonNull(mRootView)) {
+            tv = (TextView) mRootView.findViewById(R.id.fragment_hr_alg_tv1);
+            if (Objects.nonNull(tv)) {
+                tv.setText("Current HeartRate: " + mConnection.mSdServer.mSdData.mHR +
+                        "\nCurrent average: " + mConnection.mSdServer.mSdData.mHRAvg);
+            }
+        }
     }
 
     @Override
@@ -70,6 +84,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     @Override
     protected void updateUi() {
         Log.d(TAG,"updateUi()");
+        tv = (TextView) mRootView.findViewById(R.id.fragment_hr_alg_tv1);
         if (mConnection.mBound) {
             tv.setText("Bound to Server");
         } else {
