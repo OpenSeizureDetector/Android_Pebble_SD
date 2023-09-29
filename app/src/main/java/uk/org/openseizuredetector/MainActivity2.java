@@ -26,6 +26,7 @@ import android.widget.TextView;
 
 import com.rohitss.uceh.UCEHandler;
 
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -144,13 +145,15 @@ public class MainActivity2 extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (mFragmentPager.getCurrentItem() == 0) {
-            // If the user is currently looking at the first step, allow the system to handle the
-            // Back button. This calls finish() on this activity and pops the back stack.
-            super.onBackPressed();
-        } else {
-            // Otherwise, select the previous step.
-            mFragmentPager.setCurrentItem(mFragmentPager.getCurrentItem() - 1);
+        if (Objects.nonNull(mFragmentPager)){
+            if (mFragmentPager.getCurrentItem() == 0) {
+                // If the user is currently looking at the first step, allow the system to handle the
+                // Back button. This calls finish() on this activity and pops the back stack.
+                super.onBackPressed();
+            } else {
+                // Otherwise, select the previous step.
+                mFragmentPager.setCurrentItem(mFragmentPager.getCurrentItem() - 1);
+            }
         }
     }
 

@@ -19,6 +19,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     Looper looper = null;
     Handler mHandler =null;
     TextView tv = null;
+    TextView tvCurrent = null;
     String TAG = "FragmentOsdAlg";
     public FragmentHrAlg() {
         // Required empty public constructor
@@ -46,7 +47,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         }
         if (Objects.nonNull(mRootView)){
             if (Objects.isNull(tv)) {
-                tv = (TextView) mRootView.findViewById(R.id.fragment_hr_alg_tv1);
+                tvCurrent = mRootView.findViewById(R.id.hrAlgTv);
             }
         }
     }
@@ -65,13 +66,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     }
 
     private void onChangedObserver(Object o) {
-        if (Objects.nonNull(mRootView)) {
-            tv = (TextView) mRootView.findViewById(R.id.fragment_hr_alg_tv1);
-            if (Objects.nonNull(tv)) {
-                tv.setText("Current HeartRate: " + mConnection.mSdServer.mSdData.mHR +
-                        "\nCurrent average: " + mConnection.mSdServer.mSdData.mHRAvg);
-            }
-        }
+        updateUi();
     }
 
     @Override
@@ -87,10 +82,16 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         tv = (TextView) mRootView.findViewById(R.id.fragment_hr_alg_tv1);
         if (mConnection.mBound) {
             tv.setText("Bound to Server");
+            tvCurrent = mRootView.findViewById(R.id.textView2);
+            if (Objects.nonNull(tvCurrent)) {
+                tvCurrent.setText("Current heartrate: " + mConnection.mSdServer.mSdData.mHR +
+                        "/n Current average heartrate: " + mConnection.mSdServer.mSdData.mHRAvg);
+            }
         } else {
             tv.setText("****NOT BOUND TO SERVER***");
             return;
         }
+
 
 
     }
