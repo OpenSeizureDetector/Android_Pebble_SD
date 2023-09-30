@@ -103,6 +103,7 @@ public class StartupActivity extends AppCompatActivity {
             Manifest.permission.WAKE_LOCK,
     };
 
+
     public final String[] SMS_PERMISSIONS_1 = {
             Manifest.permission.SEND_SMS,
             Manifest.permission.READ_PHONE_STATE,
@@ -127,6 +128,7 @@ public class StartupActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         Log.i(TAG, "onCreate()");
         setContentView(R.layout.startup_activity);
 
@@ -335,7 +337,7 @@ public class StartupActivity extends AppCompatActivity {
         mConnection = null;
 
         if (isFinishing())
-            if (mUtil.isServerRunning())
+            if (mUtil.isServerRunning() && false)
                 mUtil.stopServer();
 
         if (Objects.nonNull(mUiTimer)) mUiTimer.cancel();
@@ -534,7 +536,7 @@ public class StartupActivity extends AppCompatActivity {
                         try {
                             Intent intent = new Intent(
                                     getApplicationContext(),
-                                    MainActivity.class);
+                                    MainActivity2.class);
                             intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                             startActivity(intent);
                             mStartedMainActivity = true;

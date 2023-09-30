@@ -26,7 +26,6 @@
 
 package uk.org.openseizuredetector;
 
-import uk.org.openseizuredetector.R;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
 import android.app.Notification;
@@ -1176,7 +1175,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
 
         // Fault
-        if ((sdData.alarmState) == 4 || (sdData.alarmState == 7) || (sdData.mHRFaultStanding) || (sdData.mHrFrozenFaultStanding)) {
+        if ((sdData.alarmState) == 4 || (sdData.alarmState == 7) || (sdData.mHRFaultStanding) || (sdData.mHRFrozenFaultStanding)) {
             sdData.alarmPhrase = "FAULT";
             //writeAlarmToSD();
             faultWarningBeep();
@@ -2296,7 +2295,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 .setContentTitle(titleStr)
                 .setContentText(contentStr)
                 .setOnlyAlertOnce(true)
-                .addAction(com.firebase.ui.auth.R.drawable.common_google_signin_btn_icon_dark, getString(R.string.login), loginPendingIntent)
+                .addAction(R.drawable.common_google_signin_btn_icon_dark, getString(R.string.login), loginPendingIntent)
                 .setPriority(0)
                 .build();
         nM.notify(DATASHARE_NOTIFICATION_ID, notification);

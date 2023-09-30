@@ -302,10 +302,18 @@ public class SdDataSourceAw extends SdDataSource {
                                 }
                             }
 
-                            //Sending return from function if aWIntent is null. With luck and a retry
-                            //the process can continue.
-                            if (Objects.isNull(aWIntentBase))
+                            if (Objects.isNull(aWIntentBase)){
+                                if (Objects.nonNull(aWIntentBaseManifest)) {
+                                    aWIntent = aWIntentBaseManifest;
+                                    aWIntent.removeExtra(Constants.GLOBAL_CONSTANTS.intentAction);
+                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_START_INTENT);
+
+                                    PendingIntent pIntent = PendingIntent.getBroadcast(mContext, useSdServerBinding().mStartId, aWIntent,
+                                            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
+                                    pIntent.send();
+                                }
                                 return;
+                            }
 
                             if (Constants.ACTION.REGISTERED_WEARRECEIVER_INTENT.equals(receivedAction)) {
 
@@ -350,13 +358,18 @@ public class SdDataSourceAw extends SdDataSource {
                             }
 
                             if (Constants.ACTION.PUSH_SETTINGS_ACTION.equals(receivedAction)) {
-                                calculateStaticTimings();
-                                mHandler.postDelayed(() -> {
-                                    aWIntent = aWIntentBase;
-                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.PUSH_SETTINGS_ACTION);
-                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, getSdData().toSettingsJSON());
-                                    mContext.sendBroadcast(aWIntent);
-                                }, 100);
+                                try{
+                                    updatePrefs();
+                                    calculateStaticTimings();
+                                    mHandler.postDelayed(() -> {
+                                        aWIntent = aWIntentBase;
+                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.PUSH_SETTINGS_ACTION);
+                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, mSdData.toSettingsJSON()); // send SdDataSource Updated mSdData
+                                        mContext.sendBroadcast(aWIntent);
+                                    }, 100);
+                                }catch (Exception e){
+                                    Log.e(TAG,"onStartReceived(): PUSH_SETTINGS_ACTION:" ,e);
+                                }
                                 return;
                             }
 
@@ -366,12 +379,12 @@ public class SdDataSourceAw extends SdDataSource {
                                         String a = updateFromJSON(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath));
 
                                         Log.v(TAG, "result from updateFromJSON(): " + a);
-                                        if (a == "sendSettings") {
+                                        if (Objects.equals(a, "sendSettings")) {
                                             super.updatePrefs();
                                             sendWatchSdSettings();
                                             getWatchSdSettings();
                                         }
-                                        if (a == "ERROR"){
+                                        if (Objects.equals(a, "ERROR")){
                                             Log.e(TAG,"Error in updateFromJSON: ");
                                         }
                                         if (!getSdData().haveSettings)
@@ -380,11 +393,20 @@ public class SdDataSourceAw extends SdDataSource {
                                             useSdServerBinding().mSdData.watchConnected = true;
                                         if (!getSdData().watchAppRunning)
                                             useSdServerBinding().mSdData.watchAppRunning = true;
+                                        if (!getSdData().haveData && ! a.equals("ERROR"))
+                                            useSdServerBinding().mSdData.haveData = true;
                                     }
 
                                 } catch (Exception e) {
                                     Log.e(TAG,"onStartReceived()",e);
                                 }
+                            }
+
+                            if (Constants.ACTION.WATCH_BODY_DETECTED.equals(receivedAction)){
+                                useSdServerBinding().mSdData.mWatchOnBody = Boolean.valueOf(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath));
+
+                                if (useSdServerBinding().uiLiveData.hasActiveObservers())
+                                    useSdServerBinding().uiLiveData.signalChangedData();
                             }
 
                             if (Constants.ACTION.STOP_WEAR_SD_ACTION.equals(receivedAction)) {
@@ -486,6 +508,7 @@ public class SdDataSourceAw extends SdDataSource {
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
                 pIntent.send();
 
+                aWIntent = aWIntentBaseManifest;
                 aWIntent.removeExtra(Constants.GLOBAL_CONSTANTS.intentAction);
                 aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_START_INTENT);
 
@@ -493,14 +516,15 @@ public class SdDataSourceAw extends SdDataSource {
                         PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
                 pIntent.send();
 
+
             } catch (Exception e) {
                 Log.e(TAG, "start() encountered an error", e);
-                mHandler.postDelayed(() -> {
+                /*mHandler.postDelayed(() -> {
                     aWIntent = new Intent(Constants.ACTION.BROADCAST_TO_WEARRECEIVER);
                     aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.STOP_MOBILE_RECEIVER_ACTION);
                     aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.returnPath, Constants.GLOBAL_CONSTANTS.mAppPackageName);
                     mContext.sendBroadcast(aWIntent);
-                }, 100);
+                }, 100);*/
             }
         }
 

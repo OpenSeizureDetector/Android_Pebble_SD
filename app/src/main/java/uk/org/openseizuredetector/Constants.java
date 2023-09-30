@@ -2,12 +2,15 @@ package uk.org.openseizuredetector;
 
 import android.net.Uri;
 
+import java.util.concurrent.TimeUnit;
+
 public class Constants {
     public interface GLOBAL_CONSTANTS {
         public final int ALARMS_OFF = 6;
         public final int ALARMS_ON = 0;
         // Request codes
         // CALENDAR GROUP
+
         public final int PERMISSION_REQUEST_READ_CALENDAR = 0;
         public final int PERMISSION_REQUEST_WRITE_CALENDAR = 1;
         // CAMERA GROUP
@@ -95,6 +98,7 @@ public class Constants {
         public static String CONNECTIONUPDATE_ACTION = "uk.org.openseizuredetector.onConnectionUpdate";
         public static String BROADCAST_TO_WEARRECEIVER = "uk.org.openseizuredetector.aw.broadcastToWearReceiver";
         public static String BROADCAST_TO_WEARRECEIVER_MANIFEST = "uk.org.openseizuredetector.aw.broadcastToWearReceiverAtManifest";
+        public static String WEARRECEIVER_FOREGROUND_STARTED = "uk.org.openseizuredetector.aw.foregroundServiceWearReceiverStarted";
         public static String BROADCAST_TO_SDSERVER = "uk.org.openseizuredetector.broadcastTosdServer";
         public static String PUSH_SETTINGS_ACTION = "uk.org.openseizuredetector.aw.wear.pushSettings";
         public static String PULL_SETTINGS_ACTION = "uk.org.openseizuredetector.aw.wear.pullSettings";
@@ -121,6 +125,7 @@ public class Constants {
         public static String CONNECTION_WEARABLE_RECONNECTED = "uk.org.openseizuredetector.aw.wear.wearableReConnected";
         public static String CONNECTION_WEARABLE_DISCONNECTED = "uk.org.openseizuredetector.aw.wear.wearableDisConnected";
         public static String SDDATA_TRANSFER_TO_SD_SERVER = "uk.org.openseizuredetector.sdDataTransfer";
+        public static String WATCH_BODY_DETECTED = "uk.org.openseizuredetector.aw.wear.wearableChangedBodyDetectedValue";
     }
 
     public interface NOTIFICATION_ID {

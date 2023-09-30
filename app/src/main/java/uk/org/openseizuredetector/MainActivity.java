@@ -25,7 +25,6 @@
 
 package uk.org.openseizuredetector;
 
-import uk.org.openseizuredetector.R;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -34,13 +33,12 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Messenger;
-import android.preference.PreferenceManager;
-import android.text.format.Time;
+import androidx.preference.PreferenceManager;
+
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -56,7 +54,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
-import androidx.appcompat.view.menu.MenuView;
 import androidx.core.view.MenuCompat;
 
 import com.github.mikephil.charting.charts.BarChart;
@@ -67,19 +64,16 @@ import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 
 import com.github.mikephil.charting.utils.ValueFormatter;
-import com.google.type.DateTime;
 import com.rohitss.uceh.UCEHandler;
 
 import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Timer;
-import java.util.TimerTask;
 
 //MPAndroidChart
 
@@ -240,7 +234,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
         String actionStr;
         Log.i(TAG, "onNewIntent");
         Bundle extras = intent.getExtras();
@@ -263,8 +256,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
-
 
     /**
      * Create Action Bar
@@ -454,7 +445,6 @@ public class MainActivity extends AppCompatActivity {
         else {
             return super.onOptionsItemSelected(item);
         }
-
     }
 
     @Override
@@ -501,7 +491,7 @@ public class MainActivity extends AppCompatActivity {
 */
 
     }
-    
+
 
     void connectUiLiveDataRunner(){
         if (mConnection.mBound && Objects.nonNull(mConnection.mSdServer))
@@ -601,7 +591,8 @@ public class MainActivity extends AppCompatActivity {
                         if (mConnection.mSdServer.mLogNDA)
                             tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName + "\nNDA Logging");
                         else
-                            tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
+                            tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName +
+                                    (Objects.nonNull(mConnection.mSdServer.mSdData.alarmPhrase) ? "\n"+"(last/current Alarm Phase:\n" + mConnection.mSdServer.mSdData.alarmPhrase:"" ));
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
                     }
@@ -717,7 +708,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(alarmTextColour);
                     }
 
-                    tv = (TextView) findViewById(R.id.pebTimeTv);
+                    tv = (TextView) findViewById(R.id.data_time_tv);
                     tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
@@ -766,7 +757,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     */
 
-                    tv = (TextView) findViewById(R.id.appTv);
+                    tv = (TextView) findViewById(R.id.fragment_watch_app_status_tv);
                     if (mConnection.mSdServer.mSdData.watchAppRunning) {
                         tv.setText(R.string.WatchAppOK);
                         tv.setBackgroundColor(okColour);
@@ -929,9 +920,9 @@ public class MainActivity extends AppCompatActivity {
                     // Fault Conditions - We override the values in the UI because we do not know
                     // if the stored ones are correct or not with a fault present.
                     if ((mConnection.mSdServer.mSdData.alarmState == 4) ||
-                            (mConnection.mSdServer.mSdData.alarmState == 7) || mConnection.mSdServer.mSdData.mHrFrozenFaultStanding) {
+                            (mConnection.mSdServer.mSdData.alarmState == 7) || mConnection.mSdServer.mSdData.mHRFrozenFaultStanding) {
                         tv = (TextView) findViewById(R.id.alarmTv);
-                        if (mConnection.mSdServer.mSdData.alarmState == 4 || mConnection.mSdServer.mSdData.mHrFrozenFaultStanding) {
+                        if (mConnection.mSdServer.mSdData.alarmState == 4 || mConnection.mSdServer.mSdData.mHRFrozenFaultStanding) {
                             tv.setText(R.string.Fault);
                             tv.setBackgroundColor(warnColour);
                             tv.setTextColor(warnTextColour);
@@ -941,12 +932,12 @@ public class MainActivity extends AppCompatActivity {
                             tv.setBackgroundColor(warnColour);
                             tv.setTextColor(warnTextColour);
                         }
-                        tv = (TextView) findViewById(R.id.pebTimeTv);
+                        tv = (TextView) findViewById(R.id.data_time_tv);
                         tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
 
-                        tv = (TextView) findViewById(R.id.pebTimeTv);
+                        tv = (TextView) findViewById(R.id.data_time_tv);
                         tv.setText("--:--:--");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
@@ -956,7 +947,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
 
-                        tv = (TextView) findViewById(R.id.appTv);
+                        tv = (TextView) findViewById(R.id.fragment_watch_app_status_tv);
                         tv.setText(getString(R.string.WatchApp) + " ----");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
@@ -971,13 +962,12 @@ public class MainActivity extends AppCompatActivity {
                     tv.setText(R.string.Dashes);
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
-                    tv = (TextView) findViewById(R.id.pebTimeTv);
-                    Date dtt = Calendar.getInstance().getTime();
-                    tv.setText(DateFormat.getTimeInstance(DateFormat.MEDIUM).format(dtt));
+                    tv = (TextView) findViewById(R.id.data_time_tv);
+                    tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
 
-                    tv = (TextView) findViewById(R.id.pebTimeTv);
+                    tv = (TextView) findViewById(R.id.data_time_tv);
                     tv.setText("--:--:--");
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
@@ -987,7 +977,7 @@ public class MainActivity extends AppCompatActivity {
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
 
-                    tv = (TextView) findViewById(R.id.appTv);
+                    tv = (TextView) findViewById(R.id.fragment_watch_app_status_tv);
                     tv.setText(getString(R.string.WatchApp) + " -----");
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);

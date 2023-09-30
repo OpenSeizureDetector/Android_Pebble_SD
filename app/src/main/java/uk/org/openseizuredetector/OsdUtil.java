@@ -71,6 +71,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 //use java.Util.Objects as comparetool.
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -99,7 +100,7 @@ public class OsdUtil {
     private static final String mSysLogTableName = "SysLog";
     //private LogManager mLm;
     static private SQLiteDatabase mSysLogDb = null;   // SQLite Database for data and log entries.
-    private final static Long mMinPruneInterval = new Long(5 * 60 * 1000); // minimum time between syslog pruning is 5 minutes
+    private final static Long mMinPruneInterval = TimeUnit.MINUTES.toMillis(5); // minimum time between syslog pruning is 5 minutes
     private static Long mLastPruneMillis = new Long(0);   // Record of the last time we pruned the syslog db.
 
     private static int mNbound = 0;
@@ -533,11 +534,36 @@ public class OsdUtil {
     }
 
     /**
+     * convertTimeUnit -- Convert From TimeUnit to TimeUnit in Double format
+     * @param amount Enter in double format value to convert
+     * @param from Enter TimeUnit Origin like TimeUnit.SECONDS
+     * @param to Enter TimeUnit.MICROSECONDS
+     * <p>
+     * if from equals to, the original value returns.
+     *
+     * @return Double converted value.
+     * */
+
+    public static double convertTimeUnit(double amount, TimeUnit from, TimeUnit to) {
+        // if the same unit is passed, avoid the conversion
+        if (from == to) {
+            return amount;
+        }
+        // is from or to the larger unit?
+        if (from.ordinal() < to.ordinal()) { // from is smaller
+            return amount / from.convert(1, to);
+        } else {
+            return amount * to.convert(1, from);
+        }
+    }
+
+
+    /**
      * string2date - returns a Date object represented by string dateStr
      * It first attempts to parse it as a long integer, in which case it is assumed to
      * be a unix timestamp.
      * If that fails it attempts to parse it as yyyy-MM-dd'T'HH:mm:ss'Z' format.
-     * @param dateStr String reprenting a date
+     * @param dateStr String representing a date
      * @return Date object or null if parsing fails.
      */
     public Date string2date(String dateStr) {
@@ -769,7 +795,7 @@ public class OsdUtil {
         if (currentDateMillis > mLastPruneMillis + mMinPruneInterval) {
             mLastPruneMillis = currentDateMillis;
             // FIXME - change this to something sensible like 7 days after testing
-            long endDateMillis = currentDateMillis - 5 * 60 * 1000;
+            long endDateMillis = currentDateMillis - TimeUnit.MINUTES.toMillis(5);
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String endDateStr = dateFormat.format(new Date(endDateMillis));
             Log.v(TAG, "pruneSysLogDb - endDateStr=" + endDateStr);

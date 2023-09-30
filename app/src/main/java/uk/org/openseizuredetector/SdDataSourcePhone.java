@@ -25,15 +25,12 @@ package uk.org.openseizuredetector;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Binder;
 import android.os.Handler;
-import android.os.IBinder;
-import android.os.PowerManager;
+
 import androidx.preference.PreferenceManager;
 import android.util.Log;
 
@@ -213,7 +210,6 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     mSdData.mSampleFreq = (int) (mSdData.mNsamp / mSdData.dT);
                     mSdData.haveSettings = true;
                     Log.v(TAG, "onSensorChanged(): Collected data for " + mSdData.dT + " sec - calculated sample rate as " + mSampleFreq + " Hz");
-                    accelerationCombined = sqrt(event.values[0] * event.values[0] + event.values[1] * event.values[1] + event.values[2] * event.values[2]);
                     calculateStaticTimings();
                     unBindSensorListeners();
                     bindSensorListeners();

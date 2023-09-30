@@ -137,9 +137,21 @@ public class LogManagerControlActivity extends AppCompatActivity {
         MenuCompat.setGroupDividerEnabled(menu, true);
         mMenu = menu;
         MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
-        if (mConnection.mSdServer.mLm.mLogNDA) {
-            startStopNDAMenuItem.setTitle(R.string.stop_nda_menu_title);
-        } else {
+        if (Objects.nonNull(mConnection)) {
+            if (Objects.nonNull(mConnection.mSdServer)) {
+                if (Objects.nonNull(mConnection.mSdServer.mLm)) {
+                    if (mConnection.mSdServer.mLm.mLogNDA) {
+                        startStopNDAMenuItem.setTitle(R.string.stop_nda_menu_title);
+                    } else {
+                        startStopNDAMenuItem.setTitle(R.string.start_nda_menu_title);
+                    }
+                }else {
+                    startStopNDAMenuItem.setTitle(R.string.start_nda_menu_title);
+                }
+            }else {
+                startStopNDAMenuItem.setTitle(R.string.start_nda_menu_title);
+            }
+        }else {
             startStopNDAMenuItem.setTitle(R.string.start_nda_menu_title);
         }
 

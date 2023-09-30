@@ -38,6 +38,11 @@
             android:title="@string/fall_detect_active_title" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/SeizureDetectorSettingsTitle">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="OsdAlarmActive"
+            android:summary="@string/OsdAlarmEnabledSummary"
+            android:title="@string/OsdAlarmEnabledTitle" />
         <EditTextPreference
             android:defaultValue="5"
             android:key="WarnTime"
@@ -72,11 +77,31 @@
 
         <EditTextPreference
             android:defaultValue="5"
+            android:enabled="false"
             android:key="SamplePeriod"
             android:summary="@string/sample_period_summary"
             android:title="@string/sample_period_title" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/ml_sd_settings_title">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="CnnAlarmActive"
+            android:summary="@string/CnnAlarmEnabledSummary"
+            android:title="@string/CnnAlarmEnabledTitle" />
+        <EditTextPreference
+            android:defaultValue="5"
+            android:key="CnnAlarmThreshold"
+            android:summary="@string/ml_sd_threshold_summary"
+            android:title="@string/ml_sd_threshold_title" />
+        <EditTextPreference
+            android:defaultValue="1"
+            android:key="CnnModelId"
+            android:enabled="false"
+            android:summary="@string/ml_sd_modelid_summary"
+            android:title="@string/ml_sd_modelid_title" />
+
+    </PreferenceCategory>
     <PreferenceCategory android:title="@string/HeartRateAlarmSettingsTitle">
         <CheckBoxPreference
             android:defaultValue="false"
@@ -186,5 +211,22 @@
             android:title="@string/fall_window_title" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="@string/FidgetSettingsTitle">
 
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="FidgetDetectorEnabled"
+            android:summary="@string/FidgetDetectorEnabledSummary"
+            android:title="@string/FidgetDetectorEnabledTitle" />
+        <EditTextPreference
+            android:defaultValue="0.6"
+            android:key="FidgetDetectorThreshold"
+            android:summary="@string/FidgetDetectorThresholdSummary"
+            android:title="@string/FidgetDetectorThresholdTitle" />
+        <EditTextPreference
+            android:defaultValue="20"
+            android:key="FidgetDetectorPeriod"
+            android:summary="@string/FidgetDetectorPeriodSummary"
+            android:title="@string/FidgetDetectorPeriodTitle" />
+    </PreferenceCategory>
 </PreferenceScreen>
