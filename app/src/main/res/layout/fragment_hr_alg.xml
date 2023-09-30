@@ -5,22 +5,73 @@
     android:layout_height="match_parent"
     tools:context=".FragmentOsdBaseClass">
 
-    <!-- TODO: Update blank fragment layout -->
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
         android:layout_height="253dp"
+        android:background="@color/okBackgroundColor"
         android:orientation="vertical">
-        <!-- TODO: Update blank fragment layout -->
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="HR Algorithm Status"
+            android:textColor="@color/okTextColor" />
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Current HR: "
+                android:textColor="@color/okTextColor" />
+
+            <TextView
+                android:id="@+id/current_hr_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="---"
+                android:textColor="@color/okTextColor" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" bpm"
+                android:textColor="@color/okTextColor" />
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Adaptive Threshold Average HR: "
+                android:textColor="@color/okTextColor" />
+
+            <TextView
+                android:id="@+id/adaptive_avg_hr_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="---"
+                android:textColor="@color/okTextColor" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" bpm"
+                android:textColor="@color/okTextColor" />
+
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
         <TextView
             android:id="@+id/fragment_hr_alg_tv1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Fragment_HrAlg" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="HR Algorithm Status" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
