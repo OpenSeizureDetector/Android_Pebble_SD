@@ -32,12 +32,15 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.hardware.SensorManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.PowerManager;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.annotation.Nullable;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -47,7 +50,10 @@ import org.jtransforms.fft.DoubleFFT_1D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.StringJoiner;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -78,7 +84,7 @@ public abstract class SdDataSource {
     protected OsdUtil mUtil;
     protected Context mContext;
     protected SdDataReceiver mSdDataReceiver;
-    private String TAG = "SdDataSource";
+    private String TAG = this.getClass().getName();
     protected List<Double> initialBuffer = new ArrayList<>(0);
 
     protected boolean mIsRunning = false;
@@ -111,6 +117,7 @@ public abstract class SdDataSource {
     private SdAlgHr mSdAlgHr;
     double[] fft = null;
     double[] simpleSpec;
+    private SharedPreferences sharedPreferences;
 
     // Values for SD_MODE
     private int SIMPLE_SPEC_FMAX = 10;
@@ -162,8 +169,12 @@ public abstract class SdDataSource {
         mSdDataReceiver = sdDataReceiver;
         if(Objects.isNull((mSdData)))
             mSdData = getSdData();
-
-
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        if (sharedPreferences.contains(Constants.GLOBAL_CONSTANTS.destroyReasonOf+TAG))
+        {
+            Log.d(TAG, "(re)Constructed after being closed with reason: \n" +
+                    sharedPreferences.getString(Constants.GLOBAL_CONSTANTS.destroyReasonOf + TAG, ""));
+        }
     }
 
 
@@ -350,6 +361,10 @@ public abstract class SdDataSource {
 
         if (mSdData.mCnnAlarmActive) {
             mSdAlgNn.close();
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            sharedPreferences.edit().putString(Constants.GLOBAL_CONSTANTS.destroyReasonOf+TAG, Thread.currentThread().getStackTrace().toString());
         }
 
     }
@@ -622,8 +637,8 @@ public abstract class SdDataSource {
             if (gravityScaleFactor == 0) calculateStaticTimings();
             // Populate the mSdData structure to communicate with the main SdServer service.
             mDataStatusTime.setToNow();
-            mSdData.specPower = (long) (specPower / miliGravityScaleFactor);
-            mSdData.roiPower = (long) (roiPower / miliGravityScaleFactor);
+            mSdData.specPower = (long) (specPower + 1d/OsdUtil.convertMetresPerSecondSquaredToMilliG(1d));
+            mSdData.roiPower = (long) (roiPower * 1d / OsdUtil.convertMetresPerSecondSquaredToMilliG(1d));
             mSdData.dataTime.setToNow();
             mSdData.maxVal = 0;   // not used
             mSdData.maxFreq = 0;  // not used
@@ -638,7 +653,7 @@ public abstract class SdDataSource {
             // FIXME - I haven't worked out why dividing by 1000 seems necessary to get the graph on scale - we don't seem to do that with the Pebble.
             // DoubleFFT_1D has from 1G values 1mG
             for (int i = 0; i < SIMPLE_SPEC_FMAX; i++) {
-                mSdData.simpleSpec[i] = (int) (simpleSpec[i] / miliGravityScaleFactor);
+                mSdData.simpleSpec[i] = (int) (simpleSpec[i] * 1/OsdUtil.convertMetresPerSecondSquaredToMilliG(1));
             }
             Log.v(TAG, "simpleSpec = " + Arrays.toString(mSdData.simpleSpec));
 
@@ -676,9 +691,17 @@ public abstract class SdDataSource {
 
         mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
 
+        signalUpdateUI();
+    }
+
+    public void signalUpdateUI() {
         //and signal update UI
-        if(useSdServerBinding().uiLiveData.hasActiveObservers()) {
-            useSdServerBinding().uiLiveData.signalChangedData();
+        if (Objects.nonNull(useSdServerBinding())){
+            if (Objects.nonNull(useSdServerBinding().uiLiveData)){
+                if (useSdServerBinding().uiLiveData.hasActiveObservers()) {
+                    useSdServerBinding().uiLiveData.signalChangedData();
+                }
+            }
         }
     }
 

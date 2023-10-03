@@ -584,6 +584,15 @@ public class OsdUtil {
         return(dataTime);
     }
 
+    /**
+     * Function to convert sensor acceleration from metres per
+     * second squared to milliGal(mGal)
+     * @param mms value in metres per second squared
+     * @return mms * math.pow(10,5}
+     */
+    public static double convertMetresPerSecondSquaredToMilliG(double mms){
+        return mms*Math.pow(10,5);
+    }
 
     public final int ALARM_STATUS_WARNING = 1;
     public final int ALARM_STATUS_ALARM = 2;

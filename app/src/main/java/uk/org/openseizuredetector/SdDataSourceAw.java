@@ -342,18 +342,24 @@ public class SdDataSourceAw extends SdDataSource {
 
                             if (Constants.ACTION.CONNECTION_WEARABLE_CONNECTED.equals(receivedAction)){
                                 useSdServerBinding().mSdData.watchConnected = true;
+                                useSdServerBinding().mSdData.watchAppRunning = true;
+                                signalUpdateUI();
                                 mobileBatteryPctUpdate();
                                 return;
                             }
 
                             if (Constants.ACTION.CONNECTION_WEARABLE_RECONNECTED.equals(receivedAction)){
                                 useSdServerBinding().mSdData.watchConnected = true;
+                                useSdServerBinding().mSdData.watchAppRunning = true;
+                                signalUpdateUI();
                                 mobileBatteryPctUpdate();
                                 return;
                             }
 
                             if (Constants.ACTION.CONNECTION_WEARABLE_DISCONNECTED.equals(receivedAction)){
                                 useSdServerBinding().mSdData.watchConnected = false;
+                                useSdServerBinding().mSdData.watchAppRunning = false;
+                                signalUpdateUI();
                                 return;
                             }
 
@@ -395,6 +401,7 @@ public class SdDataSourceAw extends SdDataSource {
                                             useSdServerBinding().mSdData.watchAppRunning = true;
                                         if (!getSdData().haveData && ! a.equals("ERROR"))
                                             useSdServerBinding().mSdData.haveData = true;
+                                        signalUpdateUI();
                                     }
 
                                 } catch (Exception e) {
@@ -405,8 +412,7 @@ public class SdDataSourceAw extends SdDataSource {
                             if (Constants.ACTION.WATCH_BODY_DETECTED.equals(receivedAction)){
                                 useSdServerBinding().mSdData.mWatchOnBody = Boolean.valueOf(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath));
 
-                                if (useSdServerBinding().uiLiveData.hasActiveObservers())
-                                    useSdServerBinding().uiLiveData.signalChangedData();
+                                signalUpdateUI();
                             }
 
                             if (Constants.ACTION.STOP_WEAR_SD_ACTION.equals(receivedAction)) {

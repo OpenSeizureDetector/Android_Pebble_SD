@@ -193,6 +193,9 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
             mSdDataSettings = pullSdData();
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             // we initially start in mMode=0, which calculates the sample frequency returned by the sensor, then enters mMode=1, which is normal operation.
+            double x = OsdUtil.convertMetresPerSecondSquaredToMilliG(event.values[0]);
+            double y = OsdUtil.convertMetresPerSecondSquaredToMilliG(event.values[1]);
+            double z = OsdUtil.convertMetresPerSecondSquaredToMilliG(event.values[2]);
             if (mMode == 0) {
                 if (mStartEvent==null) {
                     Log.v(TAG,"onSensorChanged(): mMode=0 - checking Sample Rate - mNSamp = "+mSdData.mNsamp);
@@ -240,10 +243,10 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     for (int i = 0; i < Constants.SD_SERVICE_CONSTANTS.defaultSampleCount ; i++) {
                         readPosition = (int) (i / mConversionSampleFactor);
                         if (readPosition < rawDataList.size() ){
-                            mSdData.rawData[i] = gravityScaleFactor * rawDataList.get(readPosition) / SensorManager.GRAVITY_EARTH;
-                            mSdData.rawData3D[i] = gravityScaleFactor * rawDataList3D.get(readPosition) / SensorManager.GRAVITY_EARTH;
-                            mSdData.rawData3D[i + 1] = gravityScaleFactor * rawDataList3D.get(readPosition + 1) / SensorManager.GRAVITY_EARTH;
-                            mSdData.rawData3D[i + 2] = gravityScaleFactor * rawDataList3D.get(readPosition + 2) / SensorManager.GRAVITY_EARTH;
+                            mSdData.rawData[i] = rawDataList.get(readPosition) ;
+                            mSdData.rawData3D[i] = rawDataList3D.get(readPosition) ;
+                            mSdData.rawData3D[i + 1] = rawDataList3D.get(readPosition + 1) ;
+                            mSdData.rawData3D[i + 2] = rawDataList3D.get(readPosition + 2) ;
                             //Log.v(TAG,"i="+i+", rawData="+mSdData.rawData[i]+","+mSdData.rawData[i/2]);
                         }
                     }
@@ -254,7 +257,7 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     mSdData.mHRAlarmActive = false;
                     mSdData.mHRAlarmStanding = false;
                     mSdData.mHRNullAsAlarm = false;
-                    mSdData.mNsamp /= 2;
+                    mSdData.mNsamp /= mConversionSampleFactor;
 
                     // Set HR and O2Sat values to fault value (-1) to avoid alarms if the user enables HR or O2Sat alarms.
                     mSdData.mHR = -1;
@@ -266,9 +269,6 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     return;
                 }else if (!Objects.equals(rawDataList, null) && rawDataList.size() <= mCurrentMaxSampleCount ) {
 
-                    float x = event.values[0];
-                    float y = event.values[1];
-                    float z = event.values[2];
                     //Log.v(TAG,"Accelerometer Data Received: x="+x+", y="+y+", z="+z);
                     rawDataList.add( sqrt(x * x + y * y + z * z));
                     rawDataList3D.add((double) x);

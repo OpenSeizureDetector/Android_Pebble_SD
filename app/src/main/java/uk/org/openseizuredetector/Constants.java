@@ -68,6 +68,7 @@ public class Constants {
         public final Uri mPASSUri = Uri.parse("PASS");
         public final Uri mRequestUri = Uri.parse("Request");
         public final Uri PreStart = Uri.parse("PreStart");
+        public final String destroyReasonOf = "destroyReasonOf";
         public final String mPowerLevel = "powerLevel";
         public final String mSettingsString = "settingsJson";
         public final String mSdServerIntent = "sdServerIntent";
