@@ -181,6 +181,7 @@ public class StartupActivity extends AppCompatActivity {
         });
 
         mConnection = new SdServiceConnection(getApplicationContext());
+
     }
 
     @Override
@@ -428,9 +429,17 @@ public class StartupActivity extends AppCompatActivity {
                         Log.i(TAG, "serverStatusRunnable() - starting main activity...");
                         mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - all checks ok - starting main activity.");
                         try {
-                            Intent intent = new Intent(
-                                    getApplicationContext(),
-                                    MainActivity2.class);
+                            Boolean useNewUi = SP.getBoolean("UseNewUi", false);
+                            Intent intent;
+                            if (useNewUi) {
+                                intent = new Intent(
+                                        getApplicationContext(),
+                                        MainActivity2.class);
+                            } else {
+                                intent = new Intent(
+                                        getApplicationContext(),
+                                        MainActivity.class);
+                            }
                             intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                             startActivity(intent);
                             mStartedMainActivity = true;
