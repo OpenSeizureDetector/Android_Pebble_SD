@@ -637,8 +637,8 @@ public abstract class SdDataSource {
             if (gravityScaleFactor == 0) calculateStaticTimings();
             // Populate the mSdData structure to communicate with the main SdServer service.
             mDataStatusTime.setToNow();
-            mSdData.specPower = (long) (specPower );
-            mSdData.roiPower = (long) (roiPower );
+            mSdData.specPower = (long) (specPower /1000);
+            mSdData.roiPower = (long) (roiPower /1000);
             mSdData.dataTime.setToNow();
             mSdData.maxVal = 0;   // not used
             mSdData.maxFreq = 0;  // not used
@@ -653,7 +653,7 @@ public abstract class SdDataSource {
             // FIXME - I haven't worked out why dividing by 1000 seems necessary to get the graph on scale - we don't seem to do that with the Pebble.
             // DoubleFFT_1D has from 1G values 1mG
             for (int i = 0; i < SIMPLE_SPEC_FMAX; i++) {
-                mSdData.simpleSpec[i] = (int) (simpleSpec[i] );
+                mSdData.simpleSpec[i] = (int) (simpleSpec[i] /1000);
             }
             Log.v(TAG, "simpleSpec = " + Arrays.toString(mSdData.simpleSpec));
 

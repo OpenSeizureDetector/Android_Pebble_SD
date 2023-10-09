@@ -85,7 +85,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
             tvCurrent = mRootView.findViewById(R.id.textView2);
             if (Objects.nonNull(tvCurrent)) {
                 tvCurrent.setText("Current heartrate: " + mConnection.mSdServer.mSdData.mHR +
-                        "/n Current average heartrate: " + mConnection.mSdServer.mSdData.mHRAvg);
+                        "\n Current average heartrate: " + mConnection.mSdServer.mSdData.mHRAvg);
             }
         } else {
             tv.setText("****NOT BOUND TO SERVER***");
