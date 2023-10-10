@@ -39,6 +39,7 @@ import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
@@ -320,7 +321,7 @@ public class SdDataSourceBLE extends SdDataSource {
                         mSdData.mNsamp = rawData.length;
                         //mNSamp = accelVals.length();
                         mWatchAppRunningCheck = true;
-                        mDataStatusTime = new Time(Time.getCurrentTimezone());
+                        mDataStatusTime = Calendar.getInstance().getTimeInMillis();
                         doAnalysis();
                         nRawData = 0;
                     }

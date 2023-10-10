@@ -7,7 +7,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+
 public class FragmentMlAlg extends FragmentOsdBaseClass {
+    ArrayList lineEntries;
     String TAG = "FragmentMlAlg";
     public FragmentMlAlg() {
         // Required empty public constructor
@@ -16,6 +19,8 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+
+
         super.onCreate(savedInstanceState);
     }
 
@@ -30,6 +35,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
     protected void updateUi() {
         Log.d(TAG,"updateUi()");
         TextView tv;
+
         tv = (TextView)mRootView.findViewById(R.id.fragment_ml_alg_tv1);
         if (mConnection.mBound) {
             tv.setText("Bound to Server");
