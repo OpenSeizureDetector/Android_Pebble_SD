@@ -366,7 +366,7 @@ public abstract class SdDataSource {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             sharedPreferences.edit().putString(Constants.GLOBAL_CONSTANTS.destroyReasonOf+TAG,
-                            Thread.currentThread().getStackTrace().toString())
+                            Arrays.toString(Thread.currentThread().getStackTrace()))
                     .apply();
         }
 
