@@ -174,8 +174,8 @@ public abstract class SdDataSource {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         if (sharedPreferences.contains(Constants.GLOBAL_CONSTANTS.destroyReasonOf+TAG))
         {
-            Log.d(TAG, "(re)Constructed after being closed with reason: \n" +
-                    sharedPreferences.getString(Constants.GLOBAL_CONSTANTS.destroyReasonOf + TAG, ""));
+            Log.d(TAG, "(re)Constructed after being closed with reason: \n${
+                    sharedPreferences.getString(Constants.GLOBAL_CONSTANTS.destroyReasonOf + TAG, "")} );
         }
     }
 
@@ -356,8 +356,8 @@ public abstract class SdDataSource {
             }
 
         } catch (Exception e) {
-            Log.e(TAG, "Error in stop() - " + e.toString(),e);
-            mUtil.writeToSysLogFile("SDDataSource.stop() - error - " + e.toString());
+            Log.e(TAG, "Error in stop() - ${e.toString()}" ,e);
+            mUtil.writeToSysLogFile("SDDataSource.stop() - error -${ e.toString()}" );
         }
 
         if (mSdData.mCnnAlarmActive) {
