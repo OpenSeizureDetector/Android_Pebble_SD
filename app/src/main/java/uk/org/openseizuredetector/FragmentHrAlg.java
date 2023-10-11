@@ -41,6 +41,8 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     ArrayList hrHistoryStrings= new ArrayList<Entry>();
     ArrayList hrAveragesStrings = new ArrayList<Entry>();
     String TAG = "FragmentOsdAlg";
+    private ArrayList listToDisplay;
+    private ArrayList listToDisplayStrings;
 
 
     public FragmentHrAlg() {
@@ -126,8 +128,8 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                 hrHistory.add(new Entry((float) mConnection.mSdServer.mSdData.mHR, hrAverages.size()));
                 hrHistoryStrings.add(String.valueOf((short) mConnection.mSdServer.mSdData.mHR));
                 SwitchCompat swithAverages = mRootView.findViewById(R.id.switch1);
-                ArrayList listToDisplay=swithAverages.isChecked() ? hrAverages : hrHistory;
-                ArrayList listToDisplayStrings=swithAverages.isChecked() ? hrAveragesStrings : hrHistoryStrings;
+                listToDisplay=swithAverages.isChecked() ? hrAverages : hrHistory;
+                listToDisplayStrings=swithAverages.isChecked() ? hrAveragesStrings : hrHistoryStrings;
                 if (Objects.nonNull(listToDisplay)){
                     if (listToDisplay.size() > 0) {
                         lineChart = mRootView.findViewById(R.id.lineChart);
