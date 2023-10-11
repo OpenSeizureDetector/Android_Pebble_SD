@@ -365,7 +365,9 @@ public abstract class SdDataSource {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            sharedPreferences.edit().putString(Constants.GLOBAL_CONSTANTS.destroyReasonOf+TAG, Thread.currentThread().getStackTrace().toString());
+            sharedPreferences.edit().putString(Constants.GLOBAL_CONSTANTS.destroyReasonOf+TAG,
+                            Thread.currentThread().getStackTrace().toString())
+                    .apply();
         }
 
     }
@@ -693,6 +695,10 @@ public abstract class SdDataSource {
         mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
 
         signalUpdateUI();
+        if (Objects.nonNull(useSdServerBinding().mLm)){
+            useSdServerBinding().mLm.writeToRemoteServer();
+        }
+
     }
 
     public void signalUpdateUI() {
@@ -704,6 +710,7 @@ public abstract class SdDataSource {
                 }
             }
         }
+
     }
 
 

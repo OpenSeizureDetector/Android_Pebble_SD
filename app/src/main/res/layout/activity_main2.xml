@@ -12,15 +12,22 @@
         android:layout_height="wrap_content"
         android:text="@string/app_name" />
 
-
-    <androidx.fragment.app.FragmentContainerView xmlns:android="http://schemas.android.com/apk/res/android"
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragment_common_container_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/fragment_pager"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/fragment_pager"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+        </androidx.viewpager2.widget.ViewPager2>
+    </ScrollView>
+
+
 </LinearLayout>

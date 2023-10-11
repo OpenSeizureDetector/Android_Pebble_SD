@@ -88,6 +88,7 @@ public class Constants {
         // 1/5 = 0,2 seconds. 200ms
         public final double getMaxHeartRefreshRate = (1d/(maxHeartRefreshRate/60d))*1000;
         public final String startUpTime = "startUpTime";
+        public final String lastPagerId = "lastPagerId";
 
     }
 

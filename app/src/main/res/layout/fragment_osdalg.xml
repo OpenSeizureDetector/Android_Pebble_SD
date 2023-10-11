@@ -7,7 +7,7 @@
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
-        android:layout_height="253dp"
+        android:layout_height="match_parent"
         android:orientation="vertical">
         <!-- TODO: Update blank fragment layout -->
         <TextView
