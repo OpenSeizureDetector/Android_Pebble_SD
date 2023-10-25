@@ -89,7 +89,14 @@ public class Constants {
         public final double getMaxHeartRefreshRate = (1d/(maxHeartRefreshRate/60d))*1000;
         public final String startUpTime = "startUpTime";
         public final String lastPagerId = "lastPagerId";
+        public final String heartRateList = "heartRateList";
 
+        String BATTERY_PC = "batteryPc";
+        String DATA_TYPE = "dataType";
+        String DATA_TYPE_RAW = "raw";
+        String DATA_VALUE_HR = "hr";
+        String JSON_TYPE_DATA = "data";
+        String JSON_TYPE_BATTERY = "battery";
     }
 
     public interface ACTION {

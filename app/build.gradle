@@ -80,6 +80,12 @@ dependencies {
     implementation 'androidx.navigation:navigation-ui:2.5.2'
     implementation 'androidx.preference:preference:1.2.1'
 
+    //implementation to read Json Arrays instantly
+    implementation 'com.squareup.retrofit2:converter-jackson:2.7.2'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.10.3'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.10.3'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.10.3'
+
     //implementation for Timerless operation:
     // Work Manager and worker: used instead of Services
     implementation 'androidx.work:work-runtime:2.8.1'

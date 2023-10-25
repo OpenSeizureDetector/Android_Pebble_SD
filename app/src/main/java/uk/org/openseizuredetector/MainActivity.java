@@ -963,7 +963,7 @@ public class MainActivity extends AppCompatActivity {
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
                     tv = (TextView) findViewById(R.id.data_time_tv);
-                    tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
+                    tv.setText(Calendar.getInstance().getTime().toString());
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
 

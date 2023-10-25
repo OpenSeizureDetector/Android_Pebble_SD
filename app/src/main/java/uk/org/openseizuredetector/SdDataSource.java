@@ -42,6 +42,8 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -51,14 +53,19 @@ import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.Spliterators;
 import java.util.StringJoiner;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 interface SdDataReceiver {
     public void onSdDataReceived(SdData sdData);
@@ -161,6 +168,9 @@ public abstract class SdDataSource {
     private double mFidgetThreshold;
     private long mLastFidget ;
     private double accelerationCombinedCubeRoot;
+    private List<JSONObject> jsonObjectList;
+    private JSONArray jsonArrayHeartRate;
+    private String jsonStr;
 
 
     public SdDataSource(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
@@ -414,132 +424,151 @@ public abstract class SdDataSource {
             mainObject = new JSONObject(jsonStr);
             //JSONObject dataObject = mainObject.getJSONObject("dataObj");
             dataObject = mainObject;
-            mSdData.watchConnected = true;  // we must be connected to receive data.
-            dataTypeStr = dataObject.getString("dataType");
-            Log.v(TAG, "updateFromJSON - dataType=" + dataTypeStr);
-            if (dataTypeStr.equals("raw")) {
+            if (!getSdData().dataSourceName.equals("AndroidWear")) mSdData.watchConnected = true;  // we must be connected to receive data.
+            if (dataObject.has(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY)) mSdData.batteryPc = (short) dataObject.getInt(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY);
+            if (dataObject.has(Constants.GLOBAL_CONSTANTS.heartRateList)) {
+                List<Double> testDoubles = new ArrayList<>();
                 Log.v(TAG, "updateFromJSON - processing raw data");
                 try {
-                    mSdData.mHR = dataObject.getDouble("hr");
+                    mSdData.mHR = dataObject.getDouble(Constants.GLOBAL_CONSTANTS.DATA_VALUE_HR);
                 } catch (JSONException e) {
                     // if we get 'null' HR (For example if the heart rate is not working)
                     mSdData.mHR = -1;
                 }
+                try {
+                    ObjectMapper mapper = new ObjectMapper();
+                    testDoubles.add((mapper.readValue(dataObject.getJSONObject(Constants.GLOBAL_CONSTANTS.heartRateList).toString(), Double.class)));
+                    mSdData.heartRates.addAll((Collection<? extends Double>) dataObject.getJSONObject(Constants.GLOBAL_CONSTANTS.heartRateList));
+                } catch (JSONException jsonException) {
+                    Log.e(TAG, "updateFromJson(): dataObject.has: heartRateList: ", jsonException);
+                }
+            }
+            if (dataObject.has("O2satIncluded"))
                 try {
                     mSdData.mO2Sat = dataObject.getDouble("O2sat");
                 } catch (JSONException e) {
                     // if we get 'null' O2 Saturation (For example if the oxygen sensor is not working)
                     mSdData.mO2Sat = -1;
                 }
-                try {
-                    mMute = dataObject.getInt("Mute");
-                } catch (JSONException e) {
-                    // if we get 'null' HR (For example if the heart rate is not working)
-                    mMute = 0;
-                }
-                //TODO: assert if this block is deprecated,duplicate or ok.
-                try {
-                    mSdData.batteryPc = (short) dataObject.getInt("batteryPc");
-                }catch(Exception e){
-                    Log.e(TAG,"Error in getting battery percentage",e);
-                }
-                accelVals = dataObject.getJSONArray("data"); //upstream version has data.
-                try{
-                    mSdData.dT = dataObject.getDouble("dT");
-                }catch (JSONException e)
-                {
-                    Log.e(TAG,"updateFromJSON(): import dT: " ,e);
-                    mSdData.dT = dataObject.getInt("analysisPeriod");
-                }
-                //TODO change rawData in WEAR sddata class to data
-                Log.v(TAG, "Received " + accelVals.length() + " acceleration values, rawData Length is " + mSdData.rawData.length);
-                if (accelVals.length() > mSdData.rawData.length) {
-                    mUtil.writeToSysLogFile("ERROR:  Received " + accelVals.length() + " acceleration values, but rawData storage length is "
-                            + mSdData.rawData.length);
-                }
-                int i;
-                for (i = 0; i < accelVals.length(); i++) {
-                    mSdData.rawData[i] = accelVals.getDouble(i);
-                    if (initialBuffer.size() <= mSdData.mDefaultSampleCount)
-                        initialBuffer.add(accelVals.getDouble(i));
-                }
-                mSdData.mNsamp = accelVals.length();
-                //Log.d(TAG,"accelVals[0]="+accelVals.getDouble(0)+", mSdData.rawData[0]="+mSdData.rawData[0]);
-                try {
-                    accelVals3D = dataObject.getJSONArray("data3D");
-                    Log.v(TAG, "Received " + accelVals3D.length() + " acceleration 3D values, rawData Length is " + mSdData.rawData3D.length);
-                    if (accelVals3D.length() > mSdData.rawData3D.length) {
-                        mUtil.writeToSysLogFile("ERROR:  Received " + accelVals3D.length() + " 3D acceleration values, but rawData3D storage length is "
-                                + mSdData.rawData3D.length);
+            if (dataObject.has(Constants.GLOBAL_CONSTANTS.DATA_TYPE)) {
+                dataTypeStr = dataObject.getString(Constants.GLOBAL_CONSTANTS.DATA_TYPE);
+                Log.v(TAG, "updateFromJSON - dataType=" + dataTypeStr);
+                if (dataTypeStr.equals(Constants.GLOBAL_CONSTANTS.DATA_TYPE_RAW)) {
+                    try {
+                        mMute = dataObject.getInt("Mute");
+                    } catch (JSONException e) {
+                        // if we get 'null' HR (For example if the heart rate is not working)
+                        mMute = 0;
                     }
-                    for (i = 0; i < accelVals3D.length(); i++) {
-                        mSdData.rawData3D[i] = accelVals3D.getDouble(i);
-                        if(i==3){
-                            calculateStaticTimings();
+                    //TODO: assert if this block is deprecated,duplicate or ok.
+                    if (dataObject.has(Constants.GLOBAL_CONSTANTS.BATTERY_PC)){
+                        try {
+                            mSdData.batteryPc = (short) dataObject.getInt(Constants.GLOBAL_CONSTANTS.BATTERY_PC);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error in getting battery percentage", e);
                         }
                     }
-                } catch (JSONException e) {
-                    // If we get an error, just set rawData3D to zero
-                    Log.i(TAG,"updateFromJSON - error parsing 3D data - setting it to zero",e);
-                    for (i = 0; i < mSdData.rawData3D.length; i++) {
-                        mSdData.rawData3D[i] = 0.;
+                    if (dataObject.has(Constants.GLOBAL_CONSTANTS.JSON_TYPE_DATA)) accelVals = dataObject.getJSONArray(Constants.GLOBAL_CONSTANTS.JSON_TYPE_DATA); //upstream version has data.
+                    try {
+                        mSdData.dT = dataObject.getDouble("dT");
+                    } catch (JSONException e) {
+                        Log.e(TAG, "updateFromJSON(): import dT: ", e);
+                        mSdData.dT = dataObject.getInt("analysisPeriod");
                     }
-                }
+                    //TODO change rawData in WEAR sddata class to data
+                    Log.v(TAG, "Received " + accelVals.length() + " acceleration values, rawData Length is " + mSdData.rawData.length);
+                    if (accelVals.length() > mSdData.rawData.length) {
+                        mUtil.writeToSysLogFile("ERROR:  Received " + accelVals.length() + " acceleration values, but rawData storage length is "
+                                + mSdData.rawData.length);
+                    }
+                    int i;
+                    for (i = 0; i < accelVals.length(); i++) {
+                        mSdData.rawData[i] = accelVals.getDouble(i);
+                        if (initialBuffer.size() <= mSdData.mDefaultSampleCount)
+                            initialBuffer.add(accelVals.getDouble(i));
+                    }
+                    mSdData.mNsamp = accelVals.length();
+                    //Log.d(TAG,"accelVals[0]="+accelVals.getDouble(0)+", mSdData.rawData[0]="+mSdData.rawData[0]);
+                    try {
+                        accelVals3D = dataObject.getJSONArray("data3D");
+                        Log.v(TAG, "Received " + accelVals3D.length() + " acceleration 3D values, rawData Length is " + mSdData.rawData3D.length);
+                        if (accelVals3D.length() > mSdData.rawData3D.length) {
+                            mUtil.writeToSysLogFile("ERROR:  Received " + accelVals3D.length() + " 3D acceleration values, but rawData3D storage length is "
+                                    + mSdData.rawData3D.length);
+                        }
+                        for (i = 0; i < accelVals3D.length(); i++) {
+                            mSdData.rawData3D[i] = accelVals3D.getDouble(i);
+                            if (i == 3) {
+                                calculateStaticTimings();
+                            }
+                        }
+                    } catch (JSONException e) {
+                        // If we get an error, just set rawData3D to zero
+                        Log.i(TAG, "updateFromJSON - error parsing 3D data - setting it to zero", e);
+                        for (i = 0; i < mSdData.rawData3D.length; i++) {
+                            mSdData.rawData3D[i] = 0.;
+                        }
+                    }
 
-                try{
-                    mSdData.mSampleFreq = dataObject.getInt("sampleFreq");
-                }catch (JSONException e){
-                    mSdData.mSampleFreq = mSdData.rawData.length / (int) mSdData.dT;
-                }
-                if (initialBuffer.size() == mSdDataSettings.mDefaultSampleCount)
-                    calculateStaticTimings();
-                mWatchAppRunningCheck = true;
-                boolean incorrectmNSamp = mSdData.mNsamp < 1.0;
-                boolean incorrectmSampleFreq = mSdData.mSampleFreq < 1.0;
-                boolean incorrectGravityScaleFactor = gravityScaleFactor == 0d;
-                if (incorrectmSampleFreq|| incorrectmNSamp || incorrectGravityScaleFactor){
-                    if (incorrectmNSamp) mSdData.mNsamp = mSdData.rawData.length;
-                    if (incorrectmSampleFreq) mSdData.mSampleFreq = mSdData.mNsamp / mSdData.analysisPeriod;
-                    calculateStaticTimings();
-                }
+                    try {
+                        mSdData.mSampleFreq = dataObject.getInt("sampleFreq");
+                    } catch (JSONException e) {
+                        mSdData.mSampleFreq = mSdData.rawData.length / (int) mSdData.dT;
+                    }
+                    if (initialBuffer.size() == mSdDataSettings.mDefaultSampleCount)
+                        calculateStaticTimings();
+                    mWatchAppRunningCheck = true;
+                    boolean incorrectmNSamp = mSdData.mNsamp < 1.0;
+                    boolean incorrectmSampleFreq = mSdData.mSampleFreq < 1.0;
+                    boolean incorrectGravityScaleFactor = gravityScaleFactor == 0d;
+                    if (incorrectmSampleFreq || incorrectmNSamp || incorrectGravityScaleFactor) {
+                        if (incorrectmNSamp) mSdData.mNsamp = mSdData.rawData.length;
+                        if (incorrectmSampleFreq)
+                            mSdData.mSampleFreq = mSdData.mNsamp / mSdData.analysisPeriod;
+                        calculateStaticTimings();
+                    }
 
-                doAnalysis();
+                    doAnalysis();
 
-                if (!mSdData.haveSettings) {
-                    retVal = "sendSettings";
-                } else {
+                    if (!mSdData.haveSettings) {
+                        retVal = "sendSettings";
+                    } else {
+                        retVal = "OK";
+                    }
+                } else if (dataTypeStr.equals("settings")) {
+                    Log.v(TAG, "updateFromJSON - processing settings");
+                    mSdData.analysisPeriod = (short) dataObject.getInt("analysisPeriod");
+                    mSdData.mSampleFreq = (short) dataObject.getInt("sampleFreq");
+                    Log.v(TAG, "updateFromJSON - mSamplePeriod=" + mSamplePeriod + " mSampleFreq=" + mSampleFreq);
+                    mUtil.writeToSysLogFile("SDDataSource.updateFromJSON - Settings Received");
+                    mUtil.writeToSysLogFile("    * mSamplePeriod=" + mSamplePeriod + " mSampleFreq=" + mSampleFreq);
+                    mUtil.writeToSysLogFile("    * batteryPc = " + mSdData.batteryPc);
+
+                    try {
+                        mSdData.watchPartNo = dataObject.getString("watchPartNo");
+                        mSdData.watchFwVersion = dataObject.getString("watchFwVersion");
+                        mSdData.watchSdVersion = dataObject.getString("sdVersion");
+                        mSdData.watchSdName = dataObject.getString("sdName");
+                        mUtil.writeToSysLogFile("    * sdName = " + mSdData.watchSdName + " version " + mSdData.watchSdVersion);
+                        mUtil.writeToSysLogFile("    * watchPartNo = " + mSdData.watchPartNo + " fwVersion " + mSdData.watchFwVersion);
+
+                    } catch (Exception e) {
+                        Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString(), e);
+                        mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - " + jsonStr + " - " + e.toString());
+                        mUtil.writeToSysLogFile("          This is probably because of an out of date watch app - please upgrade!");
+                        e.printStackTrace();
+                    }
+                    mSdData.haveSettings = true;
+                    mWatchAppRunningCheck = true;
                     retVal = "OK";
+                } else if (dataTypeStr.equals("watchConnect")) {
+                    retVal = dataTypeStr;
+                } else {
+                    Log.e(TAG, "updateFromJSON - unrecognised dataType " + dataTypeStr);
+                    retVal = "ERROR";
                 }
-            } else if (dataTypeStr.equals("settings")) {
-                Log.v(TAG, "updateFromJSON - processing settings");
-                mSdData.analysisPeriod = (short) dataObject.getInt("analysisPeriod");
-                mSdData.mSampleFreq = (short) dataObject.getInt("sampleFreq");
-                mSdData.batteryPc = (short) dataObject.getInt("battery");
-                Log.v(TAG, "updateFromJSON - mSamplePeriod=" + mSamplePeriod + " mSampleFreq=" + mSampleFreq);
-                mUtil.writeToSysLogFile("SDDataSource.updateFromJSON - Settings Received");
-                mUtil.writeToSysLogFile("    * mSamplePeriod=" + mSamplePeriod + " mSampleFreq=" + mSampleFreq);
-                mUtil.writeToSysLogFile("    * batteryPc = " + mSdData.batteryPc);
-
-                try {
-                    mSdData.watchPartNo = dataObject.getString("watchPartNo");
-                    mSdData.watchFwVersion = dataObject.getString("watchFwVersion");
-                    mSdData.watchSdVersion = dataObject.getString("sdVersion");
-                    mSdData.watchSdName = dataObject.getString("sdName");
-                    mUtil.writeToSysLogFile("    * sdName = " + mSdData.watchSdName + " version " + mSdData.watchSdVersion);
-                    mUtil.writeToSysLogFile("    * watchPartNo = " + mSdData.watchPartNo + " fwVersion " + mSdData.watchFwVersion);
-
-                } catch (Exception e) {
-                    Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString(), e);
-                    mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - " + jsonStr + " - " + e.toString());
-                    mUtil.writeToSysLogFile("          This is probably because of an out of date watch app - please upgrade!");
-                    e.printStackTrace();
-                }
-                mSdData.haveSettings = true;
-                mWatchAppRunningCheck = true;
-                retVal = "OK";
-            } else {
-                Log.e(TAG, "updateFromJSON - unrecognised dataType " + dataTypeStr);
-                retVal = "ERROR";
+            } else{
+                Log.e(TAG, "updateFromJSON - unrecognised string received: " + jsonStr);
             }
         } catch (Exception e) {
             Log.e(TAG, "updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " , e);
@@ -640,8 +669,8 @@ public abstract class SdDataSource {
             if (gravityScaleFactor == 0) calculateStaticTimings();
             // Populate the mSdData structure to communicate with the main SdServer service.
             mDataStatusTime = Calendar.getInstance().getTimeInMillis();
-            mSdData.specPower = (long) (specPower /1000);
-            mSdData.roiPower = (long) (roiPower /1000);
+            mSdData.specPower = (long) (specPower /OsdUtil.convertMetresPerSecondSquaredToMilliG(1));
+            mSdData.roiPower = (long) (roiPower /OsdUtil.convertMetresPerSecondSquaredToMilliG(1));
             //mSdData.dataTime = new Date(mDataStatusTime); invalid, need to change to Date
             mSdData.maxVal = 0;   // not used
             mSdData.maxFreq = 0;  // not used
@@ -656,7 +685,7 @@ public abstract class SdDataSource {
             // FIXME - I haven't worked out why dividing by 1000 seems necessary to get the graph on scale - we don't seem to do that with the Pebble.
             // DoubleFFT_1D has from 1G values 1mG
             for (int i = 0; i < SIMPLE_SPEC_FMAX; i++) {
-                mSdData.simpleSpec[i] = (int) (simpleSpec[i] /1000);
+                mSdData.simpleSpec[i] = (int) (simpleSpec[i] /OsdUtil.convertMetresPerSecondSquaredToMilliG(1));
             }
             Log.v(TAG, "simpleSpec = " + Arrays.toString(mSdData.simpleSpec));
 
@@ -1352,9 +1381,14 @@ public abstract class SdDataSource {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.v(TAG, "SdDataBroadcastReceiver.onReceive()");
-            String jsonStr = intent.getStringExtra("data");
-            Log.v(TAG, "SdDataBroadcastReceiver.onReceive() - data=" + jsonStr);
-            updateFromJSON(jsonStr);
+            if (intent.hasExtra(Constants.GLOBAL_CONSTANTS.JSON_TYPE_DATA)){
+                jsonStr = intent.getStringExtra(Constants.GLOBAL_CONSTANTS.JSON_TYPE_DATA);
+                Log.v(TAG, "SdDataBroadcastReceiver.onReceive() - data=" + jsonStr);
+                updateFromJSON(jsonStr);
+                jsonStr = null;
+            }else{
+                Log.e(TAG, "SdDataBroadcastReceiver: onReceive(): Empty broadcast received");
+            }
         }
 
     }
