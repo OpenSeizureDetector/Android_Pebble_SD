@@ -168,7 +168,9 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                         lineChart.getData().notifyDataChanged();
                         lineChart.notifyDataSetChanged();
                         lineChart.refreshDrawableState();
-                        lineChart.postInvalidate();
+                        if (mConnection.mSdServer.mBound){
+                            lineChart.postInvalidate();
+                        }
                     }
 
                 }

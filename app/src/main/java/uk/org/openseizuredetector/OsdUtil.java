@@ -250,6 +250,7 @@ public class OsdUtil {
                     activity.unbindService(sdServiceConnection);
                     mNbound = mNbound - 1;
                     Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
+                    sdServiceConnection.mBound= false;
                 } catch (Exception ex) {
                     Log.e(TAG, "unbindFromServer() - error unbinding service - " + ex.toString());
                     writeToSysLogFile("unbindFromServer() - error unbinding service - " + ex.toString());

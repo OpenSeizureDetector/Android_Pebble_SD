@@ -189,7 +189,9 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             Log.e(TAG, "Null Pointer Exception setting legend");
         }
 
-        mChart.postInvalidate();
+        if (mConnection.mSdServer.mBound){
+            mChart.postInvalidate();
+        }
 
 
     }

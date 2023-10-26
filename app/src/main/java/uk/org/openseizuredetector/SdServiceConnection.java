@@ -59,8 +59,10 @@ public class SdServiceConnection implements ServiceConnection {
             Log.v(TAG, "onServiceConnected() - Asking server to update its settings");
             mSdServer.updatePrefs();
             if(Objects.nonNull(mSdServer.uiLiveData)) {
-                if (mSdServer.uiLiveData.hasActiveObservers())
+                if (mSdServer.uiLiveData.hasActiveObservers()) {
                     mSdServer.uiLiveData.signalChangedData();
+                    mSdServer.mBound = true;
+                }
             }
         } else {
             Log.v(TAG, "onServiceConnected() - mSdServer is null - this is wrong!");
@@ -70,6 +72,7 @@ public class SdServiceConnection implements ServiceConnection {
     @Override
     public void onServiceDisconnected(ComponentName arg0) {
         Log.v(TAG, "onServiceDisonnected()");
+        mSdServer.mBound = false;
         mBound = false;
     }
 

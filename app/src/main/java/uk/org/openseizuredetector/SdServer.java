@@ -431,6 +431,10 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     }
 
 
+    public void setBound(boolean mBound) {
+        this.mBound = mBound;
+    }
+
     /**
      * PowerUpdateReceiver with coding from:
      * https://stackoverflow.com/questions/2682043/how-to-check-if-receiver-is-registered-in-android

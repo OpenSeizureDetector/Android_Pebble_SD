@@ -105,6 +105,9 @@ public class MainActivity2 extends AppCompatActivity {
         createMainActivity(null);
         setmFragmentPager();
         mFragmentPager.setId(SP.getInt(Constants.GLOBAL_CONSTANTS.lastPagerId,0));
+        serverStatusHandler.postDelayed(()-> {
+            mConnection.mSdServer.setBound(false);
+        },400);
     }
 
     private void setmFragmentPager() {
@@ -135,6 +138,7 @@ public class MainActivity2 extends AppCompatActivity {
         super.onStop();
         Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("MainActivity.onStop()");
+        mConnection.mSdServer.setBound(false);
         mUtil.unbindFromServer(getApplicationContext(), mConnection);
     }
 
@@ -150,6 +154,7 @@ public class MainActivity2 extends AppCompatActivity {
                 SP.edit().putInt(Constants.GLOBAL_CONSTANTS.lastPagerId,mFragmentPager.getId()).apply();
             }
         }
+        mConnection.mSdServer.setBound(false);
 
     }
 
@@ -162,6 +167,9 @@ public class MainActivity2 extends AppCompatActivity {
             setmFragmentPager();
         }
         mFragmentPager.setId(SP.getInt(Constants.GLOBAL_CONSTANTS.lastPagerId,0));
+        serverStatusHandler.postDelayed(()-> {
+            mConnection.mSdServer.setBound(false);
+        },400);
     }
 
 
