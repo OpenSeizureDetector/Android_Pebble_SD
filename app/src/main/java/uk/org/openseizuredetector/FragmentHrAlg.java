@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SwitchCompat;
 
 import java.util.ArrayList;
@@ -181,5 +182,22 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
 
 
         }
+    }
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        if (Objects.nonNull(mConnection))
+           if (Objects.nonNull(mConnection.mSdServer))
+               mConnection.mSdServer.setBound(true);
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+
+        if (Objects.nonNull(mConnection))
+            if (Objects.nonNull(mConnection.mSdServer))
+                mConnection.mSdServer.setBound(false);
     }
 }

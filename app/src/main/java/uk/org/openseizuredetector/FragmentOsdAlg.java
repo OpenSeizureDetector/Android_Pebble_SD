@@ -1,5 +1,6 @@
 package uk.org.openseizuredetector;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import com.github.mikephil.charting.charts.BarChart;
@@ -22,6 +24,7 @@ import com.github.mikephil.charting.utils.ValueFormatter;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class FragmentOsdAlg extends FragmentOsdBaseClass {
     String TAG = "FragmentOsdAlg";
@@ -194,5 +197,21 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
         }
 
 
+    }
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        if (Objects.nonNull(mConnection))
+            if (Objects.nonNull(mConnection.mSdServer))
+                mConnection.mSdServer.setBound(true);
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+
+        if (Objects.nonNull(mConnection))
+            if (Objects.nonNull(mConnection.mSdServer))
+                mConnection.mSdServer.setBound(false);
     }
 }
