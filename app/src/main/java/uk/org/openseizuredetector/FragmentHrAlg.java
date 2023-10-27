@@ -2,6 +2,7 @@ package uk.org.openseizuredetector;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,11 +17,14 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SwitchCompat;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
@@ -93,10 +97,10 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                 switchAverages.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        updateUi();
+                        mUtil.runOnUiThread(()->updateUi());
                     }
                 });
-                updateUi();
+                mUtil.runOnUiThread(this::updateUi);
             }
         } else {
             mHandler.postDelayed(this::connectUiLiveDataRunner, 100);
@@ -105,7 +109,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
 
 
     private void onChangedObserver(Object o) {
-        updateUi();
+        mUtil.runOnUiThread(this::updateUi);
     }
 
     @Override
@@ -139,13 +143,16 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                 if (Objects.isNull(hrAverages)) hrAverages = new ArrayList<>();
                 if (Objects.isNull(hrHistory)) hrHistory = new ArrayList<>();
 
-                for (double heartRateEntry : mConnection.mSdServer.mSdData.heartRates) {
-                    hrHistory.add(new Entry((float) heartRateEntry, hrHistory.size()));
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    hrHistory = IntStream.range(0,mConnection.mSdServer.mSdData.heartRates.size()).mapToObj(i->new Entry((float) mConnection.mSdServer.mSdData.heartRates.get(i).doubleValue(),i)).collect(Collectors.toList());
+                    hrHistoryStrings = IntStream.range(0,mConnection.mSdServer.mSdData.heartRates.size()).mapToObj(i->String.valueOf((short) mConnection.mSdServer.mSdData.heartRates.get(i).doubleValue()) + " " + Calendar.getInstance(TimeZone.getDefault()).getTime()).collect(Collectors.toList());
                 }
+
                 hrAverages.add(new Entry((float) mConnection.mSdServer.mSdData.mAverageHrAverage, hrAverages.size()));
-                hrAveragesStrings.add(String.valueOf((short) mConnection.mSdServer.mSdData.mAverageHrAverage));
-                hrHistory.add(new Entry((float) mConnection.mSdServer.mSdData.mHR, hrAverages.size()));
-                hrHistoryStrings.add(String.valueOf((short) mConnection.mSdServer.mSdData.mHR));
+                hrAveragesStrings.add(String.valueOf((short) mConnection.mSdServer.mSdData.mAverageHrAverage + " " + Calendar.getInstance(TimeZone.getDefault()).getTime()));
+                /*hrHistory.add(new Entry((float) mConnection.mSdServer.mSdData.mHR, hrAverages.size()));
+                hrHistoryStrings.add(String.valueOf((short) mConnection.mSdServer.mSdData.mHR));*/
                 switchAverages = mRootView.findViewById(R.id.switch1);
                 listToDisplay = switchAverages.isChecked() ? hrAverages : hrHistory;
                 listToDisplayStrings = switchAverages.isChecked() ? hrAveragesStrings : hrHistoryStrings;
@@ -170,7 +177,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                         lineChart.notifyDataSetChanged();
                         lineChart.refreshDrawableState();
                         if (mConnection.mSdServer.mBound){
-                            lineChart.postInvalidate();
+                            lineChart.invalidate();
                         }
                     }
 

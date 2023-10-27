@@ -64,6 +64,8 @@ import java.util.StringJoiner;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -436,9 +438,17 @@ public abstract class SdDataSource {
                     mSdData.mHR = -1;
                 }
                 try {
-                    ObjectMapper mapper = new ObjectMapper();
-                    testDoubles.add((mapper.readValue(dataObject.getJSONObject(Constants.GLOBAL_CONSTANTS.heartRateList).toString(), Double.class)));
-                    mSdData.heartRates.addAll((Collection<? extends Double>) dataObject.getJSONObject(Constants.GLOBAL_CONSTANTS.heartRateList));
+                    JSONArray jsonArray = dataObject.getJSONArray(Constants.GLOBAL_CONSTANTS.heartRateList);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        mSdData.heartRates.addAll(IntStream.range(0,jsonArray.length()).mapToObj(i-> {
+                            try {
+                                return jsonArray.getDouble(i);
+                            } catch (JSONException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }).collect(Collectors.toList()));
+                    }
+
                 } catch (JSONException jsonException) {
                     Log.e(TAG, "updateFromJson(): dataObject.has: heartRateList: ", jsonException);
                 }
