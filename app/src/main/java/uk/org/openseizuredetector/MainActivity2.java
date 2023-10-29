@@ -16,7 +16,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -38,6 +38,7 @@ public class MainActivity2 extends AppCompatActivity {
     private int okTextColour = Color.WHITE;
     private int warnTextColour = Color.WHITE;
     private int alarmTextColour = Color.BLACK;
+    private Bundle mSavedInstanceState;
 
     private ViewPager2 mFragmentPager;
     private FragmentStateAdapter mFragmentStateAdapter;
@@ -45,26 +46,33 @@ public class MainActivity2 extends AppCompatActivity {
     private OsdUtil mUtil;
     private SdServiceConnection mConnection;
     final Handler serverStatusHandler = new Handler();
+    private SharedPreferences SP;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mSavedInstanceState = savedInstanceState;
+        createMainActivity(savedInstanceState);
+    }
+
+    private void createMainActivity(Bundle savedInstanceState) {
         setContentView(R.layout.activity_main2);
 
-            Log.i(TAG, "onCreate()");
+        Log.i(TAG, "onCreate()");
 
-            // Set our custom uncaught exception handler to report issues.
-            //Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(MainActivity.this));
-            new UCEHandler.Builder(this)
-                    .addCommaSeparatedEmailAddresses("crashreports@openseizuredetector.org.uk,")
-                    .build();
+        // Set our custom uncaught exception handler to report issues.
+        //Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(MainActivity.this));
+        new UCEHandler.Builder(this)
+                .addCommaSeparatedEmailAddresses("crashreports@openseizuredetector.org.uk,")
+                .build();
 
-            //int i = 5/0;  // Force exception to test handler.
-            mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
-            mConnection = new SdServiceConnection(getApplicationContext());
-            mUtil.writeToSysLogFile("");
-            mUtil.writeToSysLogFile("* MainActivity Started     *");
-            mUtil.writeToSysLogFile("MainActivity.onCreate()");
-            mContext = this;
+        //int i = 5/0;  // Force exception to test handler.
+        mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
+        mConnection = new SdServiceConnection(getApplicationContext());
+        mUtil.writeToSysLogFile("");
+        mUtil.writeToSysLogFile("* MainActivity Started     *");
+        mUtil.writeToSysLogFile("MainActivity.onCreate()");
+        mContext = this;
 
 
         if (savedInstanceState == null) {
@@ -94,8 +102,17 @@ public class MainActivity2 extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         Log.i(TAG, "onStart()");
+        createMainActivity(null);
+        setmFragmentPager();
+        mFragmentPager.setId(SP.getInt(Constants.GLOBAL_CONSTANTS.lastPagerId,0));
+        serverStatusHandler.postDelayed(()-> {
+            mConnection.mSdServer.setBound(false);
+        },400);
+    }
+
+    private void setmFragmentPager() {
         mUtil.writeToSysLogFile("MainActivity.onStart()");
-        SharedPreferences SP = PreferenceManager
+        SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
         boolean audibleAlarm = SP.getBoolean("AudibleAlarm", true);
         Log.v(TAG, "onStart - auidbleAlarm = " + audibleAlarm);
@@ -114,8 +131,6 @@ public class MainActivity2 extends AppCompatActivity {
             Log.i(TAG, "onStart() - Server Not Running");
             mUtil.writeToSysLogFile("MainActivity.onStart - Server Not Running");
         }
-
-
     }
 
     @Override
@@ -123,6 +138,7 @@ public class MainActivity2 extends AppCompatActivity {
         super.onStop();
         Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("MainActivity.onStop()");
+        mConnection.mSdServer.setBound(false);
         mUtil.unbindFromServer(getApplicationContext(), mConnection);
     }
 
@@ -133,12 +149,27 @@ public class MainActivity2 extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         Log.i(TAG, "onPause()");
+        if (Objects.nonNull(mFragmentPager)){
+            if (Objects.nonNull(SP)){
+                SP.edit().putInt(Constants.GLOBAL_CONSTANTS.lastPagerId,mFragmentPager.getId()).apply();
+            }
+        }
+        mConnection.mSdServer.setBound(false);
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         Log.i(TAG, "onResume()");
+        if (Objects.isNull(mFragmentPager) || Objects.isNull(SP)) {
+            createMainActivity(null);
+            setmFragmentPager();
+        }
+        mFragmentPager.setId(SP.getInt(Constants.GLOBAL_CONSTANTS.lastPagerId,0));
+        serverStatusHandler.postDelayed(()-> {
+            mConnection.mSdServer.setBound(false);
+        },400);
     }
 
 

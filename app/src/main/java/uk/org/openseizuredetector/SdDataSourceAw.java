@@ -342,18 +342,24 @@ public class SdDataSourceAw extends SdDataSource {
 
                             if (Constants.ACTION.CONNECTION_WEARABLE_CONNECTED.equals(receivedAction)){
                                 useSdServerBinding().mSdData.watchConnected = true;
+                                useSdServerBinding().mSdData.watchAppRunning = true;
+                                signalUpdateUI();
                                 mobileBatteryPctUpdate();
                                 return;
                             }
 
                             if (Constants.ACTION.CONNECTION_WEARABLE_RECONNECTED.equals(receivedAction)){
                                 useSdServerBinding().mSdData.watchConnected = true;
+                                useSdServerBinding().mSdData.watchAppRunning = true;
+                                signalUpdateUI();
                                 mobileBatteryPctUpdate();
                                 return;
                             }
 
                             if (Constants.ACTION.CONNECTION_WEARABLE_DISCONNECTED.equals(receivedAction)){
                                 useSdServerBinding().mSdData.watchConnected = false;
+                                useSdServerBinding().mSdData.watchAppRunning = false;
+                                signalUpdateUI();
                                 return;
                             }
 
@@ -364,7 +370,8 @@ public class SdDataSourceAw extends SdDataSource {
                                     mHandler.postDelayed(() -> {
                                         aWIntent = aWIntentBase;
                                         aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.PUSH_SETTINGS_ACTION);
-                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, mSdData.toSettingsJSON()); // send SdDataSource Updated mSdData
+                                        if (!getSdData().serverOK) useSdServerBinding().mSdData.serverOK = true;
+                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, getSdData().toSettingsJSON()); // send SdDataSource Updated mSdData
                                         mContext.sendBroadcast(aWIntent);
                                     }, 100);
                                 }catch (Exception e){
@@ -379,7 +386,9 @@ public class SdDataSourceAw extends SdDataSource {
                                         String a = updateFromJSON(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath));
 
                                         Log.v(TAG, "result from updateFromJSON(): " + a);
-                                        if (Objects.equals(a, "sendSettings")) {
+                                        if ("sendSettings".equals(a)||
+                                            "watchConnect".equals(a)
+                                        ) {
                                             super.updatePrefs();
                                             sendWatchSdSettings();
                                             getWatchSdSettings();
@@ -395,6 +404,7 @@ public class SdDataSourceAw extends SdDataSource {
                                             useSdServerBinding().mSdData.watchAppRunning = true;
                                         if (!getSdData().haveData && ! a.equals("ERROR"))
                                             useSdServerBinding().mSdData.haveData = true;
+                                        signalUpdateUI();
                                     }
 
                                 } catch (Exception e) {
@@ -405,8 +415,7 @@ public class SdDataSourceAw extends SdDataSource {
                             if (Constants.ACTION.WATCH_BODY_DETECTED.equals(receivedAction)){
                                 useSdServerBinding().mSdData.mWatchOnBody = Boolean.valueOf(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath));
 
-                                if (useSdServerBinding().uiLiveData.hasActiveObservers())
-                                    useSdServerBinding().uiLiveData.signalChangedData();
+                                signalUpdateUI();
                             }
 
                             if (Constants.ACTION.STOP_WEAR_SD_ACTION.equals(receivedAction)) {
@@ -613,6 +622,7 @@ public class SdDataSourceAw extends SdDataSource {
             aWIntent = aWIntentBase;
             SdData sdData = getSdData();
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction,Constants.ACTION.START_MOBILE_RECEIVER_ACTION);
+            if (!sdData.serverOK) sdData.serverOK = true;
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, sdData.toSettingsJSON());
             mContext.sendBroadcast(aWIntent);
         } catch (android.content.ActivityNotFoundException anfe) {
@@ -636,6 +646,7 @@ public class SdDataSourceAw extends SdDataSource {
             SdData sdData = getSdData();
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Uri.parse(Constants.ACTION.START_WEAR_APP_ACTION));
             sdData.mDataType = Constants.GLOBAL_CONSTANTS.mSettingsString;
+            if (!sdData.serverOK) sdData.serverOK = true;
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, sdData.toSettingsJSON());
             mContext.sendBroadcast(aWIntent);
         }catch ( Exception e ){
@@ -649,6 +660,7 @@ public class SdDataSourceAw extends SdDataSource {
             aWIntent = aWIntentBase;
             SdData sdData = getSdData();
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction,Constants.ACTION.PUSH_SETTINGS_ACTION);
+            if (!sdData.serverOK) sdData.serverOK = true;
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, sdData.toSettingsJSON());
             mContext.sendBroadcast(aWIntent);
         }catch ( Exception e ){

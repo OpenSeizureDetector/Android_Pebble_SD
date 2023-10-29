@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:orientation="vertical">
+xmlns:tools="http://schemas.android.com/tools"
+
+android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="uk.org.openseizuredetector.StartupActivity"
+    android:animateLayoutChanges="true"
+    android:orientation="vertical"
+    android:isScrollContainer="true">
 
     <TextView
         android:id="@+id/versionTv"
@@ -12,15 +18,15 @@
         android:layout_height="wrap_content"
         android:text="@string/app_name" />
 
-
-    <androidx.fragment.app.FragmentContainerView xmlns:android="http://schemas.android.com/apk/res/android"
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragment_common_container_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
+        android:layout_height="wrap_content"
+        android:isScrollContainer="true"/>
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/fragment_pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 </LinearLayout>
+

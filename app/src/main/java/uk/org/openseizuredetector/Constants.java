@@ -68,6 +68,7 @@ public class Constants {
         public final Uri mPASSUri = Uri.parse("PASS");
         public final Uri mRequestUri = Uri.parse("Request");
         public final Uri PreStart = Uri.parse("PreStart");
+        public final String destroyReasonOf = "destroyReasonOf";
         public final String mPowerLevel = "powerLevel";
         public final String mSettingsString = "settingsJson";
         public final String mSdServerIntent = "sdServerIntent";
@@ -87,7 +88,15 @@ public class Constants {
         // 1/5 = 0,2 seconds. 200ms
         public final double getMaxHeartRefreshRate = (1d/(maxHeartRefreshRate/60d))*1000;
         public final String startUpTime = "startUpTime";
+        public final String lastPagerId = "lastPagerId";
+        public final String heartRateList = "heartRateList";
 
+        String BATTERY_PC = "batteryPc";
+        String DATA_TYPE = "dataType";
+        String DATA_TYPE_RAW = "raw";
+        String DATA_VALUE_HR = "hr";
+        String JSON_TYPE_DATA = "data";
+        String JSON_TYPE_BATTERY = "battery";
     }
 
     public interface ACTION {

@@ -431,6 +431,10 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     }
 
 
+    public void setBound(boolean mBound) {
+        this.mBound = mBound;
+    }
+
     /**
      * PowerUpdateReceiver with coding from:
      * https://stackoverflow.com/questions/2682043/how-to-check-if-receiver-is-registered-in-android
@@ -915,7 +919,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
             soundUri = null;
         }
 
-        Intent i = new Intent(SdServer.this, MainActivity.class);
+        Intent i = new Intent(SdServer.this, MainActivity2.class);
         i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         PendingIntent contentIntent =
                 PendingIntent.getActivity(SdServer.this,
@@ -967,7 +971,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 mUtil.writeToSysLogFile("SdServer.showMainActivity - Activity is already shown on top, not doing anything");
             } else {
                 Log.i(TAG, "showMainActivity(): Showing Main Activity");
-                Intent i = new Intent(SdServer.this, MainActivity.class);
+                Intent i = new Intent(SdServer.this, MainActivity2.class);
                 i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
                 SdServer.this.startActivity(i);
                 if (Objects.nonNull(uiLiveData))

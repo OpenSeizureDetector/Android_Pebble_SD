@@ -1100,7 +1100,7 @@ public class LogManager {
     }
 
 
-    // Mark the relevant member variables to show we are not cuurrently doing an upload, so a new one can be
+    // Mark the relevant member variables to show we are not currently doing an upload, so a new one can be
     // started if necessary.
     public void finishUpload() {
         mCurrentEventRemoteId = null;
@@ -1266,7 +1266,7 @@ public class LogManager {
         Log.i(TAG, "startRemoteLogTimer() - starting RemoteLogTimer");
         mRemoteLogTimer =
                 new RemoteLogTimer(mRemoteLogPeriod * 1000, 1000);
-        mRemoteLogTimer.start();
+        //mRemoteLogTimer.start();
     }
 
 

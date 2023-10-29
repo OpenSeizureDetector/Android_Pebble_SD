@@ -37,6 +37,7 @@ import android.database.DatabaseUtils;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.hardware.SensorManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
@@ -49,6 +50,7 @@ import androidx.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 import android.widget.Toast;
+import java.util.List;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -248,6 +250,7 @@ public class OsdUtil {
                     activity.unbindService(sdServiceConnection);
                     mNbound = mNbound - 1;
                     Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
+                    sdServiceConnection.mBound= false;
                 } catch (Exception ex) {
                     Log.e(TAG, "unbindFromServer() - error unbinding service - " + ex.toString());
                     writeToSysLogFile("unbindFromServer() - error unbinding service - " + ex.toString());
@@ -440,6 +443,27 @@ public class OsdUtil {
     }
 
 
+    public static double calculateAverage(List<Double> marks) {
+        double sum = 0;
+        if (!marks.isEmpty()) {
+            for (Double mark : marks) {
+                sum += mark;
+            }
+            return sum / marks.size();
+        }
+        return sum;
+    }
+
+    /**
+     * Function to convert sensor acceleration from metres per
+     * second squared to milliGal(mGal)
+     * @param mms value in metres per second squared
+     * @return mms * math.pow(10,5}
+     */
+    public static double convertMetresPerSecondSquaredToMilliG(double mms){
+        return (mms/ SensorManager.GRAVITY_EARTH) *Math.pow(10,5);
+    }
+
     /**
      * Write data to SD card - writes to data log file unless alarm=true,
      * in which case writes to alarm log file.
@@ -583,7 +607,6 @@ public class OsdUtil {
         }
         return(dataTime);
     }
-
 
     public final int ALARM_STATUS_WARNING = 1;
     public final int ALARM_STATUS_ALARM = 2;
