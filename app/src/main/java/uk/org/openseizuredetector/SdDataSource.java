@@ -220,12 +220,16 @@ public abstract class SdDataSource {
         if (mSdData.dT > 0d && mSdData.mNsamp >0)
         {
             mSdData.mSampleFreq = (long)( (double) mSdData.mNsamp / mSdData.dT);
+            Log.d(TAG, "SdDataSource.calculateStaticTimings() - mSampleFreq set to "+mSdData.mSampleFreq+" based on measured data");
         }
-        else{
-            if (mSdData.mNsamp == 0)
+        else {
+            if (mSdData.mNsamp == 0) {
                 mSdData.mSampleFreq = (long) mSdData.mDefaultSampleCount / mSdDataSettings.analysisPeriod;
-            else
+                Log.d(TAG, "SdDataSource.calculateStaticTimings() - mSampleFreq set to " + mSdData.mSampleFreq + " based on default values");
+            } else {
                 mSdData.mSampleFreq = (long) mSdData.mNsamp / mSdData.analysisPeriod;
+                Log.d(TAG, "SdDataSource.calculateStaticTimings() - mSampleFreq set to " + mSdData.mSampleFreq + " based actual sample count and default analysis period");
+            }
         }
         // now we have mSampleFreq in number samples / second (Hz) as default.
         // to calculate sampleTimeUs: (1 / mSampleFreq) * 1000 [1s == 1000000us]
@@ -681,7 +685,10 @@ public abstract class SdDataSource {
             mDataStatusTime = Calendar.getInstance().getTimeInMillis();
             mSdData.specPower = (long) (specPower /OsdUtil.convertMetresPerSecondSquaredToMilliG(1));
             mSdData.roiPower = (long) (roiPower /OsdUtil.convertMetresPerSecondSquaredToMilliG(1));
-            //mSdData.dataTime = new Date(mDataStatusTime); invalid, need to change to Date
+            // GJ Why was setting dataTime commented out?
+            //mSdData.dataTime = new Time(mDataStatusTime); //invalid, need to change to Date
+            mSdData.dataTime.setToNow();
+            Log.d(TAG,"SdDataSource.doAnalysis() - set mSdData.dataTime to "+mSdData.dataTime);
             mSdData.maxVal = 0;   // not used
             mSdData.maxFreq = 0;  // not used
             mSdData.haveData = true;
