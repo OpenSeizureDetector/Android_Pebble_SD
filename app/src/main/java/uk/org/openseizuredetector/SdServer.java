@@ -32,6 +32,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -61,6 +62,7 @@ import android.telephony.SmsManager;
 import android.text.format.Time;
 import android.util.Log;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LiveData;
 import androidx.work.multiprocess.RemoteWorkerService;
@@ -226,6 +228,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     }
 
     public LogManager mLm;
+    private boolean mUseNewUi;
 
 
     public int mChargingState = 0;
@@ -919,7 +922,12 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
             soundUri = null;
         }
 
-        Intent i = new Intent(SdServer.this, MainActivity2.class);
+        Intent i;
+        if (mUseNewUi) {
+            i = new Intent(SdServer.this, MainActivity2.class);
+        } else {
+            i = new Intent(SdServer.this, MainActivity.class);
+        }
         i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         PendingIntent contentIntent =
                 PendingIntent.getActivity(SdServer.this,
@@ -971,7 +979,12 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 mUtil.writeToSysLogFile("SdServer.showMainActivity - Activity is already shown on top, not doing anything");
             } else {
                 Log.i(TAG, "showMainActivity(): Showing Main Activity");
-                Intent i = new Intent(SdServer.this, MainActivity2.class);
+                Intent i;
+                if (mUseNewUi) {
+                    i = new Intent(SdServer.this, MainActivity2.class);
+                } else {
+                    i = new Intent(SdServer.this, MainActivity.class);
+                }
                 i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
                 SdServer.this.startActivity(i);
                 if (Objects.nonNull(uiLiveData))
@@ -1829,6 +1842,8 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
             mOSDUrl = SP.getString("OSDUrl", "http://openseizuredetector.org.uk/webApi");
             Log.v(TAG, "updatePrefs() - mOSDUrl = " + mOSDUrl);
             mUtil.writeToSysLogFile("updatePrefs() - mOSDUrl = " + mOSDUrl);
+
+            mUseNewUi = SP.getBoolean("UseNewUi", false);
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
             mUtil.writeToSysLogFile("SdServer.updatePrefs() - Error " + ex.toString());
@@ -2277,7 +2292,12 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         iconId = R.drawable.datasharing_fault_24x24;
         titleStr = getString(R.string.datasharing_notification_title);
 
-        Intent i = new Intent(SdServer.this, MainActivity.class);
+        Intent i;
+        if (mUseNewUi) {
+            i = new Intent(SdServer.this, MainActivity2.class);
+        } else {
+            i = new Intent(SdServer.this, MainActivity.class);
+        }
         i.putExtra("action", "showDataSharingDialog");
         i.setAction("showDataSharingDialog");
         i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);

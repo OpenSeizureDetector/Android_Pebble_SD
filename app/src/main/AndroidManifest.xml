@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:versionCode="128"
-    android:versionName="4.2.1b">
+    android:versionName="4.2.1f">
     <!-- android:allowBackup="false" -->
 
     <queries>
