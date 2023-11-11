@@ -57,7 +57,8 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
     private int mMode = 0;   // 0=check data rate, 1=running
     private SensorEvent mStartEvent = null;
     private long mStartTs = 0;
-    public double mSampleFreq = 0;
+    // GJ - Not requred - we use mSdData.mSampelFreq instead
+    // public double mSampleFreq = 0;
     private double mSampleTimeUs = -1;
     private int mCurrentMaxSampleCount = -1;
     private double mConversionSampleFactor;
@@ -212,7 +213,7 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     mCurrentMaxSampleCount = mSdData.mNsamp;
                     mSdData.mSampleFreq = (int) (mSdData.mNsamp / mSdData.dT);
                     mSdData.haveSettings = true;
-                    Log.v(TAG, "onSensorChanged(): Collected data for " + mSdData.dT + " sec - calculated sample rate as " + mSampleFreq + " Hz");
+                    Log.v(TAG, "onSensorChanged(): Collected data for " + mSdData.dT + " sec - calculated sample rate as " + mSdData.mSampleFreq + " Hz");
                     calculateStaticTimings();
                     unBindSensorListeners();
                     bindSensorListeners();
@@ -253,10 +254,11 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     rawDataList.clear();
                     rawDataList3D.clear();
                     mSdData.mNsamp = Constants.SD_SERVICE_CONSTANTS.defaultSampleCount;
-                    mSdData.mHR = -1d;
-                    mSdData.mHRAlarmActive = false;
+                    // Alarm active or not is a user selectable configuration, so we should not override it.
+                    //mSdData.mHRAlarmActive = false;
                     mSdData.mHRAlarmStanding = false;
                     mSdData.mHRNullAsAlarm = false;
+                    // What is this doing?
                     mSdData.mNsamp /= mConversionSampleFactor;
 
                     // Set HR and O2Sat values to fault value (-1) to avoid alarms if the user enables HR or O2Sat alarms.
