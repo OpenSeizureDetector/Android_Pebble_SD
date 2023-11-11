@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 
@@ -85,7 +85,7 @@ public class SdDataSourceNetwork extends SdDataSource {
         Log.v(TAG, "updatePrefs()");
         mUtil.writeToSysLogFile("SdDataSourceNetwork().updatePrefs()");
         SharedPreferences SP = PreferenceManager
-                .getDefaultSharedPreferences(mContext);
+                .getDefaultSharedPreferences(useSdServerBinding());
         mServerIP = SP.getString("ServerIP","192.168.1.175");
         Log.v(TAG,"updatePrefs() - mServerIP = "+mServerIP);
         try {

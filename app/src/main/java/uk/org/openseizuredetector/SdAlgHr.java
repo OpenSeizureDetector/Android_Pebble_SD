@@ -2,11 +2,12 @@ package uk.org.openseizuredetector;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Handler;
+
 import androidx.preference.PreferenceManager;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 public class SdAlgHr {
     private final static String TAG = "SdAlgHr";
@@ -18,12 +19,14 @@ public class SdAlgHr {
     protected boolean mAdaptiveHrAlarmActive;
     private double mAdaptiveHrAlarmWindowSecs;
     private int mAdaptiveHrAlarmWindowDp;
+    private int mAHistoricHrAlarmWindowDp;
     private double mAdaptiveHrAlarmThresh;
     protected boolean mAverageHrAlarmActive;
     private double mAverageHrAlarmWindowSecs;
     private int mAverageHrAlarmWindowDp;
     private double mAverageHrAlarmThreshMin;
     private double mAverageHrAlarmThreshMax;
+    private CircBuf mHistoricHrBuff;
 
     private CircBuf mAdaptiveHrBuff;
     private CircBuf mAverageHrBuff;
@@ -32,6 +35,7 @@ public class SdAlgHr {
         Log.i(TAG, "SdAlgHr Constructor");
         mContext = context;
         updatePrefs();
+        mHistoricHrBuff = new CircBuf(mAHistoricHrAlarmWindowDp, -1.0);
         mAdaptiveHrBuff = new CircBuf(mAdaptiveHrAlarmWindowDp, -1.0);
         mAverageHrBuff = new CircBuf(mAverageHrAlarmWindowDp, -1.0);
     }
@@ -73,6 +77,8 @@ public class SdAlgHr {
         Log.d(TAG,"updatePrefs(): mSimpleHrAlarmThreshMin="+mSimpleHrAlarmThreshMin);
         Log.d(TAG,"updatePrefs(): mSimpleHrAlarmThreshMax="+mSimpleHrAlarmThreshMax);
 
+        mAHistoricHrAlarmWindowDp = (int)Math.round(OsdUtil.convertTimeUnit(9, TimeUnit.HOURS,TimeUnit.SECONDS)/5.0);
+        Log.d(TAG,"updatePrefs(): mAHistoricHrAlarmWindowDp="+mAHistoricHrAlarmWindowDp + " \nSetting for 9Hrs for playback");
         mAdaptiveHrAlarmActive = SP.getBoolean("HRAdaptiveAlarmActive", false);
         mAdaptiveHrAlarmWindowSecs = readDoublePref(SP, "HRAdaptiveAlarmWindowSecs", "30");
         mAdaptiveHrAlarmWindowDp = (int)Math.round(mAdaptiveHrAlarmWindowSecs/5.0);
@@ -112,11 +118,22 @@ public class SdAlgHr {
     }
 
     /**
+     * Returns the simple average heart rate being used by the Adaptive heart rate algorithm
+     * @return simple Average Heart rate in bpm.
+     */
+    public double getSimpleHrAverage() {
+        return mHistoricHrBuff.getAverageVal();
+    }
+    /**
      * Returns the average heart rate being used by the Adaptive heart rate algorithm
-     * @return Average Heart reate in bpm.
+     * @return Average Heart rate in bpm.
      */
     public double getAdaptiveHrAverage() {
         return mAdaptiveHrBuff.getAverageVal();
+    }
+
+    public CircBuf getmHistoricHrBuff() {
+        return mHistoricHrBuff;
     }
 
     public CircBuf getAverageHrBuff() {
@@ -183,6 +200,7 @@ public class SdAlgHr {
         Log.v(TAG, "checkHr("+hrVal+")");
         mAdaptiveHrBuff.add(hrVal);
         mAverageHrBuff.add(hrVal);
+        mHistoricHrBuff.add(hrVal);
         ArrayList<Boolean> retVal = new ArrayList<Boolean>();
         retVal.add(checkSimpleHr(hrVal));
         retVal.add(checkAdaptiveHr(hrVal));

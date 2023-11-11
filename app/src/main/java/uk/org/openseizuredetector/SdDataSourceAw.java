@@ -26,6 +26,8 @@ package uk.org.openseizuredetector;
 
 
 import uk.org.openseizuredetector.R;
+
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
 import android.app.PendingIntent;
@@ -40,7 +42,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.strictmode.IntentReceiverLeakedViolation;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.text.SpannableString;
 import android.text.format.Time;
 import android.text.util.Linkify;
@@ -56,6 +58,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
+import androidx.work.impl.utils.ForceStopRunnable;
 
 
 /**
@@ -102,17 +105,24 @@ public class SdDataSourceAw extends SdDataSource {
     private boolean sdAwBroadCastReceived;
     public int startIdWearReceiver = 0;
     public int startIdWearSd = 0;
+    private Intent intentRegisterState;
+    IntentFilter broadCastToSdServer = new IntentFilter(Constants.ACTION.BROADCAST_TO_SDSERVER);
 
     public SdDataSourceAw(Context context, Handler handler,
                           SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
+        mSdDataReceiver = sdDataReceiver;
         mName = "AndroidWear";
+        broadCastToSdServer.addAction(Constants.ACTION.BROADCAST_TO_SDSERVER);
         // Set default settings from XML files (mContext is set by super().
-        PreferenceManager.setDefaultValues(mContext,
+        PreferenceManager.setDefaultValues(useSdServerBinding(),
                 R.xml.network_passive_datasource_prefs, true);
 
-        mContext = context;
-        intentBroadCastReceiver = new IntentBroadCastReceiver();
+        if (Objects.isNull(intentBroadCastReceiver)) intentBroadCastReceiver = new IntentBroadCastReceiver();
+        intentRegisterState = intentBroadCastReceiver.register(useSdServerBinding(), broadCastToSdServer);
+        Log.i(TAG,"start(): state of registering broadcast: " + (Objects.isNull(intentRegisterState)?" not " : "") + "registered.");
+        Log.i(TAG,"start(): state of broadcast receiver: " + (Objects.isNull(intentBroadCastReceiver)?" not " : "") + "registered.");
+
 
 
     }
@@ -143,8 +153,10 @@ public class SdDataSourceAw extends SdDataSource {
     public class IntentBroadCastReceiver  extends BroadcastReceiver {
         IntentBroadCastReceiver(){
             Log.i("IntentBroadCastReceiver","BroadcastReceiverClass() in Constructor");
+            registeredIntent.setAction(Constants.ACTION.BROADCAST_TO_SDSERVER);
         };
         public boolean isRegistered = false;
+        private Intent registeredIntent = new Intent();
 
         /**
          * register receiver
@@ -152,47 +164,57 @@ public class SdDataSourceAw extends SdDataSource {
          * @param filter - Intent Filter
          * @return see Context.registerReceiver(BroadcastReceiver,IntentFilter)
          */
+
         public Intent register(Context context, IntentFilter filter) {
-            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P){
-                try {
-                    // ceph3us note:
-                    // here I propose to create
-                    // a isRegistered(Context) method
-                    // as you can register receiver on different context
-                    // so you need to match against the same one :)
-                    // example  by storing a list of weak references
-                    // see LoadedApk.class - receiver dispatcher
-                    // its and ArrayMap there for example
-                    receivingIntent = new Intent(context, getClass());
+            Log.d(TAG,"intentBroadCastReceiver()register(): entered register.");
+            //if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P){
+            try {
+                // ceph3us note:
+                // here I propose to create
+                // a isRegistered(Context) method
+                // as you can register receiver on different context
+                // so you need to match against the same one :)
+                // example  by storing a list of weak references
+                // see LoadedApk.class - receiver dispatcher
+                // its and ArrayMap there for example
+                receivingIntent = new Intent(context, getClass());
 
-                    return !isRegistered
-                            ? context.registerReceiver(this, filter)
-                            : null;
-                } catch (Exception receiverLeakedViolation) {
-                    Log.e(TAG,"onReceive() " ,receiverLeakedViolation);
-                    return register(context,filter);
-                } finally {
-                    isRegistered = true;
-                }
-            }else {
-                try {
-                    // ceph3us note:
-                    // here I propose to create
-                    // a isRegistered(Context) method
-                    // as you can register receiver on different context
-                    // so you need to match against the same one :)
-                    // example  by storing a list of weak references
-                    // see LoadedApk.class - receiver dispatcher
-                    // its and ArrayMap there for example
-                    receivingIntent = new Intent(context, getClass());
-
-                    return !isRegistered
-                            ? context.registerReceiver(this, filter)
-                            : null;
-                } finally {
-                    isRegistered = true;
-                }
+                return !isRegistered
+                        ? (
+                                context.registerReceiver(this,filter)
+                                /*
+                                Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU?
+                                context.registerReceiver(this, filter):
+                                context.registerReceiver(this, filter, Constants.ACTION.BROADCAST_TO_SDSERVER,mHandler,Context.RECEIVER_EXPORTED)*/
+                        )
+                        : null;
+            } catch (Exception receiverLeakedViolation) {
+                Log.e(TAG,"onReceive() " ,receiverLeakedViolation);
+                return register(context,filter);
+            } finally {
+                isRegistered = true;
             }
+           /* }else {
+                try {
+                    // ceph3us note:
+                    // here I propose to create
+                    // a isRegistered(Context) method
+                    // as you can register receiver on different context
+                    // so you need to match against the same one :)
+                    // example  by storing a list of weak references
+                    // see LoadedApk.class - receiver dispatcher
+                    // its and ArrayMap there for example
+                    receivingIntent = new Intent(context, getClass());
+
+                    return !isRegistered
+                            ? Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU?
+                            context.registerReceiver(this, filter):
+                            context.registerReceiver(this, filter,Context.RECEIVER_EXPORTED)
+                            : null;
+                } finally {
+                    isRegistered = true;
+                }
+            }*/
         }
 
 
@@ -205,7 +227,7 @@ public class SdDataSourceAw extends SdDataSource {
             // additional work match on context before unregister
             // eg store weak ref in register then compare in unregister
             // if match same instance
-            Log.d(TAG,this.getClass().getCanonicalName() + "Received command to unregister");
+            Log.d(TAG,this.getClass().getName() + "Received command to unregister");
             return isRegistered
                     && unregisterInternal(context);
         }
@@ -218,13 +240,17 @@ public class SdDataSourceAw extends SdDataSource {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.i(TAG,this.getClass().getCanonicalName() + " onReceive: received broadcast.");
+            Log.i(TAG,this.getClass().getName() + " onReceive: received broadcast.");
+
             if (!Objects.equals(intent,null))
-                if (Constants.ACTION.BROADCAST_TO_SDSERVER.equals(intent.getAction()))
+                if (Constants.ACTION.BROADCAST_TO_SDSERVER.equals(intent.getAction())) {
                     intentReceivedAction(intent);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                goAsync();
-            }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                        goAsync();
+                    }
+                }else {
+                    this.abortBroadcast();
+                }
         }
 
     }
@@ -243,14 +269,14 @@ public class SdDataSourceAw extends SdDataSource {
     private void onStartReceived() {
         try {
             if (Objects.isNull(mHandler))  mHandler =  new Handler();
-            if (Objects.isNull(mUtil)) mUtil = new OsdUtil(mContext, mHandler);
+            if (Objects.isNull(mUtil)) mUtil = new OsdUtil(useSdServerBinding(), mHandler);
             if (Objects.equals(intentBroadCastReceiver, null))
                 intentBroadCastReceiver = new IntentBroadCastReceiver();
+            boolean unregisteredBroadCastReceiver = false;
             if (intentBroadCastReceiver.isRegistered)
-                intentBroadCastReceiver.unregister(mContext);
-            IntentFilter broadCastToSdServer = new IntentFilter(Constants.ACTION.BROADCAST_TO_SDSERVER);
-            intentBroadCastReceiver.register(mContext, broadCastToSdServer);
-            Log.i(TAG, "onCreate(): reached");
+                unregisteredBroadCastReceiver = intentBroadCastReceiver.unregister(useSdServerBinding());
+            if (unregisteredBroadCastReceiver || Objects.isNull(intentRegisterState)) intentRegisterState =  intentBroadCastReceiver.register(useSdServerBinding(), broadCastToSdServer);
+            Log.i(TAG, "onCreate(): reached with state of broadcastReceiver"+ (Objects.isNull(intentRegisterState)?" not " : "" )+ " registered: ");
             if ( !Objects.equals(receivedIntentByBroadCast, null)) {
                 try {
 
@@ -270,22 +296,32 @@ public class SdDataSourceAw extends SdDataSource {
 
                             if (Constants.ACTION.REGISTER_START_INTENT.equals(receivedAction)){
                                 Log.d(TAG,"onStartReceived: received REGISTER_START_INTENT in Intent.");
+                                return;
                             }
 
 
                             if (Constants.ACTION.REGISTERED_START_INTENT.equals(receivedAction))
                             {
+                                if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.wearReceiverServiceIntent)) {
+                                    aWIntentBase = receivedIntentByBroadCast.getParcelableExtra(Constants.GLOBAL_CONSTANTS.wearReceiverServiceIntent);
+                                    aWIntentBase.putExtra(Constants.GLOBAL_CONSTANTS.returnPath, Constants.GLOBAL_CONSTANTS.mAppPackageName);
+                                    aWIntentBase.setAction(Constants.ACTION.BROADCAST_TO_WEARRECEIVER);
+                                    aWIntentBase.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                                    aWIntentBase.setComponent(null);
+                                }
                                 sdBroadCastReceived = true;
                                 if (registeredAllBroadCastIntents()){
                                     aWIntent = aWIntentBase;
                                     aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTERED_START_INTENT_AW);
-                                    mContext.sendBroadcast(aWIntent);
+                                    useSdServerBinding().sendBroadcast(aWIntent);
                                 }
+                                return;
                             }
 
                             if (Constants.ACTION.REGISTER_WEARRECEIVER_INTENT.equals(receivedAction)){
                                 if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.wearReceiverServiceIntent)) {
                                     aWIntentBase = receivedIntentByBroadCast.getParcelableExtra(Constants.GLOBAL_CONSTANTS.wearReceiverServiceIntent);
+                                    if (Objects.isNull(aWIntentBase)) throw new AssertionError();
                                     aWIntentBase.putExtra(Constants.GLOBAL_CONSTANTS.returnPath, Constants.GLOBAL_CONSTANTS.mAppPackageName);
                                     aWIntentBase.setAction(Constants.ACTION.BROADCAST_TO_WEARRECEIVER);
                                     aWIntentBase.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
@@ -295,140 +331,146 @@ public class SdDataSourceAw extends SdDataSource {
                                         aWIntent = aWIntentBase;
                                         aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentReceiver,receivingIntent);
                                         aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTERED_WEARRECEIVER_INTENT);
-                                        mContext.sendBroadcast(aWIntent);
+                                        useSdServerBinding().sendBroadcast(aWIntent);
                                     }
                                 }else{
                                     Log.e(TAG,"onStartReceived(): registering WearReceiverIntent without intent attached", new Throwable());
                                 }
                             }
 
-                            if (Objects.isNull(aWIntentBase)){
-                                if (Objects.nonNull(aWIntentBaseManifest)) {
-                                    aWIntent = aWIntentBaseManifest;
-                                    aWIntent.removeExtra(Constants.GLOBAL_CONSTANTS.intentAction);
-                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_START_INTENT);
+                            if (Objects.nonNull(aWIntentBase)) {
 
-                                    PendingIntent pIntent = PendingIntent.getBroadcast(mContext, useSdServerBinding().mStartId, aWIntent,
-                                            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
-                                    pIntent.send();
-                                }
-                                return;
-                            }
+                                if (Constants.ACTION.REGISTERED_WEARRECEIVER_INTENT.equals(receivedAction)) {
 
-                            if (Constants.ACTION.REGISTERED_WEARRECEIVER_INTENT.equals(receivedAction)) {
-
-                                sdBroadCastReceived = true;
-                                if (registeredAllBroadCastIntents()){
-                                    aWIntent = aWIntentBase;
-                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_WEAR_LISTENER);
-                                    mContext.sendBroadcast(aWIntent);
-                                }
-                                return;
-                            }
-                            if (Constants.ACTION.REGISTERED_WEAR_LISTENER.equals(receivedAction)) {
-                                useSdServerBinding().mSdData.serverOK = true;
-                                mSdData = getSdData();
-
-                                sdBroadCastReceived = true;
-                                if (registeredAllBroadCastIntents()){
-                                    aWIntent = aWIntentBase;
-                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.CONNECT_WEARABLE_INTENT);
-                                    mContext.sendBroadcast(aWIntent);
-                                }
-                                return;
-                            }
-
-
-
-                            if (Constants.ACTION.CONNECTION_WEARABLE_CONNECTED.equals(receivedAction)){
-                                useSdServerBinding().mSdData.watchConnected = true;
-                                useSdServerBinding().mSdData.watchAppRunning = true;
-                                signalUpdateUI();
-                                mobileBatteryPctUpdate();
-                                return;
-                            }
-
-                            if (Constants.ACTION.CONNECTION_WEARABLE_RECONNECTED.equals(receivedAction)){
-                                useSdServerBinding().mSdData.watchConnected = true;
-                                useSdServerBinding().mSdData.watchAppRunning = true;
-                                signalUpdateUI();
-                                mobileBatteryPctUpdate();
-                                return;
-                            }
-
-                            if (Constants.ACTION.CONNECTION_WEARABLE_DISCONNECTED.equals(receivedAction)){
-                                useSdServerBinding().mSdData.watchConnected = false;
-                                useSdServerBinding().mSdData.watchAppRunning = false;
-                                signalUpdateUI();
-                                return;
-                            }
-
-                            if (Constants.ACTION.PUSH_SETTINGS_ACTION.equals(receivedAction)) {
-                                try{
-                                    updatePrefs();
-                                    calculateStaticTimings();
-                                    mHandler.postDelayed(() -> {
+                                    sdBroadCastReceived = true;
+                                    if (registeredAllBroadCastIntents()) {
                                         aWIntent = aWIntentBase;
-                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.PUSH_SETTINGS_ACTION);
-                                        if (!getSdData().serverOK) useSdServerBinding().mSdData.serverOK = true;
-                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, getSdData().toSettingsJSON()); // send SdDataSource Updated mSdData
-                                        mContext.sendBroadcast(aWIntent);
-                                    }, 100);
-                                }catch (Exception e){
-                                    Log.e(TAG,"onStartReceived(): PUSH_SETTINGS_ACTION:" ,e);
-                                }
-                                return;
-                            }
-
-                            if (Constants.ACTION.SDDATA_TRANSFER_TO_SD_SERVER.equals(receivedAction)) {
-                                try {
-                                    if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath)) {
-                                        String a = updateFromJSON(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath));
-
-                                        Log.v(TAG, "result from updateFromJSON(): " + a);
-                                        if ("sendSettings".equals(a)||
-                                            "watchConnect".equals(a)
-                                        ) {
-                                            super.updatePrefs();
-                                            sendWatchSdSettings();
-                                            getWatchSdSettings();
-                                        }
-                                        if (Objects.equals(a, "ERROR")){
-                                            Log.e(TAG,"Error in updateFromJSON: ");
-                                        }
-                                        if (!getSdData().haveSettings)
-                                            useSdServerBinding().mSdData.haveSettings = true;
-                                        if (!getSdData().watchConnected)
-                                            useSdServerBinding().mSdData.watchConnected = true;
-                                        if (!getSdData().watchAppRunning)
-                                            useSdServerBinding().mSdData.watchAppRunning = true;
-                                        if (!getSdData().haveData && ! a.equals("ERROR"))
-                                            useSdServerBinding().mSdData.haveData = true;
-                                        signalUpdateUI();
+                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_WEAR_LISTENER);
+                                        useSdServerBinding().sendBroadcast(aWIntent);
                                     }
-
-                                } catch (Exception e) {
-                                    Log.e(TAG,"onStartReceived()",e);
+                                    return;
                                 }
+                                if (Constants.ACTION.REGISTERED_WEAR_LISTENER.equals(receivedAction)) {
+                                    useSdServerBinding().mSdData.serverOK = true;
+                                    mSdData = getSdData();
+
+                                    sdBroadCastReceived = true;
+                                    if (registeredAllBroadCastIntents()) {
+                                        aWIntent = aWIntentBase;
+                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.CONNECT_WEARABLE_INTENT);
+                                        useSdServerBinding().sendBroadcast(aWIntent);
+                                    }
+                                    return;
+                                }
+
+
+                                if (Constants.ACTION.CONNECTION_WEARABLE_CONNECTED.equals(receivedAction)) {
+                                    useSdServerBinding().mSdData.watchConnected = true;
+                                    useSdServerBinding().mSdData.watchAppRunning = true;
+                                    signalUpdateUI();
+                                    mobileBatteryPctUpdate();
+                                    return;
+                                }
+
+                                if (Constants.ACTION.CONNECTION_WEARABLE_RECONNECTED.equals(receivedAction)) {
+                                    useSdServerBinding().mSdData.watchConnected = true;
+                                    useSdServerBinding().mSdData.watchAppRunning = true;
+                                    signalUpdateUI();
+                                    mobileBatteryPctUpdate();
+                                    return;
+                                }
+
+                                if (Constants.ACTION.CONNECTION_WEARABLE_DISCONNECTED.equals(receivedAction)) {
+                                    useSdServerBinding().mSdData.watchConnected = false;
+                                    useSdServerBinding().mSdData.watchAppRunning = false;
+                                    signalUpdateUI();
+                                    return;
+                                }
+
+                                if (Constants.ACTION.PUSH_SETTINGS_ACTION.equals(receivedAction)) {
+                                    try {
+                                        updatePrefs();
+                                        calculateStaticTimings();
+                                        mHandler.postDelayed(() -> {
+                                            aWIntent = aWIntentBase;
+                                            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.PUSH_SETTINGS_ACTION);
+                                            if (!getSdData().serverOK)
+                                                useSdServerBinding().mSdData.serverOK = true;
+                                            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, getSdData().toSettingsJSON()); // send SdDataSource Updated mSdData
+                                            useSdServerBinding().sendBroadcast(aWIntent);
+                                        }, 100);
+                                    } catch (Exception e) {
+                                        Log.e(TAG, "onStartReceived(): PUSH_SETTINGS_ACTION:", e);
+                                    }
+                                    return;
+                                }
+
+                                if (Constants.ACTION.SDDATA_TRANSFER_TO_SD_SERVER.equals(receivedAction)) {
+                                    try {
+                                        if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath)) {
+                                            String a = updateFromJSON(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath));
+
+                                            Log.v(TAG, "result from updateFromJSON(): " + a);
+                                            if ("sendSettings".equals(a) ||
+                                                    "watchConnect".equals(a)
+                                            ) {
+                                                super.updatePrefs();
+                                                sendWatchSdSettings();
+                                                getWatchSdSettings();
+                                            }
+                                            if (Objects.equals(a, "ERROR")) {
+                                                Log.e(TAG, "Error in updateFromJSON: ");
+                                            }
+                                            if (!getSdData().haveSettings)
+                                                useSdServerBinding().mSdData.haveSettings = true;
+                                            if (!getSdData().watchConnected)
+                                                useSdServerBinding().mSdData.watchConnected = true;
+                                            if (!getSdData().watchAppRunning)
+                                                useSdServerBinding().mSdData.watchAppRunning = true;
+                                            if (!getSdData().haveData && !a.equals("ERROR"))
+                                                useSdServerBinding().mSdData.haveData = true;
+                                            signalUpdateUI();
+                                        }
+
+                                    } catch (Exception e) {
+                                        Log.e(TAG, "onStartReceived()", e);
+                                    }
+                                }
+
+                                if (Constants.ACTION.WATCH_BODY_DETECTED.equals(receivedAction)) {
+                                    useSdServerBinding().mSdData.mWatchOnBody = Boolean.parseBoolean(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath));
+
+                                    signalUpdateUI();
+                                }
+
+                                if (Constants.ACTION.STOP_WEAR_SD_ACTION.equals(receivedAction)) {
+                                    //if (useSdServerBinding().)Log.i(TAG," fixme: add here liveData from startup and main activity");
+                                    useSdServerBinding().mSdData.haveSettings = false;
+                                    useSdServerBinding().mSdData.haveData = false;
+                                    useSdServerBinding().mSdData.watchConnected = false;
+                                    useSdServerBinding().mSdData.mDataType = receivedAction;
+                                    if (useSdServerBinding().uiLiveData.hasActiveObservers())
+                                        useSdServerBinding().uiLiveData.signalChangedData();
+                                }
+
+
+                            } else {
+                                mUtil.showToast("Received intent without prior setting WearReceiver as Receiving end.");
                             }
 
-                            if (Constants.ACTION.WATCH_BODY_DETECTED.equals(receivedAction)){
-                                useSdServerBinding().mSdData.mWatchOnBody = Boolean.valueOf(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath));
+                        } else if (Constants.GLOBAL_CONSTANTS.mAppPackageName.equals(aWIntent.getStringExtra(Constants.GLOBAL_CONSTANTS.returnPath))){
+                            aWIntent.removeExtra(Constants.GLOBAL_CONSTANTS.intentAction);
+                            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_START_INTENT);
 
-                                signalUpdateUI();
-                            }
-
-                            if (Constants.ACTION.STOP_WEAR_SD_ACTION.equals(receivedAction)) {
-                                //if (useSdServerBinding().)Log.i(TAG," fixme: add here liveData from startup and main activity");
-                                useSdServerBinding().mSdData.haveSettings = false;
-                                useSdServerBinding().mSdData.haveData = false;
-                                useSdServerBinding().mSdData.watchConnected = false;
-                                useSdServerBinding().mSdData.mDataType = receivedAction;
-                                if (useSdServerBinding().uiLiveData.hasActiveObservers())
-                                    useSdServerBinding().uiLiveData.signalChangedData();
-                            }
-
-
+                            PendingIntent pIntent = PendingIntent.getBroadcast(useSdServerBinding(), useSdServerBinding().mStartId, aWIntent,
+                                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
+                            mHandler.post(() -> {
+                                try {
+                                    pIntent.send();
+                                } catch (PendingIntent.CanceledException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
 
 
                         }
@@ -443,9 +485,9 @@ public class SdDataSourceAw extends SdDataSource {
     @RequiresApi(api = Build.VERSION_CODES.CUPCAKE)
     private boolean isWearReceiverInstalled(){
 
-        mHandler = new Handler(mContext.getMainLooper());
-        mUtil = new OsdUtil(mContext, mHandler);
-        PackageManager manager = mContext.getPackageManager();
+        mHandler = new Handler(useSdServerBinding().getMainLooper());
+        mUtil = new OsdUtil(useSdServerBinding(), mHandler);
+        PackageManager manager = useSdServerBinding().getPackageManager();
         aWIntent = manager.getLaunchIntentForPackage(Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver);
         Log.i(TAG,"aWIntent: " + aWIntent);
         if (aWIntent == null) {
@@ -483,47 +525,66 @@ public class SdDataSourceAw extends SdDataSource {
         // Now start the AndroidWear companion app
         checkAndUnRegisterReceiver();
 
-        IntentFilter broadCastToSdServer = new IntentFilter(Constants.ACTION.BROADCAST_TO_SDSERVER);
-        intentBroadCastReceiver.register(mContext, broadCastToSdServer);
+        if (Objects.isNull(intentBroadCastReceiver)) intentBroadCastReceiver = new IntentBroadCastReceiver();
+        if (!intentBroadCastReceiver.isRegistered) {
+            intentRegisterState = intentBroadCastReceiver.register(useSdServerBinding(), broadCastToSdServer);
+            Log.i(TAG,"start(): state of registering broadcast: " + (Objects.isNull(intentRegisterState)?
+                    " not " : "") + "registered.");
+        }
         //waitReceiverRegistered();
         if (isWearReceiverInstalled()) {
             try {
 
-                intentReceivedAction(aWIntent);
-                onStartReceived();
+                if (Objects.isNull(aWIntentBase)&&Objects.isNull(aWIntentBaseManifest)){
+                    intentReceivedAction(aWIntent);
+                    onStartReceived();
+                } else {
 
-                //aWIntent.setClassName(aWIntent.getPackage(),".WearReceiver");
-                //aWIntent = new Intent();
-                //aWIntent.setPackage(Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver);
-                //FIXME: tell me how to incorporate <data ######## /> with:
-                // .setData()
-                // and: launch DebugActivity from debugger.
-                // (this is one way of 2 way communication.)
-                // Also tell me how to use activity without broadcast. In this context is no getActivity() or getIntent()
-                SdData sdData = getSdData();
-                //aWIntent.setData(Constants.GLOBAL_CONSTANTS.mStartUri);
-                //aWIntent = new Intent();
-                aWIntent = aWIntentBaseManifest;
-                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.dataType, Constants.GLOBAL_CONSTANTS.mStartUri);
-                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.START_MOBILE_RECEIVER_ACTION);
+                    //aWIntent.setClassName(aWIntent.getPackage(),".WearReceiver");
+                    //aWIntent = new Intent();
+                    //aWIntent.setPackage(Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver);
+                    //FIXME: tell me how to incorporate <data ######## /> with:
+                    // .setData()
+                    // and: launch DebugActivity from debugger.
+                    // (this is one way of 2 way communication.)
+                    // Also tell me how to use activity without broadcast. In this context is no getActivity() or getIntent()
+                    SdData sdData = getSdData();
+                    //aWIntent.setData(Constants.GLOBAL_CONSTANTS.mStartUri);
+                    //aWIntent = new Intent();
+                    aWIntent = aWIntentBaseManifest;
+                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.dataType, Constants.GLOBAL_CONSTANTS.mStartUri);
+                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_START_INTENT);
 
-                //aWIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.startId, useSdServerBinding().mStartId);
-                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.startIdWearReceiver, startIdWearReceiver);
-                startIdWearReceiver++;
-                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.startIdWearSd, startIdWearSd);
-                startIdWearSd++;
-                PendingIntent pIntent = PendingIntent.getBroadcast(mContext, useSdServerBinding().mStartId, aWIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
-                pIntent.send();
+                    //aWIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.startId, useSdServerBinding().mStartId);
+                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.startIdWearReceiver, startIdWearReceiver);
+                    startIdWearReceiver++;
+                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.startIdWearSd, startIdWearSd);
+                    startIdWearSd++;
+                    final PendingIntent pIntent = PendingIntent.getBroadcast(useSdServerBinding(), useSdServerBinding().mStartId, aWIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
+                    mHandler.post(() -> {
+                        try {
+                            pIntent.send();
+                        } catch (PendingIntent.CanceledException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
 
-                aWIntent = aWIntentBaseManifest;
-                aWIntent.removeExtra(Constants.GLOBAL_CONSTANTS.intentAction);
-                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_START_INTENT);
+                    aWIntent = aWIntentBaseManifest;
+                    aWIntent.removeExtra(Constants.GLOBAL_CONSTANTS.intentAction);
+                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.START_MOBILE_RECEIVER_ACTION);
 
-                pIntent = PendingIntent.getBroadcast(mContext, useSdServerBinding().mStartId, aWIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
-                pIntent.send();
+                    PendingIntent pIntent2 = PendingIntent.getBroadcast(useSdServerBinding(), useSdServerBinding().mStartId+1, aWIntent,
+                            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
+                    mHandler.post(() -> {
+                        try {
+                            pIntent2.send();
+                        } catch (PendingIntent.CanceledException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+                }
 
 
             } catch (Exception e) {
@@ -543,7 +604,7 @@ public class SdDataSourceAw extends SdDataSource {
         if (Objects.nonNull(intentBroadCastReceiver)){
 
             if (intentBroadCastReceiver.isRegistered)
-                intentBroadCastReceiver.unregister(mContext);
+                intentBroadCastReceiver.unregister(useSdServerBinding());
         }
 
     }
@@ -578,7 +639,7 @@ public class SdDataSourceAw extends SdDataSource {
             startIdWearReceiver--;
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.startIdWearSd, startIdWearSd);
             startIdWearSd--;
-            PendingIntent pIntent = PendingIntent.getBroadcast(mContext, useSdServerBinding().mStartId, aWIntent,
+            PendingIntent pIntent = PendingIntent.getBroadcast(useSdServerBinding(), useSdServerBinding().mStartId, aWIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
             pIntent.send();
 
@@ -609,11 +670,11 @@ public class SdDataSourceAw extends SdDataSource {
             aWIntent = aWIntentBase;
             aWIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver));
             aWIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(aWIntent);
+            useSdServerBinding().startActivity(aWIntent);
         } catch (android.content.ActivityNotFoundException anfe) {
             Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + Constants.GLOBAL_CONSTANTS.mAppPackageName));
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(i);
+            useSdServerBinding().startActivity(i);
         }
     }
 
@@ -624,20 +685,18 @@ public class SdDataSourceAw extends SdDataSource {
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction,Constants.ACTION.START_MOBILE_RECEIVER_ACTION);
             if (!sdData.serverOK) sdData.serverOK = true;
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, sdData.toSettingsJSON());
-            mContext.sendBroadcast(aWIntent);
+            useSdServerBinding().sendBroadcast(aWIntent);
         } catch (android.content.ActivityNotFoundException anfe) {
             aWIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + Constants.GLOBAL_CONSTANTS.mAppPackageName));
             aWIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(aWIntent);
+            useSdServerBinding().startActivity(aWIntent);
         }
 
     }
 
     public void intentReceivedAction(Intent intent){
-        mHandler.post(()->{
-            receivedIntentByBroadCast = intent;
-            onStartReceived();
-        });
+         receivedIntentByBroadCast = intent;
+         onStartReceived();
     }
 
     public void startWearSDApp(){
@@ -648,7 +707,7 @@ public class SdDataSourceAw extends SdDataSource {
             sdData.mDataType = Constants.GLOBAL_CONSTANTS.mSettingsString;
             if (!sdData.serverOK) sdData.serverOK = true;
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, sdData.toSettingsJSON());
-            mContext.sendBroadcast(aWIntent);
+            useSdServerBinding().sendBroadcast(aWIntent);
         }catch ( Exception e ){
             Log.e(TAG,"startWearSDApp: Error occoured",e);
         }
@@ -662,7 +721,7 @@ public class SdDataSourceAw extends SdDataSource {
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction,Constants.ACTION.PUSH_SETTINGS_ACTION);
             if (!sdData.serverOK) sdData.serverOK = true;
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, sdData.toSettingsJSON());
-            mContext.sendBroadcast(aWIntent);
+            useSdServerBinding().sendBroadcast(aWIntent);
         }catch ( Exception e ){
             Log.e(TAG,"startWearSDApp: Error occoured",e);
         }
@@ -677,7 +736,7 @@ public class SdDataSourceAw extends SdDataSource {
             aWIntent = aWIntentBase;
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction,Constants.ACTION.BATTERYUPDATE_ACTION);
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mPowerLevel, useSdServerBinding().batteryPct);
-            mContext.sendBroadcast(aWIntent);
+            useSdServerBinding().sendBroadcast(aWIntent);
         }catch ( Exception e ){
             Log.e(TAG,"startWearSDApp: Error occurred",e);
         }

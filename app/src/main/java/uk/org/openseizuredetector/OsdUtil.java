@@ -743,6 +743,12 @@ public class OsdUtil {
         return (true);
     }
 
+    public void setBound(boolean valueToaset, SdServiceConnection sdServiceConnection) {
+        if (Objects.nonNull(sdServiceConnection))
+            if (Objects.nonNull(sdServiceConnection.mSdServer))
+                sdServiceConnection.mSdServer.setBound(valueToaset);
+    }
+
     /**
      * Executes the sqlite query (=SELECT statement)
      * Use as new SelectQueryTask(xxx,xxx,xx,xxxx).execute()

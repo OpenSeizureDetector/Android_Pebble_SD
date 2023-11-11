@@ -23,6 +23,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.rohitss.uceh.UCEHandler;
 
@@ -47,6 +48,9 @@ public class MainActivity2 extends AppCompatActivity {
     private SdServiceConnection mConnection;
     final Handler serverStatusHandler = new Handler();
     private SharedPreferences SP;
+    private long lastPress;
+    private boolean activateStopByBack;
+    private Toast backpressToast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,7 +110,7 @@ public class MainActivity2 extends AppCompatActivity {
         setmFragmentPager();
         mFragmentPager.setId(SP.getInt(Constants.GLOBAL_CONSTANTS.lastPagerId,0));
         serverStatusHandler.postDelayed(()-> {
-            mConnection.mSdServer.setBound(false);
+           mUtil.setBound(true,mConnection);
         },400);
     }
 
@@ -138,7 +142,7 @@ public class MainActivity2 extends AppCompatActivity {
         super.onStop();
         Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("MainActivity.onStop()");
-        mConnection.mSdServer.setBound(false);
+       mUtil.setBound(false,mConnection);
         mUtil.unbindFromServer(getApplicationContext(), mConnection);
     }
 
@@ -154,7 +158,7 @@ public class MainActivity2 extends AppCompatActivity {
                 SP.edit().putInt(Constants.GLOBAL_CONSTANTS.lastPagerId,mFragmentPager.getId()).apply();
             }
         }
-        mConnection.mSdServer.setBound(false);
+       mUtil.setBound(false,mConnection);
 
     }
 
@@ -168,7 +172,7 @@ public class MainActivity2 extends AppCompatActivity {
         }
         mFragmentPager.setId(SP.getInt(Constants.GLOBAL_CONSTANTS.lastPagerId,0));
         serverStatusHandler.postDelayed(()-> {
-            mConnection.mSdServer.setBound(false);
+           mUtil.setBound(false,mConnection);
         },400);
     }
 
@@ -180,7 +184,27 @@ public class MainActivity2 extends AppCompatActivity {
             if (mFragmentPager.getCurrentItem() == 0) {
                 // If the user is currently looking at the first step, allow the system to handle the
                 // Back button. This calls finish() on this activity and pops the back stack.
-                super.onBackPressed();
+                try {
+                    long currentTime = System.currentTimeMillis();
+                    if (currentTime - lastPress > 5000) {
+                        backpressToast = Toast.makeText(getBaseContext(), "Press back again to exit", Toast.LENGTH_LONG);
+                        backpressToast.show();
+                        lastPress = currentTime;
+                    } else {
+                        Log.d(TAG, "onBackPressed: initiating shutdown");
+                        if (backpressToast != null) backpressToast.cancel();
+                        activateStopByBack = true;
+                        if (Objects.nonNull(mConnection))
+                            if (mConnection.mBound)
+                                mUtil.unbindFromServer(MainActivity2.this, mConnection);
+                        if (mUtil.isServerRunning())
+                            mUtil.stopServer();
+                        serverStatusHandler.postDelayed(MainActivity2.this::finishAffinity, 100);
+                        super.onBackPressed();
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "onBackPressed() Error thrown while processing.");
+                }
             } else {
                 // Otherwise, select the previous step.
                 mFragmentPager.setCurrentItem(mFragmentPager.getCurrentItem() - 1);

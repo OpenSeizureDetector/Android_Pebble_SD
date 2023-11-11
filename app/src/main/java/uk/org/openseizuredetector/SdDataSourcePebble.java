@@ -29,7 +29,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 import android.widget.Toast;
@@ -147,7 +147,7 @@ public class SdDataSourcePebble extends SdDataSource {
         super(context, handler, sdDataReceiver);
         mName = "Pebble";
         // Set default settings from XML files (mContext is set by super().
-        PreferenceManager.setDefaultValues(mContext,
+        PreferenceManager.setDefaultValues(useSdServerBinding(),
                 R.xml.seizure_detector_prefs, true);
     }
 
@@ -244,7 +244,7 @@ public class SdDataSourcePebble extends SdDataSource {
         Log.v(TAG, "updatePrefs()");
         //mUtil.writeToSysLogFile("SdDataSourcePebble.updatePrefs()");
         SharedPreferences SP = PreferenceManager
-                .getDefaultSharedPreferences(mContext);
+                .getDefaultSharedPreferences(useSdServerBinding());
         try {
             // Parse the AppRestartTimeout period setting.
             try {
@@ -253,7 +253,7 @@ public class SdDataSourcePebble extends SdDataSource {
                 Log.v(TAG, "updatePrefs() - mAppRestartTimeout = " + mAppRestartTimeout);
             } catch (Exception ex) {
                 Log.v(TAG, "updatePrefs() - Problem with AppRestartTimeout preference!");
-                Toast toast = Toast.makeText(mContext, "Problem Parsing AppRestartTimeout Preference", Toast.LENGTH_SHORT);
+                Toast toast = Toast.makeText(useSdServerBinding(), "Problem Parsing AppRestartTimeout Preference", Toast.LENGTH_SHORT);
                 toast.show();
             }
 
@@ -264,7 +264,7 @@ public class SdDataSourcePebble extends SdDataSource {
                 Log.v(TAG, "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
             } catch (Exception ex) {
                 Log.v(TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!");
-                Toast toast = Toast.makeText(mContext, "Problem Parsing FaultTimerPeriod Preference", Toast.LENGTH_SHORT);
+                Toast toast = Toast.makeText(useSdServerBinding(), "Problem Parsing FaultTimerPeriod Preference", Toast.LENGTH_SHORT);
                 toast.show();
             }
 
@@ -345,7 +345,7 @@ public class SdDataSourcePebble extends SdDataSource {
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences! - prefStr="+prefStr);
             mUtil.writeToSysLogFile("SdDataSourcePebble.updatePrefs() - ERROR "+ex.toString());
-            Toast toast = Toast.makeText(mContext, "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
+            Toast toast = Toast.makeText(useSdServerBinding(), "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
             toast.show();
         }
     }
@@ -466,7 +466,7 @@ public class SdDataSourcePebble extends SdDataSource {
                 }
             }
         };
-        PebbleKit.registerReceivedDataHandler(mContext, msgDataHandler);
+        PebbleKit.registerReceivedDataHandler(useSdServerBinding(), msgDataHandler);
         // We struggle to connect to pebble time if app is already running,
         // so stop app so we can re-connect to it.
         //stopWatchApp();
@@ -481,7 +481,7 @@ public class SdDataSourcePebble extends SdDataSource {
         Log.v(TAG, "stopServer(): msgDataHandler = " + msgDataHandler.toString());
         mUtil.writeToSysLogFile("SdDataSourcePebble.stopServer()");
         try {
-            mContext.unregisterReceiver(msgDataHandler);
+            useSdServerBinding().unregisterReceiver(msgDataHandler);
             stopWatchApp();
         } catch (Exception e) {
             Log.v(TAG, "stopServer() - error " + e.toString());
@@ -496,7 +496,7 @@ public class SdDataSourcePebble extends SdDataSource {
         Log.v(TAG, "startWatchApp() - closing app first");
         mUtil.writeToSysLogFile("SdDataSourcePebble.startWatchApp() - closing app first");
         // first close the watch app if it is running.
-        PebbleKit.closeAppOnPebble(mContext, SD_UUID);
+        PebbleKit.closeAppOnPebble(useSdServerBinding(), SD_UUID);
         Log.v(TAG, "startWatchApp() - starting watch app after 5 seconds delay...");
 	// Wait 5 seconds then start the app.
         Timer appStartTimer = new Timer();
@@ -505,7 +505,7 @@ public class SdDataSourcePebble extends SdDataSource {
             public void run() {
                 Log.v(TAG, "startWatchApp() - starting watch app...");
                 mUtil.writeToSysLogFile("SdDataSourcePebble.startWatchApp() - starting watch app");
-                PebbleKit.startAppOnPebble(mContext, SD_UUID);
+                PebbleKit.startAppOnPebble(useSdServerBinding(), SD_UUID);
             }
         }, 5000);
     }
@@ -516,7 +516,7 @@ public class SdDataSourcePebble extends SdDataSource {
     public void stopWatchApp() {
         Log.v(TAG, "stopWatchApp()");
         mUtil.writeToSysLogFile("SdDataSourcePebble.stopWatchApp()");
-        PebbleKit.closeAppOnPebble(mContext, SD_UUID);
+        PebbleKit.closeAppOnPebble(useSdServerBinding(), SD_UUID);
     }
 
 
@@ -534,7 +534,7 @@ public class SdDataSourcePebble extends SdDataSource {
         PebbleDictionary data = new PebbleDictionary();
         data.addUint8(KEY_SETTINGS, (byte) 1);
         PebbleKit.sendDataToPebble(
-                mContext,
+                useSdServerBinding(),
                 SD_UUID,
                 data);
     }
@@ -573,7 +573,7 @@ public class SdDataSourcePebble extends SdDataSource {
 
         // Send Watch Settings to Pebble
         Log.v(TAG, "sendWatchSdSettings() - setDict = " + setDict.toJsonString());
-        PebbleKit.sendDataToPebble(mContext, SD_UUID, setDict);
+        PebbleKit.sendDataToPebble(useSdServerBinding(), SD_UUID, setDict);
     }
 
 
@@ -655,7 +655,7 @@ public class SdDataSourcePebble extends SdDataSource {
         PebbleDictionary data = new PebbleDictionary();
         data.addUint8(KEY_DATA_TYPE, (byte) 1);
         PebbleKit.sendDataToPebble(
-                mContext,
+                useSdServerBinding(),
                 SD_UUID,
                 data);
     }
@@ -674,7 +674,7 @@ public class SdDataSourcePebble extends SdDataSource {
         tdiff = (tnow.toMillis(false) - mPebbleStatusTime.toMillis(false));
         Log.v(TAG, "getStatus() - mPebbleAppRunningCheck=" + mPebbleAppRunningCheck + " tdiff=" + tdiff);
         // Check we are actually connected to the pebble.
-        mSdData.watchConnected = PebbleKit.isWatchConnected(mContext);
+        mSdData.watchConnected = PebbleKit.isWatchConnected(useSdServerBinding());
         if (!mSdData.watchConnected) mPebbleAppRunningCheck = false;
         // And is the pebble_sd app running?
         // set mPebbleAppRunningCheck has been false for more than 10 seconds
@@ -743,17 +743,17 @@ public class SdDataSourcePebble extends SdDataSource {
         mUtil.writeToSysLogFile("SdDataSourcePebble.startPebbleApp()");
         // first try to launch the original pebble app
         Intent pebbleAppIntent;
-        PackageManager pm = mContext.getPackageManager();
+        PackageManager pm = useSdServerBinding().getPackageManager();
         try {
             pebbleAppIntent = pm.getLaunchIntentForPackage("com.getpebble.android");
-            mContext.startActivity(pebbleAppIntent);
+            useSdServerBinding().startActivity(pebbleAppIntent);
         } catch (Exception ex1) {
             // and if original pebble app fails, try Pebble Time app...
             Log.v(TAG, "exception starting original pebble App - trying pebble time..." + ex1.toString());
             mUtil.writeToSysLogFile("SdDataSourcePebble.startPebbleApp() - Error starting original pebble app - trying Pebble Time App instead");
             try {
                 pebbleAppIntent = pm.getLaunchIntentForPackage("com.getpebble.android.basalt");
-                mContext.startActivity(pebbleAppIntent);
+                useSdServerBinding().startActivity(pebbleAppIntent);
             } catch (Exception ex2) {
                 // and if that fails, open play store so the user can install it:
                 Log.v(TAG, "exception starting Pebble Time App." + ex2.toString());
@@ -763,10 +763,10 @@ public class SdDataSourcePebble extends SdDataSource {
                 try {
                     mUtil.writeToSysLogFile("SdDataSourcePebble.startPebbleApp() - Opening Play Store to install Pebble App");
                     // try using play store app.
-                    mContext.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName)));
+                    useSdServerBinding().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName)));
                 } catch (android.content.ActivityNotFoundException anfe) {
                     // and if play store app is not installed, use browser to open app page.
-                    mContext.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)));
+                    useSdServerBinding().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)));
                 }
             }
         }

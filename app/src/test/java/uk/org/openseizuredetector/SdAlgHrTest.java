@@ -6,7 +6,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;

@@ -23,6 +23,7 @@
 */
 package uk.org.openseizuredetector;
 
+import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -34,8 +35,12 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+
+import androidx.core.app.ActivityCompat;
+import androidx.preference.PreferenceManager;
+
 import android.text.format.Time;
 import android.util.Log;
 
@@ -97,7 +102,7 @@ public class SdDataSourceBLE extends SdDataSource {
         super(context, handler, sdDataReceiver);
         mName = "BLE";
         // Set default settings from XML files (mContext is set by super().
-        PreferenceManager.setDefaultValues(mContext,
+        PreferenceManager.setDefaultValues(useSdServerBinding(),
                 R.xml.network_passive_datasource_prefs, true);
     }
 
@@ -112,9 +117,9 @@ public class SdDataSourceBLE extends SdDataSource {
         mUtil.writeToSysLogFile("SdDataSourceBLE.start() - mBleDeviceAddr=" + mBleDeviceAddr);
 
         if (mBleDeviceAddr == "" || mBleDeviceAddr == null) {
-            final Intent intent = new Intent(this.mContext, BLEScanActivity.class);
+            final Intent intent = new Intent(useSdServerBinding(), BLEScanActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(intent);
+            useSdServerBinding().startActivity(intent);
         }
         Log.i(TAG, "mBLEDevice is " + mBleDeviceName + ", Addr=" + mBleDeviceAddr);
 
@@ -128,7 +133,7 @@ public class SdDataSourceBLE extends SdDataSource {
         mBluetoothGatt = null;
         mConnectionState = STATE_DISCONNECTED;
         if (mBluetoothManager == null) {
-            mBluetoothManager = (BluetoothManager) mContext.getSystemService(Context.BLUETOOTH_SERVICE);
+            mBluetoothManager = (BluetoothManager) useSdServerBinding().getSystemService(Context.BLUETOOTH_SERVICE);
             if (mBluetoothManager == null) {
                 Log.e(TAG, "bleConnect(): Unable to initialize BluetoothManager.");
                 return;
@@ -150,7 +155,7 @@ public class SdDataSourceBLE extends SdDataSource {
         try {
             device = mBluetoothAdapter.getRemoteDevice(mBleDeviceAddr);
         } catch (Exception e) {
-            Log.w(TAG, "bleConnect(): Error connecting to device address "+mBleDeviceAddr+".");
+            Log.w(TAG, "bleConnect(): Error connecting to device address " + mBleDeviceAddr + ".");
             device = null;
         }
         if (device == null) {
@@ -159,7 +164,17 @@ public class SdDataSourceBLE extends SdDataSource {
         } else {
             // We want to directly connect to the device, so we are setting the autoConnect
             // parameter to false.
-            mBluetoothGatt = device.connectGatt(mContext, true, mGattCallback);
+            if (ActivityCompat.checkSelfPermission(useSdServerBinding(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
+            mBluetoothGatt = device.connectGatt(useSdServerBinding(), true, mGattCallback);
             Log.d(TAG, "bleConnect(): Trying to create a new connection.");
             mBluetoothDeviceAddress = mBleDeviceAddr;
             mConnectionState = STATE_CONNECTING;

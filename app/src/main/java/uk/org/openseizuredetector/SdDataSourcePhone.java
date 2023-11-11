@@ -87,9 +87,9 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
 
         mName = "Phone";
         // Set default settings from XML files (mContext is set by super().
-         PreferenceManager.setDefaultValues(mContext,
+         PreferenceManager.setDefaultValues(useSdServerBinding(),
                 R.xml.network_passive_datasource_prefs, true);
-        PreferenceManager.setDefaultValues(mContext,
+        PreferenceManager.setDefaultValues(useSdServerBinding(),
                 R.xml.seizure_detector_prefs, true);
         rawDataList = new ArrayList();
         rawDataList3D = new ArrayList();
@@ -118,7 +118,7 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
             if (mSampleTimeUs <= 0d)
                 mSampleTimeUs = SensorManager.SENSOR_DELAY_NORMAL;
         }
-        mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
+        mSensorManager = (SensorManager) useSdServerBinding().getSystemService(Context.SENSOR_SERVICE);
         Sensor mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         // registering listener with reference to (this).onSensorChanged , mSampleTime in MicroSeconds
         // and bufferingTime , sampleTime * 3 in order to save the battery, calling back to mHandler
@@ -141,7 +141,7 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
     public void start() {
         Log.i(TAG, "start()");
         mUtil.writeToSysLogFile("SdDataSourcePhone.start()");
-        mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
+        mSensorManager = (SensorManager) useSdServerBinding().getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
         if (!Objects.equals(mSdDataSettings,null))if (mSdDataSettings.mDefaultSampleCount >0d && mSdDataSettings.analysisPeriod > 0d ) {
