@@ -107,6 +107,7 @@ public class SdDataSourceAw extends SdDataSource {
     public int startIdWearSd = 0;
     private Intent intentRegisterState;
     IntentFilter broadCastToSdServer = new IntentFilter(Constants.ACTION.BROADCAST_TO_SDSERVER);
+    private BroadcastReceiver.PendingResult runningReceiver = null;
 
     public SdDataSourceAw(Context context, Handler handler,
                           SdDataReceiver sdDataReceiver) {
@@ -244,9 +245,12 @@ public class SdDataSourceAw extends SdDataSource {
 
             if (!Objects.equals(intent,null))
                 if (Constants.ACTION.BROADCAST_TO_SDSERVER.equals(intent.getAction())) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                        runningReceiver = goAsync();
+                    }
                     intentReceivedAction(intent);
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                        goAsync();
+                        runningReceiver.finish();
                     }
                 }else {
                     this.abortBroadcast();
@@ -306,7 +310,7 @@ public class SdDataSourceAw extends SdDataSource {
                                     aWIntentBase = receivedIntentByBroadCast.getParcelableExtra(Constants.GLOBAL_CONSTANTS.wearReceiverServiceIntent);
                                     aWIntentBase.putExtra(Constants.GLOBAL_CONSTANTS.returnPath, Constants.GLOBAL_CONSTANTS.mAppPackageName);
                                     aWIntentBase.setAction(Constants.ACTION.BROADCAST_TO_WEARRECEIVER);
-                                    aWIntentBase.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                                    aWIntentBase.addFlags(Intent.FLAG_RECEIVER_FOREGROUND|Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
                                     aWIntentBase.setComponent(null);
                                 }
                                 sdBroadCastReceived = true;
@@ -324,7 +328,7 @@ public class SdDataSourceAw extends SdDataSource {
                                     if (Objects.isNull(aWIntentBase)) throw new AssertionError();
                                     aWIntentBase.putExtra(Constants.GLOBAL_CONSTANTS.returnPath, Constants.GLOBAL_CONSTANTS.mAppPackageName);
                                     aWIntentBase.setAction(Constants.ACTION.BROADCAST_TO_WEARRECEIVER);
-                                    aWIntentBase.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                                    aWIntentBase.addFlags(Intent.FLAG_RECEIVER_FOREGROUND|Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
                                     aWIntentBase.setComponent(null);
                                     sdAwBroadCastReceived = true;
                                     if (registeredAllBroadCastIntents()){

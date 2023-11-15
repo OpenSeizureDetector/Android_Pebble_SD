@@ -1,5 +1,7 @@
 package uk.org.openseizuredetector;
 
+import android.app.PendingIntent;
+import android.content.Intent;
 import android.net.Uri;
 
 import java.util.concurrent.TimeUnit;
