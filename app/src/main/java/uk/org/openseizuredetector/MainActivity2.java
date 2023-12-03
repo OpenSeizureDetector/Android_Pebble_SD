@@ -275,7 +275,7 @@ public class MainActivity2 extends AppCompatActivity {
                             AuthenticateActivity.class);
                     this.startActivity(i);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting export activity " + ex.toString());
+                    Log.i(TAG, "exception starting export activity " + ex.toString(), ex);
                 }
                 return true;
             case R.id.action_about_datasharing:
@@ -290,7 +290,7 @@ public class MainActivity2 extends AppCompatActivity {
                             LogManagerControlActivity.class);
                     this.startActivity(intent);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting log manager activity " + ex.toString());
+                    Log.i(TAG, "exception starting log manager activity " + ex.toString(), ex);
                 }
                 return true;
             case R.id.action_report_seizure:
@@ -301,7 +301,7 @@ public class MainActivity2 extends AppCompatActivity {
                             ReportSeizureActivity.class);
                     this.startActivity(intent);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting Report Seizure activity " + ex.toString());
+                    Log.i(TAG, "exception starting Report Seizure activity " + ex.toString(), ex);
                 }
                 return true;
             case R.id.action_settings:
@@ -312,7 +312,7 @@ public class MainActivity2 extends AppCompatActivity {
                             PrefActivity.class);
                     this.startActivity(prefsIntent);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting settings activity " + ex.toString());
+                    Log.i(TAG, "exception starting settings activity " + ex.toString(), ex);
                 }
                 return true;
             case R.id.action_about:
@@ -433,7 +433,7 @@ public class MainActivity2 extends AppCompatActivity {
                             AuthenticateActivity.class);
                     mContext.startActivity(i);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting activity " + ex.toString());
+                    Log.i(TAG, "exception starting activity " + ex.toString(), ex);
                 }
 
             }

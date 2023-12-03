@@ -40,6 +40,7 @@ import com.getpebble.android.kit.util.PebbleDictionary;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -229,7 +230,7 @@ public class SdDataSourcePebble extends SdDataSource {
             stopPebbleServer();
 
         } catch (Exception e) {
-            Log.v(TAG, "Error in stop() - " + e.toString());
+            Log.v(TAG, "Error in stop() - " + e.toString(), e);
             mUtil.writeToSysLogFile("SdDataSourcePebble.stop() - error - "+e.toString());
         }
     }
@@ -484,8 +485,9 @@ public class SdDataSourcePebble extends SdDataSource {
             useSdServerBinding().unregisterReceiver(msgDataHandler);
             stopWatchApp();
         } catch (Exception e) {
-            Log.v(TAG, "stopServer() - error " + e.toString());
-            mUtil.writeToSysLogFile("SdDataSourcePebble.stopServer() - error " + e.toString());
+            Log.v(TAG, "stopServer() - error " + e.toString(), e);
+            mUtil.writeToSysLogFile("SdDataSourcePebble.stopServer() - error " + e.getMessage() + "\n" +
+                    Arrays.toString(Thread.currentThread().getStackTrace()));
         }
     }
 

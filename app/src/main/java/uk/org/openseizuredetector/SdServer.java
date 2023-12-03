@@ -76,6 +76,7 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Timer;
@@ -517,9 +518,9 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 }
 
 
-        // Update preferences.
-        Log.v(TAG, "onStartCommand() - calling updatePrefs()");
-        updatePrefs();
+                // Update preferences.
+                Log.v(TAG, "onStartCommand() - calling updatePrefs()");
+                updatePrefs();
 
 
                 bindBatteryEvents(SdServer.this);
@@ -578,25 +579,25 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting SdDataSource");
                 mSdDataSource.start();
 
-        // Record last time we sent an SMS so we can limit rate of SMS
-        // sending to one per minute.   We set it to one minute ago (60000 milliseconds)
-        mSMSTime = new Time(Time.getCurrentTimezone());
-        mSMSTime.set(mSMSTime.toMillis(false) - 60000);
+                // Record last time we sent an SMS so we can limit rate of SMS
+                // sending to one per minute.   We set it to one minute ago (60000 milliseconds)
+                mSMSTime = new Time(Time.getCurrentTimezone());
+                mSMSTime.set(mSMSTime.toMillis(false) - 60000);
 
 
                 // Start timer to log data regularly..
                 if (dataLogTimer == null) {
                     Log.v(TAG, "onStartCommand(): starting dataLog timer");
                     mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting dataLog timer");
-            /*dataLogTimer = new Timer();
-            dataLogTimer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    Log.v(TAG,"dataLogTimer.run()");
-                    logData();
-                }
-            }, 0, 1000 * 60);
-            */
+                    /*dataLogTimer = new Timer();
+                    dataLogTimer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            Log.v(TAG,"dataLogTimer.run()");
+                            logData();
+                        }
+                    }, 0, 1000 * 60);
+                    */
                 } else {
                     Log.v(TAG, "onStartCommand(): dataLog timer already running.");
                     mUtil.writeToSysLogFile("SdServer.onStartCommand() - dataLog timer already running???");
@@ -631,7 +632,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 stopServiceRunner();
             }
 
-            serverInitialized = true;
+        serverInitialized = true;
         return START_STICKY;
     }
 
@@ -649,7 +650,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 }else
                     Log.i(TAG,"Wakelock is not held, so no need to release.");
             } catch (Exception e) {
-                Log.e(TAG, "Error Releasing Wakelock - " + e.toString());
+                Log.e(TAG, "Error Releasing Wakelock - " + e.toString(), e);
                 mUtil.writeToSysLogFile("SdServer.onDestroy() - Error releasing wakelock.");
                 mUtil.showToast(getString(R.string.ErrorReleasingWakelockMsg));
             }
@@ -717,7 +718,9 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
             if (Objects.nonNull(mToneGenerator)) mToneGenerator.release();
             mToneGenerator = null;
 
-            SdServer.this.stopForeground(true);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                SdServer.this.stopForeground(STOP_FOREGROUND_REMOVE);
+            }
             // Cancel the notification.
             Log.d(TAG, "onDestroy(): cancelling notification");
             mUtil.writeToSysLogFile("SdServer.onDestroy - cancelling notification");
@@ -732,8 +735,15 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
             stopSelf();
 
         } catch (Exception e) {
-            Log.e(TAG, "Error in onDestroy() - " + e.toString());
-            mUtil.writeToSysLogFile("SdServer.onDestroy() -error " + e.toString());
+            Log.e(TAG, "Error in onDestroy() - " + e.toString(), e);
+            mUtil.writeToSysLogFile("SdServer.onDestroy() -error " + e.getMessage() + "\n" +
+                    Arrays.toString(Thread.currentThread().getStackTrace()));
+        }
+
+        if (Objects.nonNull(mNetworkBroadcastReceiver)) {
+            if (mNetworkBroadcastReceiver.isRegistered)
+                mNetworkBroadcastReceiver.unregister(SdServer.this);
+            mNetworkBroadcastReceiver = null;
         }
 
 
@@ -857,17 +867,25 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
             mNM.cancel(DATASHARE_NOTIFICATION_ID);
 
 
-            // stop this service.
-            Log.d(TAG, "onDestroy(): calling stopSelf()");
-            mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping self");
-            stopSelf();
 
         } catch (Exception e) {
             Log.e(TAG, "Error in onDestroy() - " + e.toString(),e);
-            mUtil.writeToSysLogFile("SdServer.onDestroy() -error " + e.toString());
+            mUtil.writeToSysLogFile("SdServer.onDestroy() -error " + e.getMessage() + "\n" +
+                    Arrays.toString(Thread.currentThread().getStackTrace()));
         }
 
-        stopForeground(true);
+        if (Objects.nonNull(mNetworkBroadcastReceiver)) {
+            if (mNetworkBroadcastReceiver.isRegistered)
+                mNetworkBroadcastReceiver.unregister(SdServer.this);
+            mNetworkBroadcastReceiver = null;
+        }
+
+        // stop this service.
+        Log.d(TAG, "onDestroy(): calling stopSelf()");
+        mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping self");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_REMOVE);
+        }
         stopSelf();
     }
 
@@ -1845,7 +1863,8 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
             mUseNewUi = SP.getBoolean("UseNewUi", false);
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
-            mUtil.writeToSysLogFile("SdServer.updatePrefs() - Error " + ex.toString());
+            mUtil.writeToSysLogFile("SdServer.updatePrefs() - Error " + ex.getMessage() + "\n" +
+                    Arrays.toString(Thread.currentThread().getStackTrace()));
             mUtil.showToast(getString(R.string.problem_parsing_preferences));
         }
     }

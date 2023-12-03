@@ -187,7 +187,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
                                 mEventSubTypesHashMap.put(key, eventSubtypesList);
                                 mRedrawEventSubTypesList = true;
                             } catch (JSONException e) {
-                                Log.e(TAG, "initialiseServiceConnection().getEventTypes Callback: Error parsing JSONObject" + e.getMessage() + e.toString());
+                                Log.e(TAG, "initialiseServiceConnection().getEventTypes Callback: Error parsing JSONObject" + e.getMessage() + e.toString(), e);
                             }
                         }
                         mRedrawEventTypesList = true;

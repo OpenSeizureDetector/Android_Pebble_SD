@@ -37,6 +37,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ComponentInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
@@ -50,8 +51,10 @@ import android.util.Log;
 
 import org.checkerframework.checker.units.qual.C;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.TimeUnit;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
@@ -252,9 +255,9 @@ public class SdDataSourceAw extends SdDataSource {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                         runningReceiver.finish();
                     }
-                }else {
+                }/*else {
                     this.abortBroadcast();
-                }
+                }*/
         }
 
     }
@@ -281,7 +284,7 @@ public class SdDataSourceAw extends SdDataSource {
                 unregisteredBroadCastReceiver = intentBroadCastReceiver.unregister(useSdServerBinding());
             if (unregisteredBroadCastReceiver || Objects.isNull(intentRegisterState)) intentRegisterState =  intentBroadCastReceiver.register(useSdServerBinding(), broadCastToSdServer);
             Log.i(TAG, "onCreate(): reached with state of broadcastReceiver"+ (Objects.isNull(intentRegisterState)?" not " : "" )+ " registered: ");
-            if ( !Objects.equals(receivedIntentByBroadCast, null)) {
+            if ( Objects.nonNull(receivedIntentByBroadCast)) {
                 try {
 
                     Log.i(TAG, "got intent and count of extras:" + receivedIntentByBroadCast.getExtras().size());
@@ -289,201 +292,233 @@ public class SdDataSourceAw extends SdDataSource {
                     Log.e(TAG, "onCreate: ", e);
                 }
 
-                if (!Objects.equals(receivedIntentByBroadCast, null))
-                    if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.returnPath)) {
-                        if (Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver.equals(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.returnPath))) {
-                            Log.i(TAG, "inOnStartReceived");
-                            if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.intentAction)) {
-                                receivedAction = receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.intentAction);
-                                Log.d(TAG,"inOnStartReceived(): received action: " +receivedAction);
+                if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.returnPath)) {
+                    if (Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver.equals(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.returnPath))) {
+                        Log.i(TAG, "inOnStartReceived");
+                        if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.intentAction)) {
+                            receivedAction = receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.intentAction);
+                            Log.d(TAG,"inOnStartReceived(): received action: " +receivedAction);
+                        }
+
+                        if (Constants.ACTION.WEARRECEIVER_FOREGROUND_STARTED.equals(receivedAction)){
+                            Log.d(TAG,"onStartReceived: received WEARRECEIVER_FOREGROUND_STARTED in Intent.");
+                            start();
+                            return;
+                        }
+                        if (Constants.ACTION.REGISTER_START_INTENT.equals(receivedAction)){
+                            Log.d(TAG,"onStartReceived: received REGISTER_START_INTENT in Intent.");
+                            return;
+                        }
+
+
+                        if (Constants.ACTION.REGISTERED_START_INTENT.equals(receivedAction))
+                        {
+                            if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.wearReceiverServiceIntent)) {
+                                aWIntentBase = receivedIntentByBroadCast.getParcelableExtra(Constants.GLOBAL_CONSTANTS.wearReceiverServiceIntent);
+                                aWIntentBase.putExtra(Constants.GLOBAL_CONSTANTS.returnPath, Constants.GLOBAL_CONSTANTS.mAppPackageName);
+                                aWIntentBase.setAction(Constants.ACTION.BROADCAST_TO_WEARRECEIVER);
+                                aWIntentBase.addFlags(Intent.FLAG_RECEIVER_FOREGROUND|Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                                aWIntentBase.setComponent(null);
                             }
-
-                            if (Constants.ACTION.REGISTER_START_INTENT.equals(receivedAction)){
-                                Log.d(TAG,"onStartReceived: received REGISTER_START_INTENT in Intent.");
-                                return;
+                            sdBroadCastReceived = true;
+                            if (registeredAllBroadCastIntents()){
+                                aWIntent = aWIntentBase;
+                                aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTERED_START_INTENT_AW);
+                                sendBroadcastToWearReceiver(aWIntent);
                             }
+                            return;
+                        }
 
-
-                            if (Constants.ACTION.REGISTERED_START_INTENT.equals(receivedAction))
-                            {
-                                if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.wearReceiverServiceIntent)) {
-                                    aWIntentBase = receivedIntentByBroadCast.getParcelableExtra(Constants.GLOBAL_CONSTANTS.wearReceiverServiceIntent);
-                                    aWIntentBase.putExtra(Constants.GLOBAL_CONSTANTS.returnPath, Constants.GLOBAL_CONSTANTS.mAppPackageName);
-                                    aWIntentBase.setAction(Constants.ACTION.BROADCAST_TO_WEARRECEIVER);
-                                    aWIntentBase.addFlags(Intent.FLAG_RECEIVER_FOREGROUND|Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-                                    aWIntentBase.setComponent(null);
-                                }
-                                sdBroadCastReceived = true;
+                        if (Constants.ACTION.REGISTER_WEARRECEIVER_INTENT.equals(receivedAction)){
+                            if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.wearReceiverServiceIntent)) {
+                                aWIntentBase = receivedIntentByBroadCast.getParcelableExtra(Constants.GLOBAL_CONSTANTS.wearReceiverServiceIntent);
+                                if (Objects.isNull(aWIntentBase)) throw new AssertionError();
+                                aWIntentBase.putExtra(Constants.GLOBAL_CONSTANTS.returnPath, Constants.GLOBAL_CONSTANTS.mAppPackageName);
+                                aWIntentBase.setAction(Constants.ACTION.BROADCAST_TO_WEARRECEIVER);
+                                aWIntentBase.addFlags(Intent.FLAG_RECEIVER_FOREGROUND|Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+                                aWIntentBase.setComponent(null);
+                                sdAwBroadCastReceived = true;
                                 if (registeredAllBroadCastIntents()){
                                     aWIntent = aWIntentBase;
-                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTERED_START_INTENT_AW);
-                                    useSdServerBinding().sendBroadcast(aWIntent);
+                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentReceiver,receivingIntent);
+                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTERED_WEARRECEIVER_INTENT);
+                                    sendBroadcastToWearReceiver(aWIntent);
+                                }
+                            }else{
+                                Log.e(TAG,"onStartReceived(): registering WearReceiverIntent without intent attached", new Throwable());
+                            }
+                        }
+
+                        if (Objects.nonNull(aWIntentBase)) {
+
+                            if (Constants.ACTION.REGISTERED_WEARRECEIVER_INTENT.equals(receivedAction)) {
+
+                                sdBroadCastReceived = true;
+                                if (registeredAllBroadCastIntents()) {
+                                    aWIntent = aWIntentBase;
+                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_WEAR_LISTENER);
+                                    sendBroadcastToWearReceiver(aWIntent);
+                                }
+                                return;
+                            }
+                            if (Constants.ACTION.REGISTERED_WEAR_LISTENER.equals(receivedAction)) {
+                                useSdServerBinding().mSdData.serverOK = true;
+                                mSdData = getSdData();
+
+                                sdBroadCastReceived = true;
+                                if (registeredAllBroadCastIntents()) {
+                                    aWIntent = aWIntentBase;
+                                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.CONNECT_WEARABLE_INTENT);
+                                    sendBroadcastToWearReceiver(aWIntent);
                                 }
                                 return;
                             }
 
-                            if (Constants.ACTION.REGISTER_WEARRECEIVER_INTENT.equals(receivedAction)){
-                                if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.wearReceiverServiceIntent)) {
-                                    aWIntentBase = receivedIntentByBroadCast.getParcelableExtra(Constants.GLOBAL_CONSTANTS.wearReceiverServiceIntent);
-                                    if (Objects.isNull(aWIntentBase)) throw new AssertionError();
-                                    aWIntentBase.putExtra(Constants.GLOBAL_CONSTANTS.returnPath, Constants.GLOBAL_CONSTANTS.mAppPackageName);
-                                    aWIntentBase.setAction(Constants.ACTION.BROADCAST_TO_WEARRECEIVER);
-                                    aWIntentBase.addFlags(Intent.FLAG_RECEIVER_FOREGROUND|Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
-                                    aWIntentBase.setComponent(null);
-                                    sdAwBroadCastReceived = true;
-                                    if (registeredAllBroadCastIntents()){
-                                        aWIntent = aWIntentBase;
-                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentReceiver,receivingIntent);
-                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTERED_WEARRECEIVER_INTENT);
-                                        useSdServerBinding().sendBroadcast(aWIntent);
-                                    }
-                                }else{
-                                    Log.e(TAG,"onStartReceived(): registering WearReceiverIntent without intent attached", new Throwable());
-                                }
+
+                            if (Constants.ACTION.CONNECTION_WEARABLE_CONNECTED.equals(receivedAction)) {
+                                useSdServerBinding().mSdData.watchConnected = true;
+                                useSdServerBinding().mSdData.watchAppRunning = true;
+                                signalUpdateUI();
+                                mobileBatteryPctUpdate();
+                                return;
                             }
 
-                            if (Objects.nonNull(aWIntentBase)) {
-
-                                if (Constants.ACTION.REGISTERED_WEARRECEIVER_INTENT.equals(receivedAction)) {
-
-                                    sdBroadCastReceived = true;
-                                    if (registeredAllBroadCastIntents()) {
-                                        aWIntent = aWIntentBase;
-                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_WEAR_LISTENER);
-                                        useSdServerBinding().sendBroadcast(aWIntent);
-                                    }
-                                    return;
-                                }
-                                if (Constants.ACTION.REGISTERED_WEAR_LISTENER.equals(receivedAction)) {
-                                    useSdServerBinding().mSdData.serverOK = true;
-                                    mSdData = getSdData();
-
-                                    sdBroadCastReceived = true;
-                                    if (registeredAllBroadCastIntents()) {
-                                        aWIntent = aWIntentBase;
-                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.CONNECT_WEARABLE_INTENT);
-                                        useSdServerBinding().sendBroadcast(aWIntent);
-                                    }
-                                    return;
-                                }
-
-
-                                if (Constants.ACTION.CONNECTION_WEARABLE_CONNECTED.equals(receivedAction)) {
-                                    useSdServerBinding().mSdData.watchConnected = true;
-                                    useSdServerBinding().mSdData.watchAppRunning = true;
-                                    signalUpdateUI();
-                                    mobileBatteryPctUpdate();
-                                    return;
-                                }
-
-                                if (Constants.ACTION.CONNECTION_WEARABLE_RECONNECTED.equals(receivedAction)) {
-                                    useSdServerBinding().mSdData.watchConnected = true;
-                                    useSdServerBinding().mSdData.watchAppRunning = true;
-                                    signalUpdateUI();
-                                    mobileBatteryPctUpdate();
-                                    return;
-                                }
-
-                                if (Constants.ACTION.CONNECTION_WEARABLE_DISCONNECTED.equals(receivedAction)) {
-                                    useSdServerBinding().mSdData.watchConnected = false;
-                                    useSdServerBinding().mSdData.watchAppRunning = false;
-                                    signalUpdateUI();
-                                    return;
-                                }
-
-                                if (Constants.ACTION.PUSH_SETTINGS_ACTION.equals(receivedAction)) {
-                                    try {
-                                        updatePrefs();
-                                        calculateStaticTimings();
-                                        mHandler.postDelayed(() -> {
-                                            aWIntent = aWIntentBase;
-                                            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.PUSH_SETTINGS_ACTION);
-                                            if (!getSdData().serverOK)
-                                                useSdServerBinding().mSdData.serverOK = true;
-                                            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, getSdData().toSettingsJSON()); // send SdDataSource Updated mSdData
-                                            useSdServerBinding().sendBroadcast(aWIntent);
-                                        }, 100);
-                                    } catch (Exception e) {
-                                        Log.e(TAG, "onStartReceived(): PUSH_SETTINGS_ACTION:", e);
-                                    }
-                                    return;
-                                }
-
-                                if (Constants.ACTION.SDDATA_TRANSFER_TO_SD_SERVER.equals(receivedAction)) {
-                                    try {
-                                        if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath)) {
-                                            String a = updateFromJSON(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath));
-
-                                            Log.v(TAG, "result from updateFromJSON(): " + a);
-                                            if ("sendSettings".equals(a) ||
-                                                    "watchConnect".equals(a)
-                                            ) {
-                                                super.updatePrefs();
-                                                sendWatchSdSettings();
-                                                getWatchSdSettings();
-                                            }
-                                            if (Objects.equals(a, "ERROR")) {
-                                                Log.e(TAG, "Error in updateFromJSON: ");
-                                            }
-                                            if (!getSdData().haveSettings)
-                                                useSdServerBinding().mSdData.haveSettings = true;
-                                            if (!getSdData().watchConnected)
-                                                useSdServerBinding().mSdData.watchConnected = true;
-                                            if (!getSdData().watchAppRunning)
-                                                useSdServerBinding().mSdData.watchAppRunning = true;
-                                            if (!getSdData().haveData && !a.equals("ERROR"))
-                                                useSdServerBinding().mSdData.haveData = true;
-                                            signalUpdateUI();
-                                        }
-
-                                    } catch (Exception e) {
-                                        Log.e(TAG, "onStartReceived()", e);
-                                    }
-                                }
-
-                                if (Constants.ACTION.WATCH_BODY_DETECTED.equals(receivedAction)) {
-                                    useSdServerBinding().mSdData.mWatchOnBody = Boolean.parseBoolean(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath));
-
-                                    signalUpdateUI();
-                                }
-
-                                if (Constants.ACTION.STOP_WEAR_SD_ACTION.equals(receivedAction)) {
-                                    //if (useSdServerBinding().)Log.i(TAG," fixme: add here liveData from startup and main activity");
-                                    useSdServerBinding().mSdData.haveSettings = false;
-                                    useSdServerBinding().mSdData.haveData = false;
-                                    useSdServerBinding().mSdData.watchConnected = false;
-                                    useSdServerBinding().mSdData.mDataType = receivedAction;
-                                    if (useSdServerBinding().uiLiveData.hasActiveObservers())
-                                        useSdServerBinding().uiLiveData.signalChangedData();
-                                }
-
-
-                            } else {
-                                mUtil.showToast("Received intent without prior setting WearReceiver as Receiving end.");
+                            if (Constants.ACTION.CONNECTION_WEARABLE_RECONNECTED.equals(receivedAction)) {
+                                useSdServerBinding().mSdData.watchConnected = true;
+                                useSdServerBinding().mSdData.watchAppRunning = true;
+                                signalUpdateUI();
+                                mobileBatteryPctUpdate();
+                                return;
                             }
 
-                        } else if (Constants.GLOBAL_CONSTANTS.mAppPackageName.equals(aWIntent.getStringExtra(Constants.GLOBAL_CONSTANTS.returnPath))){
-                            aWIntent.removeExtra(Constants.GLOBAL_CONSTANTS.intentAction);
-                            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_START_INTENT);
+                            if (Constants.ACTION.CONNECTION_WEARABLE_DISCONNECTED.equals(receivedAction)) {
+                                useSdServerBinding().mSdData.watchConnected = false;
+                                useSdServerBinding().mSdData.watchAppRunning = false;
+                                signalUpdateUI();
+                                return;
+                            }
 
-                            PendingIntent pIntent = PendingIntent.getBroadcast(useSdServerBinding(), useSdServerBinding().mStartId, aWIntent,
-                                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
-                            mHandler.post(() -> {
+                            if (Constants.ACTION.PUSH_SETTINGS_ACTION.equals(receivedAction)) {
                                 try {
-                                    pIntent.send();
-                                } catch (PendingIntent.CanceledException e) {
-                                    throw new RuntimeException(e);
+                                    updatePrefs();
+                                    calculateStaticTimings();
+                                    mHandler.postDelayed(() -> {
+                                        aWIntent = aWIntentBase;
+                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.PUSH_SETTINGS_ACTION);
+                                        if (!getSdData().serverOK)
+                                            useSdServerBinding().mSdData.serverOK = true;
+                                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, getSdData().toSettingsJSON()); // send SdDataSource Updated mSdData
+                                        sendBroadcastToWearReceiver(aWIntent);
+                                    }, 100);
+                                } catch (Exception e) {
+                                    Log.e(TAG, "onStartReceived(): PUSH_SETTINGS_ACTION:", e);
                                 }
-                            });
+                                return;
+                            }
+
+                            if (Constants.ACTION.SDDATA_TRANSFER_TO_SD_SERVER.equals(receivedAction)) {
+                                try {
+                                    if (receivedIntentByBroadCast.hasExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath)) {
+                                        String a = updateFromJSON(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath));
+
+                                        Log.v(TAG, "result from updateFromJSON(): " + a);
+                                        if ("sendSettings".equals(a) ||
+                                                "watchConnect".equals(a)
+                                        ) {
+                                            super.updatePrefs();
+                                            sendWatchSdSettings();
+                                            getWatchSdSettings();
+                                        }
+                                        if (Objects.equals(a, "ERROR")) {
+                                            Log.e(TAG, "Error in updateFromJSON: ");
+                                        }
+                                        if (!getSdData().haveSettings)
+                                            useSdServerBinding().mSdData.haveSettings = true;
+                                        if (!getSdData().watchConnected)
+                                            useSdServerBinding().mSdData.watchConnected = true;
+                                        if (!getSdData().watchAppRunning)
+                                            useSdServerBinding().mSdData.watchAppRunning = true;
+                                        if (!getSdData().haveData && !a.equals("ERROR"))
+                                            useSdServerBinding().mSdData.haveData = true;
+                                        signalUpdateUI();
+                                    }
+
+                                } catch (Exception e) {
+                                    Log.e(TAG, "onStartReceived()", e);
+                                }
+                            }
+
+                            if (Constants.ACTION.WATCH_BODY_DETECTED.equals(receivedAction)) {
+                                useSdServerBinding().mSdData.mWatchOnBody = Boolean.parseBoolean(receivedIntentByBroadCast.getStringExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath));
+
+                                signalUpdateUI();
+                            }
+
+                            if (Constants.ACTION.STOP_WEAR_SD_ACTION.equals(receivedAction)) {
+                                //if (useSdServerBinding().)Log.i(TAG," fixme: add here liveData from startup and main activity");
+                                useSdServerBinding().mSdData.haveSettings = false;
+                                useSdServerBinding().mSdData.haveData = false;
+                                useSdServerBinding().mSdData.watchConnected = false;
+                                useSdServerBinding().mSdData.mDataType = receivedAction;
+                                if (useSdServerBinding().uiLiveData.hasActiveObservers())
+                                    useSdServerBinding().uiLiveData.signalChangedData();
+                            }
 
 
+                        } else {
+                            mUtil.showToast("Received intent without prior setting WearReceiver as Receiving end.");
                         }
-                    } else
-                        mUtil.showToast("inOnStartWithIntent");
+
+                    } else if (Constants.GLOBAL_CONSTANTS.mAppPackageName.equals(aWIntent.getStringExtra(Constants.GLOBAL_CONSTANTS.returnPath))){
+                        aWIntent.removeExtra(Constants.GLOBAL_CONSTANTS.intentAction);
+                        aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_START_INTENT);
+
+                        PendingIntent pIntent = PendingIntent.getBroadcast(useSdServerBinding(), useSdServerBinding().mStartId, aWIntent,
+                                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
+                        mHandler.post(() -> {
+                            try {
+                                pIntent.send();
+                            } catch (PendingIntent.CanceledException e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+
+
+                    }
+                } else
+                    mUtil.showToast("inOnStartWithIntent");
+            }
+            else{
+                Log.e(TAG, "onStartReceived: entered with empty receivedIntentByBroadCast");
             }
         }catch (Exception e){
             Log.e(TAG,"onStartReceived(): ",e);
         }
+    }
+
+    private void sendBroadcastToWearReceiver(Intent intentToSend) {
+        logDebug_aWIntent();
+
+        useSdServerBinding().sendBroadcast(intentToSend);
+    }
+
+    private void logDebug_aWIntent() {logDebug_aWIntent(null);}
+    private void logDebug_aWIntent(Intent intentToLog) {
+        Intent intentToPrint = Objects.nonNull(intentToLog)?intentToLog:aWIntent;
+        if (Objects.isNull(intentToPrint)){
+            Log.e(TAG, Arrays.toString(Thread.currentThread().getStackTrace()) + ":\nPrinting empty intent.");
+            return;
+        }
+        Log.d(TAG,"sendBroadcastToWearReceiver(): got Intent:" + intentToPrint + " has got action: "
+                + (intentToPrint.hasExtra(Constants.GLOBAL_CONSTANTS.intentAction)?
+                intentToPrint.getStringExtra(Constants.GLOBAL_CONSTANTS.intentAction):"not defined. ") +
+                "\nof return path: " + (intentToPrint.hasExtra(Constants.GLOBAL_CONSTANTS.returnPath)?
+                intentToPrint.getStringExtra(Constants.GLOBAL_CONSTANTS.returnPath):" not defined. ") +
+                "\nwith data: " + (Objects.nonNull(intentToPrint.getData())?intentToPrint.getData(): "not defined.") +
+                "\nwith extra string data: " + (intentToPrint.hasExtra(Constants.GLOBAL_CONSTANTS.dataType)?
+                intentToPrint.getParcelableExtra(Constants.GLOBAL_CONSTANTS.dataType): "not defined.") +
+                "\nstartId: " + (Objects.nonNull(useSdServerBinding())?useSdServerBinding().mStartId:"") +
+                "\nand stacktrace\n: " + Arrays.toString(Thread.currentThread().getStackTrace()));
     }
 
     @RequiresApi(api = Build.VERSION_CODES.CUPCAKE)
@@ -499,22 +534,33 @@ public class SdDataSourceAw extends SdDataSource {
             installAwApp();
             return false;
         } else {
-
-            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.returnPath, Constants.GLOBAL_CONSTANTS.mAppPackageName);
+            aWIntent.setData(null);
+            aWIntent.setComponent(null);
             aWIntent.removeCategory(Intent.CATEGORY_LAUNCHER);
-            aWIntent.setAction(Constants.ACTION.BROADCAST_TO_WEARRECEIVER_MANIFEST);
-            //AddComponent only working for implicit BroadCast For explicit (when app is already running and broadcast registered.
-            aWIntent.setComponent(new ComponentName(Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver, Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver + ".WearReceiverBroadCastStart"));
+            aWIntent.removeExtra(Constants.GLOBAL_CONSTANTS.intentAction);
+            aWIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES|Intent.FLAG_RECEIVER_FOREGROUND|Intent.FLAG_INCLUDE_STOPPED_PACKAGES|
+            Intent.FLAG_RECEIVER_FOREGROUND|Intent.FLAG_ACTIVITY_SINGLE_TOP);
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentReceiver, receivingIntent);
-            aWIntent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
+            aWIntentBase = aWIntent;
             aWIntentBaseManifest = aWIntent;
+            aWIntentBaseManifest.putExtra(Constants.GLOBAL_CONSTANTS.returnPath, Constants.GLOBAL_CONSTANTS.mAppPackageName);
+
+            //AddComponent only working for implicit BroadCast For explicit (when app is already running and broadcast registered.
+            //aWIntentBaseManifest.setComponent(new ComponentName(Constants.GLOBAL_CONSTANTS.mAppPackageNameWearReceiver,  "WearReceiverBroadCastStart"));
+            aWIntentBaseManifest.setData(Constants.GLOBAL_CONSTANTS.mStartUri);
+            aWIntentBaseManifest.putExtra(Constants.GLOBAL_CONSTANTS.dataType,Constants.GLOBAL_CONSTANTS.mStartUri);
+            aWIntentBaseManifest.setAction(Constants.ACTION.BROADCAST_TO_WEARRECEIVER_MANIFEST);
+            aWIntentBase.setAction(Constants.ACTION.BROADCAST_TO_WEARRECEIVER);
+            aWIntent = null;
+
+            // pre-start firing service WearReceiver
 
             return true;
         }
     }
 
     /**
-     * Start the datasource updating - initialises from sharedpreferences first to
+     * Start the datasource updating - initialises from shared-preferences first to
      * make sure any changes to preferences are taken into account.
      */
     @Override
@@ -538,10 +584,9 @@ public class SdDataSourceAw extends SdDataSource {
         //waitReceiverRegistered();
         if (isWearReceiverInstalled()) {
             try {
-
+                mHandler.postDelayed(this::startWearReceiverApp,(long)OsdUtil.convertTimeUnit(2,TimeUnit.SECONDS,TimeUnit.MILLISECONDS));
                 if (Objects.isNull(aWIntentBase)&&Objects.isNull(aWIntentBaseManifest)){
                     intentReceivedAction(aWIntent);
-                    onStartReceived();
                 } else {
 
                     //aWIntent.setClassName(aWIntent.getPackage(),".WearReceiver");
@@ -552,42 +597,32 @@ public class SdDataSourceAw extends SdDataSource {
                     // and: launch DebugActivity from debugger.
                     // (this is one way of 2 way communication.)
                     // Also tell me how to use activity without broadcast. In this context is no getActivity() or getIntent()
-                    SdData sdData = getSdData();
                     //aWIntent.setData(Constants.GLOBAL_CONSTANTS.mStartUri);
                     //aWIntent = new Intent();
-                    aWIntent = aWIntentBaseManifest;
-                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.dataType, Constants.GLOBAL_CONSTANTS.mStartUri);
-                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_START_INTENT);
-
-                    //aWIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.startId, useSdServerBinding().mStartId);
-                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.startIdWearReceiver, startIdWearReceiver);
-                    startIdWearReceiver++;
-                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.startIdWearSd, startIdWearSd);
-                    startIdWearSd++;
-                    final PendingIntent pIntent = PendingIntent.getBroadcast(useSdServerBinding(), useSdServerBinding().mStartId, aWIntent,
+                    mHandler.postDelayed(this::registerSdServerIntentInWearReceiver,(long)OsdUtil.convertTimeUnit(3,TimeUnit.SECONDS,TimeUnit.MILLISECONDS));
+                   /*final PendingIntent pIntent = PendingIntent.getBroadcast(useSdServerBinding(), useSdServerBinding().mStartId, aWIntent,
                             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
-                    mHandler.post(() -> {
-                        try {
-                            pIntent.send();
-                        } catch (PendingIntent.CanceledException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
 
-                    aWIntent = aWIntentBaseManifest;
+                    try {
+                        pIntent.send();
+                    } catch (PendingIntent.CanceledException e) {
+                        Log.e(TAG,"start(): Canceled pIntent2: ",e);
+                    }*/
+
+                    /*aWIntent = aWIntentBaseManifest;
                     aWIntent.removeExtra(Constants.GLOBAL_CONSTANTS.intentAction);
-                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.START_MOBILE_RECEIVER_ACTION);
-
-                    PendingIntent pIntent2 = PendingIntent.getBroadcast(useSdServerBinding(), useSdServerBinding().mStartId+1, aWIntent,
+                    aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_START_INTENT);
+                    sendBroadcastToWearReceiver(aWIntent);
+                   PendingIntent pIntent2 = PendingIntent.getBroadcast(useSdServerBinding(), useSdServerBinding().mStartId+1, aWIntent,
                             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT);
-                    mHandler.post(() -> {
-                        try {
+                    mHandler.postDelayed(() -> {
+                        useSdServerBinding().sendBroadcast(aWIntent);
+                        *//*try {
                             pIntent2.send();
                         } catch (PendingIntent.CanceledException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
+                           Log.e(TAG,"start(): Canceled pIntent2: ",e);
+                        }*//*
+                    },(long) OsdUtil.convertTimeUnit(10, TimeUnit.SECONDS,TimeUnit.MILLISECONDS));*/
                 }
 
 
@@ -604,12 +639,30 @@ public class SdDataSourceAw extends SdDataSource {
 
     }
 
+    private void registerSdServerIntentInWearReceiver() {
+        Intent intentToSend = aWIntentBase;
+        intentToSend.removeExtra(Constants.GLOBAL_CONSTANTS.intentAction);
+        intentToSend.putExtra(Constants.GLOBAL_CONSTANTS.intentAction, Constants.ACTION.REGISTER_START_INTENT);
+
+        SdData sdData = getSdData();
+
+        //intentToSend.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intentToSend.putExtra(Constants.GLOBAL_CONSTANTS.startId, useSdServerBinding().mStartId);
+        intentToSend.putExtra(Constants.GLOBAL_CONSTANTS.startIdWearReceiver, startIdWearReceiver);
+        intentToSend.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath,sdData.toSettingsJSON());
+        startIdWearReceiver++;
+        intentToSend.putExtra(Constants.GLOBAL_CONSTANTS.startIdWearSd, startIdWearSd);
+        startIdWearSd++;
+        sendBroadcastToWearReceiver(intentToSend);
+    }
+
     private void checkAndUnRegisterReceiver(){
         if (Objects.nonNull(intentBroadCastReceiver)){
 
             if (intentBroadCastReceiver.isRegistered)
                 intentBroadCastReceiver.unregister(useSdServerBinding());
         }
+        intentBroadCastReceiver = null;
 
     }
 
@@ -632,6 +685,7 @@ public class SdDataSourceAw extends SdDataSource {
 
             intentBroadCastReceiver = null;
             aWIntent = aWIntentBaseManifest;
+            aWIntent.removeExtra(Constants.GLOBAL_CONSTANTS.intentAction);
             //AddComponent only working for implicit BroadCast For explicit (when app is already running and broadcast registered.
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.dataType, Constants.GLOBAL_CONSTANTS.mStopUri);
             aWIntent.setData(Constants.GLOBAL_CONSTANTS.mStopUri);
@@ -662,7 +716,7 @@ public class SdDataSourceAw extends SdDataSource {
             Log.e(TAG,"Stop() Exepted",e);
         }
 
-        super.stop();
+        //super.stop();
         // FIXME - send an intent to tell the Android Wear companion app to shutdown.
     }
 
@@ -684,12 +738,25 @@ public class SdDataSourceAw extends SdDataSource {
 
     public void startWearReceiverApp(){
         try {
-            aWIntent = aWIntentBase;
+            aWIntentBaseManifest.setAction(Constants.ACTION.BROADCAST_TO_WEARRECEIVER_MANIFEST);
+            Intent intentToSend = aWIntentBaseManifest;
             SdData sdData = getSdData();
-            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction,Constants.ACTION.START_MOBILE_RECEIVER_ACTION);
+            intentToSend.putExtra(Constants.GLOBAL_CONSTANTS.intentAction,Constants.ACTION.START_MOBILE_RECEIVER_ACTION);
             if (!sdData.serverOK) sdData.serverOK = true;
-            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, sdData.toSettingsJSON());
-            useSdServerBinding().sendBroadcast(aWIntent);
+            intentToSend.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, sdData.toSettingsJSON());
+            //aWIntent.setPackage(useSdServerBinding().getPackageName());
+            //aWIntent.setComponent(null);
+
+            logDebug_aWIntent(intentToSend);
+            sendBroadcastToWearReceiver(intentToSend);
+
+            /*PendingIntent pIntent = PendingIntent.getBroadcast(useSdServerBinding(), useSdServerBinding().mStartId, aWIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_ONE_SHOT );
+            try {
+                pIntent.send();
+            } catch (PendingIntent.CanceledException e) {
+                throw new RuntimeException(e);
+            }*/
         } catch (android.content.ActivityNotFoundException anfe) {
             aWIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + Constants.GLOBAL_CONSTANTS.mAppPackageName));
             aWIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -711,7 +778,7 @@ public class SdDataSourceAw extends SdDataSource {
             sdData.mDataType = Constants.GLOBAL_CONSTANTS.mSettingsString;
             if (!sdData.serverOK) sdData.serverOK = true;
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, sdData.toSettingsJSON());
-            useSdServerBinding().sendBroadcast(aWIntent);
+            sendBroadcastToWearReceiver(aWIntent);
         }catch ( Exception e ){
             Log.e(TAG,"startWearSDApp: Error occoured",e);
         }
@@ -725,7 +792,7 @@ public class SdDataSourceAw extends SdDataSource {
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction,Constants.ACTION.PUSH_SETTINGS_ACTION);
             if (!sdData.serverOK) sdData.serverOK = true;
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, sdData.toSettingsJSON());
-            useSdServerBinding().sendBroadcast(aWIntent);
+            sendBroadcastToWearReceiver(aWIntent);
         }catch ( Exception e ){
             Log.e(TAG,"startWearSDApp: Error occoured",e);
         }
@@ -737,10 +804,11 @@ public class SdDataSourceAw extends SdDataSource {
         try{
             if (Objects.isNull(aWIntentBase))
                 return;
-            aWIntent = aWIntentBase;
-            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.intentAction,Constants.ACTION.BATTERYUPDATE_ACTION);
-            aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mPowerLevel, useSdServerBinding().batteryPct);
-            useSdServerBinding().sendBroadcast(aWIntent);
+            Intent intentToSend = aWIntentBase;
+            intentToSend.setData(null);
+            intentToSend.putExtra(Constants.GLOBAL_CONSTANTS.intentAction,Constants.ACTION.BATTERYUPDATE_ACTION);
+            intentToSend.putExtra(Constants.GLOBAL_CONSTANTS.mPowerLevel, useSdServerBinding().batteryPct);
+            sendBroadcastToWearReceiver(intentToSend);
         }catch ( Exception e ){
             Log.e(TAG,"startWearSDApp: Error occurred",e);
         }

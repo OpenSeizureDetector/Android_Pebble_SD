@@ -557,16 +557,25 @@ public abstract class SdDataSource {
                     mUtil.writeToSysLogFile("    * batteryPc = " + mSdData.batteryPc);
 
                     try {
-                        mSdData.watchPartNo = dataObject.getString("watchPartNo");
-                        mSdData.watchFwVersion = dataObject.getString("watchFwVersion");
-                        mSdData.watchSdVersion = dataObject.getString("sdVersion");
-                        mSdData.watchSdName = dataObject.getString("sdName");
+                        mSdData.watchPartNo = dataObject.has("watchPartNo")?
+                                dataObject.getString("watchPartNo"):
+                                "not received or failed to fetch";
+                        mSdData.watchSdVersion = dataObject.has("watchFwVersion")?
+                                dataObject.getString("watchFwVersion"):
+                                "not received or failed to fetch";
+                        mSdData.watchSdVersion = dataObject.has("sdVersion")?
+                                dataObject.getString("sdVersion"):
+                                "not received or failed to fetch";
+
+                        mSdData.watchSdName = dataObject.has("sdName")?dataObject.getString("sdName"):
+                                "not received or failed to fetch";
                         mUtil.writeToSysLogFile("    * sdName = " + mSdData.watchSdName + " version " + mSdData.watchSdVersion);
                         mUtil.writeToSysLogFile("    * watchPartNo = " + mSdData.watchPartNo + " fwVersion " + mSdData.watchFwVersion);
 
                     } catch (Exception e) {
                         Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString(), e);
-                        mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - " + jsonStr + " - " + e.toString());
+                        mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - " + jsonStr + " - " + e.getMessage() + "\n" +
+                                Arrays.toString(Thread.currentThread().getStackTrace()));
                         mUtil.writeToSysLogFile("          This is probably because of an out of date watch app - please upgrade!");
                         e.printStackTrace();
                     }
@@ -584,7 +593,8 @@ public abstract class SdDataSource {
             }
         } catch (Exception e) {
             Log.e(TAG, "updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " , e);
-            mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.toString());
+            mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.getMessage() + "\n" +
+                    Arrays.toString(Thread.currentThread().getStackTrace()));
             if (Objects.nonNull(e.getCause()))
                 if (Objects.nonNull(e.getCause().getStackTrace()))
                     mUtil.writeToSysLogFile("updateFromJSON: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
@@ -710,7 +720,8 @@ public abstract class SdDataSource {
             Log.e(TAG, "doAnalysis - Exception during Analysis", e);
             if (Objects.nonNull(e.getCause())) {
                 if (Objects.nonNull(Objects.requireNonNull(e.getCause()).getStackTrace())) {
-                    mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e.toString());
+                    mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e.getMessage() + "\n" +
+                            Arrays.toString(Thread.currentThread().getStackTrace()));
                     mUtil.writeToSysLogFile("doAnalysis: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
                     mUtil.writeToSysLogFile("doAnalysis: mSdData.mNsamp=" + mSdData.mNsamp);
                     mUtil.writeToSysLogFile("doAnalysis: alarmFreqMin=" + mAlarmFreqMin + " nMin=" + nMin);
@@ -1364,7 +1375,8 @@ public abstract class SdDataSource {
 
         } catch (Exception ex) {
             Log.e(TAG, "updatePrefs() - Problem parsing preferences!",ex);
-            mUtil.writeToSysLogFile("SDDataSource.updatePrefs() - ERROR " + ex.toString());
+            mUtil.writeToSysLogFile("SDDataSource.updatePrefs() - ERROR " + ex.getMessage() + "\n" +
+                    Arrays.toString(Thread.currentThread().getStackTrace()));
             Toast toast = Toast.makeText(useSdServerBinding(), "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
             toast.show();
         }

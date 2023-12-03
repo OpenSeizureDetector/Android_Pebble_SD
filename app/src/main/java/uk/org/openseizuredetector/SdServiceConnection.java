@@ -71,7 +71,7 @@ public class SdServiceConnection implements ServiceConnection {
 
     @Override
     public void onServiceDisconnected(ComponentName arg0) {
-        Log.v(TAG, "onServiceDisonnected()");
+        Log.v(TAG, "onServiceDisconnected()");
         mSdServer.mBound = false;
         mBound = false;
     }

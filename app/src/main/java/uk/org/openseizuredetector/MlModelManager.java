@@ -77,7 +77,7 @@ public class MlModelManager {
                             JSONObject retObj = new JSONObject(response);
                             callback.accept(retObj);
                         } catch (JSONException e) {
-                            Log.e(TAG, "getMlModelIndex.onRespons(): Error: " + e.getMessage() + "," + e.toString());
+                            Log.e(TAG, "getMlModelIndex.onRespons(): Error: " + e.getMessage() + "," + e.toString(), e);
                             callback.accept(null);
                         }
                     }

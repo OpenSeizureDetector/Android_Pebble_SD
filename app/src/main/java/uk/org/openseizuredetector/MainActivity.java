@@ -145,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.v(TAG, "menuKeyField is null - doing nothing...");
             }
         } catch (Exception e) {
-            Log.v(TAG, "menubar fiddle exception: " + e.toString());
+            Log.v(TAG, "menubar fiddle exception: " + e.toString(), e);
         }
 
         // Force the screen to stay on when the app is running
@@ -360,7 +360,7 @@ public class MainActivity extends AppCompatActivity {
                         AuthenticateActivity.class);
                 this.startActivity(i);
             } catch (Exception ex) {
-                Log.i(TAG, "exception starting export activity " + ex.toString());
+                Log.i(TAG, "exception starting export activity " + ex.toString(), ex);
             }
             return true;
         }
@@ -378,7 +378,7 @@ public class MainActivity extends AppCompatActivity {
                             ExportDataActivity.class);
                     this.startActivity(i);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting export activity " + ex.toString());
+                    Log.i(TAG, "exception starting export activity " + ex.toString(), ex);
                 }
                 return true;
              */
@@ -396,7 +396,7 @@ public class MainActivity extends AppCompatActivity {
                     //        LogManagerActivity.class);
                     //this.startActivity(prefsIntent);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting log manager activity " + ex.toString());
+                    Log.i(TAG, "exception starting log manager activity " + ex.toString(), ex);
                 }
                 return true;
              */
@@ -408,7 +408,7 @@ public class MainActivity extends AppCompatActivity {
                         LogManagerControlActivity.class);
                 this.startActivity(intent);
             } catch (Exception ex) {
-                Log.i(TAG, "exception starting log manager activity " + ex.toString());
+                Log.i(TAG, "exception starting log manager activity " + ex.toString(), ex);
             }
             return true;
         }
@@ -420,7 +420,7 @@ public class MainActivity extends AppCompatActivity {
                         ReportSeizureActivity.class);
                 this.startActivity(intent);
             } catch (Exception ex) {
-                Log.i(TAG, "exception starting Report Seizure activity " + ex.toString());
+                Log.i(TAG, "exception starting Report Seizure activity " + ex.toString(), ex);
             }
             return true;
         }
@@ -432,7 +432,7 @@ public class MainActivity extends AppCompatActivity {
                         PrefActivity.class);
                 MainActivity.this.startActivity(prefsIntent);
             } catch (Exception ex) {
-                Log.i(TAG, "exception starting settings activity " + ex.toString());
+                Log.i(TAG, "exception starting settings activity " + ex.toString(), ex);
             }
             return true;
         }
@@ -1201,7 +1201,7 @@ public class MainActivity extends AppCompatActivity {
                             AuthenticateActivity.class);
                     MainActivity.this.startActivity(i);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting activity " + ex.toString());
+                    Log.i(TAG, "exception starting activity " + ex.toString(), ex);
                 }
 
             }

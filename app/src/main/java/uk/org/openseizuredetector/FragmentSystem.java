@@ -43,7 +43,7 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                             PrefActivity.class);
                     mContext.startActivity(prefsIntent);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting settings activity " + ex.toString());
+                    Log.i(TAG, "exception starting settings activity " + ex.toString(), ex);
                 }
 
             }

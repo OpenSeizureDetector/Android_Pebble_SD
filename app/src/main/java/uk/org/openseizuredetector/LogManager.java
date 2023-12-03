@@ -304,7 +304,7 @@ public class LogManager {
                 }
             }
         } catch (SQLException e) {
-            Log.e(TAG, "Failed to open Database: " + e.toString());
+            Log.e(TAG, "Failed to open Database: " + e.toString(), e);
             return false;
         }
         return true;
@@ -360,10 +360,10 @@ public class LogManager {
                 createLocalEvent(dateStr, sdData.alarmState, null, null, null, sdData.toSettingsJSON());
             }
         } catch (SQLException e) {
-            Log.e(TAG, "writeToLocalDb(): Error Writing Data: " + e.toString());
+            Log.e(TAG, "writeToLocalDb(): Error Writing Data: " + e.toString(), e);
             Log.e(TAG, "SQLStr was " + SQLStr);
         } catch (NullPointerException e) {
-            Log.e(TAG, "writeToLocalDb(): Null Pointer Exception: " + e.toString());
+            Log.e(TAG, "writeToLocalDb(): Null Pointer Exception: " + e.toString(), e);
         }
     }
 
@@ -776,13 +776,13 @@ public class LogManager {
                 resultSet.moveToFirst();
                 return (resultSet);
             } catch (SQLException e) {
-                Log.e(TAG, "SelectQueryTask.doInBackground(): Error selecting Data: " + e.toString());
+                Log.e(TAG, "SelectQueryTask.doInBackground(): Error selecting Data: " + e.toString(), e);
                 return (null);
             } catch (IllegalArgumentException e) {
-                Log.e(TAG, "SelectQueryTask.doInBackground(): Illegal Argument Exception: " + e.toString());
+                Log.e(TAG, "SelectQueryTask.doInBackground(): Illegal Argument Exception: " + e.toString(), e);
                 return (null);
             } catch (NullPointerException e) {
-                Log.e(TAG, "SelectQueryTask.doInBackground(): Null Pointer Exception: " + e.toString());
+                Log.e(TAG, "SelectQueryTask.doInBackground(): Null Pointer Exception: " + e.toString(), e);
                 return (null);
             }
         }
@@ -854,12 +854,12 @@ public class LogManager {
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                         mUtil.showToast(mContext.getString(R.string.error_exporting_data));
-                        Log.e(TAG, "ExportDataTask.doInBackground() - FileNotFoundException: " + e.toString());
+                        Log.e(TAG, "ExportDataTask.doInBackground() - FileNotFoundException: " + e.toString(), e);
                         mCallback.accept(false);
                     } catch (IOException e) {
                         e.printStackTrace();
                         mUtil.showToast(mContext.getString(R.string.error_exporting_data));
-                        Log.e(TAG, "ExportDataTask.doInBackground() - IOException: " + e.toString());
+                        Log.e(TAG, "ExportDataTask.doInBackground() - IOException: " + e.toString(), e);
                         mCallback.accept(false);
                     }
 
@@ -871,13 +871,13 @@ public class LogManager {
 
                 return (true);
             } catch (SQLException e) {
-                Log.e(TAG, "ExportDataTask.doInBackground(): Error selecting Data: " + e.toString());
+                Log.e(TAG, "ExportDataTask.doInBackground(): Error selecting Data: " + e.toString(), e);
                 return (null);
             } catch (IllegalArgumentException e) {
-                Log.e(TAG, "ExportDataTask.doInBackground(): Illegal Argument Exception: " + e.toString());
+                Log.e(TAG, "ExportDataTask.doInBackground(): Illegal Argument Exception: " + e.toString(), e);
                 return (null);
             } catch (NullPointerException e) {
-                Log.e(TAG, "SelectQueryTask.doInBackground(): Null Pointer Exception: " + e.toString());
+                Log.e(TAG, "SelectQueryTask.doInBackground(): Null Pointer Exception: " + e.toString(), e);
                 return (null);
             }
         }
@@ -923,7 +923,7 @@ public class LogManager {
                         }
                         fileOutputStream.write("\n".getBytes(StandardCharsets.UTF_8));
                     } catch (IOException e) {
-                        Log.e(TAG, "exportToFile() - ERROR Writing File: " + e.toString());
+                        Log.e(TAG, "exportToFile() - ERROR Writing File: " + e.toString(), e);
                         mUtil.showToast("ERROR WRITING FILE");
                         return(-1);
                     }
@@ -937,7 +937,7 @@ public class LogManager {
                 Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string ");
                 dataObj = null;
                 mUtil.showToast(mContext.getString(R.string.error_exporting_data));
-                Log.e(TAG, "exportToFile() - JSONException: " + e.toString());
+                Log.e(TAG, "exportToFile() - JSONException: " + e.toString(), e);
                 return(-1);
             }
         }

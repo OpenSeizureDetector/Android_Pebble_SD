@@ -184,7 +184,8 @@ public class OsdUtil {
         writeToSysLogFile("startServer() - starting server");
         Intent sdServerIntent;
         sdServerIntent = new Intent(mContext, SdServer.class);
-        sdServerIntent.setData(Uri.parse("Start"));
+        sdServerIntent.setData(setData);
+        sdServerIntent.addFlags(Intent.FLAG_FROM_BACKGROUND|Intent.FLAG_ACTIVITY_SINGLE_TOP);
         if (Build.VERSION.SDK_INT >= 26) {
             Log.i(TAG, "Starting Foreground Service (Android 8 and above)");
             mContext.startForegroundService(sdServerIntent);
@@ -206,8 +207,13 @@ public class OsdUtil {
         sdServerIntent = new Intent(mContext, SdServer.class);
         sdServerIntent.setData(Constants.GLOBAL_CONSTANTS.mStopUri);
         sdServerIntent.setAction(Constants.ACTION.STOPFOREGROUND_ACTION);
-        mContext.startService(sdServerIntent);
-        mContext.stopService(sdServerIntent);
+        if (Build.VERSION.SDK_INT >= 26) {
+            Log.i(TAG, "Starting Foreground Service (Android 8 and above)");
+            mContext.startForegroundService( sdServerIntent);
+        } else {
+            Log.i(TAG, "Starting Normal Service (Pre-Android 8)");
+            mContext.startService(sdServerIntent);
+        }
     }
 
     public void restartServer() {
@@ -252,8 +258,8 @@ public class OsdUtil {
                     Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
                     sdServiceConnection.mBound= false;
                 } catch (Exception ex) {
-                    Log.e(TAG, "unbindFromServer() - error unbinding service - " + ex.toString());
-                    writeToSysLogFile("unbindFromServer() - error unbinding service - " + ex.toString());
+                    Log.e(TAG, "unbindFromServer() - error unbinding service - " + ex.toString(), ex);
+                    writeToSysLogFile("unbindFromServer() - error unbinding service : \n" + ex.getMessage() + "\n" +Arrays.toString(Thread.currentThread().getStackTrace()));
                     Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
                 }
             } else {
@@ -492,11 +498,12 @@ public class OsdUtil {
                     }
                     of.close();
                 } catch (Exception ex) {
-                    Log.e(TAG, "writeToLogFile - error " + ex.toString());
+                    Log.e(TAG, "writeToLogFile - error " + ex.toString(), ex);
                     for (int i = 0; i < (ex.getStackTrace().length); i++) {
                         Log.e(TAG, "writeToLogFile - error " + ex.getStackTrace()[i]);
                     }
-                    showToast(mContext.getString(R.string.ErrorWritingLogFileWarning) + ex.toString());
+                    showToast(mContext.getString(R.string.ErrorWritingLogFileWarning) + ex.getMessage() + "\n" +
+                            Arrays.toString(Thread.currentThread().getStackTrace()));
                 }
             } else {
                 Log.e(TAG, "ERROR - Can not Write to External Folder");
@@ -649,7 +656,7 @@ public class OsdUtil {
                 Log.d(TAG, "table " + mSysLogTableName + " exists ok");
             }
         } catch (SQLException e) {
-            Log.e(TAG, "Failed to open Database: " + e.toString());
+            Log.e(TAG, "Failed to open Database: " + e.toString(), e);
             return false;
         }
         return true;
@@ -696,7 +703,7 @@ public class OsdUtil {
             pruneSysLogDb();
 
         } catch (SQLException e) {
-            Log.e(TAG, "writeLogEngryToLocalDb(): Error Writing Data: " + e.toString());
+            Log.e(TAG, "writeLogEngryToLocalDb(): Error Writing Data: " + e.toString(), e);
             Log.e(TAG, "SQLStr was " + SQLStr);
         }
 
@@ -794,10 +801,10 @@ public class OsdUtil {
                 resultSet.moveToFirst();
                 return (resultSet);
             } catch (SQLException e) {
-                Log.e(TAG, "SelectQueryTask.doInBackground(): Error selecting Data: " + e.toString());
+                Log.e(TAG, "SelectQueryTask.doInBackground(): Error selecting Data: " + e.toString(), e);
                 return (null);
             } catch (IllegalArgumentException e) {
-                Log.e(TAG, "SelectQueryTask.doInBackground(): Illegal Argument Exception: " + e.toString());
+                Log.e(TAG, "SelectQueryTask.doInBackground(): Illegal Argument Exception: " + e.toString(), e);
                 return (null);
             }
         }
@@ -833,7 +840,7 @@ public class OsdUtil {
                 String[] selectArgs = {endDateStr};
                 retVal = mSysLogDb.delete(mSysLogTableName, selectStr, selectArgs);
             } catch (Exception e) {
-                Log.e(TAG, "Error deleting log entries" + e.toString());
+                Log.e(TAG, "Error deleting log entries" + e.toString(), e);
                 retVal = 0;
             }
             if (retVal > 0) {
