@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:versionCode="130"
-    android:versionName="4.3.0a">
+    android:versionName="4.3.0b">
     <!-- android:allowBackup="false" -->
 
     <queries>
@@ -95,8 +95,7 @@ so explicitly remove it to keep Google Play store happy.
         <receiver
             android:name=".BootBroadcastReceiver"
             android:label="BootBroadcastReceiver"
-            android:exported="true"
-            >
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>

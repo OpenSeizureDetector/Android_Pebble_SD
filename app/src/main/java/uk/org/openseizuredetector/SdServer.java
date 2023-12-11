@@ -378,7 +378,8 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                     if( mSdDataSourceName.equals("Phone") ) {
                         mSdData.batteryPc = (long) (batteryPct);
                     }
-                    if(mSdDataSourceName.equals("AndroidWear"))
+                    if(mSdDataSourceName.equals("AndroidWear")&&
+                            ((SdDataSourceAw)mSdDataSource).getSdData().watchConnected)
                         ((SdDataSourceAw)mSdDataSource).mobileBatteryPctUpdate();
 
                     mChargingState = batteryStatusIntent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
