@@ -68,6 +68,7 @@ public class SdDataSourceBLE extends SdDataSource {
 
     private int nRawData = 0;
     private double[] rawData = new double[MAX_RAW_DATA];
+    private int mAccFmt = 0;
     private boolean waitForDescriptorWrite = false;
 
     private static final int STATE_DISCONNECTED = 0;
@@ -95,6 +96,8 @@ public class SdDataSourceBLE extends SdDataSource {
     public static String CHAR_OSD_BATT_DATA = "000085e9-0002-1000-8000-00805f9b34fb";
     public static String CHAR_OSD_WATCH_ID = "000085e9-0003-1000-8000-00805f9b34fb";
     public static String CHAR_OSD_WATCH_FW = "000085e9-0004-1000-8000-00805f9b34fb";
+    public static String CHAR_OSD_ACC_FMT= "000085e9-0005-1000-8000-00805f9b34fb";
+        // Valid values are 0: 8 bit vector magnitude scaled so 1g=44
 
     public static String CHAR_MANUF_NAME = "00002a29-0000-1000-8000-00805f9b34fb";
     public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
@@ -276,6 +279,9 @@ public class SdDataSourceBLE extends SdDataSource {
                             } else if (charUuidStr.equals(CHAR_OSD_WATCH_FW)) {
                                 Log.v(TAG, "Reading Watch Firmware Version");
                                 executeReadCharacteristic(gattCharacteristic);
+                            } else if (charUuidStr.equals(CHAR_OSD_ACC_FMT)) {
+                                Log.v(TAG, "Reading Acceleration format code");
+                                executeReadCharacteristic(gattCharacteristic);
                             }
                         }
                     }
@@ -406,6 +412,10 @@ public class SdDataSourceBLE extends SdDataSource {
                 String watchFwVer = new String(rawDataBytes, StandardCharsets.UTF_8);
                 Log.v(TAG,"Received Watch Firmware Version: "+watchFwVer);
                 mSdData.watchSdVersion = watchFwVer;
+            }
+            else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_FMT)) {
+                mAccFmt = characteristic.getValue()[0];
+                Log.v(TAG,"Received Acceleration format code: "+mAccFmt);
             }
             else {
                 Log.v(TAG,"Unrecognised Characteristic Updated "+
