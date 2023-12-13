@@ -23,6 +23,7 @@
 */
 package uk.org.openseizuredetector;
 
+import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -34,15 +35,19 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 
+import androidx.core.app.ActivityCompat;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -85,8 +90,8 @@ public class SdDataSourceBLE extends SdDataSource {
     public static String SERV_HEART_RATE = "0000180d-0000-1000-8000-00805f9b34fb";
     public static String CHAR_HEART_RATE_MEASUREMENT = "00002a37-0000-1000-8000-00805f9b34fb";
 
-    public static String SERV_OSD           = "000085e9-0000-1000-8000-00805f9b34fb";
-    public static String CHAR_OSD_ACC_DATA  = "000085e9-0001-1000-8000-00805f9b34fb";
+    public static String SERV_OSD = "000085e9-0000-1000-8000-00805f9b34fb";
+    public static String CHAR_OSD_ACC_DATA = "000085e9-0001-1000-8000-00805f9b34fb";
     public static String CHAR_OSD_BATT_DATA = "000085e9-0002-1000-8000-00805f9b34fb";
     public static String CHAR_OSD_WATCH_ID = "000085e9-0003-1000-8000-00805f9b34fb";
     public static String CHAR_OSD_WATCH_FW = "000085e9-0004-1000-8000-00805f9b34fb";
@@ -155,7 +160,7 @@ public class SdDataSourceBLE extends SdDataSource {
         try {
             device = mBluetoothAdapter.getRemoteDevice(mBleDeviceAddr);
         } catch (Exception e) {
-            Log.w(TAG, "bleConnect(): Error connecting to device address "+mBleDeviceAddr+".");
+            Log.w(TAG, "bleConnect(): Error connecting to device address " + mBleDeviceAddr + ".");
             device = null;
         }
         if (device == null) {
@@ -261,16 +266,17 @@ public class SdDataSourceBLE extends SdDataSource {
                             if (charUuidStr.equals(CHAR_OSD_ACC_DATA)) {
                                 Log.v(TAG, "Subscribing to Acceleration Data Change Notifications");
                                 mOsdChar = gattCharacteristic;
-                                setCharacteristicNotification(gattCharacteristic,true);
-                            }
-                            else if (charUuidStr.equals(CHAR_OSD_BATT_DATA)) {
+                                setCharacteristicNotification(gattCharacteristic, true);
+                            } else if (charUuidStr.equals(CHAR_OSD_BATT_DATA)) {
                                 Log.v(TAG, "Subscribing to battery change Notifications");
-                                setCharacteristicNotification(gattCharacteristic,true);
+                                setCharacteristicNotification(gattCharacteristic, true);
+                            } else if (charUuidStr.equals(CHAR_OSD_WATCH_ID)) {
+                                Log.v(TAG, "Reading Watch ID");
+                                executeReadCharacteristic(gattCharacteristic);
+                            } else if (charUuidStr.equals(CHAR_OSD_WATCH_FW)) {
+                                Log.v(TAG, "Reading Watch Firmware Version");
+                                executeReadCharacteristic(gattCharacteristic);
                             }
-                            //else if (charUuidStr.equals(CHAR_OSD_HR_DATA)) {
-                            //    Log.v(TAG, "Subscribing to HR change Notifications");
-                            //    setCharacteristicNotification(gattCharacteristic,true);
-                            //.}
                         }
                     }
                 }
@@ -289,6 +295,46 @@ public class SdDataSourceBLE extends SdDataSource {
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
             }
+        }
+
+
+        /**
+         * executeReadCharacteristic runs teh bluetoothGatt readCharacteristic command to read the value
+         * of a given characteristic.
+         * Because only one BLE operation can be taking place at a time, it may fail, in which case
+         * the read is re-tried after a 100ms delay.
+          * @param gattCharacteristic - the characteristic to be read.
+         */
+        private void executeReadCharacteristic(BluetoothGattCharacteristic gattCharacteristic) {
+            boolean retVal = mBluetoothGatt.readCharacteristic(gattCharacteristic);
+            if (retVal) {
+                Log.d(TAG,"executeReadCharacteristic - read initiated successfully");
+            } else {
+                Log.d(TAG,"executeReadCharacteristic - read initiation failed - waiting, then re-trying");
+                mHandler.postDelayed(new Runnable() {
+                    public void run() {
+                        Log.w(TAG, "Executing delayed read of characteristic");
+                        executeReadCharacteristic(gattCharacteristic);
+                    }
+                }, 100);
+            }
+        }
+        private boolean permissionsOK() {
+            if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                Log.e(TAG,"permissionsOK() - Bluetooth Permmission Not Granted");
+                mUtil.showToast("ERROR - Bluetooth Permission not Granted");
+                return (false);
+            } else {
+                return (true);
+            }
+
         }
 
         public void onDataReceived(BluetoothGattCharacteristic characteristic) {
@@ -348,6 +394,18 @@ public class SdDataSourceBLE extends SdDataSource {
                 mSdData.batteryPc = batteryPc;
                 Log.v(TAG,"onDataReceived(): CHAR_OSD_BATT_DATA: " + String.format("%d", batteryPc));
                 mSdData.haveSettings = true;
+            }
+            else if (characteristic.getUuid().toString().equals(CHAR_OSD_WATCH_ID)) {
+                byte[] rawDataBytes = characteristic.getValue();
+                String watchId = new String(rawDataBytes, StandardCharsets.UTF_8);
+                Log.v(TAG,"Received Watch ID: "+watchId);
+                mSdData.watchSdName = watchId;
+            }
+            else if (characteristic.getUuid().toString().equals(CHAR_OSD_WATCH_FW)) {
+                byte[] rawDataBytes = characteristic.getValue();
+                String watchFwVer = new String(rawDataBytes, StandardCharsets.UTF_8);
+                Log.v(TAG,"Received Watch Firmware Version: "+watchFwVer);
+                mSdData.watchSdVersion = watchFwVer;
             }
             else {
                 Log.v(TAG,"Unrecognised Characteristic Updated "+
