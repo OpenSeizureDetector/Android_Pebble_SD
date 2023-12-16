@@ -47,7 +47,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -68,6 +71,7 @@ public class SdDataSourceBLE extends SdDataSource {
 
     private int nRawData = 0;
     private double[] rawData = new double[MAX_RAW_DATA];
+    private double[] rawData3d = new double[MAX_RAW_DATA * 3];
     private int mAccFmt = 0;
     private boolean waitForDescriptorWrite = false;
 
@@ -75,6 +79,7 @@ public class SdDataSourceBLE extends SdDataSource {
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
 
+    /*
     public final static String ACTION_GATT_CONNECTED =
             "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED =
@@ -85,7 +90,7 @@ public class SdDataSourceBLE extends SdDataSource {
             "com.example.bluetooth.le.ACTION_DATA_AVAILABLE";
     public final static String EXTRA_DATA =
             "com.example.bluetooth.le.EXTRA_DATA";
-
+    */
 
     public static String SERV_DEV_INFO = "0000180a-0000-1000-8000-00805f9b34fb";
     public static String SERV_HEART_RATE = "0000180d-0000-1000-8000-00805f9b34fb";
@@ -99,8 +104,12 @@ public class SdDataSourceBLE extends SdDataSource {
     public static String CHAR_OSD_ACC_FMT= "000085e9-0005-1000-8000-00805f9b34fb";
         // Valid values are 0: 8 bit vector magnitude scaled so 1g=44
 
-    public static String CHAR_MANUF_NAME = "00002a29-0000-1000-8000-00805f9b34fb";
-    public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
+    public final static int ACC_FMT_8BIT = 0;
+    public final static int ACC_FMT_16BIT = 1;
+    public final static int ACC_FMT_3D = 3;
+
+    // public static String CHAR_MANUF_NAME = "00002a29-0000-1000-8000-00805f9b34fb";
+    // public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
     private BluetoothGatt mGatt;
     private BluetoothGattCharacteristic mOsdChar;
 
@@ -305,7 +314,7 @@ public class SdDataSourceBLE extends SdDataSource {
 
 
         /**
-         * executeReadCharacteristic runs teh bluetoothGatt readCharacteristic command to read the value
+         * executeReadCharacteristic runs the bluetoothGatt readCharacteristic command to read the value
          * of a given characteristic.
          * Because only one BLE operation can be taking place at a time, it may fail, in which case
          * the read is re-tried after a 100ms delay.
@@ -344,7 +353,7 @@ public class SdDataSourceBLE extends SdDataSource {
         }
 
         public void onDataReceived(BluetoothGattCharacteristic characteristic) {
-            /**
+            /*
              * onDataReceived - called whenever a BLE characteristic notifies us that its data has changed.
              * If the data is acceleration data, we add it to a buffer - it is analysed once the buffer is full.
              * Heart rate data is written directly to sdData to be used in future analysis.
@@ -362,35 +371,64 @@ public class SdDataSourceBLE extends SdDataSource {
                     //Log.d(TAG, "onDataReceived(): Heart rate format UINT8.");
                 }
                 final int heartRate = characteristic.getIntValue(format, 1);  // heart rate is second byte
-                //byte[] rawDataBytes = characteristic.getValue();
-                //Log.d(TAG,"onDataReceived - len(rawDataBytes)="+rawDataBytes.length);
-                //for (int i=0;i<rawDataBytes.length;i++) {
-                //    Log.d(TAG,"onDataReceived - HR["+i+" = "+rawDataBytes[i]);
-                //}
                 mSdData.mHR = (double) heartRate;
                 Log.d(TAG, String.format("onDataReceived(): CHAR_HEART_RATE_MEASUREMENT: %d", heartRate));
             }
             else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_DATA)) {
                 //Log.v(TAG,"Received OSD ACC DATA"+characteristic.getValue());
                 byte[] rawDataBytes = characteristic.getValue();
+                short[] newAccVals = parseDataToAccVals(rawDataBytes);
                 Log.v(TAG, "onDataReceived(): CHAR_OSD_ACC_DATA: numSamples = " + rawDataBytes.length+" nRawData="+nRawData);
-                for (int i = 0; i < rawDataBytes.length;i++) {
-                    if (nRawData < MAX_RAW_DATA) {
-                        rawData[nRawData] = 1000 * rawDataBytes[i] / 64;   // Scale to mg
-                        nRawData++;
+                Log.v(TAG, "onDataReceived() - rawDataBytes="+ Arrays.toString(rawDataBytes));
+                Log.v(TAG, "onDataReceived() - newAccVals="+Arrays.toString(newAccVals));
+                for (int i = 0; i < newAccVals.length;i++) {
+                    if (nRawData < MAX_RAW_DATA ) {
+                        switch (mAccFmt) {
+                            case ACC_FMT_8BIT:
+                            case ACC_FMT_16BIT:
+                                rawData[nRawData] = newAccVals[i];
+                                nRawData++;
+                                break;
+                            case ACC_FMT_3D:
+                                // 3d data is x1,y1,z1, x2,y2,z2 ... xn,yn,zn
+                                // We only do this every third value, then process x, y and z simultaneously.
+                                if (i+2 < newAccVals.length) {
+                                    if (i % 3 == 0) {
+                                        short x, y, z;
+                                        x = newAccVals[i];
+                                        y = newAccVals[i + 1];
+                                        z = newAccVals[i + 3];
+                                        // Calculate vector magnitude
+                                        rawData[nRawData] = Math.sqrt(x * x + y * y + z * z);
+                                        // Store 3d values
+                                        rawData3d[nRawData * 3] = x;
+                                        rawData3d[nRawData * 3 + 1] = y;
+                                        rawData3d[nRawData * 3 + 2] = z;
+                                        nRawData++;
+                                    }
+                                }
+                                break;
+                            default:
+                                Log.e(TAG,"INVALID ACCELERATION FORMAT"+mAccFmt);
+                                mUtil.showToast("INVALID ACCELERATION FORMAT "+mAccFmt);
+                        }
+
                     } else {
                         Log.i(TAG, "onDataReceived(): RawData Buffer Full - processing data");
-                        // Re-start collecting raw data.
                         mSdData.watchAppRunning = true;
                         for (i = 0; i < rawData.length; i++) {
                             mSdData.rawData[i] = rawData[i];
+                            mSdData.rawData3D[i*3] = rawData3d[i*3];
+                            mSdData.rawData3D[i*3 +1] = rawData3d[i*3 +1];
+                            mSdData.rawData3D[i*3 +2] = rawData3d[i*3 +2];
                             //Log.v(TAG,"onDataReceived() i="+i+", "+rawData[i]);
                         }
                         mSdData.mNsamp = rawData.length;
-                        //mNSamp = accelVals.length();
                         mWatchAppRunningCheck = true;
                         mDataStatusTime = new Time(Time.getCurrentTimezone());
+                        // Process the data to do seizure detection
                         doAnalysis();
+                        // Re-start collecting raw data.
                         nRawData = 0;
                     }
                 }
@@ -423,6 +461,32 @@ public class SdDataSourceBLE extends SdDataSource {
             }
         }
 
+        private short[] parseDataToAccVals(byte[] rawDataBytes) {
+            short[] retArr;
+            switch (mAccFmt) {
+                case ACC_FMT_8BIT:
+                    retArr = new short[rawDataBytes.length];
+                    for (int i = 0; i < rawDataBytes.length;i++) {
+                        retArr[i] = (short) (1000 * rawDataBytes[i] / 64);   // Scale to mg
+                    }
+                    break;
+                case ACC_FMT_16BIT:
+                case ACC_FMT_3D:
+                    // from https://stackoverflow.com/questions/5625573/byte-array-to-short-array-and-back-again-in-java
+                    retArr = new short[rawDataBytes.length/2];
+                    // to turn bytes to shorts as either big endian or little endian.
+                    ByteBuffer.wrap(rawDataBytes)
+                            .order(ByteOrder.LITTLE_ENDIAN)
+                            .asShortBuffer()
+                            .get(retArr);
+                    break;
+                default:
+                    Log.e(TAG,"INVALID ACCELERATION FORMAT"+mAccFmt);
+                    mUtil.showToast("INVALID ACCELERATION FORMAT "+mAccFmt);
+                    retArr = new short[0];
+            }
+            return(retArr);
+        }
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic characteristic,
