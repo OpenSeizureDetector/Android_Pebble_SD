@@ -36,7 +36,7 @@ import org.json.JSONArray;
 
 public class SdData implements Parcelable {
     private final static String TAG = "SdData";
-    private final static int N_RAW_DATA = 500;  // 5 seconds at 100 Hz.
+    private final static int N_RAW_DATA = 125;  // 5 seconds at 25 Hz.
 
     // Seizure Detection Algorithm Selection
     public boolean mOsdAlarmActive;
