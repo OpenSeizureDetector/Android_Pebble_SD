@@ -397,7 +397,7 @@ public class SdDataSourceBLE extends SdDataSource {
                                         short x, y, z;
                                         x = newAccVals[i];
                                         y = newAccVals[i + 1];
-                                        z = newAccVals[i + 3];
+                                        z = newAccVals[i + 2];
                                         // Calculate vector magnitude
                                         rawData[nRawData] = Math.sqrt(x * x + y * y + z * z);
                                         // Store 3d values
