@@ -7,8 +7,12 @@
 
     <queries>
         <package android:name="uk.org.openseizuredetector.aw" />
+        <package android:name="uk.org.openseizuredetector" />
     </queries>
 
+
+    <uses-permission-sdk-23 android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission-sdk-23 android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
@@ -26,6 +30,9 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.BROADCAST_STICKY" />
+    <uses-permission-sdk-23 android:name="android.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND"/>
+    <uses-permission-sdk-23 android:name="uk.org.openseizuredetector.broadcast" />
     <!--
 AD_ID seems to be added automatically as part of google play services.  We don't use ads,
 so explicitly remove it to keep Google Play store happy.

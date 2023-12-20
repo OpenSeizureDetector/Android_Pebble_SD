@@ -57,6 +57,7 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import androidx.preference.PreferenceManager;
 import android.service.notification.StatusBarNotification;
+import android.system.Os;
 import android.telephony.SmsManager;
 import android.text.format.Time;
 import android.util.Log;
@@ -80,6 +81,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Timer;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Based on example at:
@@ -379,7 +381,8 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                         mSdData.batteryPc = (long) (batteryPct);
                     }
                     if(mSdDataSourceName.equals("AndroidWear")&&
-                            ((SdDataSourceAw)mSdDataSource).getSdData().watchConnected)
+                            ((SdDataSourceAw)mSdDataSource).getSdData().watchConnected&&
+                            ((SdDataSourceAw)mSdDataSource).connectionState >=5)
                         ((SdDataSourceAw)mSdDataSource).mobileBatteryPctUpdate();
 
                     mChargingState = batteryStatusIntent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
@@ -1627,7 +1630,8 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         powerUpdateReceiverPowerOkay.register(activity, new IntentFilter(Intent.ACTION_BATTERY_LOW));
         powerUpdateReceiverPowerLow.register(activity, new IntentFilter(Intent.ACTION_BATTERY_OKAY));
 
-        mHandler.postDelayed(()-> mSdDataSource.initSdServerBindPowerBroadcastComplete(),100);
+        mHandler.postDelayed(()-> mSdDataSource.initSdServerBindPowerBroadcastComplete(),
+                (long) OsdUtil.convertTimeUnit(6, TimeUnit.SECONDS,TimeUnit.MILLISECONDS));
 //        if (Objects.nonNull(connectionUpdateReceiver) && !connectedConnectionUpdates)
 //            this.registerReceiver(connectionUpdateReceiver, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
 //        connectedConnectionUpdates = true;
