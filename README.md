@@ -56,6 +56,16 @@ Installation
  
 Note that the Garmin watch app needs to be installed separately - see the (web site)[https://www.openseizuredetector.org.uk/?page_id=1128] for details.  
 
+Code Structure
+--------------
+  - StartUpActivity is the entry point (This is the view that shows the checklist of things initialising, then exits)
+  - SdServer is started by StartUpActivity
+       - This creates an instance of SdDataSource for the particular data source in use (Garmin, BLE, Phone)
+       - SdDataSource collects data from the watch, and when a set of data is available, it calls the doAnalysis function to do the seizure detection.
+       - SdServer deals with raising the alarms based on the analysis results.
+       - SdServer also details with logging to the Data Sharing system.
+  - MainActivity provides a front end to view what is going on with SdServer
+
 Licence
 =======
 My code is licenced under the GNU Public Licence - for associated libraries 
