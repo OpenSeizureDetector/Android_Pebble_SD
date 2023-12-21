@@ -701,22 +701,31 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(warnTextColour);
                     }
                     tv = (TextView) findViewById(R.id.battTv);
-                    tv.setText(getString(R.string.WatchBatteryEquals)
-                            + String.valueOf(mConnection.mSdServer.mSdData.batteryPc) + "% / "
-                            +String.valueOf(mConnection.mSdServer.mSdData.phoneBatteryPc)+"%");
-                    if (mConnection.mSdServer.mSdData.batteryPc <= 10) {
-                        tv.setBackgroundColor(alarmColour);
-                        tv.setTextColor(alarmTextColour);
-                    }
-                    if (mConnection.mSdServer.mSdData.batteryPc > 10) {
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-                    }
-                    if (mConnection.mSdServer.mSdData.batteryPc >= 20) {
+                    if (mConnection.mSdServer.mSdData.dataSourceName.equals("Phone")) {
+                        tv.setText(getString(R.string.WatchBatteryEquals)
+                                + "---% / "
+                                + String.valueOf(mConnection.mSdServer.mSdData.phoneBatteryPc) + "%");
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
-                    }
 
+                    } else {
+                        tv.setText(getString(R.string.WatchBatteryEquals)
+                                + String.valueOf(mConnection.mSdServer.mSdData.batteryPc) + "% / "
+                                + String.valueOf(mConnection.mSdServer.mSdData.phoneBatteryPc) + "%");
+
+                        if (mConnection.mSdServer.mSdData.batteryPc <= 10) {
+                            tv.setBackgroundColor(alarmColour);
+                            tv.setTextColor(alarmTextColour);
+                        }
+                        if (mConnection.mSdServer.mSdData.batteryPc > 10) {
+                            tv.setBackgroundColor(warnColour);
+                            tv.setTextColor(warnTextColour);
+                        }
+                        if (mConnection.mSdServer.mSdData.batteryPc >= 20) {
+                            tv.setBackgroundColor(okColour);
+                            tv.setTextColor(okTextColour);
+                        }
+                    }
                     ////////////////////////////////////////////////////////////
                     // Populate the Data Sharing Status Box
                     // We start off with it set to OK, then check for several different abnormal conditions
