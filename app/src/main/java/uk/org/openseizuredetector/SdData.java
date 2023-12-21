@@ -64,7 +64,8 @@ public class SdData implements Parcelable {
     public long alarmTime;
     public long alarmThresh;
     public long alarmRatioThresh;
-    public long batteryPc;
+    public long batteryPc;  // watch battery
+    public int phoneBatteryPc;
 
     /* Heart Rate Alarm Settings */
     public boolean mHRAlarmActive = false;
@@ -269,6 +270,7 @@ public class SdData implements Parcelable {
                 jsonObj.put("dataTime", "00-00-00 00:00:00");
             }
             jsonObj.put("batteryPc", batteryPc);
+            jsonObj.put("phoneBatteryPc", phoneBatteryPc);
             jsonObj.put("alarmState", alarmState);
             jsonObj.put("alarmPhrase", alarmPhrase);
             jsonObj.put("sdMode", mSdMode);
@@ -330,6 +332,7 @@ public class SdData implements Parcelable {
             jsonObj.put("specPower", specPower);
             jsonObj.put("roiPower", roiPower);
             jsonObj.put("batteryPc", batteryPc);
+            jsonObj.put("phoneBatteryPc", phoneBatteryPc);
             jsonObj.put("watchConnected", watchConnected);
             jsonObj.put("watchAppRunning", watchAppRunning);
             jsonObj.put("haveSettings", haveSettings);

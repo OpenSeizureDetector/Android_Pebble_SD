@@ -26,8 +26,10 @@ package uk.org.openseizuredetector;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.BatteryManager;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.format.Time;
@@ -359,6 +361,7 @@ public abstract class SdDataSource {
                 mSamplePeriod = (short) dataObject.getInt("analysisPeriod");
                 mSampleFreq = (short) dataObject.getInt("sampleFreq");
                 mSdData.batteryPc = (short) dataObject.getInt("battery");
+
                 Log.v(TAG, "updateFromJSON - mSamplePeriod=" + mSamplePeriod + " mSampleFreq=" + mSampleFreq);
                 mUtil.writeToSysLogFile("SDDataSource.updateFromJSON - Settings Received");
                 mUtil.writeToSysLogFile("    * mSamplePeriod=" + mSamplePeriod + " mSampleFreq=" + mSampleFreq);
@@ -404,6 +407,19 @@ public abstract class SdDataSource {
         return (retVal);
     }
 
+    private int getPhoneBatteryLevel() {
+        /* Returns the current phone battery level in percent */
+        // Check phone battery level
+        int batPc;
+        IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = mContext.registerReceiver(null, ifilter);
+        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+        batPc = (int) (level * 100 / (float) scale);
+        Log.v(TAG, "SdDataSource.getPhoneBatteryLevel - Phone Bat = " + level + ", scale=" + scale + ", phoneBatteryPc=" + batPc);
+        return batPc;
+    }
+
     /**
      * Calculate the magnitude of entry i in the fft array fft
      *
@@ -426,6 +442,8 @@ public abstract class SdDataSource {
         int nMax = 0;
         int nFreqCutoff = 0;
         double[] fft = null;
+        // Update phone battery level - it is done here so it is called for all data sources.
+        mSdData.phoneBatteryPc = getPhoneBatteryLevel();
         try {
             // FIXME - Use specified sampleFreq, not this hard coded one
             mSampleFreq = 25;

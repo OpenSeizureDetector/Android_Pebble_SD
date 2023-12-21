@@ -701,7 +701,9 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(warnTextColour);
                     }
                     tv = (TextView) findViewById(R.id.battTv);
-                    tv.setText(getString(R.string.WatchBatteryEquals) + String.valueOf(mConnection.mSdServer.mSdData.batteryPc) + "%");
+                    tv.setText(getString(R.string.WatchBatteryEquals)
+                            + String.valueOf(mConnection.mSdServer.mSdData.batteryPc) + "% / "
+                            +String.valueOf(mConnection.mSdServer.mSdData.phoneBatteryPc)+"%");
                     if (mConnection.mSdServer.mSdData.batteryPc <= 10) {
                         tv.setBackgroundColor(alarmColour);
                         tv.setTextColor(alarmTextColour);
