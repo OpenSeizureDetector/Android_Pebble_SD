@@ -541,6 +541,7 @@ public abstract class SdDataSource {
         }
 
         // Check this data to see if it represents an alarm state.
+        mSdData.alarmCause = "";
         alarmCheck();
         hrCheck();
         o2SatCheck();
@@ -569,12 +570,14 @@ public abstract class SdDataSource {
             // Is the current set of data representing an alarm state?
             if ((mSdData.roiPower > mAlarmThresh) && ((10 * mSdData.roiPower / mSdData.specPower) > mAlarmRatioThresh)) {
                 inAlarm = true;
+                mSdData.alarmCause = mSdData.alarmCause+"OsdAlg ";
             }
         }
 
         if (mSdData.mCnnAlarmActive) {
             if (mSdData.mPseizure > 0.5) {
                 inAlarm = true;
+                mSdData.alarmCause = mSdData.alarmCause+"CnnAlg ";
             }
         }
 
@@ -602,7 +605,10 @@ public abstract class SdDataSource {
             }
         }
 
-        Log.v(TAG, "alarmCheck(): inAlarm=" + inAlarm + ", alarmState = " + mSdData.alarmState + " alarmCount=" + mAlarmCount + " mWarnTime=" + mWarnTime+ " mAlarmTime=" + mAlarmTime);
+        Log.v(TAG, "alarmCheck(): inAlarm=" + inAlarm + ", alarmCause="
+                + mSdData.alarmCause + ", alarmState = " + mSdData.alarmState
+                + " alarmCount=" + mAlarmCount + " mWarnTime=" + mWarnTime
+                + " mAlarmTime=" + mAlarmTime);
 
     }
 
@@ -640,6 +646,8 @@ public abstract class SdDataSource {
                     mSdData.mHRAlarmStanding = true;
                     mSdData.mAdaptiveHrAlarmStanding = false;
                     mSdData.mAverageHrAlarmStanding = false;
+                    mSdData.alarmCause = mSdData.alarmCause+"HrNull ";
+
                 } else {
                     Log.i(TAG, "Heart Rate Fault (HR<0)");
                     mSdData.mHRFaultStanding = true;
@@ -650,8 +658,14 @@ public abstract class SdDataSource {
             } else {
                 mSdData.mHRFaultStanding = false;
                 mSdData.mHRAlarmStanding = checkResults.get(0);
+                if (mSdData.mHRAlarmStanding)
+                    mSdData.alarmCause = mSdData.alarmCause+"HR ";
                 mSdData.mAdaptiveHrAlarmStanding = checkResults.get(1);
+                if (mSdData.mAdaptiveHrAlarmStanding)
+                    mSdData.alarmCause = mSdData.alarmCause+"HR_ADAPT ";
                 mSdData.mAverageHrAlarmStanding = checkResults.get(2);
+                if (mSdData.mAverageHrAlarmStanding)
+                    mSdData.alarmCause = mSdData.alarmCause+"HR_AVG ";
                 // Show an ALARM state if any of the HR alarms is standing.
                 if (mSdData.mHRAlarmStanding | mSdData.mAdaptiveHrAlarmStanding | mSdData.mAverageHrAlarmStanding) {
                     mSdData.alarmState = 2;
@@ -679,6 +693,7 @@ public abstract class SdDataSource {
                     Log.i(TAG, "Oxygen Saturation Null - Alarming");
                     mSdData.mO2SatFaultStanding = false;
                     mSdData.mO2SatAlarmStanding = true;
+                    mSdData.alarmCause = mSdData.alarmCause+"O2_NULL ";
                 } else {
                     Log.i(TAG, "Oxygen Saturation Fault (O2Sat<0)");
                     mSdData.mO2SatFaultStanding = true;
@@ -688,6 +703,7 @@ public abstract class SdDataSource {
                 Log.i(TAG, "Oxygen Saturation Abnormal - " + mSdData.mO2Sat + " %");
                 mSdData.mO2SatFaultStanding = false;
                 mSdData.mO2SatAlarmStanding = true;
+                mSdData.alarmCause = mSdData.alarmCause+"O2SAT ";
             } else {
                 mSdData.mO2SatFaultStanding = false;
                 mSdData.mO2SatAlarmStanding = false;
@@ -729,6 +745,7 @@ public abstract class SdDataSource {
                     Log.d(TAG, "check_fall() ****FALL DETECTED***** minAcc=" + minAcc + ", maxAcc=" + maxAcc);
                     Log.d(TAG, "check_fall() - ****FALL DETECTED****");
                     mSdData.fallAlarmStanding = true;
+                    mSdData.alarmCause = mSdData.alarmCause+"FALL ";
                     return;
                 }
                 if (mMute != 0) {

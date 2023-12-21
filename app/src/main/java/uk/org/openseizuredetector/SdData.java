@@ -106,6 +106,7 @@ public class SdData implements Parcelable {
     /* Analysis results */
     public Time dataTime = null;
     public long alarmState;
+    public String alarmCause = "";
     public boolean alarmStanding = false;
     public boolean fallAlarmStanding = false;
     public long maxVal;
@@ -223,6 +224,7 @@ public class SdData implements Parcelable {
             jsonObj.put("roiRatio", 10 * roiPower / specPower);
             jsonObj.put("alarmState", alarmState);
             jsonObj.put("alarmPhrase", alarmPhrase);
+            jsonObj.put("alarmCause", alarmCause);
             jsonObj.put("hr", mHR);
             jsonObj.put("adaptiveHrAv", mAdaptiveHrAverage);
             jsonObj.put("averageHrAv", mAverageHrAverage);
@@ -273,6 +275,7 @@ public class SdData implements Parcelable {
             jsonObj.put("phoneBatteryPc", phoneBatteryPc);
             jsonObj.put("alarmState", alarmState);
             jsonObj.put("alarmPhrase", alarmPhrase);
+            jsonObj.put("alarmCause", alarmCause);
             jsonObj.put("sdMode", mSdMode);
             jsonObj.put("sampleFreq", mSampleFreq);
             jsonObj.put("analysisPeriod", analysisPeriod);
@@ -338,6 +341,7 @@ public class SdData implements Parcelable {
             jsonObj.put("haveSettings", haveSettings);
             jsonObj.put("alarmState", alarmState);
             jsonObj.put("alarmPhrase", alarmPhrase);
+            jsonObj.put("alarmCause", alarmCause);
             jsonObj.put("sdMode", mSdMode);
             jsonObj.put("sampleFreq", mSampleFreq);
             jsonObj.put("analysisPeriod", analysisPeriod);
