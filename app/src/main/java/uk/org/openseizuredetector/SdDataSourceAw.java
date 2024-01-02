@@ -879,7 +879,7 @@ public class SdDataSourceAw extends SdDataSource {
             aWIntent.putExtra(Constants.GLOBAL_CONSTANTS.mSdDataPath, sdData.toSettingsJSON());
             sendBroadcastToWearReceiver(aWIntent);
         }catch ( Exception e ){
-            Log.e(TAG,"startWearSDApp: Error occoured",e);
+            Log.e(TAG,"startWearSDApp: Error occurred",e);
         }
 
     }
@@ -901,7 +901,7 @@ public class SdDataSourceAw extends SdDataSource {
 
     public void mobileBatteryPctUpdate(){
         try{
-            if (Objects.isNull(aWIntentBase)||Objects.isNull(aWIntentBaseManifest)||connectionState<=12)
+            if (Objects.isNull(aWIntentBase)||Objects.isNull(aWIntentBaseManifest)||connectionState<=10)
                 return;
             Intent intentToSend = aWIntentBase;
             intentToSend.removeExtra(Constants.GLOBAL_CONSTANTS.intentAction);
