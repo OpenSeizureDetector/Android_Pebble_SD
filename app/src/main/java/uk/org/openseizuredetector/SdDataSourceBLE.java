@@ -108,6 +108,9 @@ public class SdDataSourceBLE extends SdDataSource {
     public final static int ACC_FMT_16BIT = 1;
     public final static int ACC_FMT_3D = 3;
 
+    public static String SERV_INFINITIME_MOTION = "00030000-78fc-48fe-8e23-433b3a1942d0";
+    public static String CHAR_INFINITIME_ACC_DATA = "00030002-78fc-48fe-8e23-433b3a1942d0";
+
     // public static String CHAR_MANUF_NAME = "00002a29-0000-1000-8000-00805f9b34fb";
     // public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
     private BluetoothGatt mGatt;
@@ -293,6 +296,18 @@ public class SdDataSourceBLE extends SdDataSource {
                                 executeReadCharacteristic(gattCharacteristic);
                             }
                         }
+                    } else if (uuidStr.equals(SERV_INFINITIME_MOTION)) {
+                        Log.v(TAG, "Infinitime Motion Service Discovered");
+                        foundOsdService = true;
+                        for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
+                            String charUuidStr = gattCharacteristic.getUuid().toString();
+                            if (charUuidStr.equals(CHAR_INFINITIME_ACC_DATA)) {
+                                Log.v(TAG, "Subscribing to Infinitime Acceleration Data Change Notifications");
+                                mOsdChar = gattCharacteristic;
+                                mAccFmt = ACC_FMT_3D;  // Infinitime presents x, y, z data
+                                setCharacteristicNotification(gattCharacteristic, true);
+                            }
+                        }
                     }
                 }
                 if (foundOsdService) {
@@ -374,7 +389,8 @@ public class SdDataSourceBLE extends SdDataSource {
                 mSdData.mHR = (double) heartRate;
                 Log.d(TAG, String.format("onDataReceived(): CHAR_HEART_RATE_MEASUREMENT: %d", heartRate));
             }
-            else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_DATA)) {
+            else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_DATA)
+                    || characteristic.getUuid().toString().equals(CHAR_INFINITIME_ACC_DATA)) {
                 //Log.v(TAG,"Received OSD ACC DATA"+characteristic.getValue());
                 byte[] rawDataBytes = characteristic.getValue();
                 short[] newAccVals = parseDataToAccVals(rawDataBytes);
