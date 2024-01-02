@@ -762,6 +762,7 @@ public class StartupActivity extends AppCompatActivity {
         } else {
             Log.d(TAG, "ALREADY GRANTED");
         }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
             if (checkSelfPermission(Manifest.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{Manifest.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND}, 1);
