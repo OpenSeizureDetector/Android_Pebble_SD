@@ -159,20 +159,15 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                 hrHistoryStrings.add(String.valueOf((short) mConnection.mSdServer.mSdData.mHR));*/
                 switchAverages = mRootView.findViewById(R.id.switch1);
                 listToDisplay = switchAverages.isChecked() ? hrAverages : hrHistory;
-                if (!switchAverages.isChecked()){
-                    hrHistory.clear();
-                    hrHistory = null;
-                    hrHistoryStrings.clear();
-                    hrHistoryStrings = null;
-                }
                 listToDisplayStrings = switchAverages.isChecked() ? hrAveragesStrings : hrHistoryStrings;
+
+
                 if (Objects.nonNull(listToDisplay)) {
                     if (listToDisplay.size() > 0) {
 
                         lineChart = mRootView.findViewById(R.id.lineChart);
 
                         lineDataSet = new LineDataSet(listToDisplay, "Heart rate history" + (switchAverages.isChecked() ?" averages" : "" ));
-
                         lineData = new LineData(listToDisplayStrings, lineDataSet);
                         lineChart.setData(lineData);
 
@@ -188,6 +183,15 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                     }
 
                 }
+                /*if (!switchAverages.isChecked()){
+                    hrHistory.clear();
+                    hrHistory = null;
+                    hrHistoryStrings.clear();
+                    hrHistoryStrings = null;
+                    listToDisplay.clear();
+                    listToDisplay = null;
+
+                }*/
             } else {
                 tv.setText("****NOT BOUND TO SERVER***");
                 return;
