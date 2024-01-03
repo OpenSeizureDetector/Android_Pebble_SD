@@ -443,6 +443,7 @@ public abstract class SdDataSource {
                         mSdData.mHR = hrHistoricVals.getDouble(i);
                         hrCheck();
                     }
+                    signalUpdateUI();
                 } catch (JSONException e) {
                     // if we get 'null' HR (For example if the heart rate is not working)
                     mSdData.mHR = -1;

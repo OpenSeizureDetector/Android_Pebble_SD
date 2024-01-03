@@ -50,6 +50,8 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     private List<Entry> listToDisplay;
     private List<String> listToDisplayStrings;
     private SwitchCompat switchAverages;
+    private TextView tvAvgAHr;
+    private TextView tvHr;
 
 
     public FragmentHrAlg() {
@@ -122,16 +124,19 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     protected void updateUi() {
         Log.d(TAG, "updateUi()");
         tv = (TextView) mRootView.findViewById(R.id.fragment_hr_alg_tv1);
+        tvHr = (TextView) mRootView.findViewById(R.id.current_hr_tv);
+        tvAvgAHr = (TextView) mRootView.findViewById(R.id.adaptive_avg_hr_tv);
         if (mConnection.mBound) {
             tv.setText("Bound to Server");
+
             tvCurrent = mRootView.findViewById(R.id.textView2);
             if (Objects.nonNull(tvCurrent)) {
+                if (Objects.nonNull(tvHr))
+                    tvHr.setText( String.valueOf((short)mConnection.mSdServer.mSdData.mHR));
+                if (Objects.nonNull(tvAvgAHr))
+                    tvAvgAHr.setText( String.valueOf((short)mConnection.mSdServer.mSdData
+                            .mHRAvg));
                 tvCurrent.setText(new StringBuilder()
-                        .append("Current heartrate: ")
-                        .append(mConnection.mSdServer.mSdData.mHR)
-                        .append("\nCurrent average heartrate: ")
-                        .append(mConnection.mSdServer.mSdData.mAverageHrAverage)
-                        .append("\nand current adaptive heartrate: ")
                         .append(mConnection.mSdServer.mSdData.mAdaptiveHrAverage)
                         .append("\nResult of checks: Adaptive Hr Alarm Standing: ")
                         .append(mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding)
@@ -147,8 +152,9 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                     hrHistoryStrings = IntStream.range(0,mConnection.mSdServer.mSdDataSource.mSdAlgHr.getmHistoricHrBuff().getNumVals()).mapToObj(i->String.valueOf((short) mConnection.mSdServer.mSdDataSource.mSdAlgHr.getmHistoricHrBuff().getVals()[i]) + " " + Calendar.getInstance(TimeZone.getDefault()).getTime()).collect(Collectors.toList());
                 }
 
-                hrAverages.add(new Entry((float) mConnection.mSdServer.mSdData.mAverageHrAverage, hrAverages.size()));
+                else{hrAverages.add(new Entry((float) mConnection.mSdServer.mSdData.mAverageHrAverage, hrAverages.size()));
                 hrAveragesStrings.add((short) mConnection.mSdServer.mSdData.mAverageHrAverage + " " + Calendar.getInstance(TimeZone.getDefault()).getTime());
+                }
                 /*hrHistory.add(new Entry((float) mConnection.mSdServer.mSdData.mHR, hrAverages.size()));
                 hrHistoryStrings.add(String.valueOf((short) mConnection.mSdServer.mSdData.mHR));*/
                 switchAverages = mRootView.findViewById(R.id.switch1);
