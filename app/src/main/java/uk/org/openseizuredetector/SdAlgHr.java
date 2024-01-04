@@ -6,7 +6,14 @@ import android.content.SharedPreferences;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
 
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 public class SdAlgHr {
@@ -26,18 +33,27 @@ public class SdAlgHr {
     private int mAverageHrAlarmWindowDp;
     private double mAverageHrAlarmThreshMin;
     private double mAverageHrAlarmThreshMax;
-    private CircBuf mHistoricHrBuff;
+    private List<Entry> mHistoricHrBuff;
+
 
     private CircBuf mAdaptiveHrBuff;
-    private CircBuf mAverageHrBuff;
+    private List<Entry> mAverageHrBuff;
+    private LineData lineData = new LineData();
+    private LineData lineDataAverage = new LineData();
+    private LineDataSet lineDataSet ;
+    private LineDataSet lineDataSetAverage ;
+    List<String> hrHistoryStrings = new ArrayList<>();
+    List<String> hrHistoryStringsAverage = new ArrayList<>();
 
     public SdAlgHr(Context context) {
         Log.i(TAG, "SdAlgHr Constructor");
         mContext = context;
         updatePrefs();
-        mHistoricHrBuff = new CircBuf(mAHistoricHrAlarmWindowDp, -1.0);
+        mHistoricHrBuff = new ArrayList<>(mAHistoricHrAlarmWindowDp);
         mAdaptiveHrBuff = new CircBuf(mAdaptiveHrAlarmWindowDp, -1.0);
-        mAverageHrBuff = new CircBuf(mAverageHrAlarmWindowDp, -1.0);
+        mAverageHrBuff = new ArrayList<>(mAverageHrAlarmWindowDp);
+        lineDataSet = new LineDataSet(new ArrayList<Entry>(),"Heart rate history" );
+        lineDataSetAverage = new LineDataSet(new ArrayList<Entry>(),"Heart rate history" );
     }
 
     public void close() {
@@ -117,12 +133,13 @@ public class SdAlgHr {
         return(retVal);
     }
 
+
     /**
      * Returns the simple average heart rate being used by the Adaptive heart rate algorithm
      * @return simple Average Heart rate in bpm.
      */
     public double getSimpleHrAverage() {
-        return mHistoricHrBuff.getAverageVal();
+        return OsdUtil.getAverageValueFromListOfEntry(lineDataSet);
     }
     /**
      * Returns the average heart rate being used by the Adaptive heart rate algorithm
@@ -132,11 +149,17 @@ public class SdAlgHr {
         return mAdaptiveHrBuff.getAverageVal();
     }
 
-    public CircBuf getmHistoricHrBuff() {
+    public void addLineDataSetAverage(Float newValue) {
+        int currentLineDataSetSize =lineDataSetAverage.getYVals().size();
+        lineDataSetAverage.addEntry(new Entry(newValue , currentLineDataSetSize));
+        hrHistoryStringsAverage.add(Calendar.getInstance(TimeZone.getDefault()).toString());
+    }
+
+    public List<Entry> getmHistoricHrBuff() {
         return mHistoricHrBuff;
     }
 
-    public CircBuf getAverageHrBuff() {
+    public List<Entry> getAverageHrBuff() {
         return mAverageHrBuff;
     }
 
@@ -149,9 +172,16 @@ public class SdAlgHr {
      * @return Average Heart rate in bpm.
      */
     public double getAverageHrAverage() {
-        return mAverageHrBuff.getAverageVal();
+        return OsdUtil.getAverageValueFromListOfEntry(lineDataSetAverage);
     }
 
+    public LineDataSet getLineDataSet(boolean isAverage){
+        return isAverage?lineDataSetAverage :lineDataSet;
+    }
+
+    public LineData getLineData(boolean isAverage){
+        return new LineData(isAverage?hrHistoryStringsAverage:hrHistoryStrings,getLineDataSet(isAverage));
+    }
 
     private boolean checkAdaptiveHr(double hrVal) {
         boolean retVal;
@@ -199,8 +229,13 @@ public class SdAlgHr {
          */
         Log.v(TAG, "checkHr("+hrVal+")");
         mAdaptiveHrBuff.add(hrVal);
-        mAverageHrBuff.add(hrVal);
-        mHistoricHrBuff.add(hrVal);
+        int mAverageHrBuffSize = lineDataSet.getYVals().size();
+        int mHistoricHrBuffSize = mHistoricHrBuff.size();
+        mAverageHrBuff.add(mAverageHrBuffSize,new Entry(mAverageHrBuffSize,OsdUtil.getAverageValueFromListOfEntry(lineDataSet)));
+        hrHistoryStrings.add(mHistoricHrBuffSize, Calendar.getInstance(TimeZone.getDefault()).getTime().toString());
+        mHistoricHrBuff.add(new Entry(mHistoricHrBuff.size(),(int)hrVal));
+        lineDataSet.addEntry(new Entry((float) hrVal,mHistoricHrBuffSize));
+
         ArrayList<Boolean> retVal = new ArrayList<Boolean>();
         retVal.add(checkSimpleHr(hrVal));
         retVal.add(checkAdaptiveHr(hrVal));

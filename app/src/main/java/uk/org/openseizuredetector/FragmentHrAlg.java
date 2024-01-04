@@ -147,29 +147,16 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                 if (Objects.isNull(hrHistory)) hrHistory = new ArrayList<>();
 
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    hrHistory = IntStream.range(0,mConnection.mSdServer.mSdDataSource.mSdAlgHr.getmHistoricHrBuff().getNumVals()).mapToObj(i->new Entry((float) mConnection.mSdServer.mSdDataSource.mSdAlgHr.getmHistoricHrBuff().getVals()[i],i)).collect(Collectors.toList());
-                    hrHistoryStrings = IntStream.range(0,mConnection.mSdServer.mSdDataSource.mSdAlgHr.getmHistoricHrBuff().getNumVals()).mapToObj(i->String.valueOf((short) mConnection.mSdServer.mSdDataSource.mSdAlgHr.getmHistoricHrBuff().getVals()[i]) + " " + Calendar.getInstance(TimeZone.getDefault()).getTime()).collect(Collectors.toList());
-                }
-
-                else{hrAverages.add(new Entry((float) mConnection.mSdServer.mSdData.mAverageHrAverage, hrAverages.size()));
-                hrAveragesStrings.add((short) mConnection.mSdServer.mSdData.mAverageHrAverage + " " + Calendar.getInstance(TimeZone.getDefault()).getTime());
-                }
                 /*hrHistory.add(new Entry((float) mConnection.mSdServer.mSdData.mHR, hrAverages.size()));
                 hrHistoryStrings.add(String.valueOf((short) mConnection.mSdServer.mSdData.mHR));*/
                 switchAverages = mRootView.findViewById(R.id.switch1);
-                listToDisplay = switchAverages.isChecked() ? hrAverages : hrHistory;
-                listToDisplayStrings = switchAverages.isChecked() ? hrAveragesStrings : hrHistoryStrings;
-
 
                 if (Objects.nonNull(listToDisplay)) {
                     if (listToDisplay.size() > 0) {
 
                         lineChart = mRootView.findViewById(R.id.lineChart);
 
-                        lineDataSet = new LineDataSet(listToDisplay, "Heart rate history" + (switchAverages.isChecked() ?" averages" : "" ));
-                        lineData = new LineData(listToDisplayStrings, lineDataSet);
-                        lineChart.setData(lineData);
+                        lineChart.setData(mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineData(switchAverages.isChecked()));
 
                         lineDataSet.setColors(ColorTemplate.JOYFUL_COLORS);
                         lineDataSet.setValueTextColor(Color.BLACK);

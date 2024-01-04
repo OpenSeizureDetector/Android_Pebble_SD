@@ -438,9 +438,15 @@ public abstract class SdDataSource {
             if (dataObject.has(Constants.GLOBAL_CONSTANTS.heartRateList)) {
                 Log.v(TAG, "updateFromJSON - processing raw data");
                 try {
+                    int totalSumOfHr =0;
                     hrHistoricVals =  dataObject.getJSONArray(Constants.GLOBAL_CONSTANTS.heartRateList);
                     for (int i = 0; i < hrHistoricVals.length(); i++) {
                         mSdData.mHR = hrHistoricVals.getDouble(i);
+                        totalSumOfHr+=mSdData.mHR;
+                        if (i == hrHistoricVals.length() -1 )
+                        {
+                            mSdAlgHr.addLineDataSetAverage((float) (totalSumOfHr/hrHistoricVals.length()));
+                        }
                         hrCheck();
                     }
                     signalUpdateUI();
@@ -846,13 +852,10 @@ public abstract class SdDataSource {
         ArrayList<Boolean> checkResults;
         checkResults = mSdAlgHr.checkHr(mSdData.mHR);
 
-        // Populate mSdData so that the heart rate data is logged and is accessible to user interface components.
-        mSdData.mHistoricHrBuf = mSdAlgHr.getmHistoricHrBuff();
+        // Populate mSdData so that the heart rate data is logged and is accessible to user interface components
         mSdData.mHRAvg = mSdAlgHr.getSimpleHrAverage();
         mSdData.mAdaptiveHrAverage = mSdAlgHr.getAdaptiveHrAverage();
         mSdData.mAverageHrAverage = mSdAlgHr.getAverageHrAverage();
-        mSdData.mAdaptiveHrBuf = mSdAlgHr.getAdaptiveHrBuff();
-        mSdData.mAverageHrBuf = mSdAlgHr.getAverageHrBuff();
 
         /* Check for heart rate fault condition */
         if (mSdData.mHRAlarmActive) {

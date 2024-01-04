@@ -46,6 +46,9 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
@@ -57,6 +60,9 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 //uncommented due to deprication
 //import org.apache.http.conn.util.InetAddressUtils;
+
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineDataSet;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -75,6 +81,7 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 /**
  * OsdUtil - OpenSeizureDetector Utilities
@@ -469,6 +476,14 @@ public class OsdUtil {
     public static double convertMetresPerSecondSquaredToMilliG(double mms){
         return (mms/ SensorManager.GRAVITY_EARTH) *Math.pow(10,5);
     }
+
+/**
+ * Get return average of list of Entries
+ */
+    public static int getAverageValueFromListOfEntry(@NonNull LineDataSet listToAverage){
+        return (int) (listToAverage.getYValueSum()/listToAverage.getYVals().size());
+    }
+
 
     /**
      * Write data to SD card - writes to data log file unless alarm=true,
