@@ -242,7 +242,7 @@ public class WebApiConnection_firebase extends WebApiConnection {
                                 retObj.put("events", eventArray);
                                 callback.accept(retObj);
                             } catch (JSONException e) {
-                                Log.e(TAG, "getEvents.onResponse(): Error: " + e.getMessage() + "," + e.toString());
+                                Log.e(TAG, "getEvents.onResponse(): Error: " + e.getMessage() + "," + e.toString(), e);
                                 callback.accept(null);
                             }
 
@@ -281,7 +281,7 @@ public class WebApiConnection_firebase extends WebApiConnection {
             eventMap.put("subType", eventObj.getString("subType"));
             eventMap.put("userId", eventObj.getString("userId"));
         } catch (JSONException e) {
-            Log.e(TAG, "updateEvent(): Error data from eventObj." + e.toString());
+            Log.e(TAG, "updateEvent(): Error data from eventObj." + e.toString(), e);
             e.printStackTrace();
             return false;
         }
@@ -311,7 +311,7 @@ public class WebApiConnection_firebase extends WebApiConnection {
                     });
             return (true);
         } catch (Exception e) {
-            Log.e(TAG, "updateEvent() - ERROR: " + e.toString());
+            Log.e(TAG, "updateEvent() - ERROR: " + e.toString(), e);
             e.printStackTrace();
         }
         return (false);
@@ -390,7 +390,7 @@ public class WebApiConnection_firebase extends WebApiConnection {
                                 Log.d(TAG, "getEventTypes.onComplete() - retObj=" + retObj.toString());
                                 callback.accept(retObj);
                             } catch (JSONException e) {
-                                Log.e(TAG, "getEventTypes.onResponse(): Error: " + e.getMessage() + "," + e.toString());
+                                Log.e(TAG, "getEventTypes.onResponse(): Error: " + e.getMessage() + "," + e.toString(), e);
                                 callback.accept(null);
                             }
                         } else {

@@ -44,13 +44,14 @@ public class BootBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.v(TAG, "onReceive()");
+        goAsync();
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(context);
         boolean autoStart = SP.getBoolean("AutoStart",false);
         Log.v(TAG,"onReceive() - autoStart = "+autoStart);
         if (autoStart && Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
             Intent startUpIntent = new Intent(context, StartupActivity.class);
-            startUpIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startUpIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND|Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(startUpIntent);
         }
     }

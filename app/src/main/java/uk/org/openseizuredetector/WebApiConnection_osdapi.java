@@ -165,7 +165,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                             JSONObject retObj = new JSONObject(response);
                             retVal = retObj.getString("id");
                         } catch (JSONException e) {
-                            Log.e(TAG, "createEvent.onResponse(): Error: " + e.getMessage() + "," + e.toString());
+                            Log.e(TAG, "createEvent.onResponse(): Error: " + e.getMessage() + "," + e.toString(), e);
                             retVal = null;
                         }
                         callback.accept(retVal);
@@ -239,7 +239,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                             retObj.put("alarmStateStr", mUtil.alarmStatusToString(retObj.getInt("osdAlarmState")));
                             callback.accept(retObj);
                         } catch (JSONException e) {
-                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
+                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString(), e);
                             callback.accept(null);
                         }
                         mServerConnectionOk = true;
@@ -299,7 +299,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                             retObj.put("events", eventArray);
                             callback.accept(retObj);
                         } catch (JSONException e) {
-                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
+                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString(), e);
                             callback.accept(null);
                         }
                     }
@@ -377,7 +377,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                             JSONObject retObj = new JSONObject(response);
                             callback.accept(retObj);
                         } catch (JSONException e) {
-                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
+                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString(), e);
                             callback.accept(null);
                         }
                     }
@@ -540,7 +540,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                             JSONObject retObj = new JSONObject(response);
                             callback.accept(retObj);
                         } catch (JSONException e) {
-                            Log.e(TAG, "getUserProfile.onResponse(): Error: " + e.getMessage() + "," + e.toString());
+                            Log.e(TAG, "getUserProfile.onResponse(): Error: " + e.getMessage() + "," + e.toString(), e);
                             callback.accept(null);
                         }
                         mServerConnectionOk = true;
@@ -601,7 +601,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                             JSONObject retObj = new JSONObject(response);
                             callback.accept(retObj);
                         } catch (JSONException e) {
-                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
+                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString(), e);
                             callback.accept(null);
                         }
                     }
@@ -655,7 +655,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                             JSONObject retObj = new JSONObject(response);
                             callback.accept(retObj);
                         } catch (JSONException e) {
-                            Log.e(TAG, "getCNNModelInfo.onRespons(): Error: " + e.getMessage() + "," + e.toString());
+                            Log.e(TAG, "getCNNModelInfo.onRespons(): Error: " + e.getMessage() + "," + e.toString(), e);
                             callback.accept(null);
                         }
                     }

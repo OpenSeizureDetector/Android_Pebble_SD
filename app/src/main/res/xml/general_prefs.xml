@@ -8,6 +8,11 @@
         android:entryValues="@array/datasource_list_values"
         android:defaultValue="Phone"
         android:dialogTitle="@string/select_datasource_title" />
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="UseNewUi"
+        android:summary="@string/use_new_ui_summary"
+        android:title="@string/use_new_ui_title" />
     <!--
     <CheckBoxPreference
         android:defaultValue="true"

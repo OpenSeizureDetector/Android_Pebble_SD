@@ -61,9 +61,11 @@ import androidx.core.text.HtmlCompat;
 
 import com.rohitss.uceh.UCEHandler;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 /**
  * StartupActivity is shown on app start-up.  It starts the SdServer background service and waits
@@ -173,7 +175,7 @@ public class StartupActivity extends AppCompatActivity {
                             PrefActivity.class);
                     startActivity(intent);
                 } catch (Exception ex) {
-                    Log.v(TAG, "exception starting settings activity " + ex.toString());
+                    Log.v(TAG, "exception starting settings activity " + ex.toString(), ex);
                     mUtil.writeToSysLogFile("ERROR Starting Settings Activity");
                 }
 
@@ -187,7 +189,10 @@ public class StartupActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Log.v(TAG, "install Osd Watch App button clicked");
                 mUtil.writeToSysLogFile("Installing Watch App");
-                mConnection.mSdServer.mSdDataSource.installWatchApp();
+                if (Objects.nonNull(mConnection))
+                    if (Objects.nonNull(mConnection.mSdServer))
+                        if (Objects.nonNull(mConnection.mSdServer.mSdDataSource))
+                            mConnection.mSdServer.mSdDataSource.installWatchApp();
             }
         });
         if (Objects.isNull(mConnection)) {
@@ -221,7 +226,7 @@ public class StartupActivity extends AppCompatActivity {
         } else {
             Log.i(TAG, "onStart() - server not running - isServerRunning="+mUtil.isServerRunning());
         }
-        // Wait 0.1 second to give the server chance to shutdown in case we have just shut it down below, then start it
+        // Wait 1 second to give the server chance to shutdown in case we have just shut it down below, then start it
         mHandler.postDelayed(() -> {
             mUtil.writeToSysLogFile("StartupActivity.onStart() - starting server after delay - isServerRunning="+mUtil.isServerRunning());
             Log.i(TAG, "onStart() - starting server after delay -isServerRunning="+mUtil.isServerRunning());
@@ -236,7 +241,7 @@ public class StartupActivity extends AppCompatActivity {
                 mUtil.bindToServer(StartupActivity.this, mConnection);
             }
             connectUiLiveDataRunner();
-        }, 100);
+        }, (long)OsdUtil.convertTimeUnit(1.0, TimeUnit.SECONDS,TimeUnit.MILLISECONDS));
 
         // Check power management settings
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -310,7 +315,6 @@ public class StartupActivity extends AppCompatActivity {
         super.onStop();
         Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("StartupActivity.onStop() - unbinding from server");
-        mUtil.unbindFromServer(StartupActivity.this, mConnection);
         if (Objects.nonNull(mConnection)) {
             if (mConnection.mBound) {
                 if (Objects.nonNull(mConnection.mSdServer)) {
@@ -534,17 +538,26 @@ public class StartupActivity extends AppCompatActivity {
                         Log.i(TAG, "serverStatusRunnable() - starting main activity...");
                         mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - all checks ok - starting main activity.");
                         try {
-                            Intent intent = new Intent(
-                                    getApplicationContext(),
-                                    MainActivity2.class);
+                            Boolean useNewUi = SP.getBoolean("UseNewUi", false);
+                            Intent intent;
+                            if (useNewUi) {
+                                intent = new Intent(
+                                        getApplicationContext(),
+                                        MainActivity2.class);
+                            } else {
+                                intent = new Intent(
+                                        getApplicationContext(),
+                                        MainActivity.class);
+                            }
                             intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                             startActivity(intent);
                             mStartedMainActivity = true;
                             finish();
                         } catch (Exception ex) {
                             mStartedMainActivity = false;
-                            Log.e(TAG, "exception starting main activity " + ex.toString());
-                            mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - exception starting main activity " + ex.toString());
+                            Log.e(TAG, "exception starting main activity " + ex.toString(), ex);
+                            mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - exception starting main activity " + ex.getMessage() + "\n" +
+                                    Arrays.toString(Thread.currentThread().getStackTrace()));
                         }
                     } else {
                         Log.v(TAG, "allOk, but already started MainActivity so not doing anything");
@@ -571,7 +584,7 @@ public class StartupActivity extends AppCompatActivity {
                     comp.getPackageName(), 0);
             return "Version: " + pinfo.versionName;
         } catch (android.content.pm.PackageManager.NameNotFoundException e) {
-            Log.e(TAG, "getVersionName Exception - " + e.toString());
+            Log.e(TAG, "getVersionName Exception - " + e.toString(), e);
             return null;
         }
     }
@@ -749,6 +762,7 @@ public class StartupActivity extends AppCompatActivity {
         } else {
             Log.d(TAG, "ALREADY GRANTED");
         }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
             if (checkSelfPermission(Manifest.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{Manifest.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND}, 1);

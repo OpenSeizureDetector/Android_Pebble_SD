@@ -319,7 +319,7 @@ public class ExportDataActivity extends AppCompatActivity
                                     }
                                     fileOutputStream.write("\n".getBytes(StandardCharsets.UTF_8));
                                 } catch (IOException e) {
-                                    Log.e(TAG, "exportToFile() - ERROR Writing File: " + e.toString());
+                                    Log.e(TAG, "exportToFile() - ERROR Writing File: " + e.toString(), e);
                                     //mUtil.showToast("ERROR WRITING FILE");
                                 }
 
@@ -328,7 +328,7 @@ public class ExportDataActivity extends AppCompatActivity
                             Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string " + datapointsJsonStr);
                             dataObj = null;
                             mUtil.showToast(getString(R.string.error_exporting_data));
-                            Log.e(TAG, "exportToFile() - JSONException: " + e.toString());
+                            Log.e(TAG, "exportToFile() - JSONException: " + e.toString(), e);
                         }
                         // Let the document provider know you're done by closing the stream.
                         fileOutputStream.close();
@@ -338,11 +338,11 @@ public class ExportDataActivity extends AppCompatActivity
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                         mUtil.showToast(getString(R.string.error_exporting_data));
-                        Log.e(TAG, "exportToFile() - FileNotFoundException: " + e.toString());
+                        Log.e(TAG, "exportToFile() - FileNotFoundException: " + e.toString(), e);
                     } catch (IOException e) {
                         e.printStackTrace();
                         mUtil.showToast(getString(R.string.error_exporting_data));
-                        Log.e(TAG, "exportToFile() - IOException: " + e.toString());
+                        Log.e(TAG, "exportToFile() - IOException: " + e.toString(), e);
                     }
                     runOnUiThread(new Runnable() {
                         public void run() {

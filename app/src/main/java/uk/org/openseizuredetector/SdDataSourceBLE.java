@@ -23,6 +23,7 @@
 */
 package uk.org.openseizuredetector;
 
+import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -34,8 +35,12 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+
+import androidx.core.app.ActivityCompat;
+import androidx.preference.PreferenceManager;
+
 import android.text.format.Time;
 import android.util.Log;
 
@@ -79,16 +84,17 @@ public class SdDataSourceBLE extends SdDataSource {
 
     public static String SERV_DEV_INFO = "0000180a-0000-1000-8000-00805f9b34fb";
     public static String SERV_HEART_RATE = "0000180d-0000-1000-8000-00805f9b34fb";
-    public static String SERV_OSD = "000085e9-0000-1000-8000-00805f9b34fb";
     public static String CHAR_HEART_RATE_MEASUREMENT = "00002a37-0000-1000-8000-00805f9b34fb";
+
+    public static String SERV_OSD           = "000085e9-0000-1000-8000-00805f9b34fb";
+    public static String CHAR_OSD_ACC_DATA  = "000085e9-0001-1000-8000-00805f9b34fb";
+    public static String CHAR_OSD_BATT_DATA = "000085e9-0002-1000-8000-00805f9b34fb";
+    public static String CHAR_OSD_WATCH_ID = "000085e9-0003-1000-8000-00805f9b34fb";
+    public static String CHAR_OSD_WATCH_FW = "000085e9-0004-1000-8000-00805f9b34fb";
+
     public static String CHAR_MANUF_NAME = "00002a29-0000-1000-8000-00805f9b34fb";
     public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
-    public static String CHAR_OSD_ACC_DATA = "000085ea-0000-1000-8000-00805f9b34fb";
-    public static String CHAR_OSD_BATT_DATA = "000085eb-0000-1000-8000-00805f9b34fb";
-
-    public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID.fromString(CHAR_HEART_RATE_MEASUREMENT);
     private BluetoothGatt mGatt;
-    private BluetoothGattCharacteristic mBattChar;
     private BluetoothGattCharacteristic mOsdChar;
 
 
@@ -97,7 +103,7 @@ public class SdDataSourceBLE extends SdDataSource {
         super(context, handler, sdDataReceiver);
         mName = "BLE";
         // Set default settings from XML files (mContext is set by super().
-        PreferenceManager.setDefaultValues(mContext,
+        PreferenceManager.setDefaultValues(useSdServerBinding(),
                 R.xml.network_passive_datasource_prefs, true);
     }
 
@@ -112,9 +118,9 @@ public class SdDataSourceBLE extends SdDataSource {
         mUtil.writeToSysLogFile("SdDataSourceBLE.start() - mBleDeviceAddr=" + mBleDeviceAddr);
 
         if (mBleDeviceAddr == "" || mBleDeviceAddr == null) {
-            final Intent intent = new Intent(this.mContext, BLEScanActivity.class);
+            final Intent intent = new Intent(useSdServerBinding(), BLEScanActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(intent);
+            useSdServerBinding().startActivity(intent);
         }
         Log.i(TAG, "mBLEDevice is " + mBleDeviceName + ", Addr=" + mBleDeviceAddr);
 
@@ -128,7 +134,7 @@ public class SdDataSourceBLE extends SdDataSource {
         mBluetoothGatt = null;
         mConnectionState = STATE_DISCONNECTED;
         if (mBluetoothManager == null) {
-            mBluetoothManager = (BluetoothManager) mContext.getSystemService(Context.BLUETOOTH_SERVICE);
+            mBluetoothManager = (BluetoothManager) useSdServerBinding().getSystemService(Context.BLUETOOTH_SERVICE);
             if (mBluetoothManager == null) {
                 Log.e(TAG, "bleConnect(): Unable to initialize BluetoothManager.");
                 return;
@@ -150,7 +156,7 @@ public class SdDataSourceBLE extends SdDataSource {
         try {
             device = mBluetoothAdapter.getRemoteDevice(mBleDeviceAddr);
         } catch (Exception e) {
-            Log.w(TAG, "bleConnect(): Error connecting to device address "+mBleDeviceAddr+".");
+            Log.w(TAG, "bleConnect(): Error connecting to device address " + mBleDeviceAddr + ".");
             device = null;
         }
         if (device == null) {
@@ -159,7 +165,17 @@ public class SdDataSourceBLE extends SdDataSource {
         } else {
             // We want to directly connect to the device, so we are setting the autoConnect
             // parameter to false.
-            mBluetoothGatt = device.connectGatt(mContext, true, mGattCallback);
+            if (ActivityCompat.checkSelfPermission(useSdServerBinding(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
+            mBluetoothGatt = device.connectGatt(useSdServerBinding(), true, mGattCallback);
             Log.d(TAG, "bleConnect(): Trying to create a new connection.");
             mBluetoothDeviceAddress = mBleDeviceAddr;
             mConnectionState = STATE_CONNECTING;
@@ -259,10 +275,13 @@ public class SdDataSourceBLE extends SdDataSource {
                                 setCharacteristicNotification(gattCharacteristic,true);
                             }
                             else if (charUuidStr.equals(CHAR_OSD_BATT_DATA)) {
-                                Log.v(TAG,"Saving battery characteristic for later");
                                 Log.v(TAG, "Subscribing to battery change Notifications");
                                 setCharacteristicNotification(gattCharacteristic,true);
                             }
+                            //else if (charUuidStr.equals(CHAR_OSD_HR_DATA)) {
+                            //    Log.v(TAG, "Subscribing to HR change Notifications");
+                            //    setCharacteristicNotification(gattCharacteristic,true);
+                            //.}
                         }
                     }
                 }
@@ -284,34 +303,42 @@ public class SdDataSourceBLE extends SdDataSource {
         }
 
         public void onDataReceived(BluetoothGattCharacteristic characteristic) {
-            Log.v(TAG, "onDataReceived uuid" + characteristic.getUuid().toString());
-
-            // FIXME - collect data until we have enough to do analysis, then use onDataReceived to process it.
+            /**
+             * onDataReceived - called whenever a BLE characteristic notifies us that its data has changed.
+             * If the data is acceleration data, we add it to a buffer - it is analysed once the buffer is full.
+             * Heart rate data is written directly to sdData to be used in future analysis.
+             */
             //Log.v(TAG,"onDataReceived: Characteristic="+characteristic.getUuid().toString());
             if (characteristic.getUuid().toString().equals(CHAR_HEART_RATE_MEASUREMENT)) {
                 int flag = characteristic.getProperties();
+                //Log.d(TAG,"onDataReceived() - flag = "+flag);
                 int format = -1;
                 if ((flag & 0x01) != 0) {
                     format = BluetoothGattCharacteristic.FORMAT_UINT16;
-                    Log.d(TAG, "Heart rate format UINT16.");
+                    //Log.d(TAG, "onDataReceived(): Heart rate format UINT16.");
                 } else {
                     format = BluetoothGattCharacteristic.FORMAT_UINT8;
-                    Log.d(TAG, "Heart rate format UINT8.");
+                    //Log.d(TAG, "onDataReceived(): Heart rate format UINT8.");
                 }
-                final int heartRate = characteristic.getIntValue(format, 1);
+                final int heartRate = characteristic.getIntValue(format, 1);  // heart rate is second byte
+                //byte[] rawDataBytes = characteristic.getValue();
+                //Log.d(TAG,"onDataReceived - len(rawDataBytes)="+rawDataBytes.length);
+                //for (int i=0;i<rawDataBytes.length;i++) {
+                //    Log.d(TAG,"onDataReceived - HR["+i+" = "+rawDataBytes[i]);
+                //}
                 mSdData.mHR = (double) heartRate;
-                Log.d(TAG, String.format("Received heart rate: %d", heartRate));
+                Log.d(TAG, String.format("onDataReceived(): CHAR_HEART_RATE_MEASUREMENT: %d", heartRate));
             }
             else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_DATA)) {
                 //Log.v(TAG,"Received OSD ACC DATA"+characteristic.getValue());
                 byte[] rawDataBytes = characteristic.getValue();
-                Log.v(TAG, "CHAR_OSD_ACC_DATA: numSamples = " + rawDataBytes.length+" nRawData="+nRawData);
+                Log.v(TAG, "onDataReceived(): CHAR_OSD_ACC_DATA: numSamples = " + rawDataBytes.length+" nRawData="+nRawData);
                 for (int i = 0; i < rawDataBytes.length;i++) {
                     if (nRawData < MAX_RAW_DATA) {
                         rawData[nRawData] = 1000 * rawDataBytes[i] / 64;   // Scale to mg
                         nRawData++;
                     } else {
-                        Log.i(TAG, "RawData Buffer Full - processing data");
+                        Log.i(TAG, "onDataReceived(): RawData Buffer Full - processing data");
                         // Re-start collecting raw data.
                         mSdData.watchAppRunning = true;
                         for (i = 0; i < rawData.length; i++) {
@@ -330,7 +357,7 @@ public class SdDataSourceBLE extends SdDataSource {
             else if (characteristic.getUuid().toString().equals(CHAR_OSD_BATT_DATA)) {
                 byte batteryPc = characteristic.getValue()[0];
                 mSdData.batteryPc = batteryPc;
-                Log.v(TAG,"Received Battery Data" + String.format("%d", batteryPc));
+                Log.v(TAG,"onDataReceived(): CHAR_OSD_BATT_DATA: " + String.format("%d", batteryPc));
                 mSdData.haveSettings = true;
             }
             else {
@@ -352,7 +379,7 @@ public class SdDataSourceBLE extends SdDataSource {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
-            Log.v(TAG,"onCharacteristicChanged(): Characteristic "+characteristic.getUuid()+" changed");
+            //Log.v(TAG,"onCharacteristicChanged(): Characteristic "+characteristic.getUuid()+" changed");
             onDataReceived(characteristic);
         }
 

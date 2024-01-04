@@ -2,7 +2,7 @@ package uk.org.openseizuredetector;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -55,7 +55,7 @@ public class SdAlgNn {
             mModelId = Integer.parseInt(threshStr);
             Log.v(TAG, "SdAlgNn Constructor mModelId = " + mModelId);
         } catch (Exception ex) {
-            Log.v(TAG, "SdAlgNn Constructor - problem parsing preferences. " + ex.toString());
+            Log.v(TAG, "SdAlgNn Constructor - problem parsing preferences. " + ex.toString(), ex);
             Toast toast = Toast.makeText(mContext, "Problem Parsing ML Algorithm Preferences", Toast.LENGTH_SHORT);
             toast.show();
         }

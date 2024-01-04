@@ -68,7 +68,7 @@ public class SdData implements Parcelable {
     public long nMin;
     public long nMax;
     public long warnTime;
-    // number of miliseconds of currentTime-date
+    // number of milliseconds of currentTime-date
     public long alarmTime;
     public long alarmThresh;
     public long alarmRatioThresh;
@@ -79,18 +79,6 @@ public class SdData implements Parcelable {
     private JSONObject jo;
     private JSONObject jsonObj;
     private JSONArray specArr;
-    public List<Double> heartRates = new ArrayList<Double>();
-    public void addNewHeartRateValue (double newHeartRateValue) {
-        if (Objects.isNull(heartRates))
-            heartRates = new ArrayList<>();
-        heartRates.add(newHeartRateValue);
-        if (heartRates.size() < 4) {
-            mHRAvg = 0;
-        }
-        else{
-            mHRAvg = OsdUtil.calculateAverage(heartRates);
-        }
-    }
 
     /* Heart Rate Alarm Settings */
     public boolean mHRAlarmActive = false;
@@ -141,6 +129,7 @@ public class SdData implements Parcelable {
     public double mAverageHrAverage;
     public double mAdaptiveHrAverage;
 
+    public CircBuf mHistoricHrBuf;
     public CircBuf mAdaptiveHrBuf;
     public CircBuf mAverageHrBuf;
     public boolean mHRFrozenFaultStanding = false;
@@ -330,7 +319,7 @@ public class SdData implements Parcelable {
             retval = jsonObj.toString();
             Log.v(TAG, "retval rawData=" + retval);
         } catch (Exception ex) {
-            Log.v(TAG, "Error Creating Data Object - " + ex.toString());
+            Log.v(TAG, "Error Creating Data Object - " + ex.toString(), ex);
             retval = "Error Creating Data Object - " + ex.toString();
         }
         arr = null;
@@ -405,7 +394,8 @@ public class SdData implements Parcelable {
             try {
                 jsonObj.put("dataType", "ErrorType");
 
-                jsonObj.put("Exception", "Error Creating Data Object - " + ex.toString());
+                jsonObj.put("Exception", "Error Creating Data Object :\n" + ex.getMessage() + "\n" +
+                        Arrays.toString(Thread.currentThread().getStackTrace()));
             } catch (JSONException jsonException) {
                 Log.e(TAG, "toSettingsJSON() catched ex in JSON handling failed!", jsonException);
             }
@@ -447,9 +437,9 @@ public class SdData implements Parcelable {
             if (Double.isNaN(mO2Sat)||Double.isInfinite(mO2Sat)||mO2Sat < 30d)
                 mO2Sat = -1d;
             jsonObj.put("o2Sat", mO2Sat);
-            if (Objects.nonNull(heartRates)) {
-                if (!heartRates.isEmpty()) {
-                    jsonObj.put(Constants.GLOBAL_CONSTANTS.heartRateList, Arrays.toString(heartRates.toArray()));
+            if (Objects.nonNull(mHistoricHrBuf)) {
+                if (mHistoricHrBuf.getNumVals()!=0) {
+                    jsonObj.put(Constants.GLOBAL_CONSTANTS.heartRateList, Arrays.toString(mHistoricHrBuf.getVals()));
                 }
             }
         } catch (JSONException jsonException){

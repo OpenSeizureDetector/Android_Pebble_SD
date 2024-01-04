@@ -4,15 +4,18 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -130,6 +133,25 @@ public class FragmentOsdBaseClass extends Fragment {
             tv.setText("****NOT BOUND TO SERVER***");
         }
 
+    }
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        if (Objects.nonNull(mConnection))
+            if (Objects.nonNull(mConnection.mSdServer))
+               mUtil.setBound(true,mConnection);
+        updateUiHandler.post(this::updateUi);
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+
+        if (Objects.nonNull(mConnection))
+            if (Objects.nonNull(mConnection.mSdServer))
+               mUtil.setBound(false,mConnection);
+        updateUiHandler.post(this::updateUi);
     }
 
 }

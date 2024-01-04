@@ -25,7 +25,7 @@ package uk.org.openseizuredetector;
 
 import android.content.Context;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 
 
@@ -43,7 +43,7 @@ public class SdDataSourceGarmin extends SdDataSource {
         super(context, handler, sdDataReceiver);
         mName = "Garmin";
         // Set default settings from XML files (mContext is set by super().
-        PreferenceManager.setDefaultValues(mContext,
+        PreferenceManager.setDefaultValues(useSdServerBinding(),
                 R.xml.network_passive_datasource_prefs, true);
     }
 

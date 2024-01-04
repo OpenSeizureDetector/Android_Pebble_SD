@@ -93,7 +93,6 @@ public abstract class SdDataSource {
     public SdData mSdData;
     public String mName = "undefined";
     protected OsdUtil mUtil;
-    protected Context mContext;
     protected SdDataReceiver mSdDataReceiver;
     private String TAG = this.getClass().getName();
     protected List<Double> initialBuffer = new ArrayList<>(0);
@@ -156,6 +155,7 @@ public abstract class SdDataSource {
     private float batteryPct = -1f;
     private IntentFilter batteryStatusIntentFilter = null;
     private Intent batteryStatusIntent;
+    private JSONArray hrHistoricVals;
     private JSONArray accelVals;
     private JSONArray accelVals3D;
     private JSONObject mainObject;
@@ -177,13 +177,12 @@ public abstract class SdDataSource {
 
     public SdDataSource(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
         Log.v(TAG, "SdDataSource() Constructor");
-        mContext = context;
         mHandler = handler;
-        mUtil = new OsdUtil(mContext, mHandler);
         mSdDataReceiver = sdDataReceiver;
+        mUtil = new OsdUtil(useSdServerBinding(), mHandler);
         if(Objects.isNull((mSdData)))
             mSdData = getSdData();
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(useSdServerBinding());
         if (sharedPreferences.contains(Constants.GLOBAL_CONSTANTS.destroyReasonOf+TAG))
         {
             Log.d(TAG, "(re)Constructed after being closed with reason: \n+" +
@@ -272,10 +271,10 @@ public abstract class SdDataSource {
         if (!Objects.equals(mSdData,pullSdData())) mSdData = pullSdData();
         updatePrefs();
         mSdDataSettings = mSdData;
-        mSdAlgHr = new SdAlgHr(mContext);
+        mSdAlgHr = new SdAlgHr(useSdServerBinding());
 
         if (mSdData.mCnnAlarmActive) {
-            mSdAlgNn = new SdAlgNn(mContext);
+            mSdAlgNn = new SdAlgNn(useSdServerBinding());
         } else {
             mSdData.mPseizure = 0;
         }
@@ -398,7 +397,7 @@ public abstract class SdDataSource {
             Intent i = new Intent(Intent.ACTION_VIEW);
             i.setData(Uri.parse(url));
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(i);
+            useSdServerBinding().startActivity(i);
         } catch (Exception ex) {
             Log.i(TAG, "installWatchApp(): exception starting install watch app activity " + ex.toString(),ex);
             showToast("Error Displaying Installation Instructions - try http://www.openseizuredetector.org.uk/?page_id=1207 instead");
@@ -430,31 +429,37 @@ public abstract class SdDataSource {
             mainObject = new JSONObject(jsonStr);
             //JSONObject dataObject = mainObject.getJSONObject("dataObj");
             dataObject = mainObject;
+            if (dataObject.has("watchPartNo")) watchPartNo = dataObject.getString("watchPartNo");
+            if (dataObject.has("watchFwVersion")) watchFwVersion = dataObject.getString("watchFwVersion");
+            if (dataObject.has("sdVersion")) sdVersion = dataObject.getString("sdVersion");
+            if (dataObject.has("sdName")) sdName = dataObject.getString("sdName");
             if (!getSdData().dataSourceName.equals("AndroidWear")) mSdData.watchConnected = true;  // we must be connected to receive data.
             if (dataObject.has(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY)) mSdData.batteryPc = (short) dataObject.getInt(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY);
             if (dataObject.has(Constants.GLOBAL_CONSTANTS.heartRateList)) {
-                List<Double> testDoubles = new ArrayList<>();
                 Log.v(TAG, "updateFromJSON - processing raw data");
+                try {
+                    int totalSumOfHr =0;
+                    hrHistoricVals =  dataObject.getJSONArray(Constants.GLOBAL_CONSTANTS.heartRateList);
+                    for (int i = 0; i < hrHistoricVals.length(); i++) {
+                        mSdData.mHR = hrHistoricVals.getDouble(i);
+                        totalSumOfHr+=mSdData.mHR;
+                        if (i == hrHistoricVals.length() -1 )
+                        {
+                            mSdAlgHr.addLineDataSetAverage((float) (totalSumOfHr/hrHistoricVals.length()));
+                        }
+                        hrCheck();
+                    }
+                    signalUpdateUI();
+                } catch (JSONException e) {
+                    // if we get 'null' HR (For example if the heart rate is not working)
+                    mSdData.mHR = -1;
+                }
+            }else if (dataObject.has("hr")) {
                 try {
                     mSdData.mHR = dataObject.getDouble(Constants.GLOBAL_CONSTANTS.DATA_VALUE_HR);
                 } catch (JSONException e) {
                     // if we get 'null' HR (For example if the heart rate is not working)
                     mSdData.mHR = -1;
-                }
-                try {
-                    JSONArray jsonArray = dataObject.getJSONArray(Constants.GLOBAL_CONSTANTS.heartRateList);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        mSdData.heartRates.addAll(IntStream.range(0,jsonArray.length()).mapToObj(i-> {
-                            try {
-                                return jsonArray.getDouble(i);
-                            } catch (JSONException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }).collect(Collectors.toList()));
-                    }
-
-                } catch (JSONException jsonException) {
-                    Log.e(TAG, "updateFromJson(): dataObject.has: heartRateList: ", jsonException);
                 }
             }
             if (dataObject.has("O2satIncluded"))
@@ -559,16 +564,25 @@ public abstract class SdDataSource {
                     mUtil.writeToSysLogFile("    * batteryPc = " + mSdData.batteryPc);
 
                     try {
-                        mSdData.watchPartNo = dataObject.getString("watchPartNo");
-                        mSdData.watchFwVersion = dataObject.getString("watchFwVersion");
-                        mSdData.watchSdVersion = dataObject.getString("sdVersion");
-                        mSdData.watchSdName = dataObject.getString("sdName");
+                        mSdData.watchPartNo = dataObject.has("watchPartNo")?
+                                dataObject.getString("watchPartNo"):
+                                "not received or failed to fetch";
+                        mSdData.watchSdVersion = dataObject.has("watchFwVersion")?
+                                dataObject.getString("watchFwVersion"):
+                                "not received or failed to fetch";
+                        mSdData.watchSdVersion = dataObject.has("sdVersion")?
+                                dataObject.getString("sdVersion"):
+                                "not received or failed to fetch";
+
+                        mSdData.watchSdName = dataObject.has("sdName")?dataObject.getString("sdName"):
+                                "not received or failed to fetch";
                         mUtil.writeToSysLogFile("    * sdName = " + mSdData.watchSdName + " version " + mSdData.watchSdVersion);
                         mUtil.writeToSysLogFile("    * watchPartNo = " + mSdData.watchPartNo + " fwVersion " + mSdData.watchFwVersion);
 
                     } catch (Exception e) {
                         Log.e(TAG, "updateFromJSON - Error Parsing V3.2 JSON String - " + e.toString(), e);
-                        mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - " + jsonStr + " - " + e.toString());
+                        mUtil.writeToSysLogFile("updateFromJSON - Error Parsing V3.2 JSON String - " + jsonStr + " - " + e.getMessage() + "\n" +
+                                Arrays.toString(Thread.currentThread().getStackTrace()));
                         mUtil.writeToSysLogFile("          This is probably because of an out of date watch app - please upgrade!");
                         e.printStackTrace();
                     }
@@ -586,7 +600,8 @@ public abstract class SdDataSource {
             }
         } catch (Exception e) {
             Log.e(TAG, "updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " , e);
-            mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.toString());
+            mUtil.writeToSysLogFile("updateFromJSON - Error Parsing JSON String - " + jsonStr + " - " + e.getMessage() + "\n" +
+                    Arrays.toString(Thread.currentThread().getStackTrace()));
             if (Objects.nonNull(e.getCause()))
                 if (Objects.nonNull(e.getCause().getStackTrace()))
                     mUtil.writeToSysLogFile("updateFromJSON: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
@@ -712,7 +727,8 @@ public abstract class SdDataSource {
             Log.e(TAG, "doAnalysis - Exception during Analysis", e);
             if (Objects.nonNull(e.getCause())) {
                 if (Objects.nonNull(Objects.requireNonNull(e.getCause()).getStackTrace())) {
-                    mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e.toString());
+                    mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e.getMessage() + "\n" +
+                            Arrays.toString(Thread.currentThread().getStackTrace()));
                     mUtil.writeToSysLogFile("doAnalysis: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
                     mUtil.writeToSysLogFile("doAnalysis: mSdData.mNsamp=" + mSdData.mNsamp);
                     mUtil.writeToSysLogFile("doAnalysis: alarmFreqMin=" + mAlarmFreqMin + " nMin=" + nMin);
@@ -836,11 +852,10 @@ public abstract class SdDataSource {
         ArrayList<Boolean> checkResults;
         checkResults = mSdAlgHr.checkHr(mSdData.mHR);
 
-        // Populate mSdData so that the heart rate data is logged and is accessible to user interface components.
+        // Populate mSdData so that the heart rate data is logged and is accessible to user interface components
+        mSdData.mHRAvg = mSdAlgHr.getSimpleHrAverage();
         mSdData.mAdaptiveHrAverage = mSdAlgHr.getAdaptiveHrAverage();
         mSdData.mAverageHrAverage = mSdAlgHr.getAverageHrAverage();
-        mSdData.mAdaptiveHrBuf = mSdAlgHr.getAdaptiveHrBuff();
-        mSdData.mAverageHrBuf = mSdAlgHr.getAverageHrBuff();
 
         /* Check for heart rate fault condition */
         if (mSdData.mHRAlarmActive) {
@@ -850,16 +865,14 @@ public abstract class SdDataSource {
                     mSdData.alarmPhrase = "Heart Rate Null - Alarming";
                     mSdData.mHRFaultStanding = false;
                     mSdData.mHRAlarmStanding = true;
-                    mSdData.mAdaptiveHrAlarmStanding = false;
-                    mSdData.mAverageHrAlarmStanding = false;
                 } else {
                     mSdData.alarmPhrase = "Heart Rate Fault (HR<0)";
                     Log.i(TAG, "Heart Rate Fault (HR<0)");
                     mSdData.mHRFaultStanding = true;
                     mSdData.mHRAlarmStanding = false;
-                    mSdData.mAdaptiveHrAlarmStanding = false;
-                    mSdData.mAverageHrAlarmStanding = false;
                 }
+                mSdData.mAdaptiveHrAlarmStanding = false;
+                mSdData.mAverageHrAlarmStanding = false;
             } else {
                 mSdData.mHRFaultStanding = false;
                 mSdData.mHRAlarmStanding = checkResults.get(0);
@@ -1131,7 +1144,7 @@ public abstract class SdDataSource {
         Log.v(TAG, "updatePrefs()");
         mUtil.writeToSysLogFile("SDDataSource.updatePrefs()");
         SharedPreferences SP = PreferenceManager
-                .getDefaultSharedPreferences(mContext);
+                .getDefaultSharedPreferences(useSdServerBinding());
         try {
             // Parse the AppRestartTimeout period setting.
             try {
@@ -1142,7 +1155,7 @@ public abstract class SdDataSource {
             } catch (Exception ex) {
                 Log.e(TAG, "updatePrefs() - Problem with AppRestartTimeout preference!",ex);
                 mUtil.writeToSysLogFile( "updatePrefs() - Problem with AppRestartTimeout preference!");
-                Toast toast = Toast.makeText(mContext, "Problem Parsing AppRestartTimeout Preference", Toast.LENGTH_SHORT);
+                Toast toast = Toast.makeText(useSdServerBinding(), "Problem Parsing AppRestartTimeout Preference", Toast.LENGTH_SHORT);
                 toast.show();
             }
 
@@ -1155,7 +1168,7 @@ public abstract class SdDataSource {
             } catch (Exception ex) {
                 Log.e(TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!",ex);
                 mUtil.writeToSysLogFile( "updatePrefs() - Problem with FaultTimerPeriod preference!");
-                Toast toast = Toast.makeText(mContext, "Problem Parsing FaultTimerPeriod Preference", Toast.LENGTH_SHORT);
+                Toast toast = Toast.makeText(useSdServerBinding(), "Problem Parsing FaultTimerPeriod Preference", Toast.LENGTH_SHORT);
                 toast.show();
             }
 
@@ -1169,7 +1182,7 @@ public abstract class SdDataSource {
 
             } catch (Exception ex) {
                 Log.v(TAG, "updatePrefs() - Problem with FidgetDetector preferences!");
-                Toast toast = Toast.makeText(mContext, "Problem Parsing FidgetPeriod Preference", Toast.LENGTH_SHORT);
+                Toast toast = Toast.makeText(useSdServerBinding(), "Problem Parsing FidgetPeriod Preference", Toast.LENGTH_SHORT);
                 toast.show();
             }
 
@@ -1360,14 +1373,15 @@ public abstract class SdDataSource {
             } else {
                 Log.v(TAG, "updatePrefs() - prefStr is null - WHY????");
                 mUtil.writeToSysLogFile("SDDataSource.updatePrefs() - prefStr is null - WHY??");
-                Toast toast = Toast.makeText(mContext, "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
+                Toast toast = Toast.makeText(useSdServerBinding(), "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
                 toast.show();
             }
 
         } catch (Exception ex) {
             Log.e(TAG, "updatePrefs() - Problem parsing preferences!",ex);
-            mUtil.writeToSysLogFile("SDDataSource.updatePrefs() - ERROR " + ex.toString());
-            Toast toast = Toast.makeText(mContext, "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
+            mUtil.writeToSysLogFile("SDDataSource.updatePrefs() - ERROR " + ex.getMessage() + "\n" +
+                    Arrays.toString(Thread.currentThread().getStackTrace()));
+            Toast toast = Toast.makeText(useSdServerBinding(), "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
             toast.show();
         }
         mSdDataSettings = mSdData;
@@ -1384,7 +1398,7 @@ public abstract class SdDataSource {
      * @param msg - message to display.
      */
     public void showToast(String msg) {
-        Toast.makeText(mContext, msg,
+        Toast.makeText(useSdServerBinding(), msg,
                 Toast.LENGTH_LONG).show();
     }
 

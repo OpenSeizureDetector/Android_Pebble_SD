@@ -148,7 +148,7 @@ public class EditEventActivity extends AppCompatActivity {
                             mEventSubTypesHashMap.put(key, eventSubtypesList);
                             mEventTypesListChanged = true;
                         } catch (JSONException e) {
-                            Log.e(TAG, "initialiseServiceConnection().getEventTypes Callback: Error parsing JSONObject" + e.getMessage() + e.toString());
+                            Log.e(TAG, "initialiseServiceConnection().getEventTypes Callback: Error parsing JSONObject" + e.getMessage() + e.toString(), e);
                         }
                     }
                     updateUi();

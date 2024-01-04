@@ -35,8 +35,6 @@ import com.google.android.gms.wearable.Node;
 
 public class FragmentHrAlg extends FragmentOsdBaseClass {
     Context context = getContext();
-    Looper looper = null;
-    Handler mHandler = null;
     TextView tv = null;
     TextView tvCurrent = null;
 
@@ -52,6 +50,8 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     private List<Entry> listToDisplay;
     private List<String> listToDisplayStrings;
     private SwitchCompat switchAverages;
+    private TextView tvAvgAHr;
+    private TextView tvHr;
 
 
     public FragmentHrAlg() {
@@ -62,10 +62,6 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (Objects.isNull(looper) && Objects.nonNull((Context) this.getActivity()))
-            looper = ((Context) this.getActivity()).getMainLooper();
-        if (Objects.isNull(mHandler) && Objects.nonNull(looper))
-            mHandler = new Handler(looper);
         if (mUtil.isServerRunning()) {
             mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
             if (Objects.nonNull(mConnection)) {
@@ -97,13 +93,17 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                 switchAverages.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        if (Objects.nonNull(lineChart)) {
+                            lineChart.clear();
+                            lineChart.postInvalidate();
+                        }
                         mUtil.runOnUiThread(()->updateUi());
                     }
                 });
                 mUtil.runOnUiThread(this::updateUi);
             }
         } else {
-            mHandler.postDelayed(this::connectUiLiveDataRunner, 100);
+            updateUiHandler.postDelayed(this::connectUiLiveDataRunner, 100);
         }
     }
 
@@ -124,64 +124,55 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     protected void updateUi() {
         Log.d(TAG, "updateUi()");
         tv = (TextView) mRootView.findViewById(R.id.fragment_hr_alg_tv1);
+        tvHr = (TextView) mRootView.findViewById(R.id.current_hr_tv);
+        tvAvgAHr = (TextView) mRootView.findViewById(R.id.adaptive_avg_hr_tv);
         if (mConnection.mBound) {
             tv.setText("Bound to Server");
+
             tvCurrent = mRootView.findViewById(R.id.textView2);
             if (Objects.nonNull(tvCurrent)) {
+                if (Objects.nonNull(tvHr))
+                    tvHr.setText( String.valueOf((short)mConnection.mSdServer.mSdData.mHR));
+                if (Objects.nonNull(tvAvgAHr))
+                    tvAvgAHr.setText( String.valueOf((short)mConnection.mSdServer.mSdData
+                            .mHRAvg));
                 tvCurrent.setText(new StringBuilder()
-                        .append("Current heartrate: ")
-                        .append(mConnection.mSdServer.mSdData.mHR)
-                        .append("\nCurrent average heartrate: ")
-                        .append(mConnection.mSdServer.mSdData.mAverageHrAverage)
-                        .append("\nand current adaptive heartrate: ")
                         .append(mConnection.mSdServer.mSdData.mAdaptiveHrAverage)
                         .append("\nResult of checks: Adaptive Hr Alarm Standing: ")
                         .append(mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding)
                         .append("\nAverage Hr Alarm Standing: ")
                         .append(mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding)
                         .toString());
-                if (Objects.isNull(hrAverages)) hrAverages = new ArrayList<>();
-                if (Objects.isNull(hrHistory)) hrHistory = new ArrayList<>();
 
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    hrHistory = IntStream.range(0,mConnection.mSdServer.mSdData.heartRates.size()).mapToObj(i->new Entry((float) mConnection.mSdServer.mSdData.heartRates.get(i).doubleValue(),i)).collect(Collectors.toList());
-                    hrHistoryStrings = IntStream.range(0,mConnection.mSdServer.mSdData.heartRates.size()).mapToObj(i->String.valueOf((short) mConnection.mSdServer.mSdData.heartRates.get(i).doubleValue()) + " " + Calendar.getInstance(TimeZone.getDefault()).getTime()).collect(Collectors.toList());
-                }
-
-                hrAverages.add(new Entry((float) mConnection.mSdServer.mSdData.mAverageHrAverage, hrAverages.size()));
-                hrAveragesStrings.add(String.valueOf((short) mConnection.mSdServer.mSdData.mAverageHrAverage + " " + Calendar.getInstance(TimeZone.getDefault()).getTime()));
                 /*hrHistory.add(new Entry((float) mConnection.mSdServer.mSdData.mHR, hrAverages.size()));
                 hrHistoryStrings.add(String.valueOf((short) mConnection.mSdServer.mSdData.mHR));*/
                 switchAverages = mRootView.findViewById(R.id.switch1);
-                listToDisplay = switchAverages.isChecked() ? hrAverages : hrHistory;
-                listToDisplayStrings = switchAverages.isChecked() ? hrAveragesStrings : hrHistoryStrings;
-                if (Objects.nonNull(listToDisplay)) {
-                    if (listToDisplay.size() > 0) {
+
+                if (Objects.nonNull(mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineData(switchAverages.isChecked()))) {
+                    if (mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineDataSet(switchAverages.isChecked()).getYVals().size() > 0) {
 
                         lineChart = mRootView.findViewById(R.id.lineChart);
 
-                        if (lineChart.getData() != null &&
-                                lineChart.getData().getDataSetCount() > 0) {
-                            lineDataSet = (LineDataSet) lineChart.getData().getDataSetByIndex(0);
-                        }
-                        else {
-                            lineDataSet = new LineDataSet(listToDisplay, "Heart rate history" + (switchAverages.isChecked() ?" averages" : "" ));
-                        }
-                        lineData = new LineData(listToDisplayStrings, lineDataSet);
-                        lineChart.setData(lineData);
-                        lineDataSet.setColors(ColorTemplate.JOYFUL_COLORS);
-                        lineDataSet.setValueTextColor(Color.BLACK);
-                        lineDataSet.setValueTextSize(18f);
+                        lineChart.setData(mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineData(switchAverages.isChecked()));
+
                         lineChart.getData().notifyDataChanged();
                         lineChart.notifyDataSetChanged();
                         lineChart.refreshDrawableState();
                         if (mConnection.mSdServer.mBound){
-                            lineChart.invalidate();
+                            lineChart.postInvalidate();
                         }
                     }
 
                 }
+                /*if (!switchAverages.isChecked()){
+                    hrHistory.clear();
+                    hrHistory = null;
+                    hrHistoryStrings.clear();
+                    hrHistoryStrings = null;
+                    listToDisplay.clear();
+                    listToDisplay = null;
+
+                }*/
             } else {
                 tv.setText("****NOT BOUND TO SERVER***");
                 return;
@@ -191,20 +182,4 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         }
     }
 
-    @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
-        if (Objects.nonNull(mConnection))
-           if (Objects.nonNull(mConnection.mSdServer))
-               mConnection.mSdServer.setBound(true);
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-
-        if (Objects.nonNull(mConnection))
-            if (Objects.nonNull(mConnection.mSdServer))
-                mConnection.mSdServer.setBound(false);
-    }
 }
