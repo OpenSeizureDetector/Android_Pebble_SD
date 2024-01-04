@@ -4,11 +4,14 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import androidx.preference.PreferenceManager;
+
+import android.graphics.Color;
 import android.util.Log;
 
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -53,7 +56,13 @@ public class SdAlgHr {
         mAdaptiveHrBuff = new CircBuf(mAdaptiveHrAlarmWindowDp, -1.0);
         mAverageHrBuff = new ArrayList<>(mAverageHrAlarmWindowDp);
         lineDataSet = new LineDataSet(new ArrayList<Entry>(),"Heart rate history" );
+        lineDataSet.setColors(ColorTemplate.JOYFUL_COLORS);
+        lineDataSet.setValueTextColor(Color.BLACK);
+        lineDataSet.setValueTextSize(18f);
         lineDataSetAverage = new LineDataSet(new ArrayList<Entry>(),"Heart rate history" );
+        lineDataSetAverage.setColors(ColorTemplate.JOYFUL_COLORS);
+        lineDataSetAverage.setValueTextColor(Color.BLACK);
+        lineDataSetAverage.setValueTextSize(18f);
     }
 
     public void close() {

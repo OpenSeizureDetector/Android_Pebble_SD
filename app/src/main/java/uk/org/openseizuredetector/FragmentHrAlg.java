@@ -143,24 +143,18 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                         .append("\nAverage Hr Alarm Standing: ")
                         .append(mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding)
                         .toString());
-                if (Objects.isNull(hrAverages)) hrAverages = new ArrayList<>();
-                if (Objects.isNull(hrHistory)) hrHistory = new ArrayList<>();
-
 
                 /*hrHistory.add(new Entry((float) mConnection.mSdServer.mSdData.mHR, hrAverages.size()));
                 hrHistoryStrings.add(String.valueOf((short) mConnection.mSdServer.mSdData.mHR));*/
                 switchAverages = mRootView.findViewById(R.id.switch1);
 
-                if (Objects.nonNull(listToDisplay)) {
-                    if (listToDisplay.size() > 0) {
+                if (Objects.nonNull(mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineData(switchAverages.isChecked()))) {
+                    if (mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineDataSet(switchAverages.isChecked()).getYVals().size() > 0) {
 
                         lineChart = mRootView.findViewById(R.id.lineChart);
 
                         lineChart.setData(mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineData(switchAverages.isChecked()));
 
-                        lineDataSet.setColors(ColorTemplate.JOYFUL_COLORS);
-                        lineDataSet.setValueTextColor(Color.BLACK);
-                        lineDataSet.setValueTextSize(18f);
                         lineChart.getData().notifyDataChanged();
                         lineChart.notifyDataSetChanged();
                         lineChart.refreshDrawableState();
