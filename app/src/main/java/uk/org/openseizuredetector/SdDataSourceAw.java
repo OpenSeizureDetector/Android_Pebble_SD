@@ -334,7 +334,7 @@ public class SdDataSourceAw extends SdDataSource {
                                 connectionState = 5;
                                 useSdServerBinding().mSdData.watchConnected = true;
                                 useSdServerBinding().mSdData.batteryPc = receivedIntentByBroadCast.getIntExtra(Constants.ACTION.BATTERYUPDATE_AW_ACTION,-1);
-                                useSdServerBinding().lineDataSetWatchBattery.addEntry(new Entry(mSdData.batteryPc,useSdServerBinding().lineDataSetWatchBattery.getYVals().size()));
+                                useSdServerBinding().lineDataSetWatchBattery.addEntry(new Entry(useSdServerBinding().mSdData.batteryPc,useSdServerBinding().lineDataSetWatchBattery.getYVals().size()));
                                 useSdServerBinding().hrHistoryStringsWatchBattery.add(Calendar.getInstance(Locale.getDefault()).toString());
                                 signalUpdateUI();
                             }

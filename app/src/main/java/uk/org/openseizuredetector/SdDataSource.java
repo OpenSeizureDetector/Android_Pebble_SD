@@ -53,6 +53,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -324,6 +325,15 @@ public abstract class SdDataSource {
 
         if (!useSdServerBinding().mSdDataSourceName.equals("phone"))
             mSdData.mHRAlarmActive = mSdAlgHr.mSimpleHrAlarmActive||mSdAlgHr.mAverageHrAlarmActive||mSdAlgHr.mAdaptiveHrAlarmActive;
+
+        if ( useSdServerBinding().lineDataSetWatchBattery.getYVals().size() == 0 ) {
+            useSdServerBinding().lineDataSetWatchBattery.addEntry(new Entry(0f, useSdServerBinding().lineDataSetWatchBattery.getYVals().size()));
+            useSdServerBinding().hrHistoryStringsWatchBattery.add(Calendar.getInstance(TimeZone.getDefault()).toString());
+        }
+        if ( useSdServerBinding().lineDataSetPhoneBattery.getYVals().size() == 0 ) {
+            useSdServerBinding().lineDataSetPhoneBattery.addEntry(new Entry(0f, useSdServerBinding().lineDataSetPhoneBattery.getYVals().size()));
+            useSdServerBinding().hrHistoryStringsWatchBattery.add(Calendar.getInstance(TimeZone.getDefault()).toString());
+        }
     }
 
     /**
@@ -423,11 +433,13 @@ public abstract class SdDataSource {
             if (dataObject.has("sdVersion")) sdVersion = dataObject.getString("sdVersion");
             if (dataObject.has("sdName")) sdName = dataObject.getString("sdName");
             if (!getSdData().dataSourceName.equals("AndroidWear")) mSdData.watchConnected = true;  // we must be connected to receive data.
-            if (dataObject.has(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY)|| dataObject.has(Constants.ACTION.BATTERYUPDATE_AW_ACTION)) {
+            if (dataObject.has(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY+"Pc")) {
+                mSdData.batteryPc = (short) dataObject.getInt(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY + "Pc");
+                addNewWatchPowerLevel();
+            }
+            if (dataObject.has(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY)) {
                 mSdData.batteryPc = (short) dataObject.getInt(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY);
-                useSdServerBinding().lineDataSetWatchBattery.addEntry(new Entry(mSdData.batteryPc,useSdServerBinding().lineDataSetWatchBattery.getYVals().size()));
-                useSdServerBinding().hrHistoryStringsWatchBattery.add(Calendar.getInstance(Locale.getDefault()).toString());
-                signalUpdateUI();
+                addNewWatchPowerLevel();
             }
             if (dataObject.has(Constants.GLOBAL_CONSTANTS.heartRateList)) {
                 Log.v(TAG, "updateFromJSON - processing raw data");
@@ -477,6 +489,7 @@ public abstract class SdDataSource {
                     if (dataObject.has(Constants.GLOBAL_CONSTANTS.BATTERY_PC)){
                         try {
                             mSdData.batteryPc = (short) dataObject.getInt(Constants.GLOBAL_CONSTANTS.BATTERY_PC);
+                            addNewWatchPowerLevel();
                         } catch (Exception e) {
                             Log.e(TAG, "Error in getting battery percentage", e);
                         }
@@ -608,6 +621,12 @@ public abstract class SdDataSource {
             retVal = "ERROR";
         }
         return (retVal);
+    }
+
+    private void addNewWatchPowerLevel() throws JSONException {
+        useSdServerBinding().lineDataSetWatchBattery.addEntry(new Entry(mSdData.batteryPc,useSdServerBinding().lineDataSetWatchBattery.getYVals().size()));
+        useSdServerBinding().hrHistoryStringsWatchBattery.add(Calendar.getInstance(Locale.getDefault()).toString());
+        signalUpdateUI();
     }
 
     /**

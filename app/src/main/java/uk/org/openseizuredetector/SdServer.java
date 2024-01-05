@@ -274,11 +274,11 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
         lineDataSetWatchBattery = new LineDataSet(new ArrayList<Entry>(),"Watch power level history" );
         lineDataSetWatchBattery.setColors(ColorTemplate.JOYFUL_COLORS);
-        lineDataSetWatchBattery.setValueTextColor(Color.BLACK);
+        lineDataSetWatchBattery.setValueTextColor(R.color.okTextColor);
         lineDataSetWatchBattery.setValueTextSize(18f);
         lineDataSetPhoneBattery = new LineDataSet(new ArrayList<Entry>(),"Phone power level history" );
         lineDataSetPhoneBattery.setColors(ColorTemplate.JOYFUL_COLORS);
-        lineDataSetPhoneBattery.setValueTextColor(Color.BLACK);
+        lineDataSetPhoneBattery.setValueTextColor(R.color.okTextColor);
         lineDataSetPhoneBattery.setValueTextSize(18f);
     }
 
@@ -396,7 +396,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                     int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
 
                     int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-                    batteryPct = 100 * level /  scale;
+                    batteryPct = 100L * level /  scale;
                     if( mSdDataSourceName.equals("Phone") ) {
                         mSdData.batteryPc = (long) (batteryPct);
                     }
