@@ -52,6 +52,8 @@ import android.util.Log;
 import org.checkerframework.checker.units.qual.C;
 
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
@@ -64,6 +66,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.work.impl.utils.ForceStopRunnable;
 
 import com.firebase.ui.auth.viewmodel.RequestCodes;
+import com.github.mikephil.charting.data.Entry;
 
 
 /**
@@ -331,6 +334,9 @@ public class SdDataSourceAw extends SdDataSource {
                                 connectionState = 5;
                                 useSdServerBinding().mSdData.watchConnected = true;
                                 useSdServerBinding().mSdData.batteryPc = receivedIntentByBroadCast.getIntExtra(Constants.ACTION.BATTERYUPDATE_AW_ACTION,-1);
+                                useSdServerBinding().lineDataSetWatchBattery.addEntry(new Entry(mSdData.batteryPc,useSdServerBinding().lineDataSetWatchBattery.getYVals().size()));
+                                useSdServerBinding().hrHistoryStringsWatchBattery.add(Calendar.getInstance(Locale.getDefault()).toString());
+                                signalUpdateUI();
                             }
                         }
 

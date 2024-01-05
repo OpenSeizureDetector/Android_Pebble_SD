@@ -1,5 +1,6 @@
 package uk.org.openseizuredetector;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
@@ -9,6 +10,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+
+import java.util.Objects;
 
 public class FragmentCommon extends FragmentOsdBaseClass {
     String TAG = "FragmentCommon";
@@ -255,5 +260,19 @@ public class FragmentCommon extends FragmentOsdBaseClass {
 
 
 
+    }
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        if (Objects.nonNull(mConnection))
+            mUtil.setBound(true,mConnection);
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+
+        if (Objects.nonNull(mConnection))
+            mUtil.setBound(false,mConnection);
     }
 }

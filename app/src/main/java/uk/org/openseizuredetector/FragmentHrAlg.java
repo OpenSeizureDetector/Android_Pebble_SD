@@ -1,11 +1,7 @@
 package uk.org.openseizuredetector;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,21 +13,13 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SwitchCompat;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.TimeZone;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.utils.ColorTemplate;
-import com.google.android.gms.wearable.Node;
 
 public class FragmentHrAlg extends FragmentOsdBaseClass {
     Context context = getContext();
@@ -151,7 +139,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                 if (Objects.nonNull(mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineData(switchAverages.isChecked()))) {
                     if (mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineDataSet(switchAverages.isChecked()).getYVals().size() > 0) {
 
-                        lineChart = mRootView.findViewById(R.id.lineChart);
+                        lineChart = mRootView.findViewById(R.id.lineChartBattery);
 
                         lineChart.setData(mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineData(switchAverages.isChecked()));
 
@@ -182,4 +170,18 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         }
     }
 
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        if (Objects.nonNull(mConnection))
+           mUtil.setBound(true,mConnection);
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+
+        if (Objects.nonNull(mConnection))
+            mUtil.setBound(false,mConnection);
+    }
 }

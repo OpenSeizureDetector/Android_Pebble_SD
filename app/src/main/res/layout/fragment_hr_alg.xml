@@ -91,7 +91,7 @@
             android:layout_height="match_parent">
 
             <com.github.mikephil.charting.charts.LineChart
-                android:id="@+id/lineChart"
+                android:id="@+id/lineChartBattery"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent">
 

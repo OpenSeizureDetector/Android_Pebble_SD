@@ -8,18 +8,17 @@
 
     <!-- TODO: Update blank fragment layout -->
     <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/fragment_ll"
         android:layout_width="match_parent"
-        android:layout_height="253dp"
-        android:orientation="vertical"
-        android:id="@+id/fragment_ll">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="OpenSeizureDetector System Status"
-            android:textColor="@color/okTextColor"
             android:background="@color/okBackgroundColor"
-        />
+            android:text="OpenSeizureDetector System Status"
+            android:textColor="@color/okTextColor" />
 
 
         <LinearLayout
@@ -37,16 +36,18 @@
                 android:id="@+id/textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:background="@color/okBackgroundColor"
                 android:text="Edit Settings"
-                android:textColor="@color/okTextColor"
-                android:background="@color/okBackgroundColor"/>
+                android:textColor="@color/okTextColor" />
         </LinearLayout>
 
         <TextView
             android:id="@+id/serverStatusTv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="---" />
+            android:text="---"
+            android:textColor="@color/okTextColor" />
+
         <TextView
             android:id="@+id/fragment_bound_to_server_tv"
             android:layout_width="match_parent"
@@ -60,8 +61,6 @@
             android:layout_height="wrap_content"
             android:gravity="left"
             android:text="---" />
-
-
 
 
         <TextView
@@ -89,6 +88,22 @@
             android:gravity="left"
             android:text="---" />
 
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switchToPowerGraph"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/select_phone_power_graph"
+            android:textColor="@color/okTextColor"
+            tools:text="Select Phone power graph" />
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/lineChartBattery"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:accessibilityLiveRegion="polite">
+
+        </com.github.mikephil.charting.charts.LineChart>
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 

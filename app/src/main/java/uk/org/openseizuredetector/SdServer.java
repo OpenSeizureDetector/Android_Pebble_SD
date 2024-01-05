@@ -31,7 +31,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -39,6 +38,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.location.Location;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
@@ -57,7 +57,6 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import androidx.preference.PreferenceManager;
 import android.service.notification.StatusBarNotification;
-import android.system.Os;
 import android.telephony.SmsManager;
 import android.text.format.Time;
 import android.util.Log;
@@ -67,6 +66,10 @@ import androidx.core.app.NotificationCompat;
 import androidx.lifecycle.LiveData;
 import androidx.work.multiprocess.RemoteWorkerService;
 
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
 import com.rohitss.uceh.UCEHandler;
 
 import org.json.JSONArray;
@@ -78,8 +81,11 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.TimeZone;
 import java.util.Timer;
 import java.util.concurrent.TimeUnit;
 
@@ -242,6 +248,11 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     public long batteryPct = -1;
     private boolean serverInitialized = false;
 
+    public LineDataSet lineDataSetWatchBattery ;
+    public LineDataSet lineDataSetPhoneBattery ;
+    public List<String> hrHistoryStringsWatchBattery = new ArrayList<>();
+    public List<String> hrHistoryStringsPhoneBattery = new ArrayList<>();
+
 
 
     /**
@@ -260,6 +271,15 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     public SdServer() {
         super();
         Log.i(TAG, "SdServer Created");
+
+        lineDataSetWatchBattery = new LineDataSet(new ArrayList<Entry>(),"Watch power level history" );
+        lineDataSetWatchBattery.setColors(ColorTemplate.JOYFUL_COLORS);
+        lineDataSetWatchBattery.setValueTextColor(Color.BLACK);
+        lineDataSetWatchBattery.setValueTextSize(18f);
+        lineDataSetPhoneBattery = new LineDataSet(new ArrayList<Entry>(),"Phone power level history" );
+        lineDataSetPhoneBattery.setColors(ColorTemplate.JOYFUL_COLORS);
+        lineDataSetPhoneBattery.setValueTextColor(Color.BLACK);
+        lineDataSetPhoneBattery.setValueTextSize(18f);
     }
 
     @Override
@@ -384,6 +404,9 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                             ((SdDataSourceAw)mSdDataSource).getSdData().watchConnected&&
                             ((SdDataSourceAw)mSdDataSource).connectionState >=5)
                         ((SdDataSourceAw)mSdDataSource).mobileBatteryPctUpdate();
+
+                    lineDataSetPhoneBattery.addEntry(new Entry(batteryPct,lineDataSetPhoneBattery.getYVals().size()));
+                    hrHistoryStringsPhoneBattery.add(Calendar.getInstance(Locale.getDefault()).toString());
 
                     mChargingState = batteryStatusIntent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
                     mIsCharging = mChargingState == BatteryManager.BATTERY_STATUS_CHARGING ||
@@ -2362,6 +2385,14 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
             }
         }
         return(false);
+    }
+
+    public LineDataSet getLineDataSet(boolean isAverage){
+        return isAverage?lineDataSetPhoneBattery :lineDataSetWatchBattery;
+    }
+
+    public LineData getLineData(boolean isAverage){
+        return new LineData(isAverage? hrHistoryStringsPhoneBattery :hrHistoryStringsWatchBattery,getLineDataSet(isAverage));
     }
 }
 

@@ -7,9 +7,9 @@
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
-        android:layout_height="253dp"
-        android:orientation="vertical"
-        android:background="@color/okBackgroundColor">
+        android:layout_height="match_parent"
+        android:background="@color/okBackgroundColor"
+        android:orientation="vertical">
         <!-- TODO: Update blank fragment layout -->
         <TextView
             android:id="@+id/fragment_osdalg_tv1"
@@ -22,15 +22,15 @@
             android:id="@+id/fragment_osdalg_tv2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/okTextColor"
-            android:text="OSD Algorithm Status" />
+            android:text="OSD Algorithm Status"
+            android:textColor="@color/okTextColor" />
 
         <TextView
             android:id="@+id/powerTv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/okTextColor"
-            android:text="---" />
+            android:text="---"
+            android:textColor="@color/okTextColor" />
 
         <ProgressBar
             android:id="@+id/powerProgressBar"
@@ -43,8 +43,8 @@
             android:id="@+id/spectrumTv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/okTextColor"
-            android:text="---" />
+            android:text="---"
+            android:textColor="@color/okTextColor" />
 
         <ProgressBar
             android:id="@+id/spectrumProgressBar"
@@ -58,8 +58,6 @@
             android:id="@+id/chart1"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
-
-
 
 
     </androidx.appcompat.widget.LinearLayoutCompat>

@@ -1,26 +1,44 @@
 package uk.org.openseizuredetector;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.widget.LinearLayoutCompat;
+import androidx.appcompat.widget.SwitchCompat;
+
+import com.github.mikephil.charting.charts.LineChart;
+
+import java.util.Objects;
 
 public class FragmentSystem extends FragmentOsdBaseClass {
     String TAG = "FragmentSystem";
+    private SwitchCompat switchWatchGraphToPhoneGraph;
+    private LineChart lineChartPowerLevel;
+
     public FragmentSystem() {
         // Required empty public constructor
     }
 
 
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (Objects.nonNull(mConnection)) {
+            if (!mConnection.mBound)
+                mUtil.bindToServer((Context) this.getActivity(), mConnection);
+            mUtil.waitForConnection(mConnection);
+            connectUiLiveDataRunner();
+        }
     }
 
     @Override
@@ -50,6 +68,34 @@ public class FragmentSystem extends FragmentOsdBaseClass {
         });
     }
 
+    void connectUiLiveDataRunner() {
+        if (mConnection.mBound && Objects.nonNull(mConnection.mSdServer)) {
+            if (!mConnection.mSdServer.uiLiveData.isListeningInContext(this)) {
+                mConnection.mSdServer.uiLiveData.observe(this, this::onChangedObserver);
+                mConnection.mSdServer.uiLiveData.observeForever(this::onChangedObserver);
+                mConnection.mSdServer.uiLiveData.addToListening(this);
+                switchWatchGraphToPhoneGraph = mRootView.findViewById(R.id.switchToPowerGraph);
+                switchWatchGraphToPhoneGraph.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        if (Objects.nonNull(lineChartPowerLevel)) {
+                            lineChartPowerLevel.clear();
+                            lineChartPowerLevel.postInvalidate();
+                        }
+                        mUtil.runOnUiThread(()->updateUi());
+                    }
+                });
+                mUtil.runOnUiThread(this::updateUi);
+            }
+        } else {
+            updateUiHandler.postDelayed(this::connectUiLiveDataRunner, 100);
+        }
+    }
+
+
+    private void onChangedObserver(Object o) {
+        mUtil.runOnUiThread(this::updateUi);
+    }
 
 
     @Override
@@ -57,7 +103,7 @@ public class FragmentSystem extends FragmentOsdBaseClass {
         //Log.d(TAG,"updateUi()");
         TextView tv;
 
-        tv = (TextView)mRootView.findViewById(R.id.fragment_bound_to_server_tv);
+        tv = (TextView) mRootView.findViewById(R.id.fragment_bound_to_server_tv);
         if (mConnection.mBound) {
             tv.setText("Bound to Server");
             tv.setTextColor(okTextColour);
@@ -66,7 +112,7 @@ public class FragmentSystem extends FragmentOsdBaseClass {
             tv.setTextColor(warnTextColour);
             return;
         }
-        LinearLayoutCompat ll = (LinearLayoutCompat)mRootView.findViewById(R.id.fragment_ll);
+        LinearLayoutCompat ll = (LinearLayoutCompat) mRootView.findViewById(R.id.fragment_ll);
         if (mUtil.isServerRunning()) {
             ll.setBackgroundColor(okColour);
 
@@ -172,10 +218,45 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
                 }
+                switchWatchGraphToPhoneGraph = mRootView.findViewById(R.id.switchToPowerGraph);
+
+                if (Objects.nonNull(mConnection.mSdServer.getLineData(switchWatchGraphToPhoneGraph.isChecked()))) {
+                    if (mConnection.mSdServer.getLineDataSet(switchWatchGraphToPhoneGraph.isChecked()).getYVals().size() > 0) {
+
+                        lineChartPowerLevel = mRootView.findViewById(R.id.lineChartBattery);
+
+                        lineChartPowerLevel.setData(mConnection.mSdServer.getLineData(switchWatchGraphToPhoneGraph.isChecked()));
+
+                        lineChartPowerLevel.getData().notifyDataChanged();
+                        lineChartPowerLevel.notifyDataSetChanged();
+                        lineChartPowerLevel.refreshDrawableState();
+                        if (mConnection.mSdServer.mBound){
+                            lineChartPowerLevel.postInvalidate();
+                        }
+                    }
+
+                }
             }
         } catch (Exception e) {
-        Log.e(TAG, "UpdateUi: Exception - ");
-        e.printStackTrace();
+            Log.e(TAG, "UpdateUi: Exception - ");
+            e.printStackTrace();
+        }
     }
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        if (Objects.nonNull(mConnection)&&Objects.nonNull(mUtil)) {
+            connectUiLiveDataRunner();
+            mUtil.setBound(true, mConnection);
+            updateUi();
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+
+        if (Objects.nonNull(mConnection)&&Objects.nonNull(mUtil))
+            mUtil.setBound(false,mConnection);
     }
 }

@@ -36,38 +36,26 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.PowerManager;
 import androidx.preference.PreferenceManager;
-import android.text.format.Time;
+
 import android.util.Log;
 import android.widget.Toast;
 
-import androidx.annotation.Nullable;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.mikephil.charting.data.Entry;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jtransforms.fft.DoubleFFT_1D;
 
-import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Locale;
 import java.util.Objects;
-import java.util.Set;
-import java.util.Spliterators;
-import java.util.StringJoiner;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 interface SdDataReceiver {
     public void onSdDataReceived(SdData sdData);
@@ -428,13 +416,19 @@ public abstract class SdDataSource {
         try {
             mainObject = new JSONObject(jsonStr);
             //JSONObject dataObject = mainObject.getJSONObject("dataObj");
+
             dataObject = mainObject;
             if (dataObject.has("watchPartNo")) watchPartNo = dataObject.getString("watchPartNo");
             if (dataObject.has("watchFwVersion")) watchFwVersion = dataObject.getString("watchFwVersion");
             if (dataObject.has("sdVersion")) sdVersion = dataObject.getString("sdVersion");
             if (dataObject.has("sdName")) sdName = dataObject.getString("sdName");
             if (!getSdData().dataSourceName.equals("AndroidWear")) mSdData.watchConnected = true;  // we must be connected to receive data.
-            if (dataObject.has(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY)) mSdData.batteryPc = (short) dataObject.getInt(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY);
+            if (dataObject.has(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY)|| dataObject.has(Constants.ACTION.BATTERYUPDATE_AW_ACTION)) {
+                mSdData.batteryPc = (short) dataObject.getInt(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY);
+                useSdServerBinding().lineDataSetWatchBattery.addEntry(new Entry(mSdData.batteryPc,useSdServerBinding().lineDataSetWatchBattery.getYVals().size()));
+                useSdServerBinding().hrHistoryStringsWatchBattery.add(Calendar.getInstance(Locale.getDefault()).toString());
+                signalUpdateUI();
+            }
             if (dataObject.has(Constants.GLOBAL_CONSTANTS.heartRateList)) {
                 Log.v(TAG, "updateFromJSON - processing raw data");
                 try {
