@@ -332,7 +332,7 @@ public abstract class SdDataSource {
         }
         if ( useSdServerBinding().lineDataSetPhoneBattery.getYVals().size() == 0 ) {
             useSdServerBinding().lineDataSetPhoneBattery.addEntry(new Entry(0f, useSdServerBinding().lineDataSetPhoneBattery.getYVals().size()));
-            useSdServerBinding().hrHistoryStringsWatchBattery.add(Calendar.getInstance(TimeZone.getDefault()).toString());
+            useSdServerBinding().hrHistoryStringsPhoneBattery.add(Calendar.getInstance(TimeZone.getDefault()).toString());
         }
     }
 
