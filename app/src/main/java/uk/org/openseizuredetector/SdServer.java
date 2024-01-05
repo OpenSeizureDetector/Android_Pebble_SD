@@ -446,14 +446,15 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                     }
                 }
 
-                mUtil.runOnUiThread(() -> {
-                    Log.d(TAG, "onBatteryChanged(): runOnUiThread(): updateUI");
-                    if (Objects.nonNull(uiLiveData))
-                        if (uiLiveData.hasActiveObservers()||uiLiveData.connectedList.contains("MainActivity"))
-                            uiLiveData.signalChangedData();
-                });
+
 
             }
+            mUtil.runOnUiThread(() -> {
+                Log.d(TAG, "onBatteryChanged(): runOnUiThread(): updateUI");
+                if (Objects.nonNull(uiLiveData))
+                    if (uiLiveData.hasActiveObservers()||uiLiveData.connectedList.contains("MainActivity"))
+                        uiLiveData.signalChangedData();
+            });
         } catch (Exception e) {
             Log.e(TAG, "powerUpdateReceiveAction() : error in type", e);
         }
