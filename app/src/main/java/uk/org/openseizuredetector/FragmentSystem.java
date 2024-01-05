@@ -222,10 +222,11 @@ public class FragmentSystem extends FragmentOsdBaseClass {
 
                 if (Objects.nonNull(mConnection.mSdServer.getLineData(switchWatchGraphToPhoneGraph.isChecked()))) {
                     if (Objects.nonNull(lineChartPowerLevel)){
+
+                        lineChartPowerLevel = mRootView.findViewById(R.id.lineChartBattery);
                         lineChartPowerLevel.clear();
                         if (mConnection.mSdServer.getLineDataSet(switchWatchGraphToPhoneGraph.isChecked()).getYVals().size() > 0) {
 
-                            lineChartPowerLevel = mRootView.findViewById(R.id.lineChartBattery);
 
                             lineChartPowerLevel.setData(mConnection.mSdServer.getLineData(switchWatchGraphToPhoneGraph.isChecked()));
 
