@@ -221,18 +221,20 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                 switchWatchGraphToPhoneGraph = mRootView.findViewById(R.id.switchToPowerGraph);
 
                 if (Objects.nonNull(mConnection.mSdServer.getLineData(switchWatchGraphToPhoneGraph.isChecked()))) {
-                    lineChartPowerLevel.clear();
-                    if (mConnection.mSdServer.getLineDataSet(switchWatchGraphToPhoneGraph.isChecked()).getYVals().size() > 0) {
+                    if (Objects.nonNull(lineChartPowerLevel)){
+                        lineChartPowerLevel.clear();
+                        if (mConnection.mSdServer.getLineDataSet(switchWatchGraphToPhoneGraph.isChecked()).getYVals().size() > 0) {
 
-                        lineChartPowerLevel = mRootView.findViewById(R.id.lineChartBattery);
+                            lineChartPowerLevel = mRootView.findViewById(R.id.lineChartBattery);
 
-                        lineChartPowerLevel.setData(mConnection.mSdServer.getLineData(switchWatchGraphToPhoneGraph.isChecked()));
+                            lineChartPowerLevel.setData(mConnection.mSdServer.getLineData(switchWatchGraphToPhoneGraph.isChecked()));
 
-                        lineChartPowerLevel.getData().notifyDataChanged();
-                        lineChartPowerLevel.notifyDataSetChanged();
-                        lineChartPowerLevel.refreshDrawableState();
-                        if (mConnection.mSdServer.mBound){
-                            lineChartPowerLevel.postInvalidate();
+                            lineChartPowerLevel.getData().notifyDataChanged();
+                            lineChartPowerLevel.notifyDataSetChanged();
+                            lineChartPowerLevel.refreshDrawableState();
+                            if (mConnection.mSdServer.mBound) {
+                                lineChartPowerLevel.postInvalidate();
+                            }
                         }
                     }
 
