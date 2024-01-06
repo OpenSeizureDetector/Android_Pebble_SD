@@ -70,6 +70,8 @@ public class FragmentSystem extends FragmentOsdBaseClass {
 
     void connectUiLiveDataRunner() {
         if (mConnection.mBound && Objects.nonNull(mConnection.mSdServer)) {
+            switchWatchGraphToPhoneGraph = mRootView.findViewById(R.id.switchToPowerGraph);
+            lineChartPowerLevel = mRootView.findViewById(R.id.lineChartBattery);
             if (!mConnection.mSdServer.uiLiveData.isListeningInContext(this)) {
                 mConnection.mSdServer.uiLiveData.observe(this, this::onChangedObserver);
                 mConnection.mSdServer.uiLiveData.observeForever(this::onChangedObserver);
@@ -218,7 +220,6 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
                 }
-                switchWatchGraphToPhoneGraph = mRootView.findViewById(R.id.switchToPowerGraph);
 
                 if (Objects.nonNull(mConnection.mSdServer.getLineData(switchWatchGraphToPhoneGraph.isChecked()))) {
                     if (Objects.nonNull(lineChartPowerLevel)){
