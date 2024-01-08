@@ -328,11 +328,11 @@ public abstract class SdDataSource {
 
         if ( useSdServerBinding().lineDataSetWatchBattery.getYVals().size() == 0 ) {
             useSdServerBinding().lineDataSetWatchBattery.addEntry(new Entry(0f, useSdServerBinding().lineDataSetWatchBattery.getYVals().size()));
-            useSdServerBinding().hrHistoryStringsWatchBattery.add(Calendar.getInstance(TimeZone.getDefault()).toString());
+            useSdServerBinding().hrHistoryStringsWatchBattery.add(Calendar.getInstance(TimeZone.getDefault()).getTime().toString());
         }
         if ( useSdServerBinding().lineDataSetPhoneBattery.getYVals().size() == 0 ) {
             useSdServerBinding().lineDataSetPhoneBattery.addEntry(new Entry(0f, useSdServerBinding().lineDataSetPhoneBattery.getYVals().size()));
-            useSdServerBinding().hrHistoryStringsPhoneBattery.add(Calendar.getInstance(TimeZone.getDefault()).toString());
+            useSdServerBinding().hrHistoryStringsPhoneBattery.add(Calendar.getInstance(TimeZone.getDefault()).getTime().toString());
         }
     }
 
@@ -625,7 +625,7 @@ public abstract class SdDataSource {
 
     private void addNewWatchPowerLevel(float powerLevel) throws JSONException {
         useSdServerBinding().lineDataSetWatchBattery.addEntry(new Entry(powerLevel,useSdServerBinding().lineDataSetWatchBattery.getYVals().size()));
-        useSdServerBinding().hrHistoryStringsWatchBattery.add(Calendar.getInstance(TimeZone.getDefault()).toString());
+        useSdServerBinding().hrHistoryStringsWatchBattery.add(Calendar.getInstance(TimeZone.getDefault()).getTime().toString());
         signalUpdateUI();
     }
 

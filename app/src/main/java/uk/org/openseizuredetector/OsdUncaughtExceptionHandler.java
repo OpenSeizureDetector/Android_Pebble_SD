@@ -19,6 +19,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * Created by graham on 28/03/16.
@@ -79,7 +80,7 @@ public class OsdUncaughtExceptionHandler implements Thread.UncaughtExceptionHand
     }
 
     private void addInformation(StringBuilder message) {
-        message.append("Locale: ").append(Locale.getDefault()).append('\n');
+        message.append("Locale: ").append(TimeZone.getDefault()).append('\n');
         try {
             PackageManager pm = mContext.getPackageManager();
             PackageInfo pi;

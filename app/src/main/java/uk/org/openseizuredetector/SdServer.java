@@ -406,7 +406,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                         ((SdDataSourceAw)mSdDataSource).mobileBatteryPctUpdate();
 
                     lineDataSetPhoneBattery.addEntry(new Entry(batteryPct,lineDataSetPhoneBattery.getYVals().size()));
-                    hrHistoryStringsPhoneBattery.add(Calendar.getInstance(Locale.getDefault()).toString());
+                    hrHistoryStringsPhoneBattery.add(Calendar.getInstance(TimeZone.getDefault()).getTime().toString());
 
                     mChargingState = batteryStatusIntent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
                     mIsCharging = mChargingState == BatteryManager.BATTERY_STATUS_CHARGING ||

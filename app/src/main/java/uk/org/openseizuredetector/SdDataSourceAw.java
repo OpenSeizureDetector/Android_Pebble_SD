@@ -55,6 +55,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.TimeZone;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
@@ -335,7 +336,7 @@ public class SdDataSourceAw extends SdDataSource {
                                 useSdServerBinding().mSdData.watchConnected = true;
                                 useSdServerBinding().mSdData.batteryPc = receivedIntentByBroadCast.getIntExtra(Constants.ACTION.BATTERYUPDATE_AW_ACTION,-1);
                                 useSdServerBinding().lineDataSetWatchBattery.addEntry(new Entry(useSdServerBinding().mSdData.batteryPc,useSdServerBinding().lineDataSetWatchBattery.getYVals().size()));
-                                useSdServerBinding().hrHistoryStringsWatchBattery.add(Calendar.getInstance(Locale.getDefault()).toString());
+                                useSdServerBinding().hrHistoryStringsWatchBattery.add(Calendar.getInstance(TimeZone.getDefault()).getTime().toString());
                                 signalUpdateUI();
                             }
                         }
