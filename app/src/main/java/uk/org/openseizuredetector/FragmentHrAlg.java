@@ -135,19 +135,24 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                 /*hrHistory.add(new Entry((float) mConnection.mSdServer.mSdData.mHR, hrAverages.size()));
                 hrHistoryStrings.add(String.valueOf((short) mConnection.mSdServer.mSdData.mHR));*/
                 switchAverages = mRootView.findViewById(R.id.switch1);
+                if (Objects.nonNull(mConnection.mSdServer)){
+                    if (Objects.nonNull(mConnection.mSdServer.mSdDataSource)){
+                        if (Objects.nonNull(mConnection.mSdServer.mSdDataSource.mSdAlgHr)){
+                            if (Objects.nonNull(mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineData(switchAverages.isChecked()))) {
+                                if (mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineDataSet(switchAverages.isChecked()).getYVals().size() > 0) {
 
-                if (Objects.nonNull(mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineData(switchAverages.isChecked()))) {
-                    if (mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineDataSet(switchAverages.isChecked()).getYVals().size() > 0) {
+                                    lineChart = mRootView.findViewById(R.id.lineChartBattery);
 
-                        lineChart = mRootView.findViewById(R.id.lineChartBattery);
+                                    lineChart.setData(mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineData(switchAverages.isChecked()));
 
-                        lineChart.setData(mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineData(switchAverages.isChecked()));
-
-                        lineChart.getData().notifyDataChanged();
-                        lineChart.notifyDataSetChanged();
-                        lineChart.refreshDrawableState();
-                        if (mConnection.mSdServer.mBound){
-                            lineChart.postInvalidate();
+                                    lineChart.getData().notifyDataChanged();
+                                    lineChart.notifyDataSetChanged();
+                                    lineChart.refreshDrawableState();
+                                    if (mConnection.mSdServer.mBound) {
+                                        lineChart.postInvalidate();
+                                    }
+                                }
+                            }
                         }
                     }
 

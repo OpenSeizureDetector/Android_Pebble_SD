@@ -435,11 +435,11 @@ public abstract class SdDataSource {
             if (!getSdData().dataSourceName.equals("AndroidWear")) mSdData.watchConnected = true;  // we must be connected to receive data.
             if (dataObject.has(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY+"Pc")) {
                 mSdData.batteryPc = (short) dataObject.getInt(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY + "Pc");
-                addNewWatchPowerLevel();
+                addNewWatchPowerLevel(mSdData.batteryPc);
             }
             if (dataObject.has(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY)) {
                 mSdData.batteryPc = (short) dataObject.getInt(Constants.GLOBAL_CONSTANTS.JSON_TYPE_BATTERY);
-                addNewWatchPowerLevel();
+                addNewWatchPowerLevel(mSdData.batteryPc);
             }
             if (dataObject.has(Constants.GLOBAL_CONSTANTS.heartRateList)) {
                 Log.v(TAG, "updateFromJSON - processing raw data");
@@ -489,7 +489,7 @@ public abstract class SdDataSource {
                     if (dataObject.has(Constants.GLOBAL_CONSTANTS.BATTERY_PC)){
                         try {
                             mSdData.batteryPc = (short) dataObject.getInt(Constants.GLOBAL_CONSTANTS.BATTERY_PC);
-                            addNewWatchPowerLevel();
+                            addNewWatchPowerLevel(mSdData.batteryPc);
                         } catch (Exception e) {
                             Log.e(TAG, "Error in getting battery percentage", e);
                         }
@@ -623,9 +623,9 @@ public abstract class SdDataSource {
         return (retVal);
     }
 
-    private void addNewWatchPowerLevel() throws JSONException {
-        useSdServerBinding().lineDataSetWatchBattery.addEntry(new Entry(mSdData.batteryPc,useSdServerBinding().lineDataSetWatchBattery.getYVals().size()));
-        useSdServerBinding().hrHistoryStringsWatchBattery.add(Calendar.getInstance(Locale.getDefault()).toString());
+    private void addNewWatchPowerLevel(float powerLevel) throws JSONException {
+        useSdServerBinding().lineDataSetWatchBattery.addEntry(new Entry(powerLevel,useSdServerBinding().lineDataSetWatchBattery.getYVals().size()));
+        useSdServerBinding().hrHistoryStringsWatchBattery.add(Calendar.getInstance(TimeZone.getDefault()).toString());
         signalUpdateUI();
     }
 
