@@ -93,7 +93,8 @@
             <com.github.mikephil.charting.charts.LineChart
                 android:id="@+id/lineChartBattery"
                 android:layout_width="fill_parent"
-                android:layout_height="fill_parent">
+                android:layout_height="fill_parent"
+                android:isScrollContainer="true">
 
             </com.github.mikephil.charting.charts.LineChart>
         </FrameLayout>

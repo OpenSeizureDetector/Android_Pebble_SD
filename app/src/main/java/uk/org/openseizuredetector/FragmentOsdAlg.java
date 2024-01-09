@@ -15,11 +15,13 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.renderer.YAxisRenderer;
 import com.github.mikephil.charting.utils.ValueFormatter;
 
 import java.text.DecimalFormat;
@@ -148,6 +150,7 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
         }
         barDataSet.setBarSpacePercent(20f);
         barDataSet.setBarShadowColor(Color.WHITE);
+        barDataSet.setValueTextColor(R.color.okTextColor);
         BarData barData = new BarData(xVals, barDataSet);
         barData.setValueFormatter(new ValueFormatter() {
             @Override
@@ -157,6 +160,9 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             }
         });
         mChart.setData(barData);
+        mChart.setDescriptionColor(Color.WHITE);
+        Legend legendOfChart = mChart.getLegend();
+        legendOfChart.setTextColor(Color.WHITE);
 
         // format the axes
         XAxis xAxis = mChart.getXAxis();
@@ -185,6 +191,7 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
 
         YAxis yAxis2 = mChart.getAxisRight();
         yAxis2.setDrawGridLines(false);
+        yAxis2.setTextColor(Color.WHITE);
 
         try {
             mChart.getLegend().setEnabled(false);

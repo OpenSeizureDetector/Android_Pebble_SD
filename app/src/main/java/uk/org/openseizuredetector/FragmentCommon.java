@@ -201,13 +201,15 @@ public class FragmentCommon extends FragmentOsdBaseClass {
             }
         } else {
             tv = (TextView) mRootView.findViewById(R.id.serverStatusTv);
-            tv.setText(R.string.ServerStopped);
-            tv.setBackgroundColor(warnColour);
-            tv.setTextColor(warnTextColour);
-            tv = (TextView) mRootView.findViewById(R.id.serverIpTv);
-            tv.setText("--");
-            tv.setBackgroundColor(warnColour);
-            tv.setTextColor(warnTextColour);
+            if (Objects.nonNull(tv)){
+                tv.setText(R.string.ServerStopped);
+                tv.setBackgroundColor(warnColour);
+                tv.setTextColor(warnTextColour);
+                tv = (TextView) mRootView.findViewById(R.id.serverIpTv);
+                tv.setText("--");
+                tv.setBackgroundColor(warnColour);
+                tv.setTextColor(warnTextColour);
+            }
         }
 
         // deal with latch alarms button

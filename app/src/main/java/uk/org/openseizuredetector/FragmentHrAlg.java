@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.Objects;
 
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -88,6 +91,16 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                         mUtil.runOnUiThread(()->updateUi());
                     }
                 });
+                lineChart = mRootView.findViewById(R.id.lineChartBattery);
+                lineChart.setDescriptionColor(R.color.okTextColor);
+                YAxis yAxisLeft = lineChart.getAxisLeft();
+                yAxisLeft.setTextColor(R.color.okTextColor);
+                YAxis yAxisRight = lineChart.getAxisRight();
+                yAxisRight.setTextColor(R.color.okTextColor);
+                Legend legendOfGraph = lineChart.getLegend();
+                legendOfGraph.setTextColor(R.color.okTextColor);
+                XAxis xAxis = lineChart.getXAxis();
+                xAxis.setTextColor(R.color.okTextColor);
                 mUtil.runOnUiThread(this::updateUi);
             }
         } else {
@@ -141,10 +154,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                             if (Objects.nonNull(mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineData(switchAverages.isChecked()))) {
                                 if (mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineDataSet(switchAverages.isChecked()).getYVals().size() > 0) {
 
-                                    lineChart = mRootView.findViewById(R.id.lineChartBattery);
-
                                     lineChart.setData(mConnection.mSdServer.mSdDataSource.mSdAlgHr.getLineData(switchAverages.isChecked()));
-
                                     lineChart.getData().notifyDataChanged();
                                     lineChart.notifyDataSetChanged();
                                     lineChart.refreshDrawableState();

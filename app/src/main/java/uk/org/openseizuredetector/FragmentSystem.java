@@ -16,6 +16,8 @@ import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.appcompat.widget.SwitchCompat;
 
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.YAxis;
 
 import java.util.Objects;
 
@@ -66,12 +68,19 @@ public class FragmentSystem extends FragmentOsdBaseClass {
 
             }
         });
+        lineChartPowerLevel = mRootView.findViewById(R.id.lineChartBattery);
+        lineChartPowerLevel.setDescriptionColor(R.color.okTextColor);
+        YAxis yAxisLeft = lineChartPowerLevel.getAxisLeft();
+        yAxisLeft.setTextColor(R.color.okTextColor);
+        YAxis yAxisRight = lineChartPowerLevel.getAxisRight();
+        yAxisRight.setTextColor(R.color.okTextColor);
+        Legend legendOfGraph = lineChartPowerLevel.getLegend();
+        legendOfGraph.setTextColor(R.color.okTextColor);
     }
 
     void connectUiLiveDataRunner() {
         if (mConnection.mBound && Objects.nonNull(mConnection.mSdServer)) {
             switchWatchGraphToPhoneGraph = mRootView.findViewById(R.id.switchToPowerGraph);
-            lineChartPowerLevel = mRootView.findViewById(R.id.lineChartBattery);
             if (!mConnection.mSdServer.uiLiveData.isListeningInContext(this)) {
                 mConnection.mSdServer.uiLiveData.observe(this, this::onChangedObserver);
                 mConnection.mSdServer.uiLiveData.observeForever(this::onChangedObserver);
@@ -223,8 +232,6 @@ public class FragmentSystem extends FragmentOsdBaseClass {
 
                 if (Objects.nonNull(mConnection.mSdServer.getLineData(switchWatchGraphToPhoneGraph.isChecked()))) {
                     if (Objects.nonNull(lineChartPowerLevel)){
-
-                        lineChartPowerLevel = mRootView.findViewById(R.id.lineChartBattery);
                         lineChartPowerLevel.clear();
                         if (mConnection.mSdServer.getLineDataSet(switchWatchGraphToPhoneGraph.isChecked()).getYVals().size() > 0) {
 

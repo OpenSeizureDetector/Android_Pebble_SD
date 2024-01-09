@@ -57,11 +57,11 @@ public class SdAlgHr {
         mAverageHrBuff = new ArrayList<>(mAverageHrAlarmWindowDp);
         lineDataSet = new LineDataSet(new ArrayList<Entry>(),"Heart rate history" );
         lineDataSet.setColors(ColorTemplate.JOYFUL_COLORS);
-        lineDataSet.setValueTextColor(Color.BLACK);
+        lineDataSet.setValueTextColor(R.color.okTextColor);
         lineDataSet.setValueTextSize(18f);
         lineDataSetAverage = new LineDataSet(new ArrayList<Entry>(),"Heart rate history" );
         lineDataSetAverage.setColors(ColorTemplate.JOYFUL_COLORS);
-        lineDataSetAverage.setValueTextColor(Color.BLACK);
+        lineDataSetAverage.setValueTextColor(R.color.okTextColor);
         lineDataSetAverage.setValueTextSize(18f);
     }
 
@@ -161,7 +161,7 @@ public class SdAlgHr {
     public void addLineDataSetAverage(Float newValue) {
         int currentLineDataSetSize =lineDataSetAverage.getYVals().size();
         lineDataSetAverage.addEntry(new Entry(newValue , currentLineDataSetSize));
-        hrHistoryStringsAverage.add(Calendar.getInstance(TimeZone.getDefault()).toString());
+        hrHistoryStringsAverage.add(Calendar.getInstance(TimeZone.getDefault()).getTime().toString());
     }
 
     public List<Entry> getmHistoricHrBuff() {
