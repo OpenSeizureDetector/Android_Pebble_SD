@@ -111,6 +111,9 @@ public class SdDataSourceBLE extends SdDataSource {
     public static String SERV_INFINITIME_MOTION = "00030000-78fc-48fe-8e23-433b3a1942d0";
     public static String CHAR_INFINITIME_ACC_DATA = "00030002-78fc-48fe-8e23-433b3a1942d0";
 
+    public static String CHAR_BATT_DATA = "00002a19-0000-1000-8000-00805f9b34fb";
+    public static String SERV_BATT = "0000180f-0000-1000-8000-00805f9b34fb";
+
     // public static String CHAR_MANUF_NAME = "00002a29-0000-1000-8000-00805f9b34fb";
     // public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
     private BluetoothGatt mGatt;
@@ -284,7 +287,9 @@ public class SdDataSourceBLE extends SdDataSource {
                                 setCharacteristicNotification(gattCharacteristic, true);
                             } else if (charUuidStr.equals(CHAR_OSD_BATT_DATA)) {
                                 Log.v(TAG, "Subscribing to battery change Notifications");
+                                executeReadCharacteristic(gattCharacteristic);
                                 setCharacteristicNotification(gattCharacteristic, true);
+                                executeReadCharacteristic(gattCharacteristic);
                             } else if (charUuidStr.equals(CHAR_OSD_WATCH_ID)) {
                                 Log.v(TAG, "Reading Watch ID");
                                 executeReadCharacteristic(gattCharacteristic);
@@ -306,6 +311,18 @@ public class SdDataSourceBLE extends SdDataSource {
                                 mOsdChar = gattCharacteristic;
                                 mAccFmt = ACC_FMT_3D;  // Infinitime presents x, y, z data
                                 setCharacteristicNotification(gattCharacteristic, true);
+                            }
+                        }
+                    } else if (uuidStr.equals(SERV_BATT)) {
+                        Log.v(TAG, "Battery Data Service Service Discovered");
+                        for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
+                            String charUuidStr = gattCharacteristic.getUuid().toString();
+                            Log.v(TAG,"batt char="+charUuidStr);
+                            if (charUuidStr.equals(CHAR_BATT_DATA)) {
+                                Log.v(TAG, "Subscribing to Battery Data Change Notifications");
+                                setCharacteristicNotification(gattCharacteristic, true);
+                                Log.v(TAG, "Reading battery level");
+                                executeReadCharacteristic(gattCharacteristic);
                             }
                         }
                     }
@@ -373,7 +390,7 @@ public class SdDataSourceBLE extends SdDataSource {
              * If the data is acceleration data, we add it to a buffer - it is analysed once the buffer is full.
              * Heart rate data is written directly to sdData to be used in future analysis.
              */
-            //Log.v(TAG,"onDataReceived: Characteristic="+characteristic.getUuid().toString());
+            Log.v(TAG,"onDataReceived: Characteristic="+characteristic.getUuid().toString());
             if (characteristic.getUuid().toString().equals(CHAR_HEART_RATE_MEASUREMENT)) {
                 int flag = characteristic.getProperties();
                 //Log.d(TAG,"onDataReceived() - flag = "+flag);
@@ -395,8 +412,8 @@ public class SdDataSourceBLE extends SdDataSource {
                 byte[] rawDataBytes = characteristic.getValue();
                 short[] newAccVals = parseDataToAccVals(rawDataBytes);
                 Log.v(TAG, "onDataReceived(): CHAR_OSD_ACC_DATA: numSamples = " + rawDataBytes.length+" nRawData="+nRawData);
-                Log.v(TAG, "onDataReceived() - rawDataBytes="+ Arrays.toString(rawDataBytes));
-                Log.v(TAG, "onDataReceived() - newAccVals="+Arrays.toString(newAccVals));
+                //Log.v(TAG, "onDataReceived() - rawDataBytes="+ Arrays.toString(rawDataBytes));
+                //Log.v(TAG, "onDataReceived() - newAccVals="+Arrays.toString(newAccVals));
                 for (int i = 0; i < newAccVals.length;i++) {
                     if (nRawData < MAX_RAW_DATA ) {
                         switch (mAccFmt) {
@@ -453,6 +470,12 @@ public class SdDataSourceBLE extends SdDataSource {
                 byte batteryPc = characteristic.getValue()[0];
                 mSdData.batteryPc = batteryPc;
                 Log.v(TAG,"onDataReceived(): CHAR_OSD_BATT_DATA: " + String.format("%d", batteryPc));
+                mSdData.haveSettings = true;
+            }
+            else if (characteristic.getUuid().toString().equals(CHAR_BATT_DATA)) {
+                byte batteryPc = characteristic.getValue()[0];
+                mSdData.batteryPc = batteryPc;
+                Log.v(TAG,"onDataReceived(): CHAR_BATT_DATA: " + String.format("%d", batteryPc));
                 mSdData.haveSettings = true;
             }
             else if (characteristic.getUuid().toString().equals(CHAR_OSD_WATCH_ID)) {
