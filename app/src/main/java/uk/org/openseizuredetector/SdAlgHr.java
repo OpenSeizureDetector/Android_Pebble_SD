@@ -27,6 +27,7 @@ public class SdAlgHr {
 
     private CircBuf mAdaptiveHrBuff;
     private CircBuf mAverageHrBuff;
+    private CircBuf mHrHist;
 
     public SdAlgHr(Context context) {
         Log.i(TAG, "SdAlgHr Constructor");
@@ -34,6 +35,8 @@ public class SdAlgHr {
         updatePrefs();
         mAdaptiveHrBuff = new CircBuf(mAdaptiveHrAlarmWindowDp, -1.0);
         mAverageHrBuff = new CircBuf(mAverageHrAlarmWindowDp, -1.0);
+        // FIXME - this is a hard coded 3 hour period (at 5 second intervals)
+        mHrHist = new CircBuf((int)(3 * 3600 / 5), -1);
     }
 
     public void close() {
@@ -127,6 +130,8 @@ public class SdAlgHr {
         return mAdaptiveHrBuff;
     }
 
+    public CircBuf getHrHistBuff() { return mHrHist; }
+
     /**
      * Returns the average heart rate being used by the Average heart rate algorithm
      * @return Average Heart rate in bpm.
@@ -183,6 +188,7 @@ public class SdAlgHr {
         Log.v(TAG, "checkHr("+hrVal+")");
         mAdaptiveHrBuff.add(hrVal);
         mAverageHrBuff.add(hrVal);
+        mHrHist.add(hrVal);
         ArrayList<Boolean> retVal = new ArrayList<Boolean>();
         retVal.add(checkSimpleHr(hrVal));
         retVal.add(checkAdaptiveHr(hrVal));

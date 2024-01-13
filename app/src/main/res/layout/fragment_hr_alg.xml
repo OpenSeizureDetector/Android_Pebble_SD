@@ -5,13 +5,15 @@
     android:layout_height="match_parent"
     tools:context=".FragmentOsdBaseClass">
 
+    <!-- TODO: Update blank fragment layout -->
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
-        android:layout_height="253dp"
+        android:layout_height="match_parent"
         android:background="@color/okBackgroundColor"
         android:orientation="vertical">
-
+        <!-- TODO: Update blank fragment layout -->
         <TextView
+            android:id="@+id/fragment_hr_alg_tv1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="HR Algorithm Status"
@@ -68,10 +70,33 @@
         </androidx.appcompat.widget.LinearLayoutCompat>
 
         <TextView
-            android:id="@+id/fragment_hr_alg_tv1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Fragment_HrAlg" />
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="TextView" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/hr_average_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Show averages" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/lineChart"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent">
+
+            </com.github.mikephil.charting.charts.LineChart>
+        </FrameLayout>
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 

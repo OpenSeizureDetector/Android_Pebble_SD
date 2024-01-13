@@ -95,7 +95,7 @@ public abstract class SdDataSource {
     private short mFallWindow;
     private int mMute;  // !=0 means muted by keypress on watch.
     private SdAlgNn mSdAlgNn;
-    private SdAlgHr mSdAlgHr;
+    protected SdAlgHr mSdAlgHr;
 
     // Values for SD_MODE
     private int SIMPLE_SPEC_FMAX = 10;
