@@ -562,4 +562,5 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="use_new_ui_summary">Use new swipeable user interface</string>
     <string name="use_new_ui_title">Use New User Interface</string>
+    <string name="heart_rate_algorithm">Heart Rate Algorithm</string>
 </resources>
