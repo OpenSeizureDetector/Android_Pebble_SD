@@ -563,4 +563,6 @@
     <string name="use_new_ui_summary">Use new swipeable user interface</string>
     <string name="use_new_ui_title">Use New User Interface</string>
     <string name="heart_rate_algorithm">Heart Rate Algorithm</string>
+    <string name="heart_rate_history_bpm">"Heart Rate History (bpm): "</string>
+    <string name="minutes">minutes</string>
 </resources>

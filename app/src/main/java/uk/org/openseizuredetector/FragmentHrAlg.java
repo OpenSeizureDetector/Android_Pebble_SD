@@ -70,6 +70,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     public void onResume() {
         super.onResume();
         mLineChart = mRootView.findViewById(R.id.lineChart);
+        mLineChart.getLegend().setEnabled(false);
         XAxis xAxis = mLineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setTextSize(10f);
@@ -154,7 +155,10 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                         mLineChart.notifyDataSetChanged();
                         mLineChart.refreshDrawableState();
                         float xSpan = (nHistArr * 5.0f)/60.0f;   // time in minutes assuming one point every 5 seconds.
-                        mLineChart.setDescription("Heart Ratee History - "+String.format("%.1f", xSpan)+" minutes");
+                        mLineChart.setDescription(getString(R.string.heart_rate_history_bpm)
+                                + String.format("%.1f", xSpan)
+                                + " " + getString(R.string.minutes));
+                        mLineChart.setDescriptionTextSize(12f);
                         mLineChart.invalidate();
                         //if (mConnection.mBound){
                         //    lineChart.postInvalidate();
