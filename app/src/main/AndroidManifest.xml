@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:versionCode="128"
-    android:versionName="4.2.1k">
+    android:versionName="4.2.1l">
     <!-- android:allowBackup="false" -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -44,11 +44,12 @@
         <activity
             android:name=".MainActivity2"
             android:exported="false" />
-        <activity
+        <!--<activity
             android:name=".MlModelManager"
             android:exported="false"
             android:label="@string/title_activity_ml_model_manager"
             android:theme="@style/AppTheme" />
+            -->
         <activity android:name=".AuthenticateActivity" /> <!-- @android:style/Theme.Holo.Light" -->
         <activity android:name=".BLEScanActivity" />
         <activity android:name=".ExportDataActivity" /> <!-- android:usesCleartextTraffic="true" -->

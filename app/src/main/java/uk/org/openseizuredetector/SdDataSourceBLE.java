@@ -243,14 +243,16 @@ public class SdDataSourceBLE extends SdDataSource {
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 mConnectionState = STATE_DISCONNECTED;
                 mSdData.watchConnected = false;
-                Log.i(TAG, "onConnectionStateChange(): Disconnected from GATT server - reconnecting after delay...");
-                //bleDisconnect();  // Tidy up connections
+                Log.i(TAG, "onConnectionStateChange(): Disconnected from GATT server");
+                /**Log.i(TAG, "onConnectionStateChange(): Disconnected from GATT server - reconnecting after delay...");
+                bleDisconnect();  // Tidy up connections
                 // Wait 2 seconds to give the server chance to shutdown, then re-start it
                 mHandler.postDelayed(new Runnable() {
                     public void run() {
                         bleConnect();
                     }
                 }, 2000);
+                 */
             }
         }
 
@@ -403,7 +405,13 @@ public class SdDataSourceBLE extends SdDataSource {
                     //Log.d(TAG, "onDataReceived(): Heart rate format UINT8.");
                 }
                 final int heartRate = characteristic.getIntValue(format, 1);  // heart rate is second byte
-                mSdData.mHR = (double) heartRate;
+                // We normally use -1 for fault indication, but the BLE standard is for one byte for heart
+                // rate services, so we can't send -1, so treat either 0 or 255 as fault.
+                if (heartRate == 255 || heartRate == 0) {
+                    mSdData.mHR = -1;
+                } else {
+                    mSdData.mHR = (double) heartRate;
+                }
                 Log.d(TAG, String.format("onDataReceived(): CHAR_HEART_RATE_MEASUREMENT: %d", heartRate));
             }
             else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_DATA)
