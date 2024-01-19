@@ -52,7 +52,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        lineDataSet = new LineDataSet(new ArrayList<Entry>(),"Heart rate history" );
+        lineDataSet = new LineDataSet(new ArrayList<Entry>(), "Heart rate history");
         //lineDataSet.setColors(ColorTemplate.JOYFUL_COLORS);
         lineDataSet.setValueTextColor(Color.BLACK);
         lineDataSet.setValueTextSize(18f);
@@ -99,6 +99,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         yAxis2.setDrawGridLines(false);
         yAxis2.setEnabled(false);
     }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -118,9 +119,9 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
             tvCurrent = mRootView.findViewById(R.id.textView2);
             if (Objects.nonNull(tvCurrent)) {
                 if (Objects.nonNull(tvHr))
-                    tvHr.setText( String.valueOf((short)mConnection.mSdServer.mSdData.mHR));
+                    tvHr.setText(String.valueOf((short) mConnection.mSdServer.mSdData.mHR));
                 if (Objects.nonNull(tvAvgAHr))
-                    tvAvgAHr.setText( String.valueOf((short)mConnection.mSdServer.mSdData
+                    tvAvgAHr.setText(String.valueOf((short) mConnection.mSdServer.mSdData
                             .mAdaptiveHrAverage));
                 tvCurrent.setText(new StringBuilder()
                         .append("\nResult of checks: Adaptive Hr Alarm Standing: ")
@@ -137,16 +138,16 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                     int nHistArr = hrHist.getNumVals();
                     double hrHistArr[] = hrHist.getVals();   // This gives us a simple vector of hr values to plot.
                     if (Objects.nonNull(hrHist) && nHistArr > 0) {
-                        Log.v(TAG, "hrHist.getNumVals="+nHistArr);
+                        Log.v(TAG, "hrHist.getNumVals=" + nHistArr);
                         lineDataSet.clear();
                         String xVals[] = new String[nHistArr];
-                        for (int i = 0; i<nHistArr; i++) {
+                        for (int i = 0; i < nHistArr; i++) {
                             //Log.d(TAG,"i="+i+", HR="+hrHistArr[i]);
                             xVals[i] = String.valueOf(i);
-                            lineDataSet.addEntry(new Entry((float)hrHistArr[i], i));
+                            lineDataSet.addEntry(new Entry((float) hrHistArr[i], i));
                         }
-                        Log.d(TAG,"xVals="+ Arrays.toString(xVals)+ ", lneDataSet="+lineDataSet.toSimpleString());
-                        lineDataSet.setColors(new int[] {0xffff0000});
+                        Log.d(TAG, "xVals=" + Arrays.toString(xVals) + ", lneDataSet=" + lineDataSet.toSimpleString());
+                        lineDataSet.setColors(new int[]{0xffff0000});
                         LineData hrHistLineData = new LineData(xVals, lineDataSet);
 
 
@@ -154,7 +155,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                         mLineChart.getData().notifyDataChanged();
                         mLineChart.notifyDataSetChanged();
                         mLineChart.refreshDrawableState();
-                        float xSpan = (nHistArr * 5.0f)/60.0f;   // time in minutes assuming one point every 5 seconds.
+                        float xSpan = (nHistArr * 5.0f) / 60.0f;   // time in minutes assuming one point every 5 seconds.
                         mLineChart.setDescription(getString(R.string.heart_rate_history_bpm)
                                 + String.format("%.1f", xSpan)
                                 + " " + getString(R.string.minutes));

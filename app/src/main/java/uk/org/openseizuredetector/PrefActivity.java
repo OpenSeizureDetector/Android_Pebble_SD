@@ -152,7 +152,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                 Intent i;
                 i = new Intent(this, StartupActivity.class);
                 startActivity(i);
-                Log.i(TAG,"onSharedPreferenceChanged() - finishing PrefActivity");
+                Log.i(TAG, "onSharedPreferenceChanged() - finishing PrefActivity");
                 finish();
                 return;
             } else {
@@ -218,7 +218,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
     protected void onStop() {
         super.onStop();
         mUtil.writeToSysLogFile("PrefActvity.onStop()");
-        Log.i(TAG,"onStop()");
+        Log.i(TAG, "onStop()");
     }
 
     /**

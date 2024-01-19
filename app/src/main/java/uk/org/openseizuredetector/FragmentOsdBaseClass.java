@@ -34,7 +34,6 @@ public class FragmentOsdBaseClass extends Fragment {
     protected int alarmTextColour = Color.BLACK;
 
 
-
     public FragmentOsdBaseClass() {
         // Required empty public constructor
     }
@@ -44,7 +43,7 @@ public class FragmentOsdBaseClass extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
-        Log.i(TAG,"onCreate()");
+        Log.i(TAG, "onCreate()");
         mContext = getContext();
         mUtil = new OsdUtil(mContext, updateUiHandler);
         mConnection = new SdServiceConnection(mContext);
@@ -109,7 +108,7 @@ public class FragmentOsdBaseClass extends Fragment {
      * update the user interface views...
      */
     private void updateUiOnUiThread() {
-        updateUiHandler.post(new Runnable(){
+        updateUiHandler.post(new Runnable() {
             @Override
             public void run() {
                 updateUi();
@@ -121,9 +120,9 @@ public class FragmentOsdBaseClass extends Fragment {
      * The subclasses should override this to draw their own UI.
      */
     protected void updateUi() {
-        Log.d(TAG,"updateUi()");
+        Log.d(TAG, "updateUi()");
         TextView tv;
-        tv = (TextView)mRootView.findViewById(R.id.fragment_sddata_viewer_tv1);
+        tv = (TextView) mRootView.findViewById(R.id.fragment_sddata_viewer_tv1);
         if (mConnection.mBound) {
             tv.setText("Bound to Server");
         } else {

@@ -13,6 +13,7 @@ import androidx.appcompat.widget.LinearLayoutCompat;
 
 public class FragmentSystem extends FragmentOsdBaseClass {
     String TAG = "FragmentSystem";
+
     public FragmentSystem() {
         // Required empty public constructor
     }
@@ -51,13 +52,12 @@ public class FragmentSystem extends FragmentOsdBaseClass {
     }
 
 
-
     @Override
     protected void updateUi() {
         //Log.d(TAG,"updateUi()");
         TextView tv;
 
-        tv = (TextView)mRootView.findViewById(R.id.fragment_bound_to_server_tv);
+        tv = (TextView) mRootView.findViewById(R.id.fragment_bound_to_server_tv);
         if (mConnection.mBound) {
             tv.setText("Bound to Server");
             tv.setTextColor(okTextColour);
@@ -66,7 +66,7 @@ public class FragmentSystem extends FragmentOsdBaseClass {
             tv.setTextColor(warnTextColour);
             return;
         }
-        LinearLayoutCompat ll = (LinearLayoutCompat)mRootView.findViewById(R.id.fragment_ll);
+        LinearLayoutCompat ll = (LinearLayoutCompat) mRootView.findViewById(R.id.fragment_ll);
         if (mUtil.isServerRunning()) {
             ll.setBackgroundColor(okColour);
 
@@ -174,8 +174,8 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                 }
             }
         } catch (Exception e) {
-        Log.e(TAG, "UpdateUi: Exception - ");
-        e.printStackTrace();
-    }
+            Log.e(TAG, "UpdateUi: Exception - ");
+            e.printStackTrace();
+        }
     }
 }

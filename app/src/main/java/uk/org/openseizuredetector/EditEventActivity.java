@@ -3,7 +3,9 @@ package uk.org.openseizuredetector;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -205,7 +207,7 @@ public class EditEventActivity extends AppCompatActivity {
                     int alarmStateVal = Integer.parseInt(alarmStateStr);
                     alarmStateStr = mUtil.alarmStatusToString(alarmStateVal);
                 } catch (Exception e) {
-                    Log.v(TAG,"updateUi: alarmState does not parse to int so displaying it as string: " +alarmStateStr);
+                    Log.v(TAG, "updateUi: alarmState does not parse to int so displaying it as string: " + alarmStateStr);
                 }
                 tv.setText(alarmStateStr);
                 tv = (TextView) findViewById(R.id.eventNotsTv);
@@ -219,7 +221,7 @@ public class EditEventActivity extends AppCompatActivity {
                     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     tv.setText(dateFormat.format(dataTime));
                 } catch (Exception e) {
-                    Log.e(TAG,"updateUI: Error Parsing dataDate "+e.getLocalizedMessage());
+                    Log.e(TAG, "updateUI: Error Parsing dataDate " + e.getLocalizedMessage());
                     tv.setText("---");
                 }
 
@@ -234,9 +236,9 @@ public class EditEventActivity extends AppCompatActivity {
                 }
 
                 // Populate the event sub-types radio button list.
-                Log.v(TAG,"updateUi() - meventsubtypeshashmap="+mEventSubTypesHashMap+", mEventSubtypesListChanged="+mEventSubTypesListChanged);
+                Log.v(TAG, "updateUi() - meventsubtypeshashmap=" + mEventSubTypesHashMap + ", mEventSubtypesListChanged=" + mEventSubTypesListChanged);
                 if (mEventSubTypesHashMap != null && mEventSubTypesListChanged) {
-                    Log.v(TAG,"UpdateUi() - populating event sub types list");
+                    Log.v(TAG, "UpdateUi() - populating event sub types list");
                     if (mEventObj.getString("type") != null) {
                         // based on https://androidexample.com/create-a-simple-listview
                         ArrayList<String> subtypesArrayList = mEventSubTypesHashMap.get(mEventObj.getString("type"));
@@ -265,9 +267,8 @@ public class EditEventActivity extends AppCompatActivity {
 
             }
         } catch (JSONException e) {
-            Log.e(TAG,"Error Parsing mEventObj: "+e.getMessage());
+            Log.e(TAG, "Error Parsing mEventObj: " + e.getMessage());
         }
-
 
 
     }  // updateUi()
@@ -287,14 +288,14 @@ public class EditEventActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
                     //m_status=true;
-                    TextView tv = (TextView)findViewById(R.id.eventNotsTv);
+                    TextView tv = (TextView) findViewById(R.id.eventNotsTv);
                     try {
-                        mEventObj.put("desc",tv.getText());
-                        mEventObj.put("id",mEventId);   // Add event Id to event object manually because firestore does not include it by default.
+                        mEventObj.put("desc", tv.getText());
+                        mEventObj.put("id", mEventId);   // Add event Id to event object manually because firestore does not include it by default.
                     } catch (JSONException e) {
-                        Log.e(TAG,"Error writing mEventObj: "+e.getMessage());
+                        Log.e(TAG, "Error writing mEventObj: " + e.getMessage());
                     }
-                    Log.v(TAG, "onOK() - eventObj="+mEventObj.toString());
+                    Log.v(TAG, "onOK() - eventObj=" + mEventObj.toString());
 
                     try {
                         mWac.updateEvent(mEventObj, new WebApiConnection.JSONObjectCallback() {
@@ -314,7 +315,7 @@ public class EditEventActivity extends AppCompatActivity {
                             }
                         });
                     } catch (Exception e) {
-                        Log.e(TAG,"onOK() - ERROR: "+e.getMessage()+" : " +e.toString());
+                        Log.e(TAG, "onOK() - ERROR: " + e.getMessage() + " : " + e.toString());
                         e.printStackTrace();
                         mUtil.showToast("Error Updating Event");
                         updateUi();
@@ -327,16 +328,16 @@ public class EditEventActivity extends AppCompatActivity {
             new RadioGroup.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(RadioGroup group, int checkedId) {
-                    Log.v(TAG,"onEventTypeChange() - id="+checkedId);
-                    RadioButton b = (RadioButton)findViewById(group.getCheckedRadioButtonId());
+                    Log.v(TAG, "onEventTypeChange() - id=" + checkedId);
+                    RadioButton b = (RadioButton) findViewById(group.getCheckedRadioButtonId());
                     String selectedEventType = b.getText().toString();
                     try {
                         mEventObj.put("type", selectedEventType);
                     } catch (JSONException e) {
-                        Log.e(TAG,"Error setting mEventObj.type: "+e.getMessage());
+                        Log.e(TAG, "Error setting mEventObj.type: " + e.getMessage());
                     }
                     mEventSubTypesListChanged = true;
-                    Log.v(TAG,"onEventTypeChange() - mEventSubTypesListChanged="+mEventSubTypesListChanged);
+                    Log.v(TAG, "onEventTypeChange() - mEventSubTypesListChanged=" + mEventSubTypesListChanged);
                     updateUi();
                 }
             };
@@ -344,13 +345,13 @@ public class EditEventActivity extends AppCompatActivity {
             new RadioGroup.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(RadioGroup group, int checkedId) {
-                    Log.v(TAG,"onEventSubTypeChange() - id="+checkedId);
-                    RadioButton b = (RadioButton)findViewById(group.getCheckedRadioButtonId());
+                    Log.v(TAG, "onEventSubTypeChange() - id=" + checkedId);
+                    RadioButton b = (RadioButton) findViewById(group.getCheckedRadioButtonId());
                     String selectedEventSubType = b.getText().toString();
                     try {
                         mEventObj.put("subType", selectedEventSubType);
                     } catch (JSONException e) {
-                        Log.e(TAG,"Error setting mEventObj.type: "+e.getMessage());
+                        Log.e(TAG, "Error setting mEventObj.type: " + e.getMessage());
                     }
                     updateUi();
                 }

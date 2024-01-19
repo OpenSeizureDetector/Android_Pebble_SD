@@ -101,8 +101,8 @@ public class SdDataSourceBLE extends SdDataSource {
     public static String CHAR_OSD_BATT_DATA = "000085e9-0002-1000-8000-00805f9b34fb";
     public static String CHAR_OSD_WATCH_ID = "000085e9-0003-1000-8000-00805f9b34fb";
     public static String CHAR_OSD_WATCH_FW = "000085e9-0004-1000-8000-00805f9b34fb";
-    public static String CHAR_OSD_ACC_FMT= "000085e9-0005-1000-8000-00805f9b34fb";
-        // Valid values are 0: 8 bit vector magnitude scaled so 1g=44
+    public static String CHAR_OSD_ACC_FMT = "000085e9-0005-1000-8000-00805f9b34fb";
+    // Valid values are 0: 8 bit vector magnitude scaled so 1g=44
 
     public final static int ACC_FMT_8BIT = 0;
     public final static int ACC_FMT_16BIT = 1;
@@ -245,13 +245,13 @@ public class SdDataSourceBLE extends SdDataSource {
                 mSdData.watchConnected = false;
                 Log.i(TAG, "onConnectionStateChange(): Disconnected from GATT server");
                 /**Log.i(TAG, "onConnectionStateChange(): Disconnected from GATT server - reconnecting after delay...");
-                bleDisconnect();  // Tidy up connections
-                // Wait 2 seconds to give the server chance to shutdown, then re-start it
-                mHandler.postDelayed(new Runnable() {
-                    public void run() {
-                        bleConnect();
-                    }
-                }, 2000);
+                 bleDisconnect();  // Tidy up connections
+                 // Wait 2 seconds to give the server chance to shutdown, then re-start it
+                 mHandler.postDelayed(new Runnable() {
+                 public void run() {
+                 bleConnect();
+                 }
+                 }, 2000);
                  */
             }
         }
@@ -319,7 +319,7 @@ public class SdDataSourceBLE extends SdDataSource {
                         Log.v(TAG, "Battery Data Service Service Discovered");
                         for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
                             String charUuidStr = gattCharacteristic.getUuid().toString();
-                            Log.v(TAG,"batt char="+charUuidStr);
+                            Log.v(TAG, "batt char=" + charUuidStr);
                             if (charUuidStr.equals(CHAR_BATT_DATA)) {
                                 Log.v(TAG, "Subscribing to Battery Data Change Notifications");
                                 setCharacteristicNotification(gattCharacteristic, true);
@@ -352,14 +352,14 @@ public class SdDataSourceBLE extends SdDataSource {
          * of a given characteristic.
          * Because only one BLE operation can be taking place at a time, it may fail, in which case
          * the read is re-tried after a 100ms delay.
-          * @param gattCharacteristic - the characteristic to be read.
+         * @param gattCharacteristic - the characteristic to be read.
          */
         private void executeReadCharacteristic(BluetoothGattCharacteristic gattCharacteristic) {
             boolean retVal = mBluetoothGatt.readCharacteristic(gattCharacteristic);
             if (retVal) {
-                Log.d(TAG,"executeReadCharacteristic - read initiated successfully");
+                Log.d(TAG, "executeReadCharacteristic - read initiated successfully");
             } else {
-                Log.d(TAG,"executeReadCharacteristic - read initiation failed - waiting, then re-trying");
+                Log.d(TAG, "executeReadCharacteristic - read initiation failed - waiting, then re-trying");
                 mHandler.postDelayed(new Runnable() {
                     public void run() {
                         Log.w(TAG, "Executing delayed read of characteristic");
@@ -368,6 +368,7 @@ public class SdDataSourceBLE extends SdDataSource {
                 }, 100);
             }
         }
+
         private boolean permissionsOK() {
             if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                 // TODO: Consider calling
@@ -377,7 +378,7 @@ public class SdDataSourceBLE extends SdDataSource {
                 //                                          int[] grantResults)
                 // to handle the case where the user grants the permission. See the documentation
                 // for ActivityCompat#requestPermissions for more details.
-                Log.e(TAG,"permissionsOK() - Bluetooth Permmission Not Granted");
+                Log.e(TAG, "permissionsOK() - Bluetooth Permmission Not Granted");
                 mUtil.showToast("ERROR - Bluetooth Permission not Granted");
                 return (false);
             } else {
@@ -392,7 +393,7 @@ public class SdDataSourceBLE extends SdDataSource {
              * If the data is acceleration data, we add it to a buffer - it is analysed once the buffer is full.
              * Heart rate data is written directly to sdData to be used in future analysis.
              */
-            Log.v(TAG,"onDataReceived: Characteristic="+characteristic.getUuid().toString());
+            Log.v(TAG, "onDataReceived: Characteristic=" + characteristic.getUuid().toString());
             if (characteristic.getUuid().toString().equals(CHAR_HEART_RATE_MEASUREMENT)) {
                 int flag = characteristic.getProperties();
                 //Log.d(TAG,"onDataReceived() - flag = "+flag);
@@ -413,17 +414,16 @@ public class SdDataSourceBLE extends SdDataSource {
                     mSdData.mHR = (double) heartRate;
                 }
                 Log.d(TAG, String.format("onDataReceived(): CHAR_HEART_RATE_MEASUREMENT: %d", heartRate));
-            }
-            else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_DATA)
+            } else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_DATA)
                     || characteristic.getUuid().toString().equals(CHAR_INFINITIME_ACC_DATA)) {
                 //Log.v(TAG,"Received OSD ACC DATA"+characteristic.getValue());
                 byte[] rawDataBytes = characteristic.getValue();
                 short[] newAccVals = parseDataToAccVals(rawDataBytes);
-                Log.v(TAG, "onDataReceived(): CHAR_OSD_ACC_DATA: numSamples = " + rawDataBytes.length+" nRawData="+nRawData);
+                Log.v(TAG, "onDataReceived(): CHAR_OSD_ACC_DATA: numSamples = " + rawDataBytes.length + " nRawData=" + nRawData);
                 //Log.v(TAG, "onDataReceived() - rawDataBytes="+ Arrays.toString(rawDataBytes));
                 //Log.v(TAG, "onDataReceived() - newAccVals="+Arrays.toString(newAccVals));
-                for (int i = 0; i < newAccVals.length;i++) {
-                    if (nRawData < MAX_RAW_DATA ) {
+                for (int i = 0; i < newAccVals.length; i++) {
+                    if (nRawData < MAX_RAW_DATA) {
                         switch (mAccFmt) {
                             case ACC_FMT_8BIT:
                             case ACC_FMT_16BIT:
@@ -433,7 +433,7 @@ public class SdDataSourceBLE extends SdDataSource {
                             case ACC_FMT_3D:
                                 // 3d data is x1,y1,z1, x2,y2,z2 ... xn,yn,zn
                                 // We only do this every third value, then process x, y and z simultaneously.
-                                if (i+2 < newAccVals.length) {
+                                if (i + 2 < newAccVals.length) {
                                     if (i % 3 == 0) {
                                         short x, y, z;
                                         x = newAccVals[i];
@@ -450,8 +450,8 @@ public class SdDataSourceBLE extends SdDataSource {
                                 }
                                 break;
                             default:
-                                Log.e(TAG,"INVALID ACCELERATION FORMAT"+mAccFmt);
-                                mUtil.showToast("INVALID ACCELERATION FORMAT "+mAccFmt);
+                                Log.e(TAG, "INVALID ACCELERATION FORMAT" + mAccFmt);
+                                mUtil.showToast("INVALID ACCELERATION FORMAT " + mAccFmt);
                         }
 
                     } else {
@@ -459,9 +459,9 @@ public class SdDataSourceBLE extends SdDataSource {
                         mSdData.watchAppRunning = true;
                         for (i = 0; i < rawData.length; i++) {
                             mSdData.rawData[i] = rawData[i];
-                            mSdData.rawData3D[i*3] = rawData3d[i*3];
-                            mSdData.rawData3D[i*3 +1] = rawData3d[i*3 +1];
-                            mSdData.rawData3D[i*3 +2] = rawData3d[i*3 +2];
+                            mSdData.rawData3D[i * 3] = rawData3d[i * 3];
+                            mSdData.rawData3D[i * 3 + 1] = rawData3d[i * 3 + 1];
+                            mSdData.rawData3D[i * 3 + 2] = rawData3d[i * 3 + 2];
                             //Log.v(TAG,"onDataReceived() i="+i+", "+rawData[i]);
                         }
                         mSdData.mNsamp = rawData.length;
@@ -473,37 +473,31 @@ public class SdDataSourceBLE extends SdDataSource {
                         nRawData = 0;
                     }
                 }
-            }
-            else if (characteristic.getUuid().toString().equals(CHAR_OSD_BATT_DATA)) {
+            } else if (characteristic.getUuid().toString().equals(CHAR_OSD_BATT_DATA)) {
                 byte batteryPc = characteristic.getValue()[0];
                 mSdData.batteryPc = batteryPc;
-                Log.v(TAG,"onDataReceived(): CHAR_OSD_BATT_DATA: " + String.format("%d", batteryPc));
+                Log.v(TAG, "onDataReceived(): CHAR_OSD_BATT_DATA: " + String.format("%d", batteryPc));
                 mSdData.haveSettings = true;
-            }
-            else if (characteristic.getUuid().toString().equals(CHAR_BATT_DATA)) {
+            } else if (characteristic.getUuid().toString().equals(CHAR_BATT_DATA)) {
                 byte batteryPc = characteristic.getValue()[0];
                 mSdData.batteryPc = batteryPc;
-                Log.v(TAG,"onDataReceived(): CHAR_BATT_DATA: " + String.format("%d", batteryPc));
+                Log.v(TAG, "onDataReceived(): CHAR_BATT_DATA: " + String.format("%d", batteryPc));
                 mSdData.haveSettings = true;
-            }
-            else if (characteristic.getUuid().toString().equals(CHAR_OSD_WATCH_ID)) {
+            } else if (characteristic.getUuid().toString().equals(CHAR_OSD_WATCH_ID)) {
                 byte[] rawDataBytes = characteristic.getValue();
                 String watchId = new String(rawDataBytes, StandardCharsets.UTF_8);
-                Log.v(TAG,"Received Watch ID: "+watchId);
+                Log.v(TAG, "Received Watch ID: " + watchId);
                 mSdData.watchSdName = watchId;
-            }
-            else if (characteristic.getUuid().toString().equals(CHAR_OSD_WATCH_FW)) {
+            } else if (characteristic.getUuid().toString().equals(CHAR_OSD_WATCH_FW)) {
                 byte[] rawDataBytes = characteristic.getValue();
                 String watchFwVer = new String(rawDataBytes, StandardCharsets.UTF_8);
-                Log.v(TAG,"Received Watch Firmware Version: "+watchFwVer);
+                Log.v(TAG, "Received Watch Firmware Version: " + watchFwVer);
                 mSdData.watchSdVersion = watchFwVer;
-            }
-            else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_FMT)) {
+            } else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_FMT)) {
                 mAccFmt = characteristic.getValue()[0];
-                Log.v(TAG,"Received Acceleration format code: "+mAccFmt);
-            }
-            else {
-                Log.v(TAG,"Unrecognised Characteristic Updated "+
+                Log.v(TAG, "Received Acceleration format code: " + mAccFmt);
+            } else {
+                Log.v(TAG, "Unrecognised Characteristic Updated " +
                         characteristic.getUuid().toString());
             }
         }
@@ -513,14 +507,14 @@ public class SdDataSourceBLE extends SdDataSource {
             switch (mAccFmt) {
                 case ACC_FMT_8BIT:
                     retArr = new short[rawDataBytes.length];
-                    for (int i = 0; i < rawDataBytes.length;i++) {
+                    for (int i = 0; i < rawDataBytes.length; i++) {
                         retArr[i] = (short) (1000 * rawDataBytes[i] / 64);   // Scale to mg
                     }
                     break;
                 case ACC_FMT_16BIT:
                 case ACC_FMT_3D:
                     // from https://stackoverflow.com/questions/5625573/byte-array-to-short-array-and-back-again-in-java
-                    retArr = new short[rawDataBytes.length/2];
+                    retArr = new short[rawDataBytes.length / 2];
                     // to turn bytes to shorts as either big endian or little endian.
                     ByteBuffer.wrap(rawDataBytes)
                             .order(ByteOrder.LITTLE_ENDIAN)
@@ -528,17 +522,18 @@ public class SdDataSourceBLE extends SdDataSource {
                             .get(retArr);
                     break;
                 default:
-                    Log.e(TAG,"INVALID ACCELERATION FORMAT"+mAccFmt);
-                    mUtil.showToast("INVALID ACCELERATION FORMAT "+mAccFmt);
+                    Log.e(TAG, "INVALID ACCELERATION FORMAT" + mAccFmt);
+                    mUtil.showToast("INVALID ACCELERATION FORMAT " + mAccFmt);
                     retArr = new short[0];
             }
-            return(retArr);
+            return (retArr);
         }
+
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic characteristic,
                                          int status) {
-            Log.v(TAG,"onCharacteristicRead");
+            Log.v(TAG, "onCharacteristicRead");
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 onDataReceived(characteristic);
             }
@@ -553,7 +548,7 @@ public class SdDataSourceBLE extends SdDataSource {
 
         @Override
         public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-            Log.v(TAG,"onDescriptorWrite(): Characteristic " + descriptor.getUuid() + " changed");
+            Log.v(TAG, "onDescriptorWrite(): Characteristic " + descriptor.getUuid() + " changed");
             waitForDescriptorWrite = false;
         }
     };

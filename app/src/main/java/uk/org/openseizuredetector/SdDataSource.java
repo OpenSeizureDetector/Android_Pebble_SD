@@ -154,7 +154,6 @@ public abstract class SdDataSource {
         }
 
 
-
         // Start timer to check status of watch regularly.
         mDataStatusTime = new Time(Time.getCurrentTimezone());
         // use a timer to check the status of the pebble app on the same frequency
@@ -342,7 +341,7 @@ public abstract class SdDataSource {
                     }
                 } catch (JSONException e) {
                     // If we get an error, just set rawData3D to zero
-                    Log.i(TAG,"updateFromJSON - error parsing 3D data - setting it to zero");
+                    Log.i(TAG, "updateFromJSON - error parsing 3D data - setting it to zero");
                     for (i = 0; i < mSdData.rawData3D.length; i++) {
                         mSdData.rawData3D[i] = 0.;
                     }
@@ -449,7 +448,7 @@ public abstract class SdDataSource {
             mSampleFreq = 25;
             double freqRes = 1.0 * mSampleFreq / mSdData.mNsamp;
             Log.v(TAG, "doAnalysis(): mSampleFreq=" + mSampleFreq + " mNSamp=" + mSdData.mNsamp + ": freqRes=" + freqRes);
-            Log.v(TAG,"doAnalysis(): rawData=" + Arrays.toString(mSdData.rawData));
+            Log.v(TAG, "doAnalysis(): rawData=" + Arrays.toString(mSdData.rawData));
             // Set the frequency bounds for the analysis in fft output bin numbers.
             nMin = (int) (mAlarmFreqMin / freqRes);
             nMax = (int) (mAlarmFreqMax / freqRes);
@@ -526,11 +525,11 @@ public abstract class SdDataSource {
             Log.e(TAG, "doAnalysis - Exception during Analysis");
             mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e.toString());
             mUtil.writeToSysLogFile("doAnalysis: Exception at Line Number: " + e.getCause().getStackTrace()[0].getLineNumber() + ", " + e.getCause().getStackTrace()[0].toString());
-            mUtil.writeToSysLogFile("doAnalysis: mSdData.mNsamp="+mSdData.mNsamp);
-            mUtil.writeToSysLogFile("doAnalysis: alarmFreqMin="+mAlarmFreqMin+" nMin="+nMin);
-            mUtil.writeToSysLogFile("doAnalysis: alarmFreqMax="+mAlarmFreqMax+" nMax="+nMax);
-            mUtil.writeToSysLogFile("doAnalysis: nFreqCutoff.="+nFreqCutoff);
-            mUtil.writeToSysLogFile("doAnalysis: fft.length="+fft.length);
+            mUtil.writeToSysLogFile("doAnalysis: mSdData.mNsamp=" + mSdData.mNsamp);
+            mUtil.writeToSysLogFile("doAnalysis: alarmFreqMin=" + mAlarmFreqMin + " nMin=" + nMin);
+            mUtil.writeToSysLogFile("doAnalysis: alarmFreqMax=" + mAlarmFreqMax + " nMax=" + nMax);
+            mUtil.writeToSysLogFile("doAnalysis: nFreqCutoff.=" + nFreqCutoff);
+            mUtil.writeToSysLogFile("doAnalysis: fft.length=" + fft.length);
             mWatchAppRunningCheck = false;
         }
 
@@ -547,7 +546,7 @@ public abstract class SdDataSource {
         o2SatCheck();
         fallCheck();
         muteCheck();
-        Log.v(TAG,"after fallCheck, mSdData.fallAlarmStanding="+mSdData.fallAlarmStanding);
+        Log.v(TAG, "after fallCheck, mSdData.fallAlarmStanding=" + mSdData.fallAlarmStanding);
 
         mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
     }
@@ -564,20 +563,20 @@ public abstract class SdDataSource {
         // Avoid potential divide by zero issue
         if (mSdData.specPower == 0)
             mSdData.specPower = 1;
-        Log.v(TAG, "alarmCheck() - roiPower="+mSdData.roiPower+" specPower="+ mSdData.specPower+" ratio="+10*mSdData.roiPower/ mSdData.specPower);
+        Log.v(TAG, "alarmCheck() - roiPower=" + mSdData.roiPower + " specPower=" + mSdData.specPower + " ratio=" + 10 * mSdData.roiPower / mSdData.specPower);
 
         if (mSdData.mOsdAlarmActive) {
             // Is the current set of data representing an alarm state?
             if ((mSdData.roiPower > mAlarmThresh) && ((10 * mSdData.roiPower / mSdData.specPower) > mAlarmRatioThresh)) {
                 inAlarm = true;
-                mSdData.alarmCause = mSdData.alarmCause+"OsdAlg ";
+                mSdData.alarmCause = mSdData.alarmCause + "OsdAlg ";
             }
         }
 
         if (mSdData.mCnnAlarmActive) {
             if (mSdData.mPseizure > 0.5) {
                 inAlarm = true;
-                mSdData.alarmCause = mSdData.alarmCause+"CnnAlg ";
+                mSdData.alarmCause = mSdData.alarmCause + "CnnAlg ";
             }
         }
 
@@ -646,7 +645,7 @@ public abstract class SdDataSource {
                     mSdData.mHRAlarmStanding = true;
                     mSdData.mAdaptiveHrAlarmStanding = false;
                     mSdData.mAverageHrAlarmStanding = false;
-                    mSdData.alarmCause = mSdData.alarmCause+"HrNull ";
+                    mSdData.alarmCause = mSdData.alarmCause + "HrNull ";
 
                 } else {
                     Log.i(TAG, "Heart Rate Fault (HR<0)");
@@ -659,13 +658,13 @@ public abstract class SdDataSource {
                 mSdData.mHRFaultStanding = false;
                 mSdData.mHRAlarmStanding = checkResults.get(0);
                 if (mSdData.mHRAlarmStanding)
-                    mSdData.alarmCause = mSdData.alarmCause+"HR ";
+                    mSdData.alarmCause = mSdData.alarmCause + "HR ";
                 mSdData.mAdaptiveHrAlarmStanding = checkResults.get(1);
                 if (mSdData.mAdaptiveHrAlarmStanding)
-                    mSdData.alarmCause = mSdData.alarmCause+"HR_ADAPT ";
+                    mSdData.alarmCause = mSdData.alarmCause + "HR_ADAPT ";
                 mSdData.mAverageHrAlarmStanding = checkResults.get(2);
                 if (mSdData.mAverageHrAlarmStanding)
-                    mSdData.alarmCause = mSdData.alarmCause+"HR_AVG ";
+                    mSdData.alarmCause = mSdData.alarmCause + "HR_AVG ";
                 // Show an ALARM state if any of the HR alarms is standing.
                 if (mSdData.mHRAlarmStanding | mSdData.mAdaptiveHrAlarmStanding | mSdData.mAverageHrAlarmStanding) {
                     mSdData.alarmState = 2;
@@ -693,17 +692,17 @@ public abstract class SdDataSource {
                     Log.i(TAG, "Oxygen Saturation Null - Alarming");
                     mSdData.mO2SatFaultStanding = false;
                     mSdData.mO2SatAlarmStanding = true;
-                    mSdData.alarmCause = mSdData.alarmCause+"O2_NULL ";
+                    mSdData.alarmCause = mSdData.alarmCause + "O2_NULL ";
                 } else {
                     Log.i(TAG, "Oxygen Saturation Fault (O2Sat<0)");
                     mSdData.mO2SatFaultStanding = true;
                     mSdData.mO2SatAlarmStanding = false;
                 }
-            } else if  (mSdData.mO2Sat < mSdData.mO2SatThreshMin) {
+            } else if (mSdData.mO2Sat < mSdData.mO2SatThreshMin) {
                 Log.i(TAG, "Oxygen Saturation Abnormal - " + mSdData.mO2Sat + " %");
                 mSdData.mO2SatFaultStanding = false;
                 mSdData.mO2SatAlarmStanding = true;
-                mSdData.alarmCause = mSdData.alarmCause+"O2SAT ";
+                mSdData.alarmCause = mSdData.alarmCause + "O2SAT ";
             } else {
                 mSdData.mO2SatFaultStanding = false;
                 mSdData.mO2SatAlarmStanding = false;
@@ -740,12 +739,12 @@ public abstract class SdDataSource {
                     if (mSdData.rawData[i + j] < minAcc) minAcc = mSdData.rawData[i + j];
                     if (mSdData.rawData[i + j] > maxAcc) maxAcc = mSdData.rawData[i + j];
                 }
-                Log.d(TAG, "check_fall() - minAcc=" + minAcc +" (mFallThreshMin="+mFallThreshMin+ "), maxAcc=" + maxAcc+" (mFallThreshMax="+mFallThreshMax+")") ;
+                Log.d(TAG, "check_fall() - minAcc=" + minAcc + " (mFallThreshMin=" + mFallThreshMin + "), maxAcc=" + maxAcc + " (mFallThreshMax=" + mFallThreshMax + ")");
                 if ((minAcc < mFallThreshMin) && (maxAcc > mFallThreshMax)) {
                     Log.d(TAG, "check_fall() ****FALL DETECTED***** minAcc=" + minAcc + ", maxAcc=" + maxAcc);
                     Log.d(TAG, "check_fall() - ****FALL DETECTED****");
                     mSdData.fallAlarmStanding = true;
-                    mSdData.alarmCause = mSdData.alarmCause+"FALL ";
+                    mSdData.alarmCause = mSdData.alarmCause + "FALL ";
                     return;
                 }
                 if (mMute != 0) {
@@ -825,13 +824,14 @@ public abstract class SdDataSource {
 
             // Check we have seen a fidget within the required period, or else assume a fault because watch is not being worn
             if (mFidgetDetectorEnabled) {
-                if (mLastFidget == null) mLastFidget = tnow;   // Initialise last fidget time on startup.
+                if (mLastFidget == null)
+                    mLastFidget = tnow;   // Initialise last fidget time on startup.
 
                 double accStd = calcRawDataStd(mSdData);
                 if (accStd > mFidgetThreshold) {
                     mLastFidget = tnow;
                 } else {
-                    Log.d(TAG,"onStatus() - Fidget Detector - low movement - is watch being worn?");
+                    Log.d(TAG, "onStatus() - Fidget Detector - low movement - is watch being worn?");
                     tdiff = (tnow.toMillis(false) - mLastFidget.toMillis(false));
                     if (tdiff > (mFidgetPeriod) * 60 * 1000) {
                         Log.e(TAG, "onStatus() - Fidget Not Detected - is watch being worn?");
@@ -878,7 +878,7 @@ public abstract class SdDataSource {
                 mSdData.mHrFrozenFaultStanding = false;
             } else {
                 tdiff = (tnow.toMillis(false) - mHrStatusTime.toMillis(false));
-                if (tdiff > mHrFrozenPeriod *1000.) {
+                if (tdiff > mHrFrozenPeriod * 1000.) {
                     mSdData.mHrFrozenFaultStanding = true;
                 } else {
                     mSdData.mHrFrozenFaultStanding = false;
@@ -889,7 +889,7 @@ public abstract class SdDataSource {
 
     void nnAnalysis() {
         //Check the current set of data using the neural network model to look for alarms.
-        Log.d(TAG,"nnAnalysis");
+        Log.d(TAG, "nnAnalysis");
         if (mSdData.mCnnAlarmActive) {
             float pSeizure = mSdAlgNn.getPseizure(mSdData);
             Log.d(TAG, "nnAnalysis - nnResult=" + pSeizure);
@@ -904,9 +904,9 @@ public abstract class SdDataSource {
      * Read a preference value, and return it as a double.
      * FIXME - this should be in osdUtil so other classes can use it.
      *
-      * @param SP - Shared Preferences object
+     * @param SP       - Shared Preferences object
      * @param prefName - name of preference to read.
-     * @param defVal - default value if it is not stored.
+     * @param defVal   - default value if it is not stored.
      * @return double value of the stored specified preference, or the default value.
      */
     private double readDoublePref(SharedPreferences SP, String prefName, String defVal) {
@@ -937,10 +937,10 @@ public abstract class SdDataSource {
                 String appRestartTimeoutStr = SP.getString("AppRestartTimeout", "10");
                 mAppRestartTimeout = Integer.parseInt(appRestartTimeoutStr);
                 Log.v(TAG, "updatePrefs() - mAppRestartTimeout = " + mAppRestartTimeout);
-                mUtil.writeToSysLogFile( "updatePrefs() - mAppRestartTimeout = " + mAppRestartTimeout);
+                mUtil.writeToSysLogFile("updatePrefs() - mAppRestartTimeout = " + mAppRestartTimeout);
             } catch (Exception ex) {
                 Log.v(TAG, "updatePrefs() - Problem with AppRestartTimeout preference!");
-                mUtil.writeToSysLogFile( "updatePrefs() - Problem with AppRestartTimeout preference!");
+                mUtil.writeToSysLogFile("updatePrefs() - Problem with AppRestartTimeout preference!");
                 Toast toast = Toast.makeText(mContext, "Problem Parsing AppRestartTimeout Preference", Toast.LENGTH_SHORT);
                 toast.show();
             }
@@ -950,10 +950,10 @@ public abstract class SdDataSource {
                 String faultTimerPeriodStr = SP.getString("FaultTimerPeriod", "30");
                 mFaultTimerPeriod = Integer.parseInt(faultTimerPeriodStr);
                 Log.v(TAG, "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
-                mUtil.writeToSysLogFile( "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
+                mUtil.writeToSysLogFile("updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
             } catch (Exception ex) {
                 Log.v(TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!");
-                mUtil.writeToSysLogFile( "updatePrefs() - Problem with FaultTimerPeriod preference!");
+                mUtil.writeToSysLogFile("updatePrefs() - Problem with FaultTimerPeriod preference!");
                 Toast toast = Toast.makeText(mContext, "Problem Parsing FaultTimerPeriod Preference", Toast.LENGTH_SHORT);
                 toast.show();
             }
@@ -964,7 +964,7 @@ public abstract class SdDataSource {
                 mFidgetPeriod = readDoublePref(SP, "FidgetDetectorPeriod", "20"); // minutes
                 Log.v(TAG, "updatePrefs() - mFidgetPeriod = " + mFidgetPeriod);
                 mFidgetThreshold = readDoublePref(SP, "FidgetDetectorThreshold", "0.6 ");
-                Log.d(TAG,"updatePrefs(): mFidgetThreshold="+mFidgetThreshold);
+                Log.d(TAG, "updatePrefs(): mFidgetThreshold=" + mFidgetThreshold);
 
             } catch (Exception ex) {
                 Log.v(TAG, "updatePrefs() - Problem with FidgetDetector preferences!");
@@ -978,57 +978,57 @@ public abstract class SdDataSource {
             prefStr = SP.getString("BLE_Device_Addr", "SET_FROM_XML");
             mBleDeviceAddr = prefStr;
             Log.v(TAG, "mBLEDeviceAddr=" + mBleDeviceAddr);
-            mUtil.writeToSysLogFile( "mBLEDeviceAddr=" + mBleDeviceAddr);
+            mUtil.writeToSysLogFile("mBLEDeviceAddr=" + mBleDeviceAddr);
             prefStr = SP.getString("BLE_Device_Name", "SET_FROM_XML");
             mBleDeviceName = prefStr;
             Log.v(TAG, "mBLEDeviceName=" + mBleDeviceName);
-            mUtil.writeToSysLogFile( "mBLEDeviceName=" + mBleDeviceName);
+            mUtil.writeToSysLogFile("mBLEDeviceName=" + mBleDeviceName);
 
             prefStr = SP.getString("PebbleDebug", "SET_FROM_XML");
             if (prefStr != null) {
                 mDebug = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() Debug = " + mDebug);
-                mUtil.writeToSysLogFile( "updatePrefs() Debug = " + mDebug);
+                mUtil.writeToSysLogFile("updatePrefs() Debug = " + mDebug);
 
                 prefStr = SP.getString("PebbleDisplaySpectrum", "SET_FROM_XML");
                 mDisplaySpectrum = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() DisplaySpectrum = " + mDisplaySpectrum);
-                mUtil.writeToSysLogFile( "updatePrefs() DisplaySpectrum = " + mDisplaySpectrum);
+                mUtil.writeToSysLogFile("updatePrefs() DisplaySpectrum = " + mDisplaySpectrum);
 
                 prefStr = SP.getString("PebbleUpdatePeriod", "SET_FROM_XML");
                 mDataUpdatePeriod = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() DataUpdatePeriod = " + mDataUpdatePeriod);
-                mUtil.writeToSysLogFile( "updatePrefs() DataUpdatePeriod = " + mDataUpdatePeriod);
+                mUtil.writeToSysLogFile("updatePrefs() DataUpdatePeriod = " + mDataUpdatePeriod);
 
                 prefStr = SP.getString("MutePeriod", "SET_FROM_XML");
                 mMutePeriod = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() MutePeriod = " + mMutePeriod);
-                mUtil.writeToSysLogFile( "updatePrefs() MutePeriod = " + mMutePeriod);
+                mUtil.writeToSysLogFile("updatePrefs() MutePeriod = " + mMutePeriod);
 
                 prefStr = SP.getString("ManAlarmPeriod", "SET_FROM_XML");
                 mManAlarmPeriod = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() ManAlarmPeriod = " + mManAlarmPeriod);
-                mUtil.writeToSysLogFile( "updatePrefs() ManAlarmPeriod = " + mManAlarmPeriod);
+                mUtil.writeToSysLogFile("updatePrefs() ManAlarmPeriod = " + mManAlarmPeriod);
 
                 prefStr = SP.getString("PebbleSdMode", "SET_FROM_XML");
                 mPebbleSdMode = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() PebbleSdMode = " + mPebbleSdMode);
-                mUtil.writeToSysLogFile( "updatePrefs() PebbleSdMode = " + mPebbleSdMode);
+                mUtil.writeToSysLogFile("updatePrefs() PebbleSdMode = " + mPebbleSdMode);
 
                 prefStr = SP.getString("SampleFreq", "SET_FROM_XML");
                 mSampleFreq = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() SampleFreq = " + mSampleFreq);
-                mUtil.writeToSysLogFile( "updatePrefs() SampleFreq = " + mSampleFreq);
+                mUtil.writeToSysLogFile("updatePrefs() SampleFreq = " + mSampleFreq);
 
                 prefStr = SP.getString("SamplePeriod", "SET_FROM_XML");
                 mSamplePeriod = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() AnalysisPeriod = " + mSamplePeriod);
-                mUtil.writeToSysLogFile( "updatePrefs() AnalysisPeriod = " + mSamplePeriod);
+                mUtil.writeToSysLogFile("updatePrefs() AnalysisPeriod = " + mSamplePeriod);
 
                 prefStr = SP.getString("AlarmFreqMin", "SET_FROM_XML");
                 mAlarmFreqMin = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() AlarmFreqMin = " + mAlarmFreqMin);
-                mUtil.writeToSysLogFile( "updatePrefs() AlarmFreqMin = " + mAlarmFreqMin);
+                mUtil.writeToSysLogFile("updatePrefs() AlarmFreqMin = " + mAlarmFreqMin);
 
                 prefStr = SP.getString("AlarmFreqMax", "SET_FROM_XML");
                 mAlarmFreqMax = (short) Integer.parseInt(prefStr);
@@ -1038,58 +1038,58 @@ public abstract class SdDataSource {
                 prefStr = SP.getString("WarnTime", "SET_FROM_XML");
                 mWarnTime = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() WarnTime = " + mWarnTime);
-                mUtil.writeToSysLogFile( "updatePrefs() WarnTime = " + mWarnTime);
+                mUtil.writeToSysLogFile("updatePrefs() WarnTime = " + mWarnTime);
 
                 prefStr = SP.getString("AlarmTime", "SET_FROM_XML");
                 mAlarmTime = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() AlarmTime = " + mAlarmTime);
-                mUtil.writeToSysLogFile( "updatePrefs() AlarmTime = " + mAlarmTime);
+                mUtil.writeToSysLogFile("updatePrefs() AlarmTime = " + mAlarmTime);
 
                 prefStr = SP.getString("AlarmThresh", "SET_FROM_XML");
                 mAlarmThresh = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() AlarmThresh = " + mAlarmThresh);
-                mUtil.writeToSysLogFile( "updatePrefs() AlarmThresh = " + mAlarmThresh);
+                mUtil.writeToSysLogFile("updatePrefs() AlarmThresh = " + mAlarmThresh);
 
                 prefStr = SP.getString("AlarmRatioThresh", "SET_FROM_XML");
                 mAlarmRatioThresh = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() AlarmRatioThresh = " + mAlarmRatioThresh);
-                mUtil.writeToSysLogFile( "updatePrefs() AlarmRatioThresh = " + mAlarmRatioThresh);
+                mUtil.writeToSysLogFile("updatePrefs() AlarmRatioThresh = " + mAlarmRatioThresh);
 
                 mFallActive = SP.getBoolean("FallActive", false);
                 Log.v(TAG, "updatePrefs() FallActive = " + mFallActive);
-                mUtil.writeToSysLogFile( "updatePrefs() FallActive = " + mFallActive);
+                mUtil.writeToSysLogFile("updatePrefs() FallActive = " + mFallActive);
 
                 prefStr = SP.getString("FallThreshMin", "SET_FROM_XML");
                 mFallThreshMin = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() FallThreshMin = " + mFallThreshMin);
-                mUtil.writeToSysLogFile( "updatePrefs() FallThreshMin = " + mFallThreshMin);
+                mUtil.writeToSysLogFile("updatePrefs() FallThreshMin = " + mFallThreshMin);
 
                 prefStr = SP.getString("FallThreshMax", "SET_FROM_XML");
                 mFallThreshMax = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() FallThreshMax = " + mFallThreshMax);
-                mUtil.writeToSysLogFile( "updatePrefs() FallThreshMax = " + mFallThreshMax);
+                mUtil.writeToSysLogFile("updatePrefs() FallThreshMax = " + mFallThreshMax);
 
                 prefStr = SP.getString("FallWindow", "SET_FROM_XML");
                 mFallWindow = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() FallWindow = " + mFallWindow);
-                mUtil.writeToSysLogFile( "updatePrefs() FallWindow = " + mFallWindow);
+                mUtil.writeToSysLogFile("updatePrefs() FallWindow = " + mFallWindow);
 
                 mSdData.mOsdAlarmActive = SP.getBoolean("OsdAlarmActive", false);
                 Log.v(TAG, "updatePrefs() OsdAlarmActive = " + mSdData.mOsdAlarmActive);
-                mUtil.writeToSysLogFile( "updatePrefs() OsdAlarmActive = " + mSdData.mOsdAlarmActive);
+                mUtil.writeToSysLogFile("updatePrefs() OsdAlarmActive = " + mSdData.mOsdAlarmActive);
 
                 mSdData.mCnnAlarmActive = SP.getBoolean("CnnAlarmActive", false);
                 Log.v(TAG, "updatePrefs() CnnAlarmActive = " + mSdData.mCnnAlarmActive);
-                mUtil.writeToSysLogFile( "updatePrefs() CnnAlarmActive = " + mSdData.mCnnAlarmActive);
+                mUtil.writeToSysLogFile("updatePrefs() CnnAlarmActive = " + mSdData.mCnnAlarmActive);
 
 
                 mSdData.mHRAlarmActive = SP.getBoolean("HRAlarmActive", false);
                 Log.v(TAG, "updatePrefs() HRAlarmActive = " + mSdData.mHRAlarmActive);
-                mUtil.writeToSysLogFile( "updatePrefs() HRAlarmActive = " + mSdData.mHRAlarmActive);
+                mUtil.writeToSysLogFile("updatePrefs() HRAlarmActive = " + mSdData.mHRAlarmActive);
 
                 mSdData.mHRNullAsAlarm = SP.getBoolean("HRNullAsAlarm", false);
                 Log.v(TAG, "updatePrefs() HRNullAsAlarm = " + mSdData.mHRNullAsAlarm);
-                mUtil.writeToSysLogFile( "updatePrefs() HRNullAsAlarm = " + mSdData.mHRNullAsAlarm);
+                mUtil.writeToSysLogFile("updatePrefs() HRNullAsAlarm = " + mSdData.mHRNullAsAlarm);
 
                 mHrFrozenAlarm = SP.getBoolean("HrFrozenAlarm", true);
                 Log.v(TAG, "updatePrefs() - mHrFrozenAlarm = " + mHrFrozenAlarm);
@@ -1098,42 +1098,42 @@ public abstract class SdDataSource {
                 prefStr = SP.getString("HRThreshMin", "SET_FROM_XML");
                 mSdData.mHRThreshMin = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() HRThreshMin = " + mSdData.mHRThreshMin);
-                mUtil.writeToSysLogFile( "updatePrefs() HRThreshMin = " + mSdData.mHRThreshMin);
+                mUtil.writeToSysLogFile("updatePrefs() HRThreshMin = " + mSdData.mHRThreshMin);
 
                 prefStr = SP.getString("HRThreshMax", "SET_FROM_XML");
                 mSdData.mHRThreshMax = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() HRThreshMax = " + mSdData.mHRThreshMax);
-                mUtil.writeToSysLogFile( "updatePrefs() HRThreshMax = " + mSdData.mHRThreshMax);
+                mUtil.writeToSysLogFile("updatePrefs() HRThreshMax = " + mSdData.mHRThreshMax);
 
                 mSdData.mAdaptiveHrAlarmActive = SP.getBoolean("HRAdaptiveAlarmActive", false);
                 mSdData.mAdaptiveHrAlarmWindowSecs = readDoublePref(SP, "HRAdaptiveAlarmWindowSecs", "30");
                 mSdData.mAdaptiveHrAlarmThresh = readDoublePref(SP, "HRAdaptiveAlarmThresh", "20");
-                Log.d(TAG,"updatePrefs(): mAdaptiveHrAlarmActive="+mSdData.mAdaptiveHrAlarmActive);
-                Log.d(TAG,"updatePrefs(): mAdaptiveHrWindowSecs="+mSdData.mAdaptiveHrAlarmWindowSecs);
-                Log.d(TAG,"updatePrefs(): mAdaptiveHrAlarmThresh="+mSdData.mAdaptiveHrAlarmThresh);
+                Log.d(TAG, "updatePrefs(): mAdaptiveHrAlarmActive=" + mSdData.mAdaptiveHrAlarmActive);
+                Log.d(TAG, "updatePrefs(): mAdaptiveHrWindowSecs=" + mSdData.mAdaptiveHrAlarmWindowSecs);
+                Log.d(TAG, "updatePrefs(): mAdaptiveHrAlarmThresh=" + mSdData.mAdaptiveHrAlarmThresh);
 
                 mSdData.mAverageHrAlarmActive = SP.getBoolean("HRAverageAlarmActive", false);
                 mSdData.mAverageHrAlarmWindowSecs = readDoublePref(SP, "HRAverageAlarmWindowSecs", "120");
                 mSdData.mAverageHrAlarmThreshMin = readDoublePref(SP, "HRAverageAlarmThreshMin", "40");
                 mSdData.mAverageHrAlarmThreshMax = readDoublePref(SP, "HRAverageAlarmThreshMax", "120");
-                Log.d(TAG,"updatePrefs(): mAverageHrAlarmActive="+mSdData.mAverageHrAlarmActive);
-                Log.d(TAG,"updatePrefs(): mAverageHrAlarmWindowSecs="+mSdData.mAverageHrAlarmWindowSecs);
-                Log.d(TAG,"updatePrefs(): mAverageHrAlarmThreshMin="+mSdData.mAverageHrAlarmThreshMin);
-                Log.d(TAG,"updatePrefs(): mAverageHrAlarmThreshMax="+mSdData.mAverageHrAlarmThreshMax);
+                Log.d(TAG, "updatePrefs(): mAverageHrAlarmActive=" + mSdData.mAverageHrAlarmActive);
+                Log.d(TAG, "updatePrefs(): mAverageHrAlarmWindowSecs=" + mSdData.mAverageHrAlarmWindowSecs);
+                Log.d(TAG, "updatePrefs(): mAverageHrAlarmThreshMin=" + mSdData.mAverageHrAlarmThreshMin);
+                Log.d(TAG, "updatePrefs(): mAverageHrAlarmThreshMax=" + mSdData.mAverageHrAlarmThreshMax);
 
 
                 mSdData.mO2SatAlarmActive = SP.getBoolean("O2SatAlarmActive", false);
                 Log.v(TAG, "updatePrefs() O2SatAlarmActive = " + mSdData.mO2SatAlarmActive);
-                mUtil.writeToSysLogFile( "updatePrefs() O2SatAlarmActive = " + mSdData.mO2SatAlarmActive);
+                mUtil.writeToSysLogFile("updatePrefs() O2SatAlarmActive = " + mSdData.mO2SatAlarmActive);
 
                 mSdData.mO2SatNullAsAlarm = SP.getBoolean("O2SatNullAsAlarm", false);
                 Log.v(TAG, "updatePrefs() O2SatNullAsAlarm = " + mSdData.mO2SatNullAsAlarm);
-                mUtil.writeToSysLogFile( "updatePrefs() O2SatNullAsAlarm = " + mSdData.mO2SatNullAsAlarm);
+                mUtil.writeToSysLogFile("updatePrefs() O2SatNullAsAlarm = " + mSdData.mO2SatNullAsAlarm);
 
                 prefStr = SP.getString("O2SatThreshMin", "SET_FROM_XML");
                 mSdData.mO2SatThreshMin = (short) Integer.parseInt(prefStr);
                 Log.v(TAG, "updatePrefs() O2SatThreshMin = " + mSdData.mO2SatThreshMin);
-                mUtil.writeToSysLogFile( "updatePrefs() O2SatThreshMin = " + mSdData.mO2SatThreshMin);
+                mUtil.writeToSysLogFile("updatePrefs() O2SatThreshMin = " + mSdData.mO2SatThreshMin);
 
             } else {
                 Log.v(TAG, "updatePrefs() - prefStr is null - WHY????");

@@ -292,7 +292,7 @@ public class BLEScanActivity extends ListActivity {
         try {
             mBluetoothLeScanner.startScan(mLeScanCallback);
         } catch (SecurityException e) {
-            Log.e(TAG,"startScan - SecurityException while starting scan");
+            Log.e(TAG, "startScan - SecurityException while starting scan");
             Toast toast = Toast.makeText(this, "ERROR Starting Scan - Security Exception", Toast.LENGTH_SHORT);
             toast.show();
 
@@ -304,7 +304,7 @@ public class BLEScanActivity extends ListActivity {
         try {
             mBluetoothLeScanner.stopScan(mLeScanCallback);
         } catch (SecurityException e) {
-            Log.e(TAG,"stopScan - SecurityException while stopping scan");
+            Log.e(TAG, "stopScan - SecurityException while stopping scan");
             Toast toast = Toast.makeText(this, "ERROR Stopping Scan - Security Exception", Toast.LENGTH_SHORT);
             toast.show();
         }
@@ -360,7 +360,7 @@ public class BLEScanActivity extends ListActivity {
                 try {
                     Log.v(TAG, "addDevice - " + device.getName());
                 } catch (SecurityException e) {
-                    Log.e(TAG,"addDevice() - security exception getting device name");
+                    Log.e(TAG, "addDevice() - security exception getting device name");
                 }
                 mLeDevices.add(device);
             }
@@ -425,7 +425,7 @@ public class BLEScanActivity extends ListActivity {
                     try {
                         Log.v(TAG, "ScanCallback - " + result.getDevice().getName());
                     } catch (SecurityException e) {
-                        Log.e(TAG,"ScanCallback - security exception getting device name");
+                        Log.e(TAG, "ScanCallback - security exception getting device name");
                     }
                     mLeDeviceListAdapter.addDevice(result.getDevice());
                     mLeDeviceListAdapter.notifyDataSetChanged();

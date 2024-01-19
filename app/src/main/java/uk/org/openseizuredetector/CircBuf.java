@@ -6,9 +6,9 @@ import java.util.ArrayList;
 
 public class CircBuf {
     /*
-    * A circular buffer used to calculate rolling averages
-    * Based loosely on https://gist.github.com/hardik-vala/dc2d19fa7c5108536fbbff96b4fcf105
-    */
+     * A circular buffer used to calculate rolling averages
+     * Based loosely on https://gist.github.com/hardik-vala/dc2d19fa7c5108536fbbff96b4fcf105
+     */
     private final static String TAG = "CircBuf";
 
     private double[] mBuff;
@@ -35,7 +35,7 @@ public class CircBuf {
         /**
          * Add value val to the circular buffer.
          */
-        Log.d(TAG,"add() - before: mHead="+mHead+", mTail="+mTail);
+        Log.d(TAG, "add() - before: mHead=" + mHead + ", mTail=" + mTail);
         //System.out.println(TAG+" add() - before: mHead="+mHead+", mTail="+mTail);
         if (mIsFull)
             mHead = (mHead + 1) % mBuffLen;
@@ -44,7 +44,7 @@ public class CircBuf {
         mTail = (mTail + 1) % mBuffLen;
         if (mTail == mHead)
             mIsFull = true;
-        Log.d(TAG,"add() -  after: mHead="+mHead+", mTail="+mTail);
+        Log.d(TAG, "add() -  after: mHead=" + mHead + ", mTail=" + mTail);
         //System.out.println(TAG+" add() - before: mHead="+mHead+", mTail="+mTail);
     }
 
@@ -60,7 +60,7 @@ public class CircBuf {
             if (mHead > mTail) {
                 numElements = (mTail + mBuffLen) - mHead;
             } else {
-                numElements = mTail-mHead;
+                numElements = mTail - mHead;
             }
         }
         return numElements;
@@ -68,11 +68,12 @@ public class CircBuf {
 
     /**
      * Returns a double array of buffer items in order of their insertion time
+     *
      * @return double[] of buffer items
      */
-    public double[] getVals () {
+    public double[] getVals() {
         int numElements = getNumVals();
-        System.out.println(TAG+" getVals() - numElements=" + numElements);
+        System.out.println(TAG + " getVals() - numElements=" + numElements);
         double[] retArr = new double[numElements];
         for (int i = 0; i < numElements; i++) {
             retArr[i] = mBuff[(mHead + i) % mBuffLen];
@@ -89,18 +90,18 @@ public class CircBuf {
         int hrCount = 0;
         double valArr[] = getVals();
         double retVal;
-        for (int n=0; n<valArr.length; n++) {
+        for (int n = 0; n < valArr.length; n++) {
             if (valArr[n] != mErrVal) {
                 hrSum += valArr[n];
                 hrCount++;
             }
         }
-        if (hrCount>0) {
+        if (hrCount > 0) {
             retVal = hrSum / hrCount;
         } else {
             retVal = -1;
         }
-        return(retVal);
+        return (retVal);
     }
 
 }

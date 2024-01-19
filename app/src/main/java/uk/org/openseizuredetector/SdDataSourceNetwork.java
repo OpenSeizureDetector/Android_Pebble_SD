@@ -38,17 +38,18 @@ public class SdDataSourceNetwork extends SdDataSource {
         mName = "Network";
     }
 
-    @Override public void start() {
+    @Override
+    public void start() {
         // Update preferences.
-        Log.v(TAG,"start(): calling updatePrefs()");
+        Log.v(TAG, "start(): calling updatePrefs()");
         mUtil.writeToSysLogFile("SdDataSourceNetwork().start()");
         updatePrefs();
 
         // Start timer to retrieve seizure detector data regularly.
         mStatusTime = new Time(Time.getCurrentTimezone());
         mStatusTime.setToNow();
-        if (mDataUpdateTimer ==null) {
-            Log.v(TAG,"start(): starting data update timer");
+        if (mDataUpdateTimer == null) {
+            Log.v(TAG, "start(): starting data update timer");
             mDataUpdateTimer = new Timer();
             mDataUpdateTimer.schedule(new TimerTask() {
                 @Override
@@ -57,24 +58,24 @@ public class SdDataSourceNetwork extends SdDataSource {
                 }
             }, 0, mDataUpdatePeriod);
         } else {
-            Log.v(TAG,"start(): data update timer already running.");
+            Log.v(TAG, "start(): data update timer already running.");
         }
 
 
     }
 
-    @Override public void stop() {
+    @Override
+    public void stop() {
         mUtil.writeToSysLogFile("SdDataSourceNetwork().stop()");
         // Stop the data update timer
-        if (mDataUpdateTimer !=null) {
-            Log.v(TAG,"stop(): cancelling status timer");
+        if (mDataUpdateTimer != null) {
+            Log.v(TAG, "stop(): cancelling status timer");
             mDataUpdateTimer.cancel();
             mDataUpdateTimer.purge();
             mDataUpdateTimer = null;
         }
 
     }
-
 
 
     /**
@@ -86,21 +87,21 @@ public class SdDataSourceNetwork extends SdDataSource {
         mUtil.writeToSysLogFile("SdDataSourceNetwork().updatePrefs()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(mContext);
-        mServerIP = SP.getString("ServerIP","192.168.1.175");
-        Log.v(TAG,"updatePrefs() - mServerIP = "+mServerIP);
+        mServerIP = SP.getString("ServerIP", "192.168.1.175");
+        Log.v(TAG, "updatePrefs() - mServerIP = " + mServerIP);
         try {
-            String dataUpdatePeriodStr = SP.getString("DataUpdatePeriod","2000");
+            String dataUpdatePeriodStr = SP.getString("DataUpdatePeriod", "2000");
             mDataUpdatePeriod = Integer.parseInt(dataUpdatePeriodStr);
-            Log.v(TAG,"updatePrefs() - mDataUpdatePeriod = "+mDataUpdatePeriod);
-            String connectTimeoutPeriodStr = SP.getString("ConnectTimeoutPeriod","5000");
+            Log.v(TAG, "updatePrefs() - mDataUpdatePeriod = " + mDataUpdatePeriod);
+            String connectTimeoutPeriodStr = SP.getString("ConnectTimeoutPeriod", "5000");
             mConnnectTimeoutPeriod = Integer.parseInt(connectTimeoutPeriodStr);
-            Log.v(TAG,"updatePrefs() - mConnectTimeoutPeriod = "+mConnnectTimeoutPeriod);
-            String readTimeoutPeriodStr = SP.getString("ReadTimeoutPeriod","5000");
+            Log.v(TAG, "updatePrefs() - mConnectTimeoutPeriod = " + mConnnectTimeoutPeriod);
+            String readTimeoutPeriodStr = SP.getString("ReadTimeoutPeriod", "5000");
             mReadTimeoutPeriod = Integer.parseInt(readTimeoutPeriodStr);
-            Log.v(TAG,"updatePrefs() - mReadTimeoutPeriod = "+mReadTimeoutPeriod);
+            Log.v(TAG, "updatePrefs() - mReadTimeoutPeriod = " + mReadTimeoutPeriod);
         } catch (Exception ex) {
-            Log.v(TAG,"updatePrefs() - Problem parsing preferences!");
-            mUtil.writeToSysLogFile("SdDataSourceNetwork().updatePrefs() - " +ex.toString());
+            Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
+            mUtil.writeToSysLogFile("SdDataSourceNetwork().updatePrefs() - " + ex.toString());
             showToast("Problem Parsing Preferences - Something won't work");
         }
     }
@@ -117,6 +118,7 @@ public class SdDataSourceNetwork extends SdDataSource {
 
     private class DownloadSdDataTask extends AsyncTask<String, Void, SdData> {
         private SdData sdData;
+
         @Override
         protected SdData doInBackground(String... urls) {
             // params comes from the execute() call: params[0] is the url.
@@ -124,23 +126,23 @@ public class SdDataSourceNetwork extends SdDataSource {
             try {
                 String result = downloadUrl(urls[0]);
                 if (result.startsWith("Unable to retrieve web page")) {
-                    Log.v(TAG,"doInBackground() - Unable to retrieve data");
+                    Log.v(TAG, "doInBackground() - Unable to retrieve data");
                     sdData.serverOK = false;
                     sdData.watchConnected = false;
                     sdData.watchAppRunning = false;
                     sdData.alarmState = ALARM_STATE_NETFAULT;
                     sdData.alarmPhrase = "Warning - No Connection to Server";
-                    Log.v(TAG,"doInBackground(): No Connection to Server - sdData = "+sdData.toString());
+                    Log.v(TAG, "doInBackground(): No Connection to Server - sdData = " + sdData.toString());
                 } else {
-                    Log.v(TAG,"doInBackground - result = "+result);
+                    Log.v(TAG, "doInBackground - result = " + result);
                     sdData.fromJSON(result);
                     // Populate mSdData using the received data.
                     sdData.serverOK = true;
-                    if (sdData.batteryPc>0) {
+                    if (sdData.batteryPc > 0) {
                         sdData.haveSettings = true;
                     }
                     mStatusTime.setToNow();
-                    Log.v(TAG,"doInBackground(): sdData = "+sdData.toString());
+                    Log.v(TAG, "doInBackground(): sdData = " + sdData.toString());
                 }
                 return (sdData);
 
@@ -150,14 +152,15 @@ public class SdDataSourceNetwork extends SdDataSource {
                 sdData.watchAppRunning = false;
                 sdData.alarmState = ALARM_STATE_NETFAULT;
                 sdData.alarmPhrase = "Warning - No Connection to Server";
-                Log.v(TAG,"doInBackground(): IOException - "+e.toString());
+                Log.v(TAG, "doInBackground(): IOException - " + e.toString());
                 return sdData;
             }
         }
+
         // onPostExecute displays the results of the AsyncTask.
         @Override
         protected void onPostExecute(SdData sdData) {
-            Log.v(TAG,"onPostExecute() - sdData = "+sdData.toString());
+            Log.v(TAG, "onPostExecute() - sdData = " + sdData.toString());
             mSdDataReceiver.onSdDataReceived(sdData);
         }
     }
@@ -178,22 +181,22 @@ public class SdDataSourceNetwork extends SdDataSource {
             try {
                 String result = downloadUrl(urls[0]);
                 if (result.startsWith("Unable to retrieve web page")) {
-                    Log.v(TAG,"doInBackground() - Error accepting alarm");
+                    Log.v(TAG, "doInBackground() - Error accepting alarm");
                 } else {
-                    Log.v(TAG,"doInBackground(): Alarm Accepted");
+                    Log.v(TAG, "doInBackground(): Alarm Accepted");
                 }
             } catch (IOException e) {
-                Log.v(TAG,"doInBackground(): IOException - "+e.toString());
+                Log.v(TAG, "doInBackground(): IOException - " + e.toString());
             }
             return "Done";
         }
+
         // onPostExecute displays the results of the AsyncTask.
         @Override
         protected void onPostExecute(String s) {
-            Log.v(TAG,"onPostExecute() - s="+s);
+            Log.v(TAG, "onPostExecute() - s=" + s);
         }
     }
-
 
 
     // Given a URL, establishes an HttpUrlConnection and retrieves
@@ -239,8 +242,6 @@ public class SdDataSourceNetwork extends SdDataSource {
         reader.read(buffer);
         return new String(buffer);
     }
-
-
 
 
 }

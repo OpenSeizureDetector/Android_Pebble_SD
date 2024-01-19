@@ -99,6 +99,7 @@ public class SdAlgNn {
      * getPseizureFmt1 - calculate probability of sdData representing seizure-like movement
      * using a model with input format #1, which is a simple vector of 125 accelerometer vector
      * magnitude readings.
+     *
      * @param sdData - seizure detector data as input to the model
      * @return probability of data representing seizure-like movement.
      */
@@ -125,7 +126,7 @@ public class SdAlgNn {
         double stdDev;
         stdDev = calcRawDataStd(sdData);
         if (stdDev < mSdThresh) {
-            Log.d(TAG, "getPseizure - acceleration stdev below movement threshold: std="+stdDev+", thresh="+mSdThresh);
+            Log.d(TAG, "getPseizure - acceleration stdev below movement threshold: std=" + stdDev + ", thresh=" + mSdThresh);
             return (0);
         }
 
@@ -135,11 +136,11 @@ public class SdAlgNn {
                 pSeizure = getPseizureFmt1(sdData);
                 break;
             default:
-                Log.e(TAG,"getPSeizure - invalid model ID "+mModelId);
+                Log.e(TAG, "getPSeizure - invalid model ID " + mModelId);
                 pSeizure = 0;
         }
 
-        return(pSeizure);
+        return (pSeizure);
     }
 
     private double calcRawDataStd(SdData sdData) {

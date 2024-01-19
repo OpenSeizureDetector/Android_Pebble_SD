@@ -260,7 +260,7 @@ public class SdServer extends Service implements SdDataReceiver {
         Log.v(TAG, "onStartCommand() - calling updatePrefs()");
         updatePrefs();
 
-        Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName + ", phoneAppVersion="+mUtil.getAppVersionName());
+        Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName + ", phoneAppVersion=" + mUtil.getAppVersionName());
         mSdData.dataSourceName = mSdDataSourceName;
         mSdData.phoneAppVersion = mUtil.getAppVersionName();
         switch (mSdDataSourceName) {
@@ -278,7 +278,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 Log.v(TAG, "Selecting Network DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceNetwork");
                 mSdDataSource = new SdDataSourceNetwork(this.getApplicationContext(), mHandler, this);
-                Log.i(TAG,"Disabling remote logging when using network data source");
+                Log.i(TAG, "Disabling remote logging when using network data source");
                 mLogDataRemote = false;
                 break;
             case "Garmin":
@@ -306,7 +306,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Create our log manager.
         mLm = new LogManager(this, mLogDataRemote, mLogDataRemoteMobile, mAuthToken, mEventDuration,
-                mRemoteLogPeriod, mLogNDA ,mAutoPruneDb, mDataRetentionPeriod, mSdData);
+                mRemoteLogPeriod, mLogNDA, mAutoPruneDb, mDataRetentionPeriod, mSdData);
 
         if (mSMSAlarm) {
             Log.v(TAG, "Creating LocationFinder");
@@ -314,7 +314,6 @@ public class SdServer extends Service implements SdDataReceiver {
         }
         mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting SdDataSource");
         mSdDataSource.start();
-
 
 
         // Record last time we sent an SMS so we can limit rate of SMS
@@ -478,7 +477,7 @@ public class SdServer extends Service implements SdDataReceiver {
         Uri soundUri = null;
 
         if ((alarmLevel == mCurrentNotificationAlarmLevel) && (isNotificationShown(NOTIFICATION_ID))) {
-            Log.v(TAG,"showNotification - notification already shown at specified alarm level - not doing anything");
+            Log.v(TAG, "showNotification - notification already shown at specified alarm level - not doing anything");
             return;
         }
         Log.v(TAG, "showNotification() - alarmLevel=" + alarmLevel);
@@ -586,7 +585,7 @@ public class SdServer extends Service implements SdDataReceiver {
             }
         } else {
             mUtil.showToast("OpenSeizureDetector: showMainActvity Failed to Display Activity");
-            Log.e(TAG,"OpenSeizureDetector: showMainActvity Failed to Display Activity");
+            Log.e(TAG, "OpenSeizureDetector: showMainActvity Failed to Display Activity");
         }
     }
 
@@ -1345,7 +1344,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     Log.i(TAG, "SmsTimer.onFinish() - Last Location is Null so sending first SMS without location.");
                 }
             } else {
-                Log.e(TAG,"SmsTimer.onFinish - mLocationFinder is null - this should not happen!");
+                Log.e(TAG, "SmsTimer.onFinish - mLocationFinder is null - this should not happen!");
                 mUtil.showToast(getString(R.string.mLocationFinder_is_null_msg));
             }
             Log.i(TAG, "SmsTimer.onFinish() - Sending to " + mSMSNumbers.length + " Numbers");
@@ -1373,7 +1372,6 @@ public class SdServer extends Service implements SdDataReceiver {
 
         /**
          * onSdLocationReceived - called with the best estimate location after mLocationReceiver times out.
-         *
          */
         private void sendSMS(String phoneNo, String msgStr) {
             Log.i(TAG, "sendSMS() - Sending to " + phoneNo);
@@ -1618,11 +1616,11 @@ public class SdServer extends Service implements SdDataReceiver {
                     Log.v(TAG, "checkEvents() - haveUnvalidatedEvent = " +
                             haveUnvalidatedEvent);
                     if (haveUnvalidatedEvent) {
-                        Log.v(TAG,"checkEvents() - showing event notification and cancelling datashare notification.");
+                        Log.v(TAG, "checkEvents() - showing event notification and cancelling datashare notification.");
                         showEventNotification();
                         mNM.cancel(DATASHARE_NOTIFICATION_ID);
                     } else {
-                        Log.v(TAG,"checkEvents() - cancelling event and datashare notifications");
+                        Log.v(TAG, "checkEvents() - cancelling event and datashare notifications");
                         mNM.cancel(EVENT_NOTIFICATION_ID);
                         mNM.cancel(DATASHARE_NOTIFICATION_ID);
                     }
@@ -1678,7 +1676,7 @@ public class SdServer extends Service implements SdDataReceiver {
         Uri soundUri = null;
 
         if (isNotificationShown(EVENT_NOTIFICATION_ID)) {
-            Log.v(TAG,"showEventNotification() - notification is already shown, so not doing anything");
+            Log.v(TAG, "showEventNotification() - notification is already shown, so not doing anything");
             return;
         }
 
@@ -1727,7 +1725,7 @@ public class SdServer extends Service implements SdDataReceiver {
         Uri soundUri = null;
 
         if (isNotificationShown(DATASHARE_NOTIFICATION_ID)) {
-            Log.v(TAG,"showDataShareNotification() - notification is already shown, so not doing anything");
+            Log.v(TAG, "showDataShareNotification() - notification is already shown, so not doing anything");
             return;
         }
 
@@ -1781,6 +1779,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
     /**
      * isNotificationShown - returns true if the specified notificationID is shown, otherwise returns false.
+     *
      * @param notificationId - Notification ID to check
      * @return true if the specified notification is displayed, otherwise false.
      */
@@ -1789,10 +1788,10 @@ public class SdServer extends Service implements SdDataReceiver {
         StatusBarNotification[] notifications = mNotificationManager.getActiveNotifications();
         for (StatusBarNotification notification : notifications) {
             if (notification.getId() == notificationId) {
-                return(true);
+                return (true);
             }
         }
-        return(false);
+        return (false);
     }
 }
 

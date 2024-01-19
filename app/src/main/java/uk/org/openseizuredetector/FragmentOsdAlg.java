@@ -23,6 +23,7 @@ import java.util.ArrayList;
 
 public class FragmentOsdAlg extends FragmentOsdBaseClass {
     String TAG = "FragmentOsdAlg";
+
     public FragmentOsdAlg() {
         // Required empty public constructor
     }
@@ -71,7 +72,7 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
         } else
             specRatio = 0;
 
-        ((TextView)mRootView.findViewById(R.id.powerTv)).setText(getString(R.string.PowerEquals) + mConnection.mSdServer.mSdData.roiPower +
+        ((TextView) mRootView.findViewById(R.id.powerTv)).setText(getString(R.string.PowerEquals) + mConnection.mSdServer.mSdData.roiPower +
                 " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
 
         ProgressBar pb;
@@ -86,7 +87,7 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             pbDrawable = mRootView.getResources().getDrawable(R.drawable.progress_bar_red);
         pb.setProgressDrawable(pbDrawable);
 
-        ((TextView)mRootView.findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
+        ((TextView) mRootView.findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
                 " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
 
         pb = ((ProgressBar) mRootView.findViewById(R.id.spectrumProgressBar));

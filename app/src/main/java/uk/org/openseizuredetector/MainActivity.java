@@ -652,16 +652,16 @@ public class MainActivity extends AppCompatActivity {
                     //if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
                     if (mConnection.mSdServer.mSdData.mO2Sat > 0) {
                         tv.setText(getString(R.string.HR_Equals) + " " + Math.round(mConnection.mSdServer.mSdData.mHR) + " bpm\n"
-                                +"(av = "
-                                +Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage)+", "
-                                +Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage)+" bpm)\n"
-                                + getString(R.string.SpO2)+" = " + Math.round(mConnection.mSdServer.mSdData.mO2Sat) + "%");
+                                + "(av = "
+                                + Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage) + ", "
+                                + Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage) + " bpm)\n"
+                                + getString(R.string.SpO2) + " = " + Math.round(mConnection.mSdServer.mSdData.mO2Sat) + "%");
                     } else {
                         tv.setText(getString(R.string.HR_Equals) + " " + Math.round(mConnection.mSdServer.mSdData.mHR) + " bpm\n"
-                                +"(av = "
-                                +Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage)+", "
-                                +Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage)+" bpm)\n"
-                                + getString(R.string.SpO2)+" = ---%");
+                                + "(av = "
+                                + Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage) + ", "
+                                + Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage) + " bpm)\n"
+                                + getString(R.string.SpO2) + " = ---%");
                     }
                     if (mConnection.mSdServer.mSdData.mHRAlarmStanding
                             || mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding
@@ -821,7 +821,7 @@ public class MainActivity extends AppCompatActivity {
                             " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
                     ((TextView) findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
                             " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
-                    ((TextView) findViewById(R.id.pSeizureTv)).setText(getString(R.string.seizure_probability)+" = " + pSeizurePc + "%");
+                    ((TextView) findViewById(R.id.pSeizureTv)).setText(getString(R.string.seizure_probability) + " = " + pSeizurePc + "%");
 
                     ProgressBar pb;
                     Drawable pbDrawable;

@@ -1,5 +1,6 @@
 package uk.org.openseizuredetector;
 // Defines the servies and characteristics we need to subscribe to.
+
 import java.util.HashMap;
 
 public class GattAttributes {

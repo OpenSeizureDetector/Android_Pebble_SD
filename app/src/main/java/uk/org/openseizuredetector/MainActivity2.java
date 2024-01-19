@@ -45,36 +45,37 @@ public class MainActivity2 extends AppCompatActivity {
     private OsdUtil mUtil;
     private SdServiceConnection mConnection;
     final Handler serverStatusHandler = new Handler();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
 
-            Log.i(TAG, "onCreate()");
+        Log.i(TAG, "onCreate()");
 
-            // Set our custom uncaught exception handler to report issues.
-            //Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(MainActivity.this));
-            new UCEHandler.Builder(this)
-                    .addCommaSeparatedEmailAddresses("crashreports@openseizuredetector.org.uk,")
-                    .build();
+        // Set our custom uncaught exception handler to report issues.
+        //Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(MainActivity.this));
+        new UCEHandler.Builder(this)
+                .addCommaSeparatedEmailAddresses("crashreports@openseizuredetector.org.uk,")
+                .build();
 
-            //int i = 5/0;  // Force exception to test handler.
-            mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
-            mConnection = new SdServiceConnection(getApplicationContext());
-            mUtil.writeToSysLogFile("MainActivity2.onCreate()");
-            mContext = this;
+        //int i = 5/0;  // Force exception to test handler.
+        mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
+        mConnection = new SdServiceConnection(getApplicationContext());
+        mUtil.writeToSysLogFile("MainActivity2.onCreate()");
+        mContext = this;
 
         /**
-        if (savedInstanceState == null) {
-            // Instantiate a ViewPager2 and a PagerAdapter.
-            mFragmentPager = findViewById(R.id.fragment_pager);
-            mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
-            mFragmentPager.setAdapter(mFragmentStateAdapter);
-            getSupportFragmentManager().beginTransaction()
-                    .setReorderingAllowed(true)
-                    .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
-                    .commit();
-        }
+         if (savedInstanceState == null) {
+         // Instantiate a ViewPager2 and a PagerAdapter.
+         mFragmentPager = findViewById(R.id.fragment_pager);
+         mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
+         mFragmentPager.setAdapter(mFragmentStateAdapter);
+         getSupportFragmentManager().beginTransaction()
+         .setReorderingAllowed(true)
+         .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
+         .commit();
+         }
          */
     }
 
@@ -127,8 +128,6 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
 
-
-
     @Override
     protected void onPause() {
         super.onPause();
@@ -149,7 +148,6 @@ public class MainActivity2 extends AppCompatActivity {
                 .commit();
 
     }
-
 
 
     @Override
@@ -278,21 +276,20 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
 
-
-
     /**
      * A simple pager adapter that represents 5 ScreenSlidePageFragment objects, in
      * sequence.
      */
     private class ScreenSlideFragmentPagerAdapter extends FragmentStateAdapter {
         private String TAG = "ScreenSlideFragmentPagerAdapter";
+
         public ScreenSlideFragmentPagerAdapter(FragmentActivity fa) {
             super(fa);
         }
 
         @Override
         public Fragment createFragment(int position) {
-            switch(position) {
+            switch (position) {
                 case 0:
                     return new FragmentOsdAlg();
                 case 1:
@@ -305,7 +302,7 @@ public class MainActivity2 extends AppCompatActivity {
                     return new FragmentDataSharing();
 
                 default:
-                    Log.e(TAG,"createFragment() - invalid Position "+position);
+                    Log.e(TAG, "createFragment() - invalid Position " + position);
                     return null;
             }
         }
@@ -327,7 +324,6 @@ public class MainActivity2 extends AppCompatActivity {
         Log.i(TAG, "stopServer(): stopping Server...");
         mUtil.stopServer();
     }
-
 
 
     private void showAbout() {

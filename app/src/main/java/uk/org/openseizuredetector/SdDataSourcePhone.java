@@ -79,7 +79,7 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
         mUtil.writeToSysLogFile("SdDataSourcePhone.start()");
         mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mSensorManager.registerListener(this, mSensor , SensorManager.SENSOR_DELAY_GAME);
+        mSensorManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_GAME);
         super.start();
     }
 
@@ -95,22 +95,19 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
     }
 
 
-
-
-
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             // we initially start in mMode=0, which calculates the sample frequency returned by the sensor, then enters mMode=1, which is normal operation.
             if (mMode == 0) {
-                if (mStartEvent==null) {
-                    Log.v(TAG,"onSensorChanged(): mMode=0 - Starting Sample Rate Check - mNSamp = "+mSdData.mNsamp);
-                    Log.v(TAG,"onSensorChanged(): saving initial event data");
+                if (mStartEvent == null) {
+                    Log.v(TAG, "onSensorChanged(): mMode=0 - Starting Sample Rate Check - mNSamp = " + mSdData.mNsamp);
+                    Log.v(TAG, "onSensorChanged(): saving initial event data");
                     mStartEvent = event;
                     mStartTs = event.timestamp;
                     mSdData.mNsamp = 0;
                 } else {
-                    mSdData.mNsamp ++;
+                    mSdData.mNsamp++;
                 }
                 Log.v(TAG, "onSensorChanged - mMode=" + mMode + " mNSamp=" + mSdData.mNsamp);
                 if (mSdData.mNsamp >= mSdData.rawData.length) {
@@ -179,10 +176,8 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        Log.v(TAG,"onAccuracyChanged()");
+        Log.v(TAG, "onAccuracyChanged()");
     }
-
-
 
 
 }

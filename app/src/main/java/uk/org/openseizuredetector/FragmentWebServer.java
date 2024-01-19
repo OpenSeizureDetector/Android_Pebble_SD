@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 public class FragmentWebServer extends FragmentOsdBaseClass {
     String TAG = "FragmentWebServer";
+
     public FragmentWebServer() {
         // Required empty public constructor
     }
@@ -28,9 +29,9 @@ public class FragmentWebServer extends FragmentOsdBaseClass {
 
     @Override
     protected void updateUi() {
-        Log.d(TAG,"updateUi()");
+        Log.d(TAG, "updateUi()");
         TextView tv;
-        tv = (TextView)mRootView.findViewById(R.id.fragment_web_server_tv1);
+        tv = (TextView) mRootView.findViewById(R.id.fragment_web_server_tv1);
         if (mConnection.mBound) {
             tv.setText("Bound to Server");
         } else {

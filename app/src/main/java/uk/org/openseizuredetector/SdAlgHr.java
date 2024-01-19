@@ -36,7 +36,7 @@ public class SdAlgHr {
         mAdaptiveHrBuff = new CircBuf(mAdaptiveHrAlarmWindowDp, -1.0);
         mAverageHrBuff = new CircBuf(mAverageHrAlarmWindowDp, -1.0);
         // FIXME - this is a hard coded 3 hour period (at 5 second intervals)
-        mHrHist = new CircBuf((int)(3 * 3600 / 5), -1);
+        mHrHist = new CircBuf((int) (3 * 3600 / 5), -1);
     }
 
     public void close() {
@@ -72,32 +72,31 @@ public class SdAlgHr {
         mSimpleHrAlarmActive = SP.getBoolean("HRAlarmActive", false);
         mSimpleHrAlarmThreshMin = readDoublePref(SP, "HRThreshMin", "20");
         mSimpleHrAlarmThreshMax = readDoublePref(SP, "HRThreshMax", "150");
-        Log.d(TAG,"updatePrefs(): mSimpleHrAlarmActive="+mSimpleHrAlarmActive);
-        Log.d(TAG,"updatePrefs(): mSimpleHrAlarmThreshMin="+mSimpleHrAlarmThreshMin);
-        Log.d(TAG,"updatePrefs(): mSimpleHrAlarmThreshMax="+mSimpleHrAlarmThreshMax);
+        Log.d(TAG, "updatePrefs(): mSimpleHrAlarmActive=" + mSimpleHrAlarmActive);
+        Log.d(TAG, "updatePrefs(): mSimpleHrAlarmThreshMin=" + mSimpleHrAlarmThreshMin);
+        Log.d(TAG, "updatePrefs(): mSimpleHrAlarmThreshMax=" + mSimpleHrAlarmThreshMax);
 
         mAdaptiveHrAlarmActive = SP.getBoolean("HRAdaptiveAlarmActive", false);
         mAdaptiveHrAlarmWindowSecs = readDoublePref(SP, "HRAdaptiveAlarmWindowSecs", "30");
-        mAdaptiveHrAlarmWindowDp = (int)Math.round(mAdaptiveHrAlarmWindowSecs/5.0);
+        mAdaptiveHrAlarmWindowDp = (int) Math.round(mAdaptiveHrAlarmWindowSecs / 5.0);
         mAdaptiveHrAlarmThresh = readDoublePref(SP, "HRAdaptiveAlarmThresh", "20");
-        Log.d(TAG,"updatePrefs(): mAdaptiveHrAlarmActive="+mAdaptiveHrAlarmActive);
-        Log.d(TAG,"updatePrefs(): mAdaptiveHrWindowSecs="+mAdaptiveHrAlarmWindowSecs);
-        Log.d(TAG,"updatePrefs(): mAdaptiveHrWindowDp="+mAdaptiveHrAlarmWindowDp);
-        Log.d(TAG,"updatePrefs(): mAdaptiveHrAlarmThresh="+mAdaptiveHrAlarmThresh);
+        Log.d(TAG, "updatePrefs(): mAdaptiveHrAlarmActive=" + mAdaptiveHrAlarmActive);
+        Log.d(TAG, "updatePrefs(): mAdaptiveHrWindowSecs=" + mAdaptiveHrAlarmWindowSecs);
+        Log.d(TAG, "updatePrefs(): mAdaptiveHrWindowDp=" + mAdaptiveHrAlarmWindowDp);
+        Log.d(TAG, "updatePrefs(): mAdaptiveHrAlarmThresh=" + mAdaptiveHrAlarmThresh);
 
         mAverageHrAlarmActive = SP.getBoolean("HRAverageAlarmActive", false);
         mAverageHrAlarmWindowSecs = readDoublePref(SP, "HRAverageAlarmWindowSecs", "120");
-        mAverageHrAlarmWindowDp = (int)Math.round(mAverageHrAlarmWindowSecs/5.0);
+        mAverageHrAlarmWindowDp = (int) Math.round(mAverageHrAlarmWindowSecs / 5.0);
         mAverageHrAlarmThreshMin = readDoublePref(SP, "HRAverageAlarmThreshMin", "40");
         mAverageHrAlarmThreshMax = readDoublePref(SP, "HRAverageAlarmThreshMax", "120");
-        Log.d(TAG,"updatePrefs(): mAverageHrAlarmActive="+mAverageHrAlarmActive);
-        Log.d(TAG,"updatePrefs(): mAverageHrAlarmWindowSecs="+mAverageHrAlarmWindowSecs);
-        Log.d(TAG,"updatePrefs(): mAverageHrAlarmWindowDp="+mAverageHrAlarmWindowDp);
-        Log.d(TAG,"updatePrefs(): mAverageHrAlarmThreshMin="+mAverageHrAlarmThreshMin);
-        Log.d(TAG,"updatePrefs(): mAverageHrAlarmThreshMax="+mAverageHrAlarmThreshMax);
+        Log.d(TAG, "updatePrefs(): mAverageHrAlarmActive=" + mAverageHrAlarmActive);
+        Log.d(TAG, "updatePrefs(): mAverageHrAlarmWindowSecs=" + mAverageHrAlarmWindowSecs);
+        Log.d(TAG, "updatePrefs(): mAverageHrAlarmWindowDp=" + mAverageHrAlarmWindowDp);
+        Log.d(TAG, "updatePrefs(): mAverageHrAlarmThreshMin=" + mAverageHrAlarmThreshMin);
+        Log.d(TAG, "updatePrefs(): mAverageHrAlarmThreshMax=" + mAverageHrAlarmThreshMax);
 
     }
-
 
 
     private boolean checkSimpleHr(double hrVal) {
@@ -107,15 +106,16 @@ public class SdAlgHr {
         boolean retVal = false;
         if (mSimpleHrAlarmActive) {
             if ((hrVal > mSimpleHrAlarmThreshMax)
-                    || (hrVal <mSimpleHrAlarmThreshMin)) {
+                    || (hrVal < mSimpleHrAlarmThreshMin)) {
                 retVal = true;
             }
         }
-        return(retVal);
+        return (retVal);
     }
 
     /**
      * Returns the average heart rate being used by the Adaptive heart rate algorithm
+     *
      * @return Average Heart reate in bpm.
      */
     public double getAdaptiveHrAverage() {
@@ -130,10 +130,13 @@ public class SdAlgHr {
         return mAdaptiveHrBuff;
     }
 
-    public CircBuf getHrHistBuff() { return mHrHist; }
+    public CircBuf getHrHistBuff() {
+        return mHrHist;
+    }
 
     /**
      * Returns the average heart rate being used by the Average heart rate algorithm
+     *
      * @return Average Heart rate in bpm.
      */
     public double getAverageHrAverage() {
@@ -156,9 +159,9 @@ public class SdAlgHr {
         if (hrVal > hrThreshMax) {
             retVal = true;
         }
-        Log.d(TAG, "checkAdaptiveHr() - hrVal="+hrVal+", avHr="+avHr+", thresholds=("+hrThreshMin+", "+hrThreshMax+"): Alarm="+retVal);
+        Log.d(TAG, "checkAdaptiveHr() - hrVal=" + hrVal + ", avHr=" + avHr + ", thresholds=(" + hrThreshMin + ", " + hrThreshMax + "): Alarm=" + retVal);
 
-        return(retVal);
+        return (retVal);
     }
 
     private boolean checkAverageHr(double hrVal) {
@@ -172,10 +175,9 @@ public class SdAlgHr {
         if (avHr > mAverageHrAlarmThreshMax) {
             retVal = true;
         }
-        Log.d(TAG, "checkAverageHr() - hrVal="+hrVal+", avHr="+avHr+", thresholds=("+mAverageHrAlarmThreshMin+", "+mAverageHrAlarmThreshMin+"): Alarm="+retVal);
-        return(retVal);
+        Log.d(TAG, "checkAverageHr() - hrVal=" + hrVal + ", avHr=" + avHr + ", thresholds=(" + mAverageHrAlarmThreshMin + ", " + mAverageHrAlarmThreshMin + "): Alarm=" + retVal);
+        return (retVal);
     }
-
 
 
     public ArrayList<Boolean> checkHr(double hrVal) {
@@ -185,7 +187,7 @@ public class SdAlgHr {
          * and returns an ArrayList of the alarm status of each algorithm in the above order.
          * true=ALARM, false=OK.
          */
-        Log.v(TAG, "checkHr("+hrVal+")");
+        Log.v(TAG, "checkHr(" + hrVal + ")");
         mAdaptiveHrBuff.add(hrVal);
         mAverageHrBuff.add(hrVal);
         mHrHist.add(hrVal);
@@ -193,7 +195,7 @@ public class SdAlgHr {
         retVal.add(checkSimpleHr(hrVal));
         retVal.add(checkAdaptiveHr(hrVal));
         retVal.add(checkAverageHr(hrVal));
-        return(retVal);
+        return (retVal);
     }
 
 }

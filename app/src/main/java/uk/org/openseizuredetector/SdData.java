@@ -182,7 +182,7 @@ public class SdData implements Parcelable {
             try {
                 mO2Sat = jo.optDouble("o2Sat");
             } catch (Exception e) {
-                Log.w(TAG,"Error parsing o2Sat value");
+                Log.w(TAG, "Error parsing o2Sat value");
                 mO2Sat = -1;
             }
             haveData = true;
@@ -249,7 +249,7 @@ public class SdData implements Parcelable {
             jsonObj.put("rawData3D", raw3DArr);
 
             retval = jsonObj.toString();
-            Log.v(TAG,"retval rawData="+retval);
+            Log.v(TAG, "retval rawData=" + retval);
         } catch (Exception ex) {
             Log.v(TAG, "Error Creating Data Object - " + ex.toString());
             retval = "Error Creating Data Object - " + ex.toString();
@@ -302,7 +302,7 @@ public class SdData implements Parcelable {
             jsonObj.put("o2SatAlarmStanding", mO2SatAlarmStanding);
             jsonObj.put("o2SatThreshMin", mO2SatThreshMin);
             jsonObj.put("dataSourceName", dataSourceName);
-            Log.v(TAG,"phoneAppVersion="+phoneAppVersion);
+            Log.v(TAG, "phoneAppVersion=" + phoneAppVersion);
             jsonObj.put("phoneAppVersion", phoneAppVersion);
             jsonObj.put("watchPartNo", watchPartNo);
             jsonObj.put("watchSdName", watchSdName);
