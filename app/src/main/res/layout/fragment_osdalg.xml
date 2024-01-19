@@ -7,7 +7,7 @@
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
-        android:layout_height="253dp"
+        android:layout_height="match_parent"
         android:orientation="vertical"
         android:background="@color/okBackgroundColor">
 
@@ -51,14 +51,6 @@
             android:id="@+id/chart1"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
-
-        <!--This is not displayed because of match_parent height above -->
-        <TextView
-            android:id="@+id/fragment_osdalg_tv1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/okTextColor"
-            android:text="Fragment_OsdAlg" />
 
 
     </androidx.appcompat.widget.LinearLayoutCompat>

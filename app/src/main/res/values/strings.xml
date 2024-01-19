@@ -565,4 +565,5 @@
     <string name="heart_rate_algorithm">Heart Rate Algorithm</string>
     <string name="heart_rate_history_bpm">"Heart Rate History (bpm): "</string>
     <string name="minutes">minutes</string>
+    <string name="algorithms">"Algorithms: "</string>
 </resources>

@@ -61,12 +61,10 @@ public class MainActivity2 extends AppCompatActivity {
             //int i = 5/0;  // Force exception to test handler.
             mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
             mConnection = new SdServiceConnection(getApplicationContext());
-            mUtil.writeToSysLogFile("");
-            mUtil.writeToSysLogFile("* MainActivity Started     *");
-            mUtil.writeToSysLogFile("MainActivity.onCreate()");
+            mUtil.writeToSysLogFile("MainActivity2.onCreate()");
             mContext = this;
 
-
+        /**
         if (savedInstanceState == null) {
             // Instantiate a ViewPager2 and a PagerAdapter.
             mFragmentPager = findViewById(R.id.fragment_pager);
@@ -77,6 +75,7 @@ public class MainActivity2 extends AppCompatActivity {
                     .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
                     .commit();
         }
+         */
     }
 
     /**
@@ -98,7 +97,7 @@ public class MainActivity2 extends AppCompatActivity {
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
         boolean audibleAlarm = SP.getBoolean("AudibleAlarm", true);
-        Log.v(TAG, "onStart - auidbleAlarm = " + audibleAlarm);
+        Log.v(TAG, "onStart - audibleAlarm = " + audibleAlarm);
 
         TextView tv;
         tv = (TextView) findViewById(R.id.versionTv);
@@ -108,11 +107,12 @@ public class MainActivity2 extends AppCompatActivity {
         tv.setTextColor(okTextColour);
 
         if (mUtil.isServerRunning()) {
-            mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
+            Log.i(TAG, "MainActivity2.onStart() - Binding to Server");
+            mUtil.writeToSysLogFile("MainActivity2.onStart - Binding to Server");
             mUtil.bindToServer(getApplicationContext(), mConnection);
         } else {
-            Log.i(TAG, "onStart() - Server Not Running");
-            mUtil.writeToSysLogFile("MainActivity.onStart - Server Not Running");
+            Log.i(TAG, "MainActivity2.onStart() - Server Not Running");
+            mUtil.writeToSysLogFile("MainActivity2.onStart - Server Not Running");
         }
 
 
@@ -139,6 +139,15 @@ public class MainActivity2 extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         Log.i(TAG, "onResume()");
+        // Instantiate a ViewPager2 and a PagerAdapter.
+        mFragmentPager = findViewById(R.id.fragment_pager);
+        mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
+        mFragmentPager.setAdapter(mFragmentStateAdapter);
+        getSupportFragmentManager().beginTransaction()
+                .setReorderingAllowed(true)
+                .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
+                .commit();
+
     }
 
 
@@ -182,7 +191,7 @@ public class MainActivity2 extends AppCompatActivity {
                     Log.i(TAG, "Stopping Server");
                     mUtil.unbindFromServer(getApplicationContext(), mConnection);
                     stopServer();
-                    finish();
+                    //finish();
                 } else {
                     Log.i(TAG, "Starting Server");
                     startServer();

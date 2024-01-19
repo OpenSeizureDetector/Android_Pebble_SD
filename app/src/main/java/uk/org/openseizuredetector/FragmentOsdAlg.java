@@ -44,13 +44,6 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
     protected void updateUi() {
         //Log.d(TAG,"updateUi()");
         TextView tv;
-        tv = (TextView)mRootView.findViewById(R.id.fragment_osdalg_tv1);
-        if (mConnection.mBound) {
-            tv.setText("Bound to Server");
-        } else {
-            tv.setText("****NOT BOUND TO SERVER***");
-            return;
-        }
 
 
         /////////////////////////////////////////////////////
