@@ -26,7 +26,7 @@ import java.util.Objects;
 
 
 public class FragmentHrAlg extends FragmentOsdBaseClass {
-    String TAG = "FragmentOsdAlg";
+    String TAG = "FragmentHrAlg";
 
     LineChart mLineChart;
     LineData lineData;

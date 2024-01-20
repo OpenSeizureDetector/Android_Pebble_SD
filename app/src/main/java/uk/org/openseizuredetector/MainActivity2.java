@@ -295,7 +295,7 @@ public class MainActivity2 extends AppCompatActivity {
                 case 1:
                     return new FragmentHrAlg();
                 case 2:
-                    return new FragmentMlAlg();
+                    return new FragmentBatt();
                 case 3:
                     return new FragmentSystem();
                 case 4:

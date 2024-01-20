@@ -67,6 +67,9 @@ public class SdData implements Parcelable {
     public long batteryPc;  // watch battery
     public int phoneBatteryPc;
 
+    public CircBuf watchBattBuff = new CircBuf(24*3600/5, -1);  // 24 hour buffer
+    public CircBuf phoneBattBuff = new CircBuf(24*3600/5, -1);  // 24 hour buffer
+
     /* Heart Rate Alarm Settings */
     public boolean mHRAlarmActive = false;
     public boolean mHRNullAsAlarm = false;
@@ -166,6 +169,7 @@ public class SdData implements Parcelable {
             specPower = jo.optInt("specPower");
             roiPower = jo.optInt("roiPower");
             batteryPc = jo.optInt("batteryPc");
+            watchBattBuff.add(batteryPc);
             watchConnected = jo.optBoolean("watchConnected");
             watchAppRunning = jo.optBoolean("watchAppRunning");
             alarmState = jo.optInt("alarmState");
