@@ -93,6 +93,13 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
 
+                tv = (TextView) mRootView.findViewById(R.id.data_time_tv);
+                tv.setText("Time =" + mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S")
+                        + "  (" + String.format("%.1f s)",mConnection.mSdServer.mSdData.timeDiff));
+                tv.setBackgroundColor(okColour);
+                tv.setTextColor(okTextColour);
+
+
                 tv = (TextView) mRootView.findViewById(R.id.alarmTv);
                 if ((mConnection.mSdServer.mSdData.alarmState == 0)
                         && !mConnection.mSdServer.mSdData.alarmStanding

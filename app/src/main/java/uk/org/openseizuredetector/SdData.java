@@ -105,6 +105,7 @@ public class SdData implements Parcelable {
 
     /* Analysis results */
     public Time dataTime = null;
+    public float timeDiff = 0f;
     public long alarmState;
     public String alarmCause = "";
     public boolean alarmStanding = false;
@@ -136,6 +137,7 @@ public class SdData implements Parcelable {
         rawData = new double[N_RAW_DATA];
         rawData3D = new double[N_RAW_DATA * 3];
         dataTime = new Time(Time.getCurrentTimezone());
+        timeDiff = 0f;
     }
 
     /*
@@ -153,6 +155,10 @@ public class SdData implements Parcelable {
             //cal.setTime(sdf.parse(jo.optString("dataTimeStr")));
             //dataTime = cal.getTime();
             // FIXME - this doesn't work!!!
+            Time tnow = new Time();
+            tnow.setToNow();
+            timeDiff = (tnow.toMillis(false)
+                    - dataTime.toMillis(false))/1000f;
             dataTime.setToNow();
             Log.v(TAG, "fromJSON(): dataTime = " + dataTime.toString());
             maxVal = jo.optInt("maxVal");

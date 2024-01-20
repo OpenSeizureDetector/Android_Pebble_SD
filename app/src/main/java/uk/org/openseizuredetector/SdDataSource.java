@@ -504,6 +504,12 @@ public abstract class SdDataSource {
             mDataStatusTime.setToNow();
             mSdData.specPower = (long) specPower / ACCEL_SCALE_FACTOR;
             mSdData.roiPower = (long) roiPower / ACCEL_SCALE_FACTOR;
+            Time tnow = new Time();
+            tnow.setToNow();
+            mSdData.timeDiff = (tnow.toMillis(false)
+                    - mSdData.dataTime.toMillis(false))/1000f;
+            mSdData.dataTime.setToNow();
+
             mSdData.dataTime.setToNow();
             mSdData.maxVal = 0;   // not used
             mSdData.maxFreq = 0;  // not used
