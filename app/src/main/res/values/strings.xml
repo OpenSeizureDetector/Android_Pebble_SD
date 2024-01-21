@@ -568,4 +568,5 @@
     <string name="algorithms">"Algorithms: "</string>
     <string name="battery_history">Battery History</string>
     <string name="watch_batt_hist">Watch Battery History (%)</string>
+    <string name="ble_connected_warning_text">NOTE: Devices will not appear on this list if they are already connected - disconnect device from GadgetBridge etc. to allow it to be selected here</string>
 </resources>

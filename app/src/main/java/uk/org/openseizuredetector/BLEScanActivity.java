@@ -32,6 +32,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -79,6 +80,14 @@ public class BLEScanActivity extends ListActivity {
     private static final int REQUEST_ENABLE_BT = 1;
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10000;
+
+    private int okColour = Color.BLUE;
+    private int warnColour = Color.MAGENTA;
+    private int alarmColour = Color.RED;
+    private int okTextColour = Color.WHITE;
+    private int warnTextColour = Color.WHITE;
+    private int alarmTextColour = Color.BLACK;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -158,61 +167,61 @@ public class BLEScanActivity extends ListActivity {
             String bleAddr = SP.getString("BLE_Device_Addr", "none");
             String bleName = SP.getString("BLE_Device_Name", "none");
             tv.setText("Current Device=" + bleName + " (" + bleAddr + ")");
+            tv.setTextColor(okTextColour);
+            tv.setBackgroundColor(okColour);
         } catch (Exception e) {
             tv.setText("Current Device=" + "none" + " (" + "none" + ")");
+            tv.setTextColor(warnTextColour);
+            tv.setBackgroundColor(warnColour);
         }
 
         tv = (TextView) findViewById(R.id.ble_present_tv);
         if (mBluetoothAdapter == null) {
             tv.setText("ERROR - Bluetooth Adapter Not Present");
+            tv.setTextColor(alarmTextColour);
+            tv.setBackgroundColor(alarmColour);
         } else {
             tv.setText("Bluetooth Adapter Present - OK");
+            tv.setTextColor(okTextColour);
+            tv.setBackgroundColor(okColour);
         }
         // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
         // fire an intent to display a dialog asking the user to grant permission to enable it.
         tv = (TextView) findViewById(R.id.ble_adapter_tv);
         if (!mBluetoothAdapter.isEnabled()) {
-            tv.setText("ERROR - Bluetoot NOT Enabled");
+            tv.setText("ERROR - Bluetooth NOT Enabled");
+            tv.setTextColor(alarmTextColour);
+            tv.setBackgroundColor(alarmColour);
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         } else {
             tv.setText("Bluetooth Adapter Enabled OK");
+            tv.setTextColor(okTextColour);
+            tv.setBackgroundColor(okColour);
         }
 
         requestBTPermissions(this);
 
+        boolean permissionsOk = true;
         for (int i = 0; i < REQUIRED_PERMISSIONS.length; i++) {
             if (ContextCompat.checkSelfPermission(this, REQUIRED_PERMISSIONS[i]) == PERMISSION_GRANTED) {
                 Log.i(TAG, "Permission " + REQUIRED_PERMISSIONS[i] + " OK");
             } else {
                 Log.e(TAG, "Permission " + REQUIRED_PERMISSIONS[i] + " NOT GRANTED");
+                permissionsOk = false;
                 Toast.makeText(this, "ERROR - Permission " + REQUIRED_PERMISSIONS[i] + " not Granted - this will not work!!!!!", Toast.LENGTH_SHORT).show();
             }
         }
 
         tv = (TextView) findViewById(R.id.ble_perm1_tv);
-        if (ContextCompat.checkSelfPermission(this, REQUIRED_PERMISSIONS[0]) == PERMISSION_GRANTED) {
-            tv.setText("Permission " + REQUIRED_PERMISSIONS[0] + " OK");
+        if (permissionsOk) {
+            tv.setText("Permissions required for Bluetooth Granted OK");
+            tv.setBackgroundColor(okColour);
+            tv.setTextColor(okTextColour);
         } else {
-            tv.setText("ERROR: Permission " + REQUIRED_PERMISSIONS[0] + " NOT GRANTED");
-        }
-        tv = (TextView) findViewById(R.id.ble_perm2_tv);
-        if (ContextCompat.checkSelfPermission(this, REQUIRED_PERMISSIONS[1]) == PERMISSION_GRANTED) {
-            tv.setText("Permission " + REQUIRED_PERMISSIONS[1] + " OK");
-        } else {
-            tv.setText("ERROR: Permission " + REQUIRED_PERMISSIONS[1] + " NOT GRANTED");
-        }
-        tv = (TextView) findViewById(R.id.ble_perm3_tv);
-        if (ContextCompat.checkSelfPermission(this, REQUIRED_PERMISSIONS[2]) == PERMISSION_GRANTED) {
-            tv.setText("Permission " + REQUIRED_PERMISSIONS[2] + " OK");
-        } else {
-            tv.setText("ERROR: Permission " + REQUIRED_PERMISSIONS[2] + " NOT GRANTED");
-        }
-        tv = (TextView) findViewById(R.id.ble_perm4_tv);
-        if (ContextCompat.checkSelfPermission(this, REQUIRED_PERMISSIONS[3]) == PERMISSION_GRANTED) {
-            tv.setText("Permission " + REQUIRED_PERMISSIONS[3] + " OK");
-        } else {
-            tv.setText("ERROR: Permission " + REQUIRED_PERMISSIONS[3] + " NOT GRANTED");
+            tv.setText("ERROR: one or more permissions not granted - this may not work!");
+            tv.setBackgroundColor(warnColour);
+            tv.setTextColor(warnTextColour);
         }
 
 
@@ -322,6 +331,10 @@ public class BLEScanActivity extends ListActivity {
                     invalidateOptionsMenu();
                     TextView tv = (TextView) (findViewById(R.id.ble_scan_status_tv));
                     tv.setText("Stopped");
+                    tv.setTextColor(okTextColour);
+                    tv.setBackgroundColor(okColour);
+
+
                     Button b = (Button) findViewById(R.id.startScanButton);
                     b.setEnabled(true);
 
@@ -331,6 +344,9 @@ public class BLEScanActivity extends ListActivity {
             startScan();
             tv = (TextView) (findViewById(R.id.ble_scan_status_tv));
             tv.setText("Scanning");
+            tv.setTextColor(warnTextColour);
+            tv.setBackgroundColor(warnColour);
+
             Button b = (Button) findViewById(R.id.startScanButton);
             b.setEnabled(false);
 
