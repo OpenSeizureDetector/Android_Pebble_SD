@@ -124,9 +124,6 @@ public class SdDataSourceBLE extends SdDataSource {
                            SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
         mName = "BLE";
-        // Set default settings from XML files (mContext is set by super().
-        PreferenceManager.setDefaultValues(mContext,
-                R.xml.network_passive_datasource_prefs, true);
     }
 
 
@@ -135,8 +132,8 @@ public class SdDataSourceBLE extends SdDataSource {
      * make sure any changes to preferences are taken into account.
      */
     public void start() {
-        Log.i(TAG, "start()");
         super.start();
+        Log.i(TAG, "start() - mBleDeviceAddr="+mBleDeviceAddr);
         mUtil.writeToSysLogFile("SdDataSourceBLE.start() - mBleDeviceAddr=" + mBleDeviceAddr);
 
         if (mBleDeviceAddr == "" || mBleDeviceAddr == null) {
@@ -144,7 +141,14 @@ public class SdDataSourceBLE extends SdDataSource {
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             mContext.startActivity(intent);
         }
+
+        // Note, these values are set in BleScanActivity and written to shared preferences, which
+        // ae read in SdDataSource.java
+        // FIXME:  Read the shared preferences in this class so SdDataSource does not need to know
+        // FIXME:   about BLE details.
         Log.i(TAG, "mBLEDevice is " + mBleDeviceName + ", Addr=" + mBleDeviceAddr);
+        mSdData.watchSdName = mBleDeviceName;
+        mSdData.watchPartNo = mBleDeviceAddr;
 
         bleConnect();
 
