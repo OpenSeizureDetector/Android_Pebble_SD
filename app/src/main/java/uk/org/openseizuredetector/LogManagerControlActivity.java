@@ -8,8 +8,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 
@@ -40,7 +42,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.reflect.Field;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -104,6 +105,10 @@ public class LogManagerControlActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.v(TAG, "menubar fiddle exception: " + e.toString(), e);
         }
+
+        Button openOpenSdFolderBtn =
+                (Button) findViewById(R.id.button_open_sd_folder);
+        openOpenSdFolderBtn.setOnClickListener(onOpenSeizureDetectorFolder);
 
         Button authBtn =
                 (Button) findViewById(R.id.auth_button);
@@ -571,6 +576,16 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
     }
 
+    View.OnClickListener onOpenSeizureDetectorFolder =
+            new View.OnClickListener(){
+                @Override
+                public void onClick(View v) {
+                    String myPath = getExternalFilesDir(null).toString();
+                    Intent i = new Intent ("android.intent.action.VIEW", Uri.parse(myPath));
+                    //Intent i = new Intent ("android.intent.action.VIEW", Uri.parse("content://com.android.externalstorage.documents/root/primary"));
+                    startActivity(i);
+                }
+            };
 
     View.OnClickListener onAuth =
             new View.OnClickListener() {
