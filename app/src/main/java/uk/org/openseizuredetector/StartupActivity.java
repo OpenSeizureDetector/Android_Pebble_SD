@@ -427,7 +427,7 @@ public class StartupActivity extends AppCompatActivity {
                         Log.i(TAG, "serverStatusRunnable() - starting main activity...");
                         mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - all checks ok - starting main activity.");
                         try {
-                            Boolean useNewUi = SP.getBoolean("UseNewUi", false);
+                            Boolean useNewUi = SP.getBoolean("UseNewUi", true);
                             Intent intent;
                             if (useNewUi) {
                                 intent = new Intent(
