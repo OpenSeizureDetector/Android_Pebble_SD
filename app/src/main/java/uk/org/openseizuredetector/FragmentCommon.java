@@ -130,6 +130,11 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                     tv.setBackgroundColor(alarmColour);
                     tv.setTextColor(alarmTextColour);
                 }
+                if (mConnection.mSdServer.mSdData.alarmState == 4) {
+                    tv.setText(R.string.Fault);
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+                }
 
 
                 tv = (TextView) mRootView.findViewById(R.id.algsTv);
@@ -196,15 +201,18 @@ public class FragmentCommon extends FragmentOsdBaseClass {
         }
 
         tv = (TextView) mRootView.findViewById(R.id.dataSourceInfoTv);
+        tv.setBackgroundColor(okColour);
+        tv.setTextColor(okTextColour);
         if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
             tv.setText(getString(R.string.DataSource) + " = " + "Phone (Demo Mode)");
             tv.setBackgroundColor(warnColour);
             tv.setTextColor(warnTextColour);
+        } else if (mConnection.mSdServer.mSdDataSourceName.equals("BLE")) {
+            tv.setText(getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName
+                    + " ("+ mConnection.mSdServer.mSdData.watchSdName + ", "
+                    + mConnection.mSdServer.mSdData.watchPartNo+")");
         } else {
             tv.setText(getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
-            tv.setBackgroundColor(okColour);
-            tv.setTextColor(okTextColour);
-
         }
 
         // deal with latch alarms button

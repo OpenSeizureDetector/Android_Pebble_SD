@@ -65,18 +65,7 @@ public class MainActivity2 extends AppCompatActivity {
         mUtil.writeToSysLogFile("MainActivity2.onCreate()");
         mContext = this;
 
-        /**
-         if (savedInstanceState == null) {
-         // Instantiate a ViewPager2 and a PagerAdapter.
-         mFragmentPager = findViewById(R.id.fragment_pager);
-         mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
-         mFragmentPager.setAdapter(mFragmentStateAdapter);
-         getSupportFragmentManager().beginTransaction()
-         .setReorderingAllowed(true)
-         .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
-         .commit();
-         }
-         */
+
     }
 
     /**
@@ -289,17 +278,18 @@ public class MainActivity2 extends AppCompatActivity {
 
         @Override
         public Fragment createFragment(int position) {
+            // Note - the number of positions must match the value returned by getItemCount() below.
             switch (position) {
                 case 0:
                     return new FragmentOsdAlg();
                 case 1:
                     return new FragmentHrAlg();
                 case 2:
-                    return new FragmentBatt();
-                case 3:
                     return new FragmentSystem();
-                case 4:
-                    return new FragmentDataSharing();
+                //case 3:
+                //    return new FragmentBatt();
+                //case 4:
+                //    return new FragmentDataSharing();
 
                 default:
                     Log.e(TAG, "createFragment() - invalid Position " + position);
@@ -309,7 +299,7 @@ public class MainActivity2 extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return 5;
+            return 3;
         }
     }
 

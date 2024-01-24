@@ -36,6 +36,7 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.text.format.Time;
@@ -621,5 +622,23 @@ public class SdDataSourceBLE extends SdDataSource {
         return mBluetoothGatt.getServices();
     }
 
+    /**
+     * Install the watch app on the watch.
+     */
+/*    @Override
+    public void installWatchApp() {
+        Log.v(TAG, "installWatchApp");
+        try {
+            String url = "http://www.openseizuredetector.org.uk/?page_id=1207";
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setData(Uri.parse(url));
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(i);
+        } catch (Exception ex) {
+            Log.i(TAG, "exception starting install watch app activity " + ex.toString());
+            showToast("Error Displaying Installation Instructions - try http://www.openseizuredetector.org.uk/?page_id=1207 instead");
+        }
+    }
 
+ */
 }
