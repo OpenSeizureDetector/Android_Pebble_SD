@@ -178,7 +178,10 @@ public class MainActivity2 extends AppCompatActivity {
                     Log.i(TAG, "Stopping Server");
                     mUtil.unbindFromServer(getApplicationContext(), mConnection);
                     stopServer();
-                    //finish();
+                    // We exit this activity as a crude way of forcing the fragments to disconnect from the server
+                    // so that the server exits properly - otherwise we end up with multiple threads running.
+                    // FIXME - tell the threads to unbind from the serer before calling stopServer as an alternative.
+                    finish();
                 } else {
                     Log.i(TAG, "Starting Server");
                     startServer();
