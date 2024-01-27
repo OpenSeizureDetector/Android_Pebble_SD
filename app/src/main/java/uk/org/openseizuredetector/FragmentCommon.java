@@ -185,6 +185,22 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                     tv.setTextColor(Color.GRAY);
                     tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
                 }
+
+                tv = (TextView) mRootView.findViewById(R.id.dataSourceInfoTv);
+                tv.setBackgroundColor(okColour);
+                tv.setTextColor(okTextColour);
+                if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
+                    tv.setText(getString(R.string.DataSource) + " = " + "Phone (Demo Mode)");
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+                } else if (mConnection.mSdServer.mSdDataSourceName.equals("BLE")) {
+                    tv.setText(getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName
+                            + " ("+ mConnection.mSdServer.mSdData.watchSdName + ", "
+                            + mConnection.mSdServer.mSdData.watchPartNo+")");
+                } else {
+                    tv.setText(getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
+                }
+
             }
         } else {
             tv = (TextView) mRootView.findViewById(R.id.serverStatusTv);
@@ -200,20 +216,6 @@ public class FragmentCommon extends FragmentOsdBaseClass {
              */
         }
 
-        tv = (TextView) mRootView.findViewById(R.id.dataSourceInfoTv);
-        tv.setBackgroundColor(okColour);
-        tv.setTextColor(okTextColour);
-        if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
-            tv.setText(getString(R.string.DataSource) + " = " + "Phone (Demo Mode)");
-            tv.setBackgroundColor(warnColour);
-            tv.setTextColor(warnTextColour);
-        } else if (mConnection.mSdServer.mSdDataSourceName.equals("BLE")) {
-            tv.setText(getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName
-                    + " ("+ mConnection.mSdServer.mSdData.watchSdName + ", "
-                    + mConnection.mSdServer.mSdData.watchPartNo+")");
-        } else {
-            tv.setText(getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
-        }
 
         // deal with latch alarms button
         Button acceptAlarmButton = (Button) mRootView.findViewById(R.id.acceptAlarmButton);

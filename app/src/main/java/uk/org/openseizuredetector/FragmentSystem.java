@@ -74,14 +74,14 @@ public class FragmentSystem extends FragmentOsdBaseClass {
             if (mConnection.mBound) {
                 if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
                     if (mConnection.mSdServer.mLogNDA)
-                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)" + "\nNDA Logging");
+                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + " " + "(Demo Mode)" + "\nNDA Logging");
                     else
-                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)");
+                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + " " + "(Demo Mode)");
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
                 } else {
                     if (mConnection.mSdServer.mLogNDA)
-                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName + "\nNDA Logging");
+                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName + ": NDA Logging");
                     else
                         tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
                     tv.setBackgroundColor(okColour);
