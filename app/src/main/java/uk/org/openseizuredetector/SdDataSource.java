@@ -799,65 +799,74 @@ public abstract class SdDataSource {
      * and sets class variables for use by other functions.
      */
     public void getStatus() {
-        Time tnow = new Time(Time.getCurrentTimezone());
-        long tdiff;
-        tnow.setToNow();
-        // get time since the last data was received from the Pebble watch.
-        tdiff = (tnow.toMillis(false) - mDataStatusTime.toMillis(false));
-        Log.v(TAG, "getStatus() - mWatchAppRunningCheck=" + mWatchAppRunningCheck + " tdiff=" + tdiff);
-        Log.v(TAG, "getStatus() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout);
+        try {
+            Time tnow = new Time(Time.getCurrentTimezone());
+            long tdiff;
+            tnow.setToNow();
+            // get time since the last data was received from the Pebble watch.
+            tdiff = (tnow.toMillis(false) - mDataStatusTime.toMillis(false));
+            Log.v(TAG, "getStatus() - mWatchAppRunningCheck=" + mWatchAppRunningCheck + " tdiff=" + tdiff);
+            Log.v(TAG, "getStatus() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout);
 
-        mSdData.watchConnected = true;  // We can't check connection for passive network connection, so set it to true to avoid errors.
-        // And is the watch app running?
-        // set mWatchAppRunningCheck has been false for more than 10 seconds
-        // the app is not talking to us
-        // mWatchAppRunningCheck is set to true in the receiveData handler.
-        if (!mWatchAppRunningCheck &&
-                (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000)) {
-            Log.v(TAG, "getStatus() - tdiff = " + tdiff);
-            mSdData.watchAppRunning = false;
-            // Only make audible warning beep if we have not received data for more than mFaultTimerPeriod seconds.
-            if (tdiff > (mDataUpdatePeriod + mFaultTimerPeriod) * 1000) {
-                Log.v(TAG, "getStatus() - Watch App Not Running");
-                mUtil.writeToSysLogFile("SDDataSource.getStatus() - Watch App not Running");
-                //mDataStatusTime.setToNow();
-                mSdData.roiPower = -1;
-                mSdData.specPower = -1;
-                mSdDataReceiver.onSdDataFault(mSdData);
-            } else {
-                Log.v(TAG, "getStatus() - Waiting for mFaultTimerPeriod before issuing audible warning...");
-            }
-        } else {
-            mSdData.watchAppRunning = true;
-
-            // Check we have seen a fidget within the required period, or else assume a fault because watch is not being worn
-            if (mFidgetDetectorEnabled) {
-                if (mLastFidget == null)
-                    mLastFidget = tnow;   // Initialise last fidget time on startup.
-
-                double accStd = calcRawDataStd(mSdData);
-                if (accStd > mFidgetThreshold) {
-                    mLastFidget = tnow;
+            mSdData.watchConnected = true;  // We can't check connection for passive network connection, so set it to true to avoid errors.
+            // And is the watch app running?
+            // set mWatchAppRunningCheck has been false for more than 10 seconds
+            // the app is not talking to us
+            // mWatchAppRunningCheck is set to true in the receiveData handler.
+            if (!mWatchAppRunningCheck &&
+                    (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000)) {
+                Log.v(TAG, "getStatus() - tdiff = " + tdiff);
+                mSdData.watchAppRunning = false;
+                // Only make audible warning beep if we have not received data for more than mFaultTimerPeriod seconds.
+                if (tdiff > (mDataUpdatePeriod + mFaultTimerPeriod) * 1000) {
+                    Log.v(TAG, "getStatus() - Watch App Not Running");
+                    mUtil.writeToSysLogFile("SDDataSource.getStatus() - Watch App not Running");
+                    //mDataStatusTime.setToNow();
+                    mSdData.roiPower = -1;
+                    mSdData.specPower = -1;
+                    mSdDataReceiver.onSdDataFault(mSdData);
                 } else {
-                    Log.d(TAG, "onStatus() - Fidget Detector - low movement - is watch being worn?");
-                    tdiff = (tnow.toMillis(false) - mLastFidget.toMillis(false));
-                    if (tdiff > (mFidgetPeriod) * 60 * 1000) {
-                        Log.e(TAG, "onStatus() - Fidget Not Detected - is watch being worn?");
-                        mSdDataReceiver.onSdDataFault(mSdData);
+                    Log.v(TAG, "getStatus() - Waiting for mFaultTimerPeriod before issuing audible warning...");
+                }
+            } else {
+                mSdData.watchAppRunning = true;
+
+                // Check we have seen a fidget within the required period, or else assume a fault because watch is not being worn
+                if (mFidgetDetectorEnabled) {
+                    if (mLastFidget == null)
+                        mLastFidget = tnow;   // Initialise last fidget time on startup.
+
+                    double accStd = calcRawDataStd(mSdData);
+                    if (accStd > mFidgetThreshold) {
+                        mLastFidget = tnow;
+                    } else {
+                        Log.d(TAG, "onStatus() - Fidget Detector - low movement - is watch being worn?");
+                        tdiff = (tnow.toMillis(false) - mLastFidget.toMillis(false));
+                        if (tdiff > (mFidgetPeriod) * 60 * 1000) {
+                            Log.e(TAG, "onStatus() - Fidget Not Detected - is watch being worn?");
+                            mSdDataReceiver.onSdDataFault(mSdData);
+                        }
                     }
                 }
             }
-        }
 
-        // if we have confirmation that the app is running, reset the
-        // status time to now and initiate another check.
-        if (mWatchAppRunningCheck) {
-            mWatchAppRunningCheck = false;
-            mDataStatusTime.setToNow();
-        }
+            // if we have confirmation that the app is running, reset the
+            // status time to now and initiate another check.
+            if (mWatchAppRunningCheck) {
+                mWatchAppRunningCheck = false;
+                mDataStatusTime.setToNow();
+            }
 
-        if (!mSdData.haveSettings) {
-            Log.v(TAG, "getStatus() - no settings received yet");
+            if (!mSdData.haveSettings) {
+                Log.v(TAG, "getStatus() - no settings received yet");
+            }
+        } catch(Exception e) {
+            Log.e(TAG,"getStatus - Exception: "+e.toString());
+            Log.e(TAG,e.getMessage());
+            mSdData.watchAppRunning = false;
+            mSdData.roiPower = -1;
+            mSdData.specPower = -1;
+            mSdDataReceiver.onSdDataFault(mSdData);
         }
     }
 
@@ -865,35 +874,45 @@ public abstract class SdDataSource {
      * faultCheck - determines alarm state based on seizure detector data SdData.   Called every second.
      */
     private void faultCheck() {
-        Time tnow = new Time(Time.getCurrentTimezone());
-        long tdiff;
-        tnow.setToNow();
+        try {
+            Time tnow = new Time(Time.getCurrentTimezone());
+            long tdiff;
+            tnow.setToNow();
 
-        // get time since the last data was received from the watch.
-        tdiff = (tnow.toMillis(false) - mDataStatusTime.toMillis(false));
-        //Log.v(TAG, "faultCheck() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout
-        //        + ", combined = " + (mDataUpdatePeriod + mAppRestartTimeout) * 1000);
-        if (!mWatchAppRunningCheck &&
-                (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000)) {
-            //Log.v(TAG, "faultCheck() - watch app not running so not doing anything");
-            mAlarmCount = 0;
-        }
+            // get time since the last data was received from the watch.
+            tdiff = (tnow.toMillis(false) - mDataStatusTime.toMillis(false));
+            //Log.v(TAG, "faultCheck() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout
+            //        + ", combined = " + (mDataUpdatePeriod + mAppRestartTimeout) * 1000);
+            if (!mWatchAppRunningCheck &&
+                    (tdiff > (mDataUpdatePeriod + mAppRestartTimeout) * 1000)) {
+                //Log.v(TAG, "faultCheck() - watch app not running so not doing anything");
+                mAlarmCount = 0;
+            }
 
-        if (mSdData.mHRAlarmActive && mHrFrozenAlarm) {
-            if (mSdData.mHR != mLastHrValue) {
-                mLastHrValue = mSdData.mHR;
-                mHrStatusTime = tnow;
-                mSdData.mHrFrozenFaultStanding = false;
-            } else {
-                tdiff = (tnow.toMillis(false) - mHrStatusTime.toMillis(false));
-                if (tdiff > mHrFrozenPeriod * 1000.) {
-                    mSdData.mHrFrozenFaultStanding = true;
-                } else {
+            if (mSdData.mHRAlarmActive && mHrFrozenAlarm) {
+                if (mSdData.mHR != mLastHrValue) {
+                    mLastHrValue = mSdData.mHR;
+                    mHrStatusTime = tnow;
                     mSdData.mHrFrozenFaultStanding = false;
+                } else {
+                    tdiff = (tnow.toMillis(false) - mHrStatusTime.toMillis(false));
+                    if (tdiff > mHrFrozenPeriod * 1000.) {
+                        mSdData.mHrFrozenFaultStanding = true;
+                    } else {
+                        mSdData.mHrFrozenFaultStanding = false;
+                    }
                 }
             }
-        }
+        } catch(Exception e) {
+        Log.e(TAG,"faultCheck - Exception: "+e.toString());
+        Log.e(TAG,e.getMessage());
+        mSdData.watchAppRunning = false;
+        mSdData.roiPower = -1;
+        mSdData.specPower = -1;
+        mSdDataReceiver.onSdDataFault(mSdData);
     }
+
+}
 
     void nnAnalysis() {
         //Check the current set of data using the neural network model to look for alarms.
