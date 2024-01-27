@@ -136,6 +136,24 @@ public class MainActivity2 extends AppCompatActivity {
                 .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
                 .commit();
 
+        // Check to see if the user has asked for the original user interface to be used instead of this one
+        // and start that if necessary.
+        try {
+            SharedPreferences SP = PreferenceManager
+                    .getDefaultSharedPreferences(getBaseContext());
+            boolean useNewUi = SP.getBoolean("UseNewUi", false);
+            if (!useNewUi) {
+                Log.i(TAG,"onResume() - launching original User Interface");
+                Intent intent = new Intent(
+                        getApplicationContext(),
+                        MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                startActivity(intent);
+                finish();
+            }
+        } catch (Exception ex) {
+            Log.e(TAG, "exception starting main activity " + ex.toString());
+        }
     }
 
 

@@ -1087,6 +1087,25 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         Log.i(TAG, "onResume()");
         mUtil.writeToSysLogFile("MainActivity.onResume()");
+
+        // Check to see if the user has asked for the new user interface to be used instead of this one
+        // and start that if necessary.
+        try {
+            SharedPreferences SP = PreferenceManager
+                    .getDefaultSharedPreferences(getBaseContext());
+            boolean useNewUi = SP.getBoolean("UseNewUi", false);
+            if (useNewUi) {
+                Log.i(TAG,"onResume() - launching new User Interface");
+                Intent intent = new Intent(
+                        getApplicationContext(),
+                        MainActivity2.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                startActivity(intent);
+                finish();
+            }
+        } catch (Exception ex) {
+            Log.e(TAG, "exception starting main activity " + ex.toString());
+        }
     }
 
 

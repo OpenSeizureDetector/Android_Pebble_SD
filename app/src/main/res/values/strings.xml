@@ -3,7 +3,8 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
-        \nV4.2.1 - Added Machine Learning Model Manager so models can be updated easily.
+        \nV4.2.1 - Added support for PineTime Watches using Bluetooth data source.
+        \n       - Added new, swipeable user interface to simplify the main screen..
           "</string>
     <string name="UpgradeMsg">
         Please enable the new &lt;b>Data Sharing&lt;/b> feature to help improve OpenSeizureDetector!&lt;br/>
