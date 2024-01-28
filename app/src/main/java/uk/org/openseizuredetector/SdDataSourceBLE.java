@@ -104,10 +104,10 @@ public class SdDataSourceBLE extends SdDataSource {
     public static String CHAR_OSD_WATCH_FW = "000085e9-0004-1000-8000-00805f9b34fb";
     public static String CHAR_OSD_ACC_FMT = "000085e9-0005-1000-8000-00805f9b34fb";
     // Valid values are 0: 8 bit vector magnitude scaled so 1g=44
-
     public final static int ACC_FMT_8BIT = 0;
     public final static int ACC_FMT_16BIT = 1;
     public final static int ACC_FMT_3D = 3;
+    public static String CHAR_OSD_STATUS = "000085e9-0006-1000-8000-00805f9b34fb";
 
     public static String SERV_INFINITIME_MOTION = "00030000-78fc-48fe-8e23-433b3a1942d0";
     public static String CHAR_INFINITIME_ACC_DATA = "00030002-78fc-48fe-8e23-433b3a1942d0";
@@ -119,6 +119,7 @@ public class SdDataSourceBLE extends SdDataSource {
     // public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
     private BluetoothGatt mGatt;
     private BluetoothGattCharacteristic mOsdChar;
+    private BluetoothGattCharacteristic mStatusChar;
 
 
     public SdDataSourceBLE(Context context, Handler handler,
@@ -289,22 +290,25 @@ public class SdDataSourceBLE extends SdDataSource {
                         for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
                             String charUuidStr = gattCharacteristic.getUuid().toString();
                             if (charUuidStr.equals(CHAR_OSD_ACC_DATA)) {
-                                Log.v(TAG, "Subscribing to Acceleration Data Change Notifications");
+                                Log.i(TAG, "Subscribing to Acceleration Data Change Notifications");
                                 mOsdChar = gattCharacteristic;
                                 setCharacteristicNotification(gattCharacteristic, true);
+                            } else if (charUuidStr.equals(CHAR_OSD_STATUS)) {
+                                Log.i(TAG, "Found OSD Status Characteristic");
+                                mStatusChar = gattCharacteristic;
                             } else if (charUuidStr.equals(CHAR_OSD_BATT_DATA)) {
-                                Log.v(TAG, "Subscribing to battery change Notifications");
+                                Log.i(TAG, "Subscribing to battery change Notifications");
                                 executeReadCharacteristic(gattCharacteristic);
                                 setCharacteristicNotification(gattCharacteristic, true);
                                 executeReadCharacteristic(gattCharacteristic);
                             } else if (charUuidStr.equals(CHAR_OSD_WATCH_ID)) {
-                                Log.v(TAG, "Reading Watch ID");
+                                Log.i(TAG, "Reading Watch ID");
                                 executeReadCharacteristic(gattCharacteristic);
                             } else if (charUuidStr.equals(CHAR_OSD_WATCH_FW)) {
-                                Log.v(TAG, "Reading Watch Firmware Version");
+                                Log.i(TAG, "Reading Watch Firmware Version");
                                 executeReadCharacteristic(gattCharacteristic);
                             } else if (charUuidStr.equals(CHAR_OSD_ACC_FMT)) {
-                                Log.v(TAG, "Reading Acceleration format code");
+                                Log.i(TAG, "Reading Acceleration format code");
                                 executeReadCharacteristic(gattCharacteristic);
                             }
                         }
@@ -314,7 +318,7 @@ public class SdDataSourceBLE extends SdDataSource {
                         for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
                             String charUuidStr = gattCharacteristic.getUuid().toString();
                             if (charUuidStr.equals(CHAR_INFINITIME_ACC_DATA)) {
-                                Log.v(TAG, "Subscribing to Infinitime Acceleration Data Change Notifications");
+                                Log.i(TAG, "Subscribing to Infinitime Acceleration Data Change Notifications");
                                 mOsdChar = gattCharacteristic;
                                 mAccFmt = ACC_FMT_3D;  // Infinitime presents x, y, z data
                                 setCharacteristicNotification(gattCharacteristic, true);
@@ -324,11 +328,11 @@ public class SdDataSourceBLE extends SdDataSource {
                         Log.v(TAG, "Battery Data Service Service Discovered");
                         for (BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
                             String charUuidStr = gattCharacteristic.getUuid().toString();
-                            Log.v(TAG, "batt char=" + charUuidStr);
+                            Log.i(TAG, "batt char=" + charUuidStr);
                             if (charUuidStr.equals(CHAR_BATT_DATA)) {
-                                Log.v(TAG, "Subscribing to Battery Data Change Notifications");
+                                Log.i(TAG, "Subscribing to Battery Data Change Notifications");
                                 setCharacteristicNotification(gattCharacteristic, true);
-                                Log.v(TAG, "Reading battery level");
+                                Log.i(TAG, "Reading battery level");
                                 executeReadCharacteristic(gattCharacteristic);
                             }
                         }
@@ -337,7 +341,7 @@ public class SdDataSourceBLE extends SdDataSource {
                 if (foundOsdService) {
                     mGatt = gatt;
                 } else {
-                    Log.v(TAG, "device is not offering the OSD Gatt Service - re-trying connection");
+                    Log.i(TAG, "device is not offering the OSD Gatt Service - re-trying connection");
                     bleDisconnect();
                     // Wait 1 second to give the server chance to shutdown, then re-start it
                     mHandler.postDelayed(new Runnable() {
@@ -373,6 +377,32 @@ public class SdDataSourceBLE extends SdDataSource {
                 }, 100);
             }
         }
+
+        /**
+         * executeWriteCharacteristic runs the bluetoothGatt writeCharacteristic command to sent the value
+         * of a given characteristic.
+         * Because only one BLE operation can be taking place at a time, it may fail, in which case
+         * the read is re-tried after a 100ms delay.
+         * @param gattCharacteristic - the characteristic to be read.
+         * @param valBytes[] - array of bytes to send
+         * @param nBytes - number of bytes to send.
+         */
+        private void executeWriteCharacteristic(BluetoothGattCharacteristic gattCharacteristic, byte[] valBytes) {
+            gattCharacteristic.setValue(valBytes);
+            boolean retVal = mBluetoothGatt.writeCharacteristic(gattCharacteristic);
+            if (retVal) {
+                Log.d(TAG, "executeWriteCharacteristic - write initiated successfully");
+            } else {
+                Log.d(TAG, "executeWriteCharacteristic - write initiation failed - waiting, then re-trying");
+                mHandler.postDelayed(new Runnable() {
+                    public void run() {
+                        Log.w(TAG, "Executing delayed write of characteristic");
+                        executeWriteCharacteristic(gattCharacteristic, valBytes);
+                    }
+                }, 100);
+            }
+        }
+
 
         private boolean permissionsOK() {
             if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
@@ -476,6 +506,15 @@ public class SdDataSourceBLE extends SdDataSource {
                         doAnalysis();
                         // Re-start collecting raw data.
                         nRawData = 0;
+                        // Notify the device of the resulting alarm state
+                        if (mStatusChar != null) {
+                            Log.i(TAG,"onDataReceived() - Sending analysis result");
+                            byte[] statusVal = new byte[1];
+                            statusVal[0] = (byte) mSdData.alarmState;
+                            executeWriteCharacteristic(mStatusChar, statusVal);
+                        } else {
+                            Log.i(TAG,"onDataReceived() - mStatusChar is null - not sending result");
+                        }
                     }
                 }
             } else if (characteristic.getUuid().toString().equals(CHAR_OSD_BATT_DATA)) {
