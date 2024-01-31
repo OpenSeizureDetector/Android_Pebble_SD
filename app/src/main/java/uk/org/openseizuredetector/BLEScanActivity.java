@@ -304,7 +304,10 @@ public class BLEScanActivity extends ListActivity {
             Log.e(TAG, "startScan - SecurityException while starting scan");
             Toast toast = Toast.makeText(this, "ERROR Starting Scan - Security Exception", Toast.LENGTH_SHORT);
             toast.show();
-
+        } catch (Exception e) {
+            Log.e(TAG,"startScan - Exception while starting scan");
+            Toast toast = Toast.makeText(this, "ERROR Starting Scan", Toast.LENGTH_SHORT);
+            toast.show();
         }
     }
 
