@@ -21,6 +21,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -154,6 +155,10 @@ public class MainActivity2 extends AppCompatActivity {
         } catch (Exception ex) {
             Log.e(TAG, "exception starting main activity " + ex.toString());
         }
+
+        // Force the screen to stay on when the app is running
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
     }
 
 

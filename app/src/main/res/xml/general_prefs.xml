@@ -55,13 +55,14 @@
         android:key="OSDUrl"
         android:summary="@string/remote_url_summary"
         android:title="@string/remote_url_title" />
-        -->
+
 
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="PreventSleep"
         android:summary="@string/prevent_sleep_summary"
         android:title="@string/prevent_sleep_title" />
+        -->
     <!--<EditTextPreference
         android:defaultValue="1000"
         android:key="UpdatePeriod"
