@@ -240,9 +240,9 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                     }
             }
         } else {
-            acceptAlarmButton.setText(getString(R.string.AcceptAlarm));
-            acceptAlarmButton.setBackgroundColor(Color.DKGRAY);
-            acceptAlarmButton.setEnabled(false);
+            // acceptAlarmButton.setText(getString(R.string.AcceptAlarm));
+            // acceptAlarmButton.setBackgroundColor(Color.DKGRAY);
+            // acceptAlarmButton.setEnabled(false);
         }
 
         // Deal with Cancel Audible button
