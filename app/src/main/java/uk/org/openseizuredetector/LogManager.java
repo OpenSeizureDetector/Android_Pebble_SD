@@ -500,7 +500,7 @@ public class LogManager {
      * @param endDate  end date of period to export (Date type)
      * @param duration duration in hours of period to export (double)
      * @param uri      uri of file to save.
-     * @param callback  function to be called on completion of the task (returns true on success, false on error)
+     * @param callback function to be called on completion of the task (returns true on success, false on error)
      */
     public void exportToCsvFile(Date endDate, double duration, Uri uri, BooleanCallback callback) {
         Log.v(TAG, "exportToCsvFile(): uri=" + uri.toString());
@@ -512,9 +512,6 @@ public class LogManager {
     }
 
 
-
-
-    /**
      * Return an array list of objects representing the events in the database by calling the specified callback function.
      *
      * @param includeWarnings - whether to include warnings in the list of events, or just alarm conditions.
@@ -809,7 +806,7 @@ public class LogManager {
 
 
         ExportDataTask(Date endDate, double duration, Uri uri, BooleanCallback callback) {
-            Log.i(TAG,"ExportDataTask constructor()");
+            Log.i(TAG, "ExportDataTask constructor()");
             this.mCallback = callback;
             mEndDate = endDate;
             mDuration = duration;
@@ -884,7 +881,7 @@ public class LogManager {
 
         @Override
         protected void onPostExecute(final Boolean result) {
-            Log.i(TAG,"ExportDataTask.onPostExecute() - notifying callback function of result: "+result);
+            Log.i(TAG, "ExportDataTask.onPostExecute() - notifying callback function of result: " + result);
             mCallback.accept(result);
         }
 
@@ -925,12 +922,12 @@ public class LogManager {
                     } catch (IOException e) {
                         Log.e(TAG, "exportToFile() - ERROR Writing File: " + e.toString(), e);
                         mUtil.showToast("ERROR WRITING FILE");
-                        return(-1);
+                        return (-1);
                     }
 
                 }
                 Log.d(TAG, "writeDatapointsToFile() - data written to file ok");
-                mUtil.showToast(mContext.getString(R.string.data_exported_ok)+ " "+nRec);
+                mUtil.showToast(mContext.getString(R.string.data_exported_ok) + " " + nRec);
                 return nRec;
 
             } catch (JSONException | NullPointerException e) {
@@ -938,7 +935,7 @@ public class LogManager {
                 dataObj = null;
                 mUtil.showToast(mContext.getString(R.string.error_exporting_data));
                 Log.e(TAG, "exportToFile() - JSONException: " + e.toString(), e);
-                return(-1);
+                return (-1);
             }
         }
 
@@ -1266,7 +1263,7 @@ public class LogManager {
         Log.i(TAG, "startRemoteLogTimer() - starting RemoteLogTimer");
         mRemoteLogTimer =
                 new RemoteLogTimer(mRemoteLogPeriod * 1000, 1000);
-        //mRemoteLogTimer.start();
+        mRemoteLogTimer.start();
     }
 
 

@@ -95,7 +95,7 @@ public class WebApiConnection_firebase extends WebApiConnection {
         } else {
             try {
                 JSONObject retObj = new JSONObject();
-                retObj.put("id",auth.getCurrentUser().getUid());
+                retObj.put("id", auth.getCurrentUser().getUid());
                 retObj.put("username", auth.getCurrentUser().getDisplayName());
                 retObj.put("email", auth.getCurrentUser().getEmail());
                 callback.accept(retObj);
@@ -121,7 +121,7 @@ public class WebApiConnection_firebase extends WebApiConnection {
     // passes the newly created documentId to function callback on successful completion, or null on error.
     public boolean createEvent(final int osdAlarmState, final Date eventDate, final String type, final String subType,
                                final String eventDesc, final String dataJSON, StringCallback callback) {
-    // FIXME - save type, subtype, eventDesc and dataJSON
+        // FIXME - save type, subtype, eventDesc and dataJSON
         Log.v(TAG, "createEvent()");
         String userId = null;
 
@@ -424,7 +424,7 @@ public class WebApiConnection_firebase extends WebApiConnection {
     }
 
     public boolean getCnnModelInfo(JSONObjectCallback callback) {
-        Log.w(TAG,"getCnnModelInfo() - FIXME - not implemented yet!");
+        Log.w(TAG, "getCnnModelInfo() - FIXME - not implemented yet!");
         return false;
     }
 

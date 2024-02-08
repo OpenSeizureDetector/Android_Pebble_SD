@@ -11,7 +11,12 @@
         android:layout_height="match_parent"
         android:background="@color/okBackgroundColor"
         android:orientation="vertical">
-        <!-- TODO: Update blank fragment layout -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/heart_rate_algorithm"
+            android:textColor="@color/okTextColor"/>
+
         <TextView
             android:id="@+id/fragment_hr_alg_tv1"
             android:layout_width="match_parent"
@@ -65,11 +70,10 @@
                 android:layout_height="wrap_content"
                 android:text=" bpm"
                 android:textColor="@color/okTextColor" />
-
-
         </androidx.appcompat.widget.LinearLayoutCompat>
 
         <TextView
+            android:id="@+id/textView2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Fragment_HrAlg" />
@@ -91,7 +95,7 @@
             android:layout_height="match_parent">
 
             <com.github.mikephil.charting.charts.LineChart
-                android:id="@+id/lineChartBattery"
+                android:id="@+id/lineChart"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent"
                 android:isScrollContainer="true">

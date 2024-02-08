@@ -46,7 +46,6 @@ import java.util.TimerTask;
 import java.util.UUID;
 
 
-
 /**
  * Abstract class for a seizure detector data source.  Subclasses include a pebble smart watch data source and a
  * network data source.
@@ -167,7 +166,7 @@ public class SdDataSourcePebble extends SdDataSource {
         // use a timer to check the status of the pebble app on the same frequency
         // as we get app data.
         if (mStatusTimer == null) {
-            Log.v(TAG, "start(): starting status timer with period "+mDataUpdatePeriod*1000 + " ms");
+            Log.v(TAG, "start(): starting status timer with period " + mDataUpdatePeriod * 1000 + " ms");
             mUtil.writeToSysLogFile("SdDataSourcePebble.start() - starting status timer");
             mStatusTimer = new Timer();
             mStatusTimer.schedule(new TimerTask() {
@@ -186,7 +185,7 @@ public class SdDataSourcePebble extends SdDataSource {
         getPebbleSdSettings();
         if (mSettingsTimer == null) {
             Log.v(TAG, "start(): starting settings timer");
-            mUtil.writeToSysLogFile("SdDataSourcePebble.start() - starting settings timer with period "+1000*mSettingsPeriod);
+            mUtil.writeToSysLogFile("SdDataSourcePebble.start() - starting settings timer with period " + 1000 * mSettingsPeriod);
             mSettingsTimer = new Timer();
             mSettingsTimer.schedule(new TimerTask() {
                 @Override
@@ -344,8 +343,8 @@ public class SdDataSourcePebble extends SdDataSource {
             Log.v(TAG, "updatePrefs() FallWindow = " + mFallWindow);
 
         } catch (Exception ex) {
-            Log.v(TAG, "updatePrefs() - Problem parsing preferences! - prefStr="+prefStr);
-            mUtil.writeToSysLogFile("SdDataSourcePebble.updatePrefs() - ERROR "+ex.toString());
+            Log.v(TAG, "updatePrefs() - Problem parsing preferences! - prefStr=" + prefStr,ex);
+            mUtil.writeToSysLogFile("SdDataSourcePebble.updatePrefs() - ERROR " + ex.toString());
             Toast toast = Toast.makeText(useSdServerBinding(), "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
             toast.show();
         }
@@ -438,16 +437,16 @@ public class SdDataSourcePebble extends SdDataSource {
                     byte[] rawDataBytes = data.getBytes(KEY_RAW_DATA);
                     for (int i = 0; i < rawDataBytes.length - 4; i += 4) { // 4 bytes per sample
                         int b0 = rawDataBytes[i];
-                        int b1 = rawDataBytes[i+1] & 0xff;
-                        int b2 = rawDataBytes[i+2] & 0xff;
-                        int b3 = rawDataBytes[i+3] & 0xff;
+                        int b1 = rawDataBytes[i + 1] & 0xff;
+                        int b2 = rawDataBytes[i + 2] & 0xff;
+                        int b3 = rawDataBytes[i + 3] & 0xff;
                         int x = (b3 | b2 << 8 | b1 << 16 | b0 << 24);
                         //int y = (rawDataBytes[i+2] & 0xff) | (rawDataBytes[i+3] << 8);
                         //int z = (rawDataBytes[i+4] & 0xff) | (rawDataBytes[i+5] << 8);
                         //Log.v(TAG,"x="+x+", y="+y+", z="+z);
-                        Log.v(TAG,"b0="+b0+", b1="+b1+", b2="+b2+", b3="+b3+", x="+x);
+                        Log.v(TAG, "b0=" + b0 + ", b1=" + b1 + ", b2=" + b2 + ", b3=" + b3 + ", x=" + x);
                         if (nRawData < MAX_RAW_DATA) {
-                            rawData[nRawData] = (int)Math.sqrt(x);
+                            rawData[nRawData] = (int) Math.sqrt(x);
                         } else {
                             Log.i(TAG, "WARNING - rawData Buffer Full");
                         }
@@ -462,7 +461,7 @@ public class SdDataSourcePebble extends SdDataSource {
                     //    } else {
                     //        Log.i(TAG, "WARNING - rawData Buffer Full");
                     //    }
-                   // }
+                    // }
 
                 }
             }
@@ -500,7 +499,7 @@ public class SdDataSourcePebble extends SdDataSource {
         // first close the watch app if it is running.
         PebbleKit.closeAppOnPebble(useSdServerBinding(), SD_UUID);
         Log.v(TAG, "startWatchApp() - starting watch app after 5 seconds delay...");
-	// Wait 5 seconds then start the app.
+        // Wait 5 seconds then start the app.
         Timer appStartTimer = new Timer();
         appStartTimer.schedule(new TimerTask() {
             @Override
@@ -729,7 +728,7 @@ public class SdDataSourcePebble extends SdDataSource {
      * ignored!
      */
     private void analyseRawData() {
-        Log.v(TAG,"analyserawData()");
+        Log.v(TAG, "analyserawData()");
         //DoubleFFT_1D fft = new DoubleFFT_1D(MAX_RAW_DATA);
         //fft.realForward(rawData);
         // FIXME - rawData should really be a circular buffer.
@@ -774,7 +773,6 @@ public class SdDataSourcePebble extends SdDataSource {
         }
 
     }
-
 
 
 }

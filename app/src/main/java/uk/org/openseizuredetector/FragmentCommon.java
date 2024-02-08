@@ -86,37 +86,23 @@ public class FragmentCommon extends FragmentOsdBaseClass {
     protected void updateUi() {
         //Log.d(TAG,"updateUi()");
         TextView tv;
-        tv = (TextView)mRootView.findViewById(R.id.fragment_common_tv1);
-        if (mConnection.mBound) {
-            tv.setText("Bound to Server");
-        } else {
-            tv.setText("****NOT BOUND TO SERVER***");
-            return;
-        }
 
         if (mUtil.isServerRunning()) {
-            //LinearLayout ll = (LinearLayout) findViewById(R.id.statusLayout);
-            //ll.setBackgroundColor(okColour);
-            //ll = (LinearLayout) findViewById(R.id.watchStatusLl);
-            //ll.setBackgroundColor(okColour);
-
             tv = (TextView) mRootView.findViewById(R.id.serverStatusTv);
             if (mConnection.mBound) {
-                if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
-                    if (mConnection.mSdServer.mLogNDA)
-                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)" + "\nNDA Logging");
-                    else
-                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)");
-                    tv.setBackgroundColor(warnColour);
-                    tv.setTextColor(warnTextColour);
-                } else {
-                    if (mConnection.mSdServer.mLogNDA)
-                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName + "\nNDA Logging");
-                    else
-                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
-                    tv.setBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
-                }
+                if (mConnection.mSdServer.mLogNDA)
+                    tv.setText(getString(R.string.ServerRunningOK) + " - NDA Logging");
+                else
+                    tv.setText(getString(R.string.ServerRunningOK));
+                tv.setBackgroundColor(okColour);
+                tv.setTextColor(okTextColour);
+
+                tv = (TextView) mRootView.findViewById(R.id.data_time_tv);
+                tv.setText("Time =" + mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S")
+                        + "  (" + String.format("%.1f s)",mConnection.mSdServer.mSdData.timeDiff));
+                tv.setBackgroundColor(okColour);
+                tv.setTextColor(okTextColour);
+
 
                 tv = (TextView) mRootView.findViewById(R.id.alarmTv);
                 if ((mConnection.mSdServer.mSdData.alarmState == 0)
@@ -151,7 +137,7 @@ public class FragmentCommon extends FragmentOsdBaseClass {
 
 
                 tv = (TextView) mRootView.findViewById(R.id.algsTv);
-                tv.setText("Algorithms");
+                tv.setText(R.string.algorithms);
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
                 tv = (TextView) mRootView.findViewById(R.id.osdAlgTv);
@@ -173,7 +159,7 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                     tv.setPaintFlags(tv.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
                 } else {
                     tv.setBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
+                    tv.setTextColor(Color.GRAY);
                     tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
                 }
                 tv = (TextView) mRootView.findViewById(R.id.hrAlgTv);
@@ -184,7 +170,7 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                     tv.setPaintFlags(tv.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
                 } else {
                     tv.setBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
+                    tv.setTextColor(Color.GRAY);
                     tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
                 }
                 tv = (TextView) mRootView.findViewById(R.id.o2AlgTv);
@@ -195,21 +181,34 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                     tv.setPaintFlags(tv.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
                 } else {
                     tv.setBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
+                    tv.setTextColor(Color.GRAY);
                     tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
                 }
             }
         } else {
             tv = (TextView) mRootView.findViewById(R.id.serverStatusTv);
-            if (Objects.nonNull(tv)){
-                tv.setText(R.string.ServerStopped);
-                tv.setBackgroundColor(warnColour);
-                tv.setTextColor(warnTextColour);
-                tv = (TextView) mRootView.findViewById(R.id.serverIpTv);
-                tv.setText("--");
-                tv.setBackgroundColor(warnColour);
-                tv.setTextColor(warnTextColour);
-            }
+            tv.setText(R.string.ServerStopped);
+            tv.setBackgroundColor(warnColour);
+            tv.setTextColor(warnTextColour);
+
+            /**  FIXME - check this is not needed for this fragment
+             tv = (TextView) mRootView.findViewById(R.id.serverIpTv);
+             tv.setText("--");
+             tv.setBackgroundColor(warnColour);
+             tv.setTextColor(warnTextColour);
+             */
+        }
+
+        tv = (TextView) mRootView.findViewById(R.id.dataSourceInfoTv);
+        if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
+            tv.setText(getString(R.string.DataSource) + " = " + "Phone (Demo Mode)");
+            tv.setBackgroundColor(warnColour);
+            tv.setTextColor(warnTextColour);
+        } else {
+            tv.setText(getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
+            tv.setBackgroundColor(okColour);
+            tv.setTextColor(okTextColour);
+
         }
 
         // deal with latch alarms button

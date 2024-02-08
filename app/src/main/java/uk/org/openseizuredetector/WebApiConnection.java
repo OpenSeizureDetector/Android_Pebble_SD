@@ -139,19 +139,20 @@ public abstract class WebApiConnection {
 
     /**
      * Mark all of the events with IDs contained in eventList as the specified type and subtype.
-     * @param eventList list of String IDs of the events to mark as unknown.
+     *
+     * @param eventList  list of String IDs of the events to mark as unknown.
      * @param typeStr
      * @param subTypeStr
      * @return true if request sent successfully or false.
      */
-    private boolean markEventsAsTypeSubType(ArrayList<String>eventList, String typeStr, String subTypeStr) {
-        if (eventList.size()>0) {
-            Log.i(TAG,"markEventsAsTypeSubtype - eventList.size()="+eventList.size());
-            Log.i(TAG,"markEventsAsSypeSubtype - eventList(0) = "+eventList.get(0));
+    private boolean markEventsAsTypeSubType(ArrayList<String> eventList, String typeStr, String subTypeStr) {
+        if (eventList.size() > 0) {
+            Log.i(TAG, "markEventsAsTypeSubtype - eventList.size()=" + eventList.size());
+            Log.i(TAG, "markEventsAsSypeSubtype - eventList(0) = " + eventList.get(0));
             getEvent(eventList.get(0), new WebApiConnection.JSONObjectCallback() {
                 @Override
                 public void accept(JSONObject eventObj) {
-                    Log.v(TAG, "markEventsAsTypeSubtype.getEvent.callback: "+eventObj);
+                    Log.v(TAG, "markEventsAsTypeSubtype.getEvent.callback: " + eventObj);
                     if (eventObj != null) {
                         Log.v(TAG, "markEventsAsTypeSubtype.getEvent.callback:  eventObj=" + eventObj.toString());
                         try {
@@ -161,7 +162,7 @@ public abstract class WebApiConnection {
                             if (notesStr == null) notesStr = new String("");
                             notesStr = notesStr + " bulk type/subtype set";
                             eventObj.put("desc", notesStr);
-                            updateEvent(eventObj,new WebApiConnection.JSONObjectCallback() {
+                            updateEvent(eventObj, new WebApiConnection.JSONObjectCallback() {
                                 @Override
                                 public void accept(JSONObject eventObj) {
                                     if (eventObj != null) {
@@ -176,7 +177,7 @@ public abstract class WebApiConnection {
                                 }
                             });
                         } catch (JSONException e) {
-                            Log.e(TAG,"markEventsAsTypeSubtype.getEvent.callback: Error editing eventObj");
+                            Log.e(TAG, "markEventsAsTypeSubtype.getEvent.callback: Error editing eventObj");
                             mUtil.showToast("markEventsAsTypeSubtype.getEvent.callback: Error editing eventObj");
                         }
                     } else {
@@ -186,11 +187,11 @@ public abstract class WebApiConnection {
                 }
             });
         } else {
-            Log.i(TAG,"markEventsAsTypeSubtype(): No more events to Modify");
+            Log.i(TAG, "markEventsAsTypeSubtype(): No more events to Modify");
             mUtil.showToast("No more unvalidated events to modify.");
 
         }
-        return(true);
+        return (true);
     }
 
     /**
@@ -240,6 +241,7 @@ public abstract class WebApiConnection {
         markUnverifiedEventsAsTypeSubtype("Unknown", "");
         return true;
     }
+
     public boolean markUnverifiedEventsAsFalseAlarm() {
         markUnverifiedEventsAsTypeSubtype("False Alarm", "");
         return true;

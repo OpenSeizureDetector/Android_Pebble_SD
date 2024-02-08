@@ -31,7 +31,6 @@ public class FragmentSystem extends FragmentOsdBaseClass {
     }
 
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -107,7 +106,6 @@ public class FragmentSystem extends FragmentOsdBaseClass {
     private void onChangedObserver(Object o) {
         mUtil.runOnUiThread(this::updateUi);
     }
-
 
     @Override
     protected void updateUi() {
@@ -250,11 +248,10 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                 }
             }
         } catch (Exception e) {
-            Log.e(TAG, "UpdateUi: Exception - ");
-            e.printStackTrace();
-        }
+        Log.e(TAG, "UpdateUi: Exception - ",e);
+        e.printStackTrace();
     }
-    @Override
+    }@Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         if (Objects.nonNull(mConnection)&&Objects.nonNull(mUtil)) {

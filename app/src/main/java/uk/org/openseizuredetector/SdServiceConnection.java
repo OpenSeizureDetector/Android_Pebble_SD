@@ -34,7 +34,6 @@ import androidx.lifecycle.LiveData;
 
 import java.util.Objects;
 
-
 /**
  * Defines callbacks for service binding, passed to bindService()
  */
@@ -78,11 +77,12 @@ public class SdServiceConnection implements ServiceConnection {
 
     /**
      * Check if the service has received seizure detector data.
+     *
      * @return true if data has been received.
      */
     public boolean hasSdData() {
-        if (mSdServer!=null) {
-            if (mSdServer.mSdData!=null) {
+        if (mSdServer != null) {
+            if (mSdServer.mSdData != null) {
                 return mSdServer.mSdData.haveData;
             }
         }
@@ -91,11 +91,12 @@ public class SdServiceConnection implements ServiceConnection {
 
     /**
      * Check if the service has received seizure detector settings.
+     *
      * @return true if settings have been received.
      */
     public boolean hasSdSettings() {
-        if (mSdServer!=null) {
-            if (mSdServer.mSdData!=null) {
+        if (mSdServer != null) {
+            if (mSdServer.mSdData != null) {
                 if (mSdServer.mSdData.haveSettings) {
                     return true;
                 }
@@ -106,11 +107,12 @@ public class SdServiceConnection implements ServiceConnection {
 
     /**
      * Check if the pebble watch is connected to the server device via bluetooth.
+     *
      * @return true if watch connected.
      */
     public boolean watchConnected() {
-        if (mSdServer!=null) {
-            if (mSdServer.mSdData!=null) {
+        if (mSdServer != null) {
+            if (mSdServer.mSdData != null) {
                 if (mSdServer.mSdData.watchConnected) {
                     return true;
                 }
@@ -121,11 +123,12 @@ public class SdServiceConnection implements ServiceConnection {
 
     /**
      * Check if the openseizuredetector pebble watch app is running..
+     *
      * @return true if watch app running.
      */
     public boolean pebbleAppRunning() {
-        if (mSdServer!=null) {
-            if (mSdServer.mSdData!=null) {
+        if (mSdServer != null) {
+            if (mSdServer.mSdData != null) {
                 if (mSdServer.mSdData.watchAppRunning) {
                     return true;
                 }

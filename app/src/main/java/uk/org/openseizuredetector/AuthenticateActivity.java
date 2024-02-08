@@ -67,7 +67,8 @@ public class AuthenticateActivity extends AppCompatActivity {
         logoutBtn.setOnClickListener(onLogout);
 
         // Components required only for osdapi backend
-        if (LogManager.USE_FIREBASE_BACKEND) { }
+        if (LogManager.USE_FIREBASE_BACKEND) {
+        }
         else {
             mConnection = new SdServiceConnection(AuthenticateActivity.this);
 
@@ -85,7 +86,7 @@ public class AuthenticateActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Log.v(TAG,"aboutDataSharingBtn.onClick()");
+                        Log.v(TAG, "aboutDataSharingBtn.onClick()");
                         String url = OsdUtil.DATA_SHARING_URL;
                         Intent i = new Intent(Intent.ACTION_VIEW);
                         i.setData(Uri.parse(url));
@@ -98,7 +99,7 @@ public class AuthenticateActivity extends AppCompatActivity {
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Log.v(TAG,"privacyPolicyBtn.onClick()");
+                        Log.v(TAG, "privacyPolicyBtn.onClick()");
                         String url = OsdUtil.PRIVACY_POLICY_URL;
                         Intent i = new Intent(Intent.ACTION_VIEW);
                         i.setData(Uri.parse(url));
@@ -152,12 +153,11 @@ public class AuthenticateActivity extends AppCompatActivity {
     }
 
     private void initialiseServiceConnection() {
-        Log.v(TAG,"initialiseServiceConnection()");
+        Log.v(TAG, "initialiseServiceConnection()");
         mLm = mConnection.mSdServer.mLm;
         mWac = mConnection.mSdServer.mLm.mWac;
         updateUi();
     }
-
 
 
     // Called after the Firebase Auth UI has completed
@@ -172,13 +172,13 @@ public class AuthenticateActivity extends AppCompatActivity {
 
 
     private void updateUi() {
-        Log.v(TAG,"updateUi()");
+        Log.v(TAG, "updateUi()");
         LinearLayout loginLl = (LinearLayout) findViewById(R.id.login_ui);
         LinearLayout osdApiLoginLl = (LinearLayout) findViewById(R.id.login_osdapi_ui);
         LinearLayout logoutLl = (LinearLayout) findViewById(R.id.logout_ui);
 
         if (mWac == null) {
-            Log.i(TAG,"mWac is null - not updating UI");
+            Log.i(TAG, "mWac is null - not updating UI");
             return;
         }
 
@@ -206,7 +206,7 @@ public class AuthenticateActivity extends AppCompatActivity {
                 }
             });
         } else {
-            Log.v(TAG,"updateUi() - not logged in..");
+            Log.v(TAG, "updateUi() - not logged in..");
             loginLl.setVisibility(View.VISIBLE);
             logoutLl.setVisibility(View.GONE);
             if (!LogManager.USE_FIREBASE_BACKEND) {
@@ -254,19 +254,19 @@ public class AuthenticateActivity extends AppCompatActivity {
                         // FIXME - make this work with Google Authentication like we do for Firebase.
                         String uname = mUnameEt.getText().toString();
                         String passwd = mPasswdEt.getText().toString();
-                        Log.v(TAG,"onOK() - uname="+uname+", passwd="+passwd);
+                        Log.v(TAG, "onOK() - uname=" + uname + ", passwd=" + passwd);
                         mWac.authenticate(uname, passwd, new WebApiConnection.StringCallback() {
                             @Override
                             public void accept(String retVal) {
                                 if (retVal != null) {
-                                    Log.d(TAG,"Authentication Success - token is "+retVal);
+                                    Log.d(TAG, "Authentication Success - token is " + retVal);
                                     mUtil.showToast("Login Successful");
                                     saveAuthToken(retVal);
                                     updateUi();
                                 } else {
-                                    Log.e(TAG,"onOk: Authentication failure for "+uname+", "+passwd);
+                                    Log.e(TAG, "onOk: Authentication failure for " + uname + ", " + passwd);
                                     mUtil.showToast("ERROR: Authentication Failed - Please Try Again");
-                                    mUtil.writeToSysLogFile("AuthActivity - Authorisation failed for "+uname+", "+passwd);
+                                    mUtil.writeToSysLogFile("AuthActivity - Authorisation failed for " + uname + ", " + passwd);
                                 }
                             }
                         });
@@ -275,29 +275,29 @@ public class AuthenticateActivity extends AppCompatActivity {
             };
 
     View.OnClickListener onLogout = new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.v(TAG, "onLogout");
-                if (LogManager.USE_FIREBASE_BACKEND) {
-                    AuthUI.getInstance()
-                            .signOut(getApplicationContext())
-                            .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                public void onComplete(@NonNull Task<Void> task) {
-                                    // user is now signed out
-                                    updateUi();
-                                }
-                            });
+        @Override
+        public void onClick(View view) {
+            Log.v(TAG, "onLogout");
+            if (LogManager.USE_FIREBASE_BACKEND) {
+                AuthUI.getInstance()
+                        .signOut(getApplicationContext())
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            public void onComplete(@NonNull Task<Void> task) {
+                                // user is now signed out
+                                updateUi();
+                            }
+                        });
+            } else {
+                if (mWac != null) {
+                    mWac.logout();
+                    saveAuthToken(null);
                 } else {
-                    if (mWac != null) {
-                        mWac.logout();
-                        saveAuthToken(null);
-                    } else {
-                        Log.e(TAG,"logout() - mWac is null - not doing anything");
-                    }
+                    Log.e(TAG, "logout() - mWac is null - not doing anything");
                 }
-                updateUi();
             }
-        };
+            updateUi();
+        }
+    };
 
     View.OnClickListener onRegister =
             new View.OnClickListener() {

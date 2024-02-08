@@ -31,6 +31,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -607,10 +608,11 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting SdDataSource");
                 mSdDataSource.start();
 
-                // Record last time we sent an SMS so we can limit rate of SMS
-                // sending to one per minute.   We set it to one minute ago (60000 milliseconds)
-                mSMSTime = new Time(Time.getCurrentTimezone());
-                mSMSTime.set(mSMSTime.toMillis(false) - 60000);
+
+        // Record last time we sent an SMS so we can limit rate of SMS
+        // sending to one per minute.   We set it to one minute ago (60000 milliseconds)
+        mSMSTime = new Time(Time.getCurrentTimezone());
+        mSMSTime.set(mSMSTime.toMillis(false) - 60000);
 
 
                 // Start timer to log data regularly..
@@ -653,12 +655,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                     mUtil.writeToSysLogFile("SdServer.onStartCommand() - mWakeLock is not null - this shouldn't happen???");
                 }
 
-
-                checkEvents();
-            }
-            else if (intent.getData().equals(Constants.GLOBAL_CONSTANTS.mStopUri)){
-                stopServiceRunner();
-            }
+        checkEvents();
 
         serverInitialized = true;
         return START_STICKY;
@@ -927,7 +924,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         Uri soundUri = null;
 
         if ((alarmLevel == mCurrentNotificationAlarmLevel) && (isNotificationShown(NOTIFICATION_ID))) {
-            Log.v(TAG,"showNotification - notification already shown at specified alarm level - not doing anything");
+            Log.v(TAG, "showNotification - notification already shown at specified alarm level - not doing anything");
             return;
         }
         Log.v(TAG, "showNotification() - alarmLevel=" + alarmLevel);
@@ -1037,8 +1034,8 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                         uiLiveData.signalChangedData();
             }
         } else {
-            mUtil.showToast("OpenSeizureDetector: showMainActivity Failed to Display Activity");
-            Log.e(TAG,"OpenSeizureDetector: showMainActivity Failed to Display Activity");
+            mUtil.showToast("OpenSeizureDetector: showMainActvity Failed to Display Activity");
+            Log.e(TAG, "OpenSeizureDetector: showMainActvity Failed to Display Activity");
         }
     }
 
@@ -1938,7 +1935,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                     Log.i(TAG, "SmsTimer.onFinish() - Last Location is Null so sending first SMS without location.");
                 }
             } else {
-                Log.e(TAG,"SmsTimer.onFinish - mLocationFinder is null - this should not happen!");
+                Log.e(TAG, "SmsTimer.onFinish - mLocationFinder is null - this should not happen!");
                 mUtil.showToast(getString(R.string.mLocationFinder_is_null_msg));
             }
             Log.i(TAG, "SmsTimer.onFinish() - Sending to " + mSMSNumbers.length + " Numbers");
@@ -1966,7 +1963,6 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
         /**
          * onSdLocationReceived - called with the best estimate location after mLocationReceiver times out.
-         *
          */
         private void sendSMS(String phoneNo, String msgStr) {
             Log.i(TAG, "sendSMS() - Sending to " + phoneNo);
@@ -2211,11 +2207,11 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                     Log.v(TAG, "checkEvents() - haveUnvalidatedEvent = " +
                             haveUnvalidatedEvent);
                     if (haveUnvalidatedEvent) {
-                        Log.v(TAG,"checkEvents() - showing event notification and cancelling datashare notification.");
+                        Log.v(TAG, "checkEvents() - showing event notification and cancelling datashare notification.");
                         showEventNotification();
                         mNM.cancel(DATASHARE_NOTIFICATION_ID);
                     } else {
-                        Log.v(TAG,"checkEvents() - cancelling event and datashare notifications");
+                        Log.v(TAG, "checkEvents() - cancelling event and datashare notifications");
                         mNM.cancel(EVENT_NOTIFICATION_ID);
                         mNM.cancel(DATASHARE_NOTIFICATION_ID);
                     }
@@ -2271,7 +2267,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         Uri soundUri = null;
 
         if (isNotificationShown(EVENT_NOTIFICATION_ID)) {
-            Log.v(TAG,"showEventNotification() - notification is already shown, so not doing anything");
+            Log.v(TAG, "showEventNotification() - notification is already shown, so not doing anything");
             return;
         }
 
@@ -2320,7 +2316,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         Uri soundUri = null;
 
         if (isNotificationShown(DATASHARE_NOTIFICATION_ID)) {
-            Log.v(TAG,"showDataShareNotification() - notification is already shown, so not doing anything");
+            Log.v(TAG, "showDataShareNotification() - notification is already shown, so not doing anything");
             return;
         }
 
@@ -2374,6 +2370,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
     /**
      * isNotificationShown - returns true if the specified notificationID is shown, otherwise returns false.
+     *
      * @param notificationId - Notification ID to check
      * @return true if the specified notification is displayed, otherwise false.
      */
@@ -2382,10 +2379,10 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
         StatusBarNotification[] notifications = mNotificationManager.getActiveNotifications();
         for (StatusBarNotification notification : notifications) {
             if (notification.getId() == notificationId) {
-                return(true);
+                return (true);
             }
         }
-        return(false);
+        return (false);
     }
 
     public LineDataSet getLineDataSet(boolean isAverage){

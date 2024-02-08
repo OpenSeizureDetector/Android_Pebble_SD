@@ -35,7 +35,7 @@ public class MlModelManager {
     public boolean mModelReady = false;
     private final String mUrlBase = "https://openseizuredetector.org.uk/static/MLmodels/";
     private final String mModelIndexFname = "MLmodels.json";
-   RequestQueue mQueue;
+    RequestQueue mQueue;
 
     public interface JSONObjectCallback {
         public void accept(JSONObject retValObj);
@@ -43,7 +43,7 @@ public class MlModelManager {
 
 
     public MlModelManager(Context context) {
-        Log.i(TAG,"MlModelManager Constructor");
+        Log.i(TAG, "MlModelManager Constructor");
         mContext = context;
         mUtil = new OsdUtil(mContext, new Handler());
         mQueue = Volley.newRequestQueue(mContext);
@@ -53,7 +53,6 @@ public class MlModelManager {
         Log.i(TAG, "close()");
         mQueue.stop();
     }
-
 
 
     /**

@@ -226,14 +226,14 @@ public class ExportDataActivity extends AppCompatActivity
 
     public void hideProgressBar() {
         runOnUiThread(new Runnable() {
-                public void run() {
-                    ProgressBar pb = (ProgressBar) findViewById(R.id.exportPb);
-                    pb.setIndeterminate(true);
-                    pb.setVisibility(View.INVISIBLE);
-                    mExportBtn.setEnabled(true);
-                    mExportBtn.setVisibility(View.VISIBLE);
+            public void run() {
+                ProgressBar pb = (ProgressBar) findViewById(R.id.exportPb);
+                pb.setIndeterminate(true);
+                pb.setVisibility(View.INVISIBLE);
+                mExportBtn.setEnabled(true);
+                mExportBtn.setVisibility(View.VISIBLE);
 
-                }
+            }
         });
     }
 
@@ -265,8 +265,8 @@ public class ExportDataActivity extends AppCompatActivity
                 // Perform operations on the document using its URI.
                 //mUtil.showToast("URI="+uri.toString());
                 Log.v(TAG, "onActivityResult() - exporting to file " + uri.toString());
-                mLm.exportToCsvFile(mEndDate, mDuration,uri, (boolean b)-> {
-                    Log.v(TAG,"onActivityResult callback");
+                mLm.exportToCsvFile(mEndDate, mDuration, uri, (boolean b) -> {
+                    Log.v(TAG, "onActivityResult callback");
                     hideProgressBar();
                 });
 

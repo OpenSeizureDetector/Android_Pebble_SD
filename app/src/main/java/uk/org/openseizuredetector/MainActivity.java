@@ -698,7 +698,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(warnTextColour);
                     }
                     if (mConnection.mSdServer.mSdData.alarmStanding) {
-                        tv.setText(R.string.Alarm);
+                        tv.setText(getString(R.string.Alarm) + "\n" + mConnection.mSdServer.mSdData.alarmCause);
                         tv.setBackgroundColor(alarmColour);
                         tv.setTextColor(alarmTextColour);
                     }
@@ -719,16 +719,16 @@ public class MainActivity extends AppCompatActivity {
 
                     if (mConnection.mSdServer.mSdData.mO2Sat > 0) {
                         tv.setText(getString(R.string.HR_Equals) + " " + Math.round(mConnection.mSdServer.mSdData.mHR) + " bpm\n"
-                                +"(av = "
-                                +Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage)+", "
-                                +Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage)+" bpm)\n"
-                                + getString(R.string.SpO2)+" = " + Math.round(mConnection.mSdServer.mSdData.mO2Sat) + "%");
+                                + "(av = "
+                                + Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage) + ", "
+                                + Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage) + " bpm)\n"
+                                + getString(R.string.SpO2) + " = " + Math.round(mConnection.mSdServer.mSdData.mO2Sat) + "%");
                     } else {
                         tv.setText(getString(R.string.HR_Equals) + " " + Math.round(mConnection.mSdServer.mSdData.mHR) + " bpm\n"
-                                +"(av = "
-                                +Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage)+", "
-                                +Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage)+" bpm)\n"
-                                + getString(R.string.SpO2)+" = ---%");
+                                + "(av = "
+                                + Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage) + ", "
+                                + Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage) + " bpm)\n"
+                                + getString(R.string.SpO2) + " = ---%");
                     }
                     if (mConnection.mSdServer.mSdData.mHRAlarmStanding
                             || mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding
@@ -768,20 +768,31 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(warnTextColour);
                     }
                     tv = (TextView) findViewById(R.id.battTv);
-                    tv.setText(getString(R.string.WatchBatteryEquals) + String.valueOf(mConnection.mSdServer.mSdData.batteryPc) + "%");
-                    if (mConnection.mSdServer.mSdData.batteryPc <= 10) {
-                        tv.setBackgroundColor(alarmColour);
-                        tv.setTextColor(alarmTextColour);
-                    }
-                    if (mConnection.mSdServer.mSdData.batteryPc > 10) {
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-                    }
-                    if (mConnection.mSdServer.mSdData.batteryPc >= 20) {
+                    if (mConnection.mSdServer.mSdData.dataSourceName.equals("Phone")) {
+                        tv.setText(getString(R.string.WatchBatteryEquals)
+                                + "---% / "
+                                + String.valueOf(mConnection.mSdServer.mSdData.phoneBatteryPc) + "%");
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
-                    }
 
+                    } else {
+                        tv.setText(getString(R.string.WatchBatteryEquals)
+                                + String.valueOf(mConnection.mSdServer.mSdData.batteryPc) + "% / "
+                                + String.valueOf(mConnection.mSdServer.mSdData.phoneBatteryPc) + "%");
+
+                        if (mConnection.mSdServer.mSdData.batteryPc <= 10) {
+                            tv.setBackgroundColor(alarmColour);
+                            tv.setTextColor(alarmTextColour);
+                        }
+                        if (mConnection.mSdServer.mSdData.batteryPc > 10) {
+                            tv.setBackgroundColor(warnColour);
+                            tv.setTextColor(warnTextColour);
+                        }
+                        if (mConnection.mSdServer.mSdData.batteryPc >= 20) {
+                            tv.setBackgroundColor(okColour);
+                            tv.setTextColor(okTextColour);
+                        }
+                    }
                     ////////////////////////////////////////////////////////////
                     // Populate the Data Sharing Status Box
                     // We start off with it set to OK, then check for several different abnormal conditions
@@ -877,7 +888,7 @@ public class MainActivity extends AppCompatActivity {
                             " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
                     ((TextView) findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
                             " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
-                    ((TextView) findViewById(R.id.pSeizureTv)).setText(getString(R.string.seizure_probability)+" = " + pSeizurePc + "%");
+                    ((TextView) findViewById(R.id.pSeizureTv)).setText(getString(R.string.seizure_probability) + " = " + pSeizurePc + "%");
 
                     ProgressBar pb;
                     Drawable pbDrawable;

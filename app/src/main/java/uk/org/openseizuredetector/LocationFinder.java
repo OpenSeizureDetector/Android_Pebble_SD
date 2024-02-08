@@ -2,6 +2,7 @@ package uk.org.openseizuredetector;
 
 
 /**
+ *
  */
 
 import android.content.Context;
@@ -21,8 +22,7 @@ interface SdLocationReceiver {
 }
 
 
-public class LocationFinder implements LocationListener
-{
+public class LocationFinder implements LocationListener {
     SdLocationReceiver mSdLocationReceiver = null;
     Location mLastLocation = null;
     OsdUtil mUtil;
@@ -33,7 +33,7 @@ public class LocationFinder implements LocationListener
     LocationListener mLocationListener;
     int mTimeoutPeriod = 60;   // Location search timeout period in seconds.
 
-    String TAG="LocationFinder";
+    String TAG = "LocationFinder";
 
     LocationFinder(Context context) {
         mHandler = new Handler();
@@ -54,7 +54,6 @@ public class LocationFinder implements LocationListener
             mTimeoutTimer = null;
         }
     }
-
 
 
     public Location getLastLocation() {
@@ -82,7 +81,7 @@ public class LocationFinder implements LocationListener
         mTimeoutTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                Log.v(TAG,"mTimeOutTimer expired - returning last location");
+                Log.v(TAG, "mTimeOutTimer expired - returning last location");
                 //mUtil.showToast("mTimeOutTimer expired - returning last location");
                 mLocationManager.removeUpdates(mLocationListener);
                 mSdLocationReceiver.onSdLocationReceived(mLastLocation);
@@ -93,7 +92,7 @@ public class LocationFinder implements LocationListener
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.v(TAG,"onLocationChanged - "+location.toString());
+        Log.v(TAG, "onLocationChanged - " + location.toString());
 
         // if we do not have a last location, this is the best we have!
         if (mLastLocation == null) {

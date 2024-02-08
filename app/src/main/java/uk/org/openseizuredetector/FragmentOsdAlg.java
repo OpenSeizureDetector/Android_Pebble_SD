@@ -30,6 +30,7 @@ import java.util.Objects;
 
 public class FragmentOsdAlg extends FragmentOsdBaseClass {
     String TAG = "FragmentOsdAlg";
+
     public FragmentOsdAlg() {
         // Required empty public constructor
     }
@@ -51,13 +52,6 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
     protected void updateUi() {
         //Log.d(TAG,"updateUi()");
         TextView tv;
-        tv = (TextView)mRootView.findViewById(R.id.fragment_osdalg_tv1);
-        if (mConnection.mBound) {
-            tv.setText("Bound to Server");
-        } else {
-            tv.setText("****NOT BOUND TO SERVER***");
-            return;
-        }
 
 
         /////////////////////////////////////////////////////
@@ -85,7 +79,7 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
         } else
             specRatio = 0;
 
-        ((TextView)mRootView.findViewById(R.id.powerTv)).setText(getString(R.string.PowerEquals) + mConnection.mSdServer.mSdData.roiPower +
+        ((TextView) mRootView.findViewById(R.id.powerTv)).setText(getString(R.string.PowerEquals) + mConnection.mSdServer.mSdData.roiPower +
                 " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
 
         ProgressBar pb;
@@ -100,7 +94,7 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             pbDrawable = ContextCompat.getDrawable(getActivity(),R.drawable.progress_bar_red);
         pb.setProgressDrawable(pbDrawable);
 
-        ((TextView)mRootView.findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
+        ((TextView) mRootView.findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
                 " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
 
         pb = ((ProgressBar) mRootView.findViewById(R.id.spectrumProgressBar));

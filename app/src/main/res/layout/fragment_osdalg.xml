@@ -22,15 +22,15 @@
             android:id="@+id/fragment_osdalg_tv2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="OSD Algorithm Status"
-            android:textColor="@color/okTextColor" />
+            android:textColor="@color/okTextColor"
+            android:text="OSD Algorithm Status" />
 
         <TextView
             android:id="@+id/powerTv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="---"
-            android:textColor="@color/okTextColor" />
+            android:textColor="@color/okTextColor"
+            android:text="---" />
 
         <ProgressBar
             android:id="@+id/powerProgressBar"
@@ -43,8 +43,8 @@
             android:id="@+id/spectrumTv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="---"
-            android:textColor="@color/okTextColor" />
+            android:textColor="@color/okTextColor"
+            android:text="---" />
 
         <ProgressBar
             android:id="@+id/spectrumProgressBar"

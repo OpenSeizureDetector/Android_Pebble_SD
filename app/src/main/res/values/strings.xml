@@ -55,7 +55,7 @@
     <string name="HRAlarmOff">HR Alarm OFF</string>
     <string name="WatchAppOK">Watch App OK</string>
     <string name="WatchAppNotRunning">Watch App NOT Running</string>
-    <string name="WatchBatteryEquals">Watch Battery = </string>
+    <string name="WatchBatteryEquals">Batteries = </string>
     <string name="PowerEquals">Power = </string>
     <string name="SpectrumRatioEquals">Spectrum Ratio = </string>
     <string name="Threshold">threshold</string>
@@ -562,5 +562,10 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="use_new_ui_summary">Use new swipeable user interface</string>
     <string name="use_new_ui_title">Use New User Interface</string>
-    <string name="select_phone_power_graph">Select Phone power graph</string>
+    <string name="heart_rate_algorithm">Heart Rate Algorithm</string>
+    <string name="heart_rate_history_bpm">"Heart Rate History (bpm): "</string>
+    <string name="minutes">minutes</string>
+    <string name="algorithms">"Algorithms: "</string>
+    <string name="battery_history">Battery History</string>
+    <string name="watch_batt_hist">Watch Battery History (%)</string>
 </resources>

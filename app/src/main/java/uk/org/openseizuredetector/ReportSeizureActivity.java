@@ -211,24 +211,23 @@ public class ReportSeizureActivity extends AppCompatActivity {
     }
 
 
-
     private void updateUi() {
         //Log.v(TAG,"updateUi()");
         TextView tv;
         Button btn;
         RadioButton b;
 
-        tv = (TextView)findViewById(R.id.date_day_tv);
-        tv.setText(String.format("%02d",mDay));
-        tv = (TextView)findViewById(R.id.date_mon_tv);
-        tv.setText(String.format("%02d",mMonth+1));   // Month counted from zero
-        tv = (TextView)findViewById(R.id.date_year_tv);
-        tv.setText(String.format("%04d",mYear));
-        tv = (TextView)findViewById(R.id.time_hh_tv);
-        tv.setText(String.format("%02d",mHour));
-        tv = (TextView)findViewById(R.id.time_mm_tv);
-        tv.setText(String.format("%02d",mMinute));
-        tv = (TextView)findViewById(R.id.msg_tv);
+        tv = (TextView) findViewById(R.id.date_day_tv);
+        tv.setText(String.format("%02d", mDay));
+        tv = (TextView) findViewById(R.id.date_mon_tv);
+        tv.setText(String.format("%02d", mMonth + 1));   // Month counted from zero
+        tv = (TextView) findViewById(R.id.date_year_tv);
+        tv.setText(String.format("%04d", mYear));
+        tv = (TextView) findViewById(R.id.time_hh_tv);
+        tv.setText(String.format("%02d", mHour));
+        tv = (TextView) findViewById(R.id.time_mm_tv);
+        tv.setText(String.format("%02d", mMinute));
+        tv = (TextView) findViewById(R.id.msg_tv);
         tv.setText(mMsg);
 
         // Populate event type button group if necessary
@@ -252,12 +251,12 @@ public class ReportSeizureActivity extends AppCompatActivity {
         if (b != null) {
             seizureTypeStr = b.getText().toString();
         }
-        Log.i(TAG,"updateUi - SeizureType="+seizureTypeStr);
+        Log.i(TAG, "updateUi - SeizureType=" + seizureTypeStr);
 
         // Populate the event sub-types radio button list.
-        Log.v(TAG,"updateUi() - meventsubtypeshashmap="+mEventSubTypesHashMap+", mEventSubtypesListChanged="+mEventSubTypesListChanged);
+        Log.v(TAG, "updateUi() - meventsubtypeshashmap=" + mEventSubTypesHashMap + ", mEventSubtypesListChanged=" + mEventSubTypesListChanged);
         if (mEventSubTypesHashMap != null && mRedrawEventSubTypesList) {
-            Log.v(TAG,"UpdateUi() - populating event sub types list");
+            Log.v(TAG, "UpdateUi() - populating event sub types list");
             if (seizureTypeStr != null) {
                 // based on https://androidexample.com/create-a-simple-listview
                 ArrayList<String> subtypesArrayList = mEventSubTypesHashMap.get(seizureTypeStr);
@@ -283,8 +282,8 @@ public class ReportSeizureActivity extends AppCompatActivity {
                     String notesStr = null;
                     Log.v(TAG, "onOk");
                     //SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    String dateStr=String.format("%4d-%02d-%02d %02d:%02d:30",mYear,mMonth+1,mDay, mHour, mMinute);
-                    Log.v(TAG, "onOk() - dateSTr="+dateStr);
+                    String dateStr = String.format("%4d-%02d-%02d %02d:%02d:30", mYear, mMonth + 1, mDay, mHour, mMinute);
+                    Log.v(TAG, "onOk() - dateSTr=" + dateStr);
 
                     // Read seizure type from radio buttons
                     int checkedRadioButtonId = mEventTypeRg.getCheckedRadioButtonId();
@@ -292,19 +291,19 @@ public class ReportSeizureActivity extends AppCompatActivity {
                     if (b != null) {
                         seizureTypeStr = b.getText().toString();
                     }
-                    Log.i(TAG,"onOk() - SeizureType="+seizureTypeStr);
+                    Log.i(TAG, "onOk() - SeizureType=" + seizureTypeStr);
 
                     checkedRadioButtonId = mEventSubTypeRg.getCheckedRadioButtonId();
                     b = (RadioButton) findViewById(checkedRadioButtonId);
                     if (b != null) {
                         seizureSubTypeStr = b.getText().toString();
                     }
-                    Log.i(TAG,"onOk() - SeizureSubType="+seizureSubTypeStr);
+                    Log.i(TAG, "onOk() - SeizureSubType=" + seizureSubTypeStr);
 
-                    TextView tv = (TextView)findViewById(R.id.eventNotesTv);
+                    TextView tv = (TextView) findViewById(R.id.eventNotesTv);
                     notesStr = tv.getText().toString();
 
-                    mLm.createLocalEvent(dateStr,5,seizureTypeStr, seizureSubTypeStr, notesStr,
+                    mLm.createLocalEvent(dateStr, 5, seizureTypeStr, seizureSubTypeStr, notesStr,
                             mConnection.mSdServer.mSdData.toSettingsJSON());
                     mUtil.showToast("Seizure Event Created");
                     finish();

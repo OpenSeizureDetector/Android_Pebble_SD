@@ -10,6 +10,7 @@ android {
         targetSdkVersion 33
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        manifestPlaceholders.OPENSEIZUREDETECTOR_PACKAGE_NAME = "uk.org.openseizuredetector"
     }
 
     buildTypes {

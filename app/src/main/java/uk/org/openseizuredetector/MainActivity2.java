@@ -78,17 +78,18 @@ public class MainActivity2 extends AppCompatActivity {
         mUtil.writeToSysLogFile("MainActivity.onCreate()");
         mContext = this;
 
-
-        if (savedInstanceState == null) {
-            // Instantiate a ViewPager2 and a PagerAdapter.
-            mFragmentPager = findViewById(R.id.fragment_pager);
-            mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
-            mFragmentPager.setAdapter(mFragmentStateAdapter);
-            getSupportFragmentManager().beginTransaction()
-                    .setReorderingAllowed(true)
-                    .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
-                    .commit();
-        }
+        /**
+         if (savedInstanceState == null) {
+         // Instantiate a ViewPager2 and a PagerAdapter.
+         mFragmentPager = findViewById(R.id.fragment_pager);
+         mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
+         mFragmentPager.setAdapter(mFragmentStateAdapter);
+         getSupportFragmentManager().beginTransaction()
+         .setReorderingAllowed(true)
+         .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
+         .commit();
+         }
+         */
     }
 
     /**
@@ -119,7 +120,7 @@ public class MainActivity2 extends AppCompatActivity {
         SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
         boolean audibleAlarm = SP.getBoolean("AudibleAlarm", true);
-        Log.v(TAG, "onStart - auidbleAlarm = " + audibleAlarm);
+        Log.v(TAG, "onStart - audibleAlarm = " + audibleAlarm);
 
         TextView tv;
         tv = (TextView) findViewById(R.id.versionTv);
@@ -129,11 +130,12 @@ public class MainActivity2 extends AppCompatActivity {
         tv.setTextColor(okTextColour);
 
         if (mUtil.isServerRunning()) {
-            mUtil.writeToSysLogFile("MainActivity.onStart - Binding to Server");
+            Log.i(TAG, "MainActivity2.onStart() - Binding to Server");
+            mUtil.writeToSysLogFile("MainActivity2.onStart - Binding to Server");
             mUtil.bindToServer(getApplicationContext(), mConnection);
         } else {
-            Log.i(TAG, "onStart() - Server Not Running");
-            mUtil.writeToSysLogFile("MainActivity.onStart - Server Not Running");
+            Log.i(TAG, "MainActivity2.onStart() - Server Not Running");
+            mUtil.writeToSysLogFile("MainActivity2.onStart - Server Not Running");
         }
     }
 
@@ -142,11 +144,9 @@ public class MainActivity2 extends AppCompatActivity {
         super.onStop();
         Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("MainActivity.onStop()");
-       mUtil.setBound(false,mConnection);
+        mUtil.setBound(false,mConnection);
         mUtil.unbindFromServer(getApplicationContext(), mConnection);
     }
-
-
 
 
     @Override
@@ -172,43 +172,49 @@ public class MainActivity2 extends AppCompatActivity {
         }
         mFragmentPager.setId(SP.getInt(Constants.GLOBAL_CONSTANTS.lastPagerId,0));
         serverStatusHandler.postDelayed(()-> {
-           mUtil.setBound(false,mConnection);
+            mUtil.setBound(false,mConnection);
         },400);
-    }
+        // Instantiate a ViewPager2 and a PagerAdapter.
+        mFragmentPager = findViewById(R.id.fragment_pager);
+        mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
+        mFragmentPager.setAdapter(mFragmentStateAdapter);
+        getSupportFragmentManager().beginTransaction()
+                .setReorderingAllowed(true)
+                .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
+                .commit();
 
+    }
 
 
     @Override
     public void onBackPressed() {
-        if (Objects.nonNull(mFragmentPager)){
-            if (mFragmentPager.getCurrentItem() == 0) {
-                // If the user is currently looking at the first step, allow the system to handle the
-                // Back button. This calls finish() on this activity and pops the back stack.
-                try {
-                    long currentTime = System.currentTimeMillis();
-                    if (currentTime - lastPress > 5000) {
-                        backpressToast = Toast.makeText(getBaseContext(), "Press back again to exit", Toast.LENGTH_LONG);
-                        backpressToast.show();
-                        lastPress = currentTime;
-                    } else {
-                        Log.d(TAG, "onBackPressed: initiating shutdown");
-                        if (backpressToast != null) backpressToast.cancel();
-                        activateStopByBack = true;
-                        if (Objects.nonNull(mConnection))
-                            if (mConnection.mBound)
-                                mUtil.unbindFromServer(MainActivity2.this, mConnection);
-                        if (mUtil.isServerRunning())
-                            mUtil.stopServer();
-                        serverStatusHandler.postDelayed(MainActivity2.this::finishAffinity, 100);
-                        super.onBackPressed();
-                    }
-                } catch (Exception e) {
-                    Log.e(TAG, "onBackPressed() Error thrown while processing.");
+        if (Objects.isNull(mFragmentPager) || mFragmentPager.getCurrentItem() == 0) {
+            // If the user is currently looking at the first step, allow the system to handle the
+            // Back button. This calls finish() on this activity and pops the back stack.
+            try {
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastPress > 5000) {
+                    backpressToast = Toast.makeText(getBaseContext(), "Press back again to exit", Toast.LENGTH_LONG);
+                    backpressToast.show();
+                    lastPress = currentTime;
+                } else {
+                    Log.d(TAG, "onBackPressed: initiating shutdown");
+                    if (backpressToast != null) backpressToast.cancel();
+                    activateStopByBack = true;
+                    if (Objects.nonNull(mConnection))
+                        if (mConnection.mBound)
+                            mUtil.unbindFromServer(MainActivity2.this, mConnection);
+                    if (mUtil.isServerRunning())
+                        mUtil.stopServer();
+                    serverStatusHandler.postDelayed(MainActivity2.this::finishAffinity, 100);
+                    super.onBackPressed();
                 }
-            } else {
-                // Otherwise, select the previous step.
-                mFragmentPager.setCurrentItem(mFragmentPager.getCurrentItem() - 1);
+            } catch (Exception e) {
+                Log.e(TAG, "onBackPressed() Error thrown while processing.");
             }
+        } else {
+            // Otherwise, select the previous step.
+            mFragmentPager.setCurrentItem(mFragmentPager.getCurrentItem() - 1);
         }
     }
 
@@ -239,7 +245,7 @@ public class MainActivity2 extends AppCompatActivity {
                     Log.i(TAG, "Stopping Server");
                     mUtil.unbindFromServer(getApplicationContext(), mConnection);
                     stopServer();
-                    finish();
+                    //finish();
                 } else {
                     Log.i(TAG, "Starting Server");
                     startServer();
@@ -326,34 +332,35 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
 
-
-
     /**
      * A simple pager adapter that represents 5 ScreenSlidePageFragment objects, in
      * sequence.
      */
     private class ScreenSlideFragmentPagerAdapter extends FragmentStateAdapter {
         private String TAG = "ScreenSlideFragmentPagerAdapter";
+
         public ScreenSlideFragmentPagerAdapter(FragmentActivity fa) {
             super(fa);
         }
 
         @Override
         public Fragment createFragment(int position) {
-            switch(position) {
+            switch (position) {
                 case 0:
                     return new FragmentOsdAlg();
                 case 1:
                     return new FragmentHrAlg();
                 case 2:
-                    return new FragmentMlAlg();
+                    return new FragmentBatt();
                 case 3:
                     return new FragmentSystem();
                 case 4:
                     return new FragmentDataSharing();
+                case 5:
+                    return new FragmentMlAlg();
 
                 default:
-                    Log.e(TAG,"createFragment() - invalid Position "+position);
+                    Log.e(TAG, "createFragment() - invalid Position " + position);
                     return null;
             }
         }
@@ -375,7 +382,6 @@ public class MainActivity2 extends AppCompatActivity {
         Log.i(TAG, "stopServer(): stopping Server...");
         mUtil.stopServer();
     }
-
 
 
     private void showAbout() {

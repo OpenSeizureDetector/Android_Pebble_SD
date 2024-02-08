@@ -115,7 +115,7 @@ public class SdWebServer extends NanoHTTPD {
                                 answer = mSdServer.mSdDataSource.updateFromJSON(files.get("postData"));
                             }
                         } else {
-                            Log.i(TAG,"Web server received data, but datasource is not set to 'Garmin' - Ignoring");
+                            Log.i(TAG, "Web server received data, but datasource is not set to 'Garmin' - Ignoring");
                             mUtil.showToast("Web server received data, but datasource is not set to 'Garmin' - Ignoring");
                         }
                         break;
@@ -153,10 +153,10 @@ public class SdWebServer extends NanoHTTPD {
                         Log.v(TAG, "              files=" + files.toString());
                         // Send the data to the SdDataSource so the app can pick it up.
                         if (parameters != null) {
-                            Log.v(TAG,"passing parameters to data source");
+                            Log.v(TAG, "passing parameters to data source");
                             answer = mSdServer.mSdDataSource.updateFromJSON(parameters.get("dataObj").toString());
                         } else {
-                            Log.v(TAG,"Passing postData to data source");
+                            Log.v(TAG, "Passing postData to data source");
                             answer = mSdServer.mSdDataSource.updateFromJSON(files.get("postData"));
                         }
                         //mSdServer.mSdDataSource.updateFromJSON(parameters.toString());
@@ -210,12 +210,12 @@ public class SdWebServer extends NanoHTTPD {
                 } else {
                     Log.v(TAG, "WebServer.serve() - Unknown uri -" +
                             uri);
-                    answer = "{'msg' : 'Unknown URI: "+uri+"'}";
+                    answer = "{'msg' : 'Unknown URI: " + uri + "'}";
                 }
         }
         res = new NanoHTTPD.Response(answer);
         res.setMimeType(responseMimeType);
-        Log.v(TAG,"WebServer.serve() - returning "+res.getData()+", mime="+res.getMimeType()+", status="+res.getStatus());
+        Log.v(TAG, "WebServer.serve() - returning " + res.getData() + ", mime=" + res.getMimeType() + ", status=" + res.getStatus());
         return (res);
     }
 
@@ -249,13 +249,13 @@ public class SdWebServer extends NanoHTTPD {
                 try {
                     JSONObject jsonObj = new JSONObject();
                     File[] fileList = mUtil.getDataFilesList();
-                    Log.v(TAG, "serveLogFile(): fileList=" + fileList.toString()+", length="+fileList.length);
+                    Log.v(TAG, "serveLogFile(): fileList=" + fileList.toString() + ", length=" + fileList.length);
                     JSONArray arr = new JSONArray();
-                        for (int i = 0; i < fileList.length; i++) {
-                            Log.v(TAG, "serveLogFile(): file[" + i + "]=" + fileList[i]);
-                            arr.put(fileList[i].getName());
-                        }
-                        jsonObj.put("logFileList", arr);
+                    for (int i = 0; i < fileList.length; i++) {
+                        Log.v(TAG, "serveLogFile(): file[" + i + "]=" + fileList[i]);
+                        arr.put(fileList[i].getName());
+                    }
+                    jsonObj.put("logFileList", arr);
                     res = new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK,
                             "text/html", jsonObj.toString());
                 } catch (Exception ex) {

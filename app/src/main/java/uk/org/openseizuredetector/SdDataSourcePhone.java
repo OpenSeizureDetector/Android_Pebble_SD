@@ -29,8 +29,10 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Binder;
 import android.os.Handler;
-
+import android.os.IBinder;
+import android.os.PowerManager;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
 
@@ -45,7 +47,9 @@ import java.util.Objects;
  * A data source that uses the accelerometer built into the phone to provide seizure detector data for testing purposes.
  * Note that this is unlikely to be useable as a viable seizure detector because the phone must be firmly attached to the part of the body that
  * will shake during a seizure.
+
  */
+// TODO: Straithen out approaches GJ vs AP.
 public class SdDataSourcePhone extends SdDataSource implements SensorEventListener {
     private String TAG = "SdDataSourcePhone";
 
@@ -65,10 +69,13 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
     private SdData mSdDataSettings ;
     private SdServer sdServer;
 
+    private boolean mUseNextSample = true;
+
     private boolean sensorsActive = false;
     private List<Double> rawDataList;
     private List<Double> rawDataList3D;
 
+    private PowerManager.WakeLock mWakeLock;
 
 
 
@@ -84,8 +91,6 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
     public SdDataSourcePhone(Context context, Handler handler,
                              SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
-
-
         mName = "Phone";
         // Set default settings from XML files (mContext is set by super().
          PreferenceManager.setDefaultValues(useSdServerBinding(),
@@ -198,20 +203,25 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
             double y = OsdUtil.convertMetresPerSecondSquaredToMilliG(event.values[1]);
             double z = OsdUtil.convertMetresPerSecondSquaredToMilliG(event.values[2]);
             if (mMode == 0) {
-                if (mStartEvent==null) {
-                    Log.v(TAG,"onSensorChanged(): mMode=0 - checking Sample Rate - mNSamp = "+mSdData.mNsamp);
-                    Log.v(TAG,"onSensorChanged(): saving initial event data");
+                if (mStartEvent == null) {
+                    Log.v(TAG, "onSensorChanged(): mMode=0 - Starting Sample Rate Check - mNSamp = " + mSdData.mNsamp);
+                    Log.v(TAG, "onSensorChanged(): saving initial event data");
                     mStartEvent = event;
                     mStartTs = event.timestamp;
                     mSdData.mNsamp = 0;
                 } else {
-                    mSdData.mNsamp ++;
+                    mSdData.mNsamp++;
                 }
                 if (mSdData.mNsamp >= mSdDataSettings.mDefaultSampleCount) {
                     Log.v(TAG, "onSensorChanged(): Collected Data = final TimeStamp=" + event.timestamp + ", initial TimeStamp=" + mStartTs);
                     mSdData.dT = 1.0e-9 * (event.timestamp - mStartTs);
                     mCurrentMaxSampleCount = mSdData.mNsamp;
                     mSdData.mSampleFreq = (int) (mSdData.mNsamp / mSdData.dT);
+                Log.v(TAG, "onSensorChanged - mMode=" + mMode + " mNSamp=" + mSdData.mNsamp);
+                if (mSdData.mNsamp >= mSdData.rawData.length) {
+                    Log.v(TAG, "onSensorChanged(): Collected Data = final TimeStamp=" + event.timestamp + ", initial TimeStamp=" + mStartTs);
+                    double dT = 1e-9 * (event.timestamp - mStartTs);
+                    mSdData.mSampleFreq = (int) (mSdData.mNsamp / dT);
                     mSdData.haveSettings = true;
                     Log.v(TAG, "onSensorChanged(): Collected data for " + mSdData.dT + " sec - calculated sample rate as " + mSdData.mSampleFreq + " Hz");
                     calculateStaticTimings();
@@ -267,7 +277,7 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     doAnalysis();
                     mSdData.mNsamp = 0;
                     mStartTs = event.timestamp;
-                    
+
                     return;
                 }else if (!Objects.equals(rawDataList, null) && rawDataList.size() <= mCurrentMaxSampleCount ) {
 
@@ -293,19 +303,21 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     Log.v(TAG, "onSensorChanged(): Received empty data during analysis - ignoring sample");
                 }
 
+                } else {
+                    mUseNextSample = true;
+                }
             } else {
-                Log.v(TAG,"onSensorChanged(): ERROR - Mode "+mMode+" unrecognised");
+                Log.v(TAG, "onSensorChanged(): ERROR - Mode " + mMode + " unrecognised");
             }
+
         }
 
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        Log.v(TAG,"onAccuracyChanged()");
+        Log.v(TAG, "onAccuracyChanged()");
     }
-
-
 
 
 }

@@ -116,7 +116,7 @@ public class RemoteDbActivity extends AppCompatActivity {
     private HashMap<String, String> getAuthHeaders() {
         HashMap<String, String> headersMap = new HashMap<>();
         String authToken = getAuthToken();
-        headersMap.put("Authorization", "Token "+authToken);
+        headersMap.put("Authorization", "Token " + authToken);
         return (headersMap);
     }
 
@@ -127,7 +127,7 @@ public class RemoteDbActivity extends AppCompatActivity {
     }
 
     private void updateUi() {
-        Log.v(TAG,"updateUi()");
+        Log.v(TAG, "updateUi()");
         TextView tv;
         Button btn;
         // Local Database Information
@@ -139,10 +139,9 @@ public class RemoteDbActivity extends AppCompatActivity {
         //tv.setText(String.format("%d",datapointsCount));
 
 
-
         // Remote Database Information
-        tv = (TextView)findViewById(R.id.authStatusTv);
-        btn = (Button)findViewById(R.id.auth_button);
+        tv = (TextView) findViewById(R.id.authStatusTv);
+        btn = (Button) findViewById(R.id.auth_button);
         if (mLm != null) {
             if (mLm.mWac.isLoggedIn()) {
                 tv.setText("Authenticated");
@@ -160,7 +159,7 @@ public class RemoteDbActivity extends AppCompatActivity {
                 public void onClick(View view) {
                     Log.v(TAG, "onAuth");
                     Intent i;
-                    i =new Intent(mContext, AuthenticateActivity.class);
+                    i = new Intent(mContext, AuthenticateActivity.class);
                     startActivity(i);
                 }
             };

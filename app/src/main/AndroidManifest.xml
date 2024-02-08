@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:versionCode="130"
-    android:versionName="4.3.0b">
+    android:versionCode="131"
+    android:versionName="4.3.1n">
     <!-- android:allowBackup="false" -->
 
     <queries>
@@ -34,9 +34,9 @@
     <uses-permission-sdk-23 android:name="android.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND"/>
     <uses-permission-sdk-23 android:name="uk.org.openseizuredetector.broadcast" />
     <!--
-AD_ID seems to be added automatically as part of google play services.  We don't use ads,
-so explicitly remove it to keep Google Play store happy.
--->
+ AD_ID seems to be added automatically as part of google play services.  We don't use ads,
+    so explicitly remove it to keep Google Play store happy.
+    -->
     <uses-permission
         android:name="com.google.android.gms.permission.AD_ID"
         tools:node="remove" />
@@ -61,11 +61,12 @@ so explicitly remove it to keep Google Play store happy.
         <activity
             android:name=".MainActivity2"
             android:exported="false" />
-        <activity
+        <!--<activity
             android:name=".MlModelManager"
             android:exported="false"
             android:label="@string/title_activity_ml_model_manager"
             android:theme="@style/AppTheme" />
+            -->
         <activity android:name=".AuthenticateActivity" /> <!-- @android:style/Theme.Holo.Light" -->
         <activity android:name=".BLEScanActivity" />
         <activity android:name=".ExportDataActivity" /> <!-- android:usesCleartextTraffic="true" -->
@@ -101,8 +102,8 @@ so explicitly remove it to keep Google Play store happy.
 
         <receiver
             android:name=".BootBroadcastReceiver"
-            android:label="BootBroadcastReceiver"
-            android:exported="true">
+            android:exported="true"
+            android:label="BootBroadcastReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
@@ -111,9 +112,6 @@ so explicitly remove it to keep Google Play store happy.
         <uses-library
             android:name="org.apache.http.legacy"
             android:required="false" />
-
-
     </application>
-
 
 </manifest>

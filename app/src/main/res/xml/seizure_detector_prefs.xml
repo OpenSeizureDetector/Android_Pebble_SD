@@ -170,12 +170,12 @@
             android:summary=""
             android:title="@string/fall_detect_active_title" />
         <EditTextPreference
-            android:defaultValue="200"
+            android:defaultValue="1500"
             android:key="FallThreshMin"
             android:summary=""
             android:title="@string/fall_thresh_min_title" />
         <EditTextPreference
-            android:defaultValue="1200"
+            android:defaultValue="3500"
             android:key="FallThreshMax"
             android:summary=""
             android:title="@string/fall_thresh_max_title" />
