@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SwitchCompat;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -177,7 +178,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
 
         }
     }
-}
+
 
     @Override
     public void onAttach(@NonNull Context context) {

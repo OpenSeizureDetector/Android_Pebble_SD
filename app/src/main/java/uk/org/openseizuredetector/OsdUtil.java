@@ -39,6 +39,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.hardware.SensorManager;
 import android.net.ConnectivityManager;
+import android.net.LinkProperties;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -108,7 +109,7 @@ public class OsdUtil {
     //private LogManager mLm;
     static private SQLiteDatabase mSysLogDb = null;   // SQLite Database for data and log entries.
     private final static Long mMinPruneInterval = TimeUnit.MINUTES.toMillis(5); // minimum time between syslog pruning is 5 minutes
-    private static Long mLastPruneMillis = new Long(0);   // Record of the last time we pruned the syslog db.
+    private static Long mLastPruneMillis = Long.valueOf(0);   // Record of the last time we pruned the syslog db.
 
     private static int mNbound = 0;
     //save startId of SdServer
@@ -331,7 +332,9 @@ public class OsdUtil {
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         if (cm != null) {
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
-
+                LinkProperties result = cm.getLinkProperties(cm.getActiveNetwork());
+                if (result.getInterfaceName()!="wlan0")
+                    return false;
                 NetworkCapabilities capabilities = cm.getNetworkCapabilities(cm.getActiveNetwork());
                 if (capabilities == null) {
                     return false;

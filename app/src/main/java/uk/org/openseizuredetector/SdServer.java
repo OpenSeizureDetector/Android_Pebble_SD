@@ -533,7 +533,8 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "onStartCommand() - SdServer service starting");
-        if (Objects.nonNull(intent))
+
+        if (Objects.nonNull(intent)) {
             if (intent.getData().equals(Constants.GLOBAL_CONSTANTS.mStartUri)) {
                 mUtil.writeToSysLogFile("SdServer.onStartCommand()");
                 mStartId = startId;
@@ -542,7 +543,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 updatePrefs();
 
 
-                if (arePowerUpdateBroadcastsRegistered()){
+                if (arePowerUpdateBroadcastsRegistered()) {
                     unBindBatteryEvents();
                 }
 
@@ -609,10 +610,10 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                 mSdDataSource.start();
 
 
-        // Record last time we sent an SMS so we can limit rate of SMS
-        // sending to one per minute.   We set it to one minute ago (60000 milliseconds)
-        mSMSTime = new Time(Time.getCurrentTimezone());
-        mSMSTime.set(mSMSTime.toMillis(false) - 60000);
+                // Record last time we sent an SMS so we can limit rate of SMS
+                // sending to one per minute.   We set it to one minute ago (60000 milliseconds)
+                mSMSTime = new Time(Time.getCurrentTimezone());
+                mSMSTime.set(mSMSTime.toMillis(false) - 60000);
 
 
                 // Start timer to log data regularly..
@@ -644,7 +645,7 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
                 // Apply the wake-lock to prevent CPU sleeping (very battery intensive!)
                 if (Objects.nonNull(mWakeLock)) {
-                    if (false&&!mWakeLock.isHeld()) {
+                    if (!mWakeLock.isHeld()) {
                         mWakeLock.acquire(24 * 60 * 60 * 1000L /*1 day*/);
                         Log.v(TAG, "Applied Wake Lock to prevent device sleeping");
 
@@ -655,12 +656,16 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
                     mUtil.writeToSysLogFile("SdServer.onStartCommand() - mWakeLock is not null - this shouldn't happen???");
                 }
 
-        checkEvents();
+                checkEvents();
 
-        serverInitialized = true;
+                serverInitialized = true;
+            } else if (intent.getData().equals(Constants.GLOBAL_CONSTANTS.mStopUri)) {
+                stopServiceRunner();
+            }
+        }
+
         return START_STICKY;
     }
-
     @Override
     public void onDestroy() {
         Log.i(TAG, "onDestroy(): SdServer Service stopping");

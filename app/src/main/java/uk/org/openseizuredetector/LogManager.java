@@ -512,7 +512,7 @@ public class LogManager {
     }
 
 
-     * Return an array list of objects representing the events in the database by calling the specified callback function.
+     /** Return an array list of objects representing the events in the database by calling the specified callback function.
      *
      * @param includeWarnings - whether to include warnings in the list of events, or just alarm conditions.
      * @return True on successful start or false if call fails.

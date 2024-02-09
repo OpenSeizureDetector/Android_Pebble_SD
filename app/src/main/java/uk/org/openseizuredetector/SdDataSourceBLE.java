@@ -146,6 +146,16 @@ public class SdDataSourceBLE extends SdDataSource {
         }
         Log.i(TAG, "mBLEDevice is " + mBleDeviceName + ", Addr=" + mBleDeviceAddr);
 
+        if (ActivityCompat.checkSelfPermission(useSdServerBinding(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
         bleConnect();
 
     }
@@ -214,7 +224,7 @@ public class SdDataSourceBLE extends SdDataSource {
             setCharacteristicNotification(mOsdChar, false);
         }
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(useSdServerBinding(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
@@ -390,7 +400,7 @@ public class SdDataSourceBLE extends SdDataSource {
         }
 
         private boolean permissionsOK() {
-            if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(useSdServerBinding(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                 // TODO: Consider calling
                 //    ActivityCompat#requestPermissions
                 // here to request the missing permissions, and then overriding
@@ -413,7 +423,7 @@ public class SdDataSourceBLE extends SdDataSource {
              * If the data is acceleration data, we add it to a buffer - it is analysed once the buffer is full.
              * Heart rate data is written directly to sdData to be used in future analysis.
              */
-            Log.v(TAG,"onDataReceived: Characteristic="+characteristic.getUuid().toString());
+            Log.v(TAG, "onDataReceived: Characteristic=" + characteristic.getUuid().toString());
             if (characteristic.getUuid().toString().equals(CHAR_HEART_RATE_MEASUREMENT)) {
                 int flag = characteristic.getProperties();
                 //Log.d(TAG,"onDataReceived() - flag = "+flag);

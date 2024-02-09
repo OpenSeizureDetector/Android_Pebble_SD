@@ -154,7 +154,7 @@ public abstract class SdDataSource {
     private JSONObject dataObject;
     private String dataTypeStr;
     private double mLastHrValue;
-    private long mHRStatusTime;
+    private Time mHRStatusTime;
     private double mHRFrozenPeriod = 60; // seconds
     private boolean mHRFrozenAlarm;
     private boolean mFidgetDetectorEnabled;
