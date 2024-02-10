@@ -1649,12 +1649,12 @@ public class SdServer extends RemoteWorkerService implements SdDataReceiver {
 
         }
         powerUpdateReceiveAction(batteryStatusIntent);
-        powerUpdateReceiverPowerConnected.register(activity, new IntentFilter(Intent.ACTION_POWER_CONNECTED));
+        powerUpdateReceiverPowerConnected.register(SdServer.this, new IntentFilter(Intent.ACTION_POWER_CONNECTED));
         powerUpdateReceiverPowerConnected.isRegistered = true;
-        powerUpdateReceiverPowerDisConnected.register(activity, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
+        powerUpdateReceiverPowerDisConnected.register(SdServer.this, new IntentFilter(Intent.ACTION_POWER_DISCONNECTED));
         powerUpdateReceiverPowerDisConnected.isRegistered = true;
-        powerUpdateReceiverPowerOkay.register(activity, new IntentFilter(Intent.ACTION_BATTERY_LOW));
-        powerUpdateReceiverPowerLow.register(activity, new IntentFilter(Intent.ACTION_BATTERY_OKAY));
+        powerUpdateReceiverPowerOkay.register(SdServer.this, new IntentFilter(Intent.ACTION_BATTERY_LOW));
+        powerUpdateReceiverPowerLow.register(SdServer.this, new IntentFilter(Intent.ACTION_BATTERY_OKAY));
 
         mHandler.postDelayed(()-> mSdDataSource.initSdServerBindPowerBroadcastComplete(),
                 (long) OsdUtil.convertTimeUnit(6, TimeUnit.SECONDS,TimeUnit.MILLISECONDS));

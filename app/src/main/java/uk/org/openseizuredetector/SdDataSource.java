@@ -460,16 +460,22 @@ public abstract class SdDataSource {
                         hrCheck();
                     }
                     signalUpdateUI();
+                    retVal = "OK";
                 } catch (JSONException e) {
                     // if we get 'null' HR (For example if the heart rate is not working)
                     mSdData.mHR = -1;
+                    retVal = "no_hr";
                 }
+                return retVal;
             }else if (dataObject.has("hr")) {
                 try {
                     mSdData.mHR = dataObject.getDouble(Constants.GLOBAL_CONSTANTS.DATA_VALUE_HR);
+                    retVal = "OK";
                 } catch (JSONException e) {
                     // if we get 'null' HR (For example if the heart rate is not working)
                     mSdData.mHR = -1;
+                    retVal = "no_hr";
+                    return retVal;
                 }
             }
             if (dataObject.has("O2satIncluded"))
@@ -512,8 +518,9 @@ public abstract class SdDataSource {
                                 + mSdData.rawData.length);
                     }
                     int i;
+                    int divisionFactor = (mSdData.rawData.length/accelVals.length());
                     for (i = 0; i < accelVals.length(); i++) {
-                        mSdData.rawData[i] = accelVals.getDouble(i);
+                        mSdData.rawData[i] = accelVals.getDouble((int)(i/divisionFactor));
                         if (initialBuffer.size() <= mSdData.mDefaultSampleCount)
                             initialBuffer.add(accelVals.getDouble(i));
                     }
@@ -602,10 +609,12 @@ public abstract class SdDataSource {
                     mSdData.haveSettings = true;
                     mWatchAppRunningCheck = true;
                     retVal = "OK";
+                } else if (dataTypeStr.equals(Constants.GLOBAL_CONSTANTS.DATA_VALUE_HR)) {
+
                 } else if (dataTypeStr.equals("watchConnect")) {
                     retVal = dataTypeStr;
                 } else {
-                    Log.e(TAG, "updateFromJSON - unrecognised dataType " + dataTypeStr);
+                    Log.e(TAG, "updateFromJSON - unrecognised dataType: "+ dataTypeStr );
                     retVal = "ERROR";
                 }
             } else{
@@ -1034,16 +1043,16 @@ public abstract class SdDataSource {
         // FIXME - assumes length of rawdata array is 125 data points
         int j;
         double sum = 0.0;
-        for (j = 0; j < 125; j++) { // FIXME - assumed length!
+        for (j = 0; j < Constants.SD_SERVICE_CONSTANTS.defaultSampleCount; j++) { // FIXME - assumed length!
             sum += sdData.rawData[j];
         }
-        double mean = sum / 125;
+        double mean = sum / Constants.SD_SERVICE_CONSTANTS.defaultSampleCount;
 
         double standardDeviation = 0.0;
-        for (j = 0; j < 125; j++) { // FIXME - assumed length!
+        for (j = 0; j < Constants.SD_SERVICE_CONSTANTS.defaultSampleCount; j++) { // FIXME - assumed length!
             standardDeviation += Math.pow(sdData.rawData[j] - mean, 2);
         }
-        standardDeviation = Math.sqrt(standardDeviation / 125);  // FIXME - assumed length!
+        standardDeviation = Math.sqrt(standardDeviation / Constants.SD_SERVICE_CONSTANTS.defaultSampleCount);  // FIXME - assumed length!
 
         // Convert standard deviation from milli-g to %
         standardDeviation = 100. * standardDeviation / mean;

@@ -257,7 +257,7 @@ public class FragmentSystem extends FragmentOsdBaseClass {
         if (Objects.nonNull(mConnection)&&Objects.nonNull(mUtil)) {
             connectUiLiveDataRunner();
             mUtil.setBound(true, mConnection);
-            updateUi();
+            if (viewCreated) updateUi();
         }
     }
 

@@ -44,7 +44,7 @@ import java.util.Arrays;
 
 public class SdData implements Parcelable {
     private final static String TAG = "SdData";
-    private final static int N_RAW_DATA = 125;  // 5 seconds at 25 Hz.
+    private final static int N_RAW_DATA = Constants.SD_SERVICE_CONSTANTS.defaultSampleCount;  // 5 seconds at 25 Hz.
     public double dT;
 
     // Seizure Detection Algorithm Selection

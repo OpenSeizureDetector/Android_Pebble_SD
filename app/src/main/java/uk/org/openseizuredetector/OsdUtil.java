@@ -333,7 +333,7 @@ public class OsdUtil {
         if (cm != null) {
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
                 LinkProperties result = cm.getLinkProperties(cm.getActiveNetwork());
-                if (result.getInterfaceName()!="wlan0")
+                if (!result.getInterfaceName().contains("wlan"))
                     return false;
                 NetworkCapabilities capabilities = cm.getNetworkCapabilities(cm.getActiveNetwork());
                 if (capabilities == null) {

@@ -105,9 +105,9 @@ public class SdAlgNn {
      */
     private float getPseizureFmt1(SdData sdData) {
         int i;
-        float[][][] modelInput = new float[1][125][1];
+        float[][][] modelInput = new float[1][Constants.SD_SERVICE_CONSTANTS.defaultSampleCount][1];
         float[][] modelOutput = new float[1][2];
-        for (int j = 0; j < 125; j++) {
+        for (int j = 0; j < Constants.SD_SERVICE_CONSTANTS.defaultSampleCount; j++) {
             modelInput[0][j][0] = (float) sdData.rawData[j];
         }
         if (interpreter == null) {
@@ -152,16 +152,16 @@ public class SdAlgNn {
         // FIXME - assumes length of rawdata array is 125 data points
         int j;
         double sum = 0.0;
-        for (j = 0; j < 125; j++) { // FIXME - assumed length!
+        for (j = 0; j < Constants.SD_SERVICE_CONSTANTS.defaultSampleCount; j++) { // FIXME - assumed length!
             sum += sdData.rawData[j];
         }
-        double mean = sum / 125;
+        double mean = sum / Constants.SD_SERVICE_CONSTANTS.defaultSampleCount;
 
         double standardDeviation = 0.0;
-        for (j = 0; j < 125; j++) { // FIXME - assumed length!
+        for (j = 0; j < Constants.SD_SERVICE_CONSTANTS.defaultSampleCount; j++) { // FIXME - assumed length!
             standardDeviation += Math.pow(sdData.rawData[j] - mean, 2);
         }
-        standardDeviation = Math.sqrt(standardDeviation / 125);  // FIXME - assumed length!
+        standardDeviation = Math.sqrt(standardDeviation / Constants.SD_SERVICE_CONSTANTS.defaultSampleCount);  // FIXME - assumed length!
 
         // Convert standard deviation from milli-g to %
         standardDeviation = 100. * standardDeviation / mean;

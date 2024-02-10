@@ -17,6 +17,8 @@ import java.util.Objects;
 
 public class FragmentCommon extends FragmentOsdBaseClass {
     String TAG = "FragmentCommon";
+    private boolean localViewCreated;
+
     public FragmentCommon() {
         // Required empty public constructor
     }
@@ -80,6 +82,7 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                 }
             }
         });
+        localViewCreated = true;
     }
 
     @Override
@@ -87,6 +90,7 @@ public class FragmentCommon extends FragmentOsdBaseClass {
         //Log.d(TAG,"updateUi()");
         TextView tv;
 
+        if (!viewCreated || !localViewCreated) return;
         if (mUtil.isServerRunning()) {
             tv = (TextView) mRootView.findViewById(R.id.serverStatusTv);
             if (mConnection.mBound) {
@@ -99,7 +103,7 @@ public class FragmentCommon extends FragmentOsdBaseClass {
 
                 tv = (TextView) mRootView.findViewById(R.id.data_time_tv);
                 tv.setText("Time =" + mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S")
-                        + "  (" + String.format("%.1f s)",mConnection.mSdServer.mSdData.timeDiff));
+                        + "  (" + String.format("%.1f s)", mConnection.mSdServer.mSdData.timeDiff));
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
 
@@ -184,30 +188,30 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                     tv.setTextColor(Color.GRAY);
                     tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
                 }
+                tv = (TextView) mRootView.findViewById(R.id.dataSourceInfoTv);
+                if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
+                    tv.setText(getString(R.string.DataSource) + " = " + "Phone (Demo Mode)");
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+                } else {
+                    tv.setText(getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+                }
+            } else {
+                tv = (TextView) mRootView.findViewById(R.id.serverStatusTv);
+                tv.setText(R.string.ServerStopped);
+                tv.setBackgroundColor(warnColour);
+                tv.setTextColor(warnTextColour);
+
+                /**  FIXME - check this is not needed for this fragment
+                 tv = (TextView) mRootView.findViewById(R.id.serverIpTv);
+                 tv.setText("--");
+                 tv.setBackgroundColor(warnColour);
+                 tv.setTextColor(warnTextColour);
+                 */
             }
-        } else {
-            tv = (TextView) mRootView.findViewById(R.id.serverStatusTv);
-            tv.setText(R.string.ServerStopped);
-            tv.setBackgroundColor(warnColour);
-            tv.setTextColor(warnTextColour);
 
-            /**  FIXME - check this is not needed for this fragment
-             tv = (TextView) mRootView.findViewById(R.id.serverIpTv);
-             tv.setText("--");
-             tv.setBackgroundColor(warnColour);
-             tv.setTextColor(warnTextColour);
-             */
-        }
-
-        tv = (TextView) mRootView.findViewById(R.id.dataSourceInfoTv);
-        if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
-            tv.setText(getString(R.string.DataSource) + " = " + "Phone (Demo Mode)");
-            tv.setBackgroundColor(warnColour);
-            tv.setTextColor(warnTextColour);
-        } else {
-            tv.setText(getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
-            tv.setBackgroundColor(okColour);
-            tv.setTextColor(okTextColour);
 
         }
 

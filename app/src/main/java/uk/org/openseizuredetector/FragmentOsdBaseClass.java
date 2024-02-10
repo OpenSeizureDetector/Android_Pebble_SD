@@ -26,6 +26,8 @@ public class FragmentOsdBaseClass extends Fragment {
     OsdUtil mUtil;
     SdServiceConnection mConnection;
     final Handler updateUiHandler = new Handler();
+
+    protected boolean viewCreated;
     Timer mUiTimer;
     protected View mRootView;
 

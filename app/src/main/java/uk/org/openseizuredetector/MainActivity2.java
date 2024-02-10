@@ -1,5 +1,7 @@
 package uk.org.openseizuredetector;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.MenuCompat;
@@ -24,12 +26,15 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.window.OnBackInvokedDispatcher;
 
 import com.rohitss.uceh.UCEHandler;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity2 extends AppCompatActivity {
     private String TAG = "MainActivity2";
@@ -57,6 +62,30 @@ public class MainActivity2 extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         mSavedInstanceState = savedInstanceState;
         createMainActivity(savedInstanceState);
+    }
+
+    @Override
+    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        try{
+            if (Objects.isNull(mFragmentPager)) mFragmentPager = findViewById(R.id.fragment_pager);
+            mFragmentPager.setId(SP.getInt(Constants.GLOBAL_CONSTANTS.lastPagerId, 0));
+            mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
+            mFragmentPager.setAdapter(mFragmentStateAdapter);
+            getSupportFragmentManager().beginTransaction()
+                    .setReorderingAllowed(true)
+                    .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
+                    .commit();
+        }catch (Exception e)
+        {
+            if (Objects.nonNull(mUtil)){
+                mUtil.writeToSysLogFile("Error in PostCreate(): " + Arrays.toString(Thread.currentThread().getStackTrace()));
+            }
+            else{
+                Log.e(TAG,"Error in PostCreate()",e);
+            }
+        }
+
     }
 
     private void createMainActivity(Bundle savedInstanceState) {
@@ -109,9 +138,9 @@ public class MainActivity2 extends AppCompatActivity {
         Log.i(TAG, "onStart()");
         createMainActivity(null);
         setmFragmentPager();
-        mFragmentPager.setId(SP.getInt(Constants.GLOBAL_CONSTANTS.lastPagerId,0));
+
         serverStatusHandler.postDelayed(()-> {
-           mUtil.setBound(true,mConnection);
+            mUtil.setBound(true, mConnection);
         },400);
     }
 
@@ -170,24 +199,19 @@ public class MainActivity2 extends AppCompatActivity {
             createMainActivity(null);
             setmFragmentPager();
         }
-        mFragmentPager.setId(SP.getInt(Constants.GLOBAL_CONSTANTS.lastPagerId,0));
-        serverStatusHandler.postDelayed(()-> {
+       serverStatusHandler.postDelayed(()-> {
             mUtil.setBound(false,mConnection);
         },400);
         // Instantiate a ViewPager2 and a PagerAdapter.
-        mFragmentPager = findViewById(R.id.fragment_pager);
-        mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
-        mFragmentPager.setAdapter(mFragmentStateAdapter);
-        getSupportFragmentManager().beginTransaction()
-                .setReorderingAllowed(true)
-                .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
-                .commit();
+        setmFragmentPager();
+        //moved pagerAdapter to on PostCreate()
 
     }
 
-
+    @NonNull
     @Override
-    public void onBackPressed() {
+    public OnBackInvokedDispatcher getOnBackInvokedDispatcher() {
+
         if (Objects.isNull(mFragmentPager) || mFragmentPager.getCurrentItem() == 0) {
             // If the user is currently looking at the first step, allow the system to handle the
             // Back button. This calls finish() on this activity and pops the back stack.
@@ -216,6 +240,11 @@ public class MainActivity2 extends AppCompatActivity {
             // Otherwise, select the previous step.
             mFragmentPager.setCurrentItem(mFragmentPager.getCurrentItem() - 1);
         }
+        return super.getOnBackInvokedDispatcher();
+    }
+
+    @Override
+    public void onBackPressed() {
     }
 
     @Override

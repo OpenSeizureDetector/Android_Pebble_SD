@@ -61,7 +61,7 @@ import java.util.UUID;
  * waits to be notified of data being available.
  */
 public class SdDataSourceBLE extends SdDataSource {
-    private int MAX_RAW_DATA = 125;  // 5 seconds at 25 Hz.
+    private int MAX_RAW_DATA = Constants.SD_SERVICE_CONSTANTS.defaultSampleCount;  // 5 seconds at 25 Hz.
     private String TAG = "SdDataSourceBLE";
     private BluetoothManager mBluetoothManager;
     private BluetoothAdapter mBluetoothAdapter;

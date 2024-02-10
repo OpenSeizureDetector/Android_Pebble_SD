@@ -99,7 +99,7 @@ public class SdDataSourceAw extends SdDataSource {
     private final String mAppPackageName = "uk.org.openseizuredetector.aw.mobile";
     //private final String mAppPackageName = "uk.org.openseizuredetector";
     private int mNrawdata = 0;
-    private static int MAX_RAW_DATA = 125;
+    private static int MAX_RAW_DATA = Constants.SD_SERVICE_CONSTANTS.defaultSampleCount;
     private int nRawData = 0;
     private double[] rawData = new double[MAX_RAW_DATA];
     private Intent receivingIntent = null;

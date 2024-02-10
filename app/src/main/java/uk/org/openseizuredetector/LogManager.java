@@ -914,7 +914,7 @@ public class LogManager {
                         fileOutputStream.write(dataJsonObj.getString("hr").getBytes(StandardCharsets.UTF_8));
                         fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
                         fileOutputStream.write(dataJsonObj.getString("o2Sat").getBytes(StandardCharsets.UTF_8));
-                        for (int j = 0; j < 125; j++) {  // FIXME Hard Coded array length, but rawDataArr.length() is 125*3 so we don't want to use that.
+                        for (int j = 0; j < Constants.SD_SERVICE_CONSTANTS.defaultSampleCount; j++) {  // FIXME Hard Coded array length, but rawDataArr.length() is 125*3 so we don't want to use that.
                             fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
                             fileOutputStream.write(rawDataArr.getString(j).getBytes(StandardCharsets.UTF_8));
                         }
