@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/okBackgroundColor"
     tools:context=".FragmentOsdBaseClass">
 
     <!-- TODO: Update blank fragment layout -->
@@ -15,12 +16,14 @@
             android:id="@+id/fragment_data_sharing_tv1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Fragment_Data_Sharing" />
+            android:text="Fragment_Data_Sharing"
+            android:textColor="@color/okTextColor" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Data Sharing Status" />
+            android:text="Data Sharing Status"
+            android:textColor="@color/okTextColor" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 

@@ -60,7 +60,8 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".MainActivity2"
-            android:exported="false" />
+            android:exported="false"
+            android:enableOnBackInvokedCallback="true"/>
         <!--<activity
             android:name=".MlModelManager"
             android:exported="false"

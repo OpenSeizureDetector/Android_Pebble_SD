@@ -89,7 +89,10 @@ public class FragmentOsdBaseClass extends Fragment {
         mUiTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                updateUiOnUiThread();
+                if (Objects.nonNull(mConnection))
+                    if (Objects.nonNull(mConnection.mSdServer))
+                        if (mConnection.mBound)
+                            updateUiOnUiThread();
             }
         }, 0, 1000);
     }

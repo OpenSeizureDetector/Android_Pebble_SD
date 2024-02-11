@@ -7,11 +7,12 @@
 
     <!-- TODO: Update blank fragment layout -->
     <TextView
+        android:id="@+id/fragment_sddata_viewer_tv1"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/okBackgroundColor"
         android:text="@string/hello_blank_fragment"
-        android:id="@+id/fragment_sddata_viewer_tv1"/>
-
+        android:textColor="@color/okTextColor" />
 
 
 </FrameLayout>

@@ -6,9 +6,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
-
-import androidx.appcompat.widget.SwitchCompat;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -64,7 +61,7 @@ public class FragmentBatt extends FragmentOsdBaseClass {
     @Override
     public void onResume() {
         super.onResume();
-        mLineChart = mRootView.findViewById(R.id.lineChart);
+        mLineChart = mRootView.findViewById(R.id.lineChartBattHist);
         mLineChart.getLegend().setEnabled(false);
         XAxis xAxis = mLineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
@@ -105,6 +102,7 @@ public class FragmentBatt extends FragmentOsdBaseClass {
     @Override
     protected void updateUi() {
         Log.d(TAG, "updateUi()");
+        if (Objects.isNull(mRootView)||!isAdded()||!isVisible()) return;
         if (mConnection.mBound) {
 
             int nWatchBattArr = mConnection.mSdServer.mSdData.watchBattBuff.getNumVals();

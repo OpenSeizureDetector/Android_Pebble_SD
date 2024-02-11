@@ -7,6 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.util.Objects;
+
 public class FragmentMlAlg extends FragmentOsdBaseClass {
     String TAG = "FragmentMlAlg";
     public FragmentMlAlg() {
@@ -29,6 +31,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
     @Override
     protected void updateUi() {
         Log.d(TAG, "updateUi()");
+        if (Objects.isNull(mRootView)||!isAdded()||!isVisible()) return;
         TextView tv;
         tv = (TextView) mRootView.findViewById(R.id.fragment_ml_alg_tv1);
         if (mConnection.mBound) {

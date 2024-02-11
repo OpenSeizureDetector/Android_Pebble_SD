@@ -112,6 +112,7 @@ public class FragmentSystem extends FragmentOsdBaseClass {
         //Log.d(TAG,"updateUi()");
         TextView tv;
 
+        if (Objects.isNull(mRootView)||!isAdded()||!isVisible()) return;
         tv = (TextView) mRootView.findViewById(R.id.fragment_bound_to_server_tv);
         if (mConnection.mBound) {
             tv.setText("Bound to Server");

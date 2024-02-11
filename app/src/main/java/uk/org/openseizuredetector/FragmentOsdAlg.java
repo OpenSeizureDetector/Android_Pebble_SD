@@ -66,10 +66,10 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
         //Log.d(TAG,"updateUi()");
         TextView tv;
 
-
+        if (Objects.isNull(mRootView)||!isAdded()||!isVisible()) return;
         /////////////////////////////////////////////////////
         // Set ProgressBars to show margin to alarm.
-        if (viewCreated && Objects.nonNull(mConnection) && mConnection.mBound){
+        if ( Objects.nonNull(mConnection) && mConnection.mBound){
             long powerPc;
             if (mConnection.mSdServer.mSdData.alarmThresh != 0)
                 powerPc = mConnection.mSdServer.mSdData.roiPower * 100 /
@@ -92,9 +92,19 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
                         mConnection.mSdServer.mSdData.specPower;
             } else
                 specRatio = 0;
-
-            ((TextView) mRootView.findViewById(R.id.powerTv)).setText(getString(R.string.PowerEquals) + mConnection.mSdServer.mSdData.roiPower +
-                    " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
+            TextView powerTv =
+            ((TextView) mRootView.findViewById(R.id.powerTv));
+            if (isAdded()){
+                if (Objects.nonNull(powerTv)) powerTv.setText(new StringBuilder()
+                        .append(requireContext().getResources().getString(R.string.PowerEquals))
+                        .append(mConnection.mSdServer.mSdData.roiPower)
+                        .append(" (")
+                        .append(requireContext().getResources().getString(R.string.Threshold))
+                        .append("=")
+                        .append(mConnection.mSdServer.mSdData.alarmThresh)
+                        .append(")")
+                        .toString());
+            }
 
             ProgressBar pb;
             Drawable pbDrawable;

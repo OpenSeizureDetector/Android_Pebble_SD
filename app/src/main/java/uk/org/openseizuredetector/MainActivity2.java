@@ -48,7 +48,6 @@ public class MainActivity2 extends AppCompatActivity {
 
     private ViewPager2 mFragmentPager;
     private FragmentStateAdapter mFragmentStateAdapter;
-    private Context mContext;
     private OsdUtil mUtil;
     private SdServiceConnection mConnection;
     final Handler serverStatusHandler = new Handler();
@@ -67,24 +66,7 @@ public class MainActivity2 extends AppCompatActivity {
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-        try{
-            if (Objects.isNull(mFragmentPager)) mFragmentPager = findViewById(R.id.fragment_pager);
-            mFragmentPager.setId(SP.getInt(Constants.GLOBAL_CONSTANTS.lastPagerId, 0));
-            mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
-            mFragmentPager.setAdapter(mFragmentStateAdapter);
-            getSupportFragmentManager().beginTransaction()
-                    .setReorderingAllowed(true)
-                    .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
-                    .commit();
-        }catch (Exception e)
-        {
-            if (Objects.nonNull(mUtil)){
-                mUtil.writeToSysLogFile("Error in PostCreate(): " + Arrays.toString(Thread.currentThread().getStackTrace()));
-            }
-            else{
-                Log.e(TAG,"Error in PostCreate()",e);
-            }
-        }
+
 
     }
 
@@ -95,7 +77,7 @@ public class MainActivity2 extends AppCompatActivity {
 
         // Set our custom uncaught exception handler to report issues.
         //Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(MainActivity.this));
-        new UCEHandler.Builder(this)
+        new UCEHandler.Builder(MainActivity2.this)
                 .addCommaSeparatedEmailAddresses("crashreports@openseizuredetector.org.uk,")
                 .build();
 
@@ -105,7 +87,6 @@ public class MainActivity2 extends AppCompatActivity {
         mUtil.writeToSysLogFile("");
         mUtil.writeToSysLogFile("* MainActivity Started     *");
         mUtil.writeToSysLogFile("MainActivity.onCreate()");
-        mContext = this;
 
         /**
          if (savedInstanceState == null) {
@@ -137,10 +118,10 @@ public class MainActivity2 extends AppCompatActivity {
         super.onStart();
         Log.i(TAG, "onStart()");
         createMainActivity(null);
-        setmFragmentPager();
 
         serverStatusHandler.postDelayed(()-> {
             mUtil.setBound(true, mConnection);
+            setmFragmentPager();
         },400);
     }
 
@@ -165,6 +146,24 @@ public class MainActivity2 extends AppCompatActivity {
         } else {
             Log.i(TAG, "MainActivity2.onStart() - Server Not Running");
             mUtil.writeToSysLogFile("MainActivity2.onStart - Server Not Running");
+        }
+        try{
+            if (Objects.isNull(mFragmentPager)) mFragmentPager = findViewById(R.id.fragment_pager);
+            mFragmentPager.setId(SP.getInt(Constants.GLOBAL_CONSTANTS.lastPagerId, 0));
+            mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
+            mFragmentPager.setAdapter(mFragmentStateAdapter);
+            getSupportFragmentManager().beginTransaction()
+                    .setReorderingAllowed(true)
+                    .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
+                    .commit();
+        }catch (Exception e)
+        {
+            if (Objects.nonNull(mUtil)){
+                mUtil.writeToSysLogFile("Error in PostCreate(): " + Arrays.toString(Thread.currentThread().getStackTrace()));
+            }
+            else{
+                Log.e(TAG,"Error in PostCreate()",e);
+            }
         }
     }
 
@@ -208,10 +207,10 @@ public class MainActivity2 extends AppCompatActivity {
 
     }
 
-    @NonNull
-    @Override
-    public OnBackInvokedDispatcher getOnBackInvokedDispatcher() {
 
+
+    @Override
+    public void onBackPressed() {
         if (Objects.isNull(mFragmentPager) || mFragmentPager.getCurrentItem() == 0) {
             // If the user is currently looking at the first step, allow the system to handle the
             // Back button. This calls finish() on this activity and pops the back stack.
@@ -231,6 +230,7 @@ public class MainActivity2 extends AppCompatActivity {
                     if (mUtil.isServerRunning())
                         mUtil.stopServer();
                     serverStatusHandler.postDelayed(MainActivity2.this::finishAffinity, 100);
+
                     super.onBackPressed();
                 }
             } catch (Exception e) {
@@ -240,11 +240,6 @@ public class MainActivity2 extends AppCompatActivity {
             // Otherwise, select the previous step.
             mFragmentPager.setCurrentItem(mFragmentPager.getCurrentItem() - 1);
         }
-        return super.getOnBackInvokedDispatcher();
-    }
-
-    @Override
-    public void onBackPressed() {
     }
 
     @Override
@@ -466,7 +461,7 @@ public class MainActivity2 extends AppCompatActivity {
                     Intent i = new Intent(
                             MainActivity2.this,
                             AuthenticateActivity.class);
-                    mContext.startActivity(i);
+                    MainActivity2.this.startActivity(i);
                 } catch (Exception ex) {
                     Log.i(TAG, "exception starting activity " + ex.toString(), ex);
                 }

@@ -87,10 +87,9 @@ public class FragmentCommon extends FragmentOsdBaseClass {
 
     @Override
     protected void updateUi() {
-        //Log.d(TAG,"updateUi()");
+        Log.d(TAG,"updateUi()");
         TextView tv;
-
-        if (!viewCreated || !localViewCreated) return;
+        if (Objects.isNull(mRootView)||!isAdded()||!isVisible()) return;
         if (mUtil.isServerRunning()) {
             tv = (TextView) mRootView.findViewById(R.id.serverStatusTv);
             if (mConnection.mBound) {
@@ -265,19 +264,5 @@ public class FragmentCommon extends FragmentOsdBaseClass {
 
 
 
-    }
-    @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
-        if (Objects.nonNull(mConnection))
-            mUtil.setBound(true,mConnection);
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-
-        if (Objects.nonNull(mConnection))
-            mUtil.setBound(false,mConnection);
     }
 }

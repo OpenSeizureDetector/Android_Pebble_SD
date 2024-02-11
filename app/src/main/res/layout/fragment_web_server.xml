@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/okBackgroundColor"
     tools:context=".FragmentOsdBaseClass">
 
     <!-- TODO: Update blank fragment layout -->
@@ -15,12 +16,14 @@
             android:id="@+id/fragment_web_server_tv1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Fragment_WebServer" />
+            android:text="Fragment_WebServer"
+            android:textColor="@color/okTextColor" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Web Server Status" />
+            android:text="Web Server Status"
+            android:textColor="@color/okTextColor" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 

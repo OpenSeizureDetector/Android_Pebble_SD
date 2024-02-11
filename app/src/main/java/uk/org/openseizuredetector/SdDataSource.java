@@ -518,9 +518,8 @@ public abstract class SdDataSource {
                                 + mSdData.rawData.length);
                     }
                     int i;
-                    int divisionFactor = (mSdData.rawData.length/accelVals.length());
                     for (i = 0; i < accelVals.length(); i++) {
-                        mSdData.rawData[i] = accelVals.getDouble((int)(i/divisionFactor));
+                        mSdData.rawData[i] = accelVals.getDouble(i);
                         if (initialBuffer.size() <= mSdData.mDefaultSampleCount)
                             initialBuffer.add(accelVals.getDouble(i));
                     }

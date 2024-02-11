@@ -15,7 +15,8 @@
             android:id="@+id/fragment_osdalg_tv1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Fragment_OsdAlg" />
+            android:text="Fragment_OsdAlg"
+            android:textColor="@color/okTextColor" />
 
 
         <TextView

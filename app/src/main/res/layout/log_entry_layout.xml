@@ -1,39 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
-<LinearLayout
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal">
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/date"
-        android:id="@+id/event_date" />
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=" : "/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="alarm"
-        android:id="@+id/event_alarmState"
-         />
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=" : "/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="uploaded"
-        android:id="@+id/event_uploaded"
-         />
+    android:layout_height="match_parent"
+    android:background="@color/okBackgroundColor"
+    android:orientation="vertical">
 
-</LinearLayout>
- <!--   <TextView
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/event_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/date"
+            android:textColor="@color/okTextColor" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" : "
+            android:textColor="@color/okTextColor" />
+
+        <TextView
+            android:id="@+id/event_alarmState"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="alarm"
+            android:textColor="@color/okTextColor" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" : "
+            android:textColor="@color/okTextColor" />
+
+        <TextView
+            android:id="@+id/event_uploaded"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="uploaded"
+            android:textColor="@color/okTextColor" />
+
+    </LinearLayout>
+    <!--   <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="dataJSON"

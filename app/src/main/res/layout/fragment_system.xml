@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/okBackgroundColor"
     tools:context=".FragmentOsdBaseClass">
 
     <!-- TODO: Update blank fragment layout -->
@@ -16,10 +17,9 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="OpenSeizureDetector System Status"
-            android:textColor="@color/okTextColor"
             android:background="@color/okBackgroundColor"
-        />
+            android:text="OpenSeizureDetector System Status"
+            android:textColor="@color/okTextColor" />
 
 
         <LinearLayout
@@ -37,9 +37,9 @@
                 android:id="@+id/textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:background="@color/okBackgroundColor"
                 android:text="Edit Settings"
-                android:textColor="@color/okTextColor"
-                android:background="@color/okBackgroundColor"/>
+                android:textColor="@color/okTextColor" />
         </LinearLayout>
 
         <TextView
@@ -53,7 +53,8 @@
             android:id="@+id/fragment_bound_to_server_tv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Fragment_System" />
+            android:text="Fragment_System"
+            android:textColor="@color/okTextColor" />
 
 
         <TextView
@@ -61,33 +62,38 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="left"
-            android:text="---" />
+            android:text="---"
+            android:textColor="@color/okTextColor" />
 
 
         <TextView
             android:id="@+id/fragment_watch_app_status_tv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="---" />
+            android:text="---"
+            android:textColor="@color/okTextColor" />
 
         <TextView
             android:id="@+id/battTv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="---" />
+            android:text="---"
+            android:textColor="@color/okTextColor" />
 
         <TextView
             android:id="@+id/alarmTv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="---" />
+            android:text="---"
+            android:textColor="@color/okTextColor" />
 
         <TextView
             android:id="@+id/serverIpTv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="left"
-            android:text="---" />
+            android:text="---"
+            android:textColor="@color/okTextColor" />
 
 
         <androidx.appcompat.widget.SwitchCompat

@@ -7,6 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.util.Objects;
+
 public class FragmentWebServer extends FragmentOsdBaseClass {
     String TAG = "FragmentWebServer";
 
@@ -30,6 +32,7 @@ public class FragmentWebServer extends FragmentOsdBaseClass {
     @Override
     protected void updateUi() {
         Log.d(TAG, "updateUi()");
+        if (Objects.isNull(mRootView)||!isAdded()||!isVisible()) return;
         TextView tv;
         tv = (TextView) mRootView.findViewById(R.id.fragment_web_server_tv1);
         if (mConnection.mBound) {

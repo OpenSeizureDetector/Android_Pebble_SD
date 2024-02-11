@@ -7,7 +7,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -72,13 +71,15 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     @Override
     public void onResume() {
         super.onResume();
-        mLineChart = mRootView.findViewById(R.id.lineChart);
+        mLineChart = mRootView.findViewById(R.id.lineChartBattHist);
         mLineChart.getLegend().setEnabled(false);
         XAxis xAxis = mLineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setTextSize(10f);
         xAxis.setDrawAxisLine(true);
         xAxis.setDrawLabels(true);
+        switchAverages = (SwitchCompat) mRootView.findViewById(R.id.switch1);
+        switchAverages.setOnClickListener(v -> updateUi());
         // Note:  the default text colour is BLACK, so does not show up on black background!!!
         //  This took a lot of finding....
         xAxis.setTextColor(Color.WHITE);
@@ -111,8 +112,16 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     }
 
     @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        switchAverages = (SwitchCompat) mRootView.findViewById(R.id.switch1);
+        switchAverages.setOnClickListener(v -> updateUi());
+    }
+
+    @Override
     protected void updateUi() {
         Log.d(TAG, "updateUi()");
+        if (Objects.isNull(mRootView)||!isAdded()||!isVisible()) return;
         tv = (TextView) mRootView.findViewById(R.id.fragment_hr_alg_tv1);
         tvHr = (TextView) mRootView.findViewById(R.id.current_hr_tv);
         tvAvgAHr = (TextView) mRootView.findViewById(R.id.adaptive_avg_hr_tv);
@@ -164,9 +173,9 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                                 + " " + getString(R.string.minutes));
                         mLineChart.setDescriptionTextSize(12f);
                         mLineChart.invalidate();
-                        //if (mConnection.mBound){
-                        //    lineChart.postInvalidate();
-                        //}
+                        if (mConnection.mBound){
+                            mLineChart.postInvalidate();
+                        }
                     }
 
                 }

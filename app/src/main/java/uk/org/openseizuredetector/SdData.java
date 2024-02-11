@@ -157,6 +157,7 @@ public class SdData implements Parcelable {
     public boolean mWatchOnBody = false;
 
     public double mPseizure = 0.;
+    public int mMute;
 
     public SdData() {
         simpleSpec = new int[10];
@@ -270,8 +271,8 @@ public class SdData implements Parcelable {
     public String toDatapointJSON() {
         String retval;
         retval = "SdData.toDatapointJSON() Output";
+        jsonObj = new JSONObject();
         try {
-            jsonObj = new JSONObject();
             if (dataTime != null) {
                 jsonObj.put("dataTime", dataTime.format("%d-%m-%Y %H:%M:%S"));
                 jsonObj.put("dataTimeStr", dataTime.format("%Y%m%dT%H%M%S"));
@@ -283,6 +284,7 @@ public class SdData implements Parcelable {
             jsonObj.put("maxVal", maxVal);
             jsonObj.put("maxFreq", maxFreq);
             jsonObj.put("sampleFreq", mSampleFreq);
+            jsonObj.put("Mute", mMute);
             jsonObj.put("dT", dT);
             jsonObj.put("specPower", specPower);
             jsonObj.put("roiPower", roiPower);
@@ -311,18 +313,18 @@ public class SdData implements Parcelable {
                 arr.put(simpleSpec[i]);
             }*/
             jsonObj.put("simpleSpec", arr);
-            rawArr = new JSONArray(rawArr);
+            jsonObj.put("rawData" , new JSONArray(rawData));
             /*for (int i = 0; i < rawData.length; i++) {
                 rawArr.put(rawData[i]);
             }*/
             //Log.v(TAG,"rawData[0]="+rawData[0]+", rawArr[0]="+rawArr.getDouble(0));
-            jsonObj.put("rawData", rawArr);
+            //jsonObj.put("rawData", rawArr);
 
-            raw3DArr = new JSONArray(rawData3D);
+            //raw3DArr = new JSONArray(rawData3D);
             /*for (int i = 0; i < rawData3D.length; i++) {
                 raw3DArr.put(rawData3D[i]);
             }*/
-            jsonObj.put("data3D", raw3DArr);
+            jsonObj.put("data3D", new JSONArray(rawData3D));
 
             retval = jsonObj.toString();
             Log.v(TAG, "retval rawData=" + retval);
@@ -360,6 +362,7 @@ public class SdData implements Parcelable {
             jsonObj.put("alarmPhrase", alarmPhrase);
             jsonObj.put("alarmCause", alarmCause);
             jsonObj.put("sdMode", mSdMode);
+            jsonObj.put("Mute", mMute);
             jsonObj.put("sampleFreq", mSampleFreq);
             jsonObj.put("analysisPeriod", analysisPeriod);
             jsonObj.put("alarmFreqMin", alarmFreqMin);
@@ -428,6 +431,7 @@ public class SdData implements Parcelable {
                 jsonObj.put("dataTime", "00-00-00 00:00:00");
             }
             Log.v(TAG, "mSdData.dataTime = " + dataTime);
+            jsonObj.put("Mute", mMute);
 
             if (Double.isNaN(mHR)||Double.isInfinite(mHR)||mHR < 30d)
                 mHR = -1d;
@@ -530,6 +534,7 @@ public class SdData implements Parcelable {
             jsonObj.put("watchFwVersion", watchFwVersion);
             jsonObj.put("watchPartNo", watchPartNo);
             jsonObj.put("phoneName", phoneName);
+            jsonObj.put("Mute", mMute);
 
             arr = new JSONArray();
             for (int i = 0; i < simpleSpec.length; i++) {
