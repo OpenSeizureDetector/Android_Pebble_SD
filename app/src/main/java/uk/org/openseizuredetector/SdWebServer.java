@@ -95,7 +95,7 @@ public class SdWebServer extends NanoHTTPD {
                             Log.v(TAG, "WebServer.serve() - GET /data - sending " + mSdData.toString());
                             answer = mSdData.toString();
                         } catch (Exception ex) {
-                            Log.v(TAG, "Error Creating Data Object - " + ex.toString(), ex);
+                            Log.v(TAG, "Error Creating Data Object - " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                             answer = "{'msg': 'Error Creating Data Object'}";
                         }
                         break;
@@ -143,7 +143,7 @@ public class SdWebServer extends NanoHTTPD {
                              */
                             answer = mSdData.toSettingsJSON();
                         } catch (Exception ex) {
-                            Log.v(TAG, "Error Creating Data Object - " + ex.toString(), ex);
+                            Log.v(TAG, "Error Creating Data Object - " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                             answer = "{'msg': 'Error Creating Data Object'}";
                         }
                         break;
@@ -182,7 +182,7 @@ public class SdWebServer extends NanoHTTPD {
                     answer = jsonObj.toString();
                     Log.v(TAG, "WebServer.serve() - Returning spectrum - 5" + answer);
                 } catch (Exception ex) {
-                    Log.v(TAG, "Error Creating Data Object - " + ex.toString(), ex);
+                    Log.v(TAG, "Error Creating Data Object - " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                     answer = "{'msg' : 'Error Creating Data Object'}";
                 }
                 break;
@@ -276,7 +276,7 @@ public class SdWebServer extends NanoHTTPD {
                     mimeStr, ip);
             res.addHeader("Content-Length", "" + ip.available());
         } catch (IOException ex) {
-            Log.v(TAG, "serveLogFile(): Error Opening File - " + ex.toString(), ex);
+            Log.v(TAG, "serveLogFile(): Error Opening File - " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
             res = new NanoHTTPD.Response("serveLogFile(): Error Opening file " + uri);
         }
         return (res);
@@ -300,7 +300,7 @@ public class SdWebServer extends NanoHTTPD {
                     mimeStr, ip);
             res.addHeader("Content-Length", "" + ip.available());
         } catch (IOException ex) {
-            Log.v(TAG, "serveFile(): Error Opening File - " + ex.toString(), ex);
+            Log.v(TAG, "serveFile(): Error Opening File - " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
             res = new NanoHTTPD.Response("serveFile(): Error Opening file " + uri);
         }
         return (res);

@@ -23,6 +23,7 @@ import org.tensorflow.lite.support.common.FileUtil;
 
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,7 +56,7 @@ public class SdAlgNn {
             mModelId = Integer.parseInt(threshStr);
             Log.v(TAG, "SdAlgNn Constructor mModelId = " + mModelId);
         } catch (Exception ex) {
-            Log.v(TAG, "SdAlgNn Constructor - problem parsing preferences. " + ex.toString(), ex);
+            Log.v(TAG, "SdAlgNn Constructor - problem parsing preferences. " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
             Toast toast = Toast.makeText(mContext, "Problem Parsing ML Algorithm Preferences", Toast.LENGTH_SHORT);
             toast.show();
         }

@@ -19,6 +19,7 @@ import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.YAxis;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 public class FragmentSystem extends FragmentOsdBaseClass {
@@ -36,7 +37,8 @@ public class FragmentSystem extends FragmentOsdBaseClass {
         super.onCreate(savedInstanceState);
         if (Objects.nonNull(mConnection)) {
             if (!mConnection.mBound)
-                mUtil.bindToServer((Context) this.getActivity(), mConnection);
+                mUtil.bindToServer(mContext,
+                        mConnection);
             mUtil.waitForConnection(mConnection);
             connectUiLiveDataRunner();
         }
@@ -62,19 +64,11 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                             PrefActivity.class);
                     mContext.startActivity(prefsIntent);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting settings activity " + ex.toString(), ex);
+                    Log.i(TAG, "exception starting settings activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                 }
 
             }
         });
-        lineChartPowerLevel = mRootView.findViewById(R.id.lineChartBattery);
-        lineChartPowerLevel.setDescriptionColor(R.color.okTextColor);
-        YAxis yAxisLeft = lineChartPowerLevel.getAxisLeft();
-        yAxisLeft.setTextColor(R.color.okTextColor);
-        YAxis yAxisRight = lineChartPowerLevel.getAxisRight();
-        yAxisRight.setTextColor(R.color.okTextColor);
-        Legend legendOfGraph = lineChartPowerLevel.getLegend();
-        legendOfGraph.setTextColor(R.color.okTextColor);
     }
 
     void connectUiLiveDataRunner() {
@@ -84,17 +78,6 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                 mConnection.mSdServer.uiLiveData.observe(this, this::onChangedObserver);
                 mConnection.mSdServer.uiLiveData.observeForever(this::onChangedObserver);
                 mConnection.mSdServer.uiLiveData.addToListening(this);
-                switchWatchGraphToPhoneGraph = mRootView.findViewById(R.id.switchToPowerGraph);
-                switchWatchGraphToPhoneGraph.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                    @Override
-                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        if (Objects.nonNull(lineChartPowerLevel)) {
-                            lineChartPowerLevel.clear();
-                            lineChartPowerLevel.postInvalidate();
-                        }
-                        mUtil.runOnUiThread(()->updateUi());
-                    }
-                });
                 mUtil.runOnUiThread(this::updateUi);
             }
         } else {
@@ -229,24 +212,7 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                     tv.setTextColor(okTextColour);
                 }
 
-                if (Objects.nonNull(mConnection.mSdServer.getLineData(switchWatchGraphToPhoneGraph.isChecked()))) {
-                    if (Objects.nonNull(lineChartPowerLevel)){
-                        lineChartPowerLevel.clear();
-                        if (mConnection.mSdServer.getLineDataSet(switchWatchGraphToPhoneGraph.isChecked()).getYVals().size() > 0) {
 
-
-                            lineChartPowerLevel.setData(mConnection.mSdServer.getLineData(switchWatchGraphToPhoneGraph.isChecked()));
-
-                            lineChartPowerLevel.getData().notifyDataChanged();
-                            lineChartPowerLevel.notifyDataSetChanged();
-                            lineChartPowerLevel.refreshDrawableState();
-                            if (mConnection.mSdServer.mBound) {
-                                lineChartPowerLevel.postInvalidate();
-                            }
-                        }
-                    }
-
-                }
             }
         } catch (Exception e) {
         Log.e(TAG, "UpdateUi: Exception - ",e);

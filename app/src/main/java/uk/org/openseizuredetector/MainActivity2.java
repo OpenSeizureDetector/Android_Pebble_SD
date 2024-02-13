@@ -60,6 +60,7 @@ public class MainActivity2 extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mSavedInstanceState = savedInstanceState;
+        setContentView(R.layout.activity_main2);
         createMainActivity(savedInstanceState);
     }
 
@@ -71,7 +72,6 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
     private void createMainActivity(Bundle savedInstanceState) {
-        setContentView(R.layout.activity_main2);
 
         Log.i(TAG, "onCreate()");
 
@@ -82,8 +82,8 @@ public class MainActivity2 extends AppCompatActivity {
                 .build();
 
         //int i = 5/0;  // Force exception to test handler.
-        mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
-        mConnection = new SdServiceConnection(getApplicationContext());
+        mUtil = new OsdUtil(MainActivity2.this, serverStatusHandler);
+        mConnection = new SdServiceConnection(MainActivity2.this);
         mUtil.writeToSysLogFile("");
         mUtil.writeToSysLogFile("* MainActivity Started     *");
         mUtil.writeToSysLogFile("MainActivity.onCreate()");
@@ -138,23 +138,23 @@ public class MainActivity2 extends AppCompatActivity {
         tv.setText(getString(R.string.AppTitleText) + " " + versionName);
         tv.setBackgroundColor(okColour);
         tv.setTextColor(okTextColour);
+        mFragmentPager = findViewById(R.id.fragment_pager);
 
         if (mUtil.isServerRunning()) {
             Log.i(TAG, "MainActivity2.onStart() - Binding to Server");
             mUtil.writeToSysLogFile("MainActivity2.onStart - Binding to Server");
-            mUtil.bindToServer(getApplicationContext(), mConnection);
+            mUtil.bindToServer(MainActivity2.this, mConnection);
         } else {
             Log.i(TAG, "MainActivity2.onStart() - Server Not Running");
             mUtil.writeToSysLogFile("MainActivity2.onStart - Server Not Running");
         }
         try{
-            if (Objects.isNull(mFragmentPager)) mFragmentPager = findViewById(R.id.fragment_pager);
             mFragmentPager.setId(SP.getInt(Constants.GLOBAL_CONSTANTS.lastPagerId, 0));
             mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
             mFragmentPager.setAdapter(mFragmentStateAdapter);
             getSupportFragmentManager().beginTransaction()
                     .setReorderingAllowed(true)
-                    .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
+                    .add(R.id.fragment_common_container_view, FragmentCommon.class, mSavedInstanceState)
                     .commit();
         }catch (Exception e)
         {
@@ -173,7 +173,7 @@ public class MainActivity2 extends AppCompatActivity {
         Log.i(TAG, "onStop() - unbinding from server");
         mUtil.writeToSysLogFile("MainActivity.onStop()");
         mUtil.setBound(false,mConnection);
-        mUtil.unbindFromServer(getApplicationContext(), mConnection);
+        mUtil.unbindFromServer(MainActivity2.this, mConnection);
     }
 
 
@@ -267,7 +267,7 @@ public class MainActivity2 extends AppCompatActivity {
                 Log.i(TAG, "action_start_stop");
                 if (mConnection.mBound) {
                     Log.i(TAG, "Stopping Server");
-                    mUtil.unbindFromServer(getApplicationContext(), mConnection);
+                    mUtil.unbindFromServer(MainActivity2.this, mConnection);
                     stopServer();
                     //finish();
                 } else {
@@ -275,7 +275,7 @@ public class MainActivity2 extends AppCompatActivity {
                     startServer();
                     // and bind to it so we can see its data
                     Log.i(TAG, "Binding to Server");
-                    mUtil.bindToServer(getApplicationContext(), mConnection);
+                    mUtil.bindToServer(MainActivity2.this, mConnection);
                 }
                 return true;
             case R.id.action_test_alarm_beep:
@@ -305,7 +305,7 @@ public class MainActivity2 extends AppCompatActivity {
                             AuthenticateActivity.class);
                     this.startActivity(i);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting export activity " + ex.toString(), ex);
+                    Log.i(TAG, "exception starting export activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                 }
                 return true;
             case R.id.action_about_datasharing:
@@ -320,7 +320,7 @@ public class MainActivity2 extends AppCompatActivity {
                             LogManagerControlActivity.class);
                     this.startActivity(intent);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting log manager activity " + ex.toString(), ex);
+                    Log.i(TAG, "exception starting log manager activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                 }
                 return true;
             case R.id.action_report_seizure:
@@ -331,7 +331,7 @@ public class MainActivity2 extends AppCompatActivity {
                             ReportSeizureActivity.class);
                     this.startActivity(intent);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting Report Seizure activity " + ex.toString(), ex);
+                    Log.i(TAG, "exception starting Report Seizure activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                 }
                 return true;
             case R.id.action_settings:
@@ -342,7 +342,7 @@ public class MainActivity2 extends AppCompatActivity {
                             PrefActivity.class);
                     this.startActivity(prefsIntent);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting settings activity " + ex.toString(), ex);
+                    Log.i(TAG, "exception starting settings activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                 }
                 return true;
             case R.id.action_about:
@@ -391,7 +391,7 @@ public class MainActivity2 extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return 5;
+            return Constants.GLOBAL_CONSTANTS.mTotalSdFragments;
         }
     }
 
@@ -463,7 +463,7 @@ public class MainActivity2 extends AppCompatActivity {
                             AuthenticateActivity.class);
                     MainActivity2.this.startActivity(i);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting activity " + ex.toString(), ex);
+                    Log.i(TAG, "exception starting activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                 }
 
             }

@@ -6,6 +6,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
+
+import androidx.appcompat.widget.SwitchCompat;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
@@ -28,12 +31,14 @@ public class FragmentBatt extends FragmentOsdBaseClass {
     LineChart mLineChart;
     LineData lineData;
     LineDataSet lineDataSet;
+    LineDataSet lineDataSetPhone;
     List<Entry> watchHistory = new ArrayList<>();
     List<Entry> phoneHistory = new ArrayList<>();
     List<String> hrHistoryStrings = new ArrayList<>();
     List<String> hrAveragesStrings = new ArrayList<>();
     private List<Entry> listToDisplay;
     private List<String> listToDisplayStrings;
+    private SwitchCompat phoneWatchSwitch;
 
 
     public FragmentBatt() {
@@ -45,12 +50,18 @@ public class FragmentBatt extends FragmentOsdBaseClass {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         lineDataSet = new LineDataSet(new ArrayList<Entry>(), "Battery history");
+        lineDataSetPhone = new LineDataSet(new ArrayList<Entry>(), "Battery history");
         //lineDataSet.setColors(ColorTemplate.JOYFUL_COLORS);
         lineDataSet.setValueTextColor(Color.BLACK);
         lineDataSet.setValueTextSize(18f);
         lineDataSet.setDrawValues(false);
         lineDataSet.setCircleSize(0f);
         lineDataSet.setLineWidth(3f);
+        lineDataSetPhone.setValueTextColor(Color.BLACK);
+        lineDataSetPhone.setValueTextSize(18f);
+        lineDataSetPhone.setDrawValues(false);
+        lineDataSetPhone.setCircleSize(0f);
+        lineDataSetPhone.setLineWidth(3f);
         //lineDataSetAverage = new LineDataSet(new ArrayList<Entry>(),"Heart rate history" );
         //lineDataSetAverage.setColors(ColorTemplate.JOYFUL_COLORS);
         //lineDataSetAverage.setValueTextColor(Color.BLACK);
@@ -61,6 +72,14 @@ public class FragmentBatt extends FragmentOsdBaseClass {
     @Override
     public void onResume() {
         super.onResume();
+        phoneWatchSwitch = mRootView.findViewById(R.id.switchToPowerGraph);
+        phoneWatchSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (Objects.nonNull(mLineChart)) {
+                mLineChart.clear();
+                mLineChart.postInvalidate();
+            }
+            mUtil.runOnUiThread(()->updateUi());
+        });
         mLineChart = mRootView.findViewById(R.id.lineChartBattHist);
         mLineChart.getLegend().setEnabled(false);
         XAxis xAxis = mLineChart.getXAxis();
@@ -109,25 +128,35 @@ public class FragmentBatt extends FragmentOsdBaseClass {
             double watchBattArr[] = mConnection.mSdServer.mSdData.watchBattBuff.getVals();   // This gives us a simple vector of hr values to plot.
             int nPhoneBattArr = mConnection.mSdServer.mSdData.phoneBattBuff.getNumVals();
             double phoneBattArr[] = mConnection.mSdServer.mSdData.phoneBattBuff.getVals();
-            if (Objects.nonNull(mConnection.mSdServer.mSdData.watchBattBuff) && nWatchBattArr > 0) {
+            if (Objects.nonNull(mConnection.mSdServer.mSdData.watchBattBuff) && nWatchBattArr > 0 && nPhoneBattArr > 0) {
                 Log.v(TAG, "hrWatchBattBuff.getNumVals=" + nWatchBattArr);
                 lineDataSet.clear();
+                lineDataSetPhone.clear();
                 String xVals[] = new String[nWatchBattArr];
                 for (int i = 0; i < nWatchBattArr; i++) {
                     //Log.d(TAG,"i="+i+", HR="+hrHistArr[i]);
                     xVals[i] = String.valueOf(i);
                     lineDataSet.addEntry(new Entry((float) watchBattArr[i], i));
                 }
+                String xValsPhone[] = new String[nPhoneBattArr];
+                for (int i = 0; i < nPhoneBattArr; i++) {
+                    //Log.d(TAG,"i="+i+", HR="+hrHistArr[i]);
+                    xValsPhone[i] = String.valueOf(i);
+                    lineDataSetPhone.addEntry(new Entry((float) phoneBattArr[i], i));
+                }
                 Log.d(TAG, "xVals=" + Arrays.toString(xVals) + ", lneDataSet=" + lineDataSet.toSimpleString());
+                lineDataSet.setColors(new int[]{0xfffff000});
+                LineData battHistLineDataWatch = new LineData(xVals, lineDataSet);
+                Log.d(TAG, "xVals=" + Arrays.toString(xValsPhone) + ", lneDataSet=" + lineDataSetPhone.toSimpleString());
                 lineDataSet.setColors(new int[]{0xffff0000});
-                LineData watchBattHistLineData = new LineData(xVals, lineDataSet);
+                LineData battHistLineDataPhone = new LineData(xValsPhone, lineDataSetPhone);
 
 
-                mLineChart.setData(watchBattHistLineData);
+                mLineChart.setData(phoneWatchSwitch.isChecked()?battHistLineDataPhone:battHistLineDataWatch);
                 mLineChart.getData().notifyDataChanged();
                 mLineChart.notifyDataSetChanged();
                 mLineChart.refreshDrawableState();
-                float xSpan = (nWatchBattArr * 5.0f) / 60.0f;   // time in minutes assuming one point every 5 seconds.
+                float xSpan = (phoneWatchSwitch.isChecked()?nPhoneBattArr:nWatchBattArr * 5.0f) / 60.0f;   // time in minutes assuming one point every 5 seconds.
                 mLineChart.setDescription(getString(R.string.watch_batt_hist)
                         + String.format("%.1f", xSpan)
                         + " " + getString(R.string.minutes));

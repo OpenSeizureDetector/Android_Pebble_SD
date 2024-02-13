@@ -15,6 +15,7 @@ import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -101,7 +102,7 @@ public class SdDataSourceNetwork extends SdDataSource {
             Log.v(TAG, "updatePrefs() - mReadTimeoutPeriod = " + mReadTimeoutPeriod);
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
-            mUtil.writeToSysLogFile("SdDataSourceNetwork().updatePrefs() - " + ex.toString());
+            mUtil.writeToSysLogFile("SdDataSourceNetwork().updatePrefs() - " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()));
             showToast("Problem Parsing Preferences - Something won't work");
         }
     }

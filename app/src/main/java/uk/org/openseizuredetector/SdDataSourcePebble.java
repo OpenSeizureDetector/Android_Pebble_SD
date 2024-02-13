@@ -344,7 +344,7 @@ public class SdDataSourcePebble extends SdDataSource {
 
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences! - prefStr=" + prefStr,ex);
-            mUtil.writeToSysLogFile("SdDataSourcePebble.updatePrefs() - ERROR " + ex.toString());
+            mUtil.writeToSysLogFile("SdDataSourcePebble.updatePrefs() - ERROR " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()));
             Toast toast = Toast.makeText(useSdServerBinding(), "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
             toast.show();
         }

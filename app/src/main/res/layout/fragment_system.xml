@@ -96,22 +96,6 @@
             android:textColor="@color/okTextColor" />
 
 
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/switchToPowerGraph"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/select_phone_power_graph"
-            android:textColor="@color/okTextColor"
-            tools:text="Select Phone power graph" />
-
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/lineChartBattery"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:accessibilityLiveRegion="polite">
-
-        </com.github.mikephil.charting.charts.LineChart>
-
     </androidx.appcompat.widget.LinearLayoutCompat>
 
 

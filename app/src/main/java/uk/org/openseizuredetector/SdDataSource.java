@@ -401,7 +401,7 @@ public abstract class SdDataSource {
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             useSdServerBinding().startActivity(i);
         } catch (Exception ex) {
-            Log.i(TAG, "installWatchApp(): exception starting install watch app activity " + ex.toString(),ex);
+            Log.i(TAG, "installWatchApp(): exception starting install watch app activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()),ex);
             showToast("Error Displaying Installation Instructions - try http://www.openseizuredetector.org.uk/?page_id=1207 instead");
         }
     }
@@ -500,6 +500,7 @@ public abstract class SdDataSource {
                         try {
                             mSdData.batteryPc = (short) dataObject.getInt(Constants.GLOBAL_CONSTANTS.BATTERY_PC);
                             addNewWatchPowerLevel(mSdData.batteryPc);
+                            mSdData.watchBattBuff.add(mSdData.batteryPc);
                         } catch (Exception e) {
                             Log.e(TAG, "Error in getting battery percentage", e);
                         }

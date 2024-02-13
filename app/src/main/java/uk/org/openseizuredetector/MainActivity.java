@@ -70,6 +70,7 @@ import java.lang.reflect.Field;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
@@ -360,7 +361,7 @@ public class MainActivity extends AppCompatActivity {
                         AuthenticateActivity.class);
                 this.startActivity(i);
             } catch (Exception ex) {
-                Log.i(TAG, "exception starting export activity " + ex.toString(), ex);
+                Log.i(TAG, "exception starting export activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
             }
             return true;
         }
@@ -378,7 +379,7 @@ public class MainActivity extends AppCompatActivity {
                             ExportDataActivity.class);
                     this.startActivity(i);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting export activity " + ex.toString(), ex);
+                    Log.i(TAG, "exception starting export activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                 }
                 return true;
              */
@@ -396,7 +397,7 @@ public class MainActivity extends AppCompatActivity {
                     //        LogManagerActivity.class);
                     //this.startActivity(prefsIntent);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting log manager activity " + ex.toString(), ex);
+                    Log.i(TAG, "exception starting log manager activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                 }
                 return true;
              */
@@ -408,7 +409,7 @@ public class MainActivity extends AppCompatActivity {
                         LogManagerControlActivity.class);
                 this.startActivity(intent);
             } catch (Exception ex) {
-                Log.i(TAG, "exception starting log manager activity " + ex.toString(), ex);
+                Log.i(TAG, "exception starting log manager activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
             }
             return true;
         }
@@ -420,7 +421,7 @@ public class MainActivity extends AppCompatActivity {
                         ReportSeizureActivity.class);
                 this.startActivity(intent);
             } catch (Exception ex) {
-                Log.i(TAG, "exception starting Report Seizure activity " + ex.toString(), ex);
+                Log.i(TAG, "exception starting Report Seizure activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
             }
             return true;
         }
@@ -432,7 +433,7 @@ public class MainActivity extends AppCompatActivity {
                         PrefActivity.class);
                 MainActivity.this.startActivity(prefsIntent);
             } catch (Exception ex) {
-                Log.i(TAG, "exception starting settings activity " + ex.toString(), ex);
+                Log.i(TAG, "exception starting settings activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
             }
             return true;
         }
@@ -1212,7 +1213,7 @@ public class MainActivity extends AppCompatActivity {
                             AuthenticateActivity.class);
                     MainActivity.this.startActivity(i);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting activity " + ex.toString(), ex);
+                    Log.i(TAG, "exception starting activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                 }
 
             }

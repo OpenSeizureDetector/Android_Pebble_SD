@@ -42,6 +42,7 @@ public class SdServiceConnection implements ServiceConnection {
     public SdServer mSdServer = null;
     public boolean mBound = false;
     public Context mContext;
+    public int mBoundConnections = 0;
 
     public SdServiceConnection(Context context) {
         mContext = context;
@@ -60,8 +61,9 @@ public class SdServiceConnection implements ServiceConnection {
             if(Objects.nonNull(mSdServer.uiLiveData)) {
                 if (mSdServer.uiLiveData.hasActiveObservers()) {
                     mSdServer.uiLiveData.signalChangedData();
-                    mSdServer.mBound = true;
                 }
+                mSdServer.mBound = true;
+                mBoundConnections++;
             }
         } else {
             Log.v(TAG, "onServiceConnected() - mSdServer is null - this is wrong!");
@@ -73,6 +75,7 @@ public class SdServiceConnection implements ServiceConnection {
         Log.v(TAG, "onServiceDisconnected()");
         mSdServer.mBound = false;
         mBound = false;
+        mBoundConnections--;
     }
 
     /**

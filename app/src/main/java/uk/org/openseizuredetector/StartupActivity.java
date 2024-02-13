@@ -175,7 +175,7 @@ public class StartupActivity extends AppCompatActivity {
                             PrefActivity.class);
                     startActivity(intent);
                 } catch (Exception ex) {
-                    Log.v(TAG, "exception starting settings activity " + ex.toString(), ex);
+                    Log.v(TAG, "exception starting settings activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                     mUtil.writeToSysLogFile("ERROR Starting Settings Activity");
                 }
 
@@ -541,11 +541,11 @@ public class StartupActivity extends AppCompatActivity {
                             Intent intent;
                             if (useNewUi) {
                                 intent = new Intent(
-                                        getApplicationContext(),
+                                        StartupActivity.this,
                                         MainActivity2.class);
                             } else {
                                 intent = new Intent(
-                                        getApplicationContext(),
+                                        StartupActivity.this,
                                         MainActivity.class);
                             }
                             intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
@@ -554,7 +554,7 @@ public class StartupActivity extends AppCompatActivity {
                             finish();
                         } catch (Exception ex) {
                             mStartedMainActivity = false;
-                            Log.e(TAG, "exception starting main activity " + ex.toString(), ex);
+                            Log.e(TAG, "exception starting main activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                             mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - exception starting main activity " + ex.getMessage() + "\n" +
                                     Arrays.toString(Thread.currentThread().getStackTrace()));
                         }
@@ -599,8 +599,8 @@ public class StartupActivity extends AppCompatActivity {
         AlertDialog FirstRunDialog;
         SharedPreferences prefs;
         Log.i(TAG, "checkFirstRun()");
-        versionName = this.getVersionName(this, StartupActivity.class);
-        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        versionName = this.getVersionName(StartupActivity.this, StartupActivity.class);
+        prefs = PreferenceManager.getDefaultSharedPreferences(StartupActivity.this);
         storedVersionName = (prefs.getString("AppVersionName", null));
         Log.v(TAG, "storedVersionName=" + storedVersionName + ", versionName=" + versionName);
 

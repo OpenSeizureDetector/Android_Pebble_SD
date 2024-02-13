@@ -263,7 +263,7 @@ public class OsdUtil {
                     Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
                     sdServiceConnection.mBound= false;
                 } catch (Exception ex) {
-                    Log.e(TAG, "unbindFromServer() - error unbinding service - " + ex.toString(), ex);
+                    Log.e(TAG, "unbindFromServer() - error unbinding service - " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                     writeToSysLogFile("unbindFromServer() - error unbinding service : \n" + ex.getMessage() + "\n" +Arrays.toString(Thread.currentThread().getStackTrace()));
                     Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
                 }
@@ -322,7 +322,7 @@ public class OsdUtil {
                 }
             }
         } catch (Exception ex) {
-            Log.e("IP Address", ex.toString());
+            Log.e("IP Address", ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()));
         }
         return null;
     }
@@ -515,7 +515,7 @@ public class OsdUtil {
                     }
                     of.close();
                 } catch (Exception ex) {
-                    Log.e(TAG, "writeToLogFile - error " + ex.toString(), ex);
+                    Log.e(TAG, "writeToLogFile - error " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                     for (int i = 0; i < (ex.getStackTrace().length); i++) {
                         Log.e(TAG, "writeToLogFile - error " + ex.getStackTrace()[i]);
                     }

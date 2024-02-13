@@ -57,6 +57,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 
 //import static android.database.sqlite.SQLiteDatabase.openOrCreateDatabase;
 
@@ -95,6 +98,7 @@ public class LogManager {
     //private String mDbName = "osdData";
     final static private String mDpTableName = "datapoints";
     final static private String mEventsTableName = "events";
+    private ConsoleHandler consoleHandler ;
     private boolean mLogRemote;
     private boolean mLogRemoteMobile;
     private String mAuthToken;
@@ -145,7 +149,7 @@ public class LogManager {
         Log.d(TAG, "LogManger Constructor");
         mContext = context;
         Handler handler = new Handler();
-
+        consoleHandler = new ConsoleHandler();
         mLogRemote = logRemote;
         mLogRemoteMobile = logRemoteMobile;
         mAuthToken = authToken;
@@ -155,6 +159,7 @@ public class LogManager {
         mRemoteLogPeriod = remoteLogPeriod;
         mLogNDA = logNDA;
         mSdSettingsData = sdSettingsData;
+        consoleHandler.publish(new LogRecord(Level.INFO,"Started Log Manager"));
         Log.v(TAG, "mLogRemote=" + mLogRemote);
         Log.v(TAG, "mLogRemoteMobile=" + mLogRemoteMobile);
         Log.v(TAG, "mEventDuration=" + mEventDuration);
@@ -197,6 +202,8 @@ public class LogManager {
 
     }
 
+
+
     /**
      * Returns a JSON String representing an array of datapoints that are selected from sqlite cursor c.
      *
@@ -217,11 +224,11 @@ public class LogManager {
         while (!c.isAfterLast()) {
             JSONObject datapoint = new JSONObject();
             try {
-                datapoint.put("id", c.getString(c.getColumnIndex("id")));
-                datapoint.put("dataTime", c.getString(c.getColumnIndex("dataTime")));
-                datapoint.put("status", c.getString(c.getColumnIndex("status")));
-                datapoint.put("dataJSON", c.getString(c.getColumnIndex("dataJSON")));
-                datapoint.put("uploaded", c.getString(c.getColumnIndex("uploaded")));
+                datapoint.put("id", c.getString(c.getColumnIndexOrThrow("id")));
+                datapoint.put("dataTime", c.getString(c.getColumnIndexOrThrow("dataTime")));
+                datapoint.put("status", c.getString(c.getColumnIndexOrThrow("status")));
+                datapoint.put("dataJSON", c.getString(c.getColumnIndexOrThrow("dataJSON")));
+                datapoint.put("uploaded", c.getString(c.getColumnIndexOrThrow("uploaded")));
                 //Log.v(TAG,"cursor2json() - datapoint="+datapoint.toString());
                 c.moveToNext();
                 dataPointArray.put(i, datapoint);
@@ -255,22 +262,22 @@ public class LogManager {
         while (!c.isAfterLast()) {
             event = new JSONObject();
             try {
-                val = c.getString(c.getColumnIndex("id"));
+                val = c.getString(c.getColumnIndexOrThrow("id"));
                 // We replace null values with empty string, otherwise they are completely excluded from output JSON.
                 event.put("id", val == null ? "" : val);
-                val = c.getString(c.getColumnIndex("dataTime"));
+                val = c.getString(c.getColumnIndexOrThrow("dataTime"));
                 event.put("dataTime", val == null ? "" : val);
-                val = c.getString(c.getColumnIndex("status"));
+                val = c.getString(c.getColumnIndexOrThrow("status"));
                 event.put("status", val == null ? "" : val);
-                val = c.getString(c.getColumnIndex("type"));
+                val = c.getString(c.getColumnIndexOrThrow("type"));
                 event.put("type", val == null ? "" : val);
-                val = c.getString(c.getColumnIndex("subType"));
+                val = c.getString(c.getColumnIndexOrThrow("subType"));
                 event.put("subType", val == null ? "" : val);
-                val = c.getString(c.getColumnIndex("notes"));
+                val = c.getString(c.getColumnIndexOrThrow("notes"));
                 event.put("desc", val == null ? "" : val);
-                val = c.getString(c.getColumnIndex("dataJSON"));
+                val = c.getString(c.getColumnIndexOrThrow("dataJSON"));
                 event.put("dataJSON", val == null ? "" : val);
-                val = c.getString(c.getColumnIndex("uploaded"));
+                val = c.getString(c.getColumnIndexOrThrow("uploaded"));
                 event.put("uploaded", val == null ? "" : val);
                 c.moveToNext();
                 eventsArray.put(i, event);
@@ -533,13 +540,13 @@ public class LogManager {
                 Log.v(TAG, "getEventsList - returned " + cursor.getCount() + " records");
                 while (!cursor.isAfterLast()) {
                     HashMap<String, String> event = new HashMap<>();
-                    //event.put("id", cursor.getString(cursor.getColumnIndex("id")));
-                    event.put("dataTime", cursor.getString(cursor.getColumnIndex("dataTime")));
-                    int status = cursor.getInt(cursor.getColumnIndex("status"));
+                    //event.put("id", cursor.getString(cursor.getColumnIndexOrThrow("id")));
+                    event.put("dataTime", cursor.getString(cursor.getColumnIndexOrThrow("dataTime")));
+                    int status = cursor.getInt(cursor.getColumnIndexOrThrow("status"));
                     String statusStr = mUtil.alarmStatusToString(status);
                     event.put("status", statusStr);
-                    event.put("uploaded", cursor.getString(cursor.getColumnIndex("uploaded")));
-                    //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
+                    event.put("uploaded", cursor.getString(cursor.getColumnIndexOrThrow("uploaded")));
+                    //event.put("dataJSON", cursor.getString(cursor.getColumnIndexOrThrow("dataJSON")));
                     eventsList.add(event);
                     cursor.moveToNext();
                 }

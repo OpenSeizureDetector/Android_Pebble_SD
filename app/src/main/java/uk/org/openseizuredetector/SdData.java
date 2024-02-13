@@ -329,8 +329,8 @@ public class SdData implements Parcelable {
             retval = jsonObj.toString();
             Log.v(TAG, "retval rawData=" + retval);
         } catch (Exception ex) {
-            Log.v(TAG, "Error Creating Data Object - " + ex.toString(), ex);
-            retval = "Error Creating Data Object - " + ex.toString();
+            Log.v(TAG, "Error Creating Data Object - " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
+            retval = "Error Creating Data Object - " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace());
         }
         arr = null;
         rawArr = null;
@@ -400,9 +400,9 @@ public class SdData implements Parcelable {
 
             retval = jsonObj.toString();
         } catch (Exception ex) {
-            Log.e(TAG, "toSettingsJSON(): Error Creating Data Object - " + ex.toString(),ex);
+            Log.e(TAG, "toSettingsJSON(): Error Creating Data Object - " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()),ex);
 
-            Log.v(TAG, "Error Creating Data Object - " + ex.toString(),ex);
+            Log.v(TAG, "Error Creating Data Object - " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()),ex);
 
             try {
                 jsonObj.put("dataType", "ErrorType");
@@ -560,8 +560,8 @@ public class SdData implements Parcelable {
 
             retval = jsonObj.toString();
         } catch (Exception ex) {
-            Log.e(TAG, "Error Creating Data Object - " + ex.toString(), ex);
-            retval = "Error Creating Data Object - " + ex.toString();
+            Log.e(TAG, "Error Creating Data Object - " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
+            retval = "Error Creating Data Object - " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace());
         }
         jsonObj = null;
         arr = null;

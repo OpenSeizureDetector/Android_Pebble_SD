@@ -99,6 +99,7 @@ public class Constants {
         String DATA_VALUE_HR = "hr";
         String JSON_TYPE_DATA = "data";
         String JSON_TYPE_BATTERY = "battery";
+        int mTotalSdFragments = 5;
     }
 
     public interface ACTION {

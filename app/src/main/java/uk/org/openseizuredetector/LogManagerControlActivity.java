@@ -44,6 +44,7 @@ import org.json.JSONObject;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -446,7 +447,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         AuthenticateActivity.class);
                 this.startActivity(i);
             } catch (Exception ex) {
-                Log.i(TAG, "exception starting export activity " + ex.toString(), ex);
+                Log.i(TAG, "exception starting export activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
             }
             return true;
         } else if (Objects.equals(R.id.pruneDatabaseMenuItem, item.getItemId())) {
@@ -461,7 +462,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         ReportSeizureActivity.class);
                 this.startActivity(intent);
             } catch (Exception ex) {
-                Log.i(TAG, "exception starting Report Seizure activity " + ex.toString(), ex);
+                Log.i(TAG, "exception starting Report Seizure activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
             }
             return true;
         } else if (Objects.equals(R.id.action_settings, item.getItemId())) {
@@ -472,7 +473,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         PrefActivity.class);
                 this.startActivity(prefsIntent);
             } catch (Exception ex) {
-                Log.i(TAG, "exception starting settings activity " + ex.toString(), ex);
+                Log.i(TAG, "exception starting settings activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
             }
             return true;
         } else if (Objects.equals(R.id.start_stop_nda, item.getItemId())) {
@@ -521,7 +522,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                             ExportDataActivity.class);
                     this.startActivity(i);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting export data activity " + ex.toString(), ex);
+                    Log.i(TAG, "exception starting export data activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                 }
                 return true;
             } else if (Objects.equals(R.id.action_about_datasharing, item.getItemId())) {
@@ -567,7 +568,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         ExportDataActivity.class);
                 this.startActivity(i);
             } catch (Exception ex) {
-                Log.i(TAG, "exception starting export data activity " + ex.toString(), ex);
+                Log.i(TAG, "exception starting export data activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
             }
             return true;
         } else {
@@ -826,7 +827,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                             AuthenticateActivity.class);
                     mContext.startActivity(i);
                 } catch (Exception ex) {
-                    Log.i(TAG, "exception starting activity " + ex.toString(), ex);
+                    Log.i(TAG, "exception starting activity " + ex.toString() + " " + Arrays.toString(Thread.currentThread().getStackTrace()), ex);
                 }
 
             }
