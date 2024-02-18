@@ -80,8 +80,8 @@ public class MainActivity2 extends AppCompatActivity {
         ViewPager2 contentContainer = findViewById(R.id.fragment_pager);
         ViewGroup.LayoutParams layoutParamsCommonContainer = fragmentContainerView.getLayoutParams();
         ViewGroup.LayoutParams layoutParams = contentContainer.getLayoutParams();
-        layoutParamsCommonContainer.height = (int) (Math.max(point.y, point.x) * .2);
-        layoutParams.height = (int) (Math.max(point.y, point.x) * .8);
+        layoutParamsCommonContainer.height = (int) (Math.max(point.y, point.x) * .3);
+        layoutParams.height = (int) (Math.max(point.y, point.x) * .6125);
         fragmentContainerView.setLayoutParams(layoutParamsCommonContainer);
         contentContainer.setLayoutParams(layoutParams);
         fragmentContainerView.requestLayout();
