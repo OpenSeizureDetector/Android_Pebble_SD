@@ -113,25 +113,30 @@ public class FragmentSystem extends FragmentOsdBaseClass {
             if (mConnection.mBound) {
                 if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
                     if (mConnection.mSdServer.mLogNDA)
-                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)" + "\nNDA Logging");
+                        tv.setText(new StringBuilder().append(getString(R.string.ServerRunningOK)).append(getString(R.string.DataSource)).append(" = ").append("Phone").append("\n").append("(Demo Mode)").append("\nNDA Logging").toString());
                     else
-                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)");
+                        tv.setText(new StringBuilder().append(getString(R.string.ServerRunningOK)).append(getString(R.string.DataSource)).append(" = ").append("Phone").append("\n").append("(Demo Mode)").toString());
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
                 } else {
                     if (mConnection.mSdServer.mLogNDA)
-                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName + "\nNDA Logging");
+                        tv.setText(new StringBuilder().append(getString(R.string.ServerRunningOK)).append(getString(R.string.DataSource)).append(" = ").append(mConnection.mSdServer.mSdDataSourceName).append("\nNDA Logging").toString());
                     else
-                        tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
+                        tv.setText(new StringBuilder().append(getString(R.string.ServerRunningOK)).append(getString(R.string.DataSource)).append(" = ").append(mConnection.mSdServer.mSdDataSourceName).toString());
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
                 }
             }
             //Log.v(TAG,"UpdateUi() - displaying server IP address");
             tv = (TextView) mRootView.findViewById(R.id.serverIpTv);
-            tv.setText(getString(R.string.AccessServerAt) + " http://"
-                    + mUtil.getLocalIpAddress()
-                    + ":8080");
+            String ipServerUrl = !mUtil.isMobileDataActive()?
+                    new StringBuilder().append(getString(R.string.AccessServerAt))
+                            .append(" http://")
+                            .append(mUtil.getLocalIpAddress())
+                            .append(":8080")
+                            .toString():
+                    getString(R.string.server_Mobile_localhost);
+            tv.setText(ipServerUrl);
             tv.setBackgroundColor(okColour);
             tv.setTextColor(okTextColour);
         } else {

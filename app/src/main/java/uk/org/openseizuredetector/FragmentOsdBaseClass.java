@@ -2,6 +2,7 @@ package uk.org.openseizuredetector;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -10,9 +11,12 @@ import androidx.fragment.app.Fragment;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.Objects;
@@ -49,9 +53,9 @@ public class FragmentOsdBaseClass extends Fragment {
 
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate()");
-        mContext = getContext();
-        mUtil = new OsdUtil(mContext, updateUiHandler);
-        mConnection = new SdServiceConnection(mContext);
+        if (Objects.isNull(mContext)) mContext = getContext();
+        if (Objects.isNull(mUtil)) mUtil = new OsdUtil(mContext, updateUiHandler);
+        if (Objects.isNull(mConnection)) mConnection = new SdServiceConnection(mContext);
 
 
     }
@@ -60,6 +64,7 @@ public class FragmentOsdBaseClass extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
+
         return inflater.inflate(R.layout.fragment_sd_data_viewer, container, false);
     }
 
@@ -75,7 +80,10 @@ public class FragmentOsdBaseClass extends Fragment {
         Log.i(TAG, "onStart()");
         if (mUtil.isServerRunning()) {
             Log.i(TAG, "onStart() - Binding to Server");
-            mUtil.bindToServer(mContext, mConnection);
+            if (Objects.nonNull(mUtil))
+                if (Objects.nonNull(mConnection))
+                    if (!mConnection.mBound)
+                        mUtil.bindToServer(mContext, mConnection);
         } else {
             Log.i(TAG, "onStart() - Server Not Running");
         }
@@ -110,6 +118,7 @@ public class FragmentOsdBaseClass extends Fragment {
         Log.i(TAG, "onStop()");
         mUtil.unbindFromServer(mContext, mConnection);
     }
+
 
     /**
      * If we don't use this .post() trick, we get errors about the wrong thread trying to

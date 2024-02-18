@@ -1,32 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 
-
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-xmlns:tools="http://schemas.android.com/tools"
+    xmlns:tools="http://schemas.android.com/tools"
 
-android:layout_width="match_parent"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="uk.org.openseizuredetector.StartupActivity"
     android:animateLayoutChanges="true"
+    android:isScrollContainer="true"
     android:orientation="vertical"
-    android:isScrollContainer="true">
+    tools:context="uk.org.openseizuredetector.StartupActivity">
 
-    <TextView
-        android:id="@+id/versionTv"
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/app_name" />
+        android:layout_height="match_parent" >
 
-    <androidx.fragment.app.FragmentContainerView
-        android:id="@+id/fragment_common_container_view"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:isScrollContainer="true"/>
+        <LinearLayout
+            android:id="@+id/osd_main_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/fragment_pager"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+            <TextView
+                android:id="@+id/versionTv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/app_name" />
+
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/fragment_common_container_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:isScrollContainer="true" />
+
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/fragment_pager"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
 </LinearLayout>
 

@@ -569,4 +569,5 @@
     <string name="battery_history">Battery History</string>
     <string name="watch_batt_hist">Watch Battery History (%)</string>
     <string name="select_phone_power_graph">Switch on to display phone power graph \nor off for watch</string>
+    <string name="server_Mobile_localhost">Mobile data is active: webserver interface is http://localhost:8080</string>
 </resources>

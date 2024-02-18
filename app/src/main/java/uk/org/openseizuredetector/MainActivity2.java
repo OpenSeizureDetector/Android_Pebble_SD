@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.MenuCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentContainerView;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -15,15 +16,20 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.window.OnBackInvokedDispatcher;
@@ -66,10 +72,26 @@ public class MainActivity2 extends AppCompatActivity {
 
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        WindowManager windowManager = MainActivity2.this.getWindowManager();
+        Display display = windowManager.getDefaultDisplay();
+        Point point = new Point();
+        display.getSize(point);
+        FragmentContainerView fragmentContainerView = findViewById(R.id.fragment_common_container_view);
+        ViewPager2 contentContainer = findViewById(R.id.fragment_pager);
+        ViewGroup.LayoutParams layoutParamsCommonContainer = fragmentContainerView.getLayoutParams();
+        ViewGroup.LayoutParams layoutParams = contentContainer.getLayoutParams();
+        layoutParamsCommonContainer.height = (int) (Math.max(point.y, point.x) * .2);
+        layoutParams.height = (int) (Math.max(point.y, point.x) * .8);
+        fragmentContainerView.setLayoutParams(layoutParamsCommonContainer);
+        contentContainer.setLayoutParams(layoutParams);
+        fragmentContainerView.requestLayout();
+        contentContainer.requestLayout();
+
         super.onPostCreate(savedInstanceState);
 
 
     }
+
 
     private void createMainActivity(Bundle savedInstanceState) {
 
@@ -82,8 +104,9 @@ public class MainActivity2 extends AppCompatActivity {
                 .build();
 
         //int i = 5/0;  // Force exception to test handler.
-        mUtil = new OsdUtil(MainActivity2.this, serverStatusHandler);
-        mConnection = new SdServiceConnection(MainActivity2.this);
+        if (Objects.isNull(mUtil)) mUtil = new OsdUtil(MainActivity2.this, serverStatusHandler);
+        if (Objects.isNull(mConnection)) mConnection = new SdServiceConnection(MainActivity2.this);
+
         mUtil.writeToSysLogFile("");
         mUtil.writeToSysLogFile("* MainActivity Started     *");
         mUtil.writeToSysLogFile("MainActivity.onCreate()");
@@ -138,24 +161,26 @@ public class MainActivity2 extends AppCompatActivity {
         tv.setText(getString(R.string.AppTitleText) + " " + versionName);
         tv.setBackgroundColor(okColour);
         tv.setTextColor(okTextColour);
-        mFragmentPager = findViewById(R.id.fragment_pager);
 
         if (mUtil.isServerRunning()) {
             Log.i(TAG, "MainActivity2.onStart() - Binding to Server");
             mUtil.writeToSysLogFile("MainActivity2.onStart - Binding to Server");
-            mUtil.bindToServer(MainActivity2.this, mConnection);
+            if (!mConnection.mBound) mUtil.bindToServer(MainActivity2.this, mConnection);
         } else {
             Log.i(TAG, "MainActivity2.onStart() - Server Not Running");
             mUtil.writeToSysLogFile("MainActivity2.onStart - Server Not Running");
         }
         try{
+            if (Objects.isNull(mFragmentStateAdapter)) mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
+            {
+                getSupportFragmentManager().beginTransaction()
+                        .setReorderingAllowed(true)
+                        .add(R.id.fragment_common_container_view, FragmentCommon.class, mSavedInstanceState)
+                        .commit();
+            }
+            if (Objects.isNull(mFragmentPager)) mFragmentPager = (ViewPager2) findViewById(R.id.fragment_pager);
+            if (mFragmentPager.getAdapter() != mFragmentStateAdapter) mFragmentPager.setAdapter(mFragmentStateAdapter);
             mFragmentPager.setId(SP.getInt(Constants.GLOBAL_CONSTANTS.lastPagerId, 0));
-            mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
-            mFragmentPager.setAdapter(mFragmentStateAdapter);
-            getSupportFragmentManager().beginTransaction()
-                    .setReorderingAllowed(true)
-                    .add(R.id.fragment_common_container_view, FragmentCommon.class, mSavedInstanceState)
-                    .commit();
         }catch (Exception e)
         {
             if (Objects.nonNull(mUtil)){
@@ -220,6 +245,7 @@ public class MainActivity2 extends AppCompatActivity {
                     backpressToast = Toast.makeText(getBaseContext(), "Press back again to exit", Toast.LENGTH_LONG);
                     backpressToast.show();
                     lastPress = currentTime;
+                    activateStopByBack = false;
                 } else {
                     Log.d(TAG, "onBackPressed: initiating shutdown");
                     if (backpressToast != null) backpressToast.cancel();
