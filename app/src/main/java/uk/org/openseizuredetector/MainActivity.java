@@ -282,6 +282,8 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "Stopping Server");
                     mUtil.unbindFromServer(getApplicationContext(), mConnection);
                     stopServer();
+                    // we exit the activity when the server is stopped to make it consistent with MainActivity2
+                    finish();
                 } else {
                     Log.i(TAG, "Starting Server");
                     startServer();
