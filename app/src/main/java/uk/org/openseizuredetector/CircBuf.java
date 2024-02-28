@@ -22,7 +22,7 @@ public class CircBuf {
         /**
          * Create a circular buffer of doubles, of length n members.
          */
-        Log.i(TAG, "CircBuf Constructor");
+        Log.d(TAG, "CircBuf Constructor");
         mBuff = new double[n];
         mBuffLen = n;
         mErrVal = errVal;
@@ -35,7 +35,7 @@ public class CircBuf {
         /**
          * Add value val to the circular buffer.
          */
-        Log.d(TAG, "add() - before: mHead=" + mHead + ", mTail=" + mTail);
+        Log.v(TAG, "add() - before: mHead=" + mHead + ", mTail=" + mTail);
         //System.out.println(TAG+" add() - before: mHead="+mHead+", mTail="+mTail);
         if (mIsFull)
             mHead = (mHead + 1) % mBuffLen;
@@ -44,7 +44,7 @@ public class CircBuf {
         mTail = (mTail + 1) % mBuffLen;
         if (mTail == mHead)
             mIsFull = true;
-        Log.d(TAG, "add() -  after: mHead=" + mHead + ", mTail=" + mTail);
+        Log.v(TAG, "add() -  after: mHead=" + mHead + ", mTail=" + mTail);
         //System.out.println(TAG+" add() - before: mHead="+mHead+", mTail="+mTail);
     }
 
@@ -73,7 +73,7 @@ public class CircBuf {
      */
     public double[] getVals() {
         int numElements = getNumVals();
-        System.out.println(TAG + " getVals() - numElements=" + numElements);
+        //System.out.println(TAG + " getVals() - numElements=" + numElements);
         double[] retArr = new double[numElements];
         for (int i = 0; i < numElements; i++) {
             retArr[i] = mBuff[(mHead + i) % mBuffLen];
