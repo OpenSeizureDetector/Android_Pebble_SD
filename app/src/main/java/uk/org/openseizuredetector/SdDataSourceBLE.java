@@ -111,6 +111,7 @@ public class SdDataSourceBLE extends SdDataSource {
 
     public static String SERV_INFINITIME_MOTION = "00030000-78fc-48fe-8e23-433b3a1942d0";
     public static String CHAR_INFINITIME_ACC_DATA = "00030002-78fc-48fe-8e23-433b3a1942d0";
+    public static String CHAR_INFINITIME_OSD_STATUS = "00030078-78fc-48fe-8e23-433b3a1942d0";
 
     public static String CHAR_BATT_DATA = "00002a19-0000-1000-8000-00805f9b34fb";
     public static String SERV_BATT = "0000180f-0000-1000-8000-00805f9b34fb";
@@ -322,6 +323,9 @@ public class SdDataSourceBLE extends SdDataSource {
                                 mOsdChar = gattCharacteristic;
                                 mAccFmt = ACC_FMT_3D;  // Infinitime presents x, y, z data
                                 setCharacteristicNotification(gattCharacteristic, true);
+                            } else if (charUuidStr.equals(CHAR_INFINITIME_OSD_STATUS)) {
+                                Log.i(TAG, "Found Infinitime OSD Status Characteristic");
+                                mStatusChar = gattCharacteristic;
                             }
                         }
                     } else if (uuidStr.equals(SERV_BATT)) {
