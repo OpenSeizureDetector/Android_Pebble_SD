@@ -675,7 +675,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
                 Log.v(TAG, "mSMSAlarm is false - not sending");
             }
-
+            Log.v(TAG,"calling startLatchTimer()");
             startLatchTimer();
         }
         // Handle fall alarm
@@ -781,7 +781,6 @@ public class SdServer extends Service implements SdDataReceiver {
                 Log.v(TAG, "mSMSAlarm is false - not sending");
             }
         }
-
 
         // Fault
         if ((sdData.alarmState) == 4 || (sdData.alarmState == 7) || (sdData.mHRFaultStanding) || (sdData.mHrFrozenFaultStanding)) {
@@ -1007,15 +1006,20 @@ public class SdServer extends Service implements SdDataReceiver {
     private void startLatchTimer() {
         if (mLatchAlarms) {
             if (mLatchAlarmTimer != null) {
-                Log.v(TAG, "startLatchTimer -timer already running - cancelling it");
+                Log.i(TAG, "startLatchTimer -timer already running - cancelling it");
                 mLatchAlarmTimer.cancel();
                 mLatchAlarmTimer = null;
             }
-            Log.v(TAG, "startLatchTimer() - starting alarm latch release timer to time out in " + mLatchAlarmPeriod + " sec");
+            Log.i(TAG, "startLatchTimer() - starting alarm latch release timer to time out in " + mLatchAlarmPeriod + " sec");
             // set timer to timeout after mLatchAlarmPeriod, and Tick() function to be called every second.
-            mLatchAlarmTimer =
-                    new LatchAlarmTimer(mLatchAlarmPeriod * 1000, 1000);
-            mLatchAlarmTimer.start();
+            // We need to start the timer on the UI thread to get it to work for some reason - I don't know why!
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    mLatchAlarmTimer =
+                            new LatchAlarmTimer(mLatchAlarmPeriod * 1000, 1000);
+                    mLatchAlarmTimer.start();
+                }
+            });
         } else {
             Log.v(TAG, "startLatchTimer() - Latch Alarms disabled - not doing anything");
         }
@@ -1457,7 +1461,7 @@ public class SdServer extends Service implements SdDataReceiver {
         // called after startTime ms.
         @Override
         public void onFinish() {
-            Log.v(TAG, "LatchAlarmTimer.onFinish()");
+            Log.i(TAG, "LatchAlarmTimer.onFinish()");
             // Do the equivalent of accept alarm push button.
             acceptAlarm();
         }
