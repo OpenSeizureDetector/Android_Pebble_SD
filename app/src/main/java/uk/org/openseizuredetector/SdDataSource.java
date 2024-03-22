@@ -363,6 +363,7 @@ public abstract class SdDataSource {
                             z = mSdData.rawData3D[i*3 + 2];
                             mSdData.rawData[i] = Math.sqrt(x*x + y*y + z*z);
                         }
+                        mSdData.mNsamp = 125;
                     } else {
                         // If we do not have vector magnitude or 3d data, set the vector magnitude array to zero.
                         Log.e(TAG, "ERROR - no accelerometer data received - setting it to zero");
