@@ -287,6 +287,7 @@ public abstract class SdDataSource {
         String watchFwVersion;
         String sdVersion;
         String sdName;
+        boolean have3dData = false;
         JSONArray accelVals = null;
         JSONArray accelVals3D = null;
         Log.v(TAG, "updateFromJSON - " + jsonStr);
@@ -317,17 +318,6 @@ public abstract class SdDataSource {
                     // if we get 'null' HR (For example if the heart rate is not working)
                     mMute = 0;
                 }
-                accelVals = dataObject.getJSONArray("data");
-                Log.v(TAG, "Received " + accelVals.length() + " acceleration values, rawData Length is " + mSdData.rawData.length);
-                if (accelVals.length() > mSdData.rawData.length) {
-                    mUtil.writeToSysLogFile("ERROR:  Received " + accelVals.length() + " acceleration values, but rawData storage length is "
-                            + mSdData.rawData.length);
-                }
-                int i;
-                for (i = 0; i < accelVals.length(); i++) {
-                    mSdData.rawData[i] = accelVals.getDouble(i);
-                }
-                mSdData.mNsamp = accelVals.length();
                 //Log.d(TAG,"accelVals[0]="+accelVals.getDouble(0)+", mSdData.rawData[0]="+mSdData.rawData[0]);
                 try {
                     accelVals3D = dataObject.getJSONArray("data3D");
@@ -336,16 +326,56 @@ public abstract class SdDataSource {
                         mUtil.writeToSysLogFile("ERROR:  Received " + accelVals3D.length() + " 3D acceleration values, but rawData3D storage length is "
                                 + mSdData.rawData3D.length);
                     }
-                    for (i = 0; i < accelVals3D.length(); i++) {
+                    for (int i = 0; i < accelVals3D.length(); i++) {
                         mSdData.rawData3D[i] = accelVals3D.getDouble(i);
                     }
+                    have3dData = true;
                 } catch (JSONException e) {
                     // If we get an error, just set rawData3D to zero
                     Log.i(TAG, "updateFromJSON - error parsing 3D data - setting it to zero");
-                    for (i = 0; i < mSdData.rawData3D.length; i++) {
+                    for (int i = 0; i < mSdData.rawData3D.length; i++) {
                         mSdData.rawData3D[i] = 0.;
                     }
+                    have3dData = false;
                 }
+                // Try to read the vector magnitude data from the JSON string.
+                try {
+                    accelVals = dataObject.getJSONArray("data");
+                    Log.v(TAG, "Received " + accelVals.length() + " acceleration values, rawData Length is " + mSdData.rawData.length);
+                    if (accelVals.length() > mSdData.rawData.length) {
+                        mUtil.writeToSysLogFile("ERROR:  Received " + accelVals.length() + " acceleration values, but rawData storage length is "
+                                + mSdData.rawData.length);
+                    }
+                    int i;
+                    for (i = 0; i < accelVals.length(); i++) {
+                        mSdData.rawData[i] = accelVals.getDouble(i);
+                    }
+                    mSdData.mNsamp = accelVals.length();
+                } catch (JSONException e) {
+                    // If we do not have vector magnitude data, calculate it from  the 3d data.
+                    if (have3dData) {
+                        Log.i(TAG,"Deriving Vector Magnitudes from 3d accelerometer data");
+                        int i;
+                        for (i = 0; i < 125; i++) {
+                            double x, y, z;
+                            x = mSdData.rawData3D[i*3 + 0];
+                            y = mSdData.rawData3D[i*3 + 1];
+                            z = mSdData.rawData3D[i*3 + 2];
+                            mSdData.rawData[i] = Math.sqrt(x*x + y*y + z*z);
+                        }
+                        mSdData.mNsamp = 125;
+                    } else {
+                        // If we do not have vector magnitude or 3d data, set the vector magnitude array to zero.
+                        Log.e(TAG, "ERROR - no accelerometer data received - setting it to zero");
+                        int i;
+                        // FIXME - assumed fixed length of array!!
+                        for (i = 0; i < 125; i++) {
+                            mSdData.rawData[i] = 0.0;
+                        }
+                        mSdData.mNsamp = 125;
+                    }
+                }
+
 
                 mWatchAppRunningCheck = true;
                 doAnalysis();
