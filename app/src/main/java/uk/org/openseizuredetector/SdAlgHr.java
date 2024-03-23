@@ -146,36 +146,40 @@ public class SdAlgHr {
 
     private boolean checkAdaptiveHr(double hrVal) {
         boolean retVal;
-        double hrThreshMin;
-        double hrThreshMax;
-        double avHr = getAdaptiveHrAverage();
-        hrThreshMin = avHr - mAdaptiveHrAlarmThresh;
-        hrThreshMax = avHr + mAdaptiveHrAlarmThresh;
-
         retVal = false;
-        if (hrVal < hrThreshMin) {
-            retVal = true;
+        
+        if (mAdaptiveHrAlarmActive) {
+            double hrThreshMin;
+            double hrThreshMax;
+            double avHr = getAdaptiveHrAverage();
+            hrThreshMin = avHr - mAdaptiveHrAlarmThresh;
+            hrThreshMax = avHr + mAdaptiveHrAlarmThresh;
+    
+        
+            if (hrVal < hrThreshMin) {
+                retVal = true;
+            }
+            if (hrVal > hrThreshMax) {
+                retVal = true;
+            }
+            Log.d(TAG, "checkAdaptiveHr() - hrVal=" + hrVal + ", avHr=" + avHr + ", thresholds=(" + hrThreshMin + ", " + hrThreshMax + "): Alarm=" + retVal);
         }
-        if (hrVal > hrThreshMax) {
-            retVal = true;
-        }
-        Log.d(TAG, "checkAdaptiveHr() - hrVal=" + hrVal + ", avHr=" + avHr + ", thresholds=(" + hrThreshMin + ", " + hrThreshMax + "): Alarm=" + retVal);
-
         return (retVal);
     }
 
     private boolean checkAverageHr(double hrVal) {
         boolean retVal;
-        double avHr = getAverageHrAverage();
-
         retVal = false;
-        if (avHr < mAverageHrAlarmThreshMin) {
-            retVal = true;
+        if (mAverageHrAlarmActive) {
+            double avHr = getAverageHrAverage();
+            if (avHr < mAverageHrAlarmThreshMin) {
+                retVal = true;
+            }
+            if (avHr > mAverageHrAlarmThreshMax) {
+                retVal = true;
+            }
+            Log.d(TAG, "checkAverageHr() - hrVal=" + hrVal + ", avHr=" + avHr + ", thresholds=(" + mAverageHrAlarmThreshMin + ", " + mAverageHrAlarmThreshMin + "): Alarm=" + retVal);
         }
-        if (avHr > mAverageHrAlarmThreshMax) {
-            retVal = true;
-        }
-        Log.d(TAG, "checkAverageHr() - hrVal=" + hrVal + ", avHr=" + avHr + ", thresholds=(" + mAverageHrAlarmThreshMin + ", " + mAverageHrAlarmThreshMin + "): Alarm=" + retVal);
         return (retVal);
     }
 
@@ -195,6 +199,7 @@ public class SdAlgHr {
         retVal.add(checkSimpleHr(hrVal));
         retVal.add(checkAdaptiveHr(hrVal));
         retVal.add(checkAverageHr(hrVal));
+        
         return (retVal);
     }
 
