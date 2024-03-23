@@ -104,11 +104,9 @@ public class SdAlgHr {
          * Check heart rate value against simple thresholds
          */
         boolean retVal = false;
-        if (mSimpleHrAlarmActive) {
-            if ((hrVal > mSimpleHrAlarmThreshMax)
-                    || (hrVal < mSimpleHrAlarmThreshMin)) {
-                retVal = true;
-            }
+        if ((hrVal > mSimpleHrAlarmThreshMax)
+                || (hrVal < mSimpleHrAlarmThreshMin)) {
+            retVal = true;
         }
         return (retVal);
     }
@@ -146,13 +144,14 @@ public class SdAlgHr {
 
     private boolean checkAdaptiveHr(double hrVal) {
         boolean retVal;
+        retVal = false;
         double hrThreshMin;
         double hrThreshMax;
         double avHr = getAdaptiveHrAverage();
         hrThreshMin = avHr - mAdaptiveHrAlarmThresh;
         hrThreshMax = avHr + mAdaptiveHrAlarmThresh;
 
-        retVal = false;
+    
         if (hrVal < hrThreshMin) {
             retVal = true;
         }
@@ -160,15 +159,13 @@ public class SdAlgHr {
             retVal = true;
         }
         Log.d(TAG, "checkAdaptiveHr() - hrVal=" + hrVal + ", avHr=" + avHr + ", thresholds=(" + hrThreshMin + ", " + hrThreshMax + "): Alarm=" + retVal);
-
         return (retVal);
     }
 
     private boolean checkAverageHr(double hrVal) {
         boolean retVal;
-        double avHr = getAverageHrAverage();
-
         retVal = false;
+        double avHr = getAverageHrAverage();
         if (avHr < mAverageHrAlarmThreshMin) {
             retVal = true;
         }
@@ -192,9 +189,15 @@ public class SdAlgHr {
         mAverageHrBuff.add(hrVal);
         mHrHist.add(hrVal);
         ArrayList<Boolean> retVal = new ArrayList<Boolean>();
-        retVal.add(checkSimpleHr(hrVal));
-        retVal.add(checkAdaptiveHr(hrVal));
-        retVal.add(checkAverageHr(hrVal));
+        if (mSimpleHrAlarmActive) {
+            retVal.add(checkSimpleHr(hrVal));
+        }
+        if (mAdaptiveHrAlarmActive) {
+            retVal.add(checkAdaptiveHr(hrVal));
+        }
+        if (mAverageHrAlarmActive) {
+            retVal.add(checkAverageHr(hrVal));
+        }
         return (retVal);
     }
 
