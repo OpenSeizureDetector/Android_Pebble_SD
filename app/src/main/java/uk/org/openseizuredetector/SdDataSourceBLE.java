@@ -392,18 +392,22 @@ public class SdDataSourceBLE extends SdDataSource {
          * @param nBytes - number of bytes to send.
          */
         private void executeWriteCharacteristic(BluetoothGattCharacteristic gattCharacteristic, byte[] valBytes) {
-            gattCharacteristic.setValue(valBytes);
-            boolean retVal = mBluetoothGatt.writeCharacteristic(gattCharacteristic);
-            if (retVal) {
-                Log.d(TAG, "executeWriteCharacteristic - write initiated successfully");
+            if (gattCharacteristic != null) {
+                gattCharacteristic.setValue(valBytes);
+                boolean retVal = mBluetoothGatt.writeCharacteristic(gattCharacteristic);
+                if (retVal) {
+                    Log.d(TAG, "executeWriteCharacteristic - write initiated successfully");
+                } else {
+                    Log.d(TAG, "executeWriteCharacteristic - write initiation failed - waiting, then re-trying");
+                    mHandler.postDelayed(new Runnable() {
+                        public void run() {
+                            Log.w(TAG, "Executing delayed write of characteristic");
+                            executeWriteCharacteristic(gattCharacteristic, valBytes);
+                        }
+                    }, 100);
+                }
             } else {
-                Log.d(TAG, "executeWriteCharacteristic - write initiation failed - waiting, then re-trying");
-                mHandler.postDelayed(new Runnable() {
-                    public void run() {
-                        Log.w(TAG, "Executing delayed write of characteristic");
-                        executeWriteCharacteristic(gattCharacteristic, valBytes);
-                    }
-                }, 100);
+                Log.i(TAG,"ExecuteWriteCharacteristic() - gatCharacteristic is null, so not doing anything");
             }
         }
 
