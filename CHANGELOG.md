@@ -1,8 +1,9 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
-    V4.2.3c - Uses 3d accelerometer data to calculate magnitude if vector magnitude is not sent from data source.
-    V4.2.3b - fixed latched alarms (Issue #146)
+    V4.2.3 - Uses 3d accelerometer data to calculate magnitude if vector magnitude is not sent from data source.
+           - fixed latched alarms (Issue #146)
+           - fixed HR alarms selection issue (#153)
     V4.2.2 - Added support for PineTime OSD Status reporting.
     V4.2.1 - Added support for PineTime wathes using the Bluetooth Data Source
     V4.1.0 - Added experimental support for neural network based seizure detector.
