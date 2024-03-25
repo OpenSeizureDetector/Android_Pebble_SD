@@ -368,17 +368,21 @@ public class SdDataSourceBLE extends SdDataSource {
          * @param gattCharacteristic - the characteristic to be read.
          */
         private void executeReadCharacteristic(BluetoothGattCharacteristic gattCharacteristic) {
-            boolean retVal = mBluetoothGatt.readCharacteristic(gattCharacteristic);
-            if (retVal) {
-                Log.d(TAG, "executeReadCharacteristic - read initiated successfully");
+            if (gattCharacteristic != null) {
+                boolean retVal = mBluetoothGatt.readCharacteristic(gattCharacteristic);
+                if (retVal) {
+                    Log.d(TAG, "executeReadCharacteristic - read initiated successfully");
+                } else {
+                    Log.d(TAG, "executeReadCharacteristic - read initiation failed - waiting, then re-trying");
+                    mHandler.postDelayed(new Runnable() {
+                        public void run() {
+                            Log.w(TAG, "Executing delayed read of characteristic");
+                            executeReadCharacteristic(gattCharacteristic);
+                        }
+                    }, 100);
+                }
             } else {
-                Log.d(TAG, "executeReadCharacteristic - read initiation failed - waiting, then re-trying");
-                mHandler.postDelayed(new Runnable() {
-                    public void run() {
-                        Log.w(TAG, "Executing delayed read of characteristic");
-                        executeReadCharacteristic(gattCharacteristic);
-                    }
-                }, 100);
+                Log.i(TAG,"ExecuteReadCharacteristic() - gatCharacteristic is null, so not doing anything");
             }
         }
 
