@@ -368,21 +368,31 @@ public class SdDataSourceBLE extends SdDataSource {
          * @param gattCharacteristic - the characteristic to be read.
          */
         private void executeReadCharacteristic(BluetoothGattCharacteristic gattCharacteristic) {
-            if (gattCharacteristic != null) {
-                boolean retVal = mBluetoothGatt.readCharacteristic(gattCharacteristic);
-                if (retVal) {
-                    Log.d(TAG, "executeReadCharacteristic - read initiated successfully");
-                } else {
-                    Log.d(TAG, "executeReadCharacteristic - read initiation failed - waiting, then re-trying");
-                    mHandler.postDelayed(new Runnable() {
-                        public void run() {
-                            Log.w(TAG, "Executing delayed read of characteristic");
-                            executeReadCharacteristic(gattCharacteristic);
-                        }
-                    }, 100);
-                }
+            if (gattCharacteristic == null) {
+                Log.i(TAG, "ExecuteReadCharacteristic() - gatCharacteristic is null, so not doing anything");
+                mUtil.showToast("ERROR: gatCharacteristic is null - this should not happen");
+                mSdDataReceiver.onSdDataFault(mSdData);
+                return;
+            }
+            if (mBluetoothGatt == null) {
+                Log.e(TAG, "executeReadCharacteristic() - mBluetoothGatt is null - Characteristic=" + gattCharacteristic.getUuid().toString());
+                mUtil.showToast("ERROR: mGatCharacteristic is null - this should not happen");
+                mSdDataReceiver.onSdDataFault(mSdData);
+                return;
+            }
+
+            // To get here both gatCharacteristic and mBluetoothGatt must be non-null
+            boolean retVal = mBluetoothGatt.readCharacteristic(gattCharacteristic);
+            if (retVal) {
+                Log.d(TAG, "executeReadCharacteristic - read initiated successfully");
             } else {
-                Log.i(TAG,"ExecuteReadCharacteristic() - gatCharacteristic is null, so not doing anything");
+                Log.d(TAG, "executeReadCharacteristic - read initiation failed - waiting, then re-trying");
+                mHandler.postDelayed(new Runnable() {
+                    public void run() {
+                        Log.w(TAG, "Executing delayed read of characteristic");
+                        executeReadCharacteristic(gattCharacteristic);
+                    }
+                }, 100);
             }
         }
 
@@ -391,27 +401,38 @@ public class SdDataSourceBLE extends SdDataSource {
          * of a given characteristic.
          * Because only one BLE operation can be taking place at a time, it may fail, in which case
          * the read is re-tried after a 100ms delay.
+         *
          * @param gattCharacteristic - the characteristic to be read.
-         * @param valBytes[] - array of bytes to send
-         * @param nBytes - number of bytes to send.
+         * @param valBytes[]         - array of bytes to send
+         * @param nBytes             - number of bytes to send.
          */
         private void executeWriteCharacteristic(BluetoothGattCharacteristic gattCharacteristic, byte[] valBytes) {
-            if (gattCharacteristic != null) {
-                gattCharacteristic.setValue(valBytes);
-                boolean retVal = mBluetoothGatt.writeCharacteristic(gattCharacteristic);
-                if (retVal) {
-                    Log.d(TAG, "executeWriteCharacteristic - write initiated successfully");
-                } else {
-                    Log.d(TAG, "executeWriteCharacteristic - write initiation failed - waiting, then re-trying");
-                    mHandler.postDelayed(new Runnable() {
-                        public void run() {
-                            Log.w(TAG, "Executing delayed write of characteristic");
-                            executeWriteCharacteristic(gattCharacteristic, valBytes);
-                        }
-                    }, 100);
-                }
+            if (gattCharacteristic == null) {
+                Log.i(TAG, "ExecuteWriteCharacteristic() - gatCharacteristic is null, so not doing anything");
+                mUtil.showToast("ERROR: gatCharacteristic is null - this should not happen");
+                mSdDataReceiver.onSdDataFault(mSdData);
+                return;
+            }
+            if (mBluetoothGatt == null) {
+                Log.e(TAG, "executeWriteCharacteristic() - mBluetoothGatt is null - Characteristic=" + gattCharacteristic.getUuid().toString());
+                mUtil.showToast("ERROR: mGatCharacteristic is null - this should not happen");
+                mSdDataReceiver.onSdDataFault(mSdData);
+                return;
+            }
+
+            // To get here both gatCharacteristic and mBluetoothGatt must be non-null
+            gattCharacteristic.setValue(valBytes);
+            boolean retVal = mBluetoothGatt.writeCharacteristic(gattCharacteristic);
+            if (retVal) {
+                Log.d(TAG, "executeWriteCharacteristic - write initiated successfully");
             } else {
-                Log.i(TAG,"ExecuteWriteCharacteristic() - gatCharacteristic is null, so not doing anything");
+                Log.d(TAG, "executeWriteCharacteristic - write initiation failed - waiting, then re-trying");
+                mHandler.postDelayed(new Runnable() {
+                    public void run() {
+                        Log.w(TAG, "Executing delayed write of characteristic");
+                        executeWriteCharacteristic(gattCharacteristic, valBytes);
+                    }
+                }, 100);
             }
         }
 

@@ -1,6 +1,7 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
+    V4.2.4 - Added checks and a FAULT condition for Bluetooth errors in Bluetooth Data Source
     V4.2.3 - Uses 3d accelerometer data to calculate magnitude if vector magnitude is not sent from data source.
            - fixed latched alarms (Issue #146)
            - fixed HR alarms selection issue (#153)
