@@ -80,6 +80,8 @@ dependencies {
     //androidTestImplementation 'androidx.test.espresso:espresso-intents:3.1.1'
     implementation 'com.techyourchance:threadposter:1.0.1'
     implementation 'com.google.android.material:material'
+    implementation "com.github.RideBeeline:android-bluetooth-current-time-service:0.1.2"
+
 }
 
 repositories {

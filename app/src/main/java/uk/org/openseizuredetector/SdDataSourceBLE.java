@@ -56,6 +56,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+import co.beeline.android.bluetooth.currenttimeservice.CurrentTimeService;
+
 
 /**
  * A data source that registers for BLE GATT notifications from a device and
@@ -153,6 +155,8 @@ public class SdDataSourceBLE extends SdDataSource {
         mSdData.watchSdName = mBleDeviceName;
         mSdData.watchPartNo = mBleDeviceAddr;
 
+        boolean success = CurrentTimeService.startServer(mContext);
+
         bleConnect();
 
     }
@@ -231,6 +235,7 @@ public class SdDataSourceBLE extends SdDataSource {
         mUtil.writeToSysLogFile("SDDataSourceBLE.stop()");
 
         bleDisconnect();
+        CurrentTimeService.stopServer();
         super.stop();
     }
 
