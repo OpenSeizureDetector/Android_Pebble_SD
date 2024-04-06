@@ -146,8 +146,9 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
 
         // if we have enabled the SMS alarm, we may need extra permissions approving.  This is handled in
         // StartUpActivity, so we exit this activity and start start-up activity.
-        if (s.equals("SMSAlarm")) {
+        if (s.equals("SMSAlarm"))  {
             if (sharedPreferences.getBoolean("SMSAlarm", false) == true) {
+                mUtil.showToast("Restarting OpenSeizureDetector");
                 Log.i(TAG, "onSharedPreferenceChanged(): SMS Alarm Enabled - Restarting start-up activity to check permissions");
                 Intent i;
                 i = new Intent(this, StartupActivity.class);
@@ -159,21 +160,39 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                 Log.i(TAG, "OnSharedPreferenceChanged(): SMS Alarm disabled so do not need permissions");
             }
         }
+        if (s.equals("DataSource"))  {
+            Log.i(TAG, "onSharedPreferenceChanged(): Data Source Changed - Restarting start-up activity to check permissions");
+            mUtil.showToast("Restarting OpenSeizureDetector");
+            mUtil.stopServer();
+            // Wait 1 second to give the server chance to shutdown, then re-start it
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    Intent i;
+                    Log.i(TAG, "onSharedPreferenceChanged(): Data Source Changed - Restarting start-up activity to check permissions");
+                    i = new Intent(getApplicationContext(), StartupActivity.class);
+                    startActivity(i);
+                    Log.i(TAG, "onSharedPreferenceChanged() - finishing PrefActivity");
+                    finish();
+                    return;
+                }
+            }, 1000);
+        }
         // For all other preference changes we just restart SdServer so it is not as alarming for the user!
         //mUtil.showToast("Setting " + s + " Changed - restarting server");
+        mUtil.showToast("Restarting OpenSeizureDetector");
         mPrefChanged = true;
         mUtil.stopServer();
-        // Wait 0.1 second to give the server chance to shutdown, then re-start it
+        // Wait 1 second to give the server chance to shutdown, then re-start it
         mHandler.postDelayed(new Runnable() {
             public void run() {
                 mUtil.startServer();
             }
-        }, 100);
+        }, 1000);
 
         if (s.equals("DataSource") || s.equals("advancedMode")) {
             Log.i(TAG, "Re-starting PrefActivity to refresh list");
-            finish();
             startActivity(getIntent());
+            finish();
         }
 
     }
