@@ -86,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
     private Intent sdServerIntent;
 
     final Handler serverStatusHandler = new Handler();
+    final Handler mHandler = new Handler();
     Messenger messenger = new Messenger(new ResponseHandler());
     Timer mUiTimer;
     private Context mContext;
@@ -275,22 +276,27 @@ public class MainActivity extends AppCompatActivity {
                     mConnection.mSdServer.acceptAlarm();
                 }
                 return true;
-            case R.id.action_start_stop:
+            case R.id.action_exit:
                 // Respond to the start/stop server menu item.
-                Log.i(TAG, "action_sart_stop");
-                if (mConnection.mBound) {
-                    Log.i(TAG, "Stopping Server");
-                    mUtil.unbindFromServer(getApplicationContext(), mConnection);
-                    stopServer();
-                    // we exit the activity when the server is stopped to make it consistent with MainActivity2
-                    finish();
-                } else {
-                    Log.i(TAG, "Starting Server");
-                    startServer();
-                    // and bind to it so we can see its data
-                    Log.i(TAG, "Binding to Server");
-                    mUtil.bindToServer(getApplicationContext(), mConnection);
-                }
+                Log.i(TAG, "action_exit: Stopping Server");
+                mUtil.unbindFromServer(getApplicationContext(), mConnection);
+                stopServer();
+                // We exit this activity as a crude way of forcing the fragments to disconnect from the server
+                // so that the server exits properly - otherwise we end up with multiple threads running.
+                // FIXME - tell the threads to unbind from the serer before calling stopServer as an alternative.
+                finish();
+                return true;
+            case R.id.action_start_stop:
+                Log.i(TAG, "action_start_stop: restarting server");
+                mUtil.showToast("Stopping Background Service....");
+                mUtil.stopServer();
+                // Wait 1 second to give the server chance to shutdown, then re-start it
+                mHandler.postDelayed(new Runnable() {
+                    public void run() {
+                        mUtil.showToast("Re-Starting Background Service...");
+                        mUtil.startServer();
+                    }
+                }, 1000);
                 return true;
             /* fault beep test does not work with fault timer, so disable test option.
             case R.id.action_test_fault_beep:

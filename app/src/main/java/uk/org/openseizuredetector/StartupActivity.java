@@ -124,6 +124,14 @@ public class StartupActivity extends AppCompatActivity {
     private String mBleDeviceAddr;
     private String mBleDeviceName;
 
+    private final int MODE_INIT = 0;
+    private final int MODE_SHUTDOWN_SERVER = 1;
+    private final int MODE_START_SERVER = 2;
+    private final int MODE_CONNECT_SERVER = 3;
+    private final int MODE_WATCH_RUNNING = 4;
+    private final int MODE_SD_DATA_OK = 5;
+    private int mMode = MODE_INIT;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -221,10 +229,12 @@ public class StartupActivity extends AppCompatActivity {
 
 
         if (mUtil.isServerRunning()) {
+            mMode = MODE_SHUTDOWN_SERVER;
             Log.i(TAG, "onStart() - server running - stopping it - isServerRunning=" + mUtil.isServerRunning());
             mUtil.writeToSysLogFile("StartupActivity.onStart() - server already running - stopping it.");
             mUtil.stopServer();
         } else {
+            mMode = MODE_START_SERVER;
             Log.i(TAG, "onStart() - server not running - isServerRunning=" + mUtil.isServerRunning());
         }
 
@@ -375,13 +385,27 @@ public class StartupActivity extends AppCompatActivity {
             }
 
             if (allOk) {
+                tv = (TextView) findViewById(R.id.textItem1);
+                pb = (ProgressBar) findViewById(R.id.progressBar1);
+
                 if (!mUtil.isServerRunning()) {
                     mUtil.writeToSysLogFile("StartupActivity.onStart() - starting server  - isServerRunning=" + mUtil.isServerRunning());
                     Log.i(TAG, "onStart() - starting server -isServerRunning=" + mUtil.isServerRunning());
                     mUtil.startServer();
                     mBindInProgress = false;
                     allOk = false;
+                    tv.setText("Starting Server");
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                    pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
+                    pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
+                    mMode = MODE_START_SERVER;
                 } else {
+                    tv.setText(getString(R.string.ServerRunningOK));
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+                    pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
+                    pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
                     if (mBindInProgress) {
                         Log.i(TAG,"Waiting to bind to server");
                     } else {

@@ -160,6 +160,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                 Log.i(TAG, "OnSharedPreferenceChanged(): SMS Alarm disabled so do not need permissions");
             }
         }
+        // If we have changed the data source, re-start the whole system
         if (s.equals("DataSource"))  {
             Log.i(TAG, "onSharedPreferenceChanged(): Data Source Changed - Restarting start-up activity to check permissions");
             mUtil.showToast("Restarting OpenSeizureDetector");
@@ -176,25 +177,27 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                     return;
                 }
             }, 1000);
-        }
-        // For all other preference changes we just restart SdServer so it is not as alarming for the user!
-        //mUtil.showToast("Setting " + s + " Changed - restarting server");
-        mUtil.showToast("Restarting OpenSeizureDetector");
-        mPrefChanged = true;
-        mUtil.stopServer();
-        // Wait 1 second to give the server chance to shutdown, then re-start it
-        mHandler.postDelayed(new Runnable() {
-            public void run() {
-                mUtil.startServer();
+            return;
+        } else {
+            // For all other preference changes we just restart SdServer so it is not as alarming for the user!
+            //mUtil.showToast("Setting " + s + " Changed - restarting server");
+            mUtil.showToast("Stopping Background Service...");
+            mPrefChanged = true;
+            mUtil.stopServer();
+            // Wait 1 second to give the server chance to shutdown, then re-start it
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    mUtil.showToast("Re-Starting Background Service...");
+                    mUtil.startServer();
+                }
+            }, 1000);
+
+            if (s.equals("advancedMode")) {
+                Log.i(TAG, "Re-starting PrefActivity to refresh list");
+                startActivity(getIntent());
+                finish();
             }
-        }, 1000);
-
-        if (s.equals("DataSource") || s.equals("advancedMode")) {
-            Log.i(TAG, "Re-starting PrefActivity to refresh list");
-            startActivity(getIntent());
-            finish();
         }
-
     }
 
     @Override

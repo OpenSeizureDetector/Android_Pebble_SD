@@ -46,6 +46,7 @@ public class MainActivity2 extends AppCompatActivity {
     private OsdUtil mUtil;
     private SdServiceConnection mConnection;
     final Handler serverStatusHandler = new Handler();
+    private Handler mHandler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,8 +66,7 @@ public class MainActivity2 extends AppCompatActivity {
         mConnection = new SdServiceConnection(getApplicationContext());
         mUtil.writeToSysLogFile("MainActivity2.onCreate()");
         mContext = this;
-
-
+        mHandler = new Handler();
     }
 
     /**
@@ -194,24 +194,27 @@ public class MainActivity2 extends AppCompatActivity {
                     mConnection.mSdServer.acceptAlarm();
                 }
                 return true;
-            case R.id.action_start_stop:
+            case R.id.action_exit:
                 // Respond to the start/stop server menu item.
-                Log.i(TAG, "action_start_stop");
-                if (mConnection.mBound) {
-                    Log.i(TAG, "Stopping Server");
-                    mUtil.unbindFromServer(getApplicationContext(), mConnection);
-                    stopServer();
-                    // We exit this activity as a crude way of forcing the fragments to disconnect from the server
-                    // so that the server exits properly - otherwise we end up with multiple threads running.
-                    // FIXME - tell the threads to unbind from the serer before calling stopServer as an alternative.
-                    finish();
-                } else {
-                    Log.i(TAG, "Starting Server");
-                    startServer();
-                    // and bind to it so we can see its data
-                    Log.i(TAG, "Binding to Server");
-                    mUtil.bindToServer(getApplicationContext(), mConnection);
-                }
+                Log.i(TAG, "action_exit: Stopping Server");
+                mUtil.unbindFromServer(getApplicationContext(), mConnection);
+                stopServer();
+                // We exit this activity as a crude way of forcing the fragments to disconnect from the server
+                // so that the server exits properly - otherwise we end up with multiple threads running.
+                // FIXME - tell the threads to unbind from the serer before calling stopServer as an alternative.
+                finish();
+                return true;
+            case R.id.action_start_stop:
+                Log.i(TAG, "action_start_stop: restarting server");
+                mUtil.showToast("Stopping Background Service....");
+                mUtil.stopServer();
+                // Wait 1 second to give the server chance to shutdown, then re-start it
+                mHandler.postDelayed(new Runnable() {
+                    public void run() {
+                        mUtil.showToast("Re-Starting Background Service...");
+                        mUtil.startServer();
+                    }
+                }, 1000);
                 return true;
             case R.id.action_test_alarm_beep:
                 Log.i(TAG, "action_test_alarm_beep");
