@@ -275,6 +275,10 @@ public class BLEScanActivity extends ListActivity {
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences((this));
         Log.v(TAG, "Check of saved values - Name=" + SP.getString("BLE_Device_Name", "NOT SET") + ", Addr=" + SP.getString("BLE_Device_Addr", "NOT SET"));
 
+        Log.i(TAG, "Restarting start-up activity so change takes effect");
+        Intent i;
+        i = new Intent(this, StartupActivity.class);
+        startActivity(i);
         finish();
     }
 

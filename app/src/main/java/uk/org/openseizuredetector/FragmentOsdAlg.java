@@ -1,5 +1,6 @@
 package uk.org.openseizuredetector;
 
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -80,11 +81,12 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             pb = ((ProgressBar) mRootView.findViewById(R.id.powerProgressBar));
             pb.setMax(100);
             pb.setProgress((int) powerPc);
-            pbDrawable = mRootView.getResources().getDrawable(R.drawable.progress_bar_blue);
+            pbDrawable = mContext.getDrawable(R.drawable.progress_bar_blue);
+            //pbDrawable = mRootView.getResources().getDrawable(R.drawable.progress_bar_blue);
             if (powerPc > 75)
-                pbDrawable = mRootView.getResources().getDrawable(R.drawable.progress_bar_yellow);
+                pbDrawable = mContext.getDrawable(R.drawable.progress_bar_yellow);
             if (powerPc > 100)
-                pbDrawable = mRootView.getResources().getDrawable(R.drawable.progress_bar_red);
+                pbDrawable = mContext.getDrawable(R.drawable.progress_bar_red);
             pb.setProgressDrawable(pbDrawable);
 
             ((TextView) mRootView.findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
@@ -93,11 +95,12 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             pb = ((ProgressBar) mRootView.findViewById(R.id.spectrumProgressBar));
             pb.setMax(100);
             pb.setProgress((int) specPc);
-            pbDrawable = mRootView.getResources().getDrawable(R.drawable.progress_bar_blue);
+            //pbDrawable = mRootView.getResources().getDrawable(R.drawable.progress_bar_blue);
+            pbDrawable = mContext.getDrawable(R.drawable.progress_bar_blue);
             if (specPc > 75)
-                pbDrawable = mRootView.getResources().getDrawable(R.drawable.progress_bar_yellow);
+                pbDrawable = mContext.getDrawable(R.drawable.progress_bar_yellow);
             if (specPc > 100)
-                pbDrawable = mRootView.getResources().getDrawable(R.drawable.progress_bar_red);
+                pbDrawable = mContext.getDrawable(R.drawable.progress_bar_red);
             pb.setProgressDrawable(pbDrawable);
 
             ////////////////////////////////////////////////////////////

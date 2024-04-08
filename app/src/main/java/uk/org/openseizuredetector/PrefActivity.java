@@ -146,8 +146,9 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
 
         // if we have enabled the SMS alarm, we may need extra permissions approving.  This is handled in
         // StartUpActivity, so we exit this activity and start start-up activity.
-        if (s.equals("SMSAlarm")) {
+        if (s.equals("SMSAlarm"))  {
             if (sharedPreferences.getBoolean("SMSAlarm", false) == true) {
+                mUtil.showToast("Restarting OpenSeizureDetector");
                 Log.i(TAG, "onSharedPreferenceChanged(): SMS Alarm Enabled - Restarting start-up activity to check permissions");
                 Intent i;
                 i = new Intent(this, StartupActivity.class);
@@ -159,23 +160,44 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                 Log.i(TAG, "OnSharedPreferenceChanged(): SMS Alarm disabled so do not need permissions");
             }
         }
-        // For all other preference changes we just restart SdServer so it is not as alarming for the user!
-        //mUtil.showToast("Setting " + s + " Changed - restarting server");
-        mPrefChanged = true;
-        mUtil.stopServer();
-        // Wait 0.1 second to give the server chance to shutdown, then re-start it
-        mHandler.postDelayed(new Runnable() {
-            public void run() {
-                mUtil.startServer();
+        // If we have changed the data source, re-start the whole system
+        if (s.equals("DataSource"))  {
+            Log.i(TAG, "onSharedPreferenceChanged(): Data Source Changed - Restarting start-up activity to check permissions");
+            mUtil.showToast("Restarting OpenSeizureDetector");
+            mUtil.stopServer();
+            // Wait 1 second to give the server chance to shutdown, then re-start it
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    Intent i;
+                    Log.i(TAG, "onSharedPreferenceChanged(): Data Source Changed - Restarting start-up activity to check permissions");
+                    i = new Intent(getApplicationContext(), StartupActivity.class);
+                    startActivity(i);
+                    Log.i(TAG, "onSharedPreferenceChanged() - finishing PrefActivity");
+                    finish();
+                    return;
+                }
+            }, 1000);
+            return;
+        } else {
+            // For all other preference changes we just restart SdServer so it is not as alarming for the user!
+            //mUtil.showToast("Setting " + s + " Changed - restarting server");
+            mUtil.showToast("Stopping Background Service...");
+            mPrefChanged = true;
+            mUtil.stopServer();
+            // Wait 1 second to give the server chance to shutdown, then re-start it
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    mUtil.showToast("Re-Starting Background Service...");
+                    mUtil.startServer();
+                }
+            }, 1000);
+
+            if (s.equals("advancedMode")) {
+                Log.i(TAG, "Re-starting PrefActivity to refresh list");
+                startActivity(getIntent());
+                finish();
             }
-        }, 100);
-
-        if (s.equals("DataSource") || s.equals("advancedMode")) {
-            Log.i(TAG, "Re-starting PrefActivity to refresh list");
-            finish();
-            startActivity(getIntent());
         }
-
     }
 
     @Override

@@ -571,4 +571,8 @@
     <string name="battery_history">Battery History</string>
     <string name="watch_batt_hist">Watch Battery History (%)</string>
     <string name="ble_connected_warning_text">NOTE: Devices will not appear on this list if they are already connected - disconnect device from GadgetBridge etc. to allow it to be selected here</string>
+    <string name="BTPermissionWarning">Bluetooth Permissions Not Granted</string>
+    <string name="BTpermissions_required">Bluetooth Permissions Required</string>
+    <string name="BT_permissions_rationale">Bluetooth permissions are required to communicate with the bluetooth (BLE) data source</string>
+    <string name="restart_server">Restart Server</string>
 </resources>
