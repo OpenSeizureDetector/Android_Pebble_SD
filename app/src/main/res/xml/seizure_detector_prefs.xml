@@ -7,7 +7,7 @@
             android:summary="@string/OsdAlarmEnabledSummary"
             android:title="@string/OsdAlarmEnabledTitle" />
         <CheckBoxPreference
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="CnnAlarmActive"
             android:summary="@string/CnnAlarmEnabledSummary"
             android:title="@string/CnnAlarmEnabledTitle" />
@@ -85,7 +85,7 @@
 
     <PreferenceCategory android:title="@string/ml_sd_settings_title">
         <CheckBoxPreference
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="CnnAlarmActive"
             android:summary="@string/CnnAlarmEnabledSummary"
             android:title="@string/CnnAlarmEnabledTitle" />
