@@ -291,6 +291,11 @@ public class SdServer extends Service implements SdDataReceiver {
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceBLE");
                 mSdDataSource = new SdDataSourceBLE(this.getApplicationContext(), mHandler, this);
                 break;
+            case "BLE2":
+                Log.v(TAG, "Selecting BLE2 DataSource");
+                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceBLE2");
+                mSdDataSource = new SdDataSourceBLE2(this.getApplicationContext(), mHandler, this);
+                break;
             case "Phone":
                 Log.v(TAG, "Selecting Phone Sensor DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePhone");

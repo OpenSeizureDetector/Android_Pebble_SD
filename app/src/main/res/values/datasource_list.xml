@@ -3,6 +3,7 @@
     <string-array name="datasource_list">
         <item>"Garmin Watch"</item>
         <item>"Bluetooth Device"</item>
+        <item>"BLE2"</item>
         <item>"Pebble Watch"</item>
         <item>"Phone Sensor (for testing)"</item>
         <item>"Network (for Wifi Alerts)"</item>
@@ -10,6 +11,7 @@
     <string-array name="datasource_list_values">
         <item>"Garmin"</item>
         <item>"BLE"</item>
+        <item>"BLE2"</item>
         <item>"Pebble"</item>
         <item>"Phone"</item>
         <item>"Network"</item>
