@@ -57,6 +57,7 @@ import com.welie.blessed.BluetoothPeripheral;
 import com.welie.blessed.BluetoothPeripheralCallback;
 import com.welie.blessed.ConnectionPriority;
 import com.welie.blessed.GattStatus;
+import com.welie.blessed.HciStatus;
 import com.welie.blessed.PhyOptions;
 import com.welie.blessed.PhyType;
 import com.welie.blessed.WriteType;
@@ -176,6 +177,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 new Handler(Looper.getMainLooper())
         );
         // Look for the specified device
+        Log.i(TAG,"bleConnect() - scanning for device: "+mBleDeviceAddr);
         mBluetoothCentralManager.scanForPeripheralsWithAddresses(new String[]{mBleDeviceAddr});
     }
 
@@ -183,13 +185,33 @@ public class SdDataSourceBLE2 extends SdDataSource {
     private final BluetoothCentralManagerCallback mBluetoothCentralManagerCallback = new BluetoothCentralManagerCallback() {
         @Override
         public void onDiscoveredPeripheral(BluetoothPeripheral peripheral, ScanResult scanResult) {
+            Log.i(TAG,"BluetoothCentralManagerCallback.onDiscoveredPeripheral()");
             mBluetoothCentralManager.stopScan();
             mBluetoothCentralManager.connectPeripheral(peripheral, peripheralCallback);
         }
+        @Override
+        public void onConnectedPeripheral(BluetoothPeripheral peripheral) {
+            Log.i(TAG,"BluetoothCentralManagerCallback.onConnectedPeripheral()");
+            super.onConnectedPeripheral(peripheral);
+        }
+        @Override
+        public void onConnectionFailed(BluetoothPeripheral peripheral, HciStatus status) {
+            Log.i(TAG,"BluetoothCentralManagerCallback.onConnectionFailed()");
+            super.onConnectionFailed(peripheral, status);
+        }
+        @Override
+        public void onDisconnectedPeripheral(BluetoothPeripheral peripheral, HciStatus status) {
+            Log.i(TAG,"BluetoothCentralManagerCallback.onDisonnectedPeripheral");
+            super.onDisconnectedPeripheral(peripheral, status);
+        }
+
+
     };
 
+    private @NotNull BluetoothPeripheral peripheral;
     // Callback for peripherals
     private final BluetoothPeripheralCallback peripheralCallback = new BluetoothPeripheralCallback() {
+
         @Override // BluetoothPeripheralCallback
         public void onServicesDiscovered(@NotNull BluetoothPeripheral peripheral) {
             // Request a higher MTU, iOS always asks for 185
@@ -199,10 +221,71 @@ public class SdDataSourceBLE2 extends SdDataSource {
             peripheral.setPreferredPhy(PhyType.LE_2M, PhyType.LE_2M, PhyOptions.S2);
             peripheral.readPhy();
 
+            boolean foundOsdService = false;
+            for (BluetoothGattService service : peripheral.getServices()) {
+                String servUuidStr = service.getUuid().toString();
+                Log.d(TAG, "found service: " + servUuidStr);
+                if (servUuidStr.equals(SERV_OSD)) {
+                    Log.v(TAG, "OpenSeizureDetector Service Discovered");
+                    foundOsdService = true;
+                } else if (servUuidStr.equals(SERV_INFINITIME_MOTION)) {
+                    Log.v(TAG, "InfiniTime Motion Service Discovered");
+                    foundOsdService = true;
+                } else if (servUuidStr.equals(SERV_BATT)) {
+                    Log.v(TAG, "Battery Data Service Service Discovered");
+                }
+                // Loop through the available characteristics...
+                for (BluetoothGattCharacteristic gattCharacteristic : service.getCharacteristics()) {
+                    String charUuidStr = gattCharacteristic.getUuid().toString();
+                    Log.d(TAG, "  found characteristic: " + charUuidStr);
+                    if (charUuidStr.equals(CHAR_HEART_RATE_MEASUREMENT)) {
+                        Log.v(TAG, "Subscribing to Heart Rate Measurement Change Notifications");
+                        peripheral.setNotify(service.getUuid(), gattCharacteristic.getUuid(), true);
+                    } else if (charUuidStr.equals(CHAR_OSD_ACC_DATA)) {
+                        Log.i(TAG, "Subscribing to Acceleration Data Change Notifications");
+                        peripheral.setNotify(service.getUuid(), gattCharacteristic.getUuid(), true);
+                        mOsdChar = gattCharacteristic;
+                    } else if (charUuidStr.equals(CHAR_OSD_STATUS)) {
+                        Log.i(TAG, "Found OSD Status Characteristic");
+                        mStatusChar = gattCharacteristic;
+                    } else if (charUuidStr.equals(CHAR_OSD_BATT_DATA)) {
+                        Log.i(TAG, "Subscribing to battery change Notifications");
+                        peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
+                        peripheral.setNotify(service.getUuid(), gattCharacteristic.getUuid(), true);
+                    } else if (charUuidStr.equals(CHAR_OSD_WATCH_ID)) {
+                        Log.i(TAG, "Reading Watch ID");
+                        peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
+                    } else if (charUuidStr.equals(CHAR_OSD_WATCH_FW)) {
+                        Log.i(TAG, "Reading Watch Firmware Version");
+                        peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
+                    } else if (charUuidStr.equals(CHAR_OSD_ACC_FMT)) {
+                        Log.i(TAG, "Reading Acceleration format code");
+                        SdDataSourceBLE2.this.peripheral = peripheral;
+                        peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
+                        // Now the Infinitime Motion Service Characteristics
+                    } else if (charUuidStr.equals(CHAR_INFINITIME_ACC_DATA)) {
+                        Log.i(TAG, "Subscribing to Infinitime Acceleration Data Change Notifications");
+                        mOsdChar = gattCharacteristic;
+                        mAccFmt = ACC_FMT_3D;  // Infinitime presents x, y, z data
+                        peripheral.setNotify(service.getUuid(), gattCharacteristic.getUuid(), true);
+                    } else if (charUuidStr.equals(CHAR_INFINITIME_OSD_STATUS)) {
+                        Log.i(TAG, "Found Infinitime OSD Status Characteristic");
+                        mStatusChar = gattCharacteristic;
+                    } else if (charUuidStr.equals(CHAR_BATT_DATA)) {
+                        Log.i(TAG, "Subscribing to Battery Data Change Notifications");
+                        peripheral.setNotify(service.getUuid(), gattCharacteristic.getUuid(), true);
+                        Log.i(TAG, "Reading battery level");
+                        peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
+                    }
 
-            // Try to turn on notifications for other characteristics
-            peripheral.readCharacteristic(UUID.fromString(SERV_BATT), UUID.fromString(CHAR_BATT_DATA));
-            peripheral.setNotify(UUID.fromString(SERV_BATT), UUID.fromString(CHAR_BATT_DATA), true);
+                }
+            }
+            if (foundOsdService) {
+                Log.i(TAG,"Success - found OSD Service");
+            } else {
+                Log.e(TAG,"ERROR - device does not provide the OSD service");
+                mUtil.showToast("ERROR: BLE Device does no provide OSD Servie");
+            }
         }
 
         @Override
@@ -232,9 +315,88 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
             UUID characteristicUUID = characteristic.getUuid();
             BluetoothBytesParser parser = new BluetoothBytesParser(value);
+            String charUuidStr = characteristicUUID.toString();
 
-            if (characteristicUUID.equals(UUID.fromString(CHAR_HEART_RATE_MEASUREMENT))) {
-                Log.d(TAG, String.format("%s", "HR Measurement"));
+            if (charUuidStr.equals(CHAR_HEART_RATE_MEASUREMENT)) {
+                Log.v(TAG, String.format("%s", "HR Measurement"));
+                // Parse the flags
+                int flags = parser.getUInt8();
+                final int unit = flags & 0x01;
+                final int sensorContactStatus = (flags & 0x06) >> 1;
+                final boolean energyExpenditurePresent = (flags & 0x08) > 0;
+                final boolean rrIntervalPresent = (flags & 0x10) > 0;
+                // Parse heart rate
+                mSdData.mHR = (unit == 0) ? parser.getUInt8() : parser.getUInt16();
+                Log.d(TAG,"Received HR="+mSdData.mHR);
+
+            } else if (charUuidStr.equals(CHAR_OSD_ACC_DATA)
+                    || charUuidStr.equals(CHAR_INFINITIME_ACC_DATA)) {
+                //Log.v(TAG,"Received OSD ACC DATA"+characteristic.getValue());
+                byte[] rawDataBytes = characteristic.getValue();
+                short[] newAccVals = parseDataToAccVals(rawDataBytes);
+                Log.v(TAG, "onDataReceived(): CHAR_OSD_ACC_DATA: numSamples = " + rawDataBytes.length + " nRawData=" + nRawData);
+                for (int i = 0; i < newAccVals.length; i++) {
+                    if (nRawData < MAX_RAW_DATA) {
+                        switch (mAccFmt) {
+                            case ACC_FMT_8BIT:
+                            case ACC_FMT_16BIT:
+                                rawData[nRawData] = newAccVals[i];
+                                nRawData++;
+                                break;
+                            case ACC_FMT_3D:
+                                // 3d data is x1,y1,z1, x2,y2,z2 ... xn,yn,zn
+                                // We only do this every third value, then process x, y and z simultaneously.
+                                if (i + 2 < newAccVals.length) {
+                                    if (i % 3 == 0) {
+                                        short x, y, z;
+                                        x = newAccVals[i];
+                                        y = newAccVals[i + 1];
+                                        z = newAccVals[i + 2];
+                                        // Calculate vector magnitude
+                                        rawData[nRawData] = Math.sqrt(x * x + y * y + z * z);
+                                        // Store 3d values
+                                        rawData3d[nRawData * 3] = x;
+                                        rawData3d[nRawData * 3 + 1] = y;
+                                        rawData3d[nRawData * 3 + 2] = z;
+                                        nRawData++;
+                                    }
+                                }
+                                break;
+                            default:
+                                Log.e(TAG, "INVALID ACCELERATION FORMAT" + mAccFmt);
+                                mUtil.showToast("INVALID ACCELERATION FORMAT " + mAccFmt);
+                        }
+
+                    } else {
+                        Log.i(TAG, "onDataReceived(): RawData Buffer Full - processing data");
+                        mSdData.watchAppRunning = true;
+                        for (i = 0; i < rawData.length; i++) {
+                            mSdData.rawData[i] = rawData[i];
+                            mSdData.rawData3D[i * 3] = rawData3d[i * 3];
+                            mSdData.rawData3D[i * 3 + 1] = rawData3d[i * 3 + 1];
+                            mSdData.rawData3D[i * 3 + 2] = rawData3d[i * 3 + 2];
+                            //Log.v(TAG,"onDataReceived() i="+i+", "+rawData[i]);
+                        }
+                        mSdData.mNsamp = rawData.length;
+                        mWatchAppRunningCheck = true;
+                        mDataStatusTime = new Time(Time.getCurrentTimezone());
+                        // Process the data to do seizure detection
+                        doAnalysis();
+                        // Re-start collecting raw data.
+                        nRawData = 0;
+                        // Notify the device of the resulting alarm state
+                        if (mStatusChar != null) {
+                            Log.i(TAG, "onDataReceived() - Sending analysis result");
+                            byte[] statusVal = new byte[1];
+                            statusVal[0] = (byte) mSdData.alarmState;
+                            peripheral.writeCharacteristic(mStatusChar, statusVal, WriteType.WITH_RESPONSE);
+                        } else {
+                            Log.i(TAG, "onDataReceived() - mStatusChar is null - not sending result");
+                        }
+                    }
+                }
+
+
             } else if (characteristicUUID.equals(UUID.fromString(CHAR_BATT_DATA))) {
                 int batteryLevel = parser.getIntValue(FORMAT_UINT8);
                 Log.i(TAG, String.format("Received battery level %d%%", batteryLevel));
@@ -250,7 +412,9 @@ public class SdDataSourceBLE2 extends SdDataSource {
     };
 
 
+
     private void bleDisconnect() {
+        mBluetoothCentralManager.close();
     }
 
     /**
@@ -265,6 +429,32 @@ public class SdDataSourceBLE2 extends SdDataSource {
         super.stop();
     }
 
+        private short[] parseDataToAccVals(byte[] rawDataBytes) {
+            short[] retArr;
+            switch (mAccFmt) {
+                case ACC_FMT_8BIT:
+                    retArr = new short[rawDataBytes.length];
+                    for (int i = 0; i < rawDataBytes.length; i++) {
+                        retArr[i] = (short) (1000 * rawDataBytes[i] / 64);   // Scale to mg
+                    }
+                    break;
+                case ACC_FMT_16BIT:
+                case ACC_FMT_3D:
+                    // from https://stackoverflow.com/questions/5625573/byte-array-to-short-array-and-back-again-in-java
+                    retArr = new short[rawDataBytes.length / 2];
+                    // to turn bytes to shorts as either big endian or little endian.
+                    ByteBuffer.wrap(rawDataBytes)
+                            .order(ByteOrder.LITTLE_ENDIAN)
+                            .asShortBuffer()
+                            .get(retArr);
+                    break;
+                default:
+                    Log.e(TAG, "INVALID ACCELERATION FORMAT" + mAccFmt);
+                    mUtil.showToast("INVALID ACCELERATION FORMAT " + mAccFmt);
+                    retArr = new short[0];
+            }
+            return (retArr);
+        }
 
 
 
