@@ -395,11 +395,28 @@ public class SdDataSourceBLE2 extends SdDataSource {
                         }
                     }
                 }
-
-
-            } else if (characteristicUUID.equals(UUID.fromString(CHAR_BATT_DATA))) {
-                int batteryLevel = parser.getIntValue(FORMAT_UINT8);
-                Log.i(TAG, String.format("Received battery level %d%%", batteryLevel));
+            } else if (charUuidStr.equals(CHAR_BATT_DATA)
+                    || charUuidStr.equals(CHAR_OSD_BATT_DATA)) {
+                byte batteryPc = characteristic.getValue()[0];
+                mSdData.batteryPc = batteryPc;
+                Log.v(TAG, "onDataReceived(): CHAR_BATT_DATA: " + String.format("%d", batteryPc));
+                mSdData.haveSettings = true;
+            } else if (charUuidStr.equals(CHAR_OSD_WATCH_ID)) {
+                byte[] rawDataBytes = characteristic.getValue();
+                String watchId = new String(rawDataBytes, StandardCharsets.UTF_8);
+                Log.v(TAG, "Received Watch ID: " + watchId);
+                mSdData.watchSdName = watchId;
+            } else if (charUuidStr.equals(CHAR_OSD_WATCH_FW)) {
+                byte[] rawDataBytes = characteristic.getValue();
+                String watchFwVer = new String(rawDataBytes, StandardCharsets.UTF_8);
+                Log.v(TAG, "Received Watch Firmware Version: " + watchFwVer);
+                mSdData.watchSdVersion = watchFwVer;
+            } else if (charUuidStr.equals(CHAR_OSD_ACC_FMT)) {
+                mAccFmt = characteristic.getValue()[0];
+                Log.v(TAG, "Received Acceleration format code: " + mAccFmt);
+            } else {
+                Log.v(TAG, "Unrecognised Characteristic Updated " +
+                        charUuidStr);
             }
         }
 
