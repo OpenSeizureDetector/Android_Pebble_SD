@@ -68,18 +68,18 @@ public class FragmentOsdBaseClass extends Fragment {
     public void onStart() {
         super.onStart();
         Log.i(TAG, "onStart()");
-        if (mUtil.isServerRunning()) {
-            Log.i(TAG, "onStart() - Binding to Server");
-            mUtil.bindToServer(mContext, mConnection);
-        } else {
-            Log.i(TAG, "onStart() - Server Not Running");
-        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
         Log.i(TAG, "onResume()");
+        if (mUtil.isServerRunning()) {
+            Log.i(TAG, "onResume() - Binding to Server");
+            mUtil.bindToServer(mContext, mConnection);
+        } else {
+            Log.i(TAG, "onResume() - Server Not Running");
+        }
         mUiTimer = new Timer();
         mUiTimer.schedule(new TimerTask() {
             @Override
@@ -94,13 +94,13 @@ public class FragmentOsdBaseClass extends Fragment {
         super.onPause();
         Log.i(TAG, "onPause()");
         mUiTimer.cancel();
+        mUtil.unbindFromServer(mContext, mConnection);
     }
 
     @Override
     public void onStop() {
         super.onStop();
         Log.i(TAG, "onStop()");
-        mUtil.unbindFromServer(mContext, mConnection);
     }
 
     /**
