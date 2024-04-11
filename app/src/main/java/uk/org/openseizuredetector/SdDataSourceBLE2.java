@@ -23,32 +23,21 @@
 */
 package uk.org.openseizuredetector;
 
-import static com.welie.blessed.BluetoothBytesParser.FORMAT_SINT16;
-import static com.welie.blessed.BluetoothBytesParser.FORMAT_UINT16;
-import static com.welie.blessed.BluetoothBytesParser.FORMAT_UINT8;
 import static com.welie.blessed.BluetoothBytesParser.asHexString;
 import static java.lang.Math.abs;
 
-import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
-import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.format.Time;
 import android.util.Log;
-
-import androidx.core.app.ActivityCompat;
 
 import com.welie.blessed.BluetoothBytesParser;
 import com.welie.blessed.BluetoothCentralManager;
@@ -67,10 +56,6 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
 import java.util.UUID;
 
 import co.beeline.android.bluetooth.currenttimeservice.CurrentTimeService;
@@ -130,6 +115,8 @@ public class SdDataSourceBLE2 extends SdDataSource {
     private BluetoothGatt mGatt;
     private BluetoothGattCharacteristic mOsdChar;
     private BluetoothGattCharacteristic mStatusChar;
+    BluetoothGattCharacteristic mHrChar;
+    BluetoothGattCharacteristic mBattChar;
     private BluetoothCentralManager mBluetoothCentralManager;
 
 
@@ -208,12 +195,13 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
     };
 
-    private @NotNull BluetoothPeripheral peripheral;
+    private @NotNull BluetoothPeripheral mBlePeripheral;
     // Callback for peripherals
     private final BluetoothPeripheralCallback peripheralCallback = new BluetoothPeripheralCallback() {
 
         @Override // BluetoothPeripheralCallback
         public void onServicesDiscovered(@NotNull BluetoothPeripheral peripheral) {
+            mBlePeripheral = peripheral;
             // Request a higher MTU, iOS always asks for 185
             peripheral.requestMtu(185);
             // Request a new connection priority
@@ -240,6 +228,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
                     Log.d(TAG, "  found characteristic: " + charUuidStr);
                     if (charUuidStr.equals(CHAR_HEART_RATE_MEASUREMENT)) {
                         Log.v(TAG, "Subscribing to Heart Rate Measurement Change Notifications");
+                        mHrChar = gattCharacteristic;
                         peripheral.setNotify(service.getUuid(), gattCharacteristic.getUuid(), true);
                     } else if (charUuidStr.equals(CHAR_OSD_ACC_DATA)) {
                         Log.i(TAG, "Subscribing to Acceleration Data Change Notifications");
@@ -252,6 +241,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
                         Log.i(TAG, "Subscribing to battery change Notifications");
                         peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
                         peripheral.setNotify(service.getUuid(), gattCharacteristic.getUuid(), true);
+                        mBattChar = gattCharacteristic;
                     } else if (charUuidStr.equals(CHAR_OSD_WATCH_ID)) {
                         Log.i(TAG, "Reading Watch ID");
                         peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
@@ -260,7 +250,6 @@ public class SdDataSourceBLE2 extends SdDataSource {
                         peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
                     } else if (charUuidStr.equals(CHAR_OSD_ACC_FMT)) {
                         Log.i(TAG, "Reading Acceleration format code");
-                        SdDataSourceBLE2.this.peripheral = peripheral;
                         peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
                         // Now the Infinitime Motion Service Characteristics
                     } else if (charUuidStr.equals(CHAR_INFINITIME_ACC_DATA)) {
@@ -272,7 +261,8 @@ public class SdDataSourceBLE2 extends SdDataSource {
                         Log.i(TAG, "Found Infinitime OSD Status Characteristic");
                         mStatusChar = gattCharacteristic;
                     } else if (charUuidStr.equals(CHAR_BATT_DATA)) {
-                        Log.i(TAG, "Subscribing to Battery Data Change Notifications");
+                        mBattChar = gattCharacteristic;
+                        Log.i(TAG, "Subscribing to Generic Battery Data Change Notifications");
                         peripheral.setNotify(service.getUuid(), gattCharacteristic.getUuid(), true);
                         Log.i(TAG, "Reading battery level");
                         peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
@@ -431,6 +421,31 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
 
     private void bleDisconnect() {
+        Log.i(TAG,"bleDisconnect() - Unregistering notifications");
+        if (mBlePeripheral != null) {
+            if (mOsdChar != null) {
+                Log.i(TAG, "bleDisconnect() - unregistering mOsdChar");
+                mBlePeripheral.setNotify(mOsdChar, false);
+            } else {
+                Log.w(TAG, "bleDisconnect() - mOsdChar is null - not removing notification");
+            }
+            if (mHrChar != null) {
+                Log.i(TAG, "bleDisconnect() - unregistering mHrChar");
+                mBlePeripheral.setNotify(mHrChar, false);
+            } else {
+                Log.w(TAG, "bleDisconnect() - mHrChar is null - not removing notification");
+            }
+            if (mBattChar != null) {
+                Log.i(TAG, "bleDisconnect() - unregistering mBattChar");
+                mBlePeripheral.setNotify(mBattChar, false);
+            } else {
+                Log.w(TAG, "bleDisconnect() - mBattChar is null - not removing notification");
+            }
+        } else {
+            Log.w(TAG, "bleDisconnect() - mBlePeripheral is null - not removing notifications");
+        }
+
+        Log.i(TAG,"bleDisconnect() - closing  BluetoothCentralManager");
         mBluetoothCentralManager.close();
     }
 
@@ -440,10 +455,10 @@ public class SdDataSourceBLE2 extends SdDataSource {
     public void stop() {
         Log.i(TAG, "stop()");
         mUtil.writeToSysLogFile("SDDataSourceBLE.stop()");
+        super.stop();
 
         bleDisconnect();
         CurrentTimeService.stopServer();
-        super.stop();
     }
 
         private short[] parseDataToAccVals(byte[] rawDataBytes) {
