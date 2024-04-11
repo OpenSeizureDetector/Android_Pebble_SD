@@ -291,6 +291,11 @@ public class SdServer extends Service implements SdDataReceiver {
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceBLE");
                 mSdDataSource = new SdDataSourceBLE(this.getApplicationContext(), mHandler, this);
                 break;
+            case "BLE2":
+                Log.v(TAG, "Selecting BLE2 DataSource");
+                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceBLE2");
+                mSdDataSource = new SdDataSourceBLE2(this.getApplicationContext(), mHandler, this);
+                break;
             case "Phone":
                 Log.v(TAG, "Selecting Phone Sensor DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePhone");
@@ -816,12 +821,15 @@ public class SdServer extends Service implements SdDataReceiver {
         // flag.
         if (mFaultTimerCompleted) {
             faultWarningBeep();
-            //mSdDataSource.stop();
-            //mHandler.postDelayed(new Runnable() {
-            //    public void run() {
-            //        mSdDataSource.start();
-            //    }
-            //}, 190);
+            // Re-start the data source to see if that fixes it
+            Log.w(TAG,"FAULT - stopping data source");
+            mSdDataSource.stop();
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    Log.w(TAG,"FAULT - restarting data source");
+                    mSdDataSource.start();
+                }
+            }, 10000);
         } else {
             startFaultTimer();
             Log.v(TAG, "onSdDataFault() - starting Fault Timer");

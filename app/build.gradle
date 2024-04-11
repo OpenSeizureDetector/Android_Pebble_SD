@@ -81,7 +81,7 @@ dependencies {
     implementation 'com.techyourchance:threadposter:1.0.1'
     implementation 'com.google.android.material:material'
     implementation "com.github.RideBeeline:android-bluetooth-current-time-service:0.1.2"
-
+    implementation 'com.github.weliem:blessed-android:2.5.0'
 }
 
 repositories {

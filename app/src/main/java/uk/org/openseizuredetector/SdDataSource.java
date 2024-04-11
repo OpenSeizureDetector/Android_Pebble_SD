@@ -948,9 +948,14 @@ public abstract class SdDataSource {
         //Check the current set of data using the neural network model to look for alarms.
         Log.d(TAG, "nnAnalysis");
         if (mSdData.mCnnAlarmActive) {
-            float pSeizure = mSdAlgNn.getPseizure(mSdData);
-            Log.d(TAG, "nnAnalysis - nnResult=" + pSeizure);
-            mSdData.mPseizure = pSeizure;
+            try {
+                float pSeizure = mSdAlgNn.getPseizure(mSdData);
+                Log.d(TAG, "nnAnalysis - nnResult=" + pSeizure);
+                mSdData.mPseizure = pSeizure;
+            } catch(Exception e) {
+                Log.e(TAG,"nnAnalysis - Error running Analysis - "+e.getMessage());
+            }
+
         } else {
             Log.d(TAG, "nnAnalysis - mCnAlarmActive is false - not analysing");
             mSdData.mPseizure = 0;

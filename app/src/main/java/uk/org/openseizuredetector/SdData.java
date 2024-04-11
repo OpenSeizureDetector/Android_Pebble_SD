@@ -83,6 +83,8 @@ public class SdData implements Parcelable {
 
     /* Watch App Settings */
     public String dataSourceName = "";
+    public String watchManuf = "";
+    public String watchSerNo = "";
     public String watchPartNo = "";
     public String watchFwVersion = "";
     public String watchSdVersion = "";
@@ -314,7 +316,9 @@ public class SdData implements Parcelable {
             jsonObj.put("dataSourceName", dataSourceName);
             Log.v(TAG, "phoneAppVersion=" + phoneAppVersion);
             jsonObj.put("phoneAppVersion", phoneAppVersion);
+            jsonObj.put("watchManuf", watchManuf);
             jsonObj.put("watchPartNo", watchPartNo);
+            jsonObj.put("watchSerNo", watchSerNo);
             jsonObj.put("watchSdName", watchSdName);
             jsonObj.put("watchFwVersion", watchFwVersion);
             jsonObj.put("watchSdVersion", watchSdVersion);

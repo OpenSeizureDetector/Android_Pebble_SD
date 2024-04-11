@@ -205,14 +205,17 @@ public class MainActivity2 extends AppCompatActivity {
                 finish();
                 return true;
             case R.id.action_start_stop:
+                // FIXME: We need to unbind the fragments from the service, or else unbindFromServer does not work!
+                // Disabled this menu option until I work out how to fix it!
                 Log.i(TAG, "action_start_stop: restarting server");
+                mUtil.unbindFromServer(this, mConnection );
                 mUtil.showToast("Stopping Background Service....");
                 mUtil.stopServer();
                 // Wait 1 second to give the server chance to shutdown, then re-start it
                 mHandler.postDelayed(new Runnable() {
                     public void run() {
-                        mUtil.showToast("Re-Starting Background Service...");
-                        mUtil.startServer();
+                        mUtil.showToast("NOT Re-Starting Background Service...");
+                        //mUtil.startServer();
                     }
                 }, 1000);
                 return true;
