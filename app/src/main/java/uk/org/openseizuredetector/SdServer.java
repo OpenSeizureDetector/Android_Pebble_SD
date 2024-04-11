@@ -829,7 +829,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     Log.w(TAG,"FAULT - restarting data source");
                     mSdDataSource.start();
                 }
-            }, 2000);
+            }, 10000);
         } else {
             startFaultTimer();
             Log.v(TAG, "onSdDataFault() - starting Fault Timer");
