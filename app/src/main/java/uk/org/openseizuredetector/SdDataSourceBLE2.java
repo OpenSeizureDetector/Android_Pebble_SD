@@ -88,6 +88,12 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
 
     public static String SERV_DEV_INFO = "0000180a-0000-1000-8000-00805f9b34fb";
+    public static String CHAR_DEV_MANUF = "00002a29-0000-1000-8000-00805f9b34fb";
+    public static String CHAR_DEV_MODEL_NO = "00002a24-0000-1000-8000-00805f9b34fb";
+    public static String CHAR_DEV_SER_NO = "00002a25-0000-1000-8000-00805f9b34fb";
+    public static String CHAR_DEV_FW_VER = "00002a26-0000-1000-8000-00805f9b34fb";
+    public static String CHAR_DEV_HW_VER = "00002a27-0000-1000-8000-00805f9b34fb";
+    public static String CHAR_DEV_FW_NAME = "00002a28-0000-1000-8000-00805f9b34fb";
     public static String SERV_HEART_RATE = "0000180d-0000-1000-8000-00805f9b34fb";
     public static String CHAR_HEART_RATE_MEASUREMENT = "00002a37-0000-1000-8000-00805f9b34fb";
 
@@ -174,7 +180,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
         public void onDiscoveredPeripheral(BluetoothPeripheral peripheral, ScanResult scanResult) {
             Log.i(TAG,"BluetoothCentralManagerCallback.onDiscoveredPeripheral()");
             mBluetoothCentralManager.stopScan();
-            mBluetoothCentralManager.connectPeripheral(peripheral, peripheralCallback);
+            mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
         }
         @Override
         public void onConnectedPeripheral(BluetoothPeripheral peripheral) {
@@ -183,12 +189,14 @@ public class SdDataSourceBLE2 extends SdDataSource {
         }
         @Override
         public void onConnectionFailed(BluetoothPeripheral peripheral, HciStatus status) {
-            Log.i(TAG,"BluetoothCentralManagerCallback.onConnectionFailed()");
+            Log.i(TAG,"BluetoothCentralManagerCallback.onConnectionFailed() - attempting to reconnect");
+            mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
             super.onConnectionFailed(peripheral, status);
         }
         @Override
         public void onDisconnectedPeripheral(BluetoothPeripheral peripheral, HciStatus status) {
-            Log.i(TAG,"BluetoothCentralManagerCallback.onDisonnectedPeripheral");
+            Log.i(TAG,"BluetoothCentralManagerCallback.onDisonnectedPeripheral - attempting to re-connect...");
+            mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
             super.onDisconnectedPeripheral(peripheral, status);
         }
 
@@ -201,12 +209,18 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
         @Override // BluetoothPeripheralCallback
         public void onServicesDiscovered(@NotNull BluetoothPeripheral peripheral) {
+            Log.i(TAG,"onServicesDiscovered()");
             mBlePeripheral = peripheral;
-            // Request a higher MTU, iOS always asks for 185
+            // Request a higher MTU, iOS always asks for 185 - This is likely to have no effect, as Pinetime uses 23 bytes.
+            Log.i(TAG,"onServicesDiscovered() - requesting higher MTU");
             peripheral.requestMtu(185);
             // Request a new connection priority
+            Log.i(TAG,"onServicesDiscovered() - requesting high priority connection");
             peripheral.requestConnectionPriority(ConnectionPriority.HIGH);
-            peripheral.setPreferredPhy(PhyType.LE_2M, PhyType.LE_2M, PhyOptions.S2);
+            Log.i(TAG,"onServicesDiscovered() - requesting Long Range Bluetooth 5 connection");
+            //peripheral.setPreferredPhy(PhyType.LE_2M, PhyType.LE_2M, PhyOptions.S2);
+            // Request long range Bluetooth 5 connection if available.
+            peripheral.setPreferredPhy(PhyType.LE_CODED, PhyType.LE_CODED, PhyOptions.S8);
             peripheral.readPhy();
 
             boolean foundOsdService = false;
@@ -219,13 +233,20 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 } else if (servUuidStr.equals(SERV_INFINITIME_MOTION)) {
                     Log.v(TAG, "InfiniTime Motion Service Discovered");
                     foundOsdService = true;
+                } else if (servUuidStr.equals(SERV_HEART_RATE)) {
+                    Log.v(TAG, "Heart Rate Measurement Service Service Discovered");
                 } else if (servUuidStr.equals(SERV_BATT)) {
                     Log.v(TAG, "Battery Data Service Service Discovered");
+                } else if (servUuidStr.equals(SERV_DEV_INFO)) {
+                    Log.v(TAG, "Device Information Service Service Discovered");
                 }
-                // Loop through the available characteristics...
+
+
+            // Loop through the available characteristics...
                 for (BluetoothGattCharacteristic gattCharacteristic : service.getCharacteristics()) {
                     String charUuidStr = gattCharacteristic.getUuid().toString();
                     Log.d(TAG, "  found characteristic: " + charUuidStr);
+                    // The generic heart rate measurement characteristic
                     if (charUuidStr.equals(CHAR_HEART_RATE_MEASUREMENT)) {
                         Log.v(TAG, "Subscribing to Heart Rate Measurement Change Notifications");
                         mHrChar = gattCharacteristic;
@@ -255,19 +276,38 @@ public class SdDataSourceBLE2 extends SdDataSource {
                     } else if (charUuidStr.equals(CHAR_INFINITIME_ACC_DATA)) {
                         Log.i(TAG, "Subscribing to Infinitime Acceleration Data Change Notifications");
                         mOsdChar = gattCharacteristic;
-                        mAccFmt = ACC_FMT_3D;  // Infinitime presents x, y, z data
+                        mAccFmt = ACC_FMT_3D;  // InfiniTime presents x, y, z data
                         peripheral.setNotify(service.getUuid(), gattCharacteristic.getUuid(), true);
                     } else if (charUuidStr.equals(CHAR_INFINITIME_OSD_STATUS)) {
-                        Log.i(TAG, "Found Infinitime OSD Status Characteristic");
+                        Log.i(TAG, "Found InfiniTime OSD Status Characteristic");
                         mStatusChar = gattCharacteristic;
+                        // Now the generic battery data characteristic
                     } else if (charUuidStr.equals(CHAR_BATT_DATA)) {
                         mBattChar = gattCharacteristic;
                         Log.i(TAG, "Subscribing to Generic Battery Data Change Notifications");
                         peripheral.setNotify(service.getUuid(), gattCharacteristic.getUuid(), true);
                         Log.i(TAG, "Reading battery level");
                         peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
+                        // Now device info characteristics
+                    } else if (charUuidStr.equals(CHAR_DEV_MANUF)) {
+                        Log.i(TAG, "Reading device manufacturer");
+                        peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
+                    } else if (charUuidStr.equals(CHAR_DEV_MODEL_NO)) {
+                        Log.i(TAG, "Reading device model number");
+                        peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
+                    } else if (charUuidStr.equals(CHAR_DEV_SER_NO)) {
+                        Log.i(TAG, "Reading device serial number");
+                        peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
+                    } else if (charUuidStr.equals(CHAR_DEV_FW_VER)) {
+                        Log.i(TAG, "Reading device firmware version");
+                        peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
+                    } else if (charUuidStr.equals(CHAR_DEV_HW_VER)) {
+                        Log.i(TAG, "Reading device hardware version");
+                        peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
+                    } else if (charUuidStr.equals(CHAR_DEV_FW_NAME)) {
+                        Log.i(TAG, "Reading device firmware name");
+                        peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
                     }
-
                 }
             }
             if (foundOsdService) {
@@ -293,9 +333,9 @@ public class SdDataSourceBLE2 extends SdDataSource {
         @Override
         public void onCharacteristicWrite(@NotNull BluetoothPeripheral peripheral, @NotNull byte[] value, @NotNull BluetoothGattCharacteristic characteristic, @NotNull GattStatus status) {
             if (status == GattStatus.SUCCESS) {
-                Log.i(TAG, String.format("SUCCESS: Writing <%s> to <%s>", asHexString(value), characteristic.getUuid()));
+                Log.d(TAG, String.format("SUCCESS: Writing <%s> to <%s>", asHexString(value), characteristic.getUuid()));
             } else {
-                Log.i(TAG, String.format("ERROR: Failed writing <%s> to <%s> (%s)", asHexString(value), characteristic.getUuid(), status));
+                Log.w(TAG, String.format("ERROR: Failed writing <%s> to <%s> (%s)", asHexString(value), characteristic.getUuid(), status));
             }
         }
 
@@ -391,22 +431,49 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 mSdData.batteryPc = batteryPc;
                 Log.v(TAG, "onDataReceived(): CHAR_BATT_DATA: " + String.format("%d", batteryPc));
                 mSdData.haveSettings = true;
-            } else if (charUuidStr.equals(CHAR_OSD_WATCH_ID)) {
+            } else if (charUuidStr.equals(CHAR_OSD_WATCH_ID) || charUuidStr.equals(CHAR_DEV_FW_NAME)) {
                 byte[] rawDataBytes = characteristic.getValue();
                 String watchId = new String(rawDataBytes, StandardCharsets.UTF_8);
-                Log.v(TAG, "Received Watch ID: " + watchId);
+                Log.i(TAG, "Received Watch ID: " + watchId);
                 mSdData.watchSdName = watchId;
-            } else if (charUuidStr.equals(CHAR_OSD_WATCH_FW)) {
-                byte[] rawDataBytes = characteristic.getValue();
-                String watchFwVer = new String(rawDataBytes, StandardCharsets.UTF_8);
-                Log.v(TAG, "Received Watch Firmware Version: " + watchFwVer);
-                mSdData.watchSdVersion = watchFwVer;
             } else if (charUuidStr.equals(CHAR_OSD_ACC_FMT)) {
                 mAccFmt = characteristic.getValue()[0];
-                Log.v(TAG, "Received Acceleration format code: " + mAccFmt);
+                Log.i(TAG, "Received Acceleration format code: " + mAccFmt);
+            } else if (charUuidStr.equals(CHAR_DEV_MANUF)) {
+                byte[] rawDataBytes = characteristic.getValue();
+                String watchManuf = new String(rawDataBytes, StandardCharsets.UTF_8);
+                Log.i(TAG, "Received Manufacturer: " + watchManuf);
+                mSdData.watchManuf = watchManuf;
+            } else if (charUuidStr.equals(CHAR_DEV_MODEL_NO)) {
+                byte[] rawDataBytes = characteristic.getValue();
+                String watchModelNo = new String(rawDataBytes, StandardCharsets.UTF_8);
+                Log.i(TAG, "Received Watch Model No.: " + watchModelNo);
+                mSdData.watchPartNo = watchModelNo;
+            } else if (charUuidStr.equals(CHAR_DEV_SER_NO)) {
+                byte[] rawDataBytes = characteristic.getValue();
+                String watchSerNo = new String(rawDataBytes, StandardCharsets.UTF_8);
+                Log.i(TAG, "Received Watch Serial No.: " + watchSerNo);
+                mSdData.watchSerNo = watchSerNo;
+            } else if (charUuidStr.equals(CHAR_DEV_HW_VER)) {
+                byte[] rawDataBytes = characteristic.getValue();
+                String watchHwVer = new String(rawDataBytes, StandardCharsets.UTF_8);
+                Log.i(TAG, "Received Hardware Version: " + watchHwVer);
+                mSdData.watchFwVersion = watchHwVer;
+            } else if (charUuidStr.equals(CHAR_DEV_FW_NAME)) {
+                byte[] rawDataBytes = characteristic.getValue();
+                String watchFwName = new String(rawDataBytes, StandardCharsets.UTF_8);
+                Log.i(TAG, "Received Firmware Name: " + watchFwName);
+                mSdData.watchSdName = watchFwName;
+            } else if (charUuidStr.equals(CHAR_OSD_WATCH_FW)  || charUuidStr.equals(CHAR_DEV_FW_VER)) {
+                byte[] rawDataBytes = characteristic.getValue();
+                String watchFwVer = new String(rawDataBytes, StandardCharsets.UTF_8);
+                Log.i(TAG, "Received Watch Firmware Version: " + watchFwVer);
+                mSdData.watchSdVersion = watchFwVer;
             } else {
-                Log.v(TAG, "Unrecognised Characteristic Updated " +
-                        charUuidStr);
+                byte[] rawDataBytes = characteristic.getValue();
+                String strVal = new String(rawDataBytes, StandardCharsets.UTF_8);
+                Log.d(TAG, "Unrecognised Characteristic Updated " +
+                        charUuidStr+" : "+strVal);
             }
         }
 
