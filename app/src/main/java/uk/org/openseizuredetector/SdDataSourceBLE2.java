@@ -124,7 +124,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
     BluetoothGattCharacteristic mHrChar;
     BluetoothGattCharacteristic mBattChar;
     private BluetoothCentralManager mBluetoothCentralManager;
-
+    private boolean mShutdown = false;
 
     public SdDataSourceBLE2(Context context, Handler handler,
                             SdDataReceiver sdDataReceiver) {
@@ -171,6 +171,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
         );
         // Look for the specified device
         Log.i(TAG,"bleConnect() - scanning for device: "+mBleDeviceAddr);
+        mShutdown = false;
         mBluetoothCentralManager.scanForPeripheralsWithAddresses(new String[]{mBleDeviceAddr});
     }
 
@@ -195,8 +196,15 @@ public class SdDataSourceBLE2 extends SdDataSource {
         }
         @Override
         public void onDisconnectedPeripheral(BluetoothPeripheral peripheral, HciStatus status) {
-            Log.i(TAG,"BluetoothCentralManagerCallback.onDisonnectedPeripheral - attempting to re-connect...");
-            mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
+            if (mShutdown) {
+                Log.i(TAG,"BluetoothCentralManagerCallback.onDisonnectedPeripheral - mShutdown is set, so not reconnecting");
+            } else {
+                Log.i(TAG,"BluetoothCentralManagerCallback.onDisonnectedPeripheral");
+                //Log.i(TAG, "BluetoothCentralManagerCallback.onDisonnectedPeripheral - attempting to re-connect...");
+                //bleDisconnect();
+                //mShutdown=false;
+                //mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
+            }
             super.onDisconnectedPeripheral(peripheral, status);
         }
 
@@ -488,32 +496,40 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
 
     private void bleDisconnect() {
-        Log.i(TAG,"bleDisconnect() - Unregistering notifications");
-        if (mBlePeripheral != null) {
-            if (mOsdChar != null) {
-                Log.i(TAG, "bleDisconnect() - unregistering mOsdChar");
-                mBlePeripheral.setNotify(mOsdChar, false);
+        try {
+            Log.i(TAG, "bleDisconnect() - Unregistering notifications");
+            if (mBlePeripheral != null) {
+                if (mOsdChar != null) {
+                    Log.i(TAG, "bleDisconnect() - unregistering mOsdChar");
+                    mBlePeripheral.setNotify(mOsdChar, false);
+                } else {
+                    Log.w(TAG, "bleDisconnect() - mOsdChar is null - not removing notification");
+                }
+                if (mHrChar != null) {
+                    Log.i(TAG, "bleDisconnect() - unregistering mHrChar");
+                    mBlePeripheral.setNotify(mHrChar, false);
+                } else {
+                    Log.w(TAG, "bleDisconnect() - mHrChar is null - not removing notification");
+                }
+                if (mBattChar != null) {
+                    Log.i(TAG, "bleDisconnect() - unregistering mBattChar");
+                    mBlePeripheral.setNotify(mBattChar, false);
+                } else {
+                    Log.w(TAG, "bleDisconnect() - mBattChar is null - not removing notification");
+                }
             } else {
-                Log.w(TAG, "bleDisconnect() - mOsdChar is null - not removing notification");
+                Log.w(TAG, "bleDisconnect() - mBlePeripheral is null - not removing notifications");
             }
-            if (mHrChar != null) {
-                Log.i(TAG, "bleDisconnect() - unregistering mHrChar");
-                mBlePeripheral.setNotify(mHrChar, false);
-            } else {
-                Log.w(TAG, "bleDisconnect() - mHrChar is null - not removing notification");
-            }
-            if (mBattChar != null) {
-                Log.i(TAG, "bleDisconnect() - unregistering mBattChar");
-                mBlePeripheral.setNotify(mBattChar, false);
-            } else {
-                Log.w(TAG, "bleDisconnect() - mBattChar is null - not removing notification");
-            }
-        } else {
-            Log.w(TAG, "bleDisconnect() - mBlePeripheral is null - not removing notifications");
-        }
 
-        Log.i(TAG,"bleDisconnect() - closing  BluetoothCentralManager");
-        mBluetoothCentralManager.close();
+            mShutdown = true;
+            mBlePeripheral.cancelConnection();
+
+            Log.i(TAG, "bleDisconnect() - closing  BluetoothCentralManager");
+            mBluetoothCentralManager.close();
+        } catch (Exception e) {
+            Log.e(TAG,"bleDisconnect() - Error: "+e.getMessage());
+            mUtil.showToast("Error disconnecting from watch");
+        }
     }
 
     /**
@@ -524,8 +540,12 @@ public class SdDataSourceBLE2 extends SdDataSource {
         mUtil.writeToSysLogFile("SDDataSourceBLE.stop()");
         super.stop();
 
-        bleDisconnect();
-        CurrentTimeService.stopServer();
+        try {
+            bleDisconnect();
+            CurrentTimeService.stopServer();
+        } catch (Exception e) {
+            Log.e(TAG,"stop() - Error stopping data source: "+e.getMessage());
+        }
     }
 
         private short[] parseDataToAccVals(byte[] rawDataBytes) {

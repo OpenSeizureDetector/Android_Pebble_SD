@@ -821,12 +821,15 @@ public class SdServer extends Service implements SdDataReceiver {
         // flag.
         if (mFaultTimerCompleted) {
             faultWarningBeep();
-            //mSdDataSource.stop();
-            //mHandler.postDelayed(new Runnable() {
-            //    public void run() {
-            //        mSdDataSource.start();
-            //    }
-            //}, 190);
+            // Re-start the data source to see if that fixes it
+            Log.w(TAG,"FAULT - stopping data source");
+            mSdDataSource.stop();
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    Log.w(TAG,"FAULT - restarting data source");
+                    mSdDataSource.start();
+                }
+            }, 2000);
         } else {
             startFaultTimer();
             Log.v(TAG, "onSdDataFault() - starting Fault Timer");
