@@ -323,7 +323,7 @@ public class StartupActivity extends AppCompatActivity {
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
 
-                if (mSdDataSourceName.equals("BLE")) {
+                if (mSdDataSourceName.equals("BLE") || mSdDataSourceName.equals("BLE2")) {
                     if (!areBTPermissionsOK()) {
                         Log.i(TAG, "Bluetooth permissions NOT OK");
                         tv.setText(getString(R.string.BTPermissionWarning));
