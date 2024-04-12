@@ -114,9 +114,10 @@ public class StartupActivity extends AppCompatActivity {
 
     public final String[] BT_PERMISSIONS = {
             Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.BLUETOOTH,
-            Manifest.permission.BLUETOOTH_SCAN,
-            Manifest.permission.BLUETOOTH_ADMIN,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            //Manifest.permission.BLUETOOTH,
+            //Manifest.permission.BLUETOOTH_SCAN,
+            //Manifest.permission.BLUETOOTH_ADMIN,
             Manifest.permission.BLUETOOTH_CONNECT,
     };
     private boolean mBTPermissionsRequested = false;

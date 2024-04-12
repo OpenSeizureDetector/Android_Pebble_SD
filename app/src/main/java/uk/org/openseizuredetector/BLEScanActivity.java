@@ -70,10 +70,11 @@ public class BLEScanActivity extends ListActivity {
     private final String TAG = "BLEScanActivity";
 
     private final String[] REQUIRED_PERMISSIONS = {
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.BLUETOOTH,
+            //Manifest.permission.ACCESS_FINE_LOCATION,
+            //Manifest.permission.ACCESS_COARSE_LOCATION,
+            //Manifest.permission.BLUETOOTH,
             Manifest.permission.BLUETOOTH_ADMIN,
+            Manifest.permission.BLUETOOTH_SCAN,
             //Manifest.permission.BLUETOOTH_PRIVILEGED,
     };
 
@@ -92,6 +93,7 @@ public class BLEScanActivity extends ListActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i(TAG,"onCreate()");
         setContentView(R.layout.ble_scan_activity);
         //this.getActionBar().setTitle(R.string.title_devices);
         this.setTitle(R.string.title_devices);
@@ -120,6 +122,8 @@ public class BLEScanActivity extends ListActivity {
         }
 
         mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
+
+        mPermissionsRequested = false;
     }
 
     @Override
@@ -160,6 +164,7 @@ public class BLEScanActivity extends ListActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        Log.i(TAG,"onResume()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(this);
         TextView tv = (TextView) findViewById(R.id.current_ble_device_tv);
@@ -200,8 +205,10 @@ public class BLEScanActivity extends ListActivity {
             tv.setBackgroundColor(okColour);
         }
 
+        Log.i(TAG,"onResume - calling requestBTPermissions()");
         requestBTPermissions(this);
 
+        Log.i(TAG,"onResume - checking permissions");
         boolean permissionsOk = true;
         for (int i = 0; i < REQUIRED_PERMISSIONS.length; i++) {
             if (ContextCompat.checkSelfPermission(this, REQUIRED_PERMISSIONS[i]) == PERMISSION_GRANTED) {
@@ -284,15 +291,18 @@ public class BLEScanActivity extends ListActivity {
 
     public void requestBTPermissions(Activity activity) {
         if (mPermissionsRequested) {
-            Log.i(TAG, "requestPermissions() - request already sent - not doing anything");
+            Log.i(TAG, "requestBTPermissions() - request already sent - not doing anything");
         } else {
-            Log.i(TAG, "requestPermissions() - requesting permissions");
+            Log.i(TAG, "requestBTPermissions() - showing rationale (if necessary)");
             for (int i = 0; i < REQUIRED_PERMISSIONS.length; i++) {
                 if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
                         REQUIRED_PERMISSIONS[i])) {
                     Log.i(TAG, "shouldShowRationale for permission" + REQUIRED_PERMISSIONS[i]);
+                    Toast toast = Toast.makeText(this, "Please give us permission! ", Toast.LENGTH_SHORT);
+                    toast.show();
                 }
             }
+            Log.i(TAG, "requestBTPermissions() - requesting permissions");
             ActivityCompat.requestPermissions(activity,
                     REQUIRED_PERMISSIONS,
                     42);
@@ -306,7 +316,7 @@ public class BLEScanActivity extends ListActivity {
             mBluetoothLeScanner.startScan(mLeScanCallback);
         } catch (SecurityException e) {
             Log.e(TAG, "startScan - SecurityException while starting scan");
-            Toast toast = Toast.makeText(this, "ERROR Starting Scan - Security Exception", Toast.LENGTH_SHORT);
+            Toast toast = Toast.makeText(this, "ERROR - Security Exception "+e.getMessage(), Toast.LENGTH_SHORT);
             toast.show();
         } catch (Exception e) {
             Log.e(TAG,"startScan - Exception while starting scan");
