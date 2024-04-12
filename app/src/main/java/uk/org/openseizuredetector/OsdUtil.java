@@ -99,6 +99,21 @@ public class OsdUtil {
 
     private static int mNbound = 0;
 
+    public final String[] BT_PERMISSIONS_API30 = {
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.BLUETOOTH_SCAN,
+            //Manifest.permission.BLUETOOTH_ADMIN,
+            Manifest.permission.BLUETOOTH_CONNECT,
+    };
+    public final String[] BT_PERMISSIONS_OLD = {
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.BLUETOOTH,
+            Manifest.permission.BLUETOOTH_ADMIN,
+    };
+    public String[] BT_PERMISSIONS;
+
     public OsdUtil(Context context, Handler handler) {
         mContext = context;
         mHandler = handler;
@@ -735,6 +750,32 @@ public class OsdUtil {
             Log.i(TAG, "onDowngrade()");
             onUpgrade(db, oldVersion, newVersion);
         }
+    }
+
+
+    public String[] getRequiredBtPermissions() {
+        // API 31 is Android 12 - see https://developer.android.com/develop/connectivity/bluetooth/bt-permissions
+        if (Build.VERSION.SDK_INT >= 31) {
+            Log.d(TAG, "getRequiredBtPermissions() - using new Bluetooth Permissions");
+            BT_PERMISSIONS = BT_PERMISSIONS_API30;
+        } else {
+            Log.d(TAG, "getRequiredBtPermissions() - using old Bluetooth Permissions");
+            BT_PERMISSIONS = BT_PERMISSIONS_OLD;
+        }
+        return (BT_PERMISSIONS);
+    }
+    public boolean areBtPermissionsOk() {
+        String[] btPermissions = getRequiredBtPermissions();
+        boolean allOk = true;
+        Log.d(TAG, "areBTPermissions OK()");
+        for (int i = 0; i < btPermissions.length; i++) {
+            if (ContextCompat.checkSelfPermission(mContext, btPermissions[i])
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, btPermissions[i] + " Permission Not Granted");
+                allOk = false;
+            }
+        }
+        return allOk;
     }
 
 }

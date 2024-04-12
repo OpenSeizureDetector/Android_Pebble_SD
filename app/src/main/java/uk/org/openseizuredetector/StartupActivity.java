@@ -34,6 +34,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
@@ -112,14 +113,7 @@ public class StartupActivity extends AppCompatActivity {
             Manifest.permission.ACCESS_BACKGROUND_LOCATION,
     };
 
-    public final String[] BT_PERMISSIONS = {
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            //Manifest.permission.BLUETOOTH,
-            //Manifest.permission.BLUETOOTH_SCAN,
-            //Manifest.permission.BLUETOOTH_ADMIN,
-            Manifest.permission.BLUETOOTH_CONNECT,
-    };
+    private String[] BT_PERMISSIONS;
     private boolean mBTPermissionsRequested = false;
     private String mSdDataSourceName;
     private String mBleDeviceAddr;
@@ -325,7 +319,7 @@ public class StartupActivity extends AppCompatActivity {
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
 
                 if (mSdDataSourceName.equals("BLE") || mSdDataSourceName.equals("BLE2")) {
-                    if (!areBTPermissionsOK()) {
+                    if (!mUtil.areBtPermissionsOk()) {
                         Log.i(TAG, "Bluetooth permissions NOT OK");
                         tv.setText(getString(R.string.BTPermissionWarning));
                         tv.setBackgroundColor(alarmColour);
@@ -335,7 +329,7 @@ public class StartupActivity extends AppCompatActivity {
                         requestBTPermissions();
                         allOk = false;
                     } else  if (mBleDeviceAddr.equals("")) {
-                        Log.i(TAG,"BLE daa source selected, but no device address specified");
+                        Log.i(TAG,"BLE data source selected, but no device address specified - starting BLEScanActivity");
                         Intent i;
                         i = new Intent(getApplicationContext(), BLEScanActivity.class);
                         startActivity(i);
@@ -750,19 +744,6 @@ public class StartupActivity extends AppCompatActivity {
         return allOk;
     }
 
-    public boolean areBTPermissionsOK() {
-        boolean allOk = true;
-        Log.d(TAG, "areBTPermissions OK()");
-        for (int i = 0; i < BT_PERMISSIONS.length; i++) {
-            if (ContextCompat.checkSelfPermission(this, BT_PERMISSIONS[i])
-                    != PackageManager.PERMISSION_GRANTED) {
-                Log.d(TAG, BT_PERMISSIONS[i] + " Permission Not Granted");
-                allOk = false;
-            }
-        }
-        return allOk;
-    }
-
 
 
     public void requestPermissions(AppCompatActivity activity) {
@@ -890,16 +871,10 @@ public class StartupActivity extends AppCompatActivity {
                             dialog.cancel();
                             Log.i(TAG, "requestBTPermissions(): Launching ActivityCompat.requestPermissions()");
                             ActivityCompat.requestPermissions(StartupActivity.this,
-                                    BT_PERMISSIONS,
+                                    mUtil.getRequiredBtPermissions(),
                                     46);
                         }
                     })
-                    //.setNegativeButton(getString(R.string.cancelBtnTxt), new DialogInterface.OnClickListener() {
-                    //    public void onClick(DialogInterface dialog, int id) {
-                    //        dialog.cancel();
-                    //    }
-                    //}
-                    //)
                     .create().show();
         }
     }
