@@ -29,13 +29,16 @@ import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -48,6 +51,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -66,17 +70,11 @@ public class BLEScanActivity extends ListActivity {
     private Handler mHandler;
     private boolean bleAvailable = false;
 
+    private OsdUtil mUtil;
+
     private boolean mPermissionsRequested = false;
     private final String TAG = "BLEScanActivity";
 
-    private final String[] REQUIRED_PERMISSIONS = {
-            //Manifest.permission.ACCESS_FINE_LOCATION,
-            //Manifest.permission.ACCESS_COARSE_LOCATION,
-            //Manifest.permission.BLUETOOTH,
-            Manifest.permission.BLUETOOTH_ADMIN,
-            Manifest.permission.BLUETOOTH_SCAN,
-            //Manifest.permission.BLUETOOTH_PRIVILEGED,
-    };
 
     private static final int REQUEST_ENABLE_BT = 1;
     // Stops scanning after 10 seconds.
@@ -98,6 +96,7 @@ public class BLEScanActivity extends ListActivity {
         //this.getActionBar().setTitle(R.string.title_devices);
         this.setTitle(R.string.title_devices);
         mHandler = new Handler();
+        mUtil = new OsdUtil(this, mHandler);
 
         // Use this check to determine whether BLE is supported on the device.  Then you can
         // selectively disable BLE-related features.
@@ -205,23 +204,16 @@ public class BLEScanActivity extends ListActivity {
             tv.setBackgroundColor(okColour);
         }
 
-        Log.i(TAG,"onResume - calling requestBTPermissions()");
-        requestBTPermissions(this);
-
-        Log.i(TAG,"onResume - checking permissions");
-        boolean permissionsOk = true;
-        for (int i = 0; i < REQUIRED_PERMISSIONS.length; i++) {
-            if (ContextCompat.checkSelfPermission(this, REQUIRED_PERMISSIONS[i]) == PERMISSION_GRANTED) {
-                Log.i(TAG, "Permission " + REQUIRED_PERMISSIONS[i] + " OK");
-            } else {
-                Log.e(TAG, "Permission " + REQUIRED_PERMISSIONS[i] + " NOT GRANTED");
-                permissionsOk = false;
-                Toast.makeText(this, "ERROR - Permission " + REQUIRED_PERMISSIONS[i] + " not Granted - this will not work!!!!!", Toast.LENGTH_SHORT).show();
-            }
+        if (!mUtil.areBtPermissionsOk()) {
+            Log.i(TAG, "onResume - calling requestBTPermissions()");
+            requestBTPermissions(this);
+        } else {
+            Log.i(TAG, "onResume - Bluetooth Permissions OK");
         }
 
+
         tv = (TextView) findViewById(R.id.ble_perm1_tv);
-        if (permissionsOk) {
+        if (mUtil.areBtPermissionsOk()) {
             tv.setText("Permissions required for Bluetooth Granted OK");
             tv.setBackgroundColor(okColour);
             tv.setTextColor(okTextColour);
@@ -294,17 +286,44 @@ public class BLEScanActivity extends ListActivity {
             Log.i(TAG, "requestBTPermissions() - request already sent - not doing anything");
         } else {
             Log.i(TAG, "requestBTPermissions() - showing rationale (if necessary)");
-            for (int i = 0; i < REQUIRED_PERMISSIONS.length; i++) {
+            boolean showRationale = false;
+            String btPermissions[] = mUtil.getRequiredBtPermissions();
+            for (int i = 0; i < btPermissions.length; i++) {
                 if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
-                        REQUIRED_PERMISSIONS[i])) {
-                    Log.i(TAG, "shouldShowRationale for permission" + REQUIRED_PERMISSIONS[i]);
-                    Toast toast = Toast.makeText(this, "Please give us permission! ", Toast.LENGTH_SHORT);
+                        btPermissions[i])) {
+                    Log.i(TAG, "shouldShowRationale for permission" + btPermissions[i]);
+                    showRationale = true;
+                    Toast toast = Toast.makeText(this, "Please give us permission! "+ btPermissions[i], Toast.LENGTH_SHORT);
                     toast.show();
                 }
             }
+            if (showRationale) {
+                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                        this);
+                alertDialogBuilder
+                        .setTitle(getString(R.string.permissions_required))
+                        .setMessage("Additional Permissions are required to scan for Bluetooth Devices - please grant the permissions in the following dialogs")
+                        .setCancelable(false)
+                        .setNegativeButton(getString(R.string.closeBtnTxt), new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                                finish();
+                            }
+                        })
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        })
+                        .create()
+                        .show();
+            } else {
+                Log.i(TAG,"requestBTPermissions() - rationale display not required");
+            }
+
             Log.i(TAG, "requestBTPermissions() - requesting permissions");
             ActivityCompat.requestPermissions(activity,
-                    REQUIRED_PERMISSIONS,
+                    btPermissions,
                     42);
             mPermissionsRequested = true;
         }
@@ -315,11 +334,11 @@ public class BLEScanActivity extends ListActivity {
         try {
             mBluetoothLeScanner.startScan(mLeScanCallback);
         } catch (SecurityException e) {
-            Log.e(TAG, "startScan - SecurityException while starting scan");
+            Log.e(TAG, "startScan - SecurityException while starting scan:" +e.getMessage());
             Toast toast = Toast.makeText(this, "ERROR - Security Exception "+e.getMessage(), Toast.LENGTH_SHORT);
             toast.show();
         } catch (Exception e) {
-            Log.e(TAG,"startScan - Exception while starting scan");
+            Log.e(TAG,"startScan - Exception while starting scan:"+e.getMessage());
             Toast toast = Toast.makeText(this, "ERROR Starting Scan", Toast.LENGTH_SHORT);
             toast.show();
         }
