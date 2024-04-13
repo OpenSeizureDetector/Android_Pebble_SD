@@ -64,7 +64,7 @@ public class FragmentBatt extends FragmentOsdBaseClass {
     @Override
     public void onResume() {
         super.onResume();
-        mLineChart = mRootView.findViewById(R.id.lineChart);
+        mLineChart = mRootView.findViewById(R.id.battLineChart);
         mLineChart.getLegend().setEnabled(false);
         XAxis xAxis = mLineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
@@ -76,8 +76,8 @@ public class FragmentBatt extends FragmentOsdBaseClass {
         xAxis.setTextColor(Color.WHITE);
 
         YAxis yAxis = mLineChart.getAxisLeft();
-        yAxis.setAxisMinValue(40f);
-        yAxis.setAxisMaxValue(240f);
+        yAxis.setAxisMinValue(0f);
+        yAxis.setAxisMaxValue(100f);
         yAxis.setDrawGridLines(true);
         yAxis.setDrawLabels(true);
         yAxis.setTextColor(Color.WHITE);
@@ -111,6 +111,7 @@ public class FragmentBatt extends FragmentOsdBaseClass {
             double watchBattArr[] = mConnection.mSdServer.mSdData.watchBattBuff.getVals();   // This gives us a simple vector of hr values to plot.
             int nPhoneBattArr = mConnection.mSdServer.mSdData.phoneBattBuff.getNumVals();
             double phoneBattArr[] = mConnection.mSdServer.mSdData.phoneBattBuff.getVals();
+            Log.i(TAG,"updateUi() - nWatchBattArr="+nWatchBattArr+", nPhoneBattArr="+nPhoneBattArr);
             if (Objects.nonNull(mConnection.mSdServer.mSdData.watchBattBuff) && nWatchBattArr > 0) {
                 Log.v(TAG, "hrWatchBattBuff.getNumVals=" + nWatchBattArr);
                 lineDataSet.clear();

@@ -4,6 +4,7 @@
            - Improved start-up checks for permissions
            - Improved system re-start after changing settings (but still not perfect!)
            - Disabled the CNN algorithm by default as it is causing some false alarms (Issue #170)
+           - Added watch signal strength history graph and watch battery hisory graph to main activity
     V4.2.5 - Set BLE device time if the characteristic is available.
     V4.2.4 - Added checks and a FAULT condition for Bluetooth errors in Bluetooth Data Source
     V4.2.3 - Uses 3d accelerometer data to calculate magnitude if vector magnitude is not sent from data source.

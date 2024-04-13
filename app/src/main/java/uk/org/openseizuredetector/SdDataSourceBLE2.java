@@ -153,8 +153,8 @@ public class SdDataSourceBLE2 extends SdDataSource {
         // FIXME:  Read the shared preferences in this class so SdDataSource does not need to know
         // FIXME:   about BLE details.
         Log.i(TAG, "mBLEDevice is " + mBleDeviceName + ", Addr=" + mBleDeviceAddr);
-        mSdData.watchSdName = mBleDeviceName;
-        mSdData.watchPartNo = mBleDeviceAddr;
+        //mSdData.watchSdName = mBleDeviceName;
+        mSdData.watchSerNo = mBleDeviceAddr;
 
         boolean success = CurrentTimeService.startServer(mContext);
 
@@ -230,6 +230,8 @@ public class SdDataSourceBLE2 extends SdDataSource {
             // Request long range Bluetooth 5 connection if available.
             peripheral.setPreferredPhy(PhyType.LE_CODED, PhyType.LE_CODED, PhyOptions.S8);
             peripheral.readPhy();
+
+            peripheral.readRemoteRssi();
 
             boolean foundOsdService = false;
             for (BluetoothGattService service : peripheral.getServices()) {
@@ -420,6 +422,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
                         mDataStatusTime = new Time(Time.getCurrentTimezone());
                         // Process the data to do seizure detection
                         doAnalysis();
+                        mBlePeripheral.readRemoteRssi();  // Update RSSI
                         // Re-start collecting raw data.
                         nRawData = 0;
                         // Notify the device of the resulting alarm state
@@ -461,7 +464,8 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 byte[] rawDataBytes = characteristic.getValue();
                 String watchSerNo = new String(rawDataBytes, StandardCharsets.UTF_8);
                 Log.i(TAG, "Received Watch Serial No.: " + watchSerNo);
-                mSdData.watchSerNo = watchSerNo;
+                //mSdData.watchSerNo = watchSerNo;
+                // We do not use this serial number because it is zero for PineTime - we set the MAC address at start-up instead.
             } else if (charUuidStr.equals(CHAR_DEV_HW_VER)) {
                 byte[] rawDataBytes = characteristic.getValue();
                 String watchHwVer = new String(rawDataBytes, StandardCharsets.UTF_8);
@@ -490,6 +494,12 @@ public class SdDataSourceBLE2 extends SdDataSource {
             Log.i(TAG, String.format("new MTU set: %d", mtu));
         }
 
+        @Override
+        public void onReadRemoteRssi(@NotNull BluetoothPeripheral peripheral, int rssi, @NotNull GattStatus status) {
+            Log.d(TAG, String.format("Rssi = %d", rssi));
+            mSdData.watchSignalStrength = rssi;
+            mSdData.watchSignalStrengthBuff.add(rssi);
+        }
 
     };
 

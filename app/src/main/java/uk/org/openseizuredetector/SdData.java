@@ -69,6 +69,7 @@ public class SdData implements Parcelable {
 
     public CircBuf watchBattBuff = new CircBuf(24*3600/5, -1);  // 24 hour buffer
     public CircBuf phoneBattBuff = new CircBuf(24*3600/5, -1);  // 24 hour buffer
+    public CircBuf watchSignalStrengthBuff = new CircBuf(4*3600/5, -1); // 4 hour buffer
 
     /* Heart Rate Alarm Settings */
     public boolean mHRAlarmActive = false;
@@ -136,12 +137,14 @@ public class SdData implements Parcelable {
     public double mO2Sat = 0;
 
     public double mPseizure = 0.;
+    public float watchSignalStrength;
 
     public SdData() {
         simpleSpec = new int[10];
         rawData = new double[N_RAW_DATA];
         rawData3D = new double[N_RAW_DATA * 3];
         dataTime = new Time(Time.getCurrentTimezone());
+        dataTime.setToNow();
         timeDiff = 0f;
     }
 
@@ -162,8 +165,12 @@ public class SdData implements Parcelable {
             // FIXME - this doesn't work!!!
             Time tnow = new Time();
             tnow.setToNow();
-            timeDiff = (tnow.toMillis(false)
-                    - dataTime.toMillis(false))/1000f;
+            if (dataTime != null) {
+                timeDiff = (tnow.toMillis(false)
+                        - dataTime.toMillis(false)) / 1000f;
+            } else {
+                timeDiff = 0f;
+            }
             dataTime.setToNow();
             Log.v(TAG, "fromJSON(): dataTime = " + dataTime.toString());
             maxVal = jo.optInt("maxVal");
@@ -322,6 +329,7 @@ public class SdData implements Parcelable {
             jsonObj.put("watchSdName", watchSdName);
             jsonObj.put("watchFwVersion", watchFwVersion);
             jsonObj.put("watchSdVersion", watchSdVersion);
+            jsonObj.put("watchSignalStrength", watchSignalStrength);
 
             retval = jsonObj.toString();
         } catch (Exception ex) {
