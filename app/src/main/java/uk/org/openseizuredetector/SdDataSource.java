@@ -390,7 +390,6 @@ public abstract class SdDataSource {
                 mSamplePeriod = (short) dataObject.getInt("analysisPeriod");
                 mSampleFreq = (short) dataObject.getInt("sampleFreq");
                 mSdData.batteryPc = (short) dataObject.getInt("battery");
-                mSdData.watchBattBuff.add(mSdData.batteryPc);
 
                 Log.v(TAG, "updateFromJSON - mSamplePeriod=" + mSamplePeriod + " mSampleFreq=" + mSampleFreq);
                 mUtil.writeToSysLogFile("SDDataSource.updateFromJSON - Settings Received");
@@ -475,6 +474,7 @@ public abstract class SdDataSource {
         // Update phone battery level - it is done here so it is called for all data sources.
         mSdData.phoneBatteryPc = getPhoneBatteryLevel();
         mSdData.phoneBattBuff.add(mSdData.phoneBatteryPc);
+        mSdData.watchBattBuff.add(mSdData.batteryPc);
         try {
             // FIXME - Use specified sampleFreq, not this hard coded one
             mSampleFreq = 25;

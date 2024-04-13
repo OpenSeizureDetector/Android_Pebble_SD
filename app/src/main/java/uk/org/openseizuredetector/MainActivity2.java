@@ -320,8 +320,8 @@ public class MainActivity2 extends AppCompatActivity {
                     return new FragmentSystem();
                 case 3:
                     return new FragmentWatchSig();
-                //case 4:
-                //    return new FragmentBatt();
+                case 4:
+                    return new FragmentBatt();
                 //case 4:
                 //    return new FragmentDataSharing();
 
@@ -333,7 +333,7 @@ public class MainActivity2 extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return 4;
+            return 5;
         }
     }
 
