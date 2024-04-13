@@ -64,11 +64,6 @@
 
 
 
-        <TextView
-            android:id="@+id/fragment_watch_app_status_tv"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="---" />
 
         <TextView
             android:id="@+id/battTv"
@@ -88,6 +83,140 @@
             android:layout_height="wrap_content"
             android:gravity="left"
             android:text="---" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="" />
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Watch Status"
+            android:textColor="@color/okTextColor"
+            android:background="@color/okBackgroundColor"
+            />
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/okTextColor"
+                android:text="Watch Manufacturer: "/>
+            <TextView
+                android:id="@+id/watch_manuf_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="---"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/okTextColor"
+                android:text="Watch Part No: "/>
+            <TextView
+                android:id="@+id/watch_partno_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="---"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/okTextColor"
+                android:text="Watch FW Ver: "/>
+            <TextView
+                android:id="@+id/watch_fwver_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="---"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/okTextColor"
+                android:text="Watch App Name: "/>
+            <TextView
+                android:id="@+id/watch_sdname_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="---"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/okTextColor"
+                android:text="Watch App Ver: "/>
+            <TextView
+                android:id="@+id/watch_sdver_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="---"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/fragment_watch_app_status_tv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="---" />
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/okTextColor"
+                android:text="Watch Battery Level: "/>
+            <TextView
+                android:id="@+id/watch_batt_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="---"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/okTextColor"
+                android:text="Watch Signal Strength: "/>
+            <TextView
+                android:id="@+id/watch_signal_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="---"/>
+        </LinearLayout>
 
 
     </androidx.appcompat.widget.LinearLayoutCompat>

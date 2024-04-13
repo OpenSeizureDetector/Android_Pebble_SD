@@ -136,6 +136,7 @@ public class SdData implements Parcelable {
     public double mO2Sat = 0;
 
     public double mPseizure = 0.;
+    public float watchSignalStrength;
 
     public SdData() {
         simpleSpec = new int[10];
@@ -322,6 +323,7 @@ public class SdData implements Parcelable {
             jsonObj.put("watchSdName", watchSdName);
             jsonObj.put("watchFwVersion", watchFwVersion);
             jsonObj.put("watchSdVersion", watchSdVersion);
+            jsonObj.put("watchSignalStrength", watchSignalStrength);
 
             retval = jsonObj.toString();
         } catch (Exception ex) {

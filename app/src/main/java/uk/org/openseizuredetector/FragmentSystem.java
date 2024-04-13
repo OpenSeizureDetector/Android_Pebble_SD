@@ -174,6 +174,20 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
                 }
+                tv = (TextView) mRootView.findViewById(R.id.watch_manuf_tv);
+                tv.setText(mConnection.mSdServer.mSdData.watchManuf);
+                tv = (TextView) mRootView.findViewById(R.id.watch_partno_tv);
+                tv.setText(mConnection.mSdServer.mSdData.watchPartNo);
+                tv = (TextView) mRootView.findViewById(R.id.watch_fwver_tv);
+                tv.setText(mConnection.mSdServer.mSdData.watchFwVersion);
+                tv = (TextView) mRootView.findViewById(R.id.watch_sdname_tv);
+                tv.setText(mConnection.mSdServer.mSdData.watchSdName);
+                tv = (TextView) mRootView.findViewById(R.id.watch_sdver_tv);
+                tv.setText(mConnection.mSdServer.mSdData.watchSdVersion);
+                tv = (TextView) mRootView.findViewById(R.id.watch_batt_tv);
+                tv.setText(mConnection.mSdServer.mSdData.batteryPc+" %");
+                tv = (TextView) mRootView.findViewById(R.id.watch_signal_tv);
+                tv.setText(String.format("%.0f dB", mConnection.mSdServer.mSdData.watchSignalStrength));
             }
         } catch (Exception e) {
             Log.e(TAG, "UpdateUi: Exception - ");

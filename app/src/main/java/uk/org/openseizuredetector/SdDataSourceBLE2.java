@@ -231,6 +231,8 @@ public class SdDataSourceBLE2 extends SdDataSource {
             peripheral.setPreferredPhy(PhyType.LE_CODED, PhyType.LE_CODED, PhyOptions.S8);
             peripheral.readPhy();
 
+            peripheral.readRemoteRssi();
+
             boolean foundOsdService = false;
             for (BluetoothGattService service : peripheral.getServices()) {
                 String servUuidStr = service.getUuid().toString();
@@ -420,6 +422,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
                         mDataStatusTime = new Time(Time.getCurrentTimezone());
                         // Process the data to do seizure detection
                         doAnalysis();
+                        mBlePeripheral.readRemoteRssi();  // Update RSSI
                         // Re-start collecting raw data.
                         nRawData = 0;
                         // Notify the device of the resulting alarm state
@@ -490,6 +493,12 @@ public class SdDataSourceBLE2 extends SdDataSource {
             Log.i(TAG, String.format("new MTU set: %d", mtu));
         }
 
+        @Override
+        public void onReadRemoteRssi(@NotNull BluetoothPeripheral peripheral, int rssi, @NotNull GattStatus status) {
+            Log.d(TAG, String.format("Rssi = %d", rssi));
+            mSdData.watchSignalStrength = rssi;
+
+        }
 
     };
 
