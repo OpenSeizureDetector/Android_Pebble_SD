@@ -69,6 +69,7 @@ public class SdData implements Parcelable {
 
     public CircBuf watchBattBuff = new CircBuf(24*3600/5, -1);  // 24 hour buffer
     public CircBuf phoneBattBuff = new CircBuf(24*3600/5, -1);  // 24 hour buffer
+    public CircBuf watchSignalStrengthBuff = new CircBuf(4*3600/5, -1); // 4 hour buffer
 
     /* Heart Rate Alarm Settings */
     public boolean mHRAlarmActive = false;

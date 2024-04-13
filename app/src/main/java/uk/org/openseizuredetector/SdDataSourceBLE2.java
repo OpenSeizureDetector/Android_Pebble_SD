@@ -497,7 +497,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
         public void onReadRemoteRssi(@NotNull BluetoothPeripheral peripheral, int rssi, @NotNull GattStatus status) {
             Log.d(TAG, String.format("Rssi = %d", rssi));
             mSdData.watchSignalStrength = rssi;
-
+            mSdData.watchSignalStrengthBuff.add(rssi);
         }
 
     };
