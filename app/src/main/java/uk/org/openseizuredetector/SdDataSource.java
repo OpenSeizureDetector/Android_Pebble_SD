@@ -538,8 +538,12 @@ public abstract class SdDataSource {
             mSdData.roiPower = (long) roiPower / ACCEL_SCALE_FACTOR;
             Time tnow = new Time();
             tnow.setToNow();
-            mSdData.timeDiff = (tnow.toMillis(false)
-                    - mSdData.dataTime.toMillis(false))/1000f;
+            if (mSdData.dataTime != null) {
+                mSdData.timeDiff = (tnow.toMillis(false)
+                        - mSdData.dataTime.toMillis(false)) / 1000f;
+            } else {
+                mSdData.timeDiff = 0f;
+            }
             mSdData.dataTime.setToNow();
 
             mSdData.dataTime.setToNow();

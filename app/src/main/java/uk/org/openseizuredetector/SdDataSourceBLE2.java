@@ -153,8 +153,8 @@ public class SdDataSourceBLE2 extends SdDataSource {
         // FIXME:  Read the shared preferences in this class so SdDataSource does not need to know
         // FIXME:   about BLE details.
         Log.i(TAG, "mBLEDevice is " + mBleDeviceName + ", Addr=" + mBleDeviceAddr);
-        mSdData.watchSdName = mBleDeviceName;
-        mSdData.watchPartNo = mBleDeviceAddr;
+        //mSdData.watchSdName = mBleDeviceName;
+        mSdData.watchSerNo = mBleDeviceAddr;
 
         boolean success = CurrentTimeService.startServer(mContext);
 
@@ -464,7 +464,8 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 byte[] rawDataBytes = characteristic.getValue();
                 String watchSerNo = new String(rawDataBytes, StandardCharsets.UTF_8);
                 Log.i(TAG, "Received Watch Serial No.: " + watchSerNo);
-                mSdData.watchSerNo = watchSerNo;
+                //mSdData.watchSerNo = watchSerNo;
+                // We do not use this serial number because it is zero for PineTime - we set the MAC address at start-up instead.
             } else if (charUuidStr.equals(CHAR_DEV_HW_VER)) {
                 byte[] rawDataBytes = characteristic.getValue();
                 String watchHwVer = new String(rawDataBytes, StandardCharsets.UTF_8);

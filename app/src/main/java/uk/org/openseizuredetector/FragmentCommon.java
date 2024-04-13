@@ -193,10 +193,11 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                     tv.setText(getString(R.string.DataSource) + " = " + "Phone (Demo Mode)");
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
-                } else if (mConnection.mSdServer.mSdDataSourceName.equals("BLE")) {
+                } else if (mConnection.mSdServer.mSdDataSourceName.equals("BLE")
+                    || mConnection.mSdServer.mSdDataSourceName.equals("BLE2")) {
                     tv.setText(getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName
                             + " ("+ mConnection.mSdServer.mSdData.watchSdName + ", "
-                            + mConnection.mSdServer.mSdData.watchPartNo+")");
+                            + mConnection.mSdServer.mSdData.watchSerNo+")");
                 } else {
                     tv.setText(getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
                 }
