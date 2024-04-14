@@ -1,5 +1,6 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V4.2.7 - BLE2 data source re-start fixed??
     V4.2.6 - Fixed problem with notifications in Android 13
            - Improved start-up checks for permissions
            - Improved system re-start after changing settings (but still not perfect!)

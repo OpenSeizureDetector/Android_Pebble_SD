@@ -2,7 +2,9 @@
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
-        "\nV4.2.6 - Fixed issues with Android 13 notifications and BLE data source shutdown.  Added support for V2.x of Garmin watch app, Added new BLE2 data source, signal strength and battery level graphs.
+        "\n
+        \nV4.2.7 - Finally fixed BLE2 data source re-start after dropping connection?
+        \nV4.2.6 - Fixed issues with Android 13 notifications and BLE data source shutdown.  Added support for V2.x of Garmin watch app, Added new BLE2 data source, signal strength and battery level graphs.
         \nV4.2.4 - Fault alarm rather than crash if bluetooth system crashes.
         \nV4.2.3 - Bug Fixes (heart rate alarm and latched alarm issues)
         \nV4.2   - Added support for PineTime Watches using Bluetooth data source.

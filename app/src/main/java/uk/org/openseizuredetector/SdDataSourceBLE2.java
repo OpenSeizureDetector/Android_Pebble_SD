@@ -186,11 +186,13 @@ public class SdDataSourceBLE2 extends SdDataSource {
         @Override
         public void onConnectedPeripheral(BluetoothPeripheral peripheral) {
             Log.i(TAG,"BluetoothCentralManagerCallback.onConnectedPeripheral()");
+            mUtil.showToast("Watch Connected");
             super.onConnectedPeripheral(peripheral);
         }
         @Override
         public void onConnectionFailed(BluetoothPeripheral peripheral, HciStatus status) {
             Log.i(TAG,"BluetoothCentralManagerCallback.onConnectionFailed() - attempting to reconnect");
+            mUtil.showToast("Failed to Connect to Watch - Retrying");
             mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
             super.onConnectionFailed(peripheral, status);
         }
@@ -200,10 +202,11 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 Log.i(TAG,"BluetoothCentralManagerCallback.onDisonnectedPeripheral - mShutdown is set, so not reconnecting");
             } else {
                 Log.i(TAG,"BluetoothCentralManagerCallback.onDisonnectedPeripheral");
-                //Log.i(TAG, "BluetoothCentralManagerCallback.onDisonnectedPeripheral - attempting to re-connect...");
-                //bleDisconnect();
-                //mShutdown=false;
-                //mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
+                mUtil.showToast("WATCH CONNECTION LOST");
+                Log.i(TAG, "BluetoothCentralManagerCallback.onDisonnectedPeripheral - attempting to re-connect...");
+                bleDisconnect();
+                mShutdown=false;
+                mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
             }
             super.onDisconnectedPeripheral(peripheral, status);
         }
@@ -534,8 +537,8 @@ public class SdDataSourceBLE2 extends SdDataSource {
             mShutdown = true;
             mBlePeripheral.cancelConnection();
 
-            Log.i(TAG, "bleDisconnect() - closing  BluetoothCentralManager");
-            mBluetoothCentralManager.close();
+            //Log.i(TAG, "bleDisconnect() - closing  BluetoothCentralManager");
+            //mBluetoothCentralManager.close();
         } catch (Exception e) {
             Log.e(TAG,"bleDisconnect() - Error: "+e.getMessage());
             mUtil.showToast("Error disconnecting from watch");
@@ -551,6 +554,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
         super.stop();
 
         try {
+            mShutdown = true;
             bleDisconnect();
             CurrentTimeService.stopServer();
         } catch (Exception e) {
