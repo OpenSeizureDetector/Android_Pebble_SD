@@ -10,6 +10,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import android.text.format.Time;
+
 public class FragmentCommon extends FragmentOsdBaseClass {
     String TAG = "FragmentCommon";
 
@@ -94,8 +96,12 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                 tv.setTextColor(okTextColour);
 
                 tv = (TextView) mRootView.findViewById(R.id.data_time_tv);
+                Time tnow = new Time(Time.getCurrentTimezone());
+                tnow.setToNow();
+                double tdiff;
+                tdiff = (tnow.toMillis(false) - mConnection.mSdServer.mSdData.dataTime.toMillis(false))/1000.;
                 tv.setText("Time =" + mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S")
-                        + "  (" + String.format("%.1f s)",mConnection.mSdServer.mSdData.timeDiff));
+                        + "  (" + String.format("%.0f s, %.1f s)",mConnection.mSdServer.mSdData.timeDiff, tdiff));
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
 

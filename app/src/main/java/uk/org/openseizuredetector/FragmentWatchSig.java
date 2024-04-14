@@ -73,8 +73,8 @@ public class FragmentWatchSig extends FragmentOsdBaseClass {
         xAxis.setTextColor(Color.WHITE);
 
         YAxis yAxis = mLineChart.getAxisLeft();
-        //yAxis.setAxisMinValue(40f);
-        //yAxis.setAxisMaxValue(240f);
+        yAxis.setAxisMaxValue(-50f);
+        yAxis.setAxisMinValue(-100f);
         yAxis.setDrawGridLines(true);
         yAxis.setDrawLabels(true);
         yAxis.setTextColor(Color.WHITE);
