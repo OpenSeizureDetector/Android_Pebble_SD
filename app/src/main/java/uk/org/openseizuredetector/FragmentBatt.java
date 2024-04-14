@@ -132,7 +132,7 @@ public class FragmentBatt extends FragmentOsdBaseClass {
                 mLineChart.refreshDrawableState();
                 float xSpan = (nWatchBattArr * 5.0f) / 60.0f;   // time in minutes assuming one point every 5 seconds.
                 mLineChart.setDescription(getString(R.string.watch_batt_hist)
-                        + String.format("%.1f", xSpan)
+                        + " " + String.format("%.1f", xSpan)
                         + " " + getString(R.string.minutes));
                 mLineChart.setDescriptionTextSize(12f);
                 mLineChart.invalidate();
