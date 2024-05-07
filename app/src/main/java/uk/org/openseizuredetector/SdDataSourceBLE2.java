@@ -265,14 +265,14 @@ public class SdDataSourceBLE2 extends SdDataSource {
                         mHrChar = gattCharacteristic;
                         peripheral.setNotify(service.getUuid(), gattCharacteristic.getUuid(), true);
                     } else if (charUuidStr.equals(CHAR_OSD_ACC_DATA)) {
-                        Log.i(TAG, "Subscribing to Acceleration Data Change Notifications");
+                        Log.i(TAG, "Subscribing to OSD Acceleration Data Change Notifications");
                         peripheral.setNotify(service.getUuid(), gattCharacteristic.getUuid(), true);
                         mOsdChar = gattCharacteristic;
                     } else if (charUuidStr.equals(CHAR_OSD_STATUS)) {
                         Log.i(TAG, "Found OSD Status Characteristic");
                         mStatusChar = gattCharacteristic;
                     } else if (charUuidStr.equals(CHAR_OSD_BATT_DATA)) {
-                        Log.i(TAG, "Subscribing to battery change Notifications");
+                        Log.i(TAG, "Subscribing to OSD battery change Notifications");
                         peripheral.readCharacteristic(service.getUuid(), gattCharacteristic.getUuid());
                         peripheral.setNotify(service.getUuid(), gattCharacteristic.getUuid(), true);
                         mBattChar = gattCharacteristic;
@@ -359,6 +359,8 @@ public class SdDataSourceBLE2 extends SdDataSource {
             UUID characteristicUUID = characteristic.getUuid();
             BluetoothBytesParser parser = new BluetoothBytesParser(value);
             String charUuidStr = characteristicUUID.toString();
+
+            Log.v(TAG,"onCharacteristicUpdate() - Characteristic "+charUuidStr+" updated");
 
             if (charUuidStr.equals(CHAR_HEART_RATE_MEASUREMENT)) {
                 Log.v(TAG, String.format("%s", "HR Measurement"));
