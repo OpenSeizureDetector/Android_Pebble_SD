@@ -59,6 +59,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -66,6 +67,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 /**
@@ -776,6 +778,29 @@ public class OsdUtil {
             }
         }
         return allOk;
+    }
+
+    public double parseToDouble(String userInput) {
+        /**
+         * Parse a string to a double value, taking localisation into account.
+         * Using NumberFormat as recommended by https://docs.oracle.com/javase%2F7%2Fdocs%2Fapi%2F%2F/java/lang/Double.html#valueOf(java.lang.String)
+         */
+        double retVal;
+        try {
+            Locale currentLocale;
+            if (android.os.Build.VERSION.SDK_INT < 24) {
+                currentLocale = mContext.getResources().getConfiguration().locale;
+            } else {
+                currentLocale = mContext.getResources().getConfiguration().getLocales().get(0);
+            }
+            NumberFormat nf = NumberFormat.getInstance(currentLocale);
+            retVal = nf.parse(userInput).doubleValue();
+        } catch (ParseException e) {
+            // Handle invalid input (e.g., non-numeric characters)
+            showToast("Invalid input. Please enter a valid numeric value.");
+            retVal = 0.0;
+        }
+        return(retVal);
     }
 
 }
