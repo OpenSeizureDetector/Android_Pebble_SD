@@ -35,11 +35,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 public class ExportDataActivity extends AppCompatActivity
         implements View.OnClickListener {
@@ -198,8 +200,8 @@ public class ExportDataActivity extends AppCompatActivity
         if (view == mExportBtn) {
             mDateTxt.setText(String.format("%02d-%02d-%04d", mDay, mMonth + 1, mYear));
             mTimeTxt.setText(String.format("%02d:%02d:%02d", mHour, mMinute, 00));
-            mDuration = Double.parseDouble(mDurationTxt.getText().toString());
 
+            mDuration = mUtil.parseToDouble(mDurationTxt.getText().toString());
             String dateTimeStr = String.format("%04d-%02d-%02dT%02d:%02d:%02dZ", mYear, mMonth + 1, mDay, mHour, mMinute, 00);
             //mUtil.showToast(dateTimeStr);
             mEndDate = mUtil.string2date(dateTimeStr);
