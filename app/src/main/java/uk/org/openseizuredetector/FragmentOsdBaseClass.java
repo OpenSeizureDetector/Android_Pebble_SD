@@ -111,7 +111,16 @@ public class FragmentOsdBaseClass extends Fragment {
         updateUiHandler.post(new Runnable() {
             @Override
             public void run() {
-                updateUi();
+                // Check for context being null is an attempt to stop the crashes reported in Issue No 176
+                if (mContext != null) {
+                    try {
+                        updateUi();
+                    } catch (Exception e) {
+                        Log.e(TAG,"upateUiOnUiThread() - exception updating UI - "+e.getMessage());
+                    }
+                } else {
+                    Log.e(TAG,"updateUionUiThread() - mContext is null??  Can't show a Toast message because context is null....");
+                }
             }
         });
     }
