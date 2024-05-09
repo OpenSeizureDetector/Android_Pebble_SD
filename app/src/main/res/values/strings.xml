@@ -3,7 +3,7 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
-        \nV4.2.8 - Fixed problem with BangleJS2 not working with new BLE2 data source
+        \nV4.2.8 - Fixed problem with BangleJS2 not working with new BLE2 data, fixed crash in export data function, fixed (rare) crash when re-opening app from background)
         \nV4.2.7 - Finally fixed BLE2 data source re-start after dropping connection?
         \nV4.2.6 - Fixed issues with Android 13 notifications and BLE data source shutdown.  Added support for V2.x of Garmin watch app, Added new BLE2 data source, signal strength and battery level graphs.
         \nV4.2.4 - Fault alarm rather than crash if bluetooth system crashes.
