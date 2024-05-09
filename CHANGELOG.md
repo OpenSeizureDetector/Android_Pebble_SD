@@ -1,8 +1,10 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
 
-    V4.2.8 - Fixed BLE2 data source to work with BangleJS2 watches
+    V4.2.8 - 
            - Fixed crash in export data function when using european style comma based decimal separator.
+           - Added seizure probability bar graph from CCN algorithm
+           - Added trap for null context in fragments to avoid crash.
     V4.2.7 - BLE2 data source re-start fixed??
     V4.2.6 - Fixed problem with notifications in Android 13
            - Improved start-up checks for permissions
@@ -11,7 +13,7 @@
            - Added watch signal strength history graph and watch battery hisory graph to main activity
     V4.2.5 - Set BLE device time if the characteristic is available.
     V4.2.4 - Added checks and a FAULT condition for Bluetooth errors in Bluetooth Data Source
-    V4.2.3 - Uses 3d accelerometer data to calculate magnitude if vector magnitude is not sent from data source.
+    V4.2.3 - Uses 3d accelerometer data to calculate magnitude if vector magnitude is not sent from data source (=support for Version 2 of Garmin watch app)
            - fixed latched alarms (Issue #146)
            - fixed HR alarms selection issue (#153)
     V4.2.2 - Added support for PineTime OSD Status reporting.
