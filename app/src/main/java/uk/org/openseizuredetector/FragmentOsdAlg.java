@@ -104,6 +104,24 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             pb.setProgressDrawable(pbDrawable);
 
             ////////////////////////////////////////////////////////////
+            // set progressbar seizure probability
+            ////////////////////////////////////////////////////////////
+
+            long pSeizurePc;
+            pSeizurePc = (long) (mConnection.mSdServer.mSdData.mPseizure * 100);
+
+            pb = ((ProgressBar) mRootView.findViewById(R.id.pSeizureProgressBarM2));
+            pb.setMax(100);
+            pb.setProgress((int) pSeizurePc);
+            pbDrawable = mContext.getDrawable(R.drawable.progress_bar_blue);
+            if (pSeizurePc > 30)
+                pbDrawable = mContext.getDrawable(R.drawable.progress_bar_yellow);
+            if (pSeizurePc > 50)
+                pbDrawable = mContext.getDrawable(R.drawable.progress_bar_red);
+            //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
+            pb.setProgressDrawable(pbDrawable);
+
+            ////////////////////////////////////////////////////////////
             // Produce graph
             BarChart mChart = (BarChart) mRootView.findViewById(R.id.chart1);
             mChart.setDrawBarShadow(false);

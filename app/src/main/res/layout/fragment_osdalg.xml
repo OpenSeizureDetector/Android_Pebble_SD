@@ -47,6 +47,20 @@
             android:indeterminate="false"
             android:minHeight="20dp" />
 
+        <TextView
+            android:id="@+id/pSeizureTvM2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/seizure_probability"
+            android:textColor="@color/okTextColor" />
+
+        <ProgressBar
+            android:id="@+id/pSeizureProgressBarM2"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+
         <com.github.mikephil.charting.charts.BarChart
             android:id="@+id/chart1"
             android:layout_width="match_parent"
