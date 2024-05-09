@@ -1,6 +1,8 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
-    V4.2.8 - Fixed crash in export data function when using european style comma based decimal separator.
+
+    V4.2.8 - Fixed BLE2 data source to work with BangleJS2 watches
+           - Fixed crash in export data function when using european style comma based decimal separator.
     V4.2.7 - BLE2 data source re-start fixed??
     V4.2.6 - Fixed problem with notifications in Android 13
            - Improved start-up checks for permissions
