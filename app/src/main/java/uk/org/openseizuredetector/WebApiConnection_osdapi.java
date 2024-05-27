@@ -41,7 +41,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
 
     public void close() {
         super.close();
-        Log.i(TAG,"stop()");
+        Log.i(TAG, "stop()");
         mQueue.stop();
     }
 
@@ -110,8 +110,6 @@ public class WebApiConnection_osdapi extends WebApiConnection {
     }
 
 
-
-
     public boolean isLoggedIn() {
         String authToken = getStoredToken();
         Log.v(TAG, "isLoggedIn(): token=" + authToken);
@@ -119,7 +117,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
             Log.v(TAG, "isLogged in - not logged in");
             return (false);
         } else {
-            Log.v(TAG,"isLoggedIn - logged in ok");
+            Log.v(TAG, "isLoggedIn - logged in ok");
             return (true);
         }
 
@@ -315,7 +313,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                             } else {
                                 Log.e(TAG, "getEvents(): Error: - request returned null networkResponse");
                             }
-                        } else{
+                        } else {
                             Log.e(TAG, "getEvents(): Error: - request returned null response");
                         }
                         callback.accept(null);
@@ -517,6 +515,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
 
     /**
      * Retieve the user profile of the authenticated user from the server, and return it to the callback function.
+     *
      * @param callback - function to be called with a JSONObject as a parameter that contains the user profile data.
      * @return true if request sent successfully, or else false.
      */
@@ -570,8 +569,6 @@ public class WebApiConnection_osdapi extends WebApiConnection {
         mQueue.add(req);
         return (true);
     }
-
-
 
 
     /**
@@ -680,11 +677,10 @@ public class WebApiConnection_osdapi extends WebApiConnection {
     }
 
 
-
-
     /**
      * Retrieve a trivial file from the server to check we have a good server connection.
-     *  sets mServerConnectionOk.
+     * sets mServerConnectionOk.
+     *
      * @return true if request sent successfully or else false.
      */
     public boolean checkServerConnection() {
@@ -714,7 +710,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
     }
 
     public boolean getCnnModelInfo(JSONObjectCallback callback) {
-        Log.w(TAG,"getCnnModelInfo() - FIXME - not implemented yet!");
+        Log.w(TAG, "getCnnModelInfo() - FIXME - not implemented yet!");
         return false;
     }
 

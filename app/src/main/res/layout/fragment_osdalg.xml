@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".FragmentOsdBaseClass">
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="@color/okBackgroundColor">
+
+        <TextView
+            android:id="@+id/fragment_osdalg_tv2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/okTextColor"
+            android:text="OSD Algorithm Status" />
+
+        <TextView
+            android:id="@+id/powerTv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/okTextColor"
+            android:text="---" />
+
+        <ProgressBar
+            android:id="@+id/powerProgressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="20dp" />
+
+        <TextView
+            android:id="@+id/spectrumTv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/okTextColor"
+            android:text="---" />
+
+        <ProgressBar
+            android:id="@+id/spectrumProgressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:indeterminate="false"
+            android:minHeight="20dp" />
+
+        <TextView
+            android:id="@+id/pSeizureTvM2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/seizure_probability"
+            android:textColor="@color/okTextColor" />
+
+        <ProgressBar
+            android:id="@+id/pSeizureProgressBarM2"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+
+        <com.github.mikephil.charting.charts.BarChart
+            android:id="@+id/chart1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+</FrameLayout>

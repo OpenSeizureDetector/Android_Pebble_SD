@@ -59,6 +59,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -66,6 +67,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 /**
@@ -98,6 +100,21 @@ public class OsdUtil {
     private static Long mLastPruneMillis = new Long(0);   // Record of the last time we pruned the syslog db.
 
     private static int mNbound = 0;
+
+    public final String[] BT_PERMISSIONS_API30 = {
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.BLUETOOTH_SCAN,
+            //Manifest.permission.BLUETOOTH_ADMIN,
+            Manifest.permission.BLUETOOTH_CONNECT,
+    };
+    public final String[] BT_PERMISSIONS_OLD = {
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.BLUETOOTH,
+            Manifest.permission.BLUETOOTH_ADMIN,
+    };
+    public String[] BT_PERMISSIONS;
 
     public OsdUtil(Context context, Handler handler) {
         mContext = context;
@@ -325,13 +342,13 @@ public class OsdUtil {
      *
      * @param msgStr
      */
-    public void writeToSysLogFile(String msgStr,String logType) {
-        writeLogEntryToLocalDb(msgStr,logType);
-    }
-    public void writeToSysLogFile(String msgStr) {
-        writeLogEntryToLocalDb(msgStr,"v");
+    public void writeToSysLogFile(String msgStr, String logType) {
+        writeLogEntryToLocalDb(msgStr, logType);
     }
 
+    public void writeToSysLogFile(String msgStr) {
+        writeLogEntryToLocalDb(msgStr, "v");
+    }
 
 
     /**
@@ -403,12 +420,11 @@ public class OsdUtil {
 
     public File[] getDataFilesList() {
         File[] files = getDataStorageDir().listFiles();
-        Log.d("Files", "Size: "+ files.length);
-        for (int i = 0; i < files.length; i++)
-        {
+        Log.d("Files", "Size: " + files.length);
+        for (int i = 0; i < files.length; i++) {
             Log.d("Files", "FileName:" + files[i].getName());
         }
-        return(files);
+        return (files);
     }
 
     /* Checks if external storage is available for read and write */
@@ -459,6 +475,7 @@ public class OsdUtil {
      * It first attempts to parse it as a long integer, in which case it is assumed to
      * be a unix timestamp.
      * If that fails it attempts to parse it as yyyy-MM-dd'T'HH:mm:ss'Z' format.
+     *
      * @param dateStr String reprenting a date
      * @return Date object or null if parsing fails.
      */
@@ -468,7 +485,7 @@ public class OsdUtil {
             Long tstamp = Long.parseLong(dateStr);
             dataTime = new Date(tstamp);
         } catch (NumberFormatException e) {
-            Log.v(TAG, "remoteEventsAdapter.getView: Error Parsing dataDate as Long: " + e.getLocalizedMessage()+" trying as string");
+            Log.v(TAG, "remoteEventsAdapter.getView: Error Parsing dataDate as Long: " + e.getLocalizedMessage() + " trying as string");
             try {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
                 dataTime = dateFormat.parse(dateStr);
@@ -477,7 +494,7 @@ public class OsdUtil {
                 dataTime = null;
             }
         }
-        return(dataTime);
+        return (dataTime);
     }
 
 
@@ -503,20 +520,20 @@ public class OsdUtil {
                 break;
 
         }
-        return(retVal);
+        return (retVal);
     }
 
     private static boolean openDb() {
         Log.d(TAG, "openDb");
         try {
             if (mSysLogDb == null) {
-                Log.i(TAG,"openDb: mSysLogDb is null - initialising");
+                Log.i(TAG, "openDb: mSysLogDb is null - initialising");
                 mSysLogDb = new OsdSysLogHelper(mContext).getWritableDatabase();
             } else {
-                Log.i(TAG,"openDb: mSysLogDb has been initialised already so not doing anything");
+                Log.i(TAG, "openDb: mSysLogDb has been initialised already so not doing anything");
             }
             if (!checkTableExists(mSysLogDb, mSysLogTableName)) {
-                Log.e(TAG, "ERROR - Table "+mSysLogTableName+" does not exist");
+                Log.e(TAG, "ERROR - Table " + mSysLogTableName + " does not exist");
                 return false;
             } else {
                 Log.d(TAG, "table " + mSysLogTableName + " exists ok");
@@ -565,7 +582,7 @@ public class OsdUtil {
                     + 0
                     + ")";
             mSysLogDb.execSQL(SQLStr);
-            Log.v(TAG, "syslog entry written to database: "+logText);
+            Log.v(TAG, "syslog entry written to database: " + logText);
             pruneSysLogDb();
 
         } catch (SQLException e) {
@@ -612,7 +629,6 @@ public class OsdUtil {
     /**
      * Executes the sqlite query (=SELECT statement)
      * Use as new SelectQueryTask(xxx,xxx,xx,xxxx).execute()
-     *
      */
     static private class SelectQueryTask extends AsyncTask<Void, Void, Cursor> {
         // Based on https://stackoverflow.com/a/21120199/2104584
@@ -667,7 +683,6 @@ public class OsdUtil {
             mCallback.accept(result);
         }
     }
-
 
 
     /**
@@ -728,15 +743,64 @@ public class OsdUtil {
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             // This database is only a cache for online data, so its upgrade policy is
             // to simply to discard the data and start over
-            Log.i(TAG,"onUpgrade()");
+            Log.i(TAG, "onUpgrade()");
             db.execSQL("Drop table if exists " + mSysLogTableName + ";");
             onCreate(db);
         }
 
         public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            Log.i(TAG,"onDowngrade()");
+            Log.i(TAG, "onDowngrade()");
             onUpgrade(db, oldVersion, newVersion);
         }
+    }
+
+
+    public String[] getRequiredBtPermissions() {
+        // API 31 is Android 12 - see https://developer.android.com/develop/connectivity/bluetooth/bt-permissions
+        if (Build.VERSION.SDK_INT >= 31) {
+            Log.d(TAG, "getRequiredBtPermissions() - using new Bluetooth Permissions");
+            BT_PERMISSIONS = BT_PERMISSIONS_API30;
+        } else {
+            Log.d(TAG, "getRequiredBtPermissions() - using old Bluetooth Permissions");
+            BT_PERMISSIONS = BT_PERMISSIONS_OLD;
+        }
+        return (BT_PERMISSIONS);
+    }
+    public boolean areBtPermissionsOk() {
+        String[] btPermissions = getRequiredBtPermissions();
+        boolean allOk = true;
+        Log.d(TAG, "areBTPermissions OK()");
+        for (int i = 0; i < btPermissions.length; i++) {
+            if (ContextCompat.checkSelfPermission(mContext, btPermissions[i])
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, btPermissions[i] + " Permission Not Granted");
+                allOk = false;
+            }
+        }
+        return allOk;
+    }
+
+    public double parseToDouble(String userInput) {
+        /**
+         * Parse a string to a double value, taking localisation into account.
+         * Using NumberFormat as recommended by https://docs.oracle.com/javase%2F7%2Fdocs%2Fapi%2F%2F/java/lang/Double.html#valueOf(java.lang.String)
+         */
+        double retVal;
+        try {
+            Locale currentLocale;
+            if (android.os.Build.VERSION.SDK_INT < 24) {
+                currentLocale = mContext.getResources().getConfiguration().locale;
+            } else {
+                currentLocale = mContext.getResources().getConfiguration().getLocales().get(0);
+            }
+            NumberFormat nf = NumberFormat.getInstance(currentLocale);
+            retVal = nf.parse(userInput).doubleValue();
+        } catch (ParseException e) {
+            // Handle invalid input (e.g., non-numeric characters)
+            showToast("Invalid input. Please enter a valid numeric value.");
+            retVal = 0.0;
+        }
+        return(retVal);
     }
 
 }

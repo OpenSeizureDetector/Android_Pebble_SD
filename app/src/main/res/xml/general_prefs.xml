@@ -8,6 +8,11 @@
         android:entryValues="@array/datasource_list_values"
         android:defaultValue="Phone"
         android:dialogTitle="@string/select_datasource_title" />
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="UseNewUi"
+        android:summary="@string/use_new_ui_summary"
+        android:title="@string/use_new_ui_title" />
     <!--
     <CheckBoxPreference
         android:defaultValue="true"
@@ -50,13 +55,14 @@
         android:key="OSDUrl"
         android:summary="@string/remote_url_summary"
         android:title="@string/remote_url_title" />
-        -->
+
 
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="PreventSleep"
         android:summary="@string/prevent_sleep_summary"
         android:title="@string/prevent_sleep_title" />
+        -->
     <!--<EditTextPreference
         android:defaultValue="1000"
         android:key="UpdatePeriod"

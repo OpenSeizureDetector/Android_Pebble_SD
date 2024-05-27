@@ -86,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
     private Intent sdServerIntent;
 
     final Handler serverStatusHandler = new Handler();
+    final Handler mHandler = new Handler();
     Messenger messenger = new Messenger(new ResponseHandler());
     Timer mUiTimer;
     private Context mContext;
@@ -275,20 +276,27 @@ public class MainActivity extends AppCompatActivity {
                     mConnection.mSdServer.acceptAlarm();
                 }
                 return true;
-            case R.id.action_start_stop:
+            case R.id.action_exit:
                 // Respond to the start/stop server menu item.
-                Log.i(TAG, "action_sart_stop");
-                if (mConnection.mBound) {
-                    Log.i(TAG, "Stopping Server");
-                    mUtil.unbindFromServer(getApplicationContext(), mConnection);
-                    stopServer();
-                } else {
-                    Log.i(TAG, "Starting Server");
-                    startServer();
-                    // and bind to it so we can see its data
-                    Log.i(TAG, "Binding to Server");
-                    mUtil.bindToServer(getApplicationContext(), mConnection);
-                }
+                Log.i(TAG, "action_exit: Stopping Server");
+                mUtil.unbindFromServer(getApplicationContext(), mConnection);
+                stopServer();
+                // We exit this activity as a crude way of forcing the fragments to disconnect from the server
+                // so that the server exits properly - otherwise we end up with multiple threads running.
+                // FIXME - tell the threads to unbind from the serer before calling stopServer as an alternative.
+                finish();
+                return true;
+            case R.id.action_start_stop:
+                Log.i(TAG, "action_start_stop: restarting server");
+                mUtil.showToast("Stopping Background Service....");
+                mUtil.stopServer();
+                // Wait 1 second to give the server chance to shutdown, then re-start it
+                mHandler.postDelayed(new Runnable() {
+                    public void run() {
+                        mUtil.showToast("Re-Starting Background Service...");
+                        mUtil.startServer();
+                    }
+                }, 1000);
                 return true;
             /* fault beep test does not work with fault timer, so disable test option.
             case R.id.action_test_fault_beep:
@@ -517,16 +525,16 @@ public class MainActivity extends AppCompatActivity {
                 if (mConnection.mBound) {
                     if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
                         if (mConnection.mSdServer.mLogNDA)
-                            tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)" + "\nNDA Logging");
+                            tv.setText(getString(R.string.ServerRunningOK) + "\n" + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)" + "\nNDA Logging");
                         else
-                            tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)");
+                            tv.setText(getString(R.string.ServerRunningOK) + "\n" + getString(R.string.DataSource) + " = " + "Phone" + "\n" + "(Demo Mode)");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
                     } else {
                         if (mConnection.mSdServer.mLogNDA)
-                            tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName + "\nNDA Logging");
+                            tv.setText(getString(R.string.ServerRunningOK) + "\n" + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName + "\nNDA Logging");
                         else
-                            tv.setText(getString(R.string.ServerRunningOK) + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
+                            tv.setText(getString(R.string.ServerRunningOK) + "\n" + getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
                     }
@@ -632,7 +640,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(warnTextColour);
                     }
                     if (mConnection.mSdServer.mSdData.alarmStanding) {
-                        tv.setText(R.string.Alarm);
+                        tv.setText(getString(R.string.Alarm) + "\n" + mConnection.mSdServer.mSdData.alarmCause);
                         tv.setBackgroundColor(alarmColour);
                         tv.setTextColor(alarmTextColour);
                     }
@@ -642,7 +650,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(alarmTextColour);
                     }
 
-                    tv = (TextView) findViewById(R.id.pebTimeTv);
+                    tv = (TextView) findViewById(R.id.data_time_tv);
                     tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
@@ -652,16 +660,16 @@ public class MainActivity extends AppCompatActivity {
                     //if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
                     if (mConnection.mSdServer.mSdData.mO2Sat > 0) {
                         tv.setText(getString(R.string.HR_Equals) + " " + Math.round(mConnection.mSdServer.mSdData.mHR) + " bpm\n"
-                                +"(av = "
-                                +Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage)+", "
-                                +Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage)+" bpm)\n"
-                                + getString(R.string.SpO2)+" = " + Math.round(mConnection.mSdServer.mSdData.mO2Sat) + "%");
+                                + "(av = "
+                                + Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage) + ", "
+                                + Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage) + " bpm)\n"
+                                + getString(R.string.SpO2) + " = " + Math.round(mConnection.mSdServer.mSdData.mO2Sat) + "%");
                     } else {
                         tv.setText(getString(R.string.HR_Equals) + " " + Math.round(mConnection.mSdServer.mSdData.mHR) + " bpm\n"
-                                +"(av = "
-                                +Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage)+", "
-                                +Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage)+" bpm)\n"
-                                + getString(R.string.SpO2)+" = ---%");
+                                + "(av = "
+                                + Math.round(mConnection.mSdServer.mSdData.mAdaptiveHrAverage) + ", "
+                                + Math.round(mConnection.mSdServer.mSdData.mAverageHrAverage) + " bpm)\n"
+                                + getString(R.string.SpO2) + " = ---%");
                     }
                     if (mConnection.mSdServer.mSdData.mHRAlarmStanding
                             || mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding
@@ -690,7 +698,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                     */
 
-                    tv = (TextView) findViewById(R.id.appTv);
+                    tv = (TextView) findViewById(R.id.fragment_watch_app_status_tv);
                     if (mConnection.mSdServer.mSdData.watchAppRunning) {
                         tv.setText(R.string.WatchAppOK);
                         tv.setBackgroundColor(okColour);
@@ -701,20 +709,31 @@ public class MainActivity extends AppCompatActivity {
                         tv.setTextColor(warnTextColour);
                     }
                     tv = (TextView) findViewById(R.id.battTv);
-                    tv.setText(getString(R.string.WatchBatteryEquals) + String.valueOf(mConnection.mSdServer.mSdData.batteryPc) + "%");
-                    if (mConnection.mSdServer.mSdData.batteryPc <= 10) {
-                        tv.setBackgroundColor(alarmColour);
-                        tv.setTextColor(alarmTextColour);
-                    }
-                    if (mConnection.mSdServer.mSdData.batteryPc > 10) {
-                        tv.setBackgroundColor(warnColour);
-                        tv.setTextColor(warnTextColour);
-                    }
-                    if (mConnection.mSdServer.mSdData.batteryPc >= 20) {
+                    if (mConnection.mSdServer.mSdData.dataSourceName.equals("Phone")) {
+                        tv.setText(getString(R.string.WatchBatteryEquals)
+                                + "---% / "
+                                + String.valueOf(mConnection.mSdServer.mSdData.phoneBatteryPc) + "%");
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
-                    }
 
+                    } else {
+                        tv.setText(getString(R.string.WatchBatteryEquals)
+                                + String.valueOf(mConnection.mSdServer.mSdData.batteryPc) + "% / "
+                                + String.valueOf(mConnection.mSdServer.mSdData.phoneBatteryPc) + "%");
+
+                        if (mConnection.mSdServer.mSdData.batteryPc <= 10) {
+                            tv.setBackgroundColor(alarmColour);
+                            tv.setTextColor(alarmTextColour);
+                        }
+                        if (mConnection.mSdServer.mSdData.batteryPc > 10) {
+                            tv.setBackgroundColor(warnColour);
+                            tv.setTextColor(warnTextColour);
+                        }
+                        if (mConnection.mSdServer.mSdData.batteryPc >= 20) {
+                            tv.setBackgroundColor(okColour);
+                            tv.setTextColor(okTextColour);
+                        }
+                    }
                     ////////////////////////////////////////////////////////////
                     // Populate the Data Sharing Status Box
                     // We start off with it set to OK, then check for several different abnormal conditions
@@ -810,7 +829,7 @@ public class MainActivity extends AppCompatActivity {
                             " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
                     ((TextView) findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
                             " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
-                    ((TextView) findViewById(R.id.pSeizureTv)).setText(getString(R.string.seizure_probability)+" = " + pSeizurePc + "%");
+                    ((TextView) findViewById(R.id.pSeizureTv)).setText(getString(R.string.seizure_probability) + " = " + pSeizurePc + "%");
 
                     ProgressBar pb;
                     Drawable pbDrawable;
@@ -865,12 +884,12 @@ public class MainActivity extends AppCompatActivity {
                             tv.setBackgroundColor(warnColour);
                             tv.setTextColor(warnTextColour);
                         }
-                        tv = (TextView) findViewById(R.id.pebTimeTv);
+                        tv = (TextView) findViewById(R.id.data_time_tv);
                         tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
                         tv.setBackgroundColor(okColour);
                         tv.setTextColor(okTextColour);
 
-                        tv = (TextView) findViewById(R.id.pebTimeTv);
+                        tv = (TextView) findViewById(R.id.data_time_tv);
                         tv.setText("--:--:--");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
@@ -880,7 +899,7 @@ public class MainActivity extends AppCompatActivity {
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
 
-                        tv = (TextView) findViewById(R.id.appTv);
+                        tv = (TextView) findViewById(R.id.fragment_watch_app_status_tv);
                         tv.setText(getString(R.string.WatchApp) + " ----");
                         tv.setBackgroundColor(warnColour);
                         tv.setTextColor(warnTextColour);
@@ -895,12 +914,12 @@ public class MainActivity extends AppCompatActivity {
                     tv.setText(R.string.Dashes);
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
-                    tv = (TextView) findViewById(R.id.pebTimeTv);
+                    tv = (TextView) findViewById(R.id.data_time_tv);
                     tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
 
-                    tv = (TextView) findViewById(R.id.pebTimeTv);
+                    tv = (TextView) findViewById(R.id.data_time_tv);
                     tv.setText("--:--:--");
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
@@ -910,7 +929,7 @@ public class MainActivity extends AppCompatActivity {
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
 
-                    tv = (TextView) findViewById(R.id.appTv);
+                    tv = (TextView) findViewById(R.id.fragment_watch_app_status_tv);
                     tv.setText(getString(R.string.WatchApp) + " -----");
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
@@ -1076,6 +1095,25 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         Log.i(TAG, "onResume()");
         mUtil.writeToSysLogFile("MainActivity.onResume()");
+
+        // Check to see if the user has asked for the new user interface to be used instead of this one
+        // and start that if necessary.
+        try {
+            SharedPreferences SP = PreferenceManager
+                    .getDefaultSharedPreferences(getBaseContext());
+            boolean useNewUi = SP.getBoolean("UseNewUi", false);
+            if (useNewUi) {
+                Log.i(TAG,"onResume() - launching new User Interface");
+                Intent intent = new Intent(
+                        getApplicationContext(),
+                        MainActivity2.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                startActivity(intent);
+                finish();
+            }
+        } catch (Exception ex) {
+            Log.e(TAG, "exception starting main activity " + ex.toString());
+        }
     }
 
 

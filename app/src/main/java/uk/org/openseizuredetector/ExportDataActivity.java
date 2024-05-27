@@ -35,11 +35,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 public class ExportDataActivity extends AppCompatActivity
         implements View.OnClickListener {
@@ -198,8 +200,8 @@ public class ExportDataActivity extends AppCompatActivity
         if (view == mExportBtn) {
             mDateTxt.setText(String.format("%02d-%02d-%04d", mDay, mMonth + 1, mYear));
             mTimeTxt.setText(String.format("%02d:%02d:%02d", mHour, mMinute, 00));
-            mDuration = Double.parseDouble(mDurationTxt.getText().toString());
 
+            mDuration = mUtil.parseToDouble(mDurationTxt.getText().toString());
             String dateTimeStr = String.format("%04d-%02d-%02dT%02d:%02d:%02dZ", mYear, mMonth + 1, mDay, mHour, mMinute, 00);
             //mUtil.showToast(dateTimeStr);
             mEndDate = mUtil.string2date(dateTimeStr);
@@ -226,14 +228,14 @@ public class ExportDataActivity extends AppCompatActivity
 
     public void hideProgressBar() {
         runOnUiThread(new Runnable() {
-                public void run() {
-                    ProgressBar pb = (ProgressBar) findViewById(R.id.exportPb);
-                    pb.setIndeterminate(true);
-                    pb.setVisibility(View.INVISIBLE);
-                    mExportBtn.setEnabled(true);
-                    mExportBtn.setVisibility(View.VISIBLE);
+            public void run() {
+                ProgressBar pb = (ProgressBar) findViewById(R.id.exportPb);
+                pb.setIndeterminate(true);
+                pb.setVisibility(View.INVISIBLE);
+                mExportBtn.setEnabled(true);
+                mExportBtn.setVisibility(View.VISIBLE);
 
-                }
+            }
         });
     }
 
@@ -265,8 +267,8 @@ public class ExportDataActivity extends AppCompatActivity
                 // Perform operations on the document using its URI.
                 //mUtil.showToast("URI="+uri.toString());
                 Log.v(TAG, "onActivityResult() - exporting to file " + uri.toString());
-                mLm.exportToCsvFile(mEndDate, mDuration,uri, (boolean b)-> {
-                    Log.v(TAG,"onActivityResult callback");
+                mLm.exportToCsvFile(mEndDate, mDuration, uri, (boolean b) -> {
+                    Log.v(TAG, "onActivityResult callback");
                     hideProgressBar();
                 });
 

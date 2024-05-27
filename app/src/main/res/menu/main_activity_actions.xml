@@ -12,6 +12,12 @@
             android:id="@+id/action_start_stop"
             android:icon="@drawable/stop_server"
             app:showAsAction="never|withText"
+            android:title="@string/restart_server"
+            android:enabled="false" />
+        <item
+            android:id="@+id/action_exit"
+            android:icon="@drawable/stop_server"
+            app:showAsAction="never|withText"
             android:title="@string/start_stop_server" />
     </group>
     <group android:id="@+id/grp3">

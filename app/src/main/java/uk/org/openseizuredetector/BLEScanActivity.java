@@ -29,12 +29,16 @@ import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -47,6 +51,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -65,28 +70,33 @@ public class BLEScanActivity extends ListActivity {
     private Handler mHandler;
     private boolean bleAvailable = false;
 
+    private OsdUtil mUtil;
+
     private boolean mPermissionsRequested = false;
     private final String TAG = "BLEScanActivity";
 
-    private final String[] REQUIRED_PERMISSIONS = {
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.BLUETOOTH,
-            Manifest.permission.BLUETOOTH_ADMIN,
-            //Manifest.permission.BLUETOOTH_PRIVILEGED,
-    };
 
     private static final int REQUEST_ENABLE_BT = 1;
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10000;
 
+    private int okColour = Color.BLUE;
+    private int warnColour = Color.MAGENTA;
+    private int alarmColour = Color.RED;
+    private int okTextColour = Color.WHITE;
+    private int warnTextColour = Color.WHITE;
+    private int alarmTextColour = Color.BLACK;
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i(TAG,"onCreate()");
         setContentView(R.layout.ble_scan_activity);
         //this.getActionBar().setTitle(R.string.title_devices);
         this.setTitle(R.string.title_devices);
         mHandler = new Handler();
+        mUtil = new OsdUtil(this, mHandler);
 
         // Use this check to determine whether BLE is supported on the device.  Then you can
         // selectively disable BLE-related features.
@@ -111,6 +121,8 @@ public class BLEScanActivity extends ListActivity {
         }
 
         mBluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
+
+        mPermissionsRequested = false;
     }
 
     @Override
@@ -151,6 +163,7 @@ public class BLEScanActivity extends ListActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        Log.i(TAG,"onResume()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(this);
         TextView tv = (TextView) findViewById(R.id.current_ble_device_tv);
@@ -158,61 +171,56 @@ public class BLEScanActivity extends ListActivity {
             String bleAddr = SP.getString("BLE_Device_Addr", "none");
             String bleName = SP.getString("BLE_Device_Name", "none");
             tv.setText("Current Device=" + bleName + " (" + bleAddr + ")");
+            tv.setTextColor(okTextColour);
+            tv.setBackgroundColor(okColour);
         } catch (Exception e) {
             tv.setText("Current Device=" + "none" + " (" + "none" + ")");
+            tv.setTextColor(warnTextColour);
+            tv.setBackgroundColor(warnColour);
         }
 
         tv = (TextView) findViewById(R.id.ble_present_tv);
         if (mBluetoothAdapter == null) {
             tv.setText("ERROR - Bluetooth Adapter Not Present");
+            tv.setTextColor(alarmTextColour);
+            tv.setBackgroundColor(alarmColour);
         } else {
             tv.setText("Bluetooth Adapter Present - OK");
+            tv.setTextColor(okTextColour);
+            tv.setBackgroundColor(okColour);
         }
         // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
         // fire an intent to display a dialog asking the user to grant permission to enable it.
         tv = (TextView) findViewById(R.id.ble_adapter_tv);
         if (!mBluetoothAdapter.isEnabled()) {
-            tv.setText("ERROR - Bluetoot NOT Enabled");
+            tv.setText("ERROR - Bluetooth NOT Enabled");
+            tv.setTextColor(alarmTextColour);
+            tv.setBackgroundColor(alarmColour);
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         } else {
             tv.setText("Bluetooth Adapter Enabled OK");
+            tv.setTextColor(okTextColour);
+            tv.setBackgroundColor(okColour);
         }
 
-        requestBTPermissions(this);
-
-        for (int i = 0; i < REQUIRED_PERMISSIONS.length; i++) {
-            if (ContextCompat.checkSelfPermission(this, REQUIRED_PERMISSIONS[i]) == PERMISSION_GRANTED) {
-                Log.i(TAG, "Permission " + REQUIRED_PERMISSIONS[i] + " OK");
-            } else {
-                Log.e(TAG, "Permission " + REQUIRED_PERMISSIONS[i] + " NOT GRANTED");
-                Toast.makeText(this, "ERROR - Permission " + REQUIRED_PERMISSIONS[i] + " not Granted - this will not work!!!!!", Toast.LENGTH_SHORT).show();
-            }
+        if (!mUtil.areBtPermissionsOk()) {
+            Log.i(TAG, "onResume - calling requestBTPermissions()");
+            requestBTPermissions(this);
+        } else {
+            Log.i(TAG, "onResume - Bluetooth Permissions OK");
         }
+
 
         tv = (TextView) findViewById(R.id.ble_perm1_tv);
-        if (ContextCompat.checkSelfPermission(this, REQUIRED_PERMISSIONS[0]) == PERMISSION_GRANTED) {
-            tv.setText("Permission " + REQUIRED_PERMISSIONS[0] + " OK");
+        if (mUtil.areBtPermissionsOk()) {
+            tv.setText("Permissions required for Bluetooth Granted OK");
+            tv.setBackgroundColor(okColour);
+            tv.setTextColor(okTextColour);
         } else {
-            tv.setText("ERROR: Permission " + REQUIRED_PERMISSIONS[0] + " NOT GRANTED");
-        }
-        tv = (TextView) findViewById(R.id.ble_perm2_tv);
-        if (ContextCompat.checkSelfPermission(this, REQUIRED_PERMISSIONS[1]) == PERMISSION_GRANTED) {
-            tv.setText("Permission " + REQUIRED_PERMISSIONS[1] + " OK");
-        } else {
-            tv.setText("ERROR: Permission " + REQUIRED_PERMISSIONS[1] + " NOT GRANTED");
-        }
-        tv = (TextView) findViewById(R.id.ble_perm3_tv);
-        if (ContextCompat.checkSelfPermission(this, REQUIRED_PERMISSIONS[2]) == PERMISSION_GRANTED) {
-            tv.setText("Permission " + REQUIRED_PERMISSIONS[2] + " OK");
-        } else {
-            tv.setText("ERROR: Permission " + REQUIRED_PERMISSIONS[2] + " NOT GRANTED");
-        }
-        tv = (TextView) findViewById(R.id.ble_perm4_tv);
-        if (ContextCompat.checkSelfPermission(this, REQUIRED_PERMISSIONS[3]) == PERMISSION_GRANTED) {
-            tv.setText("Permission " + REQUIRED_PERMISSIONS[3] + " OK");
-        } else {
-            tv.setText("ERROR: Permission " + REQUIRED_PERMISSIONS[3] + " NOT GRANTED");
+            tv.setText("ERROR: one or more permissions not granted - this may not work!");
+            tv.setBackgroundColor(warnColour);
+            tv.setTextColor(warnTextColour);
         }
 
 
@@ -266,22 +274,56 @@ public class BLEScanActivity extends ListActivity {
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences((this));
         Log.v(TAG, "Check of saved values - Name=" + SP.getString("BLE_Device_Name", "NOT SET") + ", Addr=" + SP.getString("BLE_Device_Addr", "NOT SET"));
 
+        Log.i(TAG, "Restarting start-up activity so change takes effect");
+        Intent i;
+        i = new Intent(this, StartupActivity.class);
+        startActivity(i);
         finish();
     }
 
     public void requestBTPermissions(Activity activity) {
         if (mPermissionsRequested) {
-            Log.i(TAG, "requestPermissions() - request already sent - not doing anything");
+            Log.i(TAG, "requestBTPermissions() - request already sent - not doing anything");
         } else {
-            Log.i(TAG, "requestPermissions() - requesting permissions");
-            for (int i = 0; i < REQUIRED_PERMISSIONS.length; i++) {
+            Log.i(TAG, "requestBTPermissions() - showing rationale (if necessary)");
+            boolean showRationale = false;
+            String btPermissions[] = mUtil.getRequiredBtPermissions();
+            for (int i = 0; i < btPermissions.length; i++) {
                 if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
-                        REQUIRED_PERMISSIONS[i])) {
-                    Log.i(TAG, "shouldShowRationale for permission" + REQUIRED_PERMISSIONS[i]);
+                        btPermissions[i])) {
+                    Log.i(TAG, "shouldShowRationale for permission" + btPermissions[i]);
+                    showRationale = true;
+                    Toast toast = Toast.makeText(this, "Please give us permission! "+ btPermissions[i], Toast.LENGTH_SHORT);
+                    toast.show();
                 }
             }
+            if (showRationale) {
+                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                        this);
+                alertDialogBuilder
+                        .setTitle(getString(R.string.permissions_required))
+                        .setMessage("Additional Permissions are required to scan for Bluetooth Devices - please grant the permissions in the following dialogs")
+                        .setCancelable(false)
+                        .setNegativeButton(getString(R.string.closeBtnTxt), new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                                finish();
+                            }
+                        })
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        })
+                        .create()
+                        .show();
+            } else {
+                Log.i(TAG,"requestBTPermissions() - rationale display not required");
+            }
+
+            Log.i(TAG, "requestBTPermissions() - requesting permissions");
             ActivityCompat.requestPermissions(activity,
-                    REQUIRED_PERMISSIONS,
+                    btPermissions,
                     42);
             mPermissionsRequested = true;
         }
@@ -292,10 +334,13 @@ public class BLEScanActivity extends ListActivity {
         try {
             mBluetoothLeScanner.startScan(mLeScanCallback);
         } catch (SecurityException e) {
-            Log.e(TAG,"startScan - SecurityException while starting scan");
-            Toast toast = Toast.makeText(this, "ERROR Starting Scan - Security Exception", Toast.LENGTH_SHORT);
+            Log.e(TAG, "startScan - SecurityException while starting scan:" +e.getMessage());
+            Toast toast = Toast.makeText(this, "ERROR - Security Exception "+e.getMessage(), Toast.LENGTH_SHORT);
             toast.show();
-
+        } catch (Exception e) {
+            Log.e(TAG,"startScan - Exception while starting scan:"+e.getMessage());
+            Toast toast = Toast.makeText(this, "ERROR Starting Scan", Toast.LENGTH_SHORT);
+            toast.show();
         }
     }
 
@@ -304,7 +349,7 @@ public class BLEScanActivity extends ListActivity {
         try {
             mBluetoothLeScanner.stopScan(mLeScanCallback);
         } catch (SecurityException e) {
-            Log.e(TAG,"stopScan - SecurityException while stopping scan");
+            Log.e(TAG, "stopScan - SecurityException while stopping scan");
             Toast toast = Toast.makeText(this, "ERROR Stopping Scan - Security Exception", Toast.LENGTH_SHORT);
             toast.show();
         }
@@ -322,6 +367,10 @@ public class BLEScanActivity extends ListActivity {
                     invalidateOptionsMenu();
                     TextView tv = (TextView) (findViewById(R.id.ble_scan_status_tv));
                     tv.setText("Stopped");
+                    tv.setTextColor(okTextColour);
+                    tv.setBackgroundColor(okColour);
+
+
                     Button b = (Button) findViewById(R.id.startScanButton);
                     b.setEnabled(true);
 
@@ -331,6 +380,9 @@ public class BLEScanActivity extends ListActivity {
             startScan();
             tv = (TextView) (findViewById(R.id.ble_scan_status_tv));
             tv.setText("Scanning");
+            tv.setTextColor(warnTextColour);
+            tv.setBackgroundColor(warnColour);
+
             Button b = (Button) findViewById(R.id.startScanButton);
             b.setEnabled(false);
 
@@ -360,7 +412,7 @@ public class BLEScanActivity extends ListActivity {
                 try {
                     Log.v(TAG, "addDevice - " + device.getName());
                 } catch (SecurityException e) {
-                    Log.e(TAG,"addDevice() - security exception getting device name");
+                    Log.e(TAG, "addDevice() - security exception getting device name");
                 }
                 mLeDevices.add(device);
             }
@@ -425,7 +477,7 @@ public class BLEScanActivity extends ListActivity {
                     try {
                         Log.v(TAG, "ScanCallback - " + result.getDevice().getName());
                     } catch (SecurityException e) {
-                        Log.e(TAG,"ScanCallback - security exception getting device name");
+                        Log.e(TAG, "ScanCallback - security exception getting device name");
                     }
                     mLeDeviceListAdapter.addDevice(result.getDevice());
                     mLeDeviceListAdapter.notifyDataSetChanged();

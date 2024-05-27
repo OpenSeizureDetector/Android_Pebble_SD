@@ -80,6 +80,7 @@ The following libraries are used:
 * (jBeep)[http://www.ultraduz.com.br]
 * (Chartjs)[http://www.chartjs.org]
 * (MPAndroidChart)[https://github.com/PhilJay/MPAndroidChart]
+* (CurrentTimeService)[https://github.com/RideBeeline/android-bluetooth-current-time-service]
 
 Logo based on ["Star of life2" by Verdy p - Own work. Licensed under Public Domain via Wikimedia Commons](http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).
 
