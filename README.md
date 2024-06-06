@@ -17,7 +17,7 @@ rhythmic movements associated with a seizure, but not normal day to day
 activities.
 
 If the acceleration within the given frequency band is more than a
-threshod value, it starts a timer.  If the acceleration remains above
+threshold value, it starts a timer.  If the acceleration remains above
 the threshold for a given period, it issues a warning beep.
 If it remains above the threshold for a longer specified period, the unit
 alarms (continuous tone rather than beep).
@@ -27,10 +27,11 @@ Development
 Git Branches
 ------------
   - The version which is currently published on Play Store is the 'master' branch.
-  - The development version which will be the next major release is the V4.2.x branch.
-  - The V4.3.x branch by user @aroonpro addresses deprecation warnings and a more modern coding style - this will become the development version once we have it working reliably.
+  - The development version which will be the next major release is the Beta branch - this is released on play store for beta testers.
+  - The current working development version is the Alpha branch - this is released on play store for alpha testers.
+  - The V5.x branch by user @aroonpro addresses deprecation warnings and a more modern coding style - this will become the development version once we have it working reliably.
 
-So new developers wishing to implement features should use the V4.2.x branch
+So new developers wishing to implement features should create a fork of the Alpha branch and create a pull request agains that.
 
 Compilation
 -----------
