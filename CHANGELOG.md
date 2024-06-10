@@ -1,6 +1,6 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
-
+    V4.3.0 - Add OS3D algorith which analyses each axis individually
     V4.2.8 - 
            - Fixed crash in export data function when using european style comma based decimal separator.
            - Added seizure probability bar graph from CCN algorithm
