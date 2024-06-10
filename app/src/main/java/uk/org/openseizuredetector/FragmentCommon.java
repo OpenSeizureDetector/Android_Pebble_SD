@@ -141,6 +141,11 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
                 }
+                if (mConnection.mSdServer.mSdData.alarmState == 7) {
+                    tv.setText(R.string.NetFault);
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+                }
 
 
                 tv = (TextView) mRootView.findViewById(R.id.algsTv);

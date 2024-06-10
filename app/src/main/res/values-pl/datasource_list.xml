@@ -2,7 +2,8 @@
 <resources>
     <string-array name="datasource_list">
         <item>"Zegarek Garmin"</item>
-        <item>"Urządzenie Bluetooth"</item>
+        <item>"BangleJS (BLE)"</item>
+        <item>"PineTime (BLE2)"</item>
         <item>"Zegarek Pebble"</item>
         <item>"Czujnik w telefonie (dla testów)"</item>
         <item>"Sieć (dla alarmów przez Wifi)"</item>

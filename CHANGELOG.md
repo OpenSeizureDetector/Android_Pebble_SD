@@ -1,6 +1,6 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
-
+    V4.2.9 - fixed crash when using Polish translation.
     V4.2.8 - 
            - Fixed crash in export data function when using european style comma based decimal separator.
            - Added seizure probability bar graph from CCN algorithm
