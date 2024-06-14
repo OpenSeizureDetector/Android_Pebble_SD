@@ -576,4 +576,6 @@
     <string name="BTpermissions_required">Bluetooth Permissions Required</string>
     <string name="BT_permissions_rationale">Bluetooth permissions are required to communicate with the bluetooth (BLE) data source</string>
     <string name="restart_server">Restart Server</string>
+    <string name="error_failed_to_create_local_event">ERROR: failed to create local event</string>
+    <string name="error_failed_to_start_log_manager">ERROR: Failed to start Log Manager</string>
 </resources>

@@ -219,7 +219,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
             });
         } else {
             Log.e(TAG,"ERROR: initialiseServiceConnection() - mLm is null");
-            mUtil.showToast("ERROR: Failed to start Log Manager");
+            mUtil.showToast(getString(R.string.error_failed_to_start_log_manager));
         }
     }
 
