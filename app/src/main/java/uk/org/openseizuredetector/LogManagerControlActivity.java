@@ -203,19 +203,24 @@ public class LogManagerControlActivity extends AppCompatActivity {
         ProgressBar pb = (ProgressBar) findViewById(R.id.remoteAccessPb);
         pb.setIndeterminate(true);
         pb.setVisibility(View.VISIBLE);
-        // Populate events list - we only do it once when the activity is created because the query might slow down the UI.
-        // We could try this code in updateUI() and see though.
-        // Based on https://www.tutlane.com/tutorial/android/android-sqlite-listview-with-examples
-        mLm.getEventsList(true, (ArrayList<HashMap<String, String>> eventsList) -> {
-            mEventsList = eventsList;
-            Log.v(TAG, "initialiseServiceConnection() - set mEventsList - Updating UI");
-            updateUi();
-        });
-        mUtil.getSysLogList((ArrayList<HashMap<String, String>> syslogList) -> {
-            mSysLogList = syslogList;
-            Log.v(TAG, "initialiseServiceConnection() - set mSysLogList - Updating UI");
-            updateUi();
-        });
+        if (mLm != null) {
+            // Populate events list - we only do it once when the activity is created because the query might slow down the UI.
+            // We could try this code in updateUI() and see though.
+            // Based on https://www.tutlane.com/tutorial/android/android-sqlite-listview-with-examples
+            mLm.getEventsList(true, (ArrayList<HashMap<String, String>> eventsList) -> {
+                mEventsList = eventsList;
+                Log.v(TAG, "initialiseServiceConnection() - set mEventsList - Updating UI");
+                updateUi();
+            });
+            mUtil.getSysLogList((ArrayList<HashMap<String, String>> syslogList) -> {
+                mSysLogList = syslogList;
+                Log.v(TAG, "initialiseServiceConnection() - set mSysLogList - Updating UI");
+                updateUi();
+            });
+        } else {
+            Log.e(TAG,"ERROR: initialiseServiceConnection() - mLm is null");
+            mUtil.showToast(getString(R.string.error_failed_to_start_log_manager));
+        }
     }
 
 

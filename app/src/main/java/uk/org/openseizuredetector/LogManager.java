@@ -381,9 +381,15 @@ public class LogManager {
         values.put("notes", desc);
         values.put("dataJSON", dataJSON);
 
-        long newRowId = mOsdDb.insert(mEventsTableName, null, values);
-        Log.d(TAG, "createLocalEvent(): Created Row ID" + newRowId);
-        return true;
+        if (mOsdDb != null) {
+            long newRowId = mOsdDb.insert(mEventsTableName, null, values);
+            Log.d(TAG, "createLocalEvent(): Created Row ID" + newRowId);
+            return true;
+        } else {
+            Log.e(TAG,"createLocalEvent() - mOsdDb is null");
+            mUtil.showToast(mContext.getString(R.string.error_failed_to_create_local_event));
+            return false;
+        }
     }
 
     /**
