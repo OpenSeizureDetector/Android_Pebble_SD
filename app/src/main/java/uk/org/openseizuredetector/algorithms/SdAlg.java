@@ -1,14 +1,33 @@
 package uk.org.openseizuredetector.algorithms;
 
+import android.content.Context;
 import android.util.Log;
 
 import uk.org.openseizuredetector.SdData;
 
 public class SdAlg {
     protected String TAG = "SdAlg";
-    SdAlg() {
+    protected Context mContext;
+    SdAlg(Context context) {
         Log.v(TAG,"SdAlg Constructor");
-        // FIXME:  Subclass constructors should initialise the algorithm from shared preferences.
+        mContext = context;
+
+        if (mContext == null) {
+            Log.w(TAG,"SdAlg Constructor - context is null, so needs initialising manually");
+        } else {
+            Log.i(TAG,"SdAlg Constructor - Initialising from shared preferences");
+            initialiseFromSharedPreferences();
+        }
+
+    }
+
+    public void close() {
+        Log.v(TAG,"close()");
+    }
+
+    public boolean initialiseFromSharedPreferences() {
+        Log.e(TAG,"initialiseFromSharedPreferences() - THIS FUNCTION SHOULD BE OVERWRITTEN IN SUB CLASS");
+        return true;
     }
 
     /**

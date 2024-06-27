@@ -1,6 +1,6 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
-    V4.3.0 - Add OS3D algorith which analyses each axis individually
+    V4.3.0 - Add OS3D algorith which analyses each axis individually, and flap algorithm
     V4.2.10 - fixed (infrequent) crash when opening data sharing page (#195), and crash if log manager fails to start (#196)
     V4.2.9 - fixed crash when using Polish translation.
     V4.2.8 - 
