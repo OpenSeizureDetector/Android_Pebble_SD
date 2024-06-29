@@ -462,6 +462,22 @@ public abstract class SdDataSource {
         return mag;
     }
 
+
+    /**
+     * getBinNo - returns the FFT bin number corresponding to a frequency freqHz in Hz when the sample frequency is
+     *            sampleFreq Hz and the number of samples collected is nSamp.
+     * @param freqHz :   The frequency (in Hz) for which the bin number is required.
+     * @param sampleFreq:  Sample Frequency (Hz)
+     * @param nSamp: number of samples
+     * @return FFT bin Number
+     */
+    int freq2FftBin(double freqHz, double sampleFreq, int nSamp) {
+        int binNo = (int)(nSamp * freqHz / sampleFreq);
+        return binNo;
+    }
+
+
+
     /**
      * doAnalysis() - analyse the data if the accelerometer data array mAccData
      * and populate the output data structure mSdData
@@ -482,12 +498,12 @@ public abstract class SdDataSource {
             Log.v(TAG, "doAnalysis(): mSampleFreq=" + mSampleFreq + " mNSamp=" + mSdData.mNsamp + ": freqRes=" + freqRes);
             Log.v(TAG, "doAnalysis(): rawData=" + Arrays.toString(mSdData.rawData));
             // Set the frequency bounds for the analysis in fft output bin numbers.
-            nMin = (int) (mAlarmFreqMin / freqRes);
-            nMax = (int) (mAlarmFreqMax / freqRes);
+            nMin = freq2FftBin(mAlarmFreqMin, mSampleFreq, mSdData.mNsamp);
+            nMax = freq2FftBin(mAlarmFreqMax, mSampleFreq, mSdData.mNsamp);
+            // Calculate the bin number of the cutoff frequency
+            nFreqCutoff = freq2FftBin(mFreqCutoff, mSampleFreq, mSdData.mNsamp);
             Log.v(TAG, "doAnalysis(): mAlarmFreqMin=" + mAlarmFreqMin + ", nMin=" + nMin
                     + ", mAlarmFreqMax=" + mAlarmFreqMax + ", nMax=" + nMax);
-            // Calculate the bin number of the cutoff frequency
-            nFreqCutoff = (int) (mFreqCutoff / freqRes);
             Log.v(TAG, "mFreqCutoff = " + mFreqCutoff + ", nFreqCutoff=" + nFreqCutoff);
 
             DoubleFFT_1D fftDo = new DoubleFFT_1D(mSdData.mNsamp);
@@ -583,7 +599,9 @@ public abstract class SdDataSource {
 
         // Check this data to see if it represents an alarm state.
         mSdData.alarmCause = "";
-        alarmCheck();
+
+        boolean flapDetected = flapCheck();
+        alarmCheck(flapDetected);
         hrCheck();
         o2SatCheck();
         fallCheck();
@@ -593,6 +611,88 @@ public abstract class SdDataSource {
         mSdDataReceiver.onSdDataReceived(mSdData);  // and tell SdServer we have received data.
     }
 
+    /**
+     * flapCheck() - Performs the same analysis as the main OSD algorithm, but over a narrow
+     *  frequency band to detect a flapping arm movement.
+     *  returns True if in an alarm state, or false if ok.
+     *  FIXME - we should generalise the OSD algorithm to allow several ROIs and thresholds to be
+     *          specified, rather than doing this separately like this.
+     */
+    protected boolean flapCheck() {
+        boolean retVal;
+        double flapFreqMin = 2.0;
+        double flapFreqMax = 4.0;
+        double flapRatioThresh = 50.0;
+        double flapThresh = 5000.0;
+        int nMin = 0;
+        int nMax = 0;
+        int nFreqCutoff = 0;
+        double[] fft = null;
+        double roiRatio;
+        double roiPower;
+        try {
+            // FIXME - Use specified sampleFreq, not this hard coded one
+            mSampleFreq = 25;
+            double freqRes = 1.0 * mSampleFreq / mSdData.mNsamp;
+            Log.v(TAG, "flapCheck(): mSampleFreq=" + mSampleFreq + " mNSamp=" + mSdData.mNsamp + ": freqRes=" + freqRes);
+            Log.v(TAG, "flapCheck(): rawData=" + Arrays.toString(mSdData.rawData));
+            // Set the frequency bounds for the analysis in fft output bin numbers.
+            nMin = freq2FftBin(flapFreqMin, mSampleFreq, mSdData.mNsamp);
+            nMax = freq2FftBin(flapFreqMax, mSampleFreq, mSdData.mNsamp);
+            // Calculate the bin number of the cutoff frequency
+            nFreqCutoff = freq2FftBin(mFreqCutoff, mSampleFreq, mSdData.mNsamp);
+            Log.v(TAG, "flapCheck(): flapFreqMin=" + flapFreqMin + ", nMin=" + nMin
+                    + ", flapFreqMax=" + flapFreqMax + ", nMax=" + nMax);
+            Log.v(TAG, "mFreqCutoff = " + mFreqCutoff + ", nFreqCutoff=" + nFreqCutoff);
+
+            DoubleFFT_1D fftDo = new DoubleFFT_1D(mSdData.mNsamp);
+            fft = new double[mSdData.mNsamp * 2];
+            System.arraycopy(mSdData.rawData, 0, fft, 0, mSdData.mNsamp);
+            fftDo.realForward(fft);
+
+            // Calculate the whole spectrum power (well a value equivalent to it that avoids square root calculations
+            // and zero any readings that are above the frequency cutoff.
+            double specPower = 0;
+            for (int i = 1; i < mSdData.mNsamp / 2; i++) {
+                if (i <= nFreqCutoff) {
+                    specPower = specPower + getMagnitude(fft, i);
+                } else {
+                    fft[2 * i] = 0.;
+                    fft[2 * i + 1] = 0.;
+                }
+            }
+            specPower = specPower / mSdData.mNsamp / 2;
+            specPower = specPower / ACCEL_SCALE_FACTOR;
+
+            // Calculate the Region of Interest power and power ratio.
+            roiPower = 0;
+            for (int i = nMin; i < nMax; i++) {
+                roiPower = roiPower + getMagnitude(fft, i);
+            }
+            roiPower = roiPower / (nMax - nMin);
+            roiPower = roiPower / ACCEL_SCALE_FACTOR;
+
+            roiRatio = 10 * roiPower / specPower;
+
+            Log.d(TAG, "flapCheck() - roiPower="+roiPower+", roiRatio="+roiRatio);
+
+        } catch (Exception e) {
+            Log.e(TAG, "flapCheck - Exception during Analysis"+e.toString());
+            roiRatio = 0;
+            roiPower = 0;
+        }
+
+        retVal = false;
+        if (roiPower > flapThresh) {
+            if (roiRatio > flapRatioThresh) {
+                Log.i(TAG,"flapCheck() - *** flap detected ***");
+                retVal = true;
+            }
+        }
+        return retVal;
+    }
+
+
 
     /****************************************************************
      * checkAlarm() - checks the current accelerometer data and uses
@@ -600,7 +700,7 @@ public abstract class SdDataSource {
      * state.
      * Sets mSdData.alarmState and mSdData.hrAlarmStanding
      */
-    private void alarmCheck() {
+    private void alarmCheck(boolean flapDetected) {
         boolean inAlarm = false;
         // Avoid potential divide by zero issue
         if (mSdData.specPower == 0)
@@ -612,6 +712,13 @@ public abstract class SdDataSource {
             if ((mSdData.roiPower > mAlarmThresh) && ((10 * mSdData.roiPower / mSdData.specPower) > mAlarmRatioThresh)) {
                 inAlarm = true;
                 mSdData.alarmCause = mSdData.alarmCause + "OsdAlg ";
+            }
+        }
+
+        if (mSdData.mFlapAlarmActive) {
+            if (flapDetected) {
+                inAlarm = true;
+                mSdData.alarmCause = mSdData.alarmCause + "Flap ";
             }
         }
 
@@ -1143,6 +1250,10 @@ public abstract class SdDataSource {
                 mSdData.mOsdAlarmActive = SP.getBoolean("OsdAlarmActive", false);
                 Log.v(TAG, "updatePrefs() OsdAlarmActive = " + mSdData.mOsdAlarmActive);
                 mUtil.writeToSysLogFile("updatePrefs() OsdAlarmActive = " + mSdData.mOsdAlarmActive);
+
+                mSdData.mFlapAlarmActive = SP.getBoolean("FlapAlarmActive", true);
+                Log.v(TAG, "updatePrefs() FlapAlarmActive = " + mSdData.mFlapAlarmActive);
+                mUtil.writeToSysLogFile("updatePrefs() FlaplarmActive = " + mSdData.mFlapAlarmActive);
 
                 mSdData.mCnnAlarmActive = SP.getBoolean("CnnAlarmActive", false);
                 Log.v(TAG, "updatePrefs() CnnAlarmActive = " + mSdData.mCnnAlarmActive);

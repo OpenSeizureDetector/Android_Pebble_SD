@@ -7,6 +7,11 @@
             android:summary="@string/OsdAlarmEnabledSummary"
             android:title="@string/OsdAlarmEnabledTitle" />
         <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="FlapAlarmActive"
+            android:summary="Enable the experimental alarm to detect arm 'flapping' motion"
+            android:title="Enable Flap Alarm" />
+        <CheckBoxPreference
             android:defaultValue="false"
             android:key="CnnAlarmActive"
             android:summary="@string/CnnAlarmEnabledSummary"
