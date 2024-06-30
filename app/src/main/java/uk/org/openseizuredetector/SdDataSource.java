@@ -89,6 +89,12 @@ public abstract class SdDataSource {
     private short mAlarmTime;
     private short mAlarmThresh;
     private short mAlarmRatioThresh;
+
+    private short mFlapThresh;
+    private short mFlapRatioThresh;
+    private double mFlapFreqMin;
+    private double mFlapFreqMax;
+
     private boolean mFallActive;
     private short mFallThreshMin;
     private short mFallThreshMax;
@@ -620,10 +626,6 @@ public abstract class SdDataSource {
      */
     protected boolean flapCheck() {
         boolean retVal;
-        double flapFreqMin = 2.0;
-        double flapFreqMax = 4.0;
-        double flapRatioThresh = 50.0;
-        double flapThresh = 5000.0;
         int nMin = 0;
         int nMax = 0;
         int nFreqCutoff = 0;
@@ -637,12 +639,12 @@ public abstract class SdDataSource {
             Log.v(TAG, "flapCheck(): mSampleFreq=" + mSampleFreq + " mNSamp=" + mSdData.mNsamp + ": freqRes=" + freqRes);
             Log.v(TAG, "flapCheck(): rawData=" + Arrays.toString(mSdData.rawData));
             // Set the frequency bounds for the analysis in fft output bin numbers.
-            nMin = freq2FftBin(flapFreqMin, mSampleFreq, mSdData.mNsamp);
-            nMax = freq2FftBin(flapFreqMax, mSampleFreq, mSdData.mNsamp);
+            nMin = freq2FftBin(mFlapFreqMin, mSampleFreq, mSdData.mNsamp);
+            nMax = freq2FftBin(mFlapFreqMax, mSampleFreq, mSdData.mNsamp);
             // Calculate the bin number of the cutoff frequency
             nFreqCutoff = freq2FftBin(mFreqCutoff, mSampleFreq, mSdData.mNsamp);
-            Log.v(TAG, "flapCheck(): flapFreqMin=" + flapFreqMin + ", nMin=" + nMin
-                    + ", flapFreqMax=" + flapFreqMax + ", nMax=" + nMax);
+            Log.v(TAG, "flapCheck(): flapFreqMin=" + mFlapFreqMin + ", nMin=" + nMin
+                    + ", flapFreqMax=" + mFlapFreqMax + ", nMax=" + nMax);
             Log.v(TAG, "mFreqCutoff = " + mFreqCutoff + ", nFreqCutoff=" + nFreqCutoff);
 
             DoubleFFT_1D fftDo = new DoubleFFT_1D(mSdData.mNsamp);
@@ -683,8 +685,8 @@ public abstract class SdDataSource {
         }
 
         retVal = false;
-        if (roiPower > flapThresh) {
-            if (roiRatio > flapRatioThresh) {
+        if (roiPower > mFlapThresh) {
+            if (roiRatio > mFlapRatioThresh) {
                 Log.i(TAG,"flapCheck() - *** flap detected ***");
                 retVal = true;
             }
@@ -1254,6 +1256,26 @@ public abstract class SdDataSource {
                 mSdData.mFlapAlarmActive = SP.getBoolean("FlapAlarmActive", true);
                 Log.v(TAG, "updatePrefs() FlapAlarmActive = " + mSdData.mFlapAlarmActive);
                 mUtil.writeToSysLogFile("updatePrefs() FlaplarmActive = " + mSdData.mFlapAlarmActive);
+
+                prefStr = SP.getString("FlapAlarmThresh", "SET_FROM_XML");
+                mFlapThresh = (short) Integer.parseInt(prefStr);
+                Log.v(TAG, "updatePrefs() FlapAlarmThresh = " + mFlapThresh);
+                mUtil.writeToSysLogFile("updatePrefs() FlapThresh = " + mFlapThresh);
+
+                prefStr = SP.getString("FlapAlarmRatioThresh", "SET_FROM_XML");
+                mFlapRatioThresh = (short) Integer.parseInt(prefStr);
+                Log.v(TAG, "updatePrefs() FlapAlarmRatioThresh = " + mFlapRatioThresh);
+                mUtil.writeToSysLogFile("updatePrefs() FlapAlarmRatioThresh = " + mFlapRatioThresh);
+
+                prefStr = SP.getString("FlapAlarmFreqMin", "SET_FROM_XML");
+                mFlapFreqMin = (double) Double.parseDouble(prefStr);
+                Log.v(TAG, "updatePrefs() FlapAlarmFreqMin = " + mFlapFreqMin);
+                mUtil.writeToSysLogFile("updatePrefs() FlapAlarmFreqMin = " + mFlapFreqMin);
+
+                prefStr = SP.getString("FlapAlarmFreqMax", "SET_FROM_XML");
+                mFlapFreqMax = (double) Double.parseDouble(prefStr);
+                Log.v(TAG, "updatePrefs() FlapAlarmFreqMax = " + mFlapFreqMax);
+                mUtil.writeToSysLogFile("updatePrefs() FlapAlarmFreqMax = " + mFlapFreqMax);
 
                 mSdData.mCnnAlarmActive = SP.getBoolean("CnnAlarmActive", false);
                 Log.v(TAG, "updatePrefs() CnnAlarmActive = " + mSdData.mCnnAlarmActive);
