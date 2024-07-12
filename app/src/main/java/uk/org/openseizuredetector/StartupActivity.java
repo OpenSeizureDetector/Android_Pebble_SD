@@ -88,7 +88,9 @@ public class StartupActivity extends AppCompatActivity {
     private boolean mLocationPermissions2Requested;
     private boolean mSmsPermissionsRequested;
     private boolean mPermissionsRequested;
+    private boolean mActivityPermissionsRequested = false;
     private boolean mBindInProgress = false;
+
 
     public final String[] REQUIRED_PERMISSIONS = {
             //Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -328,14 +330,22 @@ public class StartupActivity extends AppCompatActivity {
                         //pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
                         requestBTPermissions();
                         allOk = false;
-                    } else  if (mBleDeviceAddr.equals("")) {
-                        Log.i(TAG,"BLE data source selected, but no device address specified - starting BLEScanActivity");
+                    } else if (mBleDeviceAddr.equals("")) {
+                        Log.i(TAG, "BLE data source selected, but no device address specified - starting BLEScanActivity");
                         Intent i;
                         i = new Intent(getApplicationContext(), BLEScanActivity.class);
                         startActivity(i);
                         finish();
                         return;
                     }
+                } else if (!mUtil.areActivityPermissionsOk()) {
+                    Log.i(TAG, "Activity permissions NOT OK");
+                    tv.setText(getString(R.string.ActivityPermissionWarning));
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                    requestActivityPermissions();
+                    allOk = false;
+
                 } else if (smsAlarmsActive && !areSMSPermissions1OK()) {
                     Log.i(TAG, "SMS permissions NOT OK");
                     tv.setText(getString(R.string.SmsPermissionWarning));
@@ -699,6 +709,7 @@ public class StartupActivity extends AppCompatActivity {
         return allOk;
     }
 
+
     public boolean areSMSPermissions1OK() {
         boolean allOk = true;
         Log.v(TAG, "areSMSPermissions1 OK()");
@@ -878,6 +889,33 @@ public class StartupActivity extends AppCompatActivity {
                     .create().show();
         }
     }
+
+    public void requestActivityPermissions() {
+        if (mActivityPermissionsRequested) {
+            Log.i(TAG, "requestActivityPermissions() - request already sent - not doing anything");
+        } else {
+            Log.i(TAG, "requestActivityPermissions() - requesting permissions");
+            mActivityPermissionsRequested = true;
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                    this);
+            alertDialogBuilder
+                    .setTitle(R.string.activity_permissions_required)
+                    .setMessage(R.string.activity_permissions_rationale)
+                    .setCancelable(false)
+                    .setPositiveButton(getString(R.string.okBtnTxt), new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.cancel();
+                            Log.i(TAG, "requestActivityPermissions(): Launching ActivityCompat.requestPermissions()");
+                            ActivityCompat.requestPermissions(StartupActivity.this,
+                                    mUtil.getRequiredActivityPermissions(),
+                                    49);
+                        }
+                    })
+                    .create().show();
+        }
+    }
+
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode,

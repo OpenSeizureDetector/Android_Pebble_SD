@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:versionCode="146"
-    android:versionName="4.2.11x2">
+    android:versionCode="147"
+    android:versionName="4.3.0a">
     <!-- android:allowBackup="false" -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
@@ -12,6 +12,8 @@
         android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -80,6 +82,7 @@
 
         <service
             android:name=".SdServer"
+            android:foregroundServiceType="health"
             android:exported="false" />
 
         <activity android:name=".LogManagerControlActivity" />

@@ -578,4 +578,7 @@
     <string name="restart_server">Restart Server</string>
     <string name="error_failed_to_create_local_event">ERROR: failed to create local event</string>
     <string name="error_failed_to_start_log_manager">ERROR: Failed to start Log Manager</string>
+    <string name="ActivityPermissionWarning">Problem with Activity Detection Permissions</string>
+    <string name="activity_permissions_required">Activity Detection Permission Required.</string>
+    <string name="activity_permissions_rationale">Permission required to analyse your movements to detect seizure activity.</string>
 </resources>

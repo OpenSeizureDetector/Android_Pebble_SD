@@ -116,6 +116,15 @@ public class OsdUtil {
     };
     public String[] BT_PERMISSIONS;
 
+    public final String[] ACTIVITY_PERMISSIONS_API34 = {
+            Manifest.permission.FOREGROUND_SERVICE_HEALTH,
+            Manifest.permission.ACTIVITY_RECOGNITION
+    };
+
+    public final String[] ACTIVITY_PERMISSIONS_OLD = {};
+    public String[] ACTIVITY_PERMISSIONS;
+
+
     public OsdUtil(Context context, Handler handler) {
         mContext = context;
         mHandler = handler;
@@ -779,6 +788,33 @@ public class OsdUtil {
         }
         return allOk;
     }
+
+    public String[] getRequiredActivityPermissions() {
+        // API 34 is Android 14 - see https://developer.android.com/develop/connectivity/bluetooth/bt-permissions
+        if (Build.VERSION.SDK_INT >= 34) {
+            Log.d(TAG, "getRequiredActivityPermissions() - using new Activity Permissions");
+            ACTIVITY_PERMISSIONS = ACTIVITY_PERMISSIONS_API34;
+        } else {
+            Log.d(TAG, "getRequiredActivityPermissions() - using old Activity Permissions");
+            ACTIVITY_PERMISSIONS = ACTIVITY_PERMISSIONS_OLD;
+        }
+        return (ACTIVITY_PERMISSIONS);
+    }
+    public boolean areActivityPermissionsOk() {
+        String[] activityPermissions = getRequiredActivityPermissions();
+        boolean allOk = true;
+        Log.d(TAG, "areActivityPermissions OK()");
+        for (int i = 0; i < activityPermissions.length; i++) {
+            if (ContextCompat.checkSelfPermission(mContext, activityPermissions[i])
+                    != PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, activityPermissions[i] + " Permission Not Granted");
+                allOk = false;
+            }
+        }
+        return allOk;
+    }
+
+
 
     public double parseToDouble(String userInput) {
         /**
