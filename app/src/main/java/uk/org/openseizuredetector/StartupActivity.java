@@ -512,7 +512,7 @@ public class StartupActivity extends AppCompatActivity {
                             } else {
                                 intent = new Intent(
                                         getApplicationContext(),
-                                        MainActivity.class);
+                                        ActivityMainSimple.class);
                             }
                             intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                             startActivity(intent);

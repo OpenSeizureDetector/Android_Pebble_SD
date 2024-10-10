@@ -1,6 +1,6 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
-    V4.2.11 - added a crude 'flap' detector into OSD Algorithm
+    V4.3.0  - added a crude 'flap' detector into OSD Algorithm, added simplified default UI, Improved data sharing data entry.
     V4.2.10 - fixed (infrequent) crash when opening data sharing page (#195), and crash if log manager fails to start (#196)
     V4.2.9 - fixed crash when using Polish translation.
     V4.2.8 - 
