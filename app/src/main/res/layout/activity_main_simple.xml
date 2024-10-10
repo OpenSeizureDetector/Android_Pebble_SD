@@ -6,136 +6,21 @@
     android:layout_height="fill_parent"
     android:orientation="vertical">
 
-    <LinearLayout
-        android:id="@+id/statusLayoutSimple"
+    <TextView
+        android:id="@+id/versionTv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        >
-        <TextView
-            android:id="@+id/versionTvSimple"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/app_name" />
-        <TextView
-            android:id="@+id/serverStatusTvSimple"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/app_name" />
+        android:text="@string/app_name" />
 
-    </LinearLayout>
 
-    <LinearLayout
+    <androidx.fragment.app.FragmentContainerView xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/fragment_common_container_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="100">
-        <TextView
-            android:id="@+id/alg1NameTv"
-            android:layout_weight="70"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:text="OSD" />
-        <TextView
-            android:id="@+id/alg1StatusTv"
-            android:layout_weight="70"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:text="alg1StatusTv" />
-    </LinearLayout>
+        android:layout_height="wrap_content" />
 
-    <LinearLayout
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/fragment_pager"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="100">
-        <TextView
-            android:id="@+id/alg2NameTv"
-            android:layout_weight="70"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:text="Flap" />
-        <TextView
-            android:id="@+id/alg2StatusTv"
-            android:layout_width="0dp"
-            android:layout_weight="70"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:text="alg2StatusTv" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="100">
-        <TextView
-            android:id="@+id/alg3NameTv"
-            android:layout_weight="70"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:text="CNN" />
-        <TextView
-            android:id="@+id/alg3StatusTv"
-            android:layout_width="0dp"
-            android:layout_weight="70"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:text="alg3StatusTv longer text" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="100">
-        <TextView
-            android:id="@+id/alg4NameTv"
-            android:layout_weight="70"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:text="HR" />
-        <TextView
-            android:id="@+id/alg4StatusTv"
-            android:layout_width="0dp"
-            android:layout_weight="70"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:text="alg3StatusTv longer text" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:baselineAligned="false">
-
-        <Button
-            android:id="@+id/acceptAlarmButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/AcceptAlarmBtnTxt" />
-
-        <Button
-            android:id="@+id/cancelAudibleButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/CancelAudibleButtonTxt" />
-
-        <Button
-            android:id="@+id/manualAlarmButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:backgroundTint="#ff0000"
-            android:text="@string/ManualAlarmBtnTxt" />
-    </LinearLayout>
-
-
+        android:layout_height="match_parent" />
 </LinearLayout>
