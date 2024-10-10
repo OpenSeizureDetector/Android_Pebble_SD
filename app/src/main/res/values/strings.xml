@@ -581,4 +581,6 @@
     <string name="ActivityPermissionWarning">Problem with Activity Detection Permissions</string>
     <string name="activity_permissions_required">Activity Detection Permission Required.</string>
     <string name="activity_permissions_rationale">Permission required to analyse your movements to detect seizure activity.</string>
+    <string name="sms_delay_sec">SMS Delay (sec)</string>
+    <string name="sms_delay_sec_desc">The number of seconds to delay between an alarm initiating and an SMS message being sent (default=10)</string>
 </resources>
