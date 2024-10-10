@@ -128,7 +128,8 @@ public class SdServer extends Service implements SdDataReceiver {
     private String[] mSMSNumbers;
     private String mSMSMsgStr = "default SMS Message";
     public Time mSMSTime = null;  // last time we sent an SMS Alarm (limited to one per minute)
-    public SmsTimer mSmsTimer = null;  // Timer to wait 10 seconds before sending an alert to give the user chance to cancel it.
+    public SmsTimer mSmsTimer = null;  // Timer to wait for specified time before sending an alert to give the user chance to cancel it.
+    public int mSmsTimerSecs = 10;    // Time delay in seconds before sending SMS alert.
     private AlertDialog.Builder mSMSAlertDialog;   // Dialog shown during countdown to sending SMS.
 
     // Data Logging Parameters
@@ -993,7 +994,7 @@ public class SdServer extends Service implements SdDataReceiver {
         runOnUiThread(new Runnable() {
             public void run() {
                 mSmsTimer =
-                        new SmsTimer(10 * 1000, 1000);
+                        new SmsTimer(mSmsTimerSecs * 1000, 1000);
                 mSmsTimer.start();
             }
         });
@@ -1265,6 +1266,11 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.writeToSysLogFile("updatePrefs() - SMSNumberStr = " + SMSNumberStr);
             Log.v(TAG, "updatePrefs() - mSMSNumbers = " + mSMSNumbers);
             mUtil.writeToSysLogFile("updatePrefs() - mSMSNumbers = " + mSMSNumbers);
+
+            String smsDelayPeriodStr = SP.getString("SMSDelayPeriod","10");
+            mSmsTimerSecs = Integer.parseInt(smsDelayPeriodStr);
+            Log.v(TAG,"updatePrefs() - mSmsTimerSecs = "+mSmsTimerSecs);
+
             mLogAlarms = SP.getBoolean("LogAlarms", true);
             Log.v(TAG, "updatePrefs() - mLogAlarms = " + mLogAlarms);
             mUtil.writeToSysLogFile("updatePrefs() - mLogAlarms = " + mLogAlarms);
@@ -1314,7 +1320,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
             mUseNewUi = SP.getBoolean("UseNewUi", false);
         } catch (Exception ex) {
-            Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
+            Log.v(TAG, "updatePrefs() - Problem parsing preferences!" + ex.toString());
             mUtil.writeToSysLogFile("SdServer.updatePrefs() - Error " + ex.toString());
             mUtil.showToast(getString(R.string.problem_parsing_preferences));
         }
