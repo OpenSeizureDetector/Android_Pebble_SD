@@ -51,6 +51,12 @@
             android:summary="@string/enable_sms_alarm_summary"
             android:title="@string/enable_sms_alarm_title" />
         <EditTextPreference
+            android:key="SMSDelayPeriod"
+            android:title="@string/sms_delay_sec"
+            android:summary="@string/sms_delay_sec_desc"
+            android:inputType="number"
+            android:defaultValue="10" />
+        <EditTextPreference
             android:defaultValue=""
             android:key="SMSNumbers"
             android:summary="@string/sms_numbers_summary"
