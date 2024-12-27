@@ -1,5 +1,6 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V4.2.12 - Added 'Send False Alarm notification Menu Option'
     V4.2.11 - Updated permissions handling to support Android 14 (needed to publish on Play Store)
             - added a crude 'flap' detector into OSD Algorithm
             - Added setting to change the delay before SMS alert is sent (Issue #202)
