@@ -100,7 +100,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private int mCurrentNotificationAlarmLevel = -999;
     private SdWebServer webServer = null;
     private final static String TAG = "SdServer";
-    private Timer dataLogTimer = null;
+    //private Timer dataLogTimer = null;
     private CancelAudibleTimer mCancelAudibleTimer = null;
     private int mCancelAudiblePeriod = 10;  // Cancel Audible Period in minutes
     private long mCancelAudibleTimeRemaining = 0;
@@ -140,7 +140,7 @@ public class SdServer extends Service implements SdDataReceiver {
     public boolean mLogNDA = false;
 
     private String mAuthToken = null;
-    private long mEventsTimerPeriod = 60; // Number of seconds between checks to see if there are unvalidated remote events.
+    private long mEventsTimerPeriod = 600; // Number of seconds between checks to see if there are unvalidated remote events.
     private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
     public long mDataRetentionPeriod = 1; // Prunes the local db so it only retains data younger than this duration (in days)
     private long mRemoteLogPeriod = 6; // Period in seconds between uploads to the remote server.
@@ -329,10 +329,11 @@ public class SdServer extends Service implements SdDataReceiver {
 
 
         // Start timer to log data regularly..
+        /*
         if (dataLogTimer == null) {
             Log.v(TAG, "onStartCommand(): starting dataLog timer");
             mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting dataLog timer");
-            /*dataLogTimer = new Timer();
+            dataLogTimer = new Timer();
             dataLogTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
@@ -340,11 +341,13 @@ public class SdServer extends Service implements SdDataReceiver {
                     logData();
                 }
             }, 0, 1000 * 60);
-            */
+
         } else {
             Log.v(TAG, "onStartCommand(): dataLog timer already running.");
             mUtil.writeToSysLogFile("SdServer.onStartCommand() - dataLog timer already running???");
         }
+        */
+
 
         if (mLogDataRemote) {
             startEventsTimer();
