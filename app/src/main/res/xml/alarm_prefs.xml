@@ -51,6 +51,12 @@
             android:summary="@string/enable_sms_alarm_summary"
             android:title="@string/enable_sms_alarm_title" />
         <EditTextPreference
+            android:key="SMSDelayPeriod"
+            android:title="@string/sms_delay_sec"
+            android:summary="@string/sms_delay_sec_desc"
+            android:inputType="number"
+            android:defaultValue="10" />
+        <EditTextPreference
             android:defaultValue=""
             android:key="SMSNumbers"
             android:summary="@string/sms_numbers_summary"
@@ -60,6 +66,11 @@
             android:key="SMSMsg"
             android:summary="@string/sms_message_summary"
             android:title="@string/sms_message_title" />
+        <EditTextPreference
+            android:defaultValue="@string/DefaultSMSFalseAlarmMsgText"
+            android:key="SMSFalseAlarmMsg"
+            android:summary="@string/sms_false_alarm_message_summary"
+            android:title="@string/sms_false_alarm_message_title" />
     </PreferenceCategory>
 <!--
     <PreferenceCategory android:title="Phone Call Alarm Settings">

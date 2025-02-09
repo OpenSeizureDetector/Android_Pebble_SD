@@ -57,7 +57,7 @@ public class SdAlgHrTest extends TestCase {
         mSdAlgHr.checkHr(60.);
         mSdAlgHr.checkHr(70.);
         mSdAlgHr.checkHr(80.);
-        double hrAv = mSdAlgHr.getAverageHrVal();
+        double hrAv = mSdAlgHr.getAverageHrAverage();
         assertEquals(hrAv, 70);
     }
 }

@@ -54,6 +54,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private UiTimer mUiTimer;
     private ArrayList<HashMap<String, String>> mEventsList;
     private ArrayList<HashMap<String, String>> mRemoteEventsList;
+    private ArrayList<ArrayList<HashMap<String, String>>> mGroupedRemoteEventsList;   // Each item is a list of event objects, similar to mRemoteEventsList
     private ArrayList<HashMap<String, String>> mSysLogList;
     private SdServiceConnection mConnection;
     private OsdUtil mUtil;
@@ -281,6 +282,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                             Log.v(TAG, "getRemoteEvents - skipping warning or NDA record");
                         }
                     }
+                    createGroupedEventsList();
                     Log.v(TAG, "getRemoteEvents() - set mRemoteEventsList().  Updating UI");
                     updateUi();
                 } catch (JSONException e) {
@@ -293,6 +295,15 @@ public class LogManagerControlActivity extends AppCompatActivity {
         });
     }
 
+    private void createGroupedEventsList() {
+        /**
+         * Reads the complete list of remote events mRemoteEventsList and creates a new list mGroupedRemoteEventsList
+         * where each item is a list of events that comprise a group based on time (all events within a 3 minute period are grouped together).
+         */
+        Log.i(TAG, "createGroupedEventsList()");
+        mGroupedRemoteEventsList = new ArrayList<ArrayList<HashMap<String,String>>>();
+        // FIXME - Make this do something!
+    }
 
     private void updateUi() {
         Log.i(TAG, "updateUi()");
@@ -305,10 +316,10 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 TextView tv1 = (TextView) findViewById(R.id.num_local_events_tv);
                 tv1.setText(String.format("%d", eventCount));
             });
-            mLm.getLocalDatapointsCount((Long datapointsCount) -> {
-                TextView tv2 = (TextView) findViewById(R.id.num_local_datapoints_tv);
-                tv2.setText(String.format("%d", datapointsCount));
-            });
+            //mLm.getLocalDatapointsCount((Long datapointsCount) -> {
+            //    TextView tv2 = (TextView) findViewById(R.id.num_local_datapoints_tv);
+            //    tv2.setText(String.format("%d", datapointsCount));
+            //});
             TextView tv3 = (TextView) findViewById(R.id.nda_time_remaining_tv);
             tv3.setText(String.format("%.1f hrs", mLm.mNDATimeRemaining));
             Log.d(TAG, "mNDATimeRemaining = " + String.format("%.1f hrs", mLm.mNDATimeRemaining));

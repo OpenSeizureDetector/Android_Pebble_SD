@@ -7,6 +7,11 @@
             android:summary="@string/OsdAlarmEnabledSummary"
             android:title="@string/OsdAlarmEnabledTitle" />
         <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="FlapAlarmActive"
+            android:summary="Enable the experimental alarm to detect arm 'flapping' motion"
+            android:title="Enable Flap Alarm" />
+        <CheckBoxPreference
             android:defaultValue="false"
             android:key="CnnAlarmActive"
             android:summary="@string/CnnAlarmEnabledSummary"
@@ -37,6 +42,7 @@
             android:summary=""
             android:title="@string/fall_detect_active_title" />
     </PreferenceCategory>
+
     <PreferenceCategory android:title="@string/SeizureDetectorSettingsTitle">
         <CheckBoxPreference
             android:defaultValue="true"
@@ -82,6 +88,37 @@
             android:summary="@string/sample_period_summary"
             android:title="@string/sample_period_title" />
     </PreferenceCategory>
+
+    <PreferenceCategory android:title="Flap Alarm Settings">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="FlapAlarmActive"
+            android:summary="Enable the experimental alarm to detect arm 'flapping' motion"
+            android:title="Enable Flap Alarm" />
+        <EditTextPreference
+            android:defaultValue="5000"
+            android:key="FlapAlarmThresh"
+            android:summary="Flap Alarm Threshold"
+            android:title="Flap Alarm Threshold" />
+        <EditTextPreference
+            android:defaultValue="90"
+            android:key="FlapAlarmRatioThresh"
+            android:summary="Flap Alarm Ratio Threshold"
+            android:title="Flap Alarm Ratio Threshold" />
+
+        <EditTextPreference
+            android:defaultValue="2"
+            android:key="FlapAlarmFreqMin"
+            android:summary="@string/AlarmFreqMinSummary"
+            android:title="@string/AlarmFreqMinTitle" />
+        <EditTextPreference
+            android:defaultValue="4"
+            android:key="FlapAlarmFreqMax"
+            android:summary="@string/AlarmFreqMaxSummary"
+            android:title="@string/AlarmFreqMaxTitle" />
+    </PreferenceCategory>
+
+
 
     <PreferenceCategory android:title="@string/ml_sd_settings_title">
         <CheckBoxPreference
