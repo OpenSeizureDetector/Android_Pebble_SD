@@ -305,10 +305,10 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 TextView tv1 = (TextView) findViewById(R.id.num_local_events_tv);
                 tv1.setText(String.format("%d", eventCount));
             });
-            mLm.getLocalDatapointsCount((Long datapointsCount) -> {
-                TextView tv2 = (TextView) findViewById(R.id.num_local_datapoints_tv);
-                tv2.setText(String.format("%d", datapointsCount));
-            });
+            //mLm.getLocalDatapointsCount((Long datapointsCount) -> {
+            //    TextView tv2 = (TextView) findViewById(R.id.num_local_datapoints_tv);
+            //    tv2.setText(String.format("%d", datapointsCount));
+            //});
             TextView tv3 = (TextView) findViewById(R.id.nda_time_remaining_tv);
             tv3.setText(String.format("%.1f hrs", mLm.mNDATimeRemaining));
             Log.d(TAG, "mNDATimeRemaining = " + String.format("%.1f hrs", mLm.mNDATimeRemaining));
