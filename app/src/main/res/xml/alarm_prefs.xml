@@ -66,6 +66,11 @@
             android:key="SMSMsg"
             android:summary="@string/sms_message_summary"
             android:title="@string/sms_message_title" />
+        <EditTextPreference
+            android:defaultValue="@string/DefaultSMSFalseAlarmMsgText"
+            android:key="SMSFalseAlarmMsg"
+            android:summary="@string/sms_false_alarm_message_summary"
+            android:title="@string/sms_false_alarm_message_title" />
     </PreferenceCategory>
 <!--
     <PreferenceCategory android:title="Phone Call Alarm Settings">

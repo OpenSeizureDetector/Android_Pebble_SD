@@ -237,6 +237,12 @@ public class MainActivity2 extends AppCompatActivity {
                     mConnection.mSdServer.sendSMSAlarm();
                 }
                 return true;
+            case R.id.action_send_false_alarm_sms:
+                Log.i(TAG, "action_send_false_alarm_sms");
+                if (mConnection.mBound) {
+                    mConnection.mSdServer.sendFalseAlarmSMS();
+                }
+                return true;
 
             case R.id.action_authenticate_api:
                 Log.i(TAG, "action_autheticate_api");

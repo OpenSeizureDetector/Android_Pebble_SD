@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:versionCode="149"
-    android:versionName="4.2.11d">
+    android:versionName="4.2.11e">
     <!-- android:allowBackup="false" -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
