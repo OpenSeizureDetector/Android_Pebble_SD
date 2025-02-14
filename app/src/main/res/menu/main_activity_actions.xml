@@ -73,6 +73,11 @@
             android:icon="@drawable/stop_server"
             app:showAsAction="never|withText"
             android:title="@string/test_sms_alarm_notification" />
+        <item
+            android:id="@+id/action_send_false_alarm_sms"
+            android:icon="@drawable/stop_server"
+            app:showAsAction="never|withText"
+            android:title="@string/send_false_alarm_sms_menu_text" />
     </group>
     <group android:id="@+id/grp5">
         <!--<item

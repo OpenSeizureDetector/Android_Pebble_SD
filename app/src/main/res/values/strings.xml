@@ -3,6 +3,7 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
+        \nV4.2.11 - Reduced data usage of Data Sharing system, and added a 'flap detector' component to detect high amplitude, low frequency movement
         \nV4.2   - Added support for PineTime and BangleJS Watches using Bluetooth data source.
         \n       - Added support for Version 2 of the Garmin watch app, which reduces battery drain
         \n       - Added new, swipeable user interface to simplify the main screen.
@@ -578,6 +579,13 @@
     <string name="restart_server">Restart Server</string>
     <string name="error_failed_to_create_local_event">ERROR: failed to create local event</string>
     <string name="error_failed_to_start_log_manager">ERROR: Failed to start Log Manager</string>
+    <string name="ActivityPermissionWarning">Problem with Activity Detection Permissions</string>
+    <string name="activity_permissions_required">Activity Detection Permission Required.</string>
+    <string name="activity_permissions_rationale">Permission required to analyse your movements to detect seizure activity.</string>
     <string name="sms_delay_sec">SMS Delay (sec)</string>
     <string name="sms_delay_sec_desc">The number of seconds to delay between an alarm initiating and an SMS message being sent (default=10)</string>
+    <string name="send_false_alarm_sms_menu_text">Send False Alarm SMS</string>
+    <string name="DefaultSMSFalseAlarmMsgText">False Alarm, Sorry!</string>
+    <string name="sms_false_alarm_message_summary">Text of \'False Alarm\' SMS message</string>
+    <string name="sms_false_alarm_message_title">SMS False Alarm Message</string>
 </resources>

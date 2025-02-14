@@ -100,7 +100,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private int mCurrentNotificationAlarmLevel = -999;
     private SdWebServer webServer = null;
     private final static String TAG = "SdServer";
-    private Timer dataLogTimer = null;
+    //private Timer dataLogTimer = null;
     private CancelAudibleTimer mCancelAudibleTimer = null;
     private int mCancelAudiblePeriod = 10;  // Cancel Audible Period in minutes
     private long mCancelAudibleTimeRemaining = 0;
@@ -127,6 +127,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private boolean mSMSAlarm = false;
     private String[] mSMSNumbers;
     private String mSMSMsgStr = "default SMS Message";
+    private String mSMSFalseAlarmMsgStr = "default SMS False Alarm Message";
     public Time mSMSTime = null;  // last time we sent an SMS Alarm (limited to one per minute)
     public SmsTimer mSmsTimer = null;  // Timer to wait for specified time before sending an alert to give the user chance to cancel it.
     public int mSmsTimerSecs = 10;    // Time delay in seconds before sending SMS alert.
@@ -140,7 +141,7 @@ public class SdServer extends Service implements SdDataReceiver {
     public boolean mLogNDA = false;
 
     private String mAuthToken = null;
-    private long mEventsTimerPeriod = 60; // Number of seconds between checks to see if there are unvalidated remote events.
+    private long mEventsTimerPeriod = 600; // Number of seconds between checks to see if there are unvalidated remote events.
     private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
     public long mDataRetentionPeriod = 1; // Prunes the local db so it only retains data younger than this duration (in days)
     private long mRemoteLogPeriod = 6; // Period in seconds between uploads to the remote server.
@@ -329,10 +330,11 @@ public class SdServer extends Service implements SdDataReceiver {
 
 
         // Start timer to log data regularly..
+        /*
         if (dataLogTimer == null) {
             Log.v(TAG, "onStartCommand(): starting dataLog timer");
             mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting dataLog timer");
-            /*dataLogTimer = new Timer();
+            dataLogTimer = new Timer();
             dataLogTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
@@ -340,11 +342,13 @@ public class SdServer extends Service implements SdDataReceiver {
                     logData();
                 }
             }, 0, 1000 * 60);
-            */
+
         } else {
             Log.v(TAG, "onStartCommand(): dataLog timer already running.");
             mUtil.writeToSysLogFile("SdServer.onStartCommand() - dataLog timer already running???");
         }
+        */
+
 
         if (mLogDataRemote) {
             startEventsTimer();
@@ -958,6 +962,48 @@ public class SdServer extends Service implements SdDataReceiver {
         }
     }
 
+    /**
+     * Sends SMS Alarms to the telephone numbers specified in mSMSNumbers[]
+     * Attempts to find a better location, and sends a second SMS after location search
+     * complete (onLocationReceived()).
+     */
+    public void sendFalseAlarmSMS() {
+        AlertDialog ad;
+        if (mSMSAlarm) {
+            if (!mCancelAudible) {
+                Log.i(TAG, "sendFalseAlarmsSMS() - Sending to " + mSMSNumbers.length + " Numbers");
+                mUtil.writeToSysLogFile("SdServer.sendFalseAlarmsSMS()");
+                Time tnow = new Time(Time.getCurrentTimezone());
+                tnow.setToNow();
+                String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
+                String shortUuidStr = mUuidStr.substring(mUuidStr.length() - 6);
+
+                // SmsManager sm = SmsManager.getDefault();
+                for (int i = 0; i < mSMSNumbers.length; i++) {
+                    Log.i(TAG, "sendFalseAlarmsSMS() - Sending to " + mSMSNumbers[i]);
+                    //sendSMS(new String(mSMSNumbers[i]), mSMSFalseAlarmMsgStr + " - " + dateStr + " " + shortUuidStr);
+                    try {
+                        SmsManager sm = SmsManager.getDefault();
+                        sm.sendTextMessage(mSMSNumbers[i], null, mSMSFalseAlarmMsgStr + " - " + dateStr + " " + shortUuidStr,
+                                null, null);
+                    } catch (Exception e) {
+                        Log.e(TAG, "sendFalseAlarmsSMS - Failed to send SMS Message");
+                        mUtil.showToast(getString(R.string.failed_to_send_sms));
+                    }
+
+                }
+
+            } else {
+                Log.i(TAG, "sendFalseAlarmSMS() - Cancel Audible Active - not sending SMS");
+                mUtil.showToast(getString(R.string.cancel_audible_not_sending_sms));
+            }
+        } else {
+            Log.i(TAG, "sendFalseAlarmSMS() - SMS Alarms Disabled - not doing anything!");
+            mUtil.showToast(getString(R.string.sms_alarms_disabled));
+        }
+    }
+
+
 
     /**
      * smsCanelClickListener - onClickListener for the SMS cancel dialog box.   If the
@@ -1261,11 +1307,14 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.writeToSysLogFile("updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             String SMSNumberStr = SP.getString("SMSNumbers", "");
             mSMSNumbers = SMSNumberStr.split(",");
-            mSMSMsgStr = SP.getString("SMSMsg", "Seizure Detected!!!");
             Log.v(TAG, "updatePrefs() - SMSNumberStr = " + SMSNumberStr);
             mUtil.writeToSysLogFile("updatePrefs() - SMSNumberStr = " + SMSNumberStr);
             Log.v(TAG, "updatePrefs() - mSMSNumbers = " + mSMSNumbers);
             mUtil.writeToSysLogFile("updatePrefs() - mSMSNumbers = " + mSMSNumbers);
+            mSMSMsgStr = SP.getString("SMSMsg", "Seizure Detected!!!");
+            Log.v(TAG, "updatePrefs() - SMSMsgStr = " + mSMSMsgStr);
+            mSMSFalseAlarmMsgStr = SP.getString("SMSFalseAlarmMsg", "False Alarm, Sorry!");
+            Log.v(TAG, "updatePrefs() - SMSFalseAlarmMsgStr = " + mSMSFalseAlarmMsgStr);
 
             String smsDelayPeriodStr = SP.getString("SMSDelayPeriod","10");
             mSmsTimerSecs = Integer.parseInt(smsDelayPeriodStr);

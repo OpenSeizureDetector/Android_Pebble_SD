@@ -1,6 +1,11 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
-    V4.2.11 - Added setting to change the delay before SMS alert is sent (Issue #202)
+    V4.2.11 - Updated permissions handling to support Android 14 (needed to publish on Play Store)
+            - added a crude 'flap' detector into OSD Algorithm
+            - Added setting to change the delay before SMS alert is sent (Issue #202)
+            - Added 'Send False Alarm notification Menu Option (Issue #206)'
+            - Reduced the frequency of checking if we have unvalided events on the data sharing server to reduce data usage (Issue #201).
+            - Improvements to Data Sharing Screen (Issue #199)
     V4.2.10 - fixed (infrequent) crash when opening data sharing page (#195), and crash if log manager fails to start (#196)
     V4.2.9 - fixed crash when using Polish translation.
     V4.2.8 - 

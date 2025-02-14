@@ -40,6 +40,7 @@ public class SdData implements Parcelable {
 
     // Seizure Detection Algorithm Selection
     public boolean mOsdAlarmActive;
+    public boolean mFlapAlarmActive;
     public boolean mCnnAlarmActive;
 
     /* Analysis settings */
