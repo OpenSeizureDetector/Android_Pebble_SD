@@ -42,6 +42,8 @@ import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +54,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private LogManager mLm;
     private Context mContext;
     private UiTimer mUiTimer;
+    private boolean mGroupedEventMode = true;
     private ArrayList<HashMap<String, String>> mEventsList;
     private ArrayList<HashMap<String, String>> mRemoteEventsList;
     private ArrayList<ArrayList<HashMap<String, String>>> mGroupedRemoteEventsList;   // Each item is a list of event objects, similar to mRemoteEventsList
@@ -111,6 +114,9 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 (Button) findViewById(R.id.refresh_button);
         remoteDbBtn.setOnClickListener(onRefreshBtn);
 
+        CheckBox groupEventsCb =
+                (CheckBox) findViewById(R.id.group_events_cb);
+        groupEventsCb.setOnCheckedChangeListener(onGroupEventsCb);
         CheckBox includeWarningsCb =
                 (CheckBox) findViewById(R.id.include_warnings_cb);
         includeWarningsCb.setOnCheckedChangeListener(onIncludeWarningsCb);
@@ -283,6 +289,16 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         }
                     }
                     createGroupedEventsList();
+                    if (mGroupedRemoteEventsList.isEmpty()) {
+                        Log.i(TAG,"mGroupedRemoteEvents is empty");
+                    } else {
+                        Log.i(TAG,"mGroupedRemoteEvents:");
+                        for (int i=0; i<mGroupedRemoteEventsList.size(); i++) {
+                            ArrayList<HashMap<String,String>> groupList = mGroupedRemoteEventsList.get(i);
+                            //Log.d(TAG,groupList.toString());
+                            Log.d(TAG,"i="+i+": "+groupList.get(0).get("dataTime")+", "+groupList.size()+" events");
+                        }
+                    }
                     Log.v(TAG, "getRemoteEvents() - set mRemoteEventsList().  Updating UI");
                     updateUi();
                 } catch (JSONException e) {
@@ -299,10 +315,37 @@ public class LogManagerControlActivity extends AppCompatActivity {
         /**
          * Reads the complete list of remote events mRemoteEventsList and creates a new list mGroupedRemoteEventsList
          * where each item is a list of events that comprise a group based on time (all events within a 3 minute period are grouped together).
-         */
+         * ** NOTE: It assumes that mRemoteEventsList is in DESCENDING date order **
+         **/
         Log.i(TAG, "createGroupedEventsList()");
+        int groupSecs = 180;  // 3 minute grouping
         mGroupedRemoteEventsList = new ArrayList<ArrayList<HashMap<String,String>>>();
-        // FIXME - Make this do something!
+        ArrayList<HashMap<String,String>> currGroup = new ArrayList<HashMap<String,String>>();
+        Date lastDate = mUtil.string2date("2014-01-01T00:00:00Z");
+        if (!mRemoteEventsList.isEmpty()) {
+            for (int i = 0; i < mRemoteEventsList.size(); i++) {
+                HashMap<String, String> currEvent = mRemoteEventsList.get(i);
+                Date evDate = mUtil.string2date(currEvent.get("dataTime"));
+                double tdiff = (lastDate.getTime() - evDate.getTime())/1000.;   // time difference in seconds
+                Log.d(TAG, "createGroupedEventsList() - i="+i+": date="+currEvent.get("dataTime")+", tdiff="+ tdiff);
+
+                // Is it more than groupSecs seconds since the last event? (this looks odd because we are working in descending date order)
+                if (tdiff > groupSecs) {
+                    Log.d(TAG,"createGroupedEventsList() - New Group");
+                    // save current group if there is anything in it
+                    if (!currGroup.isEmpty()) {
+                        mGroupedRemoteEventsList.add(currGroup);
+                        // New Group
+                        currGroup = new ArrayList<HashMap<String,String>>();
+                    }
+                }
+                // Add this event to the current group
+                currGroup.add(currEvent);
+                lastDate = evDate;
+            }
+        } else {
+            Log.e(TAG,"length of mRemoteEventsLst is 0");
+        }
     }
 
     private void updateUi() {
@@ -353,10 +396,18 @@ public class LogManagerControlActivity extends AppCompatActivity {
             pb.setIndeterminate(false);
             pb.setVisibility(View.INVISIBLE);
             ListView lv = (ListView) findViewById(R.id.remoteEventsLv);
-            ListAdapter adapter = new RemoteEventsAdapter(LogManagerControlActivity.this, mRemoteEventsList, R.layout.log_entry_layout_remote,
-                    new String[]{"id", "dataTime", "type", "subType", "osdAlarmStateStr", "desc"},
-                    new int[]{R.id.event_id_remote_tv, R.id.event_date_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
-                            R.id.event_alarmState_remote_tv, R.id.event_notes_remote_tv});
+            ListAdapter adapter;
+            if (mGroupedEventMode) {
+                adapter = new GroupedRemoteEventsAdapter(LogManagerControlActivity.this, mGroupedRemoteEventsList, R.layout.log_entry_layout_remote,
+                        new String[]{"id", "dataTime", "type", "subType", "osdAlarmStateStr", "desc"},
+                        new int[]{R.id.event_id_remote_tv, R.id.event_date_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
+                                R.id.event_alarmState_remote_tv, R.id.event_notes_remote_tv});
+            } else {
+                adapter = new RemoteEventsAdapter(LogManagerControlActivity.this, mRemoteEventsList, R.layout.log_entry_layout_remote,
+                        new String[]{"id", "dataTime", "type", "subType", "osdAlarmStateStr", "desc"},
+                        new int[]{R.id.event_id_remote_tv, R.id.event_date_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
+                                R.id.event_alarmState_remote_tv, R.id.event_notes_remote_tv});
+            }
             lv.setAdapter(adapter);
             //Log.i(TAG,"adapter[0]="+adapter.getItem(0));
             //Log.i(TAG,"adapter[3]="+adapter.getItem(3));
@@ -633,6 +684,16 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 }
             };
 
+    CompoundButton.OnCheckedChangeListener onGroupEventsCb =
+            new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                    Log.v(TAG, "onGroupEventsCb - b="+b);
+                    mGroupedEventMode = b;
+                    initialiseServiceConnection();
+                }
+            };
+
     CompoundButton.OnCheckedChangeListener onIncludeWarningsCb =
             new CompoundButton.OnCheckedChangeListener() {
                 @Override
@@ -786,6 +847,64 @@ public class LogManagerControlActivity extends AppCompatActivity {
             return (v);
         }
     }
+
+    private class GroupedRemoteEventsAdapter extends SimpleAdapter {
+
+        /**
+         * Constructor
+         *
+         * @param context  The context where the View associated with this SimpleAdapter is running
+         * @param data     A List of Maps. Each entry in the List corresponds to one row in the list. The
+         *                 Maps contain the data for each row, and should include all the entries specified in
+         *                 "from"
+         * @param resource Resource identifier of a view layout that defines the views for this list
+         *                 item. The layout file should include at least those named views defined in "to"
+         * @param from     A list of column names that will be added to the Map associated with each
+         *                 item.
+         * @param to       The views that should display column in the "from" parameter. These should all be
+         *                 TextViews. The first N views in this list are given the values of the first N columns
+         */
+        public GroupedRemoteEventsAdapter(Context context, List<ArrayList<? extends Map<String, ?>>> data, int resource, String[] from, int[] to) {
+            // FIXME - I think we might need to roll our own adapter rather than subclassing SimpleAdapter???
+            ArrayList<HashMap<String,String>> referenceEvents = new ArrayList<Hashmap<String,String>>();
+            for (int i=0; i<data.size(); i++) {
+                referenceEvents.add(data.get(i));
+            }
+            //super(context, referenceEvents, resource, from, to);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            View v = super.getView(position, convertView, parent);
+            Map<String, ?> dataItem = (Map<String, ?>) getItem(position);
+            Log.v(TAG, "getView() " + dataItem.toString());
+            switch (dataItem.get("type").toString()) {
+                case "null":
+                case "":
+                    v.setBackgroundColor(Color.parseColor("#ffaaaa"));
+                    break;
+                case "Seizure":
+                    v.setBackgroundColor(Color.parseColor("#ff6060"));
+                    break;
+                default:
+                    v.setBackgroundColor(Color.TRANSPARENT);
+            }
+
+            // Convert date format to something more readable.
+            TextView tv = (TextView) v.findViewById(R.id.event_date_remote_tv);
+            Date dataTime = null;
+            String dateStr = (String) dataItem.get("dataTime");
+            dataTime = mUtil.string2date(dateStr);
+            if (dataTime != null) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                tv.setText(dateFormat.format(dataTime));
+            } else {
+                tv.setText("---");
+            }
+            return (v);
+        }
+    }
+
 
     private void showDataSharingDialog() {
         mUtil.writeToSysLogFile("MainActivity.showDataSharingDialog()");

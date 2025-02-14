@@ -587,4 +587,5 @@
     <string name="DefaultSMSFalseAlarmMsgText">False Alarm, Sorry!</string>
     <string name="sms_false_alarm_message_summary">Text of \'False Alarm\' SMS message</string>
     <string name="sms_false_alarm_message_title">SMS False Alarm Message</string>
+    <string name="group_events">Group Events</string>
 </resources>

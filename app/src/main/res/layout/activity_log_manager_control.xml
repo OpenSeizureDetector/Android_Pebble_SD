@@ -153,16 +153,27 @@
             android:orientation="horizontal">
 
             <CheckBox
+                android:id="@+id/group_events_cb"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="@string/group_events">
+            </CheckBox>
+
+            <CheckBox
                 android:id="@+id/include_warnings_cb"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/include_warnings"></CheckBox>
+                android:text="@string/include_warnings">
+            </CheckBox>
 
             <CheckBox
                 android:id="@+id/include_nda_cb"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/include_nda"></CheckBox>
+                android:text="@string/include_nda">
+            </CheckBox>
+
         </LinearLayout>
 
         <ListView
