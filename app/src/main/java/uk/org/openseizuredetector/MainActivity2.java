@@ -292,6 +292,34 @@ public class MainActivity2 extends AppCompatActivity {
                     Log.i(TAG, "exception starting settings activity " + ex.toString());
                 }
                 return true;
+            case R.id.action_instructions:
+                Log.i(TAG, "action_instructions");
+                try {
+                    String url = "https://www.openseizuredetector.org.uk/?page_id=1894";
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setData(Uri.parse(url));
+                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(i);
+                } catch (Exception ex) {
+                    Log.v(TAG, "exception displaying instructions " + ex.toString());
+                    mUtil.showToast("ERROR Displaying Instructions");
+                }
+                return true;
+
+            case R.id.action_troubleshooting:
+                Log.i(TAG, "action_troubleshooting");
+                try {
+                    String url = "https://www.openseizuredetector.org.uk/?page_id=2235";
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setData(Uri.parse(url));
+                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(i);
+                } catch (Exception ex) {
+                    Log.v(TAG, "exception displaying troubleshooting " + ex.toString());
+                    mUtil.showToast("ERROR Displaying Troubleshooting Tips");
+                }
+                return true;
+
             case R.id.action_about:
                 Log.i(TAG, "action_about");
                 showAbout();

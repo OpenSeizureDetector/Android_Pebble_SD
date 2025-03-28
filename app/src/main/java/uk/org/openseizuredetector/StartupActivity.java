@@ -183,17 +183,79 @@ public class StartupActivity extends AppCompatActivity {
             }
         });
 
-
+        // Enable the "Install Watch App" button if we have the Pebble data source selected,
+        // otherwise hide it.
         b = (Button) findViewById(R.id.installOsdAppButton);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String dataSourceName = (prefs.getString("DataSource", "Phone"));
+        if (dataSourceName.equals("Pebble")) {
+            b.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.v(TAG, "install Osd Watch App button clicked");
+                    if (mConnection.mSdServer.mSdDataSource != null) {
+                        mUtil.writeToSysLogFile("Installing Watch App");
+                        mConnection.mSdServer.mSdDataSource.installWatchApp();
+                    } else {
+                        mUtil.showToast("Error installing watch app - Datasource has not started - please see installation instructions on web site");
+                        Log.v(TAG, "Displaying Installation Instructions");
+                        try {
+                            String url = "https://www.openseizuredetector.org.uk/?page_id=1894";
+                            Intent i = new Intent(Intent.ACTION_VIEW);
+                            i.setData(Uri.parse(url));
+                            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(i);
+                        } catch (Exception ex) {
+                            Log.i(TAG, "exception starting install watch app activity " + ex.toString());
+                            mUtil.showToast("Error Displaying Installation Instructions - try http://www.openseizuredetector.org.uk/?page_id=1894 instead");
+                        }
+                    }
+                }
+            });
+        } else {
+            b.setVisibility(View.GONE);
+        }
+
+        b = (Button) findViewById(R.id.instructionsButton);
         b.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.v(TAG, "install Osd Watch App button clicked");
-                mUtil.writeToSysLogFile("Installing Watch App");
-                mConnection.mSdServer.mSdDataSource.installWatchApp();
+                Log.v(TAG, "instructions button clicked");
+                try {
+                    String url = "https://www.openseizuredetector.org.uk/?page_id=1894";
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setData(Uri.parse(url));
+                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(i);
+                } catch (Exception ex) {
+                    Log.v(TAG, "exception displaying instructions " + ex.toString());
+                    mUtil.showToast("ERROR Displaying Instructions");
+                }
+
             }
         });
 
+        b = (Button) findViewById(R.id.troubleshootingButton);
+        b.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.v(TAG, "troubleshooting button clicked");
+                try {
+                    String url = "https://www.openseizuredetector.org.uk/?page_id=2235";
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setData(Uri.parse(url));
+                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(i);
+                } catch (Exception ex) {
+                    Log.v(TAG, "exception displaying troubleshooting " + ex.toString());
+                    mUtil.showToast("ERROR Displaying Troubleshooting Tips");
+                }
+
+            }
+        });
+
+
+        // Connect to the background service
         mConnection = new SdServiceConnection(getApplicationContext());
 
     }

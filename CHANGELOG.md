@@ -1,6 +1,8 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
     V4.3.0 - Add OS3D algorithm which analyses each axis individually, and flap algorithm
+    V4.2.12 - Fixed crash when pressing 'Install Watch App' button by hiding the button if the Pebble data source is not selected
+             - Added a 'Help' and 'Troubleshooting' button and menu item to draw users' attention to the web site instructions.
     V4.2.11 - Updated permissions handling to support Android 14 (needed to publish on Play Store)
             - added a crude 'flap' detector into OSD Algorithm
             - Added setting to change the delay before SMS alert is sent (Issue #202)

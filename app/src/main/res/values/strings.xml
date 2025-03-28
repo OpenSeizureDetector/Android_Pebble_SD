@@ -3,6 +3,7 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
+        \nV4.2.12 - Added butons and menu items for 'Help' and 'Troubleshooting' to point users to the web page instructoins.
         \nV4.2   - Added support for PineTime and BangleJS Watches using Bluetooth data source.
         \n       - Added support for Version 2 of the Garmin watch app, which reduces battery drain
         \n       - Added new, swipeable user interface to simplify the main screen.

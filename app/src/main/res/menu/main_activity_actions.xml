@@ -106,6 +106,14 @@
     <group android:id="@+id/grp6">
 
         <item
+            android:id="@+id/action_instructions"
+            app:showAsAction="never|withText"
+            android:title="Help" />
+        <item
+            android:id="@+id/action_troubleshooting"
+            app:showAsAction="never|withText"
+            android:title="Troubleshooting" />
+        <item
             android:id="@+id/action_about"
             app:showAsAction="never|withText"
             android:title="@string/about" />
