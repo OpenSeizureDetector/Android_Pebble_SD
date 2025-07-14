@@ -17,6 +17,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -42,13 +43,17 @@ import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class LogManagerControlActivity extends AppCompatActivity {
     private String TAG = "LogManagerControlActivity";
+    private static final long GROUPING_WINDOW_MINUTES = 3;
+    private static final long GROUPING_WINDOW_MS = GROUPING_WINDOW_MINUTES * 60 * 1000;
     private LogManager mLm;
     private Context mContext;
     private UiTimer mUiTimer;
@@ -63,6 +68,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private Integer mUiTimerPeriodSlow = 60000; // 60 seconds - once data has been received and UI populated we only update once per minute.
     private boolean mUpdateSysLog = true;
     private Menu mMenu;
+    private CheckBox mGroupEventsCb; // Declare the CheckBox member
     //private Integer UI_MODE_LOCAL = 0;
     //private Integer UI_MODE_SHARED = 1;
     //private Integer mUiMode = UI_MODE_SHARED;
@@ -117,6 +123,21 @@ public class LogManagerControlActivity extends AppCompatActivity {
         CheckBox includeNDACb =
                 (CheckBox) findViewById(R.id.include_nda_cb);
         includeNDACb.setOnCheckedChangeListener(onIncludeNDACb);
+
+        mGroupEventsCb = findViewById(R.id.group_events_cb);
+        mGroupEventsCb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                // When the checkbox state changes, re-process and update the UI
+                if (mRemoteEventsList != null && !mRemoteEventsList.isEmpty()) {
+                    if (isChecked) {
+                        createGroupedEventsList();
+                    }
+                    updateUi(); // Update UI to reflect grouped or non-grouped list
+                }
+            }
+        });
+
 
         ListView lv = (ListView) findViewById(R.id.eventLogListView);
         lv.setOnItemClickListener(onEventListClick);
@@ -219,7 +240,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 updateUi();
             });
         } else {
-            Log.e(TAG,"ERROR: initialiseServiceConnection() - mLm is null");
+            Log.e(TAG, "ERROR: initialiseServiceConnection() - mLm is null");
             mUtil.showToast(getString(R.string.error_failed_to_start_log_manager));
         }
     }
@@ -227,6 +248,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
     private void getRemoteEvents(boolean includeWarnings, boolean includeNDA) {
         mRemoteEventsList = null;  // clear existing data
+        mGroupedRemoteEventsList = null;
         // Retrieve events from remote database
         mLm.mWac.getEvents((JSONObject remoteEventsObj) -> {
             Log.v(TAG, "getRemoteEvents()");
@@ -253,7 +275,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         String dataTime = "null";
                         if (!eventObj.isNull("dataTime")) {
                             dataTime = eventObj.getString("dataTime");
-                            Log.v(TAG, "getRemoteEvents() - dataTime=" + dataTime);
+                            //Log.v(TAG, "getRemoteEvents() - dataTime=" + dataTime);
                         }
                         String typeStr = "null";
                         if (!eventObj.isNull("type")) {
@@ -282,27 +304,141 @@ public class LogManagerControlActivity extends AppCompatActivity {
                             Log.v(TAG, "getRemoteEvents - skipping warning or NDA record");
                         }
                     }
-                    createGroupedEventsList();
-                    Log.v(TAG, "getRemoteEvents() - set mRemoteEventsList().  Updating UI");
+
+                    // Sort the remote events list by date, descending (newest first)
+                    Log.v(TAG, "getRemoteEvents() - Sorting mRemoteEventsList by date");
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.getDefault()); // Adjust format if needed
+                    Collections.sort(mRemoteEventsList, (event1, event2) -> {
+                        try {
+                            String dt1Str = event1.get("dataTime");
+                            String dt2Str = event2.get("dataTime");
+                            if (
+                                    dt1Str == null
+                                            || dt2Str == null
+                                            || dt1Str.equals("null")
+                                            || dt2Str.equals("null"))
+                                return 0;
+                            Date date1 = sdf.parse(dt1Str);
+                            Date date2 = sdf.parse(dt2Str);
+                            return date2.compareTo(date1); // Descending
+                        } catch (ParseException e) {
+                            Log.e(TAG, "Error parsing date for sorting: " + e.getMessage());
+                            return 0;
+                        }
+                    });
+                    if (mGroupEventsCb.isChecked()) { // Check if grouping is enabled
+                        createGroupedEventsList();
+                        Log.v(TAG, "getRemoteEvents() - created grouped events. Updating UI");
+                    } else {
+                        mGroupedRemoteEventsList = null; // Ensure grouped list is cleared if not used
+                        Log.v(TAG, "getRemoteEvents() - grouping disabled. Updating UI with flat list.");
+                    }
                     updateUi();
                 } catch (JSONException e) {
                     Log.e(TAG, "getRemoteEvents(): Error Parsing remoteEventsObj: " + e.getMessage());
                     mUtil.showToast("Error Parsing remoteEventsObj - this should not happen!!!");
                     mRemoteEventsList = null;
+                    mGroupedRemoteEventsList = null;
+                    updateUi(); // Update UI to show error state
                 }
-                //Log.v(TAG, "getRemoteEvents(): mRemoteEventsList = " + mRemoteEventsList.toString());
             }
         });
     }
 
+    /**
+     * createGroupedEventsList()
+     * Reads the complete list of remote events mRemoteEventsList and creates a new list mGroupedRemoteEventsList
+     * where each item is a list of events that comprise a group based on time (all events within a 3 minute period are grouped together).
+     */
     private void createGroupedEventsList() {
-        /**
-         * Reads the complete list of remote events mRemoteEventsList and creates a new list mGroupedRemoteEventsList
-         * where each item is a list of events that comprise a group based on time (all events within a 3 minute period are grouped together).
-         */
         Log.i(TAG, "createGroupedEventsList()");
-        mGroupedRemoteEventsList = new ArrayList<ArrayList<HashMap<String,String>>>();
-        // FIXME - Make this do something!
+        /**
+         * createGroupedEventsList()
+         * Reads the complete list of remote events mRemoteEventsList (sorted newest first)
+         * and creates a new list mGroupedRemoteEventsList
+         * where each item is a list of events that comprise a group based on time.
+         */
+        mGroupedRemoteEventsList = new ArrayList<>();
+        if (mRemoteEventsList == null || mRemoteEventsList.isEmpty()) {
+            Log.i(TAG, "createGroupedEventsList() - mRemoteEventsList is null or empty.");
+            return;
+        }
+
+        // Helper to parse date strings to long timestamps.
+        // Adjust the SimpleDateFormat pattern to match your "dataTime" format.
+        // If "dataTime" is already a timestamp (long), you can use it directly.
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.getDefault()); // Example format
+
+        ArrayList<HashMap<String, String>> currentGroup = null;
+        long lastEventTimeInGroup = 0;
+
+        for (HashMap<String, String> event : mRemoteEventsList) {
+            String dataTimeString = event.get("dataTime");
+            if (dataTimeString == null || dataTimeString.equals("null")) {
+                Log.w(TAG, "Event has null or invalid dataTime: " + event.get("id"));
+                continue; // Skip events with no valid time
+            }
+
+            long currentEventTime;
+            try {
+                Date eventDate = sdf.parse(dataTimeString);
+                if (eventDate == null) {
+                    Log.w(TAG, "Could not parse dataTime: " + dataTimeString + " for event: " + event.get("id"));
+                    continue;
+                }
+                currentEventTime = eventDate.getTime();
+            } catch (ParseException e) {
+                Log.e(TAG, "Error parsing date string: " + dataTimeString + " - " + e.getMessage());
+                continue; // Skip if date can't be parsed
+            }
+
+            if (currentGroup == null || (lastEventTimeInGroup - currentEventTime) > GROUPING_WINDOW_MS) {
+                // Start a new group
+                if (currentGroup != null) {
+                    moveFirstAlarmToFront(currentGroup); // Move the first ALARM event to the front of the group)
+                    mGroupedRemoteEventsList.add(currentGroup);
+                }
+                currentGroup = new ArrayList<>();
+                currentGroup.add(event);
+                lastEventTimeInGroup = currentEventTime;
+            } else {
+                // Add to the current group
+                currentGroup.add(event);
+                // lastEventTimeInGroup remains the time of the first event added to this group (newest)
+            }
+        }
+
+        // Add the last group if it exists
+        if (currentGroup != null && !currentGroup.isEmpty()) {
+            moveFirstAlarmToFront(currentGroup); // Move the first ALARM event to the front of the group
+            mGroupedRemoteEventsList.add(currentGroup);
+        }
+
+        Log.i(TAG, "createGroupedEventsList() - Grouped " + mRemoteEventsList.size() +
+                " events into " + mGroupedRemoteEventsList.size() + " groups.");
+    }
+
+    /**
+     * moveFirstAlarmToFront() - This method checks the group for the first
+     * event with an ALARM state (osdAlarmState = 2) and makes that event the
+     * first in the list.
+     *
+      * @param group An ArrayList of HashMaps representing a group of events.
+     */
+    private void moveFirstAlarmToFront(ArrayList<HashMap<String, String>> group) {
+        //Log.i(TAG, "moveFirstAlarmToFront() - Checking group of size: " + group.size());
+        for (int i = 0; i < group.size(); i++) {
+            HashMap<String, String> event = group.get(i);
+            String alarmStateStr = event.get("osdAlarmState");
+            if (alarmStateStr != null && alarmStateStr.equals("2")) { // ALARM is 2
+                //Log.v(TAG," moveFirstAlarmToFront() - Found ALARM event at index: " + i);
+                if (i != 0) {
+                    group.remove(i);
+                    group.add(0, event);
+                }
+                break;
+            }
+        }
     }
 
     private void updateUi() {
@@ -353,13 +489,27 @@ public class LogManagerControlActivity extends AppCompatActivity {
             pb.setIndeterminate(false);
             pb.setVisibility(View.INVISIBLE);
             ListView lv = (ListView) findViewById(R.id.remoteEventsLv);
-            ListAdapter adapter = new RemoteEventsAdapter(LogManagerControlActivity.this, mRemoteEventsList, R.layout.log_entry_layout_remote,
-                    new String[]{"id", "dataTime", "type", "subType", "osdAlarmStateStr", "desc"},
-                    new int[]{R.id.event_id_remote_tv, R.id.event_date_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
-                            R.id.event_alarmState_remote_tv, R.id.event_notes_remote_tv});
-            lv.setAdapter(adapter);
-            //Log.i(TAG,"adapter[0]="+adapter.getItem(0));
-            //Log.i(TAG,"adapter[3]="+adapter.getItem(3));
+
+            if (mGroupEventsCb.isChecked() && mGroupedRemoteEventsList != null) {
+                // Show only the first event of each group
+                ArrayList<HashMap<String, String>> displayList = new ArrayList<>();
+                for (ArrayList<HashMap<String, String>> group : mGroupedRemoteEventsList) {
+                    displayList.add(group.get(0));
+                }
+                ListAdapter adapter = new RemoteEventsAdapter(LogManagerControlActivity.this, displayList, R.layout.log_entry_layout_remote,
+                        new String[]{"id", "dataTime", "type", "subType", "osdAlarmStateStr", "desc"},
+                        new int[]{R.id.event_id_remote_tv, R.id.event_date_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
+                                R.id.event_alarmState_remote_tv, R.id.event_notes_remote_tv});
+                lv.setAdapter(adapter);
+            } else if (mRemoteEventsList != null) {
+                ListAdapter adapter = new RemoteEventsAdapter(LogManagerControlActivity.this, mRemoteEventsList, R.layout.log_entry_layout_remote,
+                        new String[]{"id", "dataTime", "type", "subType", "osdAlarmStateStr", "desc"},
+                        new int[]{R.id.event_id_remote_tv, R.id.event_date_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
+                                R.id.event_alarmState_remote_tv, R.id.event_notes_remote_tv});
+                lv.setAdapter(adapter);
+            } else {
+                Log.i(TAG, "UpdateUi: No Remote Events");
+            }
         } else {
             //mUtil.showToast("No Remote Events");
             Log.i(TAG, "UpdateUi: No Remote Events");
@@ -656,15 +806,26 @@ public class LogManagerControlActivity extends AppCompatActivity {
             new AdapterView.OnItemClickListener() {
                 public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
                     Log.v(TAG, "onItemClicKListener() - Position=" + position + ", id=" + id);// Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
-                    HashMap<String, String> eventObj = (HashMap<String, String>) adapter.getItemAtPosition(position);
-                    String eventId = eventObj.get("uploaded");
-                    Log.d(TAG, "onItemClickListener(): eventId=" + eventId + ", eventObj=" + eventObj);
-                    if (eventId != null) {
+
+                    if (mGroupEventsCb.isChecked() && mGroupedRemoteEventsList != null) {
+                        Log.v(TAG,"onItemClickListener() - Creating Grouped Events List from Position=" + position);
+                        // Get the group for this position
+                        ArrayList<HashMap<String, String>> group = mGroupedRemoteEventsList.get(position);
+                        ArrayList<String> eventIds = new ArrayList<>();
+                        for (HashMap<String, String> event : group) {
+                            Log.v(TAG,"onItemClickListener() - Adding event to edit list: " + event.get("id"));
+                            eventIds.add(event.get("id"));
+                        }
+                        Intent i = new Intent(getApplicationContext(), EditEventActivity.class);
+                        i.putStringArrayListExtra("eventIds", eventIds);
+                        startActivity(i);
+                    } else {
+                        Log.v(TAG,"onItemClickListener() - Editing Single event at Position=" + position);
+                        HashMap<String, String> eventObj = (HashMap<String, String>) adapter.getItemAtPosition(position);
+                        String eventId = eventObj.get("id");
                         Intent i = new Intent(getApplicationContext(), EditEventActivity.class);
                         i.putExtra("eventId", eventId);
                         startActivity(i);
-                    } else {
-                        mUtil.showToast("You Must Wait for Event to Upload before Editing it");
                     }
                 }
             };
@@ -673,13 +834,31 @@ public class LogManagerControlActivity extends AppCompatActivity {
             new AdapterView.OnItemClickListener() {
                 public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
                     Log.v(TAG, "onRemoteEventList Click() - Position=" + position + ", id=" + id);// Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
-                    HashMap<String, String> eventObj = (HashMap<String, String>) adapter.getItemAtPosition(position);
-                    String eventId = eventObj.get("id");
-                    Log.d(TAG, "onItemClickListener(): eventId=" + eventId + ", eventObj=" + eventObj);
-                    Intent i = new Intent(getApplicationContext(), EditEventActivity.class);
-                    i.putExtra("eventId", eventId);
-                    startActivity(i);
+                    Log.v(TAG, "onItemClickListener() - Position=" + position + ", id=" + id);// Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
+
+                    if (mGroupEventsCb.isChecked() && mGroupedRemoteEventsList != null) {
+                        Log.v(TAG,"onItemClickListener() - Creating Grouped Events List from Position=" + position);
+                        // Get the group for this position
+                        ArrayList<HashMap<String, String>> group = mGroupedRemoteEventsList.get(position);
+                        ArrayList<String> eventIds = new ArrayList<>();
+                        for (HashMap<String, String> event : group) {
+                            Log.v(TAG,"onItemClickListener() - Adding event to edit list: " + event.get("id"));
+                            eventIds.add(event.get("id"));
+                        }
+                        Intent i = new Intent(getApplicationContext(), EditEventActivity.class);
+                        i.putStringArrayListExtra("eventIds", eventIds);
+                        startActivity(i);
+                    } else {
+                        Log.v(TAG,"onItemClickListener() - Editing Single event at Position=" + position);
+                        HashMap<String, String> eventObj = (HashMap<String, String>) adapter.getItemAtPosition(position);
+                        String eventId = eventObj.get("id");
+                        Intent i = new Intent(getApplicationContext(), EditEventActivity.class);
+                        i.putExtra("eventId", eventId);
+                        startActivity(i);
+                    }
                 }
+
+
             };
 
 
@@ -786,6 +965,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
             return (v);
         }
     }
+
 
     private void showDataSharingDialog() {
         mUtil.writeToSysLogFile("MainActivity.showDataSharingDialog()");

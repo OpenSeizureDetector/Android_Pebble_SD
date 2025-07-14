@@ -121,48 +121,67 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <TextView
                 android:id="@+id/authStatusTv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/not_authenticated" />
+                android:text="@string/not_authenticated"
+                android:layout_marginEnd="8dp"/> <!-- Space after TextView -->
 
             <Button
                 android:id="@+id/auth_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/authenticate" />
+                android:text="@string/authenticate"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp" /> <!-- Space after this button -->
 
             <Button
                 android:id="@+id/refresh_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/refreshBtn" />
+                android:text="@string/refreshBtn"
+                android:layout_marginStart="8dp" /> <!-- Space before this button -->
+            <!-- No marginEnd needed if ProgressBar is last and you want it close,
+                 or add marginEnd if you want space before ProgressBar too -->
 
             <ProgressBar
                 android:id="@+id/remoteAccessPb"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"
+                android:layout_marginStart="8dp"/> <!-- Space before ProgressBar -->
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <CheckBox
+                android:id="@+id/group_events_cb"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/group_remote_events"
+                android:checked="true" />
 
             <CheckBox
                 android:id="@+id/include_warnings_cb"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/include_warnings"></CheckBox>
+                android:layout_weight="1"
+                android:text="@string/include_warnings"/>
 
             <CheckBox
                 android:id="@+id/include_nda_cb"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/include_nda"></CheckBox>
+                android:layout_weight="1"
+                android:text="@string/include_nda"/>
         </LinearLayout>
 
         <ListView
