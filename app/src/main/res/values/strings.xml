@@ -3,7 +3,7 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
-        \nV4.3.0a - Added support for Android 14 (API 34) and above.
+        \nV4.3.0  - Added support for Android 15 (API 35) and above.
         \n        - Simplified data sharing editor by grouping events for editing.
         \nV4.2.12 - Added butons and menu items for 'Help' and 'Troubleshooting' to point users to the web page instructoins.
         \nV4.2   - Added support for PineTime and BangleJS Watches using Bluetooth data source.

@@ -1,13 +1,14 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 android {
-    compileSdk 34  // Android 14
+    compileSdk 36
+// Android 14
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
         applicationId "uk.org.openseizuredetector"
         minSdkVersion 23  // Android 6
-        targetSdkVersion 34  // Android 14 = 34
+        targetSdkVersion 35  // Android 15 = 35
         multiDexEnabled true
     }
 
