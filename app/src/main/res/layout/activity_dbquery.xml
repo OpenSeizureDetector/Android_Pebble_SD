@@ -1,91 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_layout_export_data"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Export Local Data"
-        android:textStyle="bold" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="End Date/Time (dd-mm-yyyy hh:mm)" />
+    android:fitsSystemWindows="true"
+    tools:context="uk.org.openseizuredetector.LogManager">
 
     <LinearLayout
+        android:id="@+id/export_data_content_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Export Local Data"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="End Date/Time (dd-mm-yyyy hh:mm)" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/endDateText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:text="(end date)" />
+
+            <Button
+                android:id="@+id/dateBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Select Date" />
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/endTimeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:text="(end time)" />
+
+            <Button
+                android:id="@+id/timeBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Select Time" />
+
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Duration (hrs)" />
 
         <EditText
-            android:id="@+id/endDateText"
+            android:id="@+id/durationText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ems="10"
-            android:text="(end date)" />
+            android:inputType="numberDecimal"
+            android:text="1.0" />
 
-        <Button
-            android:id="@+id/dateBtn"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Select Date" />
+            android:orientation="horizontal">
 
+            <Button
+                android:id="@+id/exportBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Export Data" />
+
+            <ProgressBar
+                android:id="@+id/exportPb"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:visibility="invisible" />
+        </LinearLayout>
 
     </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <EditText
-            android:id="@+id/endTimeText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:ems="10"
-            android:text="(end time)" />
-
-        <Button
-            android:id="@+id/timeBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Select Time" />
-
-
-    </LinearLayout>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Duration (hrs)" />
-
-    <EditText
-        android:id="@+id/durationText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="numberDecimal"
-        android:text="1.0" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/exportBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Export Data" />
-
-        <ProgressBar
-            android:id="@+id/exportPb"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:visibility="invisible" />
-    </LinearLayout>
-
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

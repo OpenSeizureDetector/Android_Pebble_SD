@@ -12,9 +12,12 @@ import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
 
+import androidx.core.graphics.Insets;
 import androidx.core.view.MenuCompat;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -90,6 +93,20 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_log_manager_control);
 
+        // Handle system window insets for all API levels
+        View rootView = findViewById(R.id.root_layout_log_manager_control);
+        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
+            // Get the system bar insets
+            int top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+            int bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+
+            // Apply padding to your main content view
+            LinearLayout content = findViewById(R.id.log_manager_control_content_layout); // Add this ID to your LinearLayout
+            content.setPadding(0, top, 0, bottom);
+
+            // Return the insets so they keep propagating
+            return WindowInsetsCompat.CONSUMED;
+        });
         /* Force display of overflow menu - from stackoverflow
          * "how to force use of..."
          */

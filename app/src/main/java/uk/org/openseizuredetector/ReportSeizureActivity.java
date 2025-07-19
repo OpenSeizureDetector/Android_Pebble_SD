@@ -12,11 +12,14 @@ import android.os.Handler;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -78,6 +81,21 @@ public class ReportSeizureActivity extends AppCompatActivity {
         mConnection = new SdServiceConnection(getApplicationContext());
 
         setContentView(R.layout.activity_report_seizure);
+        // Handle system window insets for all API levels
+        View rootView = findViewById(R.id.root_layout_report_seizure);
+        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
+            // Get the system bar insets
+            int top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+            int bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+
+            // Apply padding to your main content view
+            LinearLayout content = findViewById(R.id.report_seizure_content_layout);
+            content.setPadding(0, top, 0, bottom);
+
+            // Return the insets so they keep propagating
+            return WindowInsetsCompat.CONSUMED;
+        });
+
 
         mEventTypeRg = findViewById(R.id.eventTypeRg);
         mEventTypeRg.setOnCheckedChangeListener(onEventTypeChange);

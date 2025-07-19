@@ -26,6 +26,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.rohitss.uceh.UCEHandler;
@@ -56,23 +57,19 @@ public class MainActivity2 extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
 
-        View root = findViewById(R.id.activity_main2_root_layout);
-        ViewCompat.setOnApplyWindowInsetsListener(root, (v, insets) -> {
-            int topInset = 0;
-            //int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
-            int actionBarHeight = 0;
-            TypedValue tv = new TypedValue();
-            if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
-                actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data,getResources().getDisplayMetrics());
-            }
-            Log.i(TAG, "onCreate() - topInset = " + topInset + ", actionBarHeight = " + actionBarHeight);
-            v.setPadding(
-                    v.getPaddingLeft(),
-                    actionBarHeight,
-                    v.getPaddingRight(),
-                    v.getPaddingBottom()
-            );
-            return insets;
+        // Handle system window insets for all API levels
+        View rootView = findViewById(R.id.activity_main2_root_layout);
+        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
+            // Get the system bar insets
+            int top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+            int bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+
+            // Apply padding to your main content view
+            LinearLayout content = findViewById(R.id.activity_main2_content_layout);
+            content.setPadding(0, top, 0, bottom);
+
+            // Return the insets so they keep propagating
+            return WindowInsetsCompat.CONSUMED;
         });
 
 

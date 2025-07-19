@@ -1,6 +1,7 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
-    V4.3.0 - 2024-10-01
+    V4.3.1 - Fixed corrupted user interface issues on Android 15 and Android 16.
+    V4.3.0 - 2025-07-16
              - Added support for Android 15 (API 35) to allow publishing on Play Store.
              - Improved the data sharing screen to show grouped events to reduce the number of events that need to be edited.
     V4.2.12 - Fixed crash when pressing 'Install Watch App' button by hiding the button if the Pebble data source is not selected

@@ -5,10 +5,13 @@ import android.os.Bundle;
 import android.os.Handler;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -53,6 +56,22 @@ public class EditEventActivity extends AppCompatActivity {
         Log.v(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_event);
+        // Handle system window insets for all API levels
+        View rootView = findViewById(R.id.root_layout_edit_event);
+        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
+            // Get the system bar insets
+            int top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+            int bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+
+            // Apply padding to your main content view
+            LinearLayout content = findViewById(R.id.edit_event_content_layout);
+            content.setPadding(0, top, 0, bottom);
+
+            // Return the insets so they keep propagating
+            return WindowInsetsCompat.CONSUMED;
+        });
+
+
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
         mConnection = new SdServiceConnection(getApplicationContext());
 
