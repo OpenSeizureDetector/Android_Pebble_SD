@@ -13,6 +13,8 @@ import android.os.AsyncTask;
 import android.os.Handler;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import android.os.Bundle;
 import android.os.IBinder;
@@ -22,6 +24,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TimePicker;
 import android.os.ParcelFileDescriptor;
@@ -83,6 +86,21 @@ public class ExportDataActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dbquery);
+        // Handle system window insets for all API levels
+        View rootView = findViewById(R.id.root_layout_export_data);
+        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
+            // Get the system bar insets
+            int top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+            int bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+
+            // Apply padding to your main content view
+            LinearLayout content = findViewById(R.id.export_data_content_layout);
+            content.setPadding(0, top, 0, bottom);
+
+            // Return the insets so they keep propagating
+            return WindowInsetsCompat.CONSUMED;
+        });
+
 
         mHandler = new Handler();
         mUtil = new OsdUtil(this, mHandler);

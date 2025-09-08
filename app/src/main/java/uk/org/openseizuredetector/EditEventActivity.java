@@ -5,10 +5,13 @@ import android.os.Bundle;
 import android.os.Handler;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -38,6 +41,7 @@ public class EditEventActivity extends AppCompatActivity {
     private String mEventTypeStr = null;
     private String mEventSubTypeStr = null;
     private String mEventId;
+    private ArrayList<String> mEventIds; // For group editing
     private String mEventNotes = "";
     //private Date mEventDateTime;
     private RadioGroup mEventTypeRg;
@@ -52,6 +56,22 @@ public class EditEventActivity extends AppCompatActivity {
         Log.v(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_event);
+        // Handle system window insets for all API levels
+        View rootView = findViewById(R.id.root_layout_edit_event);
+        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
+            // Get the system bar insets
+            int top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+            int bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+
+            // Apply padding to your main content view
+            LinearLayout content = findViewById(R.id.edit_event_content_layout);
+            content.setPadding(0, top, 0, bottom);
+
+            // Return the insets so they keep propagating
+            return WindowInsetsCompat.CONSUMED;
+        });
+
+
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
         mConnection = new SdServiceConnection(getApplicationContext());
 
@@ -61,8 +81,15 @@ public class EditEventActivity extends AppCompatActivity {
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
-            String eventId = extras.getString("eventId");
-            mEventId = eventId;
+            mEventIds = extras.getStringArrayList("eventIds");
+            if (mEventIds != null && !mEventIds.isEmpty()) {
+                Log.v(TAG, "onCreate - Group Edit - eventIds=" + mEventIds.toString());
+                mEventId = mEventIds.get(0);
+            } else {
+                Log.v(TAG, "onCreate - Single Edit - eventId=" + extras.getString("eventId"));
+                mEventId = extras.getString("eventId");
+                mEventIds = null;
+            }
             Log.v(TAG, "onCreate - mEventId=" + mEventId);
         }
 
@@ -297,6 +324,7 @@ public class EditEventActivity extends AppCompatActivity {
                     }
                     Log.v(TAG, "onOK() - eventObj=" + mEventObj.toString());
 
+                    // First we just save the open event, irrespective of whether it is a group edit or not.
                     try {
                         mWac.updateEvent(mEventObj, new WebApiConnection.JSONObjectCallback() {
                             @Override
@@ -320,8 +348,57 @@ public class EditEventActivity extends AppCompatActivity {
                         mUtil.showToast("Error Updating Event");
                         updateUi();
                     }
+
+                    // If this is a group edit, we need to update the other events in the group.
+                    if (mEventIds != null && mEventIds.size() > 1) {
+                        Log.v(TAG, "onOK() - Group Edit - updating other events in group");
+                        updateGroupEventsSequentially(0);
+                    }
                 }
+
             };
+
+    private void updateGroupEventsSequentially(final int index) {
+        if (mEventIds == null || index >= mEventIds.size()) {
+            Log.v(TAG, "updateGroupEventsSequentially - All events updated");
+            return;
+        }
+        final String eventId = mEventIds.get(index);
+        mWac.getEvent(eventId, new WebApiConnection.JSONObjectCallback() {
+            @Override
+            public void accept(JSONObject eventObj) {
+                if (eventObj == null) {
+                    Log.e(TAG, "updateGroupEventsSequentially - ERROR: could not retrieve event " + eventId);
+                    mUtil.showToast("Error Retrieving Event " + eventId);
+                    updateGroupEventsSequentially(index + 1);
+                    return;
+                }
+                try {
+                    eventObj.put("id", eventId);
+                    eventObj.put("type", mEventObj.getString("type"));
+                    eventObj.put("subType", mEventObj.getString("subType"));
+                    eventObj.put("desc", mEventObj.getString("desc"));
+                } catch (JSONException e) {
+                    Log.e(TAG, "updateGroupEventsSequentially - ERROR: " + e.getMessage());
+                    updateGroupEventsSequentially(index + 1);
+                    return;
+                }
+                mWac.updateEvent(eventObj, new WebApiConnection.JSONObjectCallback() {
+                    @Override
+                    public void accept(JSONObject updatedObj) {
+                        if (updatedObj == null) {
+                            Log.e(TAG, "updateGroupEventsSequentially - ERROR: update failed for " + eventId);
+                            mUtil.showToast("Error Updating Event " + eventId);
+                        } else {
+                            Log.v(TAG, "updateGroupEventsSequentially - Updated event " + eventId + " OK");
+                            mUtil.showToast("Event " + eventId + " Updated OK");
+                        }
+                        updateGroupEventsSequentially(index + 1);
+                    }
+                });
+            }
+        });
+    }
 
 
     RadioGroup.OnCheckedChangeListener onEventTypeChange =

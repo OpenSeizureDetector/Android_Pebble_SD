@@ -369,13 +369,13 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        Log.v(TAG, "Response is: " + response);
+                        Log.v(TAG, "updateEvent.onResponse(): Response is: " + response);
                         mServerConnectionOk = true;
                         try {
                             JSONObject retObj = new JSONObject(response);
                             callback.accept(retObj);
                         } catch (JSONException e) {
-                            Log.e(TAG, "getEventTypes.onRespons(): Error: " + e.getMessage() + "," + e.toString());
+                            Log.e(TAG, "updateEvent.onResponse(): Error: " + e.getMessage() + "," + e.toString());
                             callback.accept(null);
                         }
                     }
@@ -385,9 +385,9 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                     public void onErrorResponse(VolleyError error) {
                         mServerConnectionOk = false;
                         if (error != null) {
-                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage());
+                            Log.e(TAG, "updateEvent.onErrorResponse():  Error: " + error.toString() + ", message:" + error.getMessage());
                         } else {
-                            Log.e(TAG, "Create Event Error - returned null response");
+                            Log.e(TAG, "updateEvent.onErrorResponse():  Error - returned null response");
                         }
                         callback.accept(null);
                     }

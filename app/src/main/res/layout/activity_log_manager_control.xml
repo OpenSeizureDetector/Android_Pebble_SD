@@ -1,122 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_layout_log_manager_control"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:fitsSystemWindows="true"
     tools:context="uk.org.openseizuredetector.LogManager">
 
-    <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/local_database"
-        android:textAppearance="?android:attr/textAppearanceLarge" />
-
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/num_local_events" />
-
-        <TextView
-            android:id="@+id/num_local_events_tv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="000" />
-    </LinearLayout>
-
-    <!--
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/num_local_datapoints" />
-
-        <TextView
-            android:id="@+id/num_local_datapoints_tv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="000" />
-    </LinearLayout>
-    -->
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/NDATimeRemaining" />
-
-        <TextView
-            android:id="@+id/nda_time_remaining_tv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="000" />
-    </LinearLayout>
-
-
-    <RadioGroup xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <RadioButton
-            android:id="@+id/shared_data_rb"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:onClick="onRadioButtonClicked"
-            android:text="@string/shared_data" />
-
-        <RadioButton
-            android:id="@+id/local_data_rb"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="false"
-            android:onClick="onRadioButtonClicked"
-            android:text="@string/local_data" />
-
-        <RadioButton
-            android:id="@+id/syslog_rb"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:checked="false"
-            android:onClick="onRadioButtonClicked"
-            android:text="@string/system_logs" />
-    </RadioGroup>
-
-    <LinearLayout
-        android:id="@+id/shared_data_ll"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
-        android:visibility="visible">
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        android:id="@+id/log_manager_control_content_layout"
+        tools:context="uk.org.openseizuredetector.LogManager">
 
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="@string/remote_database"
+            android:text="@string/local_database"
             android:textAppearance="?android:attr/textAppearanceLarge" />
-
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/check_seizures_message" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -124,95 +31,218 @@
             android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/authStatusTv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/not_authenticated" />
+                android:text="@string/num_local_events" />
 
-            <Button
-                android:id="@+id/auth_button"
+            <TextView
+                android:id="@+id/num_local_events_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/authenticate" />
-
-            <Button
-                android:id="@+id/refresh_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/refreshBtn" />
-
-            <ProgressBar
-                android:id="@+id/remoteAccessPb"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent" />
+                android:text="000" />
         </LinearLayout>
+
+        <!--
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/num_local_datapoints" />
+
+            <TextView
+                android:id="@+id/num_local_datapoints_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="000" />
+        </LinearLayout>
+        -->
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <CheckBox
-                android:id="@+id/include_warnings_cb"
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/include_warnings"></CheckBox>
+                android:text="@string/NDATimeRemaining" />
 
-            <CheckBox
-                android:id="@+id/include_nda_cb"
+            <TextView
+                android:id="@+id/nda_time_remaining_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/include_nda"></CheckBox>
+                android:text="000" />
         </LinearLayout>
 
-        <ListView
-            android:id="@+id/remoteEventsLv"
+
+        <RadioGroup xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp" />
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/shared_data_rb"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:onClick="onRadioButtonClicked"
+                android:text="@string/shared_data" />
+
+            <RadioButton
+                android:id="@+id/local_data_rb"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false"
+                android:onClick="onRadioButtonClicked"
+                android:text="@string/local_data" />
+
+            <RadioButton
+                android:id="@+id/syslog_rb"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="false"
+                android:onClick="onRadioButtonClicked"
+                android:text="@string/system_logs" />
+        </RadioGroup>
+
+        <LinearLayout
+            android:id="@+id/shared_data_ll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/remote_database"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/check_seizures_message" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/authStatusTv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/not_authenticated" /> <!-- Space after TextView -->
+
+                <Button
+                    android:id="@+id/auth_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="@string/authenticate" /> <!-- Space after this button -->
+
+                <Button
+                    android:id="@+id/refresh_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/refreshBtn" /> <!-- Space before this button -->
+                <!-- No marginEnd needed if ProgressBar is last and you want it close,
+                     or add marginEnd if you want space before ProgressBar too -->
+
+                <ProgressBar
+                    android:id="@+id/remoteAccessPb"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="8dp" /> <!-- Space before ProgressBar -->
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <CheckBox
+                    android:id="@+id/group_events_cb"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:checked="true"
+                    android:text="@string/group_remote_events" />
+
+                <CheckBox
+                    android:id="@+id/include_warnings_cb"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/include_warnings" />
+
+                <CheckBox
+                    android:id="@+id/include_nda_cb"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/include_nda" />
+            </LinearLayout>
+
+            <ListView
+                android:id="@+id/remoteEventsLv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp" />
+
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/local_data_ll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/EventsInLocalDb"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <ListView
+                android:id="@+id/eventLogListView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/syslog_ll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/system_logs"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <ListView
+                android:id="@+id/sysLogListView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp" />
+        </LinearLayout>
+
 
     </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
 
-
-    <LinearLayout
-        android:id="@+id/local_data_ll"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
-
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/EventsInLocalDb"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
-
-        <ListView
-            android:id="@+id/eventLogListView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/syslog_ll"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
-
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/system_logs"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
-
-        <ListView
-            android:id="@+id/sysLogListView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp" />
-    </LinearLayout>
-
-
-</LinearLayout>
