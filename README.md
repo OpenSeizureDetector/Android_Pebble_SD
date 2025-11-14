@@ -5,6 +5,8 @@ This repository contains the source code for the main
 Android App, which is published on 
 (Google Play Store)[https://play.google.com/store/apps/details?id=uk.org.openseizuredetector].
 
+For a detailed architectural overview (activities, service, data flow, resources) see APP_STRUCTURE.md.
+
 This seizure detector uses a Garmin smart watch to collect movement (acceleration) and heart rate data which is used to detect tonic-clonic epileptic seizures.  
 See (the OpenSeizureDetector Web Site)[https://www.openseizuredetector.org.uk/] for more details.
 
