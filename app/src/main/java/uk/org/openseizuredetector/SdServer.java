@@ -56,8 +56,9 @@ import android.os.PowerManager.WakeLock;
 import android.preference.PreferenceManager;
 import android.service.notification.StatusBarNotification;
 import android.telephony.SmsManager;
-import android.text.format.Time;
 import android.util.Log;
+
+import java.util.Calendar;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.NotificationCompat;
@@ -128,7 +129,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private String[] mSMSNumbers;
     private String mSMSMsgStr = "default SMS Message";
     private String mSMSFalseAlarmMsgStr = "default SMS False Alarm Message";
-    public Time mSMSTime = null;  // last time we sent an SMS Alarm (limited to one per minute)
+    public long mSMSTimeMillis = 0;  // last time we sent an SMS Alarm (limited to one per minute) - in milliseconds
     public SmsTimer mSmsTimer = null;  // Timer to wait for specified time before sending an alert to give the user chance to cancel it.
     public int mSmsTimerSecs = 10;    // Time delay in seconds before sending SMS alert.
     private AlertDialog.Builder mSMSAlertDialog;   // Dialog shown during countdown to sending SMS.
@@ -325,8 +326,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Record last time we sent an SMS so we can limit rate of SMS
         // sending to one per minute.   We set it to one minute ago (60000 milliseconds)
-        mSMSTime = new Time(Time.getCurrentTimezone());
-        mSMSTime.set(mSMSTime.toMillis(false) - 60000);
+        mSMSTimeMillis = System.currentTimeMillis() - 60000;
 
 
         // Start timer to log data regularly..
@@ -665,18 +665,27 @@ public class SdServer extends Service implements SdDataReceiver {
             alarmBeep();
             showNotification(2);
             // Display MainActvity
-            showMainActivity();
+            // Only show MainActivity if user preference is enabled (default true)
+            try {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                boolean displayMain = prefs.getBoolean("DisplayMainActivityOnAlarm", true);
+                if (displayMain) {
+                    showMainActivity();
+                } else {
+                    Log.v(TAG, "DisplayMainActivityOnAlarm preference is false - not showing MainActivity");
+                }
+            } catch (Exception ex) {
+                Log.w(TAG, "Problem checking DisplayMainActivityOnAlarm preference, defaulting to show: " + ex.toString());
+                showMainActivity();
+            }
             // Send SMS Alarm.
             if (mSMSAlarm) {
-                Time tnow = new Time(Time.getCurrentTimezone());
-                tnow.setToNow();
+                long tnowMillis = System.currentTimeMillis();
                 // limit SMS alarms to one per minute
-                if ((tnow.toMillis(false)
-                        - mSMSTime.toMillis(false))
-                        > 60000) {
+                if ((tnowMillis - mSMSTimeMillis) > 60000) {
                     sendSMSAlarm();
                     sendPhoneAlarm();
-                    mSMSTime = tnow;
+                    mSMSTimeMillis = tnowMillis;
                 } else {
                     mUtil.showToast(getString(R.string.SMSAlarmAlreadySentMsg));
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
@@ -703,17 +712,26 @@ public class SdServer extends Service implements SdDataReceiver {
             // Make alarm beep tone
             alarmBeep();
             // Display MainActvity
-            showMainActivity();
+            // Only show MainActivity if user preference is enabled (default true)
+            try {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                boolean displayMain = prefs.getBoolean("DisplayMainActivityOnAlarm", true);
+                if (displayMain) {
+                    showMainActivity();
+                } else {
+                    Log.v(TAG, "DisplayMainActivityOnAlarm preference is false - not showing MainActivity");
+                }
+            } catch (Exception ex) {
+                Log.w(TAG, "Problem checking DisplayMainActivityOnAlarm preference, defaulting to show: " + ex.toString());
+                showMainActivity();
+            }
             // Send SMS Alarm.
             if (mSMSAlarm) {
-                Time tnow = new Time(Time.getCurrentTimezone());
-                tnow.setToNow();
+                long tnowMillis = System.currentTimeMillis();
                 // limit SMS alarms to one per minute
-                if ((tnow.toMillis(false)
-                        - mSMSTime.toMillis(false))
-                        > 60000) {
+                if ((tnowMillis - mSMSTimeMillis) > 60000) {
                     sendSMSAlarm();
-                    mSMSTime = tnow;
+                    mSMSTimeMillis = tnowMillis;
                 } else {
                     mUtil.showToast(getString(R.string.SMSAlarmAlreadySentMsg));
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
@@ -737,19 +755,28 @@ public class SdServer extends Service implements SdDataReceiver {
             alarmBeep();
             showNotification(2);
             // Display MainActvity
-            showMainActivity();
+            // Only show MainActivity if user preference is enabled (default true)
+            try {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                boolean displayMain = prefs.getBoolean("DisplayMainActivityOnAlarm", true);
+                if (displayMain) {
+                    showMainActivity();
+                } else {
+                    Log.v(TAG, "DisplayMainActivityOnAlarm preference is false - not showing MainActivity");
+                }
+            } catch (Exception ex) {
+                Log.w(TAG, "Problem checking DisplayMainActivityOnAlarm preference, defaulting to show: " + ex.toString());
+                showMainActivity();
+            }
             // Send SMS Alarm.
             if (mSMSAlarm) {
-                Time tnow = new Time(Time.getCurrentTimezone());
-                tnow.setToNow();
+                long tnowMillis = System.currentTimeMillis();
                 // limit SMS alarms to one per minute
-                if ((tnow.toMillis(false)
-                        - mSMSTime.toMillis(false))
-                        > 60000) {
+                if ((tnowMillis - mSMSTimeMillis) > 60000) {
                     sendSMSAlarm();
-                    mSMSTime = tnow;
+                    mSMSTimeMillis = tnowMillis;
                 } else {
-                    mUtil.showToast(getString(R.string.sms_alarm_already_sent_msg));
+                    mUtil.showToast(getString(R.string.SMSAlarmAlreadySentMsg));
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
@@ -771,17 +798,26 @@ public class SdServer extends Service implements SdDataReceiver {
             alarmBeep();
             showNotification(2);
             // Display MainActvity
-            showMainActivity();
+            // Only show MainActivity if user preference is enabled (default true)
+            try {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                boolean displayMain = prefs.getBoolean("DisplayMainActivityOnAlarm", true);
+                if (displayMain) {
+                    showMainActivity();
+                } else {
+                    Log.v(TAG, "DisplayMainActivityOnAlarm preference is false - not showing MainActivity");
+                }
+            } catch (Exception ex) {
+                Log.w(TAG, "Problem checking DisplayMainActivityOnAlarm preference, defaulting to show: " + ex.toString());
+                showMainActivity();
+            }
             // Send SMS Alarm.
             if (mSMSAlarm) {
-                Time tnow = new Time(Time.getCurrentTimezone());
-                tnow.setToNow();
+                long tnowMillis = System.currentTimeMillis();
                 // limit SMS alarms to one per minute
-                if ((tnow.toMillis(false)
-                        - mSMSTime.toMillis(false))
-                        > 60000) {
+                if ((tnowMillis - mSMSTimeMillis) > 60000) {
                     sendSMSAlarm();
-                    mSMSTime = tnow;
+                    mSMSTimeMillis = tnowMillis;
                 } else {
                     mUtil.showToast(getString(R.string.sms_alarm_already_sent_msg));
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
@@ -973,9 +1009,14 @@ public class SdServer extends Service implements SdDataReceiver {
             if (!mCancelAudible) {
                 Log.i(TAG, "sendFalseAlarmsSMS() - Sending to " + mSMSNumbers.length + " Numbers");
                 mUtil.writeToSysLogFile("SdServer.sendFalseAlarmsSMS()");
-                Time tnow = new Time(Time.getCurrentTimezone());
-                tnow.setToNow();
-                String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
+                Calendar cal = Calendar.getInstance();
+                String dateStr = String.format("%02d:%02d:%02d %02d/%02d/%04d",
+                        cal.get(Calendar.HOUR_OF_DAY),
+                        cal.get(Calendar.MINUTE),
+                        cal.get(Calendar.SECOND),
+                        cal.get(Calendar.DAY_OF_MONTH),
+                        cal.get(Calendar.MONTH) + 1,
+                        cal.get(Calendar.YEAR));
                 String shortUuidStr = mUuidStr.substring(mUuidStr.length() - 6);
 
                 // SmsManager sm = SmsManager.getDefault();
@@ -1420,9 +1461,14 @@ public class SdServer extends Service implements SdDataReceiver {
             }
             Log.i(TAG, "SmsTimer.onFinish() - Sending to " + mSMSNumbers.length + " Numbers");
             mUtil.writeToSysLogFile("SdServer.SmsTimer.onFinish()");
-            Time tnow = new Time(Time.getCurrentTimezone());
-            tnow.setToNow();
-            String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
+            Calendar cal = Calendar.getInstance();
+            String dateStr = String.format("%02d:%02d:%02d %02d/%02d/%04d",
+                    cal.get(Calendar.HOUR_OF_DAY),
+                    cal.get(Calendar.MINUTE),
+                    cal.get(Calendar.SECOND),
+                    cal.get(Calendar.DAY_OF_MONTH),
+                    cal.get(Calendar.MONTH) + 1,
+                    cal.get(Calendar.YEAR));
             String shortUuidStr = mUuidStr.substring(mUuidStr.length() - 6);
 
             // SmsManager sm = SmsManager.getDefault();
@@ -1485,9 +1531,14 @@ public class SdServer extends Service implements SdDataReceiver {
                 if (mSMSAlarm) {
                     Log.i(TAG, "onSdLocationReceived() - Sending SMS to " + mSMSNumbers.length + " Numbers");
                     mUtil.writeToSysLogFile("SdServer.sendSMSAlarm()");
-                    Time tnow = new Time(Time.getCurrentTimezone());
-                    tnow.setToNow();
-                    String dateStr = tnow.format("%H:%M:%S %d/%m/%Y");
+                    Calendar cal = Calendar.getInstance();
+                    String dateStr = String.format("%02d:%02d:%02d %02d/%02d/%04d",
+                            cal.get(Calendar.HOUR_OF_DAY),
+                            cal.get(Calendar.MINUTE),
+                            cal.get(Calendar.SECOND),
+                            cal.get(Calendar.DAY_OF_MONTH),
+                            cal.get(Calendar.MONTH) + 1,
+                            cal.get(Calendar.YEAR));
                     NumberFormat df = new DecimalFormat("#0.000");
                     String geoUri = "<a href='geo:"
                             + df.format(ll.getLatitude()) + "," + df.format(ll.getLongitude())
@@ -1865,6 +1916,10 @@ public class SdServer extends Service implements SdDataReceiver {
         return (false);
     }
 }
+
+
+
+
 
 
 

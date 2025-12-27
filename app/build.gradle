@@ -1,15 +1,17 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 android {
-    compileSdk 36
+    compileSdk = 36
 // Android 14
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
-        applicationId "uk.org.openseizuredetector"
-        minSdkVersion 23  // Android 6
-        targetSdkVersion 35  // Android 15 = 35
-        multiDexEnabled true
+        applicationId project.hasProperty('APPLICATION_ID') ? project.APPLICATION_ID : "uk.org.openseizuredetector"
+        minSdk project.hasProperty('MIN_SDK') ? project.MIN_SDK.toInteger() : 23  // Android 6
+        targetSdk project.hasProperty('TARGET_SDK') ? project.TARGET_SDK.toInteger() : 35  // Android 15 = 35
+        versionCode project.hasProperty('VERSION_CODE') ? project.VERSION_CODE.toInteger() : 155
+        versionName project.hasProperty('VERSION_NAME') ? project.VERSION_NAME : "4.4.0a"
+        multiDexEnabled = (project.hasProperty('MULTI_DEX_ENABLED') ? project.MULTI_DEX_ENABLED.toBoolean() : true)
     }
 
     buildTypes {

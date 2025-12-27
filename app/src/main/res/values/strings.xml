@@ -3,6 +3,7 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
+        \nV4.4.0a - See CHANGELOG.md
         \nV4.3.1 - Fixed user interface issues on Android-15 and Android-16
         \nV4.3.0  - Added support for Android 15 (API 35) and above.
         \n        - Simplified data sharing editor by grouping events for editing.
@@ -519,6 +520,8 @@
     <string name="FidgetDetectorThresholdTitle">Fidget Detector Threshold (%)</string>
     <string name="FidgetDetectorPeriodTitle">Fidget Detector Period (minutes)</string>
     <string name="FidgetDetectorPeriodSummary">A fault is generated if no movement (fidgets) are detected for more than the Fidget Detector Period.</string>
+    <string name="display_main_activity_on_alarm_title">Display Main Activity on Alarm</string>
+    <string name="display_main_activity_on_alarm_summary">Bring the Main Activity to the foreground when an alarm occurs (if enabled).</string>
 
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
