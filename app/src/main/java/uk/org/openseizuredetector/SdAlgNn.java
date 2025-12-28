@@ -21,6 +21,7 @@ import org.json.JSONObject;
 import org.tensorflow.lite.InterpreterApi;
 import org.tensorflow.lite.support.common.FileUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
 import java.util.HashMap;
@@ -28,7 +29,7 @@ import java.util.Map;
 
 public class SdAlgNn {
     private final static String TAG = "SdAlgNn";
-    private final static String MODEL_PATH = "cnn_v0.24.tflite";
+    private final static String MODEL_PATH = "cnn_v0.24.tflite"; // bundled fallback
     private String mUrlBase = "https://osdApi.ddns.net";
     private InterpreterApi interpreter;
     private Context mContext;
@@ -51,34 +52,56 @@ public class SdAlgNn {
             String threshStr = SP.getString("CnnAlarmThreshold", "5");
             mSdThresh = Double.parseDouble(threshStr);
             Log.v(TAG, "SdAlgNn Constructor mSdThresh = " + mSdThresh);
-            threshStr = SP.getString("CnnModelId", "1");
-            mModelId = Integer.parseInt(threshStr);
-            Log.v(TAG, "SdAlgNn Constructor mModelId = " + mModelId);
+            mModelId = 1;
+            String inputFmtStr = "" + SP.getInt("CnnInputFormat", 1);
+            mInputFormat = Integer.parseInt(inputFmtStr);
+            Log.v(TAG, "SdAlgNn Constructor mModelId = " + mModelId + ", inputFormat=" + mInputFormat);
         } catch (Exception ex) {
             Log.v(TAG, "SdAlgNn Constructor - problem parsing preferences. " + ex.toString());
             Toast toast = Toast.makeText(mContext, "Problem Parsing ML Algorithm Preferences", Toast.LENGTH_SHORT);
             toast.show();
         }
 
-        mInputFormat = 1; // FIXME - this needs to be determined from the model ID specified by retrieving a configuration file.
-
         Task<Void> initializeTask = TfLite.initialize(mContext);
 
         initializeTask.addOnSuccessListener(a -> {
-                    MappedByteBuffer modelBuffer;
+                    MappedByteBuffer modelBuffer = null;
                     try {
-                        Log.d(TAG, "onSuccessListener - loading model");
-                        modelBuffer = FileUtil.loadMappedFile(context, MODEL_PATH);
-                        Log.d(TAG, "onSuccessListener - model loaded");
+                        String userModelPath = SP.getString("CnnModelFile", null);
+                        boolean loadedUserModel = false;
+                        if (userModelPath != null) {
+                            File userModel = new File(userModelPath);
+                            if (userModel.exists()) {
+                                Log.d(TAG, "Loading downloaded model: " + userModelPath);
+                                // Load file directly using FileInputStream and map to buffer
+                                java.io.FileInputStream fis = new java.io.FileInputStream(userModel);
+                                java.nio.channels.FileChannel fileChannel = fis.getChannel();
+                                long size = fileChannel.size();
+                                modelBuffer = fileChannel.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, 0, size);
+                                fileChannel.close();
+                                fis.close();
+                                loadedUserModel = true;
+                                Log.d(TAG, "Downloaded model loaded successfully");
+                            }
+                        }
+                        if (!loadedUserModel) {
+                            Log.d(TAG, "Loading bundled model: " + MODEL_PATH);
+                            modelBuffer = FileUtil.loadMappedFile(context, MODEL_PATH);
+                        }
+                        Log.d(TAG, "model loaded");
                     } catch (IOException e) {
-                        Log.e(TAG, "Error Loading Model File");
+                        Log.e(TAG, "Error Loading Model File: " + e.toString());
                         return;
                     }
-                    Log.d(TAG, "onSuccessListener - creating interpreter");
+                    if (modelBuffer == null) {
+                        Log.e(TAG, "Failed to load any model - modelBuffer is null");
+                        return;
+                    }
+                    Log.d(TAG, "creating interpreter");
                     interpreter = InterpreterApi.create(modelBuffer,
                             new InterpreterApi.Options().setRuntime(
                                     InterpreterApi.Options.TfLiteRuntime.FROM_SYSTEM_ONLY));
-                    Log.d(TAG, "onSuccessListener - interpreter created ok");
+                    Log.d(TAG, "interpreter created ok");
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, String.format("Cannot initialize interpreter: %s",
@@ -131,12 +154,12 @@ public class SdAlgNn {
         }
 
         float pSeizure;
-        switch (mModelId) {
+        switch (mInputFormat) {
             case 1:
                 pSeizure = getPseizureFmt1(sdData);
                 break;
             default:
-                Log.e(TAG, "getPSeizure - invalid model ID " + mModelId);
+                Log.e(TAG, "getPSeizure - unsupported input format " + mInputFormat);
                 pSeizure = 0;
         }
 

@@ -25,20 +25,29 @@
 
 package uk.org.openseizuredetector;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Handler;
-import android.preference.PreferenceActivity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.preference.Preference;
+import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.File;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PrefActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener {
     private String TAG = "PreferenceActivity";
@@ -316,12 +325,115 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
 
 
     public static class SeizureDetectorPrefsFragment extends PreferenceFragment {
+        private Dialog mProgressDialog;
+        private AtomicBoolean mDownloadCancelFlag;
+
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
 
             // Load the preferences from an XML resource
             addPreferencesFromResource(R.xml.seizure_detector_prefs);
+
+            Preference modelPref = findPreference("MlModelSelector");
+            if (modelPref != null) {
+                modelPref.setOnPreferenceClickListener(pref -> {
+                    Context ctx = getActivity();
+                    MlModelManager mm = new MlModelManager(ctx);
+                    showProgress(ctx, getString(R.string.ml_model_download_in_progress), mm::cancelIndexRequests);
+                    mm.getMlModelIndex(arr -> {
+                        dismissProgress();
+                        if (arr == null) {
+                            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+                            String existingPath = sp.getString("CnnModelFile", null);
+                            if (existingPath != null && new File(existingPath).exists()) {
+                                Toast.makeText(ctx, getString(R.string.ml_model_download_failed) + " - using existing model", Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(ctx, R.string.ml_model_download_failed, Toast.LENGTH_SHORT).show();
+                            }
+                            return;
+                        }
+                        getActivity().runOnUiThread(() -> showModelDialog(ctx, mm, arr));
+                    });
+                    return true;
+                });
+            }
+        }
+
+        private void showModelDialog(Context ctx, MlModelManager mm, JSONArray arr) {
+            try {
+                String[] names = new String[arr.length()];
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject o = arr.getJSONObject(i);
+                    String name = o.optString("name", "model" + i);
+                    names[i] = o.optBoolean("recommended", false) ? name + " (recommended)" : name;
+                }
+                new AlertDialog.Builder(ctx)
+                        .setTitle(R.string.ml_model_select_title)
+                        .setItems(names, (dialog, which) -> {
+                            try {
+                                JSONObject selected = arr.getJSONObject(which);
+                                String fname = selected.optString("fname");
+                                int inputFmt = selected.optInt("input_format", 1);
+                                mDownloadCancelFlag = new AtomicBoolean(false);
+                                showProgress(ctx, getString(R.string.ml_model_download_in_progress), () -> mDownloadCancelFlag.set(true));
+                                mm.downloadModel(fname, mDownloadCancelFlag, (ok, file) -> {
+                                    android.app.Activity act = getActivity();
+                                    if (act == null) {
+                                        return;
+                                    }
+                                    act.runOnUiThread(() -> {
+                                        dismissProgress();
+                                        if (!ok || file == null) {
+                                            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+                                            String existingPath = sp.getString("CnnModelFile", null);
+                                            if (existingPath != null && new File(existingPath).exists()) {
+                                                Toast.makeText(ctx, getString(R.string.ml_model_download_failed) + " - using existing model", Toast.LENGTH_LONG).show();
+                                            } else {
+                                                Toast.makeText(ctx, R.string.ml_model_download_failed, Toast.LENGTH_SHORT).show();
+                                            }
+                                            return;
+                                        }
+                                        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+                                        sp.edit()
+                                                .putString("CnnModelFile", file.getAbsolutePath())
+                                                .putString("CnnModelName", selected.optString("name"))
+                                                .putInt("CnnInputFormat", inputFmt)
+                                                .putString("CnnModelId", selected.optString("name"))
+                                                .apply();
+                                        Toast.makeText(ctx, R.string.ml_model_download_success, Toast.LENGTH_SHORT).show();
+                                    });
+                                 });
+                            } catch (Exception ex) {
+                                dismissProgress();
+                                Toast.makeText(ctx, R.string.ml_model_download_failed, Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show();
+            } catch (Exception e) {
+                Toast.makeText(ctx, R.string.ml_model_download_failed, Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        private void showProgress(Context ctx, String message, Runnable onCancel) {
+            dismissProgress();
+            AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+            LayoutInflater inflater = LayoutInflater.from(ctx);
+            View view = inflater.inflate(R.layout.dialog_progress, null);
+            builder.setView(view);
+            builder.setMessage(message);
+            builder.setCancelable(true);
+            builder.setOnCancelListener(dialog -> { if (onCancel != null) onCancel.run(); });
+            mProgressDialog = builder.create();
+            mProgressDialog.show();
+        }
+
+        private void dismissProgress() {
+            if (mProgressDialog != null && mProgressDialog.isShowing()) {
+                mProgressDialog.dismiss();
+            }
+            mProgressDialog = null;
         }
     }
 

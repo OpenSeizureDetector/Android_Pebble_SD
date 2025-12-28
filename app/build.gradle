@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 android {
-    compileSdk = 36
+    compileSdk = project.hasProperty('COMPILE_SDK') ? project.COMPILE_SDK.toInteger() : 36
 // Android 14
     useLibrary 'org.apache.http.legacy'
 

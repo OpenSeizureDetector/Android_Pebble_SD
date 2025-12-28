@@ -512,6 +512,12 @@
     <string name="ml_sd_threshold_title">Movement Threshold (%std)</string>
     <string name="ml_sd_modelid_title">AI Model ID</string>
     <string name="ml_sd_modelid_summary">ID number of machine learning (AI) model to be used - users should not edit this, but use the model Manager page instead.</string>
+    <string name="ml_model_select_title">Select ML Model</string>
+    <string name="ml_model_select_summary">Download and select a machine learning model for seizure detection</string>
+    <string name="ml_model_download_in_progress">Downloading model...</string>
+    <string name="ml_model_download_failed">Failed to download model</string>
+    <string name="ml_model_download_success">Model downloaded</string>
+    <string name="ml_model_input_format_label">Input format: %1$d</string>
     <string name="title_activity_ml_model_manager">MlModelManager</string>
     <string name="FidgetSettingsTitle">Fidget Detector Settings</string>
     <string name="FidgetDetectorEnabledTitle">Enable Fidget Detector</string>
