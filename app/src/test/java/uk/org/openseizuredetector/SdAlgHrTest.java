@@ -1,63 +1,42 @@
 package uk.org.openseizuredetector;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.util.Log;
-
-import androidx.test.core.app.ApplicationProvider;
-import androidx.test.platform.app.InstrumentationRegistry;
-
-import junit.framework.TestCase;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
+import org.robolectric.annotation.Config;
 
-@RunWith(MockitoJUnitRunner.class)
-public class SdAlgHrTest extends TestCase {
-    private SdAlgHr mSdAlgHr = null;
-
-    //@Mock
+@RunWith(RobolectricTestRunner.class)
+@Config(sdk = 33)
+public class SdAlgHrTest {
+    private SdAlgHr mSdAlgHr;
     private Context mContext;
-
-
     private SharedPreferences sharedPrefs;
-    private static PreferenceManager mPreferenceManager;
 
     @Before
     public void setUp() throws Exception {
-        super.setUp();
-
-        //mContext = ApplicationProvider.getApplicationContext();
-        this.sharedPrefs = Mockito.mock(SharedPreferences.class);
-        this.mContext = Mockito.mock(Context.class);
-        mPreferenceManager = Mockito.mock(PreferenceManager.class);
-        //Mockito.when(mContext.getSharedPreferences(anyString(), anyInt())).thenReturn(sharedPrefs);
-        Mockito.when(mPreferenceManager.getDefaultSharedPreferences(any())).thenReturn(sharedPrefs);
+        // Use Robolectric application context for local unit test
+        mContext = RuntimeEnvironment.getApplication();
+        sharedPrefs = PreferenceManager.getDefaultSharedPreferences(mContext);
         mSdAlgHr = new SdAlgHr(mContext);
         assertNotNull(mSdAlgHr);
-
-    }
-
-    public void tearDown() throws Exception {
     }
 
     @Test
-    public void testCheckHr() throws Exception{
-        setUp();
+    public void testCheckHr() throws Exception {
         assertNotNull(mSdAlgHr);
-        mSdAlgHr.checkHr(60.);
-        mSdAlgHr.checkHr(70.);
-        mSdAlgHr.checkHr(80.);
+        mSdAlgHr.checkHr(60.0);
+        mSdAlgHr.checkHr(70.0);
+        mSdAlgHr.checkHr(80.0);
         double hrAv = mSdAlgHr.getAverageHrAverage();
-        assertEquals(hrAv, 70);
+        assertEquals(70.0, hrAv, 0.0001);
     }
 }

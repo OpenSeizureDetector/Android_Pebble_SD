@@ -69,6 +69,68 @@ Code Structure
        - SdServer also details with logging to the Data Sharing system.
   - MainActivity provides a front end to view what is going on with SdServer
 
+## Testing
+
+This project includes unit tests and Android instrumentation tests for `MlModelManager` covering network failures, invalid JSON, download cancellation, invalid filenames, and model loading (downloaded vs bundled fallback).
+
+- Unit tests location: `app/src/test/java/uk/org/openseizuredetector/MlModelManagerTest.java`
+- Instrumentation tests location: `app/src/androidTest/java/uk/org/openseizuredetector/MlModelManagerInstrumentedTest.java`
+
+### Prerequisites
+
+- Ensure Gradle sync completes so test dependencies are resolved.
+- Tests rely on:
+  - JUnit 4
+  - Robolectric (unit tests)
+  - OkHttp MockWebServer (unit and instrumentation tests)
+  - AndroidX Test and Espresso (instrumentation tests)
+
+### Running unit tests
+
+```bash
+./gradlew test
+```
+
+The unit tests validate:
+- Index fetch network failure returns `null` to the callback
+- Invalid JSON in index returns `null`
+- Download cancellation reports failure and cleans partial files
+- Fallback to bundled model when no downloaded model exists
+- Use downloaded model when present
+- 404 invalid filename download failure
+
+### Running instrumentation tests
+
+Start an emulator or connect a device, then run:
+
+```bash
+./gradlew connectedAndroidTest
+```
+
+Instrumentation tests validate on-device behavior:
+- Bundled model fallback loads successfully when no downloaded model is present
+- Downloaded model from app storage loads successfully
+- Invalid filename (404) results in a failed download callback
+
+### Troubleshooting
+
+- If the IDE shows unresolved symbols like `RobolectricTestRunner` or `MockWebServer`, ensure Gradle sync is completed and `mavenCentral()` is present in repositories.
+- If `testBundledFallbackLoadsOnDevice` fails due to missing bundled asset:
+  - Confirm the bundled model file (`cnn_v0.24.tflite`) is packaged and accessible via `org.tensorflow.lite.support.common.FileUtil.loadMappedFile(context, filename)`.
+  - If needed, adjust packaging location (e.g., `src/main/assets`) and loading method.
+- For flaky network-dependent tests, MockWebServer enqueues deterministic responses; re-run if the emulator/device is under high load.
+
+### Updating tests
+
+`MlModelManager` provides a test-friendly constructor to inject a base URL and index filename:
+
+```java
+// For tests with MockWebServer
+MlModelManager mm = new MlModelManager(context, baseUrl, "index.json");
+```
+
+This allows unit and instrumentation tests to point at a local server for predictable behavior.
+
 Licence
 =======
 My code is licenced under the GNU Public Licence - for associated libraries 

@@ -17,27 +17,33 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
+import com.android.volley.toolbox.RequestFuture;
+
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
 // This class manages machine learning models by downloading them from a remote server when necessary.
+// Design note:
+//   - getMlModelIndex() uses Volley (async callback-based) for index retrieval
+//   - downloadModel() uses background thread + raw HttpURLConnection for file downloads
+//   Both approaches are compatible because:
+//     1. Index fetch is lightweight, async callback pattern is convenient
+//     2. File downloads are large, blocking on background thread is acceptable
+//     3. Large file downloads over Volley would require custom handling anyway
+//   Future: Could unify by creating a shared HttpHelper, but current approach is pragmatic
 public class MlModelManager {
     protected Context mContext;
     protected OsdUtil mUtil;
-    private String TAG = "MlModelManager";
+    private final String TAG = "MlModelManager";
+    private final String DEFAULT_BUNDLED_MODEL = "cnn_v0.24.tflite";
 
     public boolean mServerConnectionOk = false;
     public boolean mModelReady = false;
-    private final String mUrlBase = "https://osdapi.org.uk/static/ml_models/";
-    private final String mModelIndexFname = "index.json";
+    private String mUrlBase = "https://osdapi.org.uk/static/ml_models/";
+    private String mModelIndexFname = "index.json";
     RequestQueue mQueue;
 
     public interface JSONArrayCallback {
@@ -48,12 +54,26 @@ public class MlModelManager {
         void onComplete(boolean success, File file);
     }
 
+    public interface ModelLoadCallback {
+        void onComplete(java.nio.MappedByteBuffer buffer);
+    }
+
 
     public MlModelManager(Context context) {
         Log.i(TAG, "MlModelManager Constructor");
         mContext = context;
         mUtil = new OsdUtil(mContext, new Handler());
         mQueue = Volley.newRequestQueue(mContext);
+    }
+
+    // Test-friendly constructor allowing URL and index filename injection
+    MlModelManager(Context context, String urlBase, String indexFname) {
+        Log.i(TAG, "MlModelManager Test Constructor");
+        mContext = context;
+        mUtil = new OsdUtil(mContext, new Handler());
+        mQueue = Volley.newRequestQueue(mContext);
+        if (urlBase != null) this.mUrlBase = urlBase;
+        if (indexFname != null) this.mModelIndexFname = indexFname;
     }
 
     public void close() {
@@ -124,49 +144,125 @@ public class MlModelManager {
         }
     }
 
-    public Thread downloadModel(String fname, AtomicBoolean cancelFlag, DownloadCallback callback) {
+    public void downloadModel(String fname, AtomicBoolean cancelFlag, DownloadCallback callback) {
+        Log.v(TAG, "downloadModel(): " + fname);
+        String urlStr = mUrlBase + fname;
+
+        // Use HttpURLConnection on background thread to download file directly to disk
+        // This approach is preferred for large files (better than Volley which buffers in memory)
         Thread t = new Thread(() -> {
             File outFile = null;
+            java.io.InputStream in = null;
+            java.io.FileOutputStream fos = null;
             try {
-                URL url = new URL(mUrlBase + fname);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                java.net.URL url = new java.net.URL(urlStr);
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
                 conn.setConnectTimeout(15000);
                 conn.setReadTimeout(15000);
                 conn.connect();
-                if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+
+                if (conn.getResponseCode() != java.net.HttpURLConnection.HTTP_OK) {
                     Log.e(TAG, "downloadModel(): HTTP error " + conn.getResponseCode());
                     callback.onComplete(false, null);
                     return;
                 }
-                InputStream in = new BufferedInputStream(conn.getInputStream());
+
+                in = new java.io.BufferedInputStream(conn.getInputStream());
                 File dir = new File(mContext.getFilesDir(), "models");
                 if (!dir.exists()) {
                     dir.mkdirs();
                 }
                 outFile = new File(dir, fname);
-                try (FileOutputStream fos = new FileOutputStream(outFile)) {
-                    byte[] buf = new byte[8192];
-                    int len;
-                    while ((len = in.read(buf)) != -1) {
-                        if (cancelFlag != null && cancelFlag.get()) {
-                            Log.i(TAG, "downloadModel(): cancelled");
+                fos = new java.io.FileOutputStream(outFile);
+
+                byte[] buf = new byte[8192];
+                int len;
+                while ((len = in.read(buf)) != -1) {
+                    if (cancelFlag != null && cancelFlag.get()) {
+                        Log.i(TAG, "downloadModel(): cancelled");
+                        if (outFile.exists()) {
                             outFile.delete();
-                            callback.onComplete(false, null);
-                            return;
                         }
-                        fos.write(buf, 0, len);
+                        callback.onComplete(false, null);
+                        return;
                     }
+                    fos.write(buf, 0, len);
                 }
+                fos.flush();
+                Log.i(TAG, "downloadModel(): file downloaded to " + outFile.getAbsolutePath());
                 callback.onComplete(true, outFile);
+
             } catch (Exception ex) {
-                Log.e(TAG, "downloadModel() failed: " + ex.toString());
+                Log.e(TAG, "downloadModel() failed: " + ex.getMessage());
                 if (outFile != null && outFile.exists()) {
                     outFile.delete();
                 }
-                callback.onComplete(false, outFile);
+                callback.onComplete(false, null);
+            } finally {
+            try {
+                if (fos != null) fos.close();
+                if (in != null) in.close();
+            } catch (Exception e) {
+                Log.w(TAG, "downloadModel(): error closing streams: " + e.getMessage());
+            }
+        }
+        });
+        t.setName("MlModelDownload-" + fname);
+        t.start();
+    }
+
+    /**
+     * Load a model from disk (either downloaded or bundled).
+     * First tries to load user-downloaded model from CnnModelFile preference,
+     * then falls back to bundled model if not found.
+     * Runs on a background thread and calls the callback with the loaded buffer.
+     */
+    public void loadModel(android.content.SharedPreferences prefs, ModelLoadCallback callback) {
+        Log.v(TAG, "loadModel(): attempting to load model");
+        Thread t = new Thread(() -> {
+            java.nio.MappedByteBuffer modelBuffer = null;
+            try {
+                String userModelPath = prefs.getString("CnnModelFile", null);
+                boolean loadedUserModel = false;
+
+                if (userModelPath != null) {
+                    File userModel = new File(userModelPath);
+                    if (userModel.exists()) {
+                        Log.d(TAG, "loadModel(): Loading downloaded model: " + userModelPath);
+                        try {
+                            java.io.FileInputStream fis = new java.io.FileInputStream(userModel);
+                            java.nio.channels.FileChannel fileChannel = fis.getChannel();
+                            long size = fileChannel.size();
+                            modelBuffer = fileChannel.map(java.nio.channels.FileChannel.MapMode.READ_ONLY, 0, size);
+                            fileChannel.close();
+                            fis.close();
+                            loadedUserModel = true;
+                            Log.d(TAG, "loadModel(): Downloaded model loaded successfully");
+                        } catch (Exception e) {
+                            Log.w(TAG, "loadModel(): Failed to load downloaded model: " + e.getMessage());
+                        }
+                    }
+                }
+
+                if (!loadedUserModel) {
+                    Log.d(TAG, "loadModel(): Loading bundled model: " + DEFAULT_BUNDLED_MODEL);
+                    modelBuffer = org.tensorflow.lite.support.common.FileUtil.loadMappedFile(mContext, DEFAULT_BUNDLED_MODEL);
+                }
+
+                if (modelBuffer == null) {
+                    Log.e(TAG, "loadModel(): Failed to load any model - modelBuffer is null");
+                } else {
+                    Log.d(TAG, "loadModel(): Model loaded successfully");
+                }
+                callback.onComplete(modelBuffer);
+
+            } catch (Exception e) {
+                Log.e(TAG, "loadModel() failed: " + e.getMessage());
+                callback.onComplete(null);
             }
         });
+        t.setName("MlModelLoad");
         t.start();
-        return t;
     }
 }
+

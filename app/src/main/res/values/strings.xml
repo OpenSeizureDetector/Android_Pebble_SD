@@ -528,6 +528,8 @@
     <string name="FidgetDetectorPeriodSummary">A fault is generated if no movement (fidgets) are detected for more than the Fidget Detector Period.</string>
     <string name="display_main_activity_on_alarm_title">Display Main Activity on Alarm</string>
     <string name="display_main_activity_on_alarm_summary">Bring the Main Activity to the foreground when an alarm occurs (if enabled).</string>
+    <string name="selected_model_label">Selected model: %1$s</string>
+    <string name="no_model_selected">Selected model: None</string>
 
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>

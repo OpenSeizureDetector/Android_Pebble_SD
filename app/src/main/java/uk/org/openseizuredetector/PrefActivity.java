@@ -50,7 +50,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PrefActivity extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener {
-    private String TAG = "PreferenceActivity";
+    private static final String TAG = "PreferenceActivity";
     private OsdUtil mUtil;
     private boolean mPrefChanged = false;
     private Context mContext;
@@ -337,6 +337,14 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
 
             Preference modelPref = findPreference("MlModelSelector");
             if (modelPref != null) {
+                // Set initial summary to show currently selected model
+                SharedPreferences spInit = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                String currentModelName = spInit.getString("CnnModelName", null);
+                if (currentModelName != null) {
+                    modelPref.setSummary(getString(R.string.ml_model_select_summary) + "\n" + getString(R.string.selected_model_label, currentModelName));
+                } else {
+                    modelPref.setSummary(getString(R.string.ml_model_select_summary) + "\n" + getString(R.string.no_model_selected));
+                }
                 modelPref.setOnPreferenceClickListener(pref -> {
                     Context ctx = getActivity();
                     MlModelManager mm = new MlModelManager(ctx);
@@ -346,10 +354,15 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                         if (arr == null) {
                             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
                             String existingPath = sp.getString("CnnModelFile", null);
+                            Preference modelPref3 = findPreference("MlModelSelector");
                             if (existingPath != null && new File(existingPath).exists()) {
                                 Toast.makeText(ctx, getString(R.string.ml_model_download_failed) + " - using existing model", Toast.LENGTH_LONG).show();
+                                // keep existing summary
                             } else {
                                 Toast.makeText(ctx, R.string.ml_model_download_failed, Toast.LENGTH_SHORT).show();
+                                if (modelPref3 != null) {
+                                    modelPref3.setSummary(getString(R.string.ml_model_select_summary) + "\n" + getString(R.string.no_model_selected));
+                                }
                             }
                             return;
                         }
@@ -360,14 +373,20 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
             }
         }
 
+        /**
+         * Show a dialog allowing the user to select a Machine Learning model to download.
+         */
         private void showModelDialog(Context ctx, MlModelManager mm, JSONArray arr) {
             try {
+                // Build list of available model names
                 String[] names = new String[arr.length()];
                 for (int i = 0; i < arr.length(); i++) {
                     JSONObject o = arr.getJSONObject(i);
                     String name = o.optString("name", "model" + i);
                     names[i] = o.optBoolean("recommended", false) ? name + " (recommended)" : name;
                 }
+
+                // Display dialog to select model to download.
                 new AlertDialog.Builder(ctx)
                         .setTitle(R.string.ml_model_select_title)
                         .setItems(names, (dialog, which) -> {
@@ -377,6 +396,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                                 int inputFmt = selected.optInt("input_format", 1);
                                 mDownloadCancelFlag = new AtomicBoolean(false);
                                 showProgress(ctx, getString(R.string.ml_model_download_in_progress), () -> mDownloadCancelFlag.set(true));
+                                // The actual model download is handled by MlModelManager mm
                                 mm.downloadModel(fname, mDownloadCancelFlag, (ok, file) -> {
                                     android.app.Activity act = getActivity();
                                     if (act == null) {
@@ -391,9 +411,14 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                                                 Toast.makeText(ctx, getString(R.string.ml_model_download_failed) + " - using existing model", Toast.LENGTH_LONG).show();
                                             } else {
                                                 Toast.makeText(ctx, R.string.ml_model_download_failed, Toast.LENGTH_SHORT).show();
+                                                Preference modelPref2 = findPreference("MlModelSelector");
+                                                if (modelPref2 != null) {
+                                                    modelPref2.setSummary(getString(R.string.ml_model_select_summary) + "\n" + getString(R.string.no_model_selected));
+                                                }
                                             }
                                             return;
                                         }
+                                        // Store the model details in shared preferences.
                                         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
                                         sp.edit()
                                                 .putString("CnnModelFile", file.getAbsolutePath())
@@ -401,18 +426,25 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                                                 .putInt("CnnInputFormat", inputFmt)
                                                 .putString("CnnModelId", selected.optString("name"))
                                                 .apply();
+                                        // Update preference summary to show selected model
+                                        Preference modelPref2 = findPreference("MlModelSelector");
+                                        if (modelPref2 != null) {
+                                            modelPref2.setSummary(getString(R.string.ml_model_select_summary) + "\n" + getString(R.string.selected_model_label, selected.optString("name")));
+                                        }
                                         Toast.makeText(ctx, R.string.ml_model_download_success, Toast.LENGTH_SHORT).show();
                                     });
                                  });
                             } catch (Exception ex) {
                                 dismissProgress();
                                 Toast.makeText(ctx, R.string.ml_model_download_failed, Toast.LENGTH_SHORT).show();
+                                Log.e(TAG, "showModelDialog() download failed: " + ex.toString());
                             }
                         })
                         .setNegativeButton(android.R.string.cancel, null)
                         .show();
             } catch (Exception e) {
                 Toast.makeText(ctx, R.string.ml_model_download_failed, Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "showModelDialog() download failed: " + e.toString());
             }
         }
 
