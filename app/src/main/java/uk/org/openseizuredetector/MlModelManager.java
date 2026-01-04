@@ -20,7 +20,9 @@ import org.json.JSONObject;
 import com.android.volley.toolbox.RequestFuture;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -55,7 +57,21 @@ public class MlModelManager {
     }
 
     public interface ModelLoadCallback {
-        void onComplete(java.nio.MappedByteBuffer buffer);
+        void onComplete(ModelLoadResult result);
+    }
+
+    public static class ModelLoadResult {
+        public final String framework;
+        public final java.nio.MappedByteBuffer tfliteBuffer;
+        public final File file;
+        public final boolean fromBundled;
+
+        public ModelLoadResult(String framework, java.nio.MappedByteBuffer tfliteBuffer, File file, boolean fromBundled) {
+            this.framework = framework;
+            this.tfliteBuffer = tfliteBuffer;
+            this.file = file;
+            this.fromBundled = fromBundled;
+        }
     }
 
 
@@ -102,8 +118,9 @@ public class MlModelManager {
                         Log.v(TAG, "getMlModelIndex.onResponse(): Response is: " + response);
                         mServerConnectionOk = true;
                         try {
-                            JSONArray retObj = new JSONArray(response);
-                            callback.accept(retObj);
+                            JSONArray rawArr = new JSONArray(response);
+                            JSONArray filtered = filterValidModels(rawArr);
+                            callback.accept(filtered.length() > 0 ? filtered : null);
                         } catch (JSONException e) {
                             Log.e(TAG, "getMlModelIndex.onResponse(): Error: " + e.getMessage() + "," + e.toString());
                             callback.accept(null);
@@ -221,10 +238,37 @@ public class MlModelManager {
         Log.v(TAG, "loadModel(): attempting to load model");
         Thread t = new Thread(() -> {
             java.nio.MappedByteBuffer modelBuffer = null;
+            File modelFile = null;
+            String framework = prefs.getString("CnnFramework", "tflite");
+            boolean fromBundled = false;
             try {
                 String userModelPath = prefs.getString("CnnModelFile", null);
-                boolean loadedUserModel = false;
+                if (framework != null) {
+                    framework = framework.toLowerCase();
+                } else {
+                    framework = "tflite";
+                }
 
+                if ("pytorch".equals(framework)) {
+                    if (userModelPath != null) {
+                        File userModel = new File(userModelPath);
+                        if (userModel.exists()) {
+                            Log.d(TAG, "loadModel(): Loading downloaded PyTorch model: " + userModelPath);
+                            modelFile = userModel;
+                        } else {
+                            Log.w(TAG, "loadModel(): PyTorch model file not found: " + userModelPath);
+                        }
+                    }
+                    if (modelFile == null) {
+                        Log.e(TAG, "loadModel(): No PyTorch model available");
+                        callback.onComplete(null);
+                        return;
+                    }
+                    callback.onComplete(new ModelLoadResult(framework, null, modelFile, fromBundled));
+                    return;
+                }
+
+                boolean loadedUserModel = false;
                 if (userModelPath != null) {
                     File userModel = new File(userModelPath);
                     if (userModel.exists()) {
@@ -247,14 +291,16 @@ public class MlModelManager {
                 if (!loadedUserModel) {
                     Log.d(TAG, "loadModel(): Loading bundled model: " + DEFAULT_BUNDLED_MODEL);
                     modelBuffer = org.tensorflow.lite.support.common.FileUtil.loadMappedFile(mContext, DEFAULT_BUNDLED_MODEL);
+                    fromBundled = true;
                 }
 
                 if (modelBuffer == null) {
                     Log.e(TAG, "loadModel(): Failed to load any model - modelBuffer is null");
+                    callback.onComplete(null);
                 } else {
                     Log.d(TAG, "loadModel(): Model loaded successfully");
+                    callback.onComplete(new ModelLoadResult(framework, modelBuffer, null, fromBundled));
                 }
-                callback.onComplete(modelBuffer);
 
             } catch (Exception e) {
                 Log.e(TAG, "loadModel() failed: " + e.getMessage());
@@ -263,6 +309,53 @@ public class MlModelManager {
         });
         t.setName("MlModelLoad");
         t.start();
+    }
+
+    // Validate and filter models using new schema (framework, input_format string, input_size int)
+    private JSONArray filterValidModels(JSONArray rawArr) {
+        List<JSONObject> valid = new ArrayList<>();
+        for (int i = 0; i < rawArr.length(); i++) {
+            try {
+                JSONObject o = rawArr.getJSONObject(i);
+                String name = o.optString("name", "");
+                String fname = o.optString("fname", "");
+                String framework = o.optString("framework", "").toLowerCase();
+                String inputFmt = o.optString("input_format", "");
+                int inputSize = o.optInt("input_size", -1);
+                if (name.isEmpty() || fname.isEmpty()) {
+                    Log.w(TAG, "filterValidModels(): skipping entry missing name/fname at index " + i);
+                    continue;
+                }
+                if (framework.isEmpty() || !(framework.equals("tflite") || framework.equals("pytorch"))) {
+                    Log.w(TAG, "filterValidModels(): skipping entry with unsupported framework at index " + i + " framework=" + framework);
+                    continue;
+                }
+                // Validate file extensions match framework
+                if (framework.equals("pytorch") && !fname.endsWith(".ptl")) {
+                    Log.w(TAG, "filterValidModels(): PyTorch model '" + name + "' should use .ptl extension (TorchScript Mobile format), found: " + fname);
+                    // Don't skip, just warn - user may have named it differently
+                }
+                if (framework.equals("tflite") && !fname.endsWith(".tflite")) {
+                    Log.w(TAG, "filterValidModels(): TFLite model '" + name + "' should use .tflite extension, found: " + fname);
+                }
+                if (inputFmt.isEmpty()) {
+                    Log.w(TAG, "filterValidModels(): skipping entry with empty input_format at index " + i);
+                    continue;
+                }
+                if (inputSize <= 0) {
+                    Log.w(TAG, "filterValidModels(): skipping entry with invalid input_size at index " + i + " size=" + inputSize);
+                    continue;
+                }
+                valid.add(o);
+            } catch (JSONException e) {
+                Log.w(TAG, "filterValidModels(): skipping malformed entry " + i + " err=" + e.getMessage());
+            }
+        }
+        JSONArray out = new JSONArray();
+        for (JSONObject o : valid) {
+            out.put(o);
+        }
+        return out;
     }
 }
 

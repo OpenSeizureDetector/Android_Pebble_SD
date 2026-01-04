@@ -393,7 +393,9 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                             try {
                                 JSONObject selected = arr.getJSONObject(which);
                                 String fname = selected.optString("fname");
-                                int inputFmt = selected.optInt("input_format", 1);
+                                String inputFmtStr = selected.optString("input_format", "1d_mag");
+                                int inputSize = selected.optInt("input_size", 125);
+                                String framework = selected.optString("framework", "tflite");
                                 mDownloadCancelFlag = new AtomicBoolean(false);
                                 showProgress(ctx, getString(R.string.ml_model_download_in_progress), () -> mDownloadCancelFlag.set(true));
                                 // The actual model download is handled by MlModelManager mm
@@ -423,13 +425,19 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                                         sp.edit()
                                                 .putString("CnnModelFile", file.getAbsolutePath())
                                                 .putString("CnnModelName", selected.optString("name"))
-                                                .putInt("CnnInputFormat", inputFmt)
+                                                .putString("CnnInputFormatStr", inputFmtStr)
+                                                .putInt("CnnInputSize", inputSize)
+                                                .putString("CnnFramework", framework)
                                                 .putString("CnnModelId", selected.optString("name"))
                                                 .apply();
                                         // Update preference summary to show selected model
                                         Preference modelPref2 = findPreference("MlModelSelector");
                                         if (modelPref2 != null) {
-                                            modelPref2.setSummary(getString(R.string.ml_model_select_summary) + "\n" + getString(R.string.selected_model_label, selected.optString("name")));
+                                            String summary = getString(R.string.ml_model_select_summary) + "\n" +
+                                                    getString(R.string.selected_model_label, selected.optString("name")) + "\n" +
+                                                    getString(R.string.selected_model_framework_label, framework) + "\n" +
+                                                    getString(R.string.selected_model_input_label, inputFmtStr, inputSize);
+                                            modelPref2.setSummary(summary);
                                         }
                                         Toast.makeText(ctx, R.string.ml_model_download_success, Toast.LENGTH_SHORT).show();
                                     });

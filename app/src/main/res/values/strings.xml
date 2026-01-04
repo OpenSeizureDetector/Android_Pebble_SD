@@ -529,6 +529,8 @@
     <string name="display_main_activity_on_alarm_title">Display Main Activity on Alarm</string>
     <string name="display_main_activity_on_alarm_summary">Bring the Main Activity to the foreground when an alarm occurs (if enabled).</string>
     <string name="selected_model_label">Selected model: %1$s</string>
+    <string name="selected_model_framework_label">Framework: %1$s</string>
+    <string name="selected_model_input_label">Input: %1$s, size %2$d</string>
     <string name="no_model_selected">Selected model: None</string>
 
     <!-- Strings used for fragments for navigation -->

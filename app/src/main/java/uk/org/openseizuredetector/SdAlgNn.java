@@ -2,6 +2,8 @@ package uk.org.openseizuredetector;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -10,21 +12,32 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tflite.java.TfLite;
 
 import org.tensorflow.lite.InterpreterApi;
+import org.pytorch.Module;
+import org.pytorch.IValue;
+import org.pytorch.Tensor;
 
 public class SdAlgNn {
     private final static String TAG = "SdAlgNn";
     private InterpreterApi interpreter;
     private Context mContext;
     private MlModelManager mMm;
+    private Handler mHandler;
 
     private double mSdThresh;  // Acceleration Standard Deviation Threshold required to activate analysis (%)
     private int mInputFormat; // ID of input format required for model (populated from SharedPreferences)
+    private int mInputSize; // Length of input vector expected by model
+    private String mFramework;
+    private Module mPtModule;
+
+    // Circular buffer for accumulating data when inputSize > rawData.length
+    private CircBuf mInputBuffer;
 
 
     public SdAlgNn(Context context) {
         Log.d(TAG, "SdAlgNn Constructor");
         mContext = context;
         mMm = new MlModelManager(mContext);
+        mHandler = new Handler(Looper.getMainLooper());
 
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(mContext);
@@ -32,38 +45,96 @@ public class SdAlgNn {
             String threshStr = SP.getString("CnnAlarmThreshold", "5");
             mSdThresh = Double.parseDouble(threshStr);
             Log.v(TAG, "SdAlgNn Constructor mSdThresh = " + mSdThresh);
-            String inputFmtStr = "" + SP.getInt("CnnInputFormat", 1);
-            mInputFormat = Integer.parseInt(inputFmtStr);
-            Log.v(TAG, "SdAlgNn Constructor inputFormat=" + mInputFormat);
+            String inputFmtStr = SP.getString("CnnInputFormatStr", null);
+            int legacyInputFmt = SP.getInt("CnnInputFormat", 1);
+            mInputFormat = mapInputFormat(inputFmtStr, legacyInputFmt);
+            mInputSize = SP.getInt("CnnInputSize", 125);
+            mFramework = SP.getString("CnnFramework", "tflite");
+            Log.v(TAG, "SdAlgNn Constructor inputFormat=" + mInputFormat + ", inputSize=" + mInputSize + ", framework=" + mFramework);
         } catch (Exception ex) {
             Log.v(TAG, "SdAlgNn Constructor - problem parsing preferences. " + ex.toString());
-            Toast toast = Toast.makeText(mContext, "Problem Parsing ML Algorithm Preferences", Toast.LENGTH_SHORT);
-            toast.show();
+            showToast("Problem Parsing ML Algorithm Preferences", Toast.LENGTH_SHORT);
         }
 
-        Task<Void> initializeTask = TfLite.initialize(mContext);
+        // Load model depending on selected framework
+        if ("pytorch".equalsIgnoreCase(mFramework)) {
+            mMm.loadModel(SP, result -> {
+                if (result == null) {
+                    Log.e(TAG, "Failed to load any model - result is null");
+                    showToast("Problem Loading PyTorch Model", Toast.LENGTH_SHORT);
+                    return;
+                }
+                mFramework = result.framework;
+                if (!"pytorch".equalsIgnoreCase(result.framework)) {
+                    Log.w(TAG, "Expected PyTorch model but got " + result.framework + " - skipping load");
+                    return;
+                }
+                if (result.file == null) {
+                    Log.e(TAG, "PyTorch model file missing");
+                    showToast("PyTorch model file not found", Toast.LENGTH_LONG);
+                    return;
+                }
+                String filePath = result.file.getAbsolutePath();
+                if (!filePath.endsWith(".ptl")) {
+                    Log.w(TAG, "PyTorch model file does not have .ptl extension: " + filePath);
+                    showToast("Warning: PyTorch model should be in .ptl (TorchScript Mobile) format", Toast.LENGTH_LONG);
+                }
+                try {
+                    mPtModule = Module.load(filePath);
+                    Log.d(TAG, "PyTorch module loaded successfully from: " + filePath);
+                    showToast("PyTorch model loaded successfully", Toast.LENGTH_SHORT);
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to load PyTorch module: " + e.getMessage());
+                    String errorMsg = "Failed to load PyTorch model. ";
+                    if (e.getMessage() != null && e.getMessage().contains("constants.pkl")) {
+                        errorMsg += "Model must be in TorchScript Mobile format (.ptl), not standard PyTorch format (.pt)";
+                    } else {
+                        errorMsg += e.getMessage();
+                    }
+                    showToast(errorMsg, Toast.LENGTH_LONG);
+                }
+            });
+        } else {
+            Task<Void> initializeTask = TfLite.initialize(mContext);
 
-        initializeTask.addOnSuccessListener(a -> {
-                    Log.d(TAG, "TfLite initialized, loading model...");
-                    // Use MlModelManager to load the model (handles both downloaded and bundled models)
-                    mMm.loadModel(SP, modelBuffer -> {
-                        if (modelBuffer == null) {
-                            Log.e(TAG, "Failed to load any model - modelBuffer is null");
-                            return;
-                        }
-                        Log.d(TAG, "creating interpreter");
-                        interpreter = InterpreterApi.create(modelBuffer,
-                                new InterpreterApi.Options().setRuntime(
-                                        InterpreterApi.Options.TfLiteRuntime.FROM_SYSTEM_ONLY));
-                        Log.d(TAG, "interpreter created ok");
+            initializeTask.addOnSuccessListener(a -> {
+                        Log.d(TAG, "TfLite initialized, loading model...");
+                        // Use MlModelManager to load the model (handles both downloaded and bundled models)
+                        mMm.loadModel(SP, result -> {
+                            if (result == null) {
+                                Log.e(TAG, "Failed to load any model - result is null");
+                                return;
+                            }
+                            mFramework = result.framework;
+                            if ("pytorch".equalsIgnoreCase(result.framework)) {
+                                Log.w(TAG, "Loaded PyTorch model while expecting TFLite - not creating TFLite interpreter");
+                                return;
+                            }
+                            if (result.tfliteBuffer == null) {
+                                Log.e(TAG, "Failed to load TfLite model buffer");
+                                return;
+                            }
+                            Log.d(TAG, "creating interpreter");
+                            interpreter = InterpreterApi.create(result.tfliteBuffer,
+                                    new InterpreterApi.Options().setRuntime(
+                                            InterpreterApi.Options.TfLiteRuntime.FROM_SYSTEM_ONLY));
+                            Log.d(TAG, "interpreter created ok");
+                        });
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, String.format("Cannot initialize interpreter: %s",
+                                e.getMessage()));
                     });
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, String.format("Cannot initialize interpreter: %s",
-                            e.getMessage()));
-                });
+        }
         // FIXME - Add hardware acceleration - see https://www.tensorflow.org/lite/android/play_services
         Log.d(TAG, "constructor finished - Note, NOT using hardware acceleration yet!!!!");
+    }
+
+    /**
+     * Helper method to show Toast on the main thread safely
+     */
+    private void showToast(String message, int duration) {
+        mHandler.post(() -> Toast.makeText(mContext, message, duration).show());
     }
 
     public void close() {
@@ -71,30 +142,75 @@ public class SdAlgNn {
         if (interpreter != null) {
             interpreter.close();
         }
+        if (mPtModule != null) {
+            mPtModule.destroy();
+        }
     }
 
     /**
      * getPseizureFmt1 - calculate probability of sdData representing seizure-like movement
-     * using a model with input format #1, which is a simple vector of 125 accelerometer vector
-     * magnitude readings.
+     * using a model with input format #1, which is a simple vector of accelerometer vector
+     * magnitude readings. Always uses a circular buffer to accumulate data to the required inputSize.
      *
      * @param sdData - seizure detector data as input to the model
-     * @return probability of data representing seizure-like movement.
+     * @return probability of data representing seizure-like movement (0 if buffer not yet full).
      */
     private float getPseizureFmt1(SdData sdData) {
-        int i;
-        float[][][] modelInput = new float[1][125][1];
+        // Always use circular buffer to accumulate data
+        if (mInputBuffer == null) {
+            mInputBuffer = new CircBuf(mInputSize, Double.NaN);
+        }
+
+        // Add each sample from rawData to the circular buffer, converting from milli-g to g units
+        for (int i = 0; i < sdData.rawData.length; i++) {
+            mInputBuffer.add(sdData.rawData[i] / 1000.);
+        }
+
+        if (mInputBuffer.getNumVals() < mInputSize) {
+            Log.d(TAG, "getPseizureFmt1() - buffer not full: " + mInputBuffer.getNumVals() + "/" + mInputSize);
+            return 0.0f;
+        }
+
+        double[] inputData = mInputBuffer.getVals();
+
+        // Now invoke the appropriate framework with the prepared input data
+        if ("pytorch".equalsIgnoreCase(mFramework)) {
+            if (mPtModule == null) {
+                Log.d(TAG, "getPseizureFmt1() - PyTorch module is null - returning zero seizure probability");
+                return 0.0f;
+            }
+
+            float[] inputVec = new float[mInputSize];
+            for (int i = 0; i < mInputSize; i++) {
+                inputVec[i] = (float) inputData[i];
+            }
+            // Create tensor with shape [batch=1, channels=1, sequence_length=mInputSize]
+            // The model code does torch.unsqueeze(x, 2) which adds a dimension at position 2,
+            // so it expects input shape [batch, channels, sequence_length]
+            Tensor inputTensor = Tensor.fromBlob(inputVec, new long[]{1, 1, mInputSize});
+            Tensor output = mPtModule.forward(IValue.from(inputTensor)).toTensor();
+            float[] scores = output.getDataAsFloatArray();
+            if (scores.length >= 2) {
+                Log.d(TAG, "PyTorch run - pSeizure=" + scores[1]);
+                return scores[1];
+            }
+            Log.e(TAG, "PyTorch output size unexpected: " + scores.length);
+            return 0.0f;
+        }
+
+        // TFLite path
+        float[][][] modelInput = new float[1][mInputSize][1];
         float[][] modelOutput = new float[1][2];
-        for (int j = 0; j < 125; j++) {
-            modelInput[0][j][0] = (float) sdData.rawData[j];
+        for (int j = 0; j < mInputSize; j++) {
+            modelInput[0][j][0] = (float) inputData[j];
         }
         if (interpreter == null) {
             Log.d(TAG, "getPSeizure() - interpreter is null - returning zero seizure probability");
-            return (0.0f);
+            return 0.0f;
         }
         interpreter.run(modelInput, modelOutput);
         Log.d(TAG, "run - pSeizure=" + modelOutput[0][1]);
-        return (modelOutput[0][1]);
+        return modelOutput[0][1];
     }
 
     public float getPseizure(SdData sdData) {
@@ -144,5 +260,17 @@ public class SdAlgNn {
         // Convert standard deviation from milli-g to %
         standardDeviation = 100. * standardDeviation / mean;
         return (standardDeviation);
+    }
+
+    private int mapInputFormat(String fmtStr, int legacyDefault) {
+        if (fmtStr == null || fmtStr.isEmpty()) {
+            return legacyDefault;
+        }
+        // Map known string identifiers to existing numeric formats to preserve behaviour
+        if (fmtStr.equalsIgnoreCase("1d_mag")) {
+            return 1;
+        }
+        // Unknown format - fall back to legacy default
+        return legacyDefault;
     }
 }

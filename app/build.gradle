@@ -35,6 +35,14 @@ android {
     buildFeatures {
         viewBinding true
     }
+    aaptOptions {
+        noCompress "tflite", "lite", "ptl"
+    }
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging true
+        }
+    }
 }
 
 dependencies {
@@ -69,6 +77,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore'
     implementation 'androidx.navigation:navigation-fragment:2.7.6'
     implementation 'androidx.navigation:navigation-ui:2.7.6'
+    implementation 'org.pytorch:pytorch_android:1.13.1'
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation "androidx.test:core"
