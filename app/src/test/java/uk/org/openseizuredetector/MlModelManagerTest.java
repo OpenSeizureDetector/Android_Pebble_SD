@@ -102,13 +102,13 @@ public class MlModelManagerTest {
 
         MlModelManager mm = new MlModelManager(context);
         CountDownLatch latch = new CountDownLatch(1);
-        final java.nio.MappedByteBuffer[] buf = new java.nio.MappedByteBuffer[1];
-        mm.loadModel(sp, buffer -> { buf[0] = buffer; latch.countDown(); });
+        final MlModelManager.ModelLoadResult[] result = new MlModelManager.ModelLoadResult[1];
+        mm.loadModel(sp, modelResult -> { result[0] = modelResult; latch.countDown(); });
 
         assertTrue("Callback not invoked", latch.await(2, TimeUnit.SECONDS));
         // We can't assert non-null without real bundled asset setup; just assert callback occurred.
         // In real instrumentation tests, we'd include the asset and assert non-null.
-        assertNotNull("Model buffer should be loaded from bundled model if present", buf[0]);
+        assertNotNull("Model should be loaded from bundled model if present", result[0]);
     }
 
     @Test
@@ -126,11 +126,11 @@ public class MlModelManagerTest {
 
         MlModelManager mm = new MlModelManager(context);
         CountDownLatch latch = new CountDownLatch(1);
-        final java.nio.MappedByteBuffer[] buf = new java.nio.MappedByteBuffer[1];
-        mm.loadModel(sp, buffer -> { buf[0] = buffer; latch.countDown(); });
+        final MlModelManager.ModelLoadResult[] result = new MlModelManager.ModelLoadResult[1];
+        mm.loadModel(sp, modelResult -> { result[0] = modelResult; latch.countDown(); });
 
         assertTrue("Callback not invoked", latch.await(2, TimeUnit.SECONDS));
-        assertNotNull("Model buffer should be loaded from downloaded file", buf[0]);
+        assertNotNull("Model should be loaded from downloaded file", result[0]);
     }
 
     @org.junit.Ignore("Covered by instrumentation tests; use androidTest instead")

@@ -139,11 +139,30 @@ public class SdAlgNn {
 
     public void close() {
         Log.d(TAG, "close()");
+
+        // Clear all pending handler callbacks to prevent lingering threads
+        if (mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
+        }
+
         if (interpreter != null) {
             interpreter.close();
+            interpreter = null;
         }
+
         if (mPtModule != null) {
-            mPtModule.destroy();
+            try {
+                mPtModule.destroy();
+            } catch (Exception e) {
+                Log.w(TAG, "Error destroying PyTorch module: " + e.getMessage());
+            }
+            mPtModule = null;
+        }
+
+        // Close MlModelManager if it exists
+        if (mMm != null) {
+            mMm.close();
+            mMm = null;
         }
     }
 

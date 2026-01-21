@@ -22,8 +22,10 @@ import com.android.volley.toolbox.RequestFuture;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -47,6 +49,10 @@ public class MlModelManager {
     private String mUrlBase = "https://osdapi.org.uk/static/ml_models/";
     private String mModelIndexFname = "index.json";
     RequestQueue mQueue;
+
+    // Track active background threads for proper shutdown
+    private final Set<Thread> mActiveThreads = new HashSet<>();
+    private final Object mThreadLock = new Object();
 
     public interface JSONArrayCallback {
         void accept(JSONArray retValArr);
@@ -94,7 +100,74 @@ public class MlModelManager {
 
     public void close() {
         Log.i(TAG, "close()");
-        mQueue.stop();
+
+        // Cancel any pending Volley requests
+        if (mQueue != null) {
+            mQueue.cancelAll(INDEX_TAG);
+            mQueue.stop();
+        }
+
+        // Wait for background threads to complete with timeout
+        waitForThreadsToComplete(10000); // 10 second timeout
+    }
+
+    /**
+     * Wait for all active background threads to complete or timeout.
+     * This ensures clean shutdown without orphaned threads.
+     *
+     * @param timeoutMs Maximum time to wait in milliseconds
+     */
+    private void waitForThreadsToComplete(long timeoutMs) {
+        long startTime = System.currentTimeMillis();
+        List<Thread> threadsToWait = new ArrayList<>();
+
+        synchronized (mThreadLock) {
+            threadsToWait.addAll(mActiveThreads);
+        }
+
+        for (Thread t : threadsToWait) {
+            try {
+                long elapsed = System.currentTimeMillis() - startTime;
+                long remainingTime = timeoutMs - elapsed;
+
+                if (remainingTime <= 0) {
+                    Log.w(TAG, "Timeout waiting for threads to complete");
+                    break;
+                }
+
+                Log.d(TAG, "Waiting for thread: " + t.getName());
+                t.join(remainingTime);
+
+                if (t.isAlive()) {
+                    Log.w(TAG, "Thread did not complete within timeout: " + t.getName());
+                }
+            } catch (InterruptedException e) {
+                Log.w(TAG, "Interrupted while waiting for thread: " + t.getName());
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        synchronized (mThreadLock) {
+            mActiveThreads.clear();
+        }
+    }
+
+    /**
+     * Register a thread as active so it can be tracked for shutdown.
+     */
+    private void registerThread(Thread t) {
+        synchronized (mThreadLock) {
+            mActiveThreads.add(t);
+        }
+    }
+
+    /**
+     * Unregister a thread when it completes.
+     */
+    private void unregisterThread(Thread t) {
+        synchronized (mThreadLock) {
+            mActiveThreads.remove(t);
+        }
     }
 
 
@@ -216,15 +289,17 @@ public class MlModelManager {
                 }
                 callback.onComplete(false, null);
             } finally {
-            try {
-                if (fos != null) fos.close();
-                if (in != null) in.close();
-            } catch (Exception e) {
-                Log.w(TAG, "downloadModel(): error closing streams: " + e.getMessage());
+                try {
+                    if (fos != null) fos.close();
+                    if (in != null) in.close();
+                } catch (Exception e) {
+                    Log.w(TAG, "downloadModel(): error closing streams: " + e.getMessage());
+                }
+                unregisterThread(Thread.currentThread());
             }
-        }
         });
         t.setName("MlModelDownload-" + fname);
+        registerThread(t);
         t.start();
     }
 
@@ -305,9 +380,12 @@ public class MlModelManager {
             } catch (Exception e) {
                 Log.e(TAG, "loadModel() failed: " + e.getMessage());
                 callback.onComplete(null);
+            } finally {
+                unregisterThread(Thread.currentThread());
             }
         });
         t.setName("MlModelLoad");
+        registerThread(t);
         t.start();
     }
 
