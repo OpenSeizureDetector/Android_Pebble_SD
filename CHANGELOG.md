@@ -2,8 +2,9 @@
 	============================================
     V4.4.0 - Tidied up build settings (into gradle.properties)
             - Added MlModelManager to download ML models from web service.
-            - Added support for pytorch models (As well as TFLite)
+            - Added support for pytorch models (executorch) (As well as TFLite)
             - Added initial support for AndroidWear from Dylan Griffiths (not tested, but included to make sure it doesn't break anything else)
+            - Fixed issue with 16kB page alignment (requirement for Play Store)
     V4.3.1 - Fixed corrupted user interface issues on Android 15 and Android 16.
     V4.3.0 - 2025-07-16
              - Added support for Android 15 (API 35) to allow publishing on Play Store.

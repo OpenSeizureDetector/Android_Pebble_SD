@@ -454,7 +454,7 @@
     <string name="LogNDATitle">Log Normal Daily Activities (NDA)</string>
     <string name="NDATimerStartTimeParseError">Error Parsing NDATimerStartTime</string>
     <string name="include_nda">Include NDA</string>
-    <string name="start_nda">Start NDA Logging</string>
+    <string name="start_nda">Start/Stop NDA Logging</string>
     <string name="stop_nda">Stop NDA Logging</string>
     <string name="stop_nda_logging_dialog_title">Stop NDA Logging?</string>
     <string name="stop_nda_logging_dialog_meassage">Stop Normal Daily Activity (NDA) Logging?</string>
