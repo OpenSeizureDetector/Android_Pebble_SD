@@ -35,6 +35,7 @@ public class EditEventActivity extends AppCompatActivity {
     private LogManager mLm;
     private SdServiceConnection mConnection;
     final Handler serverStatusHandler = new Handler();
+    private final Handler mUiHandler = new Handler(android.os.Looper.getMainLooper());
     private OsdUtil mUtil;
     private List<String> mEventTypesList = null;
     private HashMap<String, ArrayList<String>> mEventSubTypesHashMap = null;
@@ -49,6 +50,8 @@ public class EditEventActivity extends AppCompatActivity {
     private RadioGroup mEventSubTypeRg;
     private boolean mEventSubTypesListChanged = false;
     private JSONObject mEventObj;
+    private volatile boolean mIsActive = false;
+    private final List<String> mPendingGroupUpdates = new ArrayList<>();
 
 
     @Override
@@ -112,6 +115,7 @@ public class EditEventActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         Log.i(TAG, "onStart()");
+        mIsActive = true;
         mUtil.bindToServer(getApplicationContext(), mConnection);
         waitForConnection();
 
@@ -120,8 +124,12 @@ public class EditEventActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
-        super.onStop();
         Log.i(TAG, "onStop()");
+        mIsActive = false;
+        synchronized (mPendingGroupUpdates) {
+            mPendingGroupUpdates.clear();
+        }
+        super.onStop();
         mUtil.unbindFromServer(getApplicationContext(), mConnection);
     }
 
@@ -155,9 +163,17 @@ public class EditEventActivity extends AppCompatActivity {
             @Override
             public void accept(JSONObject eventTypesObj) {
                 Log.v(TAG, "initialiseServiceConnection().onEventTypesReceived");
+                if (!mIsActive || isFinishing() || isDestroyed()) {
+                    Log.w(TAG, "Activity not active, ignoring getEventTypes callback");
+                    return;
+                }
                 if (eventTypesObj == null) {
                     Log.e(TAG, "initialiseServiceConnection().getEventTypes Callback:  Error Retrieving event types");
-                    mUtil.showToast("Error Retrieving Event Types from Server - Please Try Again Later!");
+                    mUiHandler.post(() -> {
+                        if (mIsActive && !isFinishing() && !isDestroyed()) {
+                            mUtil.showToast("Error Retrieving Event Types from Server - Please Try Again Later!");
+                        }
+                    });
                 } else {
                     Iterator<String> keys = eventTypesObj.keys();
                     mEventTypesList = new ArrayList<String>();
@@ -178,7 +194,11 @@ public class EditEventActivity extends AppCompatActivity {
                             Log.e(TAG, "initialiseServiceConnection().getEventTypes Callback: Error parsing JSONObject" + e.getMessage() + e.toString());
                         }
                     }
-                    updateUi();
+                    mUiHandler.post(() -> {
+                        if (mIsActive && !isFinishing() && !isDestroyed()) {
+                            updateUi();
+                        }
+                    });
                 }
             }
         });
@@ -189,14 +209,26 @@ public class EditEventActivity extends AppCompatActivity {
                 @Override
                 public void accept(JSONObject eventObj) {
                     Log.v(TAG, "initialiseServiceConnection.getEvent");
+                    if (!mIsActive || isFinishing() || isDestroyed()) {
+                        Log.w(TAG, "Activity not active, ignoring getEvent callback");
+                        return;
+                    }
                     if (eventObj != null) {
                         mEventObj = eventObj;
                         Log.v(TAG, "initialiseServiceConnection.getEvent:  eventObj=" + eventObj.toString());
-                        updateUi();
+                        mUiHandler.post(() -> {
+                            if (mIsActive && !isFinishing() && !isDestroyed()) {
+                                updateUi();
+                            }
+                        });
                         // FIXME: modify updateUi to use mEventObj
                     } else {
-                        mUtil.showToast("Failed to Retrieve Event from Remote Database");
-                        finish();
+                        mUiHandler.post(() -> {
+                            if (mIsActive && !isFinishing() && !isDestroyed()) {
+                                mUtil.showToast("Failed to Retrieve Event from Remote Database");
+                                finish();
+                            }
+                        });
                     }
                 }
             });
@@ -330,23 +362,39 @@ public class EditEventActivity extends AppCompatActivity {
                             @Override
                             public void accept(JSONObject eventObj) {
                                 Log.v(TAG, "onOk.updateEvent");
+                                if (!mIsActive || isFinishing() || isDestroyed()) {
+                                    Log.w(TAG, "Activity not active, ignoring updateEvent callback");
+                                    return;
+                                }
                                 //mEventObj = eventObj;
                                 if (eventObj != null) {
                                     Log.v(TAG, "onOk.getEvent:  eventObj=" + eventObj.toString());
-                                    mUtil.showToast("Event Updated OK");
-                                    finish();
+                                    mUiHandler.post(() -> {
+                                        if (mIsActive && !isFinishing() && !isDestroyed()) {
+                                            mUtil.showToast("Event Updated OK");
+                                            finish();
+                                        }
+                                    });
                                 } else {
                                     Log.e(TAG, "onOk.updateEvent - Error - returned NULL");
-                                    mUtil.showToast("Error Updating Event");
-                                    updateUi();
+                                    mUiHandler.post(() -> {
+                                        if (mIsActive && !isFinishing() && !isDestroyed()) {
+                                            mUtil.showToast("Error Updating Event");
+                                            updateUi();
+                                        }
+                                    });
                                 }
                             }
                         });
                     } catch (Exception e) {
                         Log.e(TAG, "onOK() - ERROR: " + e.getMessage() + " : " + e.toString());
                         e.printStackTrace();
-                        mUtil.showToast("Error Updating Event");
-                        updateUi();
+                        mUiHandler.post(() -> {
+                            if (mIsActive && !isFinishing() && !isDestroyed()) {
+                                mUtil.showToast("Error Updating Event");
+                                updateUi();
+                            }
+                        });
                     }
 
                     // If this is a group edit, we need to update the other events in the group.
@@ -359,17 +407,42 @@ public class EditEventActivity extends AppCompatActivity {
             };
 
     private void updateGroupEventsSequentially(final int index) {
-        if (mEventIds == null || index >= mEventIds.size()) {
-            Log.v(TAG, "updateGroupEventsSequentially - All events updated");
+        if (!mIsActive || isFinishing() || isDestroyed() || mEventIds == null || index >= mEventIds.size()) {
+            if (index >= mEventIds.size()) {
+                Log.v(TAG, "updateGroupEventsSequentially - All events updated");
+            } else {
+                Log.v(TAG, "updateGroupEventsSequentially - Cancelled (activity not active)");
+            }
             return;
         }
         final String eventId = mEventIds.get(index);
+
+        // Track this operation so it can be cancelled if activity stops
+        synchronized (mPendingGroupUpdates) {
+            if (!mPendingGroupUpdates.contains(eventId)) {
+                mPendingGroupUpdates.add(eventId);
+            }
+        }
+
         mWac.getEvent(eventId, new WebApiConnection.JSONObjectCallback() {
             @Override
             public void accept(JSONObject eventObj) {
+                // Check if this operation was cancelled
+                synchronized (mPendingGroupUpdates) {
+                    if (!mPendingGroupUpdates.contains(eventId) || !mIsActive || isFinishing() || isDestroyed()) {
+                        Log.v(TAG, "updateGroupEventsSequentially - Operation cancelled for event " + eventId);
+                        return;
+                    }
+                    mPendingGroupUpdates.remove(eventId);
+                }
+
                 if (eventObj == null) {
                     Log.e(TAG, "updateGroupEventsSequentially - ERROR: could not retrieve event " + eventId);
-                    mUtil.showToast("Error Retrieving Event " + eventId);
+                    mUiHandler.post(() -> {
+                        if (mIsActive && !isFinishing() && !isDestroyed()) {
+                            mUtil.showToast("Error Retrieving Event " + eventId);
+                        }
+                    });
                     updateGroupEventsSequentially(index + 1);
                     return;
                 }
@@ -386,12 +459,24 @@ public class EditEventActivity extends AppCompatActivity {
                 mWac.updateEvent(eventObj, new WebApiConnection.JSONObjectCallback() {
                     @Override
                     public void accept(JSONObject updatedObj) {
+                        if (!mIsActive || isFinishing() || isDestroyed()) {
+                            Log.v(TAG, "updateGroupEventsSequentially - updateEvent callback ignored (activity not active)");
+                            return;
+                        }
                         if (updatedObj == null) {
                             Log.e(TAG, "updateGroupEventsSequentially - ERROR: update failed for " + eventId);
-                            mUtil.showToast("Error Updating Event " + eventId);
+                            mUiHandler.post(() -> {
+                                if (mIsActive && !isFinishing() && !isDestroyed()) {
+                                    mUtil.showToast("Error Updating Event " + eventId);
+                                }
+                            });
                         } else {
                             Log.v(TAG, "updateGroupEventsSequentially - Updated event " + eventId + " OK");
-                            mUtil.showToast("Event " + eventId + " Updated OK");
+                            mUiHandler.post(() -> {
+                                if (mIsActive && !isFinishing() && !isDestroyed()) {
+                                    mUtil.showToast("Event " + eventId + " Updated OK");
+                                }
+                            });
                         }
                         updateGroupEventsSequentially(index + 1);
                     }

@@ -110,6 +110,8 @@ public class LogManager {
     public static final boolean USE_FIREBASE_BACKEND = false;
 
     private boolean mUploadInProgress;
+    private volatile boolean mShutdownRequested = false;
+    private final Handler mUiHandler = new Handler(android.os.Looper.getMainLooper());
     private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
     public long mDataRetentionPeriod = 1; // Prunes the local db so it only retains data younger than this duration (in days)
     private long mRemoteLogPeriod = 10; // Period in seconds between uploads to the remote server.
@@ -132,6 +134,21 @@ public class LogManager {
 
     public interface BooleanCallback {
         void accept(boolean retVal);
+    }
+
+    /**
+     * Show a toast message safely on the UI thread, but only if not shutting down
+     */
+    private void showToastSafe(final String message) {
+        if (mShutdownRequested) {
+            Log.v(TAG, "showToastSafe: Shutdown requested, not showing toast: " + message);
+            return;
+        }
+        mUiHandler.post(() -> {
+            if (!mShutdownRequested) {
+                mUtil.showToast(message);
+            }
+        });
     }
 
 
@@ -387,7 +404,7 @@ public class LogManager {
             return true;
         } else {
             Log.e(TAG,"createLocalEvent() - mOsdDb is null");
-            mUtil.showToast(mContext.getString(R.string.error_failed_to_create_local_event));
+            showToastSafe(mContext.getString(R.string.error_failed_to_create_local_event));
             return false;
         }
     }
@@ -855,12 +872,18 @@ public class LogManager {
                         mCallback.accept(true);
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
-                        mUtil.showToast(mContext.getString(R.string.error_exporting_data));
+                        // Show toast on UI thread
+                        new Handler(android.os.Looper.getMainLooper()).post(() ->
+                            mUtil.showToast(mContext.getString(R.string.error_exporting_data))
+                        );
                         Log.e(TAG, "ExportDataTask.doInBackground() - FileNotFoundException: " + e.toString());
                         mCallback.accept(false);
                     } catch (IOException e) {
                         e.printStackTrace();
-                        mUtil.showToast(mContext.getString(R.string.error_exporting_data));
+                        // Show toast on UI thread
+                        new Handler(android.os.Looper.getMainLooper()).post(() ->
+                            mUtil.showToast(mContext.getString(R.string.error_exporting_data))
+                        );
                         Log.e(TAG, "ExportDataTask.doInBackground() - IOException: " + e.toString());
                         mCallback.accept(false);
                     }
@@ -926,19 +949,29 @@ public class LogManager {
                         fileOutputStream.write("\n".getBytes(StandardCharsets.UTF_8));
                     } catch (IOException e) {
                         Log.e(TAG, "exportToFile() - ERROR Writing File: " + e.toString());
-                        mUtil.showToast("ERROR WRITING FILE");
+                        // Show toast on UI thread
+                        new Handler(android.os.Looper.getMainLooper()).post(() ->
+                            mUtil.showToast("ERROR WRITING FILE")
+                        );
                         return (-1);
                     }
 
                 }
                 Log.d(TAG, "writeDatapointsToFile() - data written to file ok");
-                mUtil.showToast(mContext.getString(R.string.data_exported_ok) + " " + nRec);
+                // Show toast on UI thread
+                final int finalNRec = nRec;
+                new Handler(android.os.Looper.getMainLooper()).post(() ->
+                    mUtil.showToast(mContext.getString(R.string.data_exported_ok) + " " + finalNRec)
+                );
                 return nRec;
 
             } catch (JSONException | NullPointerException e) {
                 Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string ");
                 dataObj = null;
-                mUtil.showToast(mContext.getString(R.string.error_exporting_data));
+                // Show toast on UI thread
+                new Handler(android.os.Looper.getMainLooper()).post(() ->
+                    mUtil.showToast(mContext.getString(R.string.error_exporting_data))
+                );
                 Log.e(TAG, "exportToFile() - JSONException: " + e.toString());
                 return (-1);
             }
@@ -1117,13 +1150,23 @@ public class LogManager {
     // and uploads those as a batch of data points.
     public void createEventCallback(String eventId) {
         Log.v(TAG, "createEventCallback(): " + eventId);
+        if (mShutdownRequested) {
+            Log.v(TAG, "createEventCallback(): Shutdown requested, ignoring callback");
+            finishUpload();
+            return;
+        }
         Log.v(TAG, "createEventCallback(): Retrieving remote event details");
         mWac.getEvent(eventId, new WebApiConnection.JSONObjectCallback() {
             @Override
             public void accept(JSONObject eventObj) {
+                if (mShutdownRequested) {
+                    Log.v(TAG, "createEventCallback.accept(): Shutdown requested, ignoring callback");
+                    finishUpload();
+                    return;
+                }
                 if (eventObj == null) {
                     Log.e(TAG, "createEventCallback() - eventObj is null - failed to create event");
-                    mUtil.showToast(mContext.getString(R.string.error_creating_remote_event_msg));
+                    showToastSafe(mContext.getString(R.string.error_creating_remote_event_msg));
                 } else {
                     Log.v(TAG, "createEventCallback() - eventObj=" + eventObj.toString());
                     Date eventDate;
@@ -1148,6 +1191,11 @@ public class LogManager {
                                 dateFormat.format(new Date(startDateMillis)),
                                 dateFormat.format(new Date(endDateMillis)),
                                 (String datapointsJsonStr) -> {
+                                    if (mShutdownRequested) {
+                                        Log.v(TAG, "createEventCallback.getDatapointsByDate(): Shutdown requested, ignoring callback");
+                                        finishUpload();
+                                        return;
+                                    }
                                     //Log.v(TAG, "createEventCallback() - datapointsJsonStr=" + datapointsJsonStr);
                                     JSONArray dataObj;
                                     mDatapointsToUploadList = new ArrayList<JSONObject>();
@@ -1177,7 +1225,7 @@ public class LogManager {
                                 });
                     } else {
                         Log.e(TAG, "createEventCallback() - Error - event date is null - not doing anything");
-                        mUtil.showToast(mContext.getString(R.string.error_uploading_event_msg));
+                        showToastSafe(mContext.getString(R.string.error_uploading_event_msg));
                         finishUpload();
                     }
                 }
@@ -1189,6 +1237,11 @@ public class LogManager {
     // datapointCallback is called when the upload is complete.
     public void uploadNextDatapoint() {
         //Log.v(TAG, "uploadNextDatapoint()");
+        if (mShutdownRequested) {
+            Log.v(TAG, "uploadNextDatapoint(): Shutdown requested, aborting upload");
+            finishUpload();
+            return;
+        }
         if (mDatapointsToUploadList != null) {
             if (mDatapointsToUploadList.size() > 0) {
                 mUploadInProgress = true;
@@ -1199,6 +1252,7 @@ public class LogManager {
                     Log.e(TAG, "uploadNextDatapoint(): Removing mDatapointsToUploadList[0] and trying the next datapoint");
                     mDatapointsToUploadList.remove(0);
                     uploadNextDatapoint();
+                    return;
                 }
 
                 Log.v(TAG, "uploadNextDatapoint() - " + mDatapointsToUploadList.size() + " datapoints to upload.  Uploading datapoint ID:" + mCurrentDatapointId);
@@ -1219,6 +1273,11 @@ public class LogManager {
     // to upload the next one.
     public void datapointCallback(String datapointStr) {
         Log.v(TAG, "datapointCallback() dataPointId=" + mCurrentDatapointId + " remote datapointID=" + datapointStr + ", mCurrentEventId=" + mCurrentEventRemoteId);
+        if (mShutdownRequested) {
+            Log.v(TAG, "datapointCallback(): Shutdown requested, aborting upload");
+            finishUpload();
+            return;
+        }
         if (mDatapointsToUploadList != null) {
             if (mDatapointsToUploadList.size() > 0) {
                 mDatapointsToUploadList.remove(0);
@@ -1249,9 +1308,34 @@ public class LogManager {
 
     public void stop() {
         // Stop the timers and shutdown the remote API connection.
+        Log.i(TAG, "stop() - initiating shutdown");
+        mShutdownRequested = true;
+
         stopRemoteLogTimer();
         stopAutoPruneTimer();
         stopNDATimer();
+
+        // Wait for ongoing upload to complete or timeout
+        if (mUploadInProgress) {
+            Log.i(TAG, "stop() - waiting for upload to complete");
+            int waitCount = 0;
+            while (mUploadInProgress && waitCount < 50) { // 5 second max wait
+                try {
+                    Thread.sleep(100);
+                    waitCount++;
+                } catch (InterruptedException e) {
+                    Log.w(TAG, "stop() - interrupted while waiting for upload");
+                    break;
+                }
+            }
+
+            if (mUploadInProgress) {
+                Log.w(TAG, "stop() - forcing upload termination after timeout");
+                finishUpload();
+            }
+        }
+
+        Log.i(TAG, "stop() - shutdown complete");
     }
 
     /*
@@ -1454,10 +1538,16 @@ public class LogManager {
 
         @Override
         public void onFinish() {
+            if (mShutdownRequested) {
+                Log.d(TAG, "mRemoteLogTimer - onFinish - shutdown requested, not uploading");
+                return;
+            }
             Log.d(TAG, "mRemoteLogTimer - onFinish - uploading data to remote database");
             writeToRemoteServer();
             // Restart this timer.
-            start();
+            if (!mShutdownRequested) {
+                start();
+            }
         }
 
     }
@@ -1480,6 +1570,10 @@ public class LogManager {
 
         @Override
         public void onFinish() {
+            if (mShutdownRequested) {
+                Log.d(TAG, "mNDATimer - onFinish - shutdown requested, not logging NDA event");
+                return;
+            }
             Log.d(TAG, "mNDATimer - onFinish - Recording a Normal Daily Activity Event");
             createNDAEvent();
             // Check if we have been logging NDA events for more than the set limit.  If it has, we disable it
@@ -1502,7 +1596,11 @@ public class LogManager {
                 // Restart this timer.
                 Log.i(TAG, "NDATimer - tDiffMillis=" + tDiffMillis + ", tdiffHrs = " + tDiffHrs + ", tnow=" + tNow + ", tstart=" + mNDATimerStartTime + ", NDALogPeriod=" + mNDALogPeriodHours);
                 Log.i(TAG, "NDATimer - re-starting NDA timer");
-                start();
+                if (!mShutdownRequested) {
+                    start();
+                } else {
+                    Log.i(TAG, "NDATimer - shutdown requested, not restarting timer");
+                }
             }
         }
 
@@ -1523,10 +1621,16 @@ public class LogManager {
 
         @Override
         public void onFinish() {
+            if (mShutdownRequested) {
+                Log.d(TAG, "mAutoPruneTimer - onFinish - shutdown requested, not pruning");
+                return;
+            }
             Log.d(TAG, "mAutoPruneTimer - onFinish - Pruning Local Database");
             pruneLocalDb();
             // Restart this timer.
-            start();
+            if (!mShutdownRequested) {
+                start();
+            }
         }
 
     }
