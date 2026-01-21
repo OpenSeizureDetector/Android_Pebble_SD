@@ -106,7 +106,8 @@ public abstract class SdDataSource {
     // Values for SD_MODE
     private int SIMPLE_SPEC_FMAX = 10;
 
-    private int ACCEL_SCALE_FACTOR = 1000;  // Amount by which to reduce analysis results to scale to be comparable to analysis on Pebble.
+    // TODO: Why as this 1000? When I set it to 1 I can trigger alerts from the Wear OS app. When it is set to 1000 I cannot get the numbers high enough. With 1 the power reading is very high but the spectrum is below threshold.
+    private int ACCEL_SCALE_FACTOR = 1;  // Amount by which to reduce analysis results to scale to be comparable to analysis on Pebble.
 
 
     private int mAlarmCount;
