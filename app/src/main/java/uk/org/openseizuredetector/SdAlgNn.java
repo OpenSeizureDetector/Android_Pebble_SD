@@ -12,9 +12,10 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tflite.java.TfLite;
 
 import org.tensorflow.lite.InterpreterApi;
-import org.pytorch.Module;
-import org.pytorch.IValue;
-import org.pytorch.Tensor;
+// ExecuTorch imports (PyTorch's new mobile runtime)
+import org.pytorch.executorch.EValue;
+import org.pytorch.executorch.Module;
+import org.pytorch.executorch.Tensor;
 
 public class SdAlgNn {
     private final static String TAG = "SdAlgNn";
@@ -57,37 +58,51 @@ public class SdAlgNn {
         }
 
         // Load model depending on selected framework
-        if ("pytorch".equalsIgnoreCase(mFramework)) {
+        if ("pytorch".equalsIgnoreCase(mFramework) || "executorch".equalsIgnoreCase(mFramework)) {
             mMm.loadModel(SP, result -> {
                 if (result == null) {
                     Log.e(TAG, "Failed to load any model - result is null");
-                    showToast("Problem Loading PyTorch Model", Toast.LENGTH_SHORT);
+                    showToast("Problem Loading Model", Toast.LENGTH_SHORT);
                     return;
                 }
                 mFramework = result.framework;
-                if (!"pytorch".equalsIgnoreCase(result.framework)) {
-                    Log.w(TAG, "Expected PyTorch model but got " + result.framework + " - skipping load");
+                if (!"pytorch".equalsIgnoreCase(result.framework) && !"executorch".equalsIgnoreCase(result.framework)) {
+                    Log.w(TAG, "Expected PyTorch/ExecuTorch model but got " + result.framework + " - skipping load");
                     return;
                 }
                 if (result.file == null) {
-                    Log.e(TAG, "PyTorch model file missing");
-                    showToast("PyTorch model file not found", Toast.LENGTH_LONG);
+                    Log.e(TAG, "ExecuTorch model file missing");
+                    showToast("ExecuTorch model file not found", Toast.LENGTH_LONG);
                     return;
                 }
                 String filePath = result.file.getAbsolutePath();
-                if (!filePath.endsWith(".ptl")) {
-                    Log.w(TAG, "PyTorch model file does not have .ptl extension: " + filePath);
-                    showToast("Warning: PyTorch model should be in .ptl (TorchScript Mobile) format", Toast.LENGTH_LONG);
+
+                // Check file format - ExecuTorch REQUIRES .pte format
+                if (!filePath.endsWith(".pte")) {
+                    String errorMsg;
+                    if (filePath.endsWith(".ptl")) {
+                        errorMsg = "ExecuTorch requires .pte format. Your .ptl file must be converted. " +
+                                   "Use TFLite models instead, or convert PyTorch models to .pte format.";
+                        Log.e(TAG, "Cannot load .ptl file with ExecuTorch: " + filePath);
+                    } else {
+                        errorMsg = "ExecuTorch requires .pte (ExecuTorch Program) format files.";
+                        Log.e(TAG, "Invalid file format for ExecuTorch: " + filePath);
+                    }
+                    showToast(errorMsg, Toast.LENGTH_LONG);
+                    return;
                 }
+
                 try {
                     mPtModule = Module.load(filePath);
-                    Log.d(TAG, "PyTorch module loaded successfully from: " + filePath);
-                    showToast("PyTorch model loaded successfully", Toast.LENGTH_SHORT);
+                    Log.d(TAG, "ExecuTorch model loaded successfully from: " + filePath);
+                    showToast("ExecuTorch model loaded successfully", Toast.LENGTH_SHORT);
                 } catch (Exception e) {
-                    Log.e(TAG, "Failed to load PyTorch module: " + e.getMessage());
-                    String errorMsg = "Failed to load PyTorch model. ";
-                    if (e.getMessage() != null && e.getMessage().contains("constants.pkl")) {
-                        errorMsg += "Model must be in TorchScript Mobile format (.ptl), not standard PyTorch format (.pt)";
+                    Log.e(TAG, "Failed to load ExecuTorch model: " + e.getMessage());
+                    String errorMsg = "Failed to load ExecuTorch model. ";
+                    if (e.getMessage() != null && e.getMessage().contains("ET12")) {
+                        errorMsg += "File is not in ExecuTorch .pte format. Use TFLite models instead.";
+                    } else if (e.getMessage() != null && e.getMessage().contains("Invalid argument")) {
+                        errorMsg += "Model file is corrupted or wrong format. Expected .pte file.";
                     } else {
                         errorMsg += e.getMessage();
                     }
@@ -106,8 +121,8 @@ public class SdAlgNn {
                                 return;
                             }
                             mFramework = result.framework;
-                            if ("pytorch".equalsIgnoreCase(result.framework)) {
-                                Log.w(TAG, "Loaded PyTorch model while expecting TFLite - not creating TFLite interpreter");
+                            if ("pytorch".equalsIgnoreCase(result.framework) || "executorch".equalsIgnoreCase(result.framework)) {
+                                Log.w(TAG, "Loaded PyTorch/ExecuTorch model while expecting TFLite - not creating TFLite interpreter");
                                 return;
                             }
                             if (result.tfliteBuffer == null) {
@@ -154,7 +169,7 @@ public class SdAlgNn {
             try {
                 mPtModule.destroy();
             } catch (Exception e) {
-                Log.w(TAG, "Error destroying PyTorch module: " + e.getMessage());
+                Log.w(TAG, "Error destroying ExecuTorch module: " + e.getMessage());
             }
             mPtModule = null;
         }
@@ -193,9 +208,9 @@ public class SdAlgNn {
         double[] inputData = mInputBuffer.getVals();
 
         // Now invoke the appropriate framework with the prepared input data
-        if ("pytorch".equalsIgnoreCase(mFramework)) {
+        if ("pytorch".equalsIgnoreCase(mFramework) || "executorch".equalsIgnoreCase(mFramework)) {
             if (mPtModule == null) {
-                Log.d(TAG, "getPseizureFmt1() - PyTorch module is null - returning zero seizure probability");
+                Log.d(TAG, "getPseizureFmt1() - ExecuTorch module is null - returning zero seizure probability");
                 return 0.0f;
             }
 
@@ -207,13 +222,18 @@ public class SdAlgNn {
             // The model code does torch.unsqueeze(x, 2) which adds a dimension at position 2,
             // so it expects input shape [batch, channels, sequence_length]
             Tensor inputTensor = Tensor.fromBlob(inputVec, new long[]{1, 1, mInputSize});
-            Tensor output = mPtModule.forward(IValue.from(inputTensor)).toTensor();
-            float[] scores = output.getDataAsFloatArray();
+            // ExecuTorch forward() returns EValue[] array, get first element
+            EValue[] outputs = mPtModule.forward(EValue.from(inputTensor));
+            if (outputs.length == 0) {
+                Log.e(TAG, "ExecuTorch returned empty output array");
+                return 0.0f;
+            }
+            float[] scores = outputs[0].toTensor().getDataAsFloatArray();
             if (scores.length >= 2) {
-                Log.d(TAG, "PyTorch run - pSeizure=" + scores[1]);
+                Log.d(TAG, "ExecuTorch run - pSeizure=" + scores[1]);
                 return scores[1];
             }
-            Log.e(TAG, "PyTorch output size unexpected: " + scores.length);
+            Log.e(TAG, "ExecuTorch output size unexpected: " + scores.length);
             return 0.0f;
         }
 

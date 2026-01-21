@@ -43,6 +43,76 @@ android {
             // This ensures native libs are not compressed, allowing them to be memory-mapped
             useLegacyPackaging = false
         }
+        // Exclude duplicate files that cause build warnings
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/license.txt'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/notice.txt'
+        exclude 'META-INF/ASL2.0'
+    }
+}
+
+// Automatically create 16KB-aligned APK after build
+// This works around AGP not automatically aligning PyTorch native libraries
+android.applicationVariants.all { variant ->
+    variant.outputs.all { output ->
+        variant.assembleProvider.get().doLast {
+            def apkFile = output.outputFile
+            if (apkFile.name.endsWith('.apk')) {
+                def alignedApk = new File(apkFile.parentFile,
+                    apkFile.name.replace('.apk', '-16kb-aligned.apk'))
+
+                // Find zipalign in Android SDK
+                def sdkDir = android.sdkDirectory
+                def buildToolsDir = new File(sdkDir, "build-tools/${android.buildToolsVersion}")
+                def zipalign = new File(buildToolsDir, "zipalign")
+
+                if (!zipalign.exists()) {
+                    // Try finding any build-tools version
+                    def buildToolsParent = new File(sdkDir, "build-tools")
+                    if (buildToolsParent.exists()) {
+                        def versions = buildToolsParent.listFiles()?.sort()?.reverse()
+                        for (def version : versions) {
+                            zipalign = new File(version, "zipalign")
+                            if (zipalign.exists()) break
+                        }
+                    }
+                }
+
+                if (zipalign.exists()) {
+                    try {
+                        exec {
+                            commandLine zipalign.absolutePath, '-f', '-p', '16384',
+                                apkFile.absolutePath, alignedApk.absolutePath
+                            ignoreExitValue = true
+                        }
+
+                        // Verify alignment
+                        def verifyResult = exec {
+                            commandLine zipalign.absolutePath, '-c', '-p', '16384',
+                                alignedApk.absolutePath
+                            ignoreExitValue = true
+                        }
+
+                        if (verifyResult.exitValue == 0) {
+                            println "✅ Created 16KB-aligned APK: ${alignedApk.name}"
+                            println "   Original: ${apkFile.name}"
+                            println "   Aligned:  ${alignedApk.name}"
+                        } else {
+                            println "⚠️  Warning: 16KB alignment verification failed for ${alignedApk.name}"
+                        }
+                    } catch (Exception e) {
+                        println "⚠️  Warning: Failed to create 16KB-aligned APK: ${e.message}"
+                    }
+                } else {
+                    println "⚠️  Warning: zipalign not found - cannot create 16KB-aligned APK"
+                    println "   Install Android SDK build-tools to enable automatic alignment"
+                }
+            }
+        }
     }
 }
 
@@ -78,7 +148,9 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore'
     implementation 'androidx.navigation:navigation-fragment:2.7.6'
     implementation 'androidx.navigation:navigation-ui:2.7.6'
-    implementation 'org.pytorch:pytorch_android:1.13.1'
+    // Using ExecuTorch (PyTorch's new mobile runtime) instead of deprecated pytorch_android
+    // ExecuTorch is smaller (~10-20MB vs ~70MB), faster, and has better 16KB alignment support
+    implementation 'org.pytorch:executorch-android:1.0.1'
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation "androidx.test:core"
