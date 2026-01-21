@@ -40,7 +40,8 @@ android {
     }
     packagingOptions {
         jniLibs {
-            useLegacyPackaging true
+            // This ensures native libs are not compressed, allowing them to be memory-mapped
+            useLegacyPackaging = false
         }
     }
 }
