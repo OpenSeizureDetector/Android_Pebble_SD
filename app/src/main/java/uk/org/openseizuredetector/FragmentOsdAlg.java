@@ -110,6 +110,8 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             long pSeizurePc;
             pSeizurePc = (long) (mConnection.mSdServer.mSdData.mPseizure * 100);
 
+            ((TextView) mRootView.findViewById(R.id.pSeizureTvM2)).setText(getString(R.string.seizure_probability) + " : " + pSeizurePc + "%");
+
             pb = ((ProgressBar) mRootView.findViewById(R.id.pSeizureProgressBarM2));
             pb.setMax(100);
             pb.setProgress((int) pSeizurePc);

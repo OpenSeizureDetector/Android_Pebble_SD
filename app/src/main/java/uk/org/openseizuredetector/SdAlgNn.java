@@ -33,6 +33,32 @@ public class SdAlgNn {
     // Circular buffer for accumulating data when inputSize > rawData.length
     private CircBuf mInputBuffer;
 
+    private static float softmaxProb(float[] scores, int index) {
+        // Many model exports output logits (unbounded). Convert to probability.
+        // If the output already looks like probabilities (non-negative and sums to ~1),
+        // return it as-is to avoid double-softmax.
+        if (scores == null || scores.length < 2 || index < 0 || index >= scores.length) {
+            return 0.0f;
+        }
+        float s0 = scores[0];
+        float s1 = scores[1];
+        float sum = s0 + s1;
+        if (s0 >= 0.0f && s1 >= 0.0f && Math.abs(sum - 1.0f) < 0.01f) {
+            return scores[index];
+        }
+
+        // Numerically-stable softmax for 2-class output.
+        float max = Math.max(s0, s1);
+        double e0 = Math.exp(s0 - max);
+        double e1 = Math.exp(s1 - max);
+        double denom = e0 + e1;
+        if (denom == 0.0) {
+            return 0.0f;
+        }
+        double p1 = e1 / denom;
+        return (index == 1) ? (float) p1 : (float) (e0 / denom);
+    }
+
 
     public SdAlgNn(Context context) {
         Log.d(TAG, "SdAlgNn Constructor");
@@ -230,8 +256,9 @@ public class SdAlgNn {
             }
             float[] scores = outputs[0].toTensor().getDataAsFloatArray();
             if (scores.length >= 2) {
-                Log.d(TAG, "ExecuTorch run - pSeizure=" + scores[1]);
-                return scores[1];
+                float pSeizure = softmaxProb(scores, 1);
+                Log.d(TAG, "ExecuTorch run - pSeizure=" + pSeizure + " (raw[0]=" + scores[0] + ", raw[1]=" + scores[1] + ")");
+                return pSeizure;
             }
             Log.e(TAG, "ExecuTorch output size unexpected: " + scores.length);
             return 0.0f;
