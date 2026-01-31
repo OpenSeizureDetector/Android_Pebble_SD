@@ -127,8 +127,6 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         historyChart.getViewport().setScalable(true);
         historyChart.getViewport().setScrollable(true);
 
-        historyChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (minutes ago)");
-        historyChart.getGridLabelRenderer().setVerticalAxisTitle("Seizure Probability (%)");
 
         // Configure number of tick marks and grid lines
         // Setting to 11 to try to force more labels (GraphView may reduce this)
@@ -165,9 +163,17 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
             historyChart.getGridLabelRenderer().setHorizontalLabelsColor(textColor);
             historyChart.getGridLabelRenderer().setVerticalLabelsColor(textColor);
             historyChart.getGridLabelRenderer().setGridColor(Color.GRAY);
+
+            // Set axis title colors to match labels
+            historyChart.getGridLabelRenderer().setHorizontalAxisTitleColor(textColor);
+            historyChart.getGridLabelRenderer().setVerticalAxisTitleColor(textColor);
         } catch (Exception e) {
             Log.w(TAG, "Error setting chart colors: " + e.getMessage());
         }
+
+        // Set axis titles after colors are configured
+        historyChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (minutes ago)");
+        historyChart.getGridLabelRenderer().setVerticalAxisTitle("Seizure Probability (%)");
 
         Log.d(TAG, "Chart view initialized");
     }
