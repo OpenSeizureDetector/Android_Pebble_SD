@@ -27,6 +27,23 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tab_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#2E3F8F"
+            android:elevation="4dp"
+            app:tabMode="scrollable"
+            app:tabGravity="fill"
+            app:tabTextColor="#B0B0FF"
+            app:tabSelectedTextColor="#FFFFFF"
+            app:tabIndicatorColor="@color/colorAccent"
+            app:tabIndicatorHeight="4dp"
+            app:tabRippleColor="#40FFFFFF"
+            app:tabPaddingStart="16dp"
+            app:tabPaddingEnd="16dp"
+            app:tabMinWidth="72dp"
+            app:tabTextAppearance="@style/TabTextAppearance" />
 
         <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/fragment_pager"

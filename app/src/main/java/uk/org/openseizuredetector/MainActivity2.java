@@ -10,6 +10,9 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -46,6 +49,8 @@ public class MainActivity2 extends AppCompatActivity {
 
     private ViewPager2 mFragmentPager;
     private FragmentStateAdapter mFragmentStateAdapter;
+    private TabLayout mTabLayout;
+    private TabLayoutMediator mTabLayoutMediator;
     private Context mContext;
     private OsdUtil mUtil;
     private SdServiceConnection mConnection;
@@ -142,6 +147,11 @@ public class MainActivity2 extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         Log.i(TAG, "onPause()");
+
+        // Detach TabLayoutMediator to prevent memory leaks
+        if (mTabLayoutMediator != null) {
+            mTabLayoutMediator.detach();
+        }
     }
 
     @Override
@@ -152,6 +162,39 @@ public class MainActivity2 extends AppCompatActivity {
         mFragmentPager = findViewById(R.id.fragment_pager);
         mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
         mFragmentPager.setAdapter(mFragmentStateAdapter);
+
+        // Set up TabLayout with ViewPager2
+        mTabLayout = findViewById(R.id.tab_layout);
+        mTabLayoutMediator = new TabLayoutMediator(mTabLayout, mFragmentPager,
+                new TabLayoutMediator.TabConfigurationStrategy() {
+                    @Override
+                    public void onConfigureTab(TabLayout.Tab tab, int position) {
+                        switch (position) {
+                            case 0:
+                                tab.setText("OSD");
+                                break;
+                            case 1:
+                                tab.setText("ML");
+                                break;
+                            case 2:
+                                tab.setText("Heart Rate");
+                                break;
+                            case 3:
+                                tab.setText("System");
+                                break;
+                            case 4:
+                                tab.setText("Signal");
+                                break;
+                            case 5:
+                                tab.setText("Battery");
+                                break;
+                            default:
+                                tab.setText("Screen " + position);
+                        }
+                    }
+                });
+        mTabLayoutMediator.attach();
+
         getSupportFragmentManager().beginTransaction()
                 .setReorderingAllowed(true)
                 .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
