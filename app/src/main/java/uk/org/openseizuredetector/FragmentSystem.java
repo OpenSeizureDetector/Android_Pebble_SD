@@ -12,52 +12,22 @@ import android.widget.TextView;
 
 import androidx.appcompat.widget.LinearLayoutCompat;
 
-import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.utils.ValueFormatter;
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
 
-import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Objects;
 
 public class FragmentSystem extends FragmentOsdBaseClass {
     String TAG = "FragmentSystem";
 
-    private LineChart mBattLineChart;
-    private LineDataSet mBattLineDataSet;
-    private LineChart mSignalLineChart;
-    private LineDataSet mSignalLineDataSet;
+    private GraphView mBattLineChart;
+    private GraphView mSignalLineChart;
 
     public FragmentSystem() {
         // Required empty public constructor
     }
 
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        // Initialize battery history graph dataset
-        mBattLineDataSet = new LineDataSet(new ArrayList<Entry>(), "Battery History");
-        mBattLineDataSet.setValueTextColor(Color.BLACK);
-        mBattLineDataSet.setValueTextSize(12f);
-        mBattLineDataSet.setDrawValues(false);
-        mBattLineDataSet.setCircleSize(0f);
-        mBattLineDataSet.setLineWidth(2f);
-        mBattLineDataSet.setColor(Color.RED);
-
-        // Initialize signal strength graph dataset
-        mSignalLineDataSet = new LineDataSet(new ArrayList<Entry>(), "Signal Strength History");
-        mSignalLineDataSet.setValueTextColor(Color.BLACK);
-        mSignalLineDataSet.setValueTextSize(18f);
-        mSignalLineDataSet.setDrawValues(false);
-        mSignalLineDataSet.setCircleSize(0f);
-        mSignalLineDataSet.setLineWidth(3f);
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -72,67 +42,13 @@ public class FragmentSystem extends FragmentOsdBaseClass {
         // Setup battery history chart
         mBattLineChart = mRootView.findViewById(R.id.system_batt_line_chart);
         if (mBattLineChart != null) {
-            mBattLineChart.getLegend().setEnabled(false);
-            mBattLineChart.setDescription("");
-
-            XAxis xAxis = mBattLineChart.getXAxis();
-            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-            xAxis.setTextSize(8f);
-            xAxis.setDrawAxisLine(true);
-            xAxis.setDrawLabels(true);
-            xAxis.setTextColor(Color.WHITE);
-
-            YAxis yAxis = mBattLineChart.getAxisLeft();
-            yAxis.setAxisMinValue(0f);
-            yAxis.setAxisMaxValue(100f);
-            yAxis.setDrawGridLines(true);
-            yAxis.setDrawLabels(true);
-            yAxis.setTextColor(Color.WHITE);
-            yAxis.setTextSize(8f);
-            yAxis.setValueFormatter(new ValueFormatter() {
-                @Override
-                public String getFormattedValue(float v) {
-                    DecimalFormat format = new DecimalFormat("###");
-                    return format.format(v);
-                }
-            });
-
-            YAxis yAxis2 = mBattLineChart.getAxisRight();
-            yAxis2.setDrawGridLines(false);
-            yAxis2.setEnabled(false);
+            setupBatteryChart();
         }
 
         // Setup signal strength history chart
         mSignalLineChart = mRootView.findViewById(R.id.system_signal_line_chart);
         if (mSignalLineChart != null) {
-            mSignalLineChart.getLegend().setEnabled(false);
-            mSignalLineChart.setDescription("");
-
-            XAxis xAxis = mSignalLineChart.getXAxis();
-            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-            xAxis.setTextSize(8f);
-            xAxis.setDrawAxisLine(true);
-            xAxis.setDrawLabels(true);
-            xAxis.setTextColor(Color.WHITE);
-
-            YAxis yAxis = mSignalLineChart.getAxisLeft();
-            yAxis.setAxisMaxValue(-50f);
-            yAxis.setAxisMinValue(-100f);
-            yAxis.setDrawGridLines(true);
-            yAxis.setDrawLabels(true);
-            yAxis.setTextColor(Color.WHITE);
-            yAxis.setTextSize(8f);
-            yAxis.setValueFormatter(new ValueFormatter() {
-                @Override
-                public String getFormattedValue(float v) {
-                    DecimalFormat format = new DecimalFormat("###");
-                    return format.format(v);
-                }
-            });
-
-            YAxis yAxis2 = mSignalLineChart.getAxisRight();
-            yAxis2.setDrawGridLines(false);
-            yAxis2.setEnabled(false);
+            setupSignalChart();
         }
 
         // Handle Edit Settings Button
@@ -151,6 +67,86 @@ public class FragmentSystem extends FragmentOsdBaseClass {
 
             }
         });
+    }
+
+    private void setupBatteryChart() {
+        mBattLineChart.getViewport().setYAxisBoundsManual(true);
+        mBattLineChart.getViewport().setMinY(0);
+        mBattLineChart.getViewport().setMaxY(100);
+
+        // Set X-axis to show full 24 hours (in seconds, will display as hours)
+        mBattLineChart.getViewport().setXAxisBoundsManual(true);
+        mBattLineChart.getViewport().setMinX(0);
+        mBattLineChart.getViewport().setMaxX(86400); // 24 hours = 86400 seconds
+
+        mBattLineChart.getViewport().setScalable(true);
+        mBattLineChart.getViewport().setScrollable(true);
+        mBattLineChart.getGridLabelRenderer().setNumVerticalLabels(6);
+        mBattLineChart.getGridLabelRenderer().setNumHorizontalLabels(7);
+
+        try {
+            int textColor = mContext.getResources().getColor(R.color.okTextColor, null);
+            mBattLineChart.getGridLabelRenderer().setHorizontalLabelsColor(textColor);
+            mBattLineChart.getGridLabelRenderer().setVerticalLabelsColor(textColor);
+            mBattLineChart.getGridLabelRenderer().setGridColor(Color.GRAY);
+            mBattLineChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (hours)");
+            mBattLineChart.getGridLabelRenderer().setHorizontalAxisTitleColor(textColor);
+
+            // Format X-axis to show hours instead of seconds
+            mBattLineChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {
+                @Override
+                public String formatLabel(double value, boolean isValueX) {
+                    if (isValueX) {
+                        // Convert seconds to hours
+                        return String.format("%.0f", value / 3600.0);
+                    } else {
+                        return super.formatLabel(value, isValueX);
+                    }
+                }
+            });
+        } catch (Exception e) {
+            Log.w(TAG, "Error setting battery chart colors: " + e.getMessage());
+        }
+    }
+
+    private void setupSignalChart() {
+        mSignalLineChart.getViewport().setYAxisBoundsManual(true);
+        mSignalLineChart.getViewport().setMinY(-100);
+        mSignalLineChart.getViewport().setMaxY(-50);
+
+        // Set X-axis to show full 10 minutes (in seconds, will display as minutes)
+        mSignalLineChart.getViewport().setXAxisBoundsManual(true);
+        mSignalLineChart.getViewport().setMinX(0);
+        mSignalLineChart.getViewport().setMaxX(600); // 10 minutes = 600 seconds
+
+        mSignalLineChart.getViewport().setScalable(true);
+        mSignalLineChart.getViewport().setScrollable(true);
+        mSignalLineChart.getGridLabelRenderer().setNumVerticalLabels(6);
+        mSignalLineChart.getGridLabelRenderer().setNumHorizontalLabels(6);
+
+        try {
+            int textColor = mContext.getResources().getColor(R.color.okTextColor, null);
+            mSignalLineChart.getGridLabelRenderer().setHorizontalLabelsColor(textColor);
+            mSignalLineChart.getGridLabelRenderer().setVerticalLabelsColor(textColor);
+            mSignalLineChart.getGridLabelRenderer().setGridColor(Color.GRAY);
+            mSignalLineChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (minutes)");
+            mSignalLineChart.getGridLabelRenderer().setHorizontalAxisTitleColor(textColor);
+
+            // Format X-axis to show minutes instead of seconds
+            mSignalLineChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {
+                @Override
+                public String formatLabel(double value, boolean isValueX) {
+                    if (isValueX) {
+                        // Convert seconds to minutes
+                        return String.format("%.0f", value / 60.0);
+                    } else {
+                        return super.formatLabel(value, isValueX);
+                    }
+                }
+            });
+        } catch (Exception e) {
+            Log.w(TAG, "Error setting signal chart colors: " + e.getMessage());
+        }
     }
 
 
@@ -251,6 +247,66 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                 tv.setTextColor(okTextColour);
                 tv = (TextView) mRootView.findViewById(R.id.watch_sdver_tv);
                 tv.setText(mConnection.mSdServer.mSdData.watchSdVersion);
+                tv = (TextView) mRootView.findViewById(R.id.alarmTv);
+                if ((mConnection.mSdServer.mSdData.alarmState == 0)
+                        && !mConnection.mSdServer.mSdData.alarmStanding
+                        && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
+                    tv.setText(getString(R.string.okBtnTxt));
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+                }
+                if ((mConnection.mSdServer.mSdData.alarmState == 1)
+                        && !mConnection.mSdServer.mSdData.alarmStanding
+                        && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
+                    tv.setText(R.string.Warning);
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+                }
+                if (mConnection.mSdServer.mSdData.alarmState == 6) {
+                    tv.setText(R.string.Mute);
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+                }
+                if (mConnection.mSdServer.mSdData.alarmStanding) {
+                    tv.setText(R.string.Alarm);
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                }
+                if (mConnection.mSdServer.mSdData.fallAlarmStanding) {
+                    tv.setText(R.string.Fall);
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                }
+                tv = (TextView) mRootView.findViewById(R.id.battTv);
+                tv.setText(getString(R.string.WatchBatteryEquals)
+                        + String.valueOf(mConnection.mSdServer.mSdData.batteryPc) + "% / "
+                        + String.valueOf(mConnection.mSdServer.mSdData.phoneBatteryPc) + "%");
+                if (mConnection.mSdServer.mSdData.batteryPc <= 10) {
+                    tv.setBackgroundColor(alarmColour);
+                    tv.setTextColor(alarmTextColour);
+                }
+                if (mConnection.mSdServer.mSdData.batteryPc > 10) {
+                    tv.setBackgroundColor(warnColour);
+                    tv.setTextColor(warnTextColour);
+                }
+                if (mConnection.mSdServer.mSdData.batteryPc >= 20) {
+                    tv.setBackgroundColor(okColour);
+                    tv.setTextColor(okTextColour);
+                }
+                tv = (TextView) mRootView.findViewById(R.id.watch_manuf_tv);
+                tv.setText(mConnection.mSdServer.mSdData.watchManuf);
+                tv.setTextColor(okTextColour);
+                tv = (TextView) mRootView.findViewById(R.id.watch_partno_tv);
+                tv.setText(mConnection.mSdServer.mSdData.watchPartNo);
+                tv.setTextColor(okTextColour);
+                tv = (TextView) mRootView.findViewById(R.id.watch_fwver_tv);
+                tv.setText(mConnection.mSdServer.mSdData.watchFwVersion);
+                tv.setTextColor(okTextColour);
+                tv = (TextView) mRootView.findViewById(R.id.watch_sdname_tv);
+                tv.setText(mConnection.mSdServer.mSdData.watchSdName);
+                tv.setTextColor(okTextColour);
+                tv = (TextView) mRootView.findViewById(R.id.watch_sdver_tv);
+                tv.setText(mConnection.mSdServer.mSdData.watchSdVersion);
                 tv.setTextColor(okTextColour);
                 tv = (TextView) mRootView.findViewById(R.id.watch_batt_tv);
                 tv.setText(mConnection.mSdServer.mSdData.batteryPc+" %");
@@ -258,10 +314,8 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                 tv = (TextView) mRootView.findViewById(R.id.watch_signal_tv);
                 tv.setText(String.format("%.0f dB", mConnection.mSdServer.mSdData.watchSignalStrength));
                 tv.setTextColor(okTextColour);
-
                 // Update battery history graph
                 updateBatteryGraph();
-
                 // Update signal strength graph
                 updateSignalGraph();
             }
@@ -270,81 +324,115 @@ public class FragmentSystem extends FragmentOsdBaseClass {
             e.printStackTrace();
         }
     }
-
     private void updateBatteryGraph() {
         if (mBattLineChart == null || !mConnection.mBound) {
             return;
         }
-
         try {
-            int nWatchBattArr = mConnection.mSdServer.mSdData.watchBattBuff.getNumVals();
             double watchBattArr[] = mConnection.mSdServer.mSdData.watchBattBuff.getVals();
-
-            if (Objects.nonNull(mConnection.mSdServer.mSdData.watchBattBuff) && nWatchBattArr > 0) {
+            int nWatchBattArr = watchBattArr.length;
+            if (Objects.nonNull(watchBattArr) && nWatchBattArr > 0) {
                 Log.v(TAG, "Battery buffer contains " + nWatchBattArr + " values");
-                mBattLineDataSet.clear();
-                String xVals[] = new String[nWatchBattArr];
+
+                // Create data points with forward time axis (like ML graph)
+                // Index 0 = oldest data (left side, time=0)
+                // Index N-1 = newest data (right side, time=max)
+                DataPoint[] dataPoints = new DataPoint[nWatchBattArr];
+                int validPoints = 0;
 
                 for (int i = 0; i < nWatchBattArr; i++) {
-                    xVals[i] = String.valueOf(i);
-                    mBattLineDataSet.addEntry(new Entry((float) watchBattArr[i], i));
+                    // Calculate time in seconds from oldest sample
+                    double timeInSeconds = i * 5.0; // 5 seconds per sample
+
+                    // Filter out error values (-1.0) but keep zeros
+                    if (watchBattArr[i] >= 0.0) {
+                        dataPoints[validPoints] = new DataPoint(timeInSeconds, watchBattArr[i]);
+                        validPoints++;
+                    }
                 }
 
-                mBattLineDataSet.setColors(new int[]{0xffff0000});
-                LineData battHistLineData = new LineData(xVals, mBattLineDataSet);
+                if (validPoints == 0) {
+                    Log.d(TAG, "No valid battery data points");
+                    mBattLineChart.removeAllSeries();
+                    return;
+                }
 
-                mBattLineChart.setData(battHistLineData);
-                mBattLineChart.getData().notifyDataChanged();
-                mBattLineChart.notifyDataSetChanged();
-                mBattLineChart.refreshDrawableState();
+                // Create series with only valid points
+                DataPoint[] validDataPoints = new DataPoint[validPoints];
+                System.arraycopy(dataPoints, 0, validDataPoints, 0, validPoints);
 
-                float xSpan = (nWatchBattArr * 5.0f) / 60.0f;  // time in minutes assuming one point every 5 seconds
-                mBattLineChart.setDescription(getString(R.string.watch_batt_hist)
-                        + " " + String.format("%.1f", xSpan)
-                        + " " + getString(R.string.minutes));
-                mBattLineChart.setDescriptionTextSize(8f);
-                mBattLineChart.setDescriptionColor(Color.WHITE);
-                mBattLineChart.invalidate();
+                LineGraphSeries<DataPoint> series = new LineGraphSeries<>(validDataPoints);
+                series.setColor(Color.RED);
+                series.setThickness(2);
+                series.setDrawDataPoints(false);
+                series.setDrawBackground(false);
+                mBattLineChart.removeAllSeries();
+                mBattLineChart.addSeries(series);
+
+                float xSpan = (nWatchBattArr * 5.0f) / 3600.0f; // hours
+                mBattLineChart.setTitle(getString(R.string.watch_batt_hist)
+                        + " " + String.format("%.1f", xSpan) + " hours");
+                mBattLineChart.setTitleTextSize(24f);
+                mBattLineChart.setTitleColor(Color.WHITE);
+
+                Log.d(TAG, "Battery chart updated with " + validPoints + " data points");
             }
         } catch (Exception e) {
             Log.e(TAG, "updateBatteryGraph: Exception - " + e.getMessage());
         }
     }
-
     private void updateSignalGraph() {
         if (mSignalLineChart == null || !mConnection.mBound) {
             return;
         }
-
         try {
             double signalArr[] = mConnection.mSdServer.mSdData.watchSignalStrengthBuff.getVals();
             int nSignalArr = signalArr.length;
-
             if (Objects.nonNull(signalArr) && nSignalArr > 0) {
                 Log.v(TAG, "Signal buffer contains " + nSignalArr + " values");
-                mSignalLineDataSet.clear();
-                String xVals[] = new String[nSignalArr];
+
+                // Create data points with forward time axis (like ML graph)
+                // Index 0 = oldest data (left side, time=0)
+                // Index N-1 = newest data (right side, time=max)
+                DataPoint[] dataPoints = new DataPoint[nSignalArr];
+                int validPoints = 0;
 
                 for (int i = 0; i < nSignalArr; i++) {
-                    xVals[i] = String.valueOf(i);
-                    mSignalLineDataSet.addEntry(new Entry((float) signalArr[i], i));
+                    // Calculate time in seconds from oldest sample
+                    double timeInSeconds = i * 5.0; // 5 seconds per sample
+
+                    // Filter out error values (-1.0) but keep zeros
+                    if (signalArr[i] >= -100.0) { // Signal strength is negative, so check >= -100
+                        dataPoints[validPoints] = new DataPoint(timeInSeconds, signalArr[i]);
+                        validPoints++;
+                    }
                 }
 
-                mSignalLineDataSet.setColors(new int[]{0xff00ff00}); // Green color
-                LineData signalHistLineData = new LineData(xVals, mSignalLineDataSet);
+                if (validPoints == 0) {
+                    Log.d(TAG, "No valid signal data points");
+                    mSignalLineChart.removeAllSeries();
+                    return;
+                }
 
-                mSignalLineChart.setData(signalHistLineData);
-                mSignalLineChart.getData().notifyDataChanged();
-                mSignalLineChart.notifyDataSetChanged();
-                mSignalLineChart.refreshDrawableState();
+                // Create series with only valid points
+                DataPoint[] validDataPoints = new DataPoint[validPoints];
+                System.arraycopy(dataPoints, 0, validDataPoints, 0, validPoints);
 
-                float xSpan = (nSignalArr * 5.0f) / 60.0f;  // time in minutes assuming one point every 5 seconds
-                mSignalLineChart.setDescription("Signal Strength History "
-                        + String.format("%.1f", xSpan)
-                        + " " + getString(R.string.minutes));
-                mSignalLineChart.setDescriptionTextSize(8f);
-                mSignalLineChart.setDescriptionColor(Color.WHITE);
-                mSignalLineChart.invalidate();
+                LineGraphSeries<DataPoint> series = new LineGraphSeries<>(validDataPoints);
+                series.setColor(Color.GREEN);
+                series.setThickness(2);
+                series.setDrawDataPoints(false);
+                series.setDrawBackground(false);
+                mSignalLineChart.removeAllSeries();
+                mSignalLineChart.addSeries(series);
+
+                float xSpan = (nSignalArr * 5.0f) / 60.0f; // minutes
+                mSignalLineChart.setTitle("Signal Strength History "
+                        + String.format("%.1f", xSpan) + " minutes");
+                mSignalLineChart.setTitleTextSize(24f);
+                mSignalLineChart.setTitleColor(Color.WHITE);
+
+                Log.d(TAG, "Signal chart updated with " + validPoints + " data points");
             }
         } catch (Exception e) {
             Log.e(TAG, "updateSignalGraph: Exception - " + e.getMessage());

@@ -120,7 +120,7 @@
                     android:background="@color/okBackgroundColor"
                     android:textSize="12sp"/>
 
-                <com.github.mikephil.charting.charts.LineChart
+                <com.jjoe64.graphview.GraphView
                     android:id="@+id/system_signal_line_chart"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
@@ -307,7 +307,7 @@
                     android:textColor="@color/okTextColor"
                     android:background="@color/okBackgroundColor" />
 
-                <com.github.mikephil.charting.charts.LineChart
+                <com.jjoe64.graphview.GraphView
                     android:id="@+id/system_batt_line_chart"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"

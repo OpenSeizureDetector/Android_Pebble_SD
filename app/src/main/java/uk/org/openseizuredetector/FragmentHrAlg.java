@@ -10,34 +10,17 @@ import android.widget.TextView;
 
 import androidx.appcompat.widget.SwitchCompat;
 
-import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.utils.ValueFormatter;
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
 
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 
 public class FragmentHrAlg extends FragmentOsdBaseClass {
     String TAG = "FragmentHrAlg";
 
-    LineChart mLineChart;
-    LineData lineData;
-    LineDataSet lineDataSet;
-    List<Entry> hrHistory = new ArrayList<>();
-    List<Entry> hrAverages = new ArrayList<>();
-    List<String> hrHistoryStrings = new ArrayList<>();
-    List<String> hrAveragesStrings = new ArrayList<>();
-    private List<Entry> listToDisplay;
-    private List<String> listToDisplayStrings;
-
+    private GraphView mLineChart;
     private TextView tvAvgAHr;
     private TextView tvHr;
     private TextView tv;
@@ -52,59 +35,66 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        lineDataSet = new LineDataSet(new ArrayList<Entry>(), "Heart rate history");
-        //lineDataSet.setColors(ColorTemplate.JOYFUL_COLORS);
-        lineDataSet.setValueTextColor(Color.BLACK);
-        lineDataSet.setValueTextSize(18f);
-        lineDataSet.setDrawValues(false);
-        lineDataSet.setCircleSize(0f);
-        lineDataSet.setLineWidth(3f);
-        //lineDataSetAverage = new LineDataSet(new ArrayList<Entry>(),"Heart rate history" );
-        //lineDataSetAverage.setColors(ColorTemplate.JOYFUL_COLORS);
-        //lineDataSetAverage.setValueTextColor(Color.BLACK);
-        //lineDataSetAverage.setValueTextSize(18f);
-
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        mLineChart = mRootView.findViewById(R.id.lineChart);
-        mLineChart.getLegend().setEnabled(false);
-        XAxis xAxis = mLineChart.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setTextSize(10f);
-        xAxis.setDrawAxisLine(true);
-        xAxis.setDrawLabels(true);
-        // Note:  the default text colour is BLACK, so does not show up on black background!!!
-        //  This took a lot of finding....
-        xAxis.setTextColor(Color.WHITE);
-
-        YAxis yAxis = mLineChart.getAxisLeft();
-        yAxis.setAxisMinValue(40f);
-        yAxis.setAxisMaxValue(240f);
-        yAxis.setDrawGridLines(true);
-        yAxis.setDrawLabels(true);
-        yAxis.setTextColor(Color.WHITE);
-        // Inhibit the decimal part of the y axis labels.
-        yAxis.setValueFormatter(new ValueFormatter() {
-            @Override
-            public String getFormattedValue(float v) {
-                DecimalFormat format = new DecimalFormat("###");
-                return format.format(v);
-            }
-        });
-
-        YAxis yAxis2 = mLineChart.getAxisRight();
-        yAxis2.setDrawGridLines(false);
-        yAxis2.setEnabled(false);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_hr_alg, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_hr_alg, container, false);
+        mLineChart = rootView.findViewById(R.id.lineChart);
+        setupChart();
+        return rootView;
+    }
+
+    private void setupChart() {
+        if (mLineChart == null) {
+            Log.w(TAG, "Chart view is null");
+            return;
+        }
+
+        // Configure chart appearance
+        mLineChart.getViewport().setYAxisBoundsManual(true);
+        mLineChart.getViewport().setMinY(40);
+        mLineChart.getViewport().setMaxY(240);
+
+        // Set X-axis to show full 10 minutes (in seconds, like ML graph)
+        mLineChart.getViewport().setXAxisBoundsManual(true);
+        mLineChart.getViewport().setMinX(0);
+        mLineChart.getViewport().setMaxX(600); // 10 minutes = 600 seconds
+
+        mLineChart.getViewport().setScalable(true);
+        mLineChart.getViewport().setScrollable(true);
+
+        mLineChart.getGridLabelRenderer().setNumVerticalLabels(6);
+        mLineChart.getGridLabelRenderer().setNumHorizontalLabels(6);
+
+        // Set text color for better visibility
+        try {
+            int textColor = mContext.getResources().getColor(R.color.okTextColor, null);
+            mLineChart.getGridLabelRenderer().setHorizontalLabelsColor(textColor);
+            mLineChart.getGridLabelRenderer().setVerticalLabelsColor(textColor);
+            mLineChart.getGridLabelRenderer().setGridColor(Color.GRAY);
+            mLineChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (minutes)");
+            mLineChart.getGridLabelRenderer().setHorizontalAxisTitleColor(textColor);
+
+            // Format X-axis to show minutes instead of seconds
+            mLineChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {
+                @Override
+                public String formatLabel(double value, boolean isValueX) {
+                    if (isValueX) {
+                        // Convert seconds to minutes
+                        return String.format("%.0f", value / 60.0);
+                    } else {
+                        return super.formatLabel(value, isValueX);
+                    }
+                }
+            });
+        } catch (Exception e) {
+            Log.w(TAG, "Error setting chart colors: " + e.getMessage());
+        }
+
+        Log.d(TAG, "Chart view initialized");
     }
 
     @Override
@@ -113,6 +103,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         tv = (TextView) mRootView.findViewById(R.id.fragment_hr_alg_tv1);
         tvHr = (TextView) mRootView.findViewById(R.id.current_hr_tv);
         tvAvgAHr = (TextView) mRootView.findViewById(R.id.adaptive_avg_hr_tv);
+
         if (mConnection.mBound) {
             tv.setText("Bound to Server");
 
@@ -130,49 +121,85 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                         .append(mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding)
                         .toString());
 
-                //switchAverages = mRootView.findViewById(R.id.hr_average_switch);
-
                 if (Objects.nonNull(mConnection.mSdServer.mSdDataSource.mSdAlgHr)) {
-                    //Log.v(TAG,"mSdAlgHr is not null");
                     CircBuf hrHist = mConnection.mSdServer.mSdDataSource.mSdAlgHr.getHrHistBuff();
                     int nHistArr = hrHist.getNumVals();
-                    double hrHistArr[] = hrHist.getVals();   // This gives us a simple vector of hr values to plot.
+                    double hrHistArr[] = hrHist.getVals();
+
                     if (Objects.nonNull(hrHist) && nHistArr > 0) {
-                        Log.v(TAG, "hrHist.getNumVals=" + nHistArr);
-                        lineDataSet.clear();
-                        String xVals[] = new String[nHistArr];
-                        for (int i = 0; i < nHistArr; i++) {
-                            //Log.d(TAG,"i="+i+", HR="+hrHistArr[i]);
-                            xVals[i] = String.valueOf(i);
-                            lineDataSet.addEntry(new Entry((float) hrHistArr[i], i));
-                        }
-                        Log.d(TAG, "xVals=" + Arrays.toString(xVals) + ", lneDataSet=" + lineDataSet.toSimpleString());
-                        lineDataSet.setColors(new int[]{0xffff0000});
-                        LineData hrHistLineData = new LineData(xVals, lineDataSet);
-
-
-                        mLineChart.setData(hrHistLineData);
-                        mLineChart.getData().notifyDataChanged();
-                        mLineChart.notifyDataSetChanged();
-                        mLineChart.refreshDrawableState();
-                        float xSpan = (nHistArr * 5.0f) / 60.0f;   // time in minutes assuming one point every 5 seconds.
-                        mLineChart.setDescription(getString(R.string.heart_rate_history_bpm)
-                                + String.format("%.1f", xSpan)
-                                + " " + getString(R.string.minutes));
-                        mLineChart.setDescriptionTextSize(12f);
-                        mLineChart.invalidate();
-                        //if (mConnection.mBound){
-                        //    lineChart.postInvalidate();
-                        //}
+                        displayHistoryChart(hrHistArr, nHistArr);
                     }
-
                 }
-            } else {
-                tv.setText("****NOT BOUND TO SERVER***");
+            }
+        } else {
+            tv.setText("****NOT BOUND TO SERVER***");
+            return;
+        }
+    }
+
+    private void displayHistoryChart(double[] historyData, int length) {
+        try {
+            if (mLineChart == null || historyData == null || length == 0) {
+                if (mLineChart != null) {
+                    mLineChart.removeAllSeries();
+                }
                 return;
             }
 
+            // Create data points with forward time axis (like ML graph)
+            // Index 0 = oldest data (left side, time=0)
+            // Index N-1 = newest data (right side, time=max)
+            DataPoint[] dataPoints = new DataPoint[length];
+            int validPoints = 0;
 
+            for (int i = 0; i < length; i++) {
+                // Calculate time in seconds from oldest sample
+                double timeInSeconds = i * 5.0; // 5 seconds per sample
+
+                // Filter out error values (-1.0) but keep zeros
+                if (historyData[i] >= 0.0) {
+                    dataPoints[validPoints] = new DataPoint(timeInSeconds, historyData[i]);
+                    validPoints++;
+                }
+            }
+
+            if (validPoints == 0) {
+                Log.d(TAG, "No valid data points in history");
+                mLineChart.removeAllSeries();
+                return;
+            }
+
+            // Create series with only valid points
+            DataPoint[] validDataPoints = new DataPoint[validPoints];
+            System.arraycopy(dataPoints, 0, validDataPoints, 0, validPoints);
+
+            LineGraphSeries<DataPoint> series = new LineGraphSeries<>(validDataPoints);
+
+            try {
+                int lineColor = mContext.getResources().getColor(R.color.colorAccent, null);
+                series.setColor(lineColor);
+            } catch (Exception e) {
+                series.setColor(Color.RED);
+            }
+
+            series.setThickness(3);
+            series.setDrawDataPoints(false);
+            series.setDrawBackground(false);
+
+            // Remove old series and add new one
+            mLineChart.removeAllSeries();
+            mLineChart.addSeries(series);
+
+            float xSpan = (length * 5.0f) / 60.0f; // minutes
+            mLineChart.setTitle(getString(R.string.heart_rate_history_bpm)
+                    + " " + String.format("%.1f", xSpan) + " minutes");
+            mLineChart.setTitleTextSize(36f);
+            mLineChart.setTitleColor(Color.WHITE);
+
+            Log.d(TAG, "Chart updated with " + validPoints + " data points");
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating chart: " + e.getMessage(), e);
         }
     }
 }

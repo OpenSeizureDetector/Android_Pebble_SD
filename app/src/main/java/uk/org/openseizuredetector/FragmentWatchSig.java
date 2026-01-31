@@ -10,30 +10,17 @@ import android.widget.TextView;
 
 import androidx.appcompat.widget.SwitchCompat;
 
-import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.LineData;
-import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.utils.ValueFormatter;
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
 
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 
 
 public class FragmentWatchSig extends FragmentOsdBaseClass {
     String TAG = "FragmentWatchSig";
 
-    LineChart mLineChart;
-    LineData lineData;
-    LineDataSet lineDataSet;
-    List<Entry> sigHistory = new ArrayList<>();
-    List<String> hrHistoryStrings = new ArrayList<>();
-
+    private GraphView mLineChart;
     private TextView tvCurrSigStren;
 
     public FragmentWatchSig() {
@@ -44,105 +31,105 @@ public class FragmentWatchSig extends FragmentOsdBaseClass {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        lineDataSet = new LineDataSet(new ArrayList<Entry>(), "Watch Signal Strength history");
-        //lineDataSet.setColors(ColorTemplate.JOYFUL_COLORS);
-        lineDataSet.setValueTextColor(Color.BLACK);
-        lineDataSet.setValueTextSize(18f);
-        lineDataSet.setDrawValues(false);
-        lineDataSet.setCircleSize(0f);
-        lineDataSet.setLineWidth(3f);
-        //lineDataSetAverage = new LineDataSet(new ArrayList<Entry>(),"Heart rate history" );
-        //lineDataSetAverage.setColors(ColorTemplate.JOYFUL_COLORS);
-        //lineDataSetAverage.setValueTextColor(Color.BLACK);
-        //lineDataSetAverage.setValueTextSize(18f);
-
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        mLineChart = mRootView.findViewById(R.id.sigStrengthLineChart);
-        mLineChart.getLegend().setEnabled(false);
-        XAxis xAxis = mLineChart.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setTextSize(10f);
-        xAxis.setDrawAxisLine(true);
-        xAxis.setDrawLabels(true);
-        // Note:  the default text colour is BLACK, so does not show up on black background!!!
-        //  This took a lot of finding....
-        xAxis.setTextColor(Color.WHITE);
-
-        YAxis yAxis = mLineChart.getAxisLeft();
-        yAxis.setAxisMaxValue(-50f);
-        yAxis.setAxisMinValue(-100f);
-        yAxis.setDrawGridLines(true);
-        yAxis.setDrawLabels(true);
-        yAxis.setTextColor(Color.WHITE);
-        // Inhibit the decimal part of the y axis labels.
-        yAxis.setValueFormatter(new ValueFormatter() {
-            @Override
-            public String getFormattedValue(float v) {
-                DecimalFormat format = new DecimalFormat("###");
-                return format.format(v);
-            }
-        });
-
-        YAxis yAxis2 = mLineChart.getAxisRight();
-        yAxis2.setDrawGridLines(false);
-        yAxis2.setEnabled(false);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_watch_sig, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_watch_sig, container, false);
+        mLineChart = rootView.findViewById(R.id.sigStrengthLineChart);
+        setupChart();
+        return rootView;
+    }
+
+    private void setupChart() {
+        if (mLineChart == null) {
+            Log.w(TAG, "Chart view is null");
+            return;
+        }
+
+        // Configure chart appearance
+        mLineChart.getViewport().setYAxisBoundsManual(true);
+        mLineChart.getViewport().setMinY(-100);
+        mLineChart.getViewport().setMaxY(-50);
+
+        mLineChart.getViewport().setScalable(true);
+        mLineChart.getViewport().setScrollable(true);
+
+        mLineChart.getGridLabelRenderer().setNumVerticalLabels(6);
+
+        // Set text color for better visibility
+        try {
+            int textColor = mContext.getResources().getColor(R.color.okTextColor, null);
+            mLineChart.getGridLabelRenderer().setHorizontalLabelsColor(textColor);
+            mLineChart.getGridLabelRenderer().setVerticalLabelsColor(textColor);
+            mLineChart.getGridLabelRenderer().setGridColor(Color.GRAY);
+        } catch (Exception e) {
+            Log.w(TAG, "Error setting chart colors: " + e.getMessage());
+        }
+
+        Log.d(TAG, "Chart view initialized");
     }
 
     @Override
     protected void updateUi() {
         Log.d(TAG, "updateUi()");
         tvCurrSigStren = (TextView) mRootView.findViewById(R.id.current_sig_strength_tv);
+        
         if (mConnection.mBound) {
             if (Objects.nonNull(tvCurrSigStren))
                 tvCurrSigStren.setText(String.valueOf((int) mConnection.mSdServer.mSdData.watchSignalStrength));
+            
             double histArr[] = mConnection.mSdServer.mSdData.watchSignalStrengthBuff.getVals();
             int nHist = histArr.length;
+            
             if (Objects.nonNull(histArr) && nHist > 0) {
-                Log.v(TAG, "nHist=" + nHist);
-                lineDataSet.clear();
-                String xVals[] = new String[nHist];
-                for (int i = 0; i < nHist; i++) {
-                    //Log.d(TAG,"i="+i+", HR="+hrHistArr[i]);
-                    xVals[i] = String.valueOf(i);
-                    lineDataSet.addEntry(new Entry((float) histArr[i], i));
-                }
-                Log.d(TAG, "xVals=" + Arrays.toString(xVals) + ", lneDataSet=" + lineDataSet.toSimpleString());
-                lineDataSet.setColors(new int[]{0xffff0000});
-                LineData histLineData = new LineData(xVals, lineDataSet);
-
-
-                mLineChart.setData(histLineData);
-                mLineChart.getData().notifyDataChanged();
-                mLineChart.notifyDataSetChanged();
-                mLineChart.refreshDrawableState();
-                float xSpan = (nHist * 5.0f) / 60.0f;   // time in minutes assuming one point every 5 seconds.
-                mLineChart.setDescription("Signal Strength History "
-                        + String.format("%.1f", xSpan)
-                        + " " + getString(R.string.minutes));
-                mLineChart.setDescriptionTextSize(12f);
-                mLineChart.invalidate();
-                //if (mConnection.mBound){
-                //    lineChart.postInvalidate();
-                //}
+                displayHistoryChart(histArr, nHist);
             }
-
         } else {
             Log.w(TAG,"not Bound to Server");
             return;
         }
-
-
     }
 
+    private void displayHistoryChart(double[] historyData, int length) {
+        try {
+            if (mLineChart == null || historyData == null || length == 0) {
+                if (mLineChart != null) {
+                    mLineChart.removeAllSeries();
+                }
+                return;
+            }
+
+            // Create data points
+            DataPoint[] dataPoints = new DataPoint[length];
+            for (int i = 0; i < length; i++) {
+                dataPoints[i] = new DataPoint(i, historyData[i]);
+            }
+
+            LineGraphSeries<DataPoint> series = new LineGraphSeries<>(dataPoints);
+
+            series.setColor(Color.GREEN);
+            series.setThickness(3);
+            series.setDrawDataPoints(false);
+            series.setDrawBackground(false);
+
+            // Remove old series and add new one
+            mLineChart.removeAllSeries();
+            mLineChart.addSeries(series);
+
+            float xSpan = (length * 5.0f) / 60.0f;
+            mLineChart.setTitle("Signal Strength History "
+                    + String.format("%.1f", xSpan)
+                    + " " + getString(R.string.minutes));
+            mLineChart.setTitleTextSize(36f);
+            mLineChart.setTitleColor(Color.WHITE);
+
+            Log.v(TAG, "Chart updated with " + length + " data points");
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating chart: " + e.getMessage(), e);
+        }
+    }
 }

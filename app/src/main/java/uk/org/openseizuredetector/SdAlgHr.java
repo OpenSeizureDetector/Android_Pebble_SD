@@ -35,8 +35,8 @@ public class SdAlgHr {
         updatePrefs();
         mAdaptiveHrBuff = new CircBuf(mAdaptiveHrAlarmWindowDp, -1.0);
         mAverageHrBuff = new CircBuf(mAverageHrAlarmWindowDp, -1.0);
-        // FIXME - this is a hard coded 3 hour period (at 5 second intervals)
-        mHrHist = new CircBuf((int) (3 * 3600 / 5), -1);
+        // 10 minute period (at 5 second intervals) to match ML seizure probability history
+        mHrHist = new CircBuf((int) (10 * 60 / 5), -1);
     }
 
     public void close() {

@@ -18,12 +18,10 @@
             android:textColor="@color/okTextColor" />
 
 
-        <com.github.mikephil.charting.charts.LineChart
+        <com.jjoe64.graphview.GraphView
             android:id="@+id/battLineChart"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent">
-
-        </com.github.mikephil.charting.charts.LineChart>
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 

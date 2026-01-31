@@ -1,5 +1,41 @@
 package uk.org.openseizuredetector;
 
+/*
+ * ADDING OR REMOVING TABS AND FRAGMENTS:
+ *
+ * To add or remove tabs from the main screen, you must update THREE places:
+ *
+ * 1. TabLayoutMediator Configuration (in onResume() method, around line 169):
+ *    - Add/remove/modify the case statements that set tab labels
+ *    - Each case number corresponds to a tab position (0-indexed)
+ *    - Example: case 0: tab.setText("OSD");
+ *
+ * 2. ScreenSlideFragmentPagerAdapter.createFragment() method (around line 409):
+ *    - Add/remove/modify the case statements that return Fragment instances
+ *    - Each case must match the tab position from step 1
+ *    - Example: case 0: return new FragmentOsdAlg();
+ *
+ * 3. ScreenSlideFragmentPagerAdapter.getItemCount() method (around line 434):
+ *    - Update the return value to match the TOTAL number of active tabs
+ *    - This MUST equal the number of active cases in steps 1 and 2
+ *    - Example: return 4; (for tabs at positions 0, 1, 2, 3)
+ *
+ * IMPORTANT: All three places must be kept in sync!
+ * - If getItemCount() returns N, you must have cases 0 through N-1 defined
+ * - Position numbers must be consecutive starting from 0
+ * - Commented out cases do NOT count toward the total
+ *
+ * Current Active Tabs (as of January 2026):
+ * - Position 0: OSD Algorithm (FragmentOsdAlg)
+ * - Position 1: ML Algorithm (FragmentMlAlg)
+ * - Position 2: Heart Rate (FragmentHrAlg)
+ * - Position 3: System (FragmentSystem - includes Signal & Battery graphs)
+ *
+ * Removed/Inactive:
+ * - FragmentWatchSig (signal graph moved to System tab)
+ * - FragmentBatt (battery graph moved to System tab)
+ */
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowInsetsCompat;
@@ -182,12 +218,12 @@ public class MainActivity2 extends AppCompatActivity {
                             case 3:
                                 tab.setText("System");
                                 break;
-                            case 4:
-                                tab.setText("Signal");
-                                break;
-                            case 5:
-                                tab.setText("Battery");
-                                break;
+                            //case 4:
+                            //    tab.setText("Signal");
+                            //    break;
+                            //case 5:
+                            //    tab.setText("Battery");
+                            //    break;
                             default:
                                 tab.setText("Screen " + position);
                         }
@@ -417,10 +453,10 @@ public class MainActivity2 extends AppCompatActivity {
                     return new FragmentHrAlg();
                 case 3:
                     return new FragmentSystem();
-                case 4:
-                    return new FragmentWatchSig();
-                case 5:
-                    return new FragmentBatt();
+                //case 4:
+                //    return new FragmentWatchSig();
+                //case 5:
+                //    return new FragmentBatt();
                 //case 4:
                 //    return new FragmentDataSharing();
 
@@ -432,7 +468,7 @@ public class MainActivity2 extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return 5;
+            return 4; // Must match the number of active cases in createFragment() above
         }
     }
 
