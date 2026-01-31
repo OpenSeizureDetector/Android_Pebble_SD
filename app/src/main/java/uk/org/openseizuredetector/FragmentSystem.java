@@ -53,11 +53,10 @@ public class FragmentSystem extends FragmentOsdBaseClass {
         // Initialize signal strength graph dataset
         mSignalLineDataSet = new LineDataSet(new ArrayList<Entry>(), "Signal Strength History");
         mSignalLineDataSet.setValueTextColor(Color.BLACK);
-        mSignalLineDataSet.setValueTextSize(12f);
+        mSignalLineDataSet.setValueTextSize(18f);
         mSignalLineDataSet.setDrawValues(false);
         mSignalLineDataSet.setCircleSize(0f);
-        mSignalLineDataSet.setLineWidth(2f);
-        mSignalLineDataSet.setColor(Color.GREEN);
+        mSignalLineDataSet.setLineWidth(3f);
     }
 
     @Override
@@ -117,8 +116,8 @@ public class FragmentSystem extends FragmentOsdBaseClass {
             xAxis.setTextColor(Color.WHITE);
 
             YAxis yAxis = mSignalLineChart.getAxisLeft();
+            yAxis.setAxisMaxValue(-50f);
             yAxis.setAxisMinValue(-100f);
-            yAxis.setAxisMaxValue(0f);
             yAxis.setDrawGridLines(true);
             yAxis.setDrawLabels(true);
             yAxis.setTextColor(Color.WHITE);
@@ -318,10 +317,10 @@ public class FragmentSystem extends FragmentOsdBaseClass {
         }
 
         try {
-            int nSignalArr = mConnection.mSdServer.mSdData.watchSignalStrengthBuff.getNumVals();
             double signalArr[] = mConnection.mSdServer.mSdData.watchSignalStrengthBuff.getVals();
+            int nSignalArr = signalArr.length;
 
-            if (Objects.nonNull(mConnection.mSdServer.mSdData.watchSignalStrengthBuff) && nSignalArr > 0) {
+            if (Objects.nonNull(signalArr) && nSignalArr > 0) {
                 Log.v(TAG, "Signal buffer contains " + nSignalArr + " values");
                 mSignalLineDataSet.clear();
                 String xVals[] = new String[nSignalArr];
@@ -331,7 +330,7 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                     mSignalLineDataSet.addEntry(new Entry((float) signalArr[i], i));
                 }
 
-                mSignalLineDataSet.setColors(new int[]{0xff00ff00});
+                mSignalLineDataSet.setColors(new int[]{0xff00ff00}); // Green color
                 LineData signalHistLineData = new LineData(xVals, mSignalLineDataSet);
 
                 mSignalLineChart.setData(signalHistLineData);
@@ -342,13 +341,14 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                 float xSpan = (nSignalArr * 5.0f) / 60.0f;  // time in minutes assuming one point every 5 seconds
                 mSignalLineChart.setDescription("Signal Strength History "
                         + String.format("%.1f", xSpan)
-                        + " minutes");
+                        + " " + getString(R.string.minutes));
                 mSignalLineChart.setDescriptionTextSize(8f);
                 mSignalLineChart.setDescriptionColor(Color.WHITE);
                 mSignalLineChart.invalidate();
             }
         } catch (Exception e) {
             Log.e(TAG, "updateSignalGraph: Exception - " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }
