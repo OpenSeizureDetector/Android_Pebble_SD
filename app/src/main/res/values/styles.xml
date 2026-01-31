@@ -1,13 +1,15 @@
 <resources>
 
-    <!-- Base application theme. -->
+    <!-- Base application theme with Material Design colors -->
     <style name="AppTheme" parent="Theme.MaterialComponents.DayNight">
-        <!-- Customize your theme here.
+        <!-- Material Design Color System -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:textColorPrimary">#a0a0a0</item>
-        -->
+        <item name="colorSurface">@color/colorSurface</item>
+        <item name="android:colorBackground">@color/colorBackground</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">#B0B0B0</item>
     </style>
 
     <!-- Tab text appearance for better visibility and clickability indication -->

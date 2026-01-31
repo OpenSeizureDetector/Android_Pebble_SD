@@ -6,6 +6,12 @@
             - Added initial support for AndroidWear from Dylan Griffiths (not tested, but included to make sure it doesn't break anything else)
             - Fixed issue with 16kB page alignment (requirement for Play Store)
             - Tidied up events list in data sharing (log manager) screen
+            - Tidied up main activity UI - tabbed switching between screens, material design colours.
+            - Migrated all graphs from MPAndroidChart to GraphView library (simpler, more maintainable)
+            - Added version number to action bar title
+            - Improved UI consistency with unified Material Design color scheme
+            - Improved settings experience - system now only restarts when exiting settings screen, not on every change
+            - CRITICAL FIX: Fixed server lifecycle bug that caused multiple server instances and FAULT/OK oscillation after changing settings
     V4.3.1 - Fixed corrupted user interface issues on Android 15 and Android 16.
     V4.3.0 - 2025-07-16
              - Added support for Android 15 (API 35) to allow publishing on Play Store.

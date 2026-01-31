@@ -167,10 +167,11 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                 return;
             } else {
                 Log.i(TAG, "OnSharedPreferenceChanged(): SMS Alarm disabled so do not need permissions");
+                mPrefChanged = true;
             }
         }
         // If we have changed the data source, re-start the whole system
-        if (s.equals("DataSource"))  {
+        else if (s.equals("DataSource"))  {
             Log.i(TAG, "onSharedPreferenceChanged(): Data Source Changed - Restarting start-up activity to check permissions");
             mUtil.showToast("Restarting OpenSeizureDetector");
             mUtil.stopServer();
@@ -187,25 +188,18 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                 }
             }, 1000);
             return;
-        } else {
-            // For all other preference changes we just restart SdServer so it is not as alarming for the user!
-            //mUtil.showToast("Setting " + s + " Changed - restarting server");
-            mUtil.showToast("Stopping Background Service...");
+        }
+        else if (s.equals("advancedMode")) {
+            // Advanced mode requires immediate restart to refresh the headers
+            Log.i(TAG, "Re-starting PrefActivity to refresh list");
+            startActivity(getIntent());
+            finish();
+        }
+        else {
+            // For all other preference changes, just track that a change was made
+            // The server will be restarted when the user exits the settings screen
+            Log.i(TAG, "Setting changed - will restart server when settings screen is closed");
             mPrefChanged = true;
-            mUtil.stopServer();
-            // Wait 1 second to give the server chance to shutdown, then re-start it
-            mHandler.postDelayed(new Runnable() {
-                public void run() {
-                    mUtil.showToast("Re-Starting Background Service...");
-                    mUtil.startServer();
-                }
-            }, 1000);
-
-            if (s.equals("advancedMode")) {
-                Log.i(TAG, "Re-starting PrefActivity to refresh list");
-                startActivity(getIntent());
-                finish();
-            }
         }
     }
 
@@ -250,6 +244,17 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         super.onStop();
         mUtil.writeToSysLogFile("PrefActvity.onStop()");
         Log.i(TAG, "onStop()");
+
+        // If preferences were changed during this session, stop the server
+        // but DON'T restart it here - let MainActivity2 (or StartupActivity) restart it
+        // when the user returns. This prevents multiple server instances.
+        if (mPrefChanged) {
+            Log.i(TAG, "onStop() - Preferences changed, stopping server");
+            Log.i(TAG, "onStop() - Server will be restarted when returning to main activity");
+            mUtil.showToast("Settings changed - server will restart...");
+            mUtil.stopServer();
+            mPrefChanged = false; // Reset the flag
+        }
     }
 
     /**

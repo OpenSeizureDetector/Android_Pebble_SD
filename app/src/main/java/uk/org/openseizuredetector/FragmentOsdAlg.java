@@ -1,6 +1,5 @@
 package uk.org.openseizuredetector;
 
-import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -11,16 +10,9 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.BarData;
-import com.github.mikephil.charting.data.BarDataSet;
-import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.utils.ValueFormatter;
-
-import java.text.DecimalFormat;
-import java.util.ArrayList;
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.LineGraphSeries;
+import com.jjoe64.graphview.series.DataPoint;
 
 public class FragmentOsdAlg extends FragmentOsdBaseClass {
     String TAG = "FragmentOsdAlg";
@@ -124,87 +116,115 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             pb.setProgressDrawable(pbDrawable);
 
             ////////////////////////////////////////////////////////////
-            // Produce graph
-            BarChart mChart = (BarChart) mRootView.findViewById(R.id.chart1);
-            mChart.setDrawBarShadow(false);
-            mChart.setNoDataTextDescription("You need to provide data for the chart.");
-            mChart.setDescription("");
+            // Produce graph using GraphView with smoothed line
+            GraphView mChart = (GraphView) mRootView.findViewById(R.id.chart1);
 
-            // X and Y Values
-            ArrayList<String> xVals = new ArrayList<String>();
-            ArrayList<BarEntry> yBarVals = new ArrayList<BarEntry>();
-            for (int i = 0; i < 10; i++) {
-                xVals.add(i + "-" + (i + 1) + " Hz");
-                if (mConnection.mSdServer != null) {
-                    yBarVals.add(new BarEntry(mConnection.mSdServer.mSdData.simpleSpec[i], i));
-                } else {
-                    yBarVals.add(new BarEntry(i, i));
-                }
-            }
+            // Clear any previous series
+            mChart.removeAllSeries();
 
-            // create a dataset and give it a type
-            BarDataSet barDataSet = new BarDataSet(yBarVals, "Spectrum");
             try {
-                int[] barColours = new int[10];
+                // Create data points for the entire spectrum
+                DataPoint[] dataPoints = new DataPoint[10];
                 for (int i = 0; i < 10; i++) {
-                    if ((i < mConnection.mSdServer.mSdData.alarmFreqMin) ||
-                            (i > mConnection.mSdServer.mSdData.alarmFreqMax)) {
-                        barColours[i] = Color.GRAY;
+                    if (mConnection.mSdServer != null) {
+                        dataPoints[i] = new DataPoint(i, mConnection.mSdServer.mSdData.simpleSpec[i]);
                     } else {
-                        barColours[i] = Color.RED;
+                        dataPoints[i] = new DataPoint(i, 0);
                     }
                 }
-                barDataSet.setColors(barColours);
-            } catch (NullPointerException e) {
-                Log.e(TAG, "Null pointer exception setting bar colours");
+
+                // Convert long to int for array indexing
+                int alarmFreqMin = (int) mConnection.mSdServer.mSdData.alarmFreqMin;
+                int alarmFreqMax = (int) mConnection.mSdServer.mSdData.alarmFreqMax;
+
+                // Create separate line segments to control colors
+                // Gray segments before alarm range
+                if (alarmFreqMin > 0) {
+                    DataPoint[] graySegmentBefore = new DataPoint[alarmFreqMin + 1];
+                    for (int i = 0; i <= alarmFreqMin; i++) {
+                        graySegmentBefore[i] = dataPoints[i];
+                    }
+                    com.jjoe64.graphview.series.LineGraphSeries<DataPoint> graySeriesBefore =
+                        new com.jjoe64.graphview.series.LineGraphSeries<>(graySegmentBefore);
+                    graySeriesBefore.setColor(Color.GRAY);
+                    graySeriesBefore.setThickness(4);
+                    graySeriesBefore.setDrawDataPoints(true);
+                    graySeriesBefore.setDataPointsRadius(6);
+                    mChart.addSeries(graySeriesBefore);
+                }
+
+                // Red segment for alarm range
+                int alarmRangeSize = alarmFreqMax - alarmFreqMin + 1;
+                DataPoint[] redSegment = new DataPoint[alarmRangeSize];
+                for (int i = 0; i < alarmRangeSize; i++) {
+                    redSegment[i] = dataPoints[alarmFreqMin + i];
+                }
+                com.jjoe64.graphview.series.LineGraphSeries<DataPoint> redSeries =
+                    new com.jjoe64.graphview.series.LineGraphSeries<>(redSegment);
+                redSeries.setColor(Color.RED);
+                redSeries.setThickness(4);
+                redSeries.setDrawDataPoints(true);
+                redSeries.setDataPointsRadius(6);
+                mChart.addSeries(redSeries);
+
+                // Gray segment after alarm range
+                if (alarmFreqMax < 9) {
+                    int grayAfterSize = 10 - alarmFreqMax;
+                    DataPoint[] graySegmentAfter = new DataPoint[grayAfterSize];
+                    for (int i = 0; i < grayAfterSize; i++) {
+                        graySegmentAfter[i] = dataPoints[alarmFreqMax + i];
+                    }
+                    com.jjoe64.graphview.series.LineGraphSeries<DataPoint> graySeriesAfter =
+                        new com.jjoe64.graphview.series.LineGraphSeries<>(graySegmentAfter);
+                    graySeriesAfter.setColor(Color.GRAY);
+                    graySeriesAfter.setThickness(4);
+                    graySeriesAfter.setDrawDataPoints(true);
+                    graySeriesAfter.setDataPointsRadius(6);
+                    mChart.addSeries(graySeriesAfter);
+                }
+
+            } catch (Exception e) {
+                Log.e(TAG, "Exception creating spectrum graph: " + e.getMessage());
             }
-            barDataSet.setBarSpacePercent(20f);
-            barDataSet.setBarShadowColor(Color.WHITE);
-            BarData barData = new BarData(xVals, barDataSet);
-            barData.setValueFormatter(new ValueFormatter() {
+
+            // Configure viewport
+            mChart.getViewport().setYAxisBoundsManual(true);
+            mChart.getViewport().setMinY(0);
+            mChart.getViewport().setMaxY(3000);
+            mChart.getViewport().setXAxisBoundsManual(true);
+            mChart.getViewport().setMinX(-0.5);
+            mChart.getViewport().setMaxX(9.5);
+
+            mChart.getViewport().setScalable(false);
+            mChart.getViewport().setScrollable(false);
+
+            // Configure grid and labels
+            mChart.getGridLabelRenderer().setNumHorizontalLabels(10);
+            mChart.getGridLabelRenderer().setNumVerticalLabels(5);
+            mChart.getGridLabelRenderer().setHorizontalLabelsColor(Color.WHITE);
+            mChart.getGridLabelRenderer().setVerticalLabelsColor(Color.WHITE);
+            mChart.getGridLabelRenderer().setGridColor(Color.GRAY);
+
+            // Custom label formatter for X-axis to show frequency ranges
+            mChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {
                 @Override
-                public String getFormattedValue(float v) {
-                    DecimalFormat format = new DecimalFormat("####");
-                    return format.format(v);
+                public String formatLabel(double value, boolean isValueX) {
+                    if (isValueX) {
+                        int i = (int) Math.round(value);
+                        if (i >= 0 && i < 10) {
+                            return i + "-" + (i + 1) + "Hz";
+                        }
+                        return "";
+                    } else {
+                        return super.formatLabel(value, isValueX);
+                    }
                 }
             });
-            mChart.setData(barData);
 
-            // format the axes
-            XAxis xAxis = mChart.getXAxis();
-            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-            xAxis.setTextSize(10f);
-            xAxis.setDrawAxisLine(true);
-            xAxis.setDrawLabels(true);
-            // Note:  the default text colour is BLACK, so does not show up on black background!!!
-            //  This took a lot of finding....
-            xAxis.setTextColor(Color.WHITE);
-            xAxis.setDrawGridLines(false);
+            // Disable legend
+            mChart.getLegendRenderer().setVisible(false);
 
-            YAxis yAxis = mChart.getAxisLeft();
-            yAxis.setAxisMinValue(0f);
-            yAxis.setAxisMaxValue(3000f);
-            yAxis.setDrawGridLines(true);
-            yAxis.setDrawLabels(true);
-            yAxis.setTextColor(Color.WHITE);
-            yAxis.setValueFormatter(new ValueFormatter() {
-                @Override
-                public String getFormattedValue(float v) {
-                    DecimalFormat format = new DecimalFormat("#####");
-                    return format.format(v);
-                }
-            });
 
-            YAxis yAxis2 = mChart.getAxisRight();
-            yAxis2.setDrawGridLines(false);
-
-            try {
-                mChart.getLegend().setEnabled(false);
-            } catch (NullPointerException e) {
-                Log.e(TAG, "Null Pointer Exception setting legend");
-            }
-
-            mChart.invalidate();
 
         }
     }

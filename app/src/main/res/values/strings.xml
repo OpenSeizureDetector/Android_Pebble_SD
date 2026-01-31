@@ -51,7 +51,7 @@
     <string name="SeizureDetectorSettingsReceived">Seizure Detector Settings Received OK</string>
     <string name="WaitingForSeizureDetectorSettings">Waiting for Seizure Detector Settings...</string>
     <string name="DataSource">DataSource</string>
-    <string name="AppTitleText">OpenSeizureDetector Android App Version </string>
+    <string name="AppTitleText" translatable="false">OpenSeizureDetector</string>
     <string name="ServerRunningOK">Server Running OK</string>
     <string name="AccessServerAt">Access Server at </string>
     <string name="ServerStopped">Server Stopped</string>

@@ -15,13 +15,6 @@
         android:layout_height="fill_parent"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/versionTv"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/app_name" />
-
-
         <androidx.fragment.app.FragmentContainerView xmlns:android="http://schemas.android.com/apk/res/android"
             android:id="@+id/fragment_common_container_view"
             android:layout_width="match_parent"
@@ -31,13 +24,13 @@
             android:id="@+id/tab_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#2E3F8F"
+            android:background="@color/tabBackground"
             android:elevation="4dp"
             app:tabMode="scrollable"
             app:tabGravity="fill"
-            app:tabTextColor="#B0B0FF"
-            app:tabSelectedTextColor="#FFFFFF"
-            app:tabIndicatorColor="@color/colorAccent"
+            app:tabTextColor="@color/tabUnselected"
+            app:tabSelectedTextColor="@color/tabSelected"
+            app:tabIndicatorColor="@color/tabIndicator"
             app:tabIndicatorHeight="4dp"
             app:tabRippleColor="#40FFFFFF"
             app:tabPaddingStart="16dp"

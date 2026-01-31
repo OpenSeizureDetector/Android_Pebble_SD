@@ -48,8 +48,7 @@
     <string name="WaitingForSeizureDetectorData">Czekam na dane czujnika drgawek...</string>
     <string name="SeizureDetectorSettingsReceived">Odbiór ustawień czujnika drgawek OK</string>
     <string name="WaitingForSeizureDetectorSettings">Czekam na ustawienia czujnika drgawek...</string>
-    <string name="AppTitleText">OpenSeizureDetector Android wersja </string>
-	<string name="DataSource">Źródło danych</string>
+    <string name="DataSource">Źródło danych</string>
     <string name="ServerRunningOK">Serwer działa OK\n</string>
     <string name="AccessServerAt">IP serwera:</string>
     <string name="ServerStopped">Serwer zatrzymany</string>

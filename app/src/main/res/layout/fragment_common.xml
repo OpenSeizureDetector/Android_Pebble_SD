@@ -35,7 +35,8 @@
             android:id="@+id/statusLayout"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:background="@color/okBackgroundColor">
 
 
 
@@ -49,7 +50,8 @@
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:background="@color/okBackgroundColor">
 
                     <TextView
                         android:id="@+id/osdAlgTv"
@@ -98,13 +100,16 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:baselineAligned="false">
+            android:baselineAligned="false"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
 
             <Button
                 android:id="@+id/acceptAlarmButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:layout_marginEnd="4dp"
                 android:text="@string/AcceptAlarmBtnTxt" />
 
             <Button
@@ -112,6 +117,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
                 android:text="@string/CancelAudibleButtonTxt" />
 
             <Button
@@ -119,6 +126,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:layout_marginStart="4dp"
                 android:backgroundTint="#ff0000"
                 android:text="@string/ManualAlarmBtnTxt" />
         </LinearLayout>

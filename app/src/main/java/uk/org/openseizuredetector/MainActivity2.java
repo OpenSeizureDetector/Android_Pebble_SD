@@ -151,20 +151,27 @@ public class MainActivity2 extends AppCompatActivity {
         boolean audibleAlarm = SP.getBoolean("AudibleAlarm", true);
         Log.v(TAG, "onStart - audibleAlarm = " + audibleAlarm);
 
-        TextView tv;
-        tv = (TextView) findViewById(R.id.versionTv);
+        // Set action bar title with version number
         String versionName = mUtil.getAppVersionName();
-        tv.setText(getString(R.string.AppTitleText) + " " + versionName);
-        tv.setBackgroundColor(okColour);
-        tv.setTextColor(okTextColour);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle(getString(R.string.AppTitleText) + " " + versionName);
+        }
 
         if (mUtil.isServerRunning()) {
-            Log.i(TAG, "MainActivity2.onStart() - Binding to Server");
+            Log.i(TAG, "MainActivity2.onStart() - Server Running - Binding to Server");
             mUtil.writeToSysLogFile("MainActivity2.onStart - Binding to Server");
             mUtil.bindToServer(getApplicationContext(), mConnection);
         } else {
-            Log.i(TAG, "MainActivity2.onStart() - Server Not Running");
-            mUtil.writeToSysLogFile("MainActivity2.onStart - Server Not Running");
+            Log.i(TAG, "MainActivity2.onStart() - Server Not Running - Starting Server");
+            mUtil.writeToSysLogFile("MainActivity2.onStart - Server Not Running - Starting Server");
+            mUtil.startServer();
+            // Give server a moment to start before binding
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    Log.i(TAG, "MainActivity2.onStart() - Now binding to server");
+                    mUtil.bindToServer(getApplicationContext(), mConnection);
+                }
+            }, 500);
         }
 
 

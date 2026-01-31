@@ -61,7 +61,7 @@
             android:layout_height="wrap_content" />
 
 
-        <com.github.mikephil.charting.charts.BarChart
+        <com.jjoe64.graphview.GraphView
             android:id="@+id/chart1"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />

@@ -48,6 +48,18 @@ public class FragmentOsdBaseClass extends Fragment {
         mUtil = new OsdUtil(mContext, updateUiHandler);
         mConnection = new SdServiceConnection(mContext);
 
+        // Load Material Design colors from resources
+        try {
+            okColour = mContext.getResources().getColor(R.color.okBackgroundColor, null);
+            warnColour = Color.MAGENTA;
+            alarmColour = Color.RED;
+            okTextColour = mContext.getResources().getColor(R.color.okTextColor, null);
+            warnTextColour = Color.WHITE;
+            alarmTextColour = Color.BLACK;
+        } catch (Exception e) {
+            Log.w(TAG, "Error loading colors from resources, using defaults");
+            // Keep the hard-coded defaults as fallback
+        }
 
     }
 

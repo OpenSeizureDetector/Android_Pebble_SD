@@ -1,8 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Material Design Primary Colors -->
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
-    <color name="okBackgroundColor">#0000ff</color>
-    <color name="okTextColor">#ffffff</color>
+
+    <!-- Surface and Background Colors -->
+    <color name="colorSurface">#2A2A3F</color>      <!-- Dark blue-gray for main surfaces -->
+    <color name="colorBackground">#1E1E2E</color>   <!-- Slightly darker for background -->
+
+    <!-- Status Colors (for data display) -->
+    <color name="okBackgroundColor">#3F51B5</color>  <!-- Use primary instead of pure blue -->
+    <color name="okTextColor">#FFFFFF</color>
+
+    <!-- Tab Colors -->
+    <color name="tabBackground">#303F9F</color>      <!-- Matches primary dark -->
+    <color name="tabSelected">#FFFFFF</color>
+    <color name="tabUnselected">#B0B0FF</color>
+    <color name="tabIndicator">#FF4081</color>       <!-- Accent color for indicator -->
 </resources>
