@@ -22,7 +22,6 @@ allprojects {
             name 'Google'
         }
         google()
-        //maven { url 'https://jitpack.io' }
         maven { url 'https://jitpack.io' }   // for mpandroidchart
     }
     tasks.withType(JavaCompile) {

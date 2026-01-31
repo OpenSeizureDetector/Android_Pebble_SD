@@ -369,12 +369,14 @@ public class MainActivity2 extends AppCompatActivity {
                 case 0:
                     return new FragmentOsdAlg();
                 case 1:
-                    return new FragmentHrAlg();
+                    return new FragmentMlAlg();
                 case 2:
-                    return new FragmentSystem();
+                    return new FragmentHrAlg();
                 case 3:
-                    return new FragmentWatchSig();
+                    return new FragmentSystem();
                 case 4:
+                    return new FragmentWatchSig();
+                case 5:
                     return new FragmentBatt();
                 //case 4:
                 //    return new FragmentDataSharing();

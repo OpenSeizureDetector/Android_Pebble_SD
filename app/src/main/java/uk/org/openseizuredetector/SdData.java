@@ -140,6 +140,10 @@ public class SdData implements Parcelable {
     public double mPseizure = 0.;
     public float watchSignalStrength;
 
+    // Circular buffer to store ML seizure probability history for the last 10 minutes
+    // At 5-second analysis intervals, 10 minutes = 600 seconds / 5 = 120 samples
+    public CircBuf mPseizureHistBuf = new CircBuf(120, -1.0);
+
     public SdData() {
         simpleSpec = new int[10];
         rawData = new double[N_RAW_DATA];
@@ -147,6 +151,11 @@ public class SdData implements Parcelable {
         dataTime = new Time(Time.getCurrentTimezone());
         dataTime.setToNow();
         timeDiff = 0f;
+
+        // Initialize the history buffer with zeros so we have initial data for the chart
+        for (int i = 0; i < 120; i++) {
+            mPseizureHistBuf.add(0.0);
+        }
     }
 
     /*

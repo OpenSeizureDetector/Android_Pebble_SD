@@ -148,6 +148,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore'
     implementation 'androidx.navigation:navigation-fragment:2.7.6'
     implementation 'androidx.navigation:navigation-ui:2.7.6'
+    // GraphView - Simple, lightweight charting library for Android
+    implementation 'com.jjoe64:graphview:4.2.2'
     // Using ExecuTorch (PyTorch's new mobile runtime) instead of deprecated pytorch_android
     // ExecuTorch is smaller (~10-20MB vs ~70MB), faster, and has better 16KB alignment support
     implementation 'org.pytorch:executorch-android:1.0.1'

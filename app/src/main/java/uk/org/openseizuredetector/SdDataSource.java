@@ -1066,6 +1066,8 @@ public abstract class SdDataSource {
                 float pSeizure = mSdAlgNn.getPseizure(mSdData);
                 Log.d(TAG, "nnAnalysis - nnResult=" + pSeizure);
                 mSdData.mPseizure = pSeizure;
+                // Record seizure probability in history buffer for display in UI
+                mSdData.mPseizureHistBuf.add(pSeizure);
             } catch(Exception e) {
                 Log.e(TAG,"nnAnalysis - Error running Analysis - "+e.getMessage());
             }
