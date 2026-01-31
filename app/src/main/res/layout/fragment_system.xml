@@ -6,13 +6,19 @@
     android:layout_height="match_parent"
     tools:context=".FragmentOsdBaseClass">
 
-    <!-- TODO: Update blank fragment layout -->
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <!-- ScrollView to allow vertical scrolling when content is too tall -->
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:id="@+id/fragment_ll">
+        android:fillViewport="true">
 
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:id="@+id/fragment_ll">
+
+            <!--
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -20,206 +26,300 @@
             android:textColor="@color/okTextColor"
             android:background="@color/okBackgroundColor"
         />
+        -->
 
 
+        <!-- Two-column layout: System Status on left, Signal Strength Graph on right -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:baselineAligned="false">
 
-            <ImageButton
-                android:id="@+id/settingsButton"
-                android:layout_width="wrap_content"
+            <!-- Left column: System Status Information -->
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:src="@android:drawable/ic_menu_manage" />
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingEnd="8dp">
 
-            <TextView
-                android:id="@+id/textView"
-                android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <ImageButton
+                        android:id="@+id/settingsButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@android:drawable/ic_menu_manage" />
+
+                    <TextView
+                        android:id="@+id/textView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Edit Settings"
+                        android:textColor="@color/okTextColor"
+                        android:background="@color/okBackgroundColor"
+                        android:textSize="12sp"/>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/serverStatusTv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="---"
+                    android:textSize="12sp"/>
+
+                <TextView
+                    android:id="@+id/data_time_tv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="left"
+                    android:text="---"
+                    android:textSize="12sp"/>
+
+                <TextView
+                    android:id="@+id/battTv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="---"
+                    android:textSize="12sp"/>
+
+                <TextView
+                    android:id="@+id/alarmTv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="---"
+                    android:textSize="12sp"/>
+
+                <TextView
+                    android:id="@+id/serverIpTv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="left"
+                    android:text="---"
+                    android:textSize="12sp"/>
+
+            </LinearLayout>
+
+            <!-- Right column: Signal Strength History Graph -->
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Edit Settings"
-                android:textColor="@color/okTextColor"
-                android:background="@color/okBackgroundColor"/>
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingStart="8dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Signal Strength History"
+                    android:textColor="@color/okTextColor"
+                    android:background="@color/okBackgroundColor"
+                    android:textSize="12sp"/>
+
+                <com.github.mikephil.charting.charts.LineChart
+                    android:id="@+id/system_signal_line_chart"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:background="#1A000000" />
+
+            </LinearLayout>
+
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/serverStatusTv"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="---" />
-        <TextView
-            android:id="@+id/fragment_bound_to_server_tv"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Fragment_System" />
-
-
-        <TextView
-            android:id="@+id/data_time_tv"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="left"
-            android:text="---" />
-
-
-
-
-
-        <TextView
-            android:id="@+id/battTv"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="---" />
-
-        <TextView
-            android:id="@+id/alarmTv"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="---" />
-
-        <TextView
-            android:id="@+id/serverIpTv"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="left"
-            android:text="---" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="" />
 
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Watch Status"
-            android:textColor="@color/okTextColor"
-            android:background="@color/okBackgroundColor"
-            />
-
-
+        <!-- Two-column layout: Watch Status on left, Battery Graph on right -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/okTextColor"
-                android:text="Watch Manufacturer: "/>
-            <TextView
-                android:id="@+id/watch_manuf_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="---"/>
-        </LinearLayout>
+            android:orientation="horizontal"
+            android:baselineAligned="false">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- Left column: Watch Status Information -->
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:textColor="@color/okTextColor"
-                android:text="Watch Part No: "/>
-            <TextView
-                android:id="@+id/watch_partno_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="---"/>
-        </LinearLayout>
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingEnd="8dp">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/okTextColor"
-                android:text="Watch FW Ver: "/>
-            <TextView
-                android:id="@+id/watch_fwver_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="---"/>
-        </LinearLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Watch Status"
+                    android:textColor="@color/okTextColor"
+                    android:background="@color/okBackgroundColor" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/okTextColor"
-                android:text="Watch App Name: "/>
-            <TextView
-                android:id="@+id/watch_sdname_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="---"/>
-        </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/okTextColor"
+                        android:text="Manufacturer: "
+                        android:textSize="12sp"/>
+                    <TextView
+                        android:id="@+id/watch_manuf_tv"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="---"
+                        android:textSize="12sp"/>
+                </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/okTextColor"
-                android:text="Watch App Ver: "/>
-            <TextView
-                android:id="@+id/watch_sdver_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="---"/>
-        </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/okTextColor"
+                        android:text="Part No: "
+                        android:textSize="12sp"/>
+                    <TextView
+                        android:id="@+id/watch_partno_tv"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="---"
+                        android:textSize="12sp"/>
+                </LinearLayout>
 
-        <TextView
-            android:id="@+id/fragment_watch_app_status_tv"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="---" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/okTextColor"
+                        android:text="FW Ver: "
+                        android:textSize="12sp"/>
+                    <TextView
+                        android:id="@+id/watch_fwver_tv"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="---"
+                        android:textSize="12sp"/>
+                </LinearLayout>
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/okTextColor"
+                        android:text="App Name: "
+                        android:textSize="12sp"/>
+                    <TextView
+                        android:id="@+id/watch_sdname_tv"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="---"
+                        android:textSize="12sp"/>
+                </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/okTextColor"
-                android:text="Watch Battery Level: "/>
-            <TextView
-                android:id="@+id/watch_batt_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="---"/>
-        </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/okTextColor"
+                        android:text="App Ver: "
+                        android:textSize="12sp"/>
+                    <TextView
+                        android:id="@+id/watch_sdver_tv"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="---"
+                        android:textSize="12sp"/>
+                </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/fragment_watch_app_status_tv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="---"
+                    android:textSize="12sp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/okTextColor"
+                        android:text="Battery: "
+                        android:textSize="12sp"/>
+                    <TextView
+                        android:id="@+id/watch_batt_tv"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="---"
+                        android:textSize="12sp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/okTextColor"
+                        android:text="Signal: "
+                        android:textSize="12sp"/>
+                    <TextView
+                        android:id="@+id/watch_signal_tv"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="---"
+                        android:textSize="12sp"/>
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Right column: Battery History Graph -->
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:textColor="@color/okTextColor"
-                android:text="Watch Signal Strength: "/>
-            <TextView
-                android:id="@+id/watch_signal_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="---"/>
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingStart="8dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Battery History"
+                    android:textColor="@color/okTextColor"
+                    android:background="@color/okBackgroundColor" />
+
+                <com.github.mikephil.charting.charts.LineChart
+                    android:id="@+id/system_batt_line_chart"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:background="#1A000000" />
+
+            </LinearLayout>
+
         </LinearLayout>
 
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
+    </ScrollView>
 
 </FrameLayout>
