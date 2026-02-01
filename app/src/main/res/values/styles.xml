@@ -10,6 +10,41 @@
         <item name="android:colorBackground">@color/colorBackground</item>
         <item name="android:textColorPrimary">#FFFFFF</item>
         <item name="android:textColorSecondary">#B0B0B0</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Osd.AlertDialog</item>
+        <item name="alertDialogTheme">@style/ThemeOverlay.Osd.AppCompatAlertDialog</item>
+        <item name="android:alertDialogTheme">@style/ThemeOverlay.Osd.AppCompatAlertDialog</item>
+    </style>
+
+    <style name="ThemeOverlay.Osd.AlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="colorSurface">@color/colorSurface</item>
+        <item name="android:colorBackground">@color/colorSurface</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">#B0B0B0</item>
+        <item name="colorPrimary">@color/colorAccent</item>
+        <item name="android:textColorLink">@color/colorAccent</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Osd.DialogButton.Material</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Osd.DialogButton.Material</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Osd.DialogButton.Material</item>
+    </style>
+
+    <style name="ThemeOverlay.Osd.AppCompatAlertDialog" parent="ThemeOverlay.AppCompat.Dialog.Alert">
+        <item name="android:windowBackground">@color/colorSurface</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">#B0B0B0</item>
+        <item name="textColorAlertDialogListItem">#FFFFFF</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textColorLink">@color/colorAccent</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Osd.DialogButton.AppCompat</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Osd.DialogButton.AppCompat</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Osd.DialogButton.AppCompat</item>
+    </style>
+
+    <style name="Osd.DialogButton.Material" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">?attr/colorPrimary</item>
+    </style>
+
+    <style name="Osd.DialogButton.AppCompat" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">?attr/colorAccent</item>
     </style>
 
     <!-- Tab text appearance for better visibility and clickability indication -->
@@ -20,5 +55,3 @@
     </style>
 
 </resources>
-
-

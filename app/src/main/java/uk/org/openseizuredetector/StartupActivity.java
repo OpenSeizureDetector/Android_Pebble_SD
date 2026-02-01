@@ -32,7 +32,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -66,13 +65,6 @@ import java.util.TimerTask;
  */
 public class StartupActivity extends AppCompatActivity {
     private static String TAG = "StartupActivity";
-    private int okColour = Color.BLUE;
-    private int warnColour = Color.MAGENTA;
-    private int alarmColour = Color.RED;
-    private int okTextColour = Color.WHITE;
-    private int warnTextColour = Color.BLACK;
-    private int alarmTextColour = Color.BLACK;
-
 
     private OsdUtil mUtil;
     private Timer mUiTimer;
@@ -377,8 +369,7 @@ public class StartupActivity extends AppCompatActivity {
                 Log.i(TAG,"arePermissionsOK=true");
                 Log.i(TAG,"mSdDataSourceName = "+ mSdDataSourceName);
                 tv.setText(getString(R.string.AppPermissionsOk));
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
+                // Use theme defaults for text/background colors.
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
 
@@ -386,10 +377,6 @@ public class StartupActivity extends AppCompatActivity {
                     if (!mUtil.areBtPermissionsOk()) {
                         Log.i(TAG, "Bluetooth permissions NOT OK");
                         tv.setText(getString(R.string.BTPermissionWarning));
-                        tv.setBackgroundColor(alarmColour);
-                        tv.setTextColor(alarmTextColour);
-                        //pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                        //pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
                         requestBTPermissions();
                         allOk = false;
                     } else if (mBleDeviceAddr.equals("")) {
@@ -403,39 +390,28 @@ public class StartupActivity extends AppCompatActivity {
                 } else if (!mUtil.areActivityPermissionsOk()) {
                     Log.i(TAG, "Activity permissions NOT OK");
                     tv.setText(getString(R.string.ActivityPermissionWarning));
-                    tv.setBackgroundColor(alarmColour);
-                    tv.setTextColor(alarmTextColour);
                     requestActivityPermissions();
                     allOk = false;
 
                 } else if (smsAlarmsActive && !areSMSPermissions1OK()) {
                     Log.i(TAG, "SMS permissions NOT OK");
                     tv.setText(getString(R.string.SmsPermissionWarning));
-                    tv.setBackgroundColor(alarmColour);
-                    tv.setTextColor(alarmTextColour);
-                    //pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
-                    //pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
                     requestSMSPermissions();
                     allOk = false;
                 } else if (smsAlarmsActive && !areLocationPermissions1OK()) {
                     Log.i(TAG, "Location permissions NOT OK");
                     tv.setText(getString(R.string.SmsPermissionWarning));
-                    tv.setBackgroundColor(alarmColour);
-                    tv.setTextColor(alarmTextColour);
                     requestLocationPermissions1();
                     allOk = false;
                 } else if (smsAlarmsActive && !areLocationPermissions2OK()) {
                     Log.i(TAG, "Location permissions2 NOT OK");
                     tv.setText(getString(R.string.SmsPermissionWarning));
-                    tv.setBackgroundColor(alarmColour);
-                    tv.setTextColor(alarmTextColour);
                     requestLocationPermissions2();
                     allOk = false;
                 }
             } else {
                 tv.setText(getString(R.string.AppPermissionsWarning));
-                tv.setBackgroundColor(alarmColour);
-                tv.setTextColor(alarmTextColour);
+                // Use theme defaults for text/background colors.
                 pb.setIndeterminate(true);
                 allOk = false;
                 requestPermissions(StartupActivity.this);
@@ -444,8 +420,7 @@ public class StartupActivity extends AppCompatActivity {
             // If phone alarms are selected, we need to have the uk.org.openseizuredetector.dialler package installed to do the actual dialling.
             if (phoneAlarmsActive && !mUtil.isPackageInstalled("uk.org.openseizuredetector.dialler")) {
                 tv.setText(getText(R.string.DiallerNotInstalledWarning));
-                tv.setBackgroundColor(alarmColour);
-                tv.setTextColor(alarmTextColour);
+                // Use theme defaults for text/background colors.
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
                 allOk = false;
@@ -462,15 +437,13 @@ public class StartupActivity extends AppCompatActivity {
                     mBindInProgress = false;
                     allOk = false;
                     tv.setText("Starting Server");
-                    tv.setBackgroundColor(alarmColour);
-                    tv.setTextColor(alarmTextColour);
+                    // Use theme defaults for text/background colors.
                     pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                     pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
                     mMode = MODE_START_SERVER;
                 } else {
                     tv.setText(getString(R.string.ServerRunningOK));
-                    tv.setBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
+                    // Use theme defaults for text/background colors.
                     pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                     pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
                     if (mBindInProgress) {
@@ -491,14 +464,12 @@ public class StartupActivity extends AppCompatActivity {
             pb = (ProgressBar) findViewById(R.id.progressBar2);
             if (mConnection.mBound) {
                 tv.setText(getString(R.string.BoundToServiceOk));
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
+                // Use theme defaults for text/background colors.
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
                 tv.setText(getString(R.string.BindingToService));
-                tv.setBackgroundColor(alarmColour);
-                tv.setTextColor(alarmTextColour);
+                // Use theme defaults for text/background colors.
                 pb.setIndeterminate(true);
                 allOk = false;
             }
@@ -508,14 +479,12 @@ public class StartupActivity extends AppCompatActivity {
             pb = (ProgressBar) findViewById(R.id.progressBar3);
             if (mConnection.watchConnected()) {
                 tv.setText(getString(R.string.WatchConnectedOk));
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
+                // Use theme defaults for text/background colors.
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
                 tv.setText(getString(R.string.WatchNotConnected));
-                tv.setBackgroundColor(alarmColour);
-                tv.setTextColor(alarmTextColour);
+                // Use theme defaults for text/background colors.
                 pb.setIndeterminate(true);
                 allOk = false;
             }
@@ -526,14 +495,12 @@ public class StartupActivity extends AppCompatActivity {
             pb = (ProgressBar) findViewById(R.id.progressBar5);
             if (mConnection.hasSdData()) {
                 tv.setText(getString(R.string.SeizureDetectorDataReceived));
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
+                // Use theme defaults for text/background colors.
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
                 tv.setText(getString(R.string.WaitingForSeizureDetectorData));
-                tv.setBackgroundColor(alarmColour);
-                tv.setTextColor(alarmTextColour);
+                // Use theme defaults for text/background colors.
                 pb.setIndeterminate(true);
                 allOk = false;
             }
@@ -544,14 +511,12 @@ public class StartupActivity extends AppCompatActivity {
             pb = (ProgressBar) findViewById(R.id.progressBar6);
             if (mConnection.hasSdSettings()) {
                 tv.setText(getString(R.string.SeizureDetectorSettingsReceived));
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
+                // Use theme defaults for text/background colors.
                 pb.setIndeterminateDrawable(getResources().getDrawable(R.drawable.start_server));
                 pb.setProgressDrawable(getResources().getDrawable(R.drawable.start_server));
             } else {
                 tv.setText(getString(R.string.WaitingForSeizureDetectorSettings));
-                tv.setBackgroundColor(alarmColour);
-                tv.setTextColor(alarmTextColour);
+                // Use theme defaults for text/background colors.
                 pb.setIndeterminate(true);
                 allOk = false;
             }
