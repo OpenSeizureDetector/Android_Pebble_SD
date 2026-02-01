@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -104,30 +105,41 @@
             android:paddingTop="8dp"
             android:paddingBottom="8dp">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/acceptAlarmButton"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
+                android:minHeight="56dp"
                 android:layout_weight="1"
                 android:layout_marginEnd="4dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="@color/button_stroke_color"
+                android:textColor="@color/button_text_color"
                 android:text="@string/AcceptAlarmBtnTxt" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/cancelAudibleButton"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
+                android:minHeight="56dp"
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
                 android:layout_marginEnd="4dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="@color/button_stroke_color"
+                android:textColor="@color/button_text_color"
                 android:text="@string/CancelAudibleButtonTxt" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/manualAlarmButton"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
+                android:minHeight="56dp"
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
+                style="@style/Widget.MaterialComponents.Button"
                 android:backgroundTint="#ff0000"
+                android:textColor="@color/button_text_color"
                 android:text="@string/ManualAlarmBtnTxt" />
         </LinearLayout>
 

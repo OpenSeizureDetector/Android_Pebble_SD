@@ -152,19 +152,25 @@
                     android:textColor="?android:attr/textColorPrimary"
                     android:text="@string/not_authenticated" /> <!-- Space after TextView -->
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/auth_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginEnd="8dp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:strokeColor="#FFFFFF"
+                    android:textColor="#FFFFFF"
                     android:text="@string/authenticate" /> <!-- Space after this button -->
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/refresh_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:strokeColor="#FFFFFF"
+                    android:textColor="#FFFFFF"
                     android:text="@string/refreshBtn" /> <!-- Space before this button -->
                 <!-- No marginEnd needed if ProgressBar is last and you want it close,
                      or add marginEnd if you want space before ProgressBar too -->

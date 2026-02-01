@@ -83,10 +83,14 @@
                         android:textColor="?android:attr/textColorPrimary"
                         android:text="yyyy" />
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/select_date_button"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        app:strokeColor="#FFFFFF"
+                        android:textColor="#FFFFFF"
                         android:text="@string/select_date" />
                 </LinearLayout>
 
@@ -122,10 +126,14 @@
                         android:textColor="?android:attr/textColorPrimary"
                         android:text="mm" />
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/select_time_button"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        app:strokeColor="#FFFFFF"
+                        android:textColor="#FFFFFF"
                         android:text="@string/select_time" />
                 </LinearLayout>
 
@@ -184,16 +192,24 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/loginBtn"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginEnd="4dp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        app:strokeColor="#FFFFFF"
+                        android:textColor="#FFFFFF"
                         android:text="@string/okBtnTxt" />
 
-                    <Button
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/cancelBtn"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        app:strokeColor="#FFFFFF"
+                        android:textColor="#FFFFFF"
                         android:text="@string/cancelBtnTxt" />
                 </LinearLayout>
 

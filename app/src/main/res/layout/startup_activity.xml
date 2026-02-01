@@ -41,34 +41,43 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"
             android:text="Help"
             android:id="@+id/instructionsButton"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            app:strokeColor="#FFFFFF"
+            android:textColor="#FFFFFF"
             android:layout_gravity="center_horizontal" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"
             android:text="Trouble-\nshooting"
             android:id="@+id/troubleshootingButton"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            app:strokeColor="#FFFFFF"
+            android:textColor="#FFFFFF"
             android:layout_gravity="center_horizontal" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"
             android:text="@string/edit_settings"
             android:id="@+id/settingsButton"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            app:strokeColor="#FFFFFF"
+            android:textColor="#FFFFFF"
             android:layout_gravity="center_horizontal" />
 
     </LinearLayout>
@@ -151,10 +160,13 @@
                 android:text="New Text"
                 android:gravity="center_vertical"
                 android:id="@+id/textItem5" />
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/install_watch_app"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="#FFFFFF"
+                android:textColor="#FFFFFF"
                 android:id="@+id/installOsdAppButton" />
         </LinearLayout>
 

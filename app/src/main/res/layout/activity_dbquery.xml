@@ -42,10 +42,14 @@
                 android:textColor="?android:attr/textColorPrimary"
                 android:text="(end date)" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/dateBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="#FFFFFF"
+                android:textColor="#FFFFFF"
                 android:text="Select Date" />
 
 
@@ -64,10 +68,14 @@
                 android:textColor="?android:attr/textColorPrimary"
                 android:text="(end time)" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/timeBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="#FFFFFF"
+                android:textColor="#FFFFFF"
                 android:text="Select Time" />
 
 
@@ -93,10 +101,13 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/exportBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="#FFFFFF"
+                android:textColor="#FFFFFF"
                 android:text="Export Data" />
 
             <ProgressBar

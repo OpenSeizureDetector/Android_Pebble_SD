@@ -253,6 +253,10 @@ public class ReportSeizureActivity extends AppCompatActivity {
             for (String eventTypeStr : mEventTypesList) {
                 b = new RadioButton(this);
                 b.setText(eventTypeStr);
+                // Use theme's primary text color for consistency
+                android.util.TypedValue typedValue = new android.util.TypedValue();
+                getTheme().resolveAttribute(android.R.attr.textColorPrimary, typedValue, true);
+                b.setTextColor(typedValue.data);
                 mEventTypeRg.addView(b);
             }
             mRedrawEventTypesList = false;
@@ -281,6 +285,10 @@ public class ReportSeizureActivity extends AppCompatActivity {
                 for (String eventSubTypeStr : subtypesArrayList) {
                     b = new RadioButton(this);
                     b.setText(eventSubTypeStr);
+                    // Use theme's primary text color for consistency
+                    android.util.TypedValue typedValue = new android.util.TypedValue();
+                    getTheme().resolveAttribute(android.R.attr.textColorPrimary, typedValue, true);
+                    b.setTextColor(typedValue.data);
                     mEventSubTypeRg.addView(b);
                 }
                 mRedrawEventSubTypesList = false;
