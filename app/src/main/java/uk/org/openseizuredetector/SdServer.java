@@ -160,7 +160,6 @@ public class SdServer extends Service implements SdDataReceiver {
     private final IBinder mBinder = new SdBinder();
 
     public LogManager mLm;
-    private boolean mUseNewUi;
 
     /**
      * class to handle binding the MainApp activity to this service
@@ -528,11 +527,7 @@ public class SdServer extends Service implements SdDataReceiver {
         }
 
         Intent i;
-        if (mUseNewUi) {
-            i = new Intent(getApplicationContext(), MainActivity2.class);
-        } else {
-            i = new Intent(getApplicationContext(), MainActivity.class);
-        }
+        i = new Intent(getApplicationContext(), MainActivity2.class);
         i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         PendingIntent contentIntent =
                 PendingIntent.getActivity(this,
@@ -585,11 +580,7 @@ public class SdServer extends Service implements SdDataReceiver {
             } else {
                 Log.i(TAG, "showMainActivity(): Showing Main Activity");
                 Intent i;
-                if (mUseNewUi) {
-                    i = new Intent(getApplicationContext(), MainActivity2.class);
-                } else {
-                    i = new Intent(getApplicationContext(), MainActivity.class);
-                }
+                i = new Intent(getApplicationContext(), MainActivity2.class);
                 i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_NEW_TASK);
                 this.startActivity(i);
             }
@@ -1408,7 +1399,6 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "updatePrefs() - mOSDUrl = " + mOSDUrl);
             mUtil.writeToSysLogFile("updatePrefs() - mOSDUrl = " + mOSDUrl);
 
-            mUseNewUi = SP.getBoolean("UseNewUi", false);
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!" + ex.toString());
             mUtil.writeToSysLogFile("SdServer.updatePrefs() - Error " + ex.toString());
@@ -1867,11 +1857,7 @@ public class SdServer extends Service implements SdDataReceiver {
         titleStr = getString(R.string.datasharing_notification_title);
 
         Intent i;
-        if (mUseNewUi) {
-            i = new Intent(getApplicationContext(), MainActivity2.class);
-        } else {
-            i = new Intent(getApplicationContext(), MainActivity.class);
-        }
+        i = new Intent(getApplicationContext(), MainActivity2.class);
         i.putExtra("action", "showDataSharingDialog");
         i.setAction("showDataSharingDialog");
         i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
