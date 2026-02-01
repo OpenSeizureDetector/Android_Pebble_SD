@@ -15,7 +15,6 @@
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="#FFFFFF"
             android:contentDescription="@string/app_name"
             android:scaleType="center"
             app:srcCompat="@drawable/star_of_life_24x24" />
