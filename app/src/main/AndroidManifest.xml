@@ -40,6 +40,12 @@
         android:name="android.hardware.bluetooth_le"
         android:required="false" />
 
+    <!-- Declare packages we need to query for (Android 11+ requirement) -->
+    <queries>
+        <!-- PineTime Firmware Updater app -->
+        <package android:name="uk.org.openseizuredetector.pinetime" />
+    </queries>
+
     <application
         android:icon="@drawable/star_of_life_48x48"
         android:label="@string/app_name"

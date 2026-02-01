@@ -57,6 +57,11 @@
             android:title="@string/install_watch_app" />
 
         <item
+            android:id="@+id/action_update_pinetime_firmware"
+            app:showAsAction="never|withText"
+            android:title="@string/update_pinetime_firmware" />
+
+        <item
             android:id="@+id/action_test_alarm_beep"
             android:icon="@drawable/stop_server"
             app:showAsAction="never|withText"

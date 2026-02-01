@@ -275,6 +275,11 @@ public class MainActivity2 extends AppCompatActivity {
                 mConnection.mSdServer.mSdDataSource.installWatchApp();
                 return true;
 
+            case R.id.action_update_pinetime_firmware:
+                Log.i(TAG, "action_update_pinetime_firmware");
+                launchPineTimeUpdater();
+                return true;
+
             case R.id.action_accept_alarm:
                 Log.i(TAG, "action_accept_alarm");
                 if (mConnection.mBound) {
@@ -534,6 +539,161 @@ public class MainActivity2 extends AppCompatActivity {
             }
         });
         builder.setView(aboutView);
+        builder.create();
+        builder.show();
+    }
+
+    /**
+     * Launch the PineTime Firmware Updater app if installed, or show installation dialog
+     */
+    private void launchPineTimeUpdater() {
+        Log.i(TAG, "launchPineTimeUpdater()");
+        mUtil.writeToSysLogFile("MainActivity2.launchPineTimeUpdater()");
+
+        // Package name of the PineTime Updater app
+        String pineTimePackageName = "uk.org.openseizuredetector.pinetime";
+
+        try {
+            // First check if the package is installed
+            boolean isInstalled = false;
+            try {
+                getPackageManager().getPackageInfo(pineTimePackageName, 0);
+                isInstalled = true;
+                Log.i(TAG, "PineTime Updater package found: " + pineTimePackageName);
+            } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+                Log.i(TAG, "PineTime Updater package not found: " + pineTimePackageName);
+                isInstalled = false;
+            }
+
+            if (isInstalled) {
+                // Show warning dialog before proceeding
+                showPineTimeUpdaterWarningDialog(pineTimePackageName);
+            } else {
+                // App not installed - show dialog to install it
+                Log.i(TAG, "PineTime Updater app not found - showing install dialog");
+                showPineTimeUpdaterInstallDialog();
+            }
+        } catch (Exception ex) {
+            Log.e(TAG, "Error launching PineTime Updater: " + ex.toString());
+            mUtil.showToast("Error: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Show warning dialog before launching PineTime Updater explaining that the service will stop
+     */
+    private void showPineTimeUpdaterWarningDialog(final String pineTimePackageName) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
+        builder.setTitle("Update PineTime Firmware");
+        builder.setMessage("To update your PineTime watch firmware:\n\n" +
+                "1. The OpenSeizureDetector monitoring service will be stopped\n" +
+                "2. Your PineTime watch will disconnect from this app\n" +
+                "3. The PineTime Firmware Updater will launch\n" +
+                "4. After the firmware update completes, you must manually restart the OpenSeizureDetector app to resume monitoring\n\n" +
+                "WARNING: Seizure detection will NOT be active during the firmware update.\n\n" +
+                "Do you want to continue?");
+        builder.setIcon(android.R.drawable.ic_dialog_alert);
+
+        builder.setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Log.i(TAG, "User confirmed PineTime Updater launch - stopping service");
+
+                // Stop the SdServer service
+                if (mConnection.mBound) {
+                    mUtil.unbindFromServer(getApplicationContext(), mConnection);
+                }
+                mUtil.stopServer();
+                mUtil.writeToSysLogFile("MainActivity2: Stopped SdServer for PineTime firmware update");
+
+                // Wait a moment for service to stop, then launch the updater
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Intent launchIntent = getPackageManager().getLaunchIntentForPackage(pineTimePackageName);
+                            if (launchIntent != null) {
+                                Log.i(TAG, "Launching PineTime Updater");
+                                // Launch PineTime Updater in a new task
+                                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(launchIntent);
+
+                                // Move OSD app to background (keeps service stopped, allows easy return)
+                                moveTaskToBack(true);
+                                Log.i(TAG, "OSD moved to background - service remains stopped");
+                            } else {
+                                Log.e(TAG, "Failed to get launch intent for PineTime Updater");
+                                mUtil.showToast("Error: Cannot launch PineTime Updater");
+                                // Restart the service since we failed to launch
+                                mUtil.startServer();
+                            }
+                        } catch (Exception ex) {
+                            Log.e(TAG, "Error launching PineTime Updater: " + ex.toString());
+                            mUtil.showToast("Error: " + ex.getMessage());
+                            // Restart the service since we failed to launch
+                            mUtil.startServer();
+                        }
+                    }
+                }, 500); // 500ms delay to allow service to stop
+            }
+        });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Log.i(TAG, "User cancelled PineTime Updater launch");
+                dialog.dismiss();
+            }
+        });
+
+        builder.setCancelable(true);
+        builder.create();
+        builder.show();
+    }
+
+    /**
+     * Show dialog prompting user to install PineTime Updater app
+     */
+    private void showPineTimeUpdaterInstallDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
+        builder.setTitle("PineTime Firmware Updater");
+        builder.setMessage("The PineTime Firmware Updater app is not installed.\n\n" +
+                "This companion app is required to update the firmware on your PineTime watch.\n\n" +
+                "Would you like to install it from the Google Play Store?");
+        builder.setIcon(android.R.drawable.ic_dialog_info);
+
+        builder.setPositiveButton("Install", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Open the PineTime Updater app in Google Play Store
+                String pineTimePackageName = "uk.org.openseizuredetector.pinetime";
+                try {
+                    // Try to open the Play Store app directly
+                    Intent playStoreIntent = new Intent(Intent.ACTION_VIEW,
+                            Uri.parse("market://details?id=" + pineTimePackageName));
+                    playStoreIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(playStoreIntent);
+                } catch (android.content.ActivityNotFoundException e) {
+                    // Play Store app not found, open in browser instead
+                    try {
+                        Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+                                Uri.parse("https://play.google.com/store/apps/details?id=" + pineTimePackageName));
+                        startActivity(browserIntent);
+                    } catch (Exception ex) {
+                        Log.e(TAG, "Error opening Play Store: " + ex.toString());
+                        mUtil.showToast("Error opening Play Store");
+                    }
+                }
+            }
+        });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+
         builder.create();
         builder.show();
     }
