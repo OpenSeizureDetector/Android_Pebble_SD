@@ -18,6 +18,7 @@
                 android:id="@+id/event_date_remote_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorPrimary"
                 android:text="date"
                 android:textStyle="bold" />
 
@@ -30,18 +31,21 @@
                     android:id="@+id/event_type_remote_tv"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textColor="?android:attr/textColorPrimary"
                     android:text="---"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textColor="?android:attr/textColorPrimary"
                     android:text=" : " />
 
                 <TextView
                     android:id="@+id/event_subtype_remote_tv"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:textColor="?android:attr/textColorPrimary"
                     android:text="---" />
 
             </LinearLayout>
@@ -50,12 +54,14 @@
                 android:id="@+id/event_alarmState_remote_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorPrimary"
                 android:text="alarm" />
 
             <TextView
                 android:id="@+id/event_notes_remote_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorPrimary"
                 android:text="notes"
                 android:textStyle="italic" />
 
@@ -64,6 +70,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="10dp"
+                android:textColor="?android:attr/textColorPrimary"
                 android:text="eventId"
                 android:textAppearance="?android:attr/textAppearanceSmall" />
         </LinearLayout>

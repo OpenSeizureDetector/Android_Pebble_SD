@@ -392,7 +392,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
                 }
 
                 // Display dialog to select model to download.
-                new AlertDialog.Builder(ctx)
+                new AlertDialog.Builder(new android.view.ContextThemeWrapper(ctx, R.style.AppTheme_AlertDialog))
                         .setTitle(R.string.ml_model_select_title)
                         .setItems(names, (dialog, which) -> {
                             try {
@@ -463,7 +463,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
 
         private void showProgress(Context ctx, String message, Runnable onCancel) {
             dismissProgress();
-            AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+            AlertDialog.Builder builder = new AlertDialog.Builder(new android.view.ContextThemeWrapper(ctx, R.style.AppTheme_AlertDialog));
             LayoutInflater inflater = LayoutInflater.from(ctx);
             View view = inflater.inflate(R.layout.dialog_progress, null);
             builder.setView(view);

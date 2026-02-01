@@ -616,7 +616,7 @@ public class StartupActivity extends AppCompatActivity {
         //storedVersionName = null;  // FIXME Force first run dialog for easier testing ****************************
         if (storedVersionName == null || storedVersionName.length() == 0) {
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    this);
+                    new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
             final String s = new String(
                     getString(R.string.FirstRunDlgMsg));
             alertDialogBuilder
@@ -662,7 +662,7 @@ public class StartupActivity extends AppCompatActivity {
         } else if (!storedVersionName.equals(versionName)) {
             // Check for update of installed application
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    this);
+                    new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
             final String s = new String(
                     getString(R.string.UpgradeMsg) + getString(R.string.changelog)
             );
@@ -714,8 +714,10 @@ public class StartupActivity extends AppCompatActivity {
     }
 
     private void showBatteryOptimisationWarningDialog() {
+        // Use ContextThemeWrapper to explicitly apply dialog theme
+        // This prevents inheriting white text from activity theme
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                this);
+                new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
         final SpannableString s = new SpannableString(
                 getString(R.string.battery_usage_optimisation_dialog_text)
         );
@@ -824,7 +826,7 @@ public class StartupActivity extends AppCompatActivity {
             Log.i(TAG, "requestSMSPermissions() - requesting permissions");
             mSmsPermissionsRequested = true;
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    this);
+                    new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
             alertDialogBuilder
                     .setTitle(R.string.permissions_required)
                     .setMessage(R.string.sms_permissions_rationale_1)
@@ -842,7 +844,9 @@ public class StartupActivity extends AppCompatActivity {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.cancel();
                         }
-                    }).create().show();
+                    });
+            AlertDialog smsDialog = alertDialogBuilder.create();
+            smsDialog.show();
         }
     }
 
@@ -854,7 +858,7 @@ public class StartupActivity extends AppCompatActivity {
             Log.i(TAG, "requestLocationPermissions1() - requesting permissions");
             mLocationPermissions1Requested = true;
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    this);
+                    new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
             alertDialogBuilder
                     .setTitle(R.string.permissions_required)
                     .setMessage(R.string.location_permissions_rationale_1)
@@ -872,8 +876,9 @@ public class StartupActivity extends AppCompatActivity {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.cancel();
                         }
-                    })
-                    .create().show();
+                    });
+            AlertDialog locationDialog1 = alertDialogBuilder.create();
+            locationDialog1.show();
         }
     }
 
@@ -885,7 +890,7 @@ public class StartupActivity extends AppCompatActivity {
             mLocationPermissions2Requested = true;
 
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    this);
+                    new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
             alertDialogBuilder
                     .setTitle(R.string.permissions_required)
                     .setMessage(R.string.location_permissions_2_rationale)
@@ -903,7 +908,9 @@ public class StartupActivity extends AppCompatActivity {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.cancel();
                         }
-                    }).create().show();
+                    });
+            AlertDialog locationDialog2 = alertDialogBuilder.create();
+            locationDialog2.show();
         }
     }
 
@@ -914,7 +921,7 @@ public class StartupActivity extends AppCompatActivity {
             Log.i(TAG, "requestBTPermissions() - requesting permissions");
             mBTPermissionsRequested = true;
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    this);
+                    new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
             alertDialogBuilder
                     .setTitle(R.string.BTpermissions_required)
                     .setMessage(R.string.BT_permissions_rationale)
@@ -927,8 +934,9 @@ public class StartupActivity extends AppCompatActivity {
                                     mUtil.getRequiredBtPermissions(),
                                     46);
                         }
-                    })
-                    .create().show();
+                    });
+            AlertDialog btDialog = alertDialogBuilder.create();
+            btDialog.show();
         }
     }
 
@@ -939,7 +947,7 @@ public class StartupActivity extends AppCompatActivity {
             Log.i(TAG, "requestActivityPermissions() - requesting permissions");
             mActivityPermissionsRequested = true;
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    this);
+                    new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
             alertDialogBuilder
                     .setTitle(R.string.activity_permissions_required)
                     .setMessage(R.string.activity_permissions_rationale)
@@ -952,8 +960,9 @@ public class StartupActivity extends AppCompatActivity {
                                     mUtil.getRequiredActivityPermissions(),
                                     49);
                         }
-                    })
-                    .create().show();
+                    });
+            AlertDialog activityDialog = alertDialogBuilder.create();
+            activityDialog.show();
         }
     }
 

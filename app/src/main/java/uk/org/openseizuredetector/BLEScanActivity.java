@@ -299,7 +299,7 @@ public class BLEScanActivity extends ListActivity {
             }
             if (showRationale) {
                 AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                        this);
+                        new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
                 alertDialogBuilder
                         .setTitle(getString(R.string.permissions_required))
                         .setMessage("Additional Permissions are required to scan for Bluetooth Devices - please grant the permissions in the following dialogs")

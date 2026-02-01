@@ -12,17 +12,21 @@
         android:id="@+id/export_data_content_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:background="?attr/colorPrimary"
+        android:orientation="vertical"
+        android:padding="16dp">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="?android:attr/textColorPrimary"
             android:text="Export Local Data"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="?android:attr/textColorPrimary"
             android:text="End Date/Time (dd-mm-yyyy hh:mm)" />
 
         <LinearLayout
@@ -35,6 +39,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ems="10"
+                android:textColor="?android:attr/textColorPrimary"
                 android:text="(end date)" />
 
             <Button
@@ -56,6 +61,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ems="10"
+                android:textColor="?android:attr/textColorPrimary"
                 android:text="(end time)" />
 
             <Button
@@ -70,6 +76,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="?android:attr/textColorPrimary"
             android:text="Duration (hrs)" />
 
         <EditText
@@ -78,6 +85,7 @@
             android:layout_height="wrap_content"
             android:ems="10"
             android:inputType="numberDecimal"
+            android:textColor="?android:attr/textColorPrimary"
             android:text="1.0" />
 
         <LinearLayout

@@ -638,7 +638,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
             case R.id.start_stop_nda:
                 Log.i(TAG, "start/stop NDA");
                 if (mConnection.mSdServer.mLogNDA) {
-                    new AlertDialog.Builder(this)
+                    new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
                             .setTitle(R.string.stop_nda_logging_dialog_title)
                             .setMessage(R.string.stop_nda_logging_dialog_meassage)
                             .setIcon(android.R.drawable.ic_dialog_alert)
@@ -659,7 +659,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                             .setNegativeButton(android.R.string.no, null)
                             .show();
                 } else {
-                    new AlertDialog.Builder(this)
+                    new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
                             .setTitle(R.string.start_nda_logging_dialog_title)
                             .setMessage(R.string.start_nda_logging_dialog_meassage)
                             .setIcon(android.R.drawable.ic_dialog_alert)
@@ -684,7 +684,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 return true;
             case R.id.action_mark_unknown:
                 Log.i(TAG, "action_mark_unknown");
-                new AlertDialog.Builder(this)
+                new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
                         .setTitle(R.string.mark_unverified_events_unknown_dialog_title)
                         .setMessage(R.string.mark_unverified_events_unknown_dialog_message)
                         .setIcon(android.R.drawable.ic_dialog_alert)
@@ -698,7 +698,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 return true;
             case R.id.action_mark_false_alarm:
                 Log.i(TAG, "action_mark_false_alarm");
-                new AlertDialog.Builder(this)
+                new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
                         .setTitle(R.string.mark_unverified_events_false_alarm_dialog_title)
                         .setMessage(R.string.mark_unverified_events_false_alarm_dialog_message)
                         .setIcon(android.R.drawable.ic_dialog_alert)
@@ -748,7 +748,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 public void onClick(View view) {
                     Log.v(TAG, "onPruneBtn");
                     // Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
-                    AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(new android.view.ContextThemeWrapper(mContext, R.style.AppTheme_AlertDialog));
                     builder.setTitle(R.string.prune_database_title);
                     builder.setMessage(String.format(getString(R.string.prune_database_dialog_msg), mLm.mDataRetentionPeriod));
                     builder.setPositiveButton(R.string.yes_button_title, new DialogInterface.OnClickListener() {
@@ -987,7 +987,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private void showDataSharingDialog() {
         mUtil.writeToSysLogFile("MainActivity.showDataSharingDialog()");
         View aboutView = getLayoutInflater().inflate(R.layout.data_sharing_dialog_layout, null, false);
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
         builder.setIcon(R.drawable.datasharing_fault_24x24);
         builder.setTitle(R.string.data_sharing_dialog_title);
         builder.setNegativeButton(getString(R.string.cancel), null);

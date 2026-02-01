@@ -9,25 +9,30 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="?android:attr/textColorPrimary"
         android:text="@string/date"
         android:id="@+id/event_date" />
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="?android:attr/textColorPrimary"
         android:text=" : "/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="?android:attr/textColorPrimary"
         android:text="alarm"
         android:id="@+id/event_alarmState"
          />
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="?android:attr/textColorPrimary"
         android:text=" : "/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:textColor="?android:attr/textColorPrimary"
         android:text="uploaded"
         android:id="@+id/event_uploaded"
          />

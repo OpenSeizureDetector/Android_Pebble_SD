@@ -12,6 +12,43 @@
         <!-- White text for contrast on blue background -->
         <item name="android:textColorPrimary">#FFFFFF</item>
         <item name="android:textColorSecondary">#E0E0E0</item>
+        <!-- Dialog theme -->
+        <item name="alertDialogTheme">@style/AppTheme.AlertDialog</item>
+    </style>
+
+    <!-- Alert dialog theme that ensures proper colors and visibility -->
+    <!-- Use Light theme parent and explicitly override ALL text-related attributes -->
+    <style name="AppTheme.AlertDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <!-- Color palette -->
+        <item name="colorPrimary">#3F51B5</item>
+        <item name="colorPrimaryDark">#303F9F</item>
+        <item name="colorAccent">#FF4081</item>
+
+        <!-- Dialog background must be light -->
+        <item name="android:windowBackground">@android:color/white</item>
+
+        <!-- CRITICAL: Override text colors from activity theme -->
+        <!-- Using both namespaced and non-namespaced versions for compatibility -->
+        <item name="android:textColorPrimary">@android:color/black</item>
+        <item name="android:textColorSecondary">#757575</item>
+        <item name="textColorAlertDialogListItem">@android:color/black</item>
+
+        <!-- Additional text appearance overrides to ensure black text -->
+        <item name="android:textAppearance">@style/TextAppearance.AppCompat</item>
+        <item name="android:textAppearanceLarge">@style/TextAppearance.AppCompat.Large</item>
+        <item name="android:textAppearanceMedium">@style/TextAppearance.AppCompat.Medium</item>
+        <item name="android:textAppearanceSmall">@style/TextAppearance.AppCompat.Small</item>
+
+        <!-- Button styles -->
+        <item name="buttonBarPositiveButtonStyle">@style/AppTheme.AlertDialog.Button</item>
+        <item name="buttonBarNegativeButtonStyle">@style/AppTheme.AlertDialog.Button</item>
+        <item name="buttonBarNeutralButtonStyle">@style/AppTheme.AlertDialog.Button</item>
+    </style>
+
+    <!-- Dialog button style for better visibility -->
+    <style name="AppTheme.AlertDialog.Button" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <!-- Explicitly set button text color to colorAccent (pink) for visibility -->
+        <item name="android:textColor">?attr/colorAccent</item>
     </style>
 
     <!-- Alert dialog theme overlay using Material Design colors -->

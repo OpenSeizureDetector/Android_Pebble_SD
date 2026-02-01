@@ -212,7 +212,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
                 }
             });
         } else {
-            new AlertDialog.Builder(mContext)
+            new AlertDialog.Builder(new android.view.ContextThemeWrapper(mContext, R.style.AppTheme_AlertDialog))
                     .setTitle(R.string.not_logged_in_dialog_title)
                     .setMessage(R.string.not_logged_in_dialog_message)
                     .setIcon(android.R.drawable.ic_dialog_alert)

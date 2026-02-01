@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:background="?attr/colorPrimary"
     android:orientation="vertical">
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -21,6 +22,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textColor="?android:attr/textColorPrimary"
             android:text="@string/login_to_osdapi"
             android:textAppearance="?android:attr/textAppearanceLarge" />
     </LinearLayout>
@@ -45,6 +47,7 @@
                 android:layout_marginTop="16dp"
                 android:layout_marginRight="4dp"
                 android:layout_marginBottom="4dp"
+                android:textColor="?android:attr/textColorPrimary"
                 android:hint="username" />
 
             <EditText
@@ -56,6 +59,7 @@
                 android:layout_marginRight="4dp"
                 android:layout_marginBottom="16dp"
                 android:fontFamily="sans-serif"
+                android:textColor="?android:attr/textColorPrimary"
                 android:hint="password"
                 android:inputType="textPassword" />
 
@@ -123,6 +127,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text="@string/logged_in_as_user_id" />
 
@@ -130,6 +135,7 @@
                 android:id="@+id/userIdTv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text="userId" />
         </LinearLayout>
@@ -142,6 +148,7 @@
         <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text=" (" />
 
@@ -149,12 +156,14 @@
                 android:id="@+id/usernameTv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text="username" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorPrimary"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text=")" />
 

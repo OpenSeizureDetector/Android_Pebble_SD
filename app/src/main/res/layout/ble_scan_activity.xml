@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="?attr/colorPrimary"
     android:paddingLeft="8dp"
     android:paddingRight="8dp">
 
@@ -11,12 +12,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="16pt"
+        android:textColor="?android:attr/textColorPrimary"
         android:text="Scan for Bluetooth Data Sources" />
 
     <TextView
         android:id="@+id/ble_connection_warning_tv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="?android:attr/textColorPrimary"
         android:text="@string/ble_connected_warning_text" />
 
 
@@ -24,22 +27,26 @@
         android:id="@+id/ble_present_tv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="?android:attr/textColorPrimary"
         android:text="ble_present_tv" />
     <TextView
         android:id="@+id/ble_adapter_tv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="?android:attr/textColorPrimary"
         android:text="ble_adapter_tv" />
     <TextView
         android:id="@+id/current_ble_device_tv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="?android:attr/textColorPrimary"
         android:text="current_ble_device_tv" />
 
     <TextView
         android:id="@+id/ble_perm1_tv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="?android:attr/textColorPrimary"
         android:text="ble_perm1_tv" />
 
     <LinearLayout
@@ -52,6 +59,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="16pt"
+            android:textColor="?android:attr/textColorPrimary"
             android:text="ble_scan_status_tv" />
 
         <Button
@@ -79,7 +87,7 @@
             android:id="@android:id/empty"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#101010"
+            android:textColor="?android:attr/textColorPrimary"
             android:text="No data" />
     </LinearLayout>
 </LinearLayout>

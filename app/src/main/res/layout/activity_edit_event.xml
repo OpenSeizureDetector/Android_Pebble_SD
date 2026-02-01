@@ -12,6 +12,7 @@
         android:id="@+id/edit_event_content_layout"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
+        android:background="?attr/colorPrimary"
         android:orientation="vertical">
 
         <LinearLayout
@@ -53,17 +54,20 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="@string/eventid" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text=": " />
 
                     <TextView
                         android:id="@+id/eventIdTv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="[id]" />
                 </LinearLayout>
 
@@ -75,12 +79,14 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="@string/event_date"
                         android:textSize="20sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text=": "
                         android:textSize="20sp" />
 
@@ -88,6 +94,7 @@
                         android:id="@+id/eventDateTv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="..."
                         android:textSize="20sp" />
                 </LinearLayout>
@@ -100,12 +107,14 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="@string/alarm_state"
                         android:textSize="20sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text=": "
                         android:textSize="20sp" />
 
@@ -113,6 +122,7 @@
                         android:id="@+id/eventAlarmStateTv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="..."
                         android:textSize="20sp" />
                 </LinearLayout>
@@ -125,12 +135,14 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="@string/event_type"
                         android:textSize="20sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text=": "
                         android:textSize="20sp" />
 
@@ -149,12 +161,14 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="@string/event_sub_type"
                         android:textSize="20sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text=": "
                         android:textSize="20sp" />
 

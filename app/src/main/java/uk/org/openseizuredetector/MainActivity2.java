@@ -478,7 +478,7 @@ public class MainActivity2 extends AppCompatActivity {
         View aboutView = getLayoutInflater().inflate(R.layout.about_layout, null, false);
         String versionName = mUtil.getAppVersionName();
         Log.i(TAG, "showAbout() - version name = " + versionName);
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
         builder.setIcon(R.drawable.icon_24x24);
         builder.setTitle("OpenSeizureDetector V" + versionName);
         builder.setNeutralButton(getString(R.string.closeBtnTxt), new DialogInterface.OnClickListener() {
@@ -514,7 +514,7 @@ public class MainActivity2 extends AppCompatActivity {
     private void showDataSharingDialog() {
         mUtil.writeToSysLogFile("MainActivity.showDataSharingDialog()");
         View aboutView = getLayoutInflater().inflate(R.layout.data_sharing_dialog_layout, null, false);
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
         builder.setIcon(R.drawable.datasharing_fault_24x24);
         builder.setTitle(R.string.data_sharing_dialog_title);
         builder.setNegativeButton(getString(R.string.cancel), null);

@@ -13,6 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
+        android:background="?attr/colorPrimary"
         android:paddingLeft="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin"
         android:paddingRight="@dimen/activity_horizontal_margin"
@@ -23,6 +24,7 @@
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:textColor="?android:attr/textColorPrimary"
             android:text="@string/report_seizure"
             android:textAppearance="?android:attr/textAppearanceLarge" />
 
@@ -43,36 +45,42 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="@string/date" />
 
                     <TextView
                         android:id="@+id/date_day_tv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="dd" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:enabled="false"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="/" />
 
                     <TextView
                         android:id="@+id/date_mon_tv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="mm" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:enabled="false"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="/" />
 
                     <TextView
                         android:id="@+id/date_year_tv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="yyyy" />
 
                     <Button
@@ -90,24 +98,28 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="@string/time" />
 
                     <TextView
                         android:id="@+id/time_hh_tv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="hh" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:enabled="false"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text=":" />
 
                     <TextView
                         android:id="@+id/time_mm_tv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="mm" />
 
                     <Button
@@ -125,6 +137,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="@string/event_type"
                         android:textSize="20sp" />
 
@@ -143,6 +156,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="@string/event_sub_type"
                         android:textSize="20sp" />
 
@@ -161,6 +175,7 @@
                     android:layout_marginTop="16dp"
                     android:layout_marginRight="4dp"
                     android:layout_marginBottom="4dp"
+                    android:textColor="?android:attr/textColorPrimary"
                     android:hint="notes about event" />
 
 
@@ -186,6 +201,7 @@
                     android:id="@+id/msg_tv"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
+                    android:textColor="?android:attr/textColorPrimary"
                     android:text="msg" />
             </LinearLayout>
         </ScrollView>
