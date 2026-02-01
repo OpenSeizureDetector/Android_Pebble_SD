@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorPrimary">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Select Detection Algorithms"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Choose which seizure detection algorithms to use. You can enable multiple algorithms."
+            android:textSize="14sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginBottom="24dp" />
+
+        <CheckBox
+            android:id="@+id/check_osd_alg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Original OSD Algorithm"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="16sp"
+            android:checked="true"
+            android:padding="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Recommended. The original movement-based seizure detection algorithm."
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:paddingStart="48dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="12dp" />
+
+        <CheckBox
+            android:id="@+id/check_flap_alg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="OSD with Flap Detection"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Enhanced OSD algorithm that detects arm flapping movements."
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:paddingStart="48dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="12dp" />
+
+        <CheckBox
+            android:id="@+id/check_ml_alg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Machine Learning Algorithm"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="AI-powered detection using machine learning. Requires model download."
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:paddingStart="48dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="12dp" />
+
+        <CheckBox
+            android:id="@+id/check_hr_alg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Heart Rate Algorithm"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Detects abnormal heart rate patterns. Requires heart rate monitor."
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:paddingStart="48dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="12dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Note: At least one algorithm should be enabled for seizure detection to work."
+            android:textSize="12sp"
+            android:textStyle="italic"
+            android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginTop="16dp" />
+
+    </LinearLayout>
+</ScrollView>

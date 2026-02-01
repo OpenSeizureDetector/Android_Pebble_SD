@@ -125,6 +125,19 @@ public class StartupActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate()");
+
+        // Check if this is the first run - if so, launch onboarding wizard
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean firstRunComplete = prefs.getBoolean("first_run_complete", false);
+
+        if (!firstRunComplete) {
+            Log.i(TAG, "First run detected - launching onboarding wizard");
+            Intent onboardingIntent = new Intent(this, OnboardingActivity.class);
+            startActivity(onboardingIntent);
+            finish();
+            return; // Exit onCreate early
+        }
+
         setContentView(R.layout.startup_activity);
 
         // Fix ActionBar overlap by adding top padding to content
@@ -192,7 +205,6 @@ public class StartupActivity extends AppCompatActivity {
         // Enable the "Install Watch App" button if we have the Pebble data source selected,
         // otherwise hide it.
         b = (Button) findViewById(R.id.installOsdAppButton);
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String dataSourceName = (prefs.getString("DataSource", "Phone"));
         if (dataSourceName.equals("Pebble")) {
             b.setOnClickListener(new View.OnClickListener() {

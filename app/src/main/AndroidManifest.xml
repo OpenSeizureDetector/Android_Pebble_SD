@@ -52,6 +52,10 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/AppTheme">
         <activity
+            android:name=".OnboardingActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+        <activity
             android:name=".MainActivity2"
             android:exported="false" />
         <!--<activity

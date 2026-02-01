@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorPrimary">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Choose Data Source"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Select where seizure detection data will come from:"
+            android:textSize="14sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginBottom="24dp" />
+
+        <RadioGroup
+            android:id="@+id/data_source_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <RadioButton
+                android:id="@+id/radio_phone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Phone (Demo Mode)"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="16sp"
+                android:padding="12dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Uses phone's accelerometer for testing. Not suitable for real seizure detection."
+                android:textSize="12sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:paddingStart="48dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="8dp" />
+
+            <RadioButton
+                android:id="@+id/radio_watch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Smartwatch"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="16sp"
+                android:padding="12dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Recommended. Uses a smartwatch worn on the wrist for accurate detection."
+                android:textSize="12sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:paddingStart="48dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="8dp" />
+
+            <RadioButton
+                android:id="@+id/radio_network"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Network (Remote Monitoring)"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="16sp"
+                android:padding="12dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Connect to another device running OpenSeizureDetector for remote alarm annunciation."
+                android:textSize="12sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:paddingStart="48dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="8dp" />
+
+        </RadioGroup>
+
+        <!-- Watch Type Section (visible only when Watch is selected) -->
+        <LinearLayout
+            android:id="@+id/watch_type_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Select Watch Type"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="?android:attr/textColorPrimary"
+                android:layout_marginBottom="16dp" />
+
+            <RadioGroup
+                android:id="@+id/watch_type_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/radio_pinetime"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="PineTime Watch"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="16sp"
+                    android:padding="12dp"
+                    android:checked="true" />
+
+                <RadioButton
+                    android:id="@+id/radio_garmin"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Garmin Watch"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="16sp"
+                    android:padding="12dp" />
+
+                <RadioButton
+                    android:id="@+id/radio_other"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Other / Pebble"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="16sp"
+                    android:padding="12dp" />
+
+            </RadioGroup>
+
+            <!-- PineTime-specific buttons -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_scan_pinetime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:visibility="gone"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="@color/button_stroke_color"
+                android:textColor="@color/button_text_color"
+                android:text="Scan for PineTime Watch" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_update_pinetime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="@color/button_stroke_color"
+                android:textColor="@color/button_text_color"
+                android:text="Update PineTime Firmware" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
