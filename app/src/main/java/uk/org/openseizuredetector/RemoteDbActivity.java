@@ -40,6 +40,21 @@ public class RemoteDbActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         mContext = this;
         setContentView(R.layout.activity_remote_db);
+
+        // Fix ActionBar overlap by adding top padding to content
+        if (getSupportActionBar() != null) {
+            View contentView = findViewById(android.R.id.content);
+            if (contentView != null) {
+                // Get ActionBar height
+                android.util.TypedValue tv = new android.util.TypedValue();
+                if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+                    int actionBarHeight = android.util.TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
+                    // Add padding to account for ActionBar
+                    contentView.setPadding(0, actionBarHeight, 0, 0);
+                }
+            }
+        }
+
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
         mConnection = new SdServiceConnection(getApplicationContext());
         mUtil.bindToServer(getApplicationContext(), mConnection);

@@ -5,7 +5,8 @@
     android:orientation="vertical"
     android:background="?attr/colorPrimary"
     android:paddingLeft="8dp"
-    android:paddingRight="8dp">
+    android:paddingRight="8dp"
+    android:fitsSystemWindows="true">
 
     <TextView
         android:id="@+id/ble_scan_title"

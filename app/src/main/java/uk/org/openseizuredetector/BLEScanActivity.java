@@ -93,6 +93,19 @@ public class BLEScanActivity extends ListActivity {
         super.onCreate(savedInstanceState);
         Log.i(TAG,"onCreate()");
         setContentView(R.layout.ble_scan_activity);
+
+        // Fix ActionBar overlap by adding top padding to content
+        View contentView = findViewById(android.R.id.content);
+        if (contentView != null) {
+            // Get ActionBar height
+            android.util.TypedValue tv = new android.util.TypedValue();
+            if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+                int actionBarHeight = android.util.TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
+                // Add padding to account for ActionBar
+                contentView.setPadding(0, actionBarHeight, 0, 0);
+            }
+        }
+
         //this.getActionBar().setTitle(R.string.title_devices);
         this.setTitle(R.string.title_devices);
         mHandler = new Handler();

@@ -47,6 +47,20 @@ public class AuthenticateActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_authenticate);
 
+        // Fix ActionBar overlap by adding top padding to content
+        if (getSupportActionBar() != null) {
+            View contentView = findViewById(android.R.id.content);
+            if (contentView != null) {
+                // Get ActionBar height
+                android.util.TypedValue tv = new android.util.TypedValue();
+                if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+                    int actionBarHeight = android.util.TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
+                    // Add padding to account for ActionBar
+                    contentView.setPadding(0, actionBarHeight, 0, 0);
+                }
+            }
+        }
+
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
         if (!mUtil.isServerRunning()) {
             mUtil.showToast(getString(R.string.error_server_not_running));
