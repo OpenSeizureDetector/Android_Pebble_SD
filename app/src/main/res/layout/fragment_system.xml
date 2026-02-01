@@ -23,8 +23,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="OpenSeizureDetector System Status"
-            android:textColor="@color/okTextColor"
-            android:background="@color/okBackgroundColor"
+            android:textColor="?attr/colorOnPrimary"
+            android:background="?attr/colorPrimary"
         />
         -->
 
@@ -60,8 +60,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Edit Settings"
-                        android:textColor="@color/okTextColor"
-                        android:background="@color/okBackgroundColor"
+                        android:textColor="?attr/colorOnPrimary"
+                        android:background="?attr/colorPrimary"
                         android:textSize="12sp"/>
                 </LinearLayout>
 
@@ -116,8 +116,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Signal Strength History"
-                    android:textColor="@color/okTextColor"
-                    android:background="@color/okBackgroundColor"
+                    android:textColor="?attr/colorOnPrimary"
+                    android:background="?attr/colorPrimary"
                     android:textSize="12sp"/>
 
                 <com.jjoe64.graphview.GraphView
@@ -154,8 +154,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Watch Status"
-                    android:textColor="@color/okTextColor"
-                    android:background="@color/okBackgroundColor" />
+                    android:textColor="?attr/colorOnPrimary"
+                    android:background="?attr/colorPrimary" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -164,7 +164,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/okTextColor"
+                        android:textColor="?attr/colorOnPrimary"
                         android:text="Manufacturer: "
                         android:textSize="12sp"/>
                     <TextView
@@ -182,7 +182,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/okTextColor"
+                        android:textColor="?attr/colorOnPrimary"
                         android:text="Part No: "
                         android:textSize="12sp"/>
                     <TextView
@@ -200,7 +200,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/okTextColor"
+                        android:textColor="?attr/colorOnPrimary"
                         android:text="FW Ver: "
                         android:textSize="12sp"/>
                     <TextView
@@ -218,7 +218,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/okTextColor"
+                        android:textColor="?attr/colorOnPrimary"
                         android:text="App Name: "
                         android:textSize="12sp"/>
                     <TextView
@@ -236,7 +236,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/okTextColor"
+                        android:textColor="?attr/colorOnPrimary"
                         android:text="App Ver: "
                         android:textSize="12sp"/>
                     <TextView
@@ -261,7 +261,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/okTextColor"
+                        android:textColor="?attr/colorOnPrimary"
                         android:text="Battery: "
                         android:textSize="12sp"/>
                     <TextView
@@ -279,7 +279,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/okTextColor"
+                        android:textColor="?attr/colorOnPrimary"
                         android:text="Signal: "
                         android:textSize="12sp"/>
                     <TextView
@@ -304,8 +304,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Battery History"
-                    android:textColor="@color/okTextColor"
-                    android:background="@color/okBackgroundColor" />
+                    android:textColor="?attr/colorOnPrimary"
+                    android:background="?attr/colorPrimary" />
 
                 <com.jjoe64.graphview.GraphView
                     android:id="@+id/system_batt_line_chart"

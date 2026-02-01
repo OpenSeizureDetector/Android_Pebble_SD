@@ -10,14 +10,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="@color/okBackgroundColor"
+        android:background="?attr/colorPrimary"
         android:padding="16dp">
 
         <TextView
             android:id="@+id/fragment_ml_alg_tv1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/okTextColor"
+            android:textColor="?attr/colorOnPrimary"
             android:textSize="18sp"
             android:textStyle="bold"
             android:text="Machine Learning Algorithm Status" />
@@ -26,7 +26,7 @@
             android:id="@+id/fragment_ml_alg_model_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/okTextColor"
+            android:textColor="?attr/colorOnPrimary"
             android:text="Model: ---"
             android:paddingBottom="8dp" />
 
@@ -34,7 +34,7 @@
             android:id="@+id/fragment_ml_alg_probability_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/okTextColor"
+            android:textColor="?attr/colorOnPrimary"
             android:text="@string/seizure_probability" />
 
         <LinearLayout
@@ -55,7 +55,7 @@
                 android:id="@+id/fragment_ml_alg_probability_value"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/okTextColor"
+                android:textColor="?attr/colorOnPrimary"
                 android:text="0%"
                 android:minWidth="60dp"
                 android:gravity="end"
@@ -66,7 +66,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/okTextColor"
+            android:textColor="?attr/colorOnPrimary"
             android:text="History (Last 10 Minutes):"
             android:paddingTop="16dp"
             android:paddingBottom="8dp" />

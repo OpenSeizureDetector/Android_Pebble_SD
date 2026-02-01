@@ -9,8 +9,22 @@
     <color name="colorSurface">#2A2A3F</color>      <!-- Dark blue-gray for main surfaces -->
     <color name="colorBackground">#1E1E2E</color>   <!-- Slightly darker for background -->
 
-    <!-- Status Colors (for data display) -->
-    <color name="okBackgroundColor">#3F51B5</color>  <!-- Use primary instead of pure blue -->
+    <!-- Status Colors (for startup activity status display) -->
+    <!-- Material Design: Using semantic colors for status indication -->
+    <!-- OK/Success state: Green (Material Success) -->
+    <color name="status_ok_background">#4CAF50</color>      <!-- Material Green -->
+    <color name="status_ok_text">#FFFFFF</color>            <!-- White text -->
+
+    <!-- Warning/In-Progress state: Orange (Material Warning) -->
+    <color name="status_warning_background">#FF9800</color>  <!-- Material Orange -->
+    <color name="status_warning_text">#FFFFFF</color>        <!-- White text -->
+
+    <!-- Error/Failed state: Red (Material Error) -->
+    <color name="status_error_background">#F44336</color>    <!-- Material Red -->
+    <color name="status_error_text">#FFFFFF</color>          <!-- White text -->
+
+    <!-- Legacy colors for compatibility - used by fragments in MainActivity2 -->
+    <color name="okBackgroundColor">#3F51B5</color>  <!-- Blue - used by fragment backgrounds -->
     <color name="okTextColor">#FFFFFF</color>
 
     <!-- Tab Colors -->
@@ -18,4 +32,44 @@
     <color name="tabSelected">#FFFFFF</color>
     <color name="tabUnselected">#B0B0FF</color>
     <color name="tabIndicator">#FF4081</color>       <!-- Accent color for indicator -->
+
+    <!-- Material 3 Color System - Fallback colors for Android versions without dynamic color support -->
+    <!-- On Android 12+, the system will override these with dynamic colors from the user's wallpaper -->
+
+    <!-- Primary Colors -->
+    <color name="material3_primary">#3F51B5</color>
+    <color name="material3_on_primary">#FFFFFF</color>
+    <color name="material3_primary_container">#3F51B5</color>
+    <color name="material3_on_primary_container">#FFFFFF</color>
+
+    <!-- Secondary Colors -->
+    <color name="material3_secondary">#7F8FB7</color>
+    <color name="material3_on_secondary">#FFFFFF</color>
+    <color name="material3_secondary_container">#7F8FB7</color>
+    <color name="material3_on_secondary_container">#FFFFFF</color>
+
+    <!-- Tertiary Colors -->
+    <color name="material3_tertiary">#7796B5</color>
+    <color name="material3_on_tertiary">#FFFFFF</color>
+    <color name="material3_tertiary_container">#7796B5</color>
+    <color name="material3_on_tertiary_container">#FFFFFF</color>
+
+    <!-- Error Colors -->
+    <color name="material3_error">#B3261E</color>
+    <color name="material3_on_error">#FFFFFF</color>
+    <color name="material3_error_container">#F9DEDC</color>
+    <color name="material3_on_error_container">#410E0B</color>
+
+    <!-- Surface and Background Colors (Dark) -->
+    <color name="material3_background">#1E1E2E</color>
+    <color name="material3_on_background">#E8E8F0</color>
+    <color name="material3_surface">#2A2A3F</color>
+    <color name="material3_on_surface">#E8E8F0</color>
+    <color name="material3_surface_variant">#4A4A5E</color>
+    <color name="material3_on_surface_variant">#C4C4D0</color>
+
+    <!-- Outline Colors -->
+    <color name="material3_outline">#9E9EAE</color>
+    <color name="material3_outline_variant">#49454E</color>
+    <color name="material3_scrim">#000000</color>
 </resources>

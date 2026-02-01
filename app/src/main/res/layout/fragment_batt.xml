@@ -8,14 +8,14 @@
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/okBackgroundColor"
+        android:background="?attr/colorPrimary"
         android:orientation="vertical">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/battery_history"
-            android:textColor="@color/okTextColor" />
+            android:textColor="?attr/colorOnPrimary" />
 
 
         <com.jjoe64.graphview.GraphView

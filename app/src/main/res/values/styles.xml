@@ -1,50 +1,27 @@
 <resources>
 
-    <!-- Base application theme with Material Design colors -->
-    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight">
-        <!-- Material Design Color System -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
-        <item name="colorSurface">@color/colorSurface</item>
-        <item name="android:colorBackground">@color/colorBackground</item>
+    <!-- AppCompat theme - ignores Material3 dynamic colors and uses our explicit blue palette -->
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight">
+        <!-- Explicitly set blue colors -->
+        <item name="colorPrimary">#3F51B5</item>
+        <item name="colorPrimaryDark">#303F9F</item>
+        <item name="colorAccent">#FF4081</item>
+        <!-- Blue backgrounds for consistency across all screens -->
+        <item name="android:windowBackground">@color/colorPrimary</item>
+        <item name="android:colorBackground">@color/colorPrimary</item>
+        <!-- White text for contrast on blue background -->
         <item name="android:textColorPrimary">#FFFFFF</item>
-        <item name="android:textColorSecondary">#B0B0B0</item>
-        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Osd.AlertDialog</item>
-        <item name="alertDialogTheme">@style/ThemeOverlay.Osd.AppCompatAlertDialog</item>
-        <item name="android:alertDialogTheme">@style/ThemeOverlay.Osd.AppCompatAlertDialog</item>
+        <item name="android:textColorSecondary">#E0E0E0</item>
     </style>
 
+    <!-- Alert dialog theme overlay using Material Design colors -->
     <style name="ThemeOverlay.Osd.AlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
-        <item name="colorSurface">@color/colorSurface</item>
-        <item name="android:colorBackground">@color/colorSurface</item>
-        <item name="android:textColorPrimary">#FFFFFF</item>
-        <item name="android:textColorSecondary">#B0B0B0</item>
-        <item name="colorPrimary">@color/colorAccent</item>
-        <item name="android:textColorLink">@color/colorAccent</item>
-        <item name="buttonBarPositiveButtonStyle">@style/Osd.DialogButton.Material</item>
-        <item name="buttonBarNegativeButtonStyle">@style/Osd.DialogButton.Material</item>
-        <item name="buttonBarNeutralButtonStyle">@style/Osd.DialogButton.Material</item>
+        <!-- Material Design colors automatically apply here -->
     </style>
 
+    <!-- AppCompat alert dialog theme overlay -->
     <style name="ThemeOverlay.Osd.AppCompatAlertDialog" parent="ThemeOverlay.AppCompat.Dialog.Alert">
-        <item name="android:windowBackground">@color/colorSurface</item>
-        <item name="android:textColorPrimary">#FFFFFF</item>
-        <item name="android:textColorSecondary">#B0B0B0</item>
-        <item name="textColorAlertDialogListItem">#FFFFFF</item>
-        <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:textColorLink">@color/colorAccent</item>
-        <item name="buttonBarPositiveButtonStyle">@style/Osd.DialogButton.AppCompat</item>
-        <item name="buttonBarNegativeButtonStyle">@style/Osd.DialogButton.AppCompat</item>
-        <item name="buttonBarNeutralButtonStyle">@style/Osd.DialogButton.AppCompat</item>
-    </style>
-
-    <style name="Osd.DialogButton.Material" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
-        <item name="android:textColor">?attr/colorPrimary</item>
-    </style>
-
-    <style name="Osd.DialogButton.AppCompat" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
-        <item name="android:textColor">?attr/colorAccent</item>
+        <!-- Material Design colors automatically apply here -->
     </style>
 
     <!-- Tab text appearance for better visibility and clickability indication -->

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material Design theme for Android 12+ with blue as the base color -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight">
+        <!-- Set blue as primary - Material Design will derive contrasting colors -->
+        <item name="colorPrimary">#3F51B5</item>
+        <item name="colorPrimaryDark">#303F9F</item>
+        <item name="colorPrimaryVariant">#303F9F</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">#3F51B5</item>
+        <item name="colorSecondaryVariant">#303F9F</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="colorAccent">#FF4081</item>
+        <!-- Blue backgrounds for consistency across all screens -->
+        <item name="android:windowBackground">@color/colorPrimary</item>
+        <item name="android:colorBackground">@color/colorPrimary</item>
+        <item name="colorOnBackground">#FFFFFF</item>
+        <!-- Dark surfaces for dialogs -->
+        <item name="colorSurface">#2A2A3F</item>
+        <item name="colorOnSurface">#E8E8F0</item>
+        <!-- Text colors -->
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">#E0E0E0</item>
+    </style>
+</resources>
+

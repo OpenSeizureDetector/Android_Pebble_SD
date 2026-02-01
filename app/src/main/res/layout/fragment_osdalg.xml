@@ -9,20 +9,20 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="@color/okBackgroundColor">
+        android:background="?attr/colorPrimary">
 
         <TextView
             android:id="@+id/fragment_osdalg_tv2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/okTextColor"
+            android:textColor="?attr/colorOnPrimary"
             android:text="OSD Algorithm Status" />
 
         <TextView
             android:id="@+id/powerTv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/okTextColor"
+            android:textColor="?attr/colorOnPrimary"
             android:text="---" />
 
         <ProgressBar
@@ -36,7 +36,7 @@
             android:id="@+id/spectrumTv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/okTextColor"
+            android:textColor="?attr/colorOnPrimary"
             android:text="---" />
 
         <ProgressBar
@@ -52,7 +52,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/seizure_probability"
-            android:textColor="@color/okTextColor" />
+            android:textColor="?attr/colorOnPrimary" />
 
         <ProgressBar
             android:id="@+id/pSeizureProgressBarM2"

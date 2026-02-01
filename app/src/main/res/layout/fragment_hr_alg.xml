@@ -9,20 +9,20 @@
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/okBackgroundColor"
+        android:background="?attr/colorPrimary"
         android:orientation="vertical">
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/heart_rate_algorithm"
-            android:textColor="@color/okTextColor"/>
+            android:textColor="?attr/colorOnPrimary"/>
 
         <TextView
             android:id="@+id/fragment_hr_alg_tv1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="HR Algorithm Status"
-            android:textColor="@color/okTextColor" />
+            android:textColor="?attr/colorOnPrimary" />
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
@@ -32,20 +32,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Current HR: "
-                android:textColor="@color/okTextColor" />
+                android:textColor="?attr/colorOnPrimary" />
 
             <TextView
                 android:id="@+id/current_hr_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="---"
-                android:textColor="@color/okTextColor" />
+                android:textColor="?attr/colorOnPrimary" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=" bpm"
-                android:textColor="@color/okTextColor" />
+                android:textColor="?attr/colorOnPrimary" />
         </androidx.appcompat.widget.LinearLayoutCompat>
 
         <androidx.appcompat.widget.LinearLayoutCompat
@@ -56,20 +56,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Adaptive Threshold Average HR: "
-                android:textColor="@color/okTextColor" />
+                android:textColor="?attr/colorOnPrimary" />
 
             <TextView
                 android:id="@+id/adaptive_avg_hr_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="---"
-                android:textColor="@color/okTextColor" />
+                android:textColor="?attr/colorOnPrimary" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=" bpm"
-                android:textColor="@color/okTextColor" />
+                android:textColor="?attr/colorOnPrimary" />
         </androidx.appcompat.widget.LinearLayoutCompat>
 
         <TextView
@@ -77,14 +77,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="TextView"
-            android:textColor="@color/okTextColor"/>
+            android:textColor="?attr/colorOnPrimary"/>
 <!--
         <androidx.appcompat.widget.SwitchCompat
             android:id="@+id/hr_average_switch"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Show averages"
-            android:textColor="@color/okTextColor"/>
+            android:textColor="?attr/colorOnPrimary"/>
 -->
         <FrameLayout
             android:layout_width="match_parent"
