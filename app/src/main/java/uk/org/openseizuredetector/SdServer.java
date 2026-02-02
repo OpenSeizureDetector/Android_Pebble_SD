@@ -25,6 +25,7 @@
 
 
 package uk.org.openseizuredetector;
+import uk.org.openseizuredetector.R;
 
 import android.app.ActivityManager;
 import android.app.Notification;
@@ -75,6 +76,24 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Timer;
 
+import uk.org.openseizuredetector.activity.logging.LogManager;
+import uk.org.openseizuredetector.datasource.SdDataReceiver;
+import uk.org.openseizuredetector.datasource.SdDataSource;
+import uk.org.openseizuredetector.datasource.SdDataSourceAw;
+import uk.org.openseizuredetector.datasource.SdDataSourceBLE;
+import uk.org.openseizuredetector.datasource.SdDataSourceBLE2;
+import uk.org.openseizuredetector.datasource.SdDataSourceGarmin;
+import uk.org.openseizuredetector.datasource.SdDataSourceNetwork;
+import uk.org.openseizuredetector.datasource.SdDataSourcePebble;
+import uk.org.openseizuredetector.datasource.SdDataSourcePhone;
+import uk.org.openseizuredetector.utils.LocationFinder;
+import uk.org.openseizuredetector.utils.SdLocationReceiver;
+import uk.org.openseizuredetector.utils.OsdUtil;
+import uk.org.openseizuredetector.utils.SdData;
+import uk.org.openseizuredetector.webserver.SdWebServer;
+import uk.org.openseizuredetector.activity.auth.AuthenticateActivity;
+import uk.org.openseizuredetector.activity.logging.LogManagerControlActivity;
+import uk.org.openseizuredetector.activity.main.MainActivity2;
 /**
  * Based on example at:
  * http://stackoverflow.com/questions/14309256/using-nanohttpd-in-android
@@ -166,7 +185,7 @@ public class SdServer extends Service implements SdDataReceiver {
      * so it can access mSdData.
      */
     public class SdBinder extends Binder {
-        SdServer getService() {
+        public SdServer getService() {
             return SdServer.this;
         }
     }

@@ -52,11 +52,11 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".OnboardingActivity"
+            android:name=".activity.onboarding.OnboardingActivity"
             android:exported="false"
             android:theme="@style/AppTheme" />
         <activity
-            android:name=".MainActivity2"
+            android:name=".activity.main.MainActivity2"
             android:exported="false" />
         <!--<activity
             android:name=".MlModelManager"
@@ -64,11 +64,11 @@
             android:label="@string/title_activity_ml_model_manager"
             android:theme="@style/AppTheme" />
             -->
-        <activity android:name=".AuthenticateActivity" /> <!-- @android:style/Theme.Holo.Light" -->
-        <activity android:name=".BLEScanActivity" />
-        <activity android:name=".ExportDataActivity" /> <!-- android:usesCleartextTraffic="true" -->
+        <activity android:name=".activity.auth.AuthenticateActivity" /> <!-- @android:style/Theme.Holo.Light" -->
+        <activity android:name=".activity.bluetooth.BLEScanActivity" />
+        <activity android:name=".activity.export.ExportDataActivity" /> <!-- android:usesCleartextTraffic="true" -->
         <activity
-            android:name=".StartupActivity"
+            android:name=".activity.startup.StartupActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -77,12 +77,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:icon="@drawable/star_of_life_48x48"
-            android:label="@string/app_name" />
-        <activity
-            android:name=".PrefActivity"
+            android:name=".activity.settings.PrefActivity"
             android:label="OpenSeizureDetector Preferences" />
         <activity
             android:name="com.rohitss.uceh.UCEDefaultActivity"
@@ -93,13 +88,13 @@
             android:foregroundServiceType="health"
             android:exported="false" />
 
-        <activity android:name=".LogManagerControlActivity" />
-        <activity android:name=".EditEventActivity" />
-        <activity android:name=".RemoteDbActivity" />
-        <activity android:name=".ReportSeizureActivity" />
+        <activity android:name=".activity.logging.LogManagerControlActivity" />
+        <activity android:name=".activity.events.EditEventActivity" />
+        <activity android:name=".activity.remote.RemoteDbActivity" />
+        <activity android:name=".activity.events.ReportSeizureActivity" />
 
         <receiver
-            android:name=".BootBroadcastReceiver"
+            android:name=".utils.BootBroadcastReceiver"
             android:exported="true"
             android:label="BootBroadcastReceiver">
             <intent-filter>
