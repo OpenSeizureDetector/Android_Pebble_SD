@@ -280,6 +280,11 @@ public class AuthenticateActivity extends AppCompatActivity {
                                     mUtil.showToast("Login Successful");
                                     saveAuthToken(retVal);
                                     updateUi();
+                                    // Trigger immediate upload after successful login
+                                    if (mLm != null) {
+                                        Log.i(TAG, "Authentication successful - triggering immediate upload");
+                                        mLm.triggerImmediateUpload();
+                                    }
                                 } else {
                                     Log.e(TAG, "onOk: Authentication failure for " + uname + ", " + passwd);
                                     mUtil.showToast("ERROR: Authentication Failed - Please Try Again");

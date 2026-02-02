@@ -77,6 +77,7 @@ import java.util.List;
 import java.util.Timer;
 
 import uk.org.openseizuredetector.activity.logging.LogManager;
+import uk.org.openseizuredetector.alg.MlModelManager;
 import uk.org.openseizuredetector.datasource.SdDataReceiver;
 import uk.org.openseizuredetector.datasource.SdDataSource;
 import uk.org.openseizuredetector.datasource.SdDataSourceAw;
@@ -128,6 +129,10 @@ public class SdServer extends Service implements SdDataReceiver {
     private CheckEventsTimer mEventsTimer = null;
     private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
     private boolean mFaultTimerCompleted = false;
+
+    private CheckModelUpdateTimer mModelUpdateTimer = null;
+    private long mModelUpdateCheckPeriod = 86400;  // Model update check period in seconds (default: 1 day)
+    private MlModelManager mMlModelManager = null;
 
     private HandlerThread thread;
     private WakeLock mWakeLock = null;
@@ -372,6 +377,14 @@ public class SdServer extends Service implements SdDataReceiver {
             startEventsTimer();
         }
 
+
+        // Initialize ML Model Manager and start model update check timer
+        if (mMlModelManager == null) {
+            mMlModelManager = new MlModelManager(this);
+        }
+        if (mModelUpdateCheckPeriod > 0) {
+            startModelUpdateTimer();
+        }
 
         // Start the web server
         mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting web server");
@@ -1267,10 +1280,22 @@ public class SdServer extends Service implements SdDataReceiver {
                     Log.v(TAG, "NetworkBroadcastReceiver - no Wifi Connection");
                     mUtil.writeToSysLogFile("Network State Changed - no Wifi Connection");
                     mUtil.showToast(getString(R.string.no_wifi_connection));
+                    // If mobile data logging is enabled, trigger upload
+                    if (mLogDataRemoteMobile && mLm != null) {
+                        Log.i(TAG, "NetworkBroadcastReceiver - Mobile data connected and remote mobile logging enabled - triggering upload");
+                        mUtil.writeToSysLogFile("NetworkBroadcastReceiver - triggering upload on mobile data");
+                        mLm.triggerImmediateUpload();
+                    }
                 } else {
                     Log.v(TAG, "NetworkBroadcastReceiver - Wifi Connected");
                     mUtil.writeToSysLogFile("Network State Changed - Wifi Connected");
                     //mUtil.showToast("Network State Changed - Wifi Connected");
+                    // Trigger immediate upload when WiFi becomes available
+                    if (mLm != null) {
+                        Log.i(TAG, "NetworkBroadcastReceiver - WiFi connected - triggering upload");
+                        mUtil.writeToSysLogFile("NetworkBroadcastReceiver - triggering upload on WiFi connection");
+                        mLm.triggerImmediateUpload();
+                    }
                 }
             } else {
                 Log.v(TAG, "NetworkBroadcastReceiver - No Active Network");
@@ -1417,6 +1442,19 @@ public class SdServer extends Service implements SdDataReceiver {
             mOSDUrl = SP.getString("OSDUrl", "http://openseizuredetector.org.uk/webApi");
             Log.v(TAG, "updatePrefs() - mOSDUrl = " + mOSDUrl);
             mUtil.writeToSysLogFile("updatePrefs() - mOSDUrl = " + mOSDUrl);
+
+            // ML Model Update Check Period
+            prefVal = SP.getString("MlModelUpdateCheckPeriod", "86400");
+            long newPeriod = Long.parseLong(prefVal);
+            if (newPeriod != mModelUpdateCheckPeriod) {
+                mModelUpdateCheckPeriod = newPeriod;
+                // Restart the timer with new period
+                stopModelUpdateTimer();
+                if (mModelUpdateCheckPeriod > 0) {
+                    startModelUpdateTimer();
+                }
+            }
+            Log.v(TAG, "updatePrefs() - mModelUpdateCheckPeriod = " + mModelUpdateCheckPeriod);
 
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!" + ex.toString());
@@ -1920,7 +1958,192 @@ public class SdServer extends Service implements SdDataReceiver {
         }
         return (false);
     }
+
+    /**
+     * Start the ML model update check timer
+     */
+    public void startModelUpdateTimer() {
+        if (mModelUpdateTimer != null) {
+            Log.v(TAG, "startModelUpdateTimer(): timer already running - cancelling it.");
+            stopModelUpdateTimer();
+        }
+        if (mModelUpdateCheckPeriod > 0) {
+            Log.v(TAG, "startModelUpdateTimer(): starting timer.");
+            mUtil.writeToSysLogFile("startModelUpdateTimer() - starting timer");
+            runOnUiThread(new Runnable() {
+                public void run() {
+                    mModelUpdateTimer =
+                            // Run every configured period (convert to ms.)
+                            new CheckModelUpdateTimer(mModelUpdateCheckPeriod * 1000, 1000);
+                    mModelUpdateTimer.mIsRunning = true;
+                    mModelUpdateTimer.start();
+                }
+            });
+        }
+    }
+
+    public void stopModelUpdateTimer() {
+        if (mModelUpdateTimer != null) {
+            Log.v(TAG, "stopModelUpdateTimer(): timer already running - cancelling it.");
+            mUtil.writeToSysLogFile("stopModelUpdateTimer() - stopping timer, setting mIsRunning to false");
+            mModelUpdateTimer.mIsRunning = false;
+            mModelUpdateTimer.cancel();
+            mModelUpdateTimer = null;
+        } else {
+            Log.v(TAG, "stopModelUpdateTimer(): timer not running - not doing anything.");
+        }
+    }
+
+    private void checkForModelUpdate() {
+        Log.v(TAG, "checkForModelUpdate()");
+        if (mMlModelManager == null) {
+            Log.w(TAG, "checkForModelUpdate(): mMlModelManager is null");
+            return;
+        }
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        // Store last check time
+        prefs.edit().putLong("LastModelUpdateCheck", System.currentTimeMillis()).apply();
+
+        mMlModelManager.checkForModelUpdate(prefs, new MlModelManager.ModelUpdateCallback() {
+            @Override
+            public void onUpdateAvailable(JSONObject recommendedModel) {
+                Log.i(TAG, "checkForModelUpdate(): Update available");
+                runOnUiThread(() -> showModelUpdateDialog(recommendedModel));
+            }
+
+            @Override
+            public void onNoUpdate() {
+                Log.d(TAG, "checkForModelUpdate(): No update available");
+            }
+        });
+    }
+
+    /**
+     * Show a dialog to prompt the user to download a new recommended ML model
+     */
+    private void showModelUpdateDialog(JSONObject recommendedModel) {
+        try {
+            String modelName = recommendedModel.optString("name", "Unknown");
+            String message = getString(R.string.ml_model_update_available_message, modelName);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
+            builder.setTitle(R.string.ml_model_update_available_title);
+            builder.setMessage(message);
+            builder.setCancelable(true);
+
+            // Download Now button
+            builder.setPositiveButton(R.string.ml_model_update_download_button, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Log.i(TAG, "User chose to download new model");
+                    downloadModelUpdate(recommendedModel);
+                }
+            });
+
+            // Remind Me Later button
+            builder.setNeutralButton(R.string.ml_model_update_later_button, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Log.i(TAG, "User chose to be reminded later");
+                    dialog.dismiss();
+                }
+            });
+
+            // Skip This Version button
+            builder.setNegativeButton(R.string.ml_model_update_skip_button, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    Log.i(TAG, "User chose to skip this model version");
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(SdServer.this);
+                    prefs.edit().putString("SkippedModelName", recommendedModel.optString("name")).apply();
+                    dialog.dismiss();
+                }
+            });
+
+            AlertDialog dialog = builder.create();
+            // Make the dialog show over other apps (required for background service)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                dialog.getWindow().setType(android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
+            } else {
+                dialog.getWindow().setType(android.view.WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+            }
+            dialog.show();
+
+        } catch (Exception e) {
+            Log.e(TAG, "showModelUpdateDialog(): Error showing dialog: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Download and install a new ML model
+     */
+    private void downloadModelUpdate(JSONObject modelInfo) {
+        try {
+            String fname = modelInfo.optString("fname");
+            String inputFmtStr = modelInfo.optString("input_format", "1d_mag");
+            int inputSize = modelInfo.optInt("input_size", 125);
+            String framework = modelInfo.optString("framework", "tflite");
+
+            java.util.concurrent.atomic.AtomicBoolean cancelFlag = new java.util.concurrent.atomic.AtomicBoolean(false);
+
+            mMlModelManager.downloadModel(fname, cancelFlag, (ok, file) -> {
+                if (!ok || file == null) {
+                    Log.e(TAG, "downloadModelUpdate(): Failed to download model");
+                    mUtil.showToast(getString(R.string.ml_model_download_failed));
+                    return;
+                }
+
+                // Store the model details in shared preferences
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                prefs.edit()
+                        .putString("CnnModelFile", file.getAbsolutePath())
+                        .putString("CnnModelName", modelInfo.optString("name"))
+                        .putString("CnnInputFormatStr", inputFmtStr)
+                        .putInt("CnnInputSize", inputSize)
+                        .putString("CnnFramework", framework)
+                        .putString("CnnModelId", modelInfo.optString("name"))
+                        .remove("SkippedModelName")  // Clear any skipped version
+                        .apply();
+
+                Log.i(TAG, "downloadModelUpdate(): Model downloaded and installed successfully");
+                mUtil.showToast(getString(R.string.ml_model_download_success));
+            });
+
+        } catch (Exception e) {
+            Log.e(TAG, "downloadModelUpdate(): Error: " + e.getMessage());
+            mUtil.showToast(getString(R.string.ml_model_download_failed));
+        }
+    }
+
+    /**
+     * Periodically check if a new recommended ML model is available
+     */
+    private class CheckModelUpdateTimer extends CountDownTimer {
+        public boolean mIsRunning = true;
+
+        public CheckModelUpdateTimer(long startTime, long interval) {
+            super(startTime, interval);
+        }
+
+        @Override
+        public void onFinish() {
+            Log.v(TAG, "CheckModelUpdateTimer.onFinish()");
+            checkForModelUpdate();
+            if (mIsRunning) {
+                // Restart this timer.
+                Log.v(TAG, "CheckModelUpdateTimer.onFinish() - mIsRunning is true, so re-starting timer");
+                start();
+            }
+        }
+
+        @Override
+        public void onTick(long msRemaining) {
+        }
+    }
 }
+
 
 
 

@@ -141,6 +141,14 @@
             android:key="MlModelSelector"
             android:title="@string/ml_model_select_title"
             android:summary="@string/ml_model_select_summary" />
+        <ListPreference
+            android:key="MlModelUpdateCheckPeriod"
+            android:title="@string/ml_model_update_check_title"
+            android:summary="@string/ml_model_update_check_summary"
+            android:entries="@array/ml_model_update_periods"
+            android:entryValues="@array/ml_model_update_periods_values"
+            android:defaultValue="86400"
+            android:dialogTitle="@string/ml_model_update_check_title" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/HeartRateAlarmSettingsTitle">
         <CheckBoxPreference

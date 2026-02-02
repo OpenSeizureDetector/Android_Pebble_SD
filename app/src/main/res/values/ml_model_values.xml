@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Arrays used for Machine Learning Model preferences -->
+<resources>
+    <string-array name="ml_model_update_periods">
+        <item>"Never"</item>
+        <item>"Daily"</item>
+        <item>"Weekly"</item>
+        <item>"Monthly"</item>
+    </string-array>
+    <string-array name="ml_model_update_periods_values">
+        <item>"0"</item>
+        <item>"86400"</item>
+        <item>"604800"</item>
+        <item>"2592000"</item>
+    </string-array>
+</resources>

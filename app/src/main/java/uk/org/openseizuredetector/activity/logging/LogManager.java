@@ -1032,6 +1032,27 @@ public class LogManager {
     /***************************************************************************************
      * Remote Database Part
      */
+
+    /**
+     * Trigger an immediate upload attempt, typically called when network state changes
+     * or after successful authentication. This bypasses the normal timer cycle.
+     * Note: We don't call checkServerConnection() here to avoid unnecessary data usage -
+     * the actual upload attempt will verify connectivity if there's data to upload.
+     */
+    public void triggerImmediateUpload() {
+        Log.i(TAG, "triggerImmediateUpload() - triggered by network change or authentication");
+
+        // Refresh the network request queue to ensure we're using current network state
+        if (!USE_FIREBASE_BACKEND && mWac != null) {
+            if (mWac instanceof WebApiConnection_osdapi) {
+                ((WebApiConnection_osdapi) mWac).onNetworkChange();
+            }
+        }
+
+        // Attempt to upload immediately (if there's data, this will verify connectivity)
+        writeToRemoteServer();
+    }
+
     public void writeToRemoteServer() {
         Log.v(TAG, "writeToRemoteServer()");
         if (!mLogRemote) {

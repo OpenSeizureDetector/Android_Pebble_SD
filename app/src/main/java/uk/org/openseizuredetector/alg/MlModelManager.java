@@ -67,6 +67,11 @@ public class MlModelManager {
         void onComplete(ModelLoadResult result);
     }
 
+    public interface ModelUpdateCallback {
+        void onUpdateAvailable(JSONObject recommendedModel);
+        void onNoUpdate();
+    }
+
     public static class ModelLoadResult {
         public final String framework;
         public final java.nio.MappedByteBuffer tfliteBuffer;
@@ -436,5 +441,78 @@ public class MlModelManager {
         }
         return out;
     }
-}
 
+    /**
+     * Check if a new recommended model is available.
+     * Compares the recommended model from the server with the currently installed model.
+     * Calls callback with the recommended model info if an update is available, otherwise calls onNoUpdate.
+     *
+     * @param prefs SharedPreferences to read current model info
+     * @param callback Callback to notify of update availability
+     */
+    public void checkForModelUpdate(android.content.SharedPreferences prefs, ModelUpdateCallback callback) {
+        Log.v(TAG, "checkForModelUpdate()");
+
+        // Get current model info
+        String currentModelName = prefs.getString("CnnModelName", null);
+        String skippedModelName = prefs.getString("SkippedModelName", null);
+
+        Log.d(TAG, "checkForModelUpdate(): currentModelName=" + currentModelName + ", skippedModelName=" + skippedModelName);
+
+        // Fetch the model index
+        getMlModelIndex(arr -> {
+            if (arr == null || arr.length() == 0) {
+                Log.w(TAG, "checkForModelUpdate(): No models available from server");
+                callback.onNoUpdate();
+                return;
+            }
+
+            try {
+                // Find the recommended model
+                JSONObject recommendedModel = null;
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject model = arr.getJSONObject(i);
+                    if (model.optBoolean("recommended", false)) {
+                        recommendedModel = model;
+                        break;
+                    }
+                }
+
+                if (recommendedModel == null) {
+                    Log.w(TAG, "checkForModelUpdate(): No recommended model found in index");
+                    callback.onNoUpdate();
+                    return;
+                }
+
+                String recommendedName = recommendedModel.optString("name", "");
+                Log.d(TAG, "checkForModelUpdate(): recommendedName=" + recommendedName);
+
+                // Check if we need to update
+                if (currentModelName == null || currentModelName.isEmpty()) {
+                    // No model installed, offer the recommended one
+                    Log.i(TAG, "checkForModelUpdate(): No current model, recommending: " + recommendedName);
+                    callback.onUpdateAvailable(recommendedModel);
+                } else if (!currentModelName.equals(recommendedName)) {
+                    // Different model is recommended
+                    if (recommendedName.equals(skippedModelName)) {
+                        // User already skipped this version
+                        Log.d(TAG, "checkForModelUpdate(): User already skipped model: " + recommendedName);
+                        callback.onNoUpdate();
+                    } else {
+                        // New recommended model available
+                        Log.i(TAG, "checkForModelUpdate(): New recommended model available: " + recommendedName);
+                        callback.onUpdateAvailable(recommendedModel);
+                    }
+                } else {
+                    // Already have the recommended model
+                    Log.d(TAG, "checkForModelUpdate(): Already have recommended model: " + recommendedName);
+                    callback.onNoUpdate();
+                }
+
+            } catch (JSONException e) {
+                Log.e(TAG, "checkForModelUpdate(): Error parsing model index: " + e.getMessage());
+                callback.onNoUpdate();
+            }
+        });
+    }
+}

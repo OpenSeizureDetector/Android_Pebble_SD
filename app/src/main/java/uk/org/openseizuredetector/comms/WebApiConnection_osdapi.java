@@ -46,6 +46,22 @@ public class WebApiConnection_osdapi extends WebApiConnection {
     }
 
     /**
+     * Called when network state changes to refresh the request queue.
+     * This ensures we're using a fresh network connection and not cached stale state.
+     */
+    public void onNetworkChange() {
+        Log.i(TAG, "onNetworkChange() - refreshing RequestQueue for new network state");
+        try {
+            if (mQueue != null) {
+                mQueue.stop();
+            }
+            mQueue = Volley.newRequestQueue(mContext);
+        } catch (Exception e) {
+            Log.e(TAG, "onNetworkChange() - Error refreshing RequestQueue: " + e.getMessage());
+        }
+    }
+
+    /**
      * Attempt to authenticate with the web API using user name uname and password passwd.  Calls function callback with either
      * the authentication token on success or null on failure.
      *
