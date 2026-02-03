@@ -11,7 +11,9 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-import android.text.format.Time;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class FragmentCommon extends FragmentOsdBaseClass {
     String TAG = "FragmentCommon";
@@ -97,11 +99,12 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                 tv.setTextColor(okTextColour);
 
                 tv = (TextView) mRootView.findViewById(R.id.data_time_tv);
-                Time tnow = new Time(Time.getCurrentTimezone());
-                tnow.setToNow();
+                long tnow = System.currentTimeMillis();
                 double tdiff;
-                tdiff = (tnow.toMillis(false) - mConnection.mSdServer.mSdData.dataTime.toMillis(false))/1000.;
-                tv.setText("Time =" + mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S")
+                tdiff = (tnow - mConnection.mSdServer.mSdData.dataTimeMillis) / 1000.;
+                SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+                String timeStr = timeFormat.format(new Date(mConnection.mSdServer.mSdData.dataTimeMillis));
+                tv.setText("Time =" + timeStr
                         + "  (" + String.format("%.0f s, %.1f s)",mConnection.mSdServer.mSdData.timeDiff, tdiff));
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);

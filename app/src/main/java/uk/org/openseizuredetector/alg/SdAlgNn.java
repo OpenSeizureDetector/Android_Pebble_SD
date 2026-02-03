@@ -1,7 +1,7 @@
 package uk.org.openseizuredetector.alg;
 
+import uk.org.openseizuredetector.data.SdData;
 import uk.org.openseizuredetector.utils.CircBuf;
-import uk.org.openseizuredetector.utils.SdData;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
@@ -123,7 +123,7 @@ public class SdAlgNn {
                 try {
                     mPtModule = Module.load(filePath);
                     Log.d(TAG, "ExecuTorch model loaded successfully from: " + filePath);
-                    showToast("ExecuTorch model loaded successfully", Toast.LENGTH_SHORT);
+                    //showToast("ExecuTorch model loaded successfully", Toast.LENGTH_SHORT);
                 } catch (Exception e) {
                     Log.e(TAG, "Failed to load ExecuTorch model: " + e.getMessage());
                     String errorMsg = "Failed to load ExecuTorch model. ";

@@ -411,10 +411,12 @@ public class OsdUtil {
                 try {
                     FileWriter of = new FileWriter(getDataStorageDir() + "/" + fname, true);
                     if (msgStr != null) {
-                        String dateTimeStr = tnow.format("%Y-%m-%d %H:%M:%S");
+                        long tnow = System.currentTimeMillis();
+                        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+                        String dateTimeStr = dateTimeFormat.format(new Date(tnow));
                         //Log.v(TAG, "writing msgStr");
                         of.append(dateTimeStr + ", "
-                                + tnow.toMillis(true) + ", "
+                                + tnow + ", "
                                 + msgStr + "<br/>\n");
                     }
                     of.close();

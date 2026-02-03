@@ -543,7 +543,7 @@ public class SdDataSourceBLE extends SdDataSource {
                         }
                         mSdData.mNsamp = rawData.length;
                         mWatchAppRunningCheck = true;
-                        mDataStatusTime = new Time(Time.getCurrentTimezone());
+                        mDataStatusTimeMillis = System.currentTimeMillis();
                         // Process the data to do seizure detection
                         doAnalysis();
                         // Re-start collecting raw data.

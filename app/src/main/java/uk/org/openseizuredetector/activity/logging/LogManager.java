@@ -27,8 +27,8 @@ import uk.org.openseizuredetector.activity.logging.LogManager;
 import uk.org.openseizuredetector.comms.WebApiConnection;
 import uk.org.openseizuredetector.comms.WebApiConnection_firebase;
 import uk.org.openseizuredetector.comms.WebApiConnection_osdapi;
+import uk.org.openseizuredetector.data.SdData;
 import uk.org.openseizuredetector.utils.OsdUtil;
-import uk.org.openseizuredetector.utils.SdData;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -1415,17 +1415,13 @@ public class LogManager {
                 .getDefaultSharedPreferences(mContext);
         mNDATimerStartTime = SP.getLong("NDATimerStartTime", 0);
         if (mNDATimerStartTime == 0) {
-            Time timeNow = new Time(Time.getCurrentTimezone());
-            timeNow.setToNow();
-            mNDATimerStartTime = timeNow.toMillis(true);
+            mNDATimerStartTime = System.currentTimeMillis();
             SharedPreferences.Editor editor = SP.edit();
             editor.putLong("NDATimerStartTime", mNDATimerStartTime);
             editor.putBoolean("LogNDA", true);
             editor.apply();
         }
-        Time timeNow = new Time(Time.getCurrentTimezone());
-        timeNow.setToNow();
-        long tNow = timeNow.toMillis(true);
+        long tNow = System.currentTimeMillis();
         long tDiffMillis = (tNow - mNDATimerStartTime);
         mNDATimeRemaining = mNDALogPeriodHours - tDiffMillis / (3600. * 1000.);
 

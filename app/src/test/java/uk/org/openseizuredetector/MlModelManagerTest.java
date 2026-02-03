@@ -24,6 +24,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 
+import uk.org.openseizuredetector.alg.MlModelManager;
+
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 33)
 public class MlModelManagerTest {

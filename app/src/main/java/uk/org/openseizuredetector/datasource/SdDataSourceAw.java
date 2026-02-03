@@ -147,8 +147,7 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
         mWatchAppRunningCheck = true;
         mSdData.watchConnected = true;
         mSdData.watchAppRunning = true;
-        mDataStatusTime = new Time(Time.getCurrentTimezone());
-        mDataStatusTime.setToNow();
+        mDataStatusTimeMillis = System.currentTimeMillis();
 
         try {
             if (path.equals(PATH_ACCEL_DATA)) {
@@ -366,10 +365,9 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
      */
     @Override
     public void getStatus() {
-        Time tnow = new Time(Time.getCurrentTimezone());
-        tnow.setToNow();
+        long tnow = System.currentTimeMillis();
 
-        long tdiff = tnow.toMillis(false) - mDataStatusTime.toMillis(false);
+        long tdiff = tnow - mDataStatusTimeMillis;
         Log.v(TAG, "getStatus() - mWatchAppRunningCheck=" + mWatchAppRunningCheck +
                 ", tdiff=" + tdiff);
 
@@ -389,7 +387,7 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
         // Reset check flag
         if (mWatchAppRunningCheck) {
             mWatchAppRunningCheck = false;
-            mDataStatusTime.setToNow();
+            mDataStatusTimeMillis = System.currentTimeMillis();
         }
     }
 }

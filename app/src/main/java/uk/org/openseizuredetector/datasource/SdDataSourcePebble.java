@@ -376,8 +376,8 @@ public class SdDataSourcePebble extends SdDataSource {
                 if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
                         == DATA_TYPE_RESULTS) {
                     Log.v(TAG, "DATA_TYPE = Results");
-                    mSdData.dataTime.setToNow();
-                    Log.v(TAG, "mSdData.dataTime=" + mSdData.dataTime);
+                    mSdData.dataTimeMillis = System.currentTimeMillis();
+                    Log.v(TAG, "mSdData.dataTimeMillis=" + mSdData.dataTimeMillis);
 
                     mSdData.alarmState = data.getUnsignedIntegerAsLong(
                             KEY_ALARMSTATE);

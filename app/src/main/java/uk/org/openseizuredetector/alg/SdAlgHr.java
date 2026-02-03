@@ -1,8 +1,8 @@
 package uk.org.openseizuredetector.alg;
 import uk.org.openseizuredetector.R;
 
+import uk.org.openseizuredetector.data.SdData;
 import uk.org.openseizuredetector.utils.CircBuf;
-import uk.org.openseizuredetector.utils.SdData;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;

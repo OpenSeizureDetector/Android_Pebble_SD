@@ -1,9 +1,9 @@
 package uk.org.openseizuredetector.webserver;
 
 import uk.org.openseizuredetector.SdServer;
+import uk.org.openseizuredetector.data.SdData;
 import uk.org.openseizuredetector.datasource.SdDataSource;
 import uk.org.openseizuredetector.utils.OsdUtil;
-import uk.org.openseizuredetector.utils.SdData;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.os.Handler;

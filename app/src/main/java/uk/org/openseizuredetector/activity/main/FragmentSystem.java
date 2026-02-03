@@ -17,6 +17,9 @@ import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Objects;
 
 import uk.org.openseizuredetector.activity.settings.PrefActivity;
@@ -204,7 +207,9 @@ public class FragmentSystem extends FragmentOsdBaseClass {
         try {
             if (mConnection.mBound) {
                 tv = (TextView) mRootView.findViewById(R.id.data_time_tv);
-                tv.setText(mConnection.mSdServer.mSdData.dataTime.format("%H:%M:%S"));
+                SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+                String timeStr = timeFormat.format(new Date(mConnection.mSdServer.mSdData.dataTimeMillis));
+                tv.setText(timeStr);
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
 

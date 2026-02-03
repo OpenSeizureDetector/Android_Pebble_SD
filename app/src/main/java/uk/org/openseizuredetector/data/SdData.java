@@ -22,17 +22,19 @@
   along with pebble_sd.  If not, see <http://www.gnu.org/licenses/>.
 
 */
-package uk.org.openseizuredetector.utils;
+package uk.org.openseizuredetector.data;
 
 import uk.org.openseizuredetector.utils.CircBuf;
-import uk.org.openseizuredetector.utils.SdData;
 import android.os.Parcelable;
 import android.os.Parcel;
-import android.text.format.Time;
 import android.util.Log;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /* based on http://stackoverflow.com/questions/2139134/how-to-send-an-object-from-one-android-activity-to-another-using-intents */
 
@@ -113,7 +115,7 @@ public class SdData implements Parcelable {
     public int mNsamp = 0;
 
     /* Analysis results */
-    public Time dataTime = null;
+    public long dataTimeMillis = 0;
     public float timeDiff = 0f;
     public long alarmState;
     public String alarmCause = "";
@@ -150,8 +152,7 @@ public class SdData implements Parcelable {
         simpleSpec = new int[10];
         rawData = new double[N_RAW_DATA];
         rawData3D = new double[N_RAW_DATA * 3];
-        dataTime = new Time(Time.getCurrentTimezone());
-        dataTime.setToNow();
+        dataTimeMillis = System.currentTimeMillis();
         timeDiff = 0f;
 
         // Initialize the history buffer with zeros so we have initial data for the chart
@@ -175,16 +176,14 @@ public class SdData implements Parcelable {
             //cal.setTime(sdf.parse(jo.optString("dataTimeStr")));
             //dataTime = cal.getTime();
             // FIXME - this doesn't work!!!
-            Time tnow = new Time();
-            tnow.setToNow();
-            if (dataTime != null) {
-                timeDiff = (tnow.toMillis(false)
-                        - dataTime.toMillis(false)) / 1000f;
+            long tnow = System.currentTimeMillis();
+            if (dataTimeMillis != 0) {
+                timeDiff = (tnow - dataTimeMillis) / 1000f;
             } else {
                 timeDiff = 0f;
             }
-            dataTime.setToNow();
-            Log.v(TAG, "fromJSON(): dataTime = " + dataTime.toString());
+            dataTimeMillis = tnow;
+            Log.v(TAG, "fromJSON(): dataTimeMillis = " + dataTimeMillis);
             maxVal = jo.optInt("maxVal");
             maxFreq = jo.optInt("maxFreq");
             specPower = jo.optInt("specPower");
@@ -240,14 +239,17 @@ public class SdData implements Parcelable {
         retval = "SdData.toDatapointJSON() Output";
         try {
             JSONObject jsonObj = new JSONObject();
-            if (dataTime != null) {
-                jsonObj.put("dataTime", dataTime.format("%d-%m-%Y %H:%M:%S"));
-                jsonObj.put("dataTimeStr", dataTime.format("%Y%m%dT%H%M%S"));
+            if (dataTimeMillis != 0) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault());
+                SimpleDateFormat dateStrFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss", Locale.getDefault());
+                Date date = new Date(dataTimeMillis);
+                jsonObj.put("dataTime", dateFormat.format(date));
+                jsonObj.put("dataTimeStr", dateStrFormat.format(date));
             } else {
                 jsonObj.put("dataTimeStr", "00000000T000000");
                 jsonObj.put("dataTime", "00-00-00 00:00:00");
             }
-            Log.v(TAG, "mSdData.dataTime = " + dataTime);
+            Log.v(TAG, "mSdData.dataTimeMillis = " + dataTimeMillis);
             jsonObj.put("maxVal", maxVal);
             jsonObj.put("maxFreq", maxFreq);
             jsonObj.put("specPower", specPower);
@@ -295,9 +297,12 @@ public class SdData implements Parcelable {
         retval = "SdData.toSettingsJSON() Output";
         try {
             JSONObject jsonObj = new JSONObject();
-            if (dataTime != null) {
-                jsonObj.put("dataTime", dataTime.format("%d-%m-%Y %H:%M:%S"));
-                jsonObj.put("dataTimeStr", dataTime.format("%Y%m%dT%H%M%S"));
+            if (dataTimeMillis != 0) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault());
+                SimpleDateFormat dateStrFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss", Locale.getDefault());
+                Date date = new Date(dataTimeMillis);
+                jsonObj.put("dataTime", dateFormat.format(date));
+                jsonObj.put("dataTimeStr", dateStrFormat.format(date));
             } else {
                 jsonObj.put("dataTimeStr", "00000000T000000");
                 jsonObj.put("dataTime", "00-00-00 00:00:00");
@@ -356,14 +361,17 @@ public class SdData implements Parcelable {
         retval = "SdData.toDataString() Output";
         try {
             JSONObject jsonObj = new JSONObject();
-            if (dataTime != null) {
-                jsonObj.put("dataTime", dataTime.format("%d-%m-%Y %H:%M:%S"));
-                jsonObj.put("dataTimeStr", dataTime.format("%Y%m%dT%H%M%S"));
+            if (dataTimeMillis != 0) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault());
+                SimpleDateFormat dateStrFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss", Locale.getDefault());
+                Date date = new Date(dataTimeMillis);
+                jsonObj.put("dataTime", dateFormat.format(date));
+                jsonObj.put("dataTimeStr", dateStrFormat.format(date));
             } else {
                 jsonObj.put("dataTimeStr", "00000000T000000");
                 jsonObj.put("dataTime", "00-00-00 00:00:00");
             }
-            Log.v(TAG, "mSdData.dataTime = " + dataTime);
+            Log.v(TAG, "mSdData.dataTimeMillis = " + dataTimeMillis);
             jsonObj.put("maxVal", maxVal);
             jsonObj.put("maxFreq", maxFreq);
             jsonObj.put("specPower", specPower);
@@ -433,8 +441,9 @@ public class SdData implements Parcelable {
     public String toCSVString(boolean includeRawData) {
         String retval;
         retval = "";
-        if (dataTime != null) {
-            retval = dataTime.format("%d-%m-%Y %H:%M:%S");
+        if (dataTimeMillis != 0) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault());
+            retval = dateFormat.format(new Date(dataTimeMillis));
         } else {
             retval = "00-00-00 00:00:00";
         }

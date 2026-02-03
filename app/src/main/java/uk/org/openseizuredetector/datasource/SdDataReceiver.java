@@ -1,6 +1,6 @@
 package uk.org.openseizuredetector.datasource;
 
-import uk.org.openseizuredetector.utils.SdData;
+import uk.org.openseizuredetector.data.SdData;
 
 public interface SdDataReceiver {
     public void onSdDataReceived(SdData sdData);

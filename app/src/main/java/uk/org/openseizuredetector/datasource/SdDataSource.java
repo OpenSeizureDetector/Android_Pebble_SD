@@ -26,9 +26,9 @@ import uk.org.openseizuredetector.R;
 
 import uk.org.openseizuredetector.alg.SdAlgHr;
 import uk.org.openseizuredetector.alg.SdAlgNn;
+import uk.org.openseizuredetector.data.SdData;
 import uk.org.openseizuredetector.datasource.SdDataSource;
 import uk.org.openseizuredetector.utils.OsdUtil;
-import uk.org.openseizuredetector.utils.SdData;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -560,15 +560,13 @@ public abstract class SdDataSource {
             mSdData.specPower = (long) specPower / ACCEL_SCALE_FACTOR;
             mSdData.roiPower = (long) roiPower / ACCEL_SCALE_FACTOR;
             long tnow = System.currentTimeMillis();
-            if (mSdData.dataTime != null) {
-                mSdData.timeDiff = (tnow
-                        - mSdData.dataTime.toMillis(false)) / 1000f;
+            if (mSdData.dataTimeMillis != 0) {
+                mSdData.timeDiff = (tnow - mSdData.dataTimeMillis) / 1000f;
             } else {
                 mSdData.timeDiff = 0f;
             }
-            mSdData.dataTime.setToNow();
+            mSdData.dataTimeMillis = tnow;
 
-            mSdData.dataTime.setToNow();
             mSdData.maxVal = 0;   // not used
             mSdData.maxFreq = 0;  // not used
             mSdData.haveData = true;
@@ -996,7 +994,7 @@ public abstract class SdDataSource {
             // status time to now and initiate another check.
             if (mWatchAppRunningCheck) {
                 mWatchAppRunningCheck = false;
-                mDataStatusTime.setToNow();
+                mDataStatusTimeMillis = System.currentTimeMillis();
             }
 
             if (!mSdData.haveSettings) {
@@ -1033,10 +1031,10 @@ public abstract class SdDataSource {
             if (mSdData.mHRAlarmActive && mHrFrozenAlarm) {
                 if (mSdData.mHR != mLastHrValue) {
                     mLastHrValue = mSdData.mHR;
-                    mHrStatusTime = tnow;
+                    mHrStatusTimeMillis = tnow;
                     mSdData.mHrFrozenFaultStanding = false;
                 } else {
-                    tdiff = (tnow.toMillis(false) - mHrStatusTime.toMillis(false));
+                    tdiff = (tnow - mHrStatusTimeMillis);
                     if (tdiff > mHrFrozenPeriod * 1000.) {
                         mSdData.mHrFrozenFaultStanding = true;
                     } else {

@@ -1,7 +1,7 @@
 package uk.org.openseizuredetector.activity.main;
 import uk.org.openseizuredetector.R;
 
-import uk.org.openseizuredetector.utils.SdData;
+import uk.org.openseizuredetector.data.SdData;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;

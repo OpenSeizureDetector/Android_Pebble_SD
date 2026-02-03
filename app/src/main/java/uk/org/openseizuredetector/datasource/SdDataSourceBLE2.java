@@ -428,7 +428,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
                         }
                         mSdData.mNsamp = rawData.length;
                         mWatchAppRunningCheck = true;
-                        mDataStatusTime = new Time(Time.getCurrentTimezone());
+                        mDataStatusTimeMillis = System.currentTimeMillis();
                         // Process the data to do seizure detection
                         doAnalysis();
                         mBlePeripheral.readRemoteRssi();  // Update RSSI

@@ -95,7 +95,7 @@ public class MlModelManager {
     }
 
     // Test-friendly constructor allowing URL and index filename injection
-    MlModelManager(Context context, String urlBase, String indexFname) {
+    public MlModelManager(Context context, String urlBase, String indexFname) {
         Log.i(TAG, "MlModelManager Test Constructor");
         mContext = context;
         mUtil = new OsdUtil(mContext, new Handler());

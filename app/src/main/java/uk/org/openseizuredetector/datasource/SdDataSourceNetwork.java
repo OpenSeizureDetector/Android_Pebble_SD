@@ -1,6 +1,6 @@
 package uk.org.openseizuredetector.datasource;
 
-import uk.org.openseizuredetector.utils.SdData;
+import uk.org.openseizuredetector.data.SdData;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;

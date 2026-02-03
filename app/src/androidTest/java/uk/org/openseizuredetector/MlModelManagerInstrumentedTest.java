@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 
+import uk.org.openseizuredetector.alg.MlModelManager;
+
 @RunWith(AndroidJUnit4.class)
 public class MlModelManagerInstrumentedTest {
     private Context context;
@@ -41,16 +43,17 @@ public class MlModelManagerInstrumentedTest {
 
     @Test
     public void testBundledFallbackLoadsOnDevice() throws Exception {
-        SharedPreferences sp = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        android.content.SharedPreferences sp = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
         sp.edit().remove("CnnModelFile").commit();
 
         MlModelManager mm = new MlModelManager(context);
         CountDownLatch latch = new CountDownLatch(1);
-        final java.nio.MappedByteBuffer[] buf = new java.nio.MappedByteBuffer[1];
-        mm.loadModel(sp, buffer -> { buf[0] = buffer; latch.countDown(); });
+        final MlModelManager.ModelLoadResult[] result = new MlModelManager.ModelLoadResult[1];
+        mm.loadModel(sp, loadResult -> { result[0] = loadResult; latch.countDown(); });
 
         assertTrue("Callback not invoked", latch.await(5, TimeUnit.SECONDS));
-        assertNotNull("Bundled model should load on device", buf[0]);
+        assertNotNull("Bundled model should load on device", result[0]);
+        assertNotNull("Model buffer should not be null", result[0].tfliteBuffer);
     }
 
     @Test
@@ -63,16 +66,17 @@ public class MlModelManagerInstrumentedTest {
         fos.write(new byte[256]);
         fos.close();
 
-        SharedPreferences sp = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        android.content.SharedPreferences sp = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
         sp.edit().putString("CnnModelFile", fakeModel.getAbsolutePath()).commit();
 
         MlModelManager mm = new MlModelManager(context);
         CountDownLatch latch = new CountDownLatch(1);
-        final java.nio.MappedByteBuffer[] buf = new java.nio.MappedByteBuffer[1];
-        mm.loadModel(sp, buffer -> { buf[0] = buffer; latch.countDown(); });
+        final MlModelManager.ModelLoadResult[] result = new MlModelManager.ModelLoadResult[1];
+        mm.loadModel(sp, loadResult -> { result[0] = loadResult; latch.countDown(); });
 
         assertTrue("Callback not invoked", latch.await(5, TimeUnit.SECONDS));
-        assertNotNull("Downloaded model should load on device", buf[0]);
+        assertNotNull("Downloaded model should load on device", result[0]);
+        assertNotNull("Model buffer should not be null", result[0].tfliteBuffer);
     }
 
     @Test
