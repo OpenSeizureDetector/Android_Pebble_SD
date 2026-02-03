@@ -1,9 +1,9 @@
 package uk.org.openseizuredetector.datasource;
 
 import uk.org.openseizuredetector.data.SdData;
+import uk.org.openseizuredetector.utils.BackgroundTaskExecutor;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Handler;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
@@ -105,60 +105,67 @@ public class SdDataSourceNetwork extends SdDataSource {
 
     /**
      * Retrive the current Seizure Detector Data from the server.
-     * Uses the DownloadSdDataTask class to download the data in the
-     * background.  The data is processed in DownloadSdDataTask.onPostExecute().
+     * Uses BackgroundTaskExecutor to download the data in the background.
      */
     public void downloadSdData() {
         Log.v(TAG, "downloadSdData()");
-        new DownloadSdDataTask().execute("http://" + mServerIP + ":8080/data");
-    }
 
-    private class DownloadSdDataTask extends AsyncTask<String, Void, SdData> {
-        private SdData sdData;
-
-        @Override
-        protected SdData doInBackground(String... urls) {
-            // params comes from the execute() call: params[0] is the url.
-            sdData = new SdData();
-            try {
-                String result = downloadUrl(urls[0]);
-                if (result.startsWith("Unable to retrieve web page")) {
-                    Log.v(TAG, "doInBackground() - Unable to retrieve data");
+        BackgroundTaskExecutor.execute(
+            () -> {
+                // Background work
+                SdData sdData = new SdData();
+                try {
+                    String url = "http://" + mServerIP + ":8080/data";
+                    String result = downloadUrl(url);
+                    if (result.startsWith("Unable to retrieve web page")) {
+                        Log.v(TAG, "doInBackground() - Unable to retrieve data");
+                        sdData.serverOK = false;
+                        sdData.watchConnected = false;
+                        sdData.watchAppRunning = false;
+                        sdData.alarmState = ALARM_STATE_NETFAULT;
+                        sdData.alarmPhrase = "Warning - No Connection to Server";
+                        Log.v(TAG, "No Connection to Server - sdData = " + sdData.toString());
+                    } else {
+                        Log.v(TAG, "result = " + result);
+                        sdData.fromJSON(result);
+                        // Populate mSdData using the received data.
+                        sdData.serverOK = true;
+                        if (sdData.batteryPc > 0) {
+                            sdData.haveSettings = true;
+                        }
+                        Log.v(TAG, "sdData = " + sdData.toString());
+                    }
+                    return sdData;
+                } catch (IOException e) {
                     sdData.serverOK = false;
                     sdData.watchConnected = false;
                     sdData.watchAppRunning = false;
                     sdData.alarmState = ALARM_STATE_NETFAULT;
                     sdData.alarmPhrase = "Warning - No Connection to Server";
-                    Log.v(TAG, "doInBackground(): No Connection to Server - sdData = " + sdData.toString());
-                } else {
-                    Log.v(TAG, "doInBackground - result = " + result);
-                    sdData.fromJSON(result);
-                    // Populate mSdData using the received data.
-                    sdData.serverOK = true;
-                    if (sdData.batteryPc > 0) {
-                        sdData.haveSettings = true;
-                    }
-                    Log.v(TAG, "doInBackground(): sdData = " + sdData.toString());
+                    Log.v(TAG, "IOException - " + e.toString());
+                    return sdData;
                 }
-                return (sdData);
+            },
+            new BackgroundTaskExecutor.Callback<SdData>() {
+                @Override
+                public void onSuccess(SdData sdData) {
+                    Log.v(TAG, "onSuccess() - sdData = " + sdData.toString());
+                    mSdDataReceiver.onSdDataReceived(sdData);
+                }
 
-            } catch (IOException e) {
-                sdData.serverOK = false;
-                sdData.watchConnected = false;
-                sdData.watchAppRunning = false;
-                sdData.alarmState = ALARM_STATE_NETFAULT;
-                sdData.alarmPhrase = "Warning - No Connection to Server";
-                Log.v(TAG, "doInBackground(): IOException - " + e.toString());
-                return sdData;
+                @Override
+                public void onError(Exception e) {
+                    Log.e(TAG, "Error downloading data", e);
+                    SdData errorData = new SdData();
+                    errorData.serverOK = false;
+                    errorData.watchConnected = false;
+                    errorData.watchAppRunning = false;
+                    errorData.alarmState = ALARM_STATE_NETFAULT;
+                    errorData.alarmPhrase = "Warning - Error downloading data";
+                    mSdDataReceiver.onSdDataReceived(errorData);
+                }
             }
-        }
-
-        // onPostExecute displays the results of the AsyncTask.
-        @Override
-        protected void onPostExecute(SdData sdData) {
-            Log.v(TAG, "onPostExecute() - sdData = " + sdData.toString());
-            mSdDataReceiver.onSdDataReceived(sdData);
-        }
+        );
     }
 
     /**
@@ -167,31 +174,20 @@ public class SdDataSourceNetwork extends SdDataSource {
     @Override
     public void acceptAlarm() {
         Log.v(TAG, "acceptAlarm()");
-        new AcceptAlarmTask().execute("http://" + mServerIP + ":8080/acceptalarm");
-    }
 
-    private class AcceptAlarmTask extends AsyncTask<String, Void, String> {
-        @Override
-        protected String doInBackground(String... urls) {
-            // params comes from the execute() call: params[0] is the url.
+        BackgroundTaskExecutor.executeAndForget(() -> {
             try {
-                String result = downloadUrl(urls[0]);
+                String url = "http://" + mServerIP + ":8080/acceptalarm";
+                String result = downloadUrl(url);
                 if (result.startsWith("Unable to retrieve web page")) {
-                    Log.v(TAG, "doInBackground() - Error accepting alarm");
+                    Log.v(TAG, "Error accepting alarm");
                 } else {
-                    Log.v(TAG, "doInBackground(): Alarm Accepted");
+                    Log.v(TAG, "Alarm Accepted");
                 }
             } catch (IOException e) {
-                Log.v(TAG, "doInBackground(): IOException - " + e.toString());
+                Log.v(TAG, "IOException accepting alarm - " + e.toString());
             }
-            return "Done";
-        }
-
-        // onPostExecute displays the results of the AsyncTask.
-        @Override
-        protected void onPostExecute(String s) {
-            Log.v(TAG, "onPostExecute() - s=" + s);
-        }
+        });
     }
 
 

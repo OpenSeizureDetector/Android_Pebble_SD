@@ -44,7 +44,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
@@ -619,7 +618,7 @@ public class OsdUtil {
         String whereClause = "";
         String[] whereArgs = {};
         String[] columns = {"*"};
-        new SelectQueryTask(mSysLogTableName, columns, null, null,
+        executeSelectQuery(mSysLogTableName, columns, null, null,
                 null, null, "dataTime DESC", (Cursor cursor) -> {
             Log.v(TAG, "getSysLogList - returned " + cursor);
             if (cursor != null) {
@@ -637,66 +636,48 @@ public class OsdUtil {
                 }
             }
             callback.accept(eventsList);
-        }).execute();
+        });
         return (true);
     }
 
     /**
-     * Executes the sqlite query (=SELECT statement)
-     * Use as new SelectQueryTask(xxx,xxx,xx,xxxx).execute()
+     * Executes the sqlite query (=SELECT statement) using BackgroundTaskExecutor
      */
-    static private class SelectQueryTask extends AsyncTask<Void, Void, Cursor> {
-        // Based on https://stackoverflow.com/a/21120199/2104584
-        String mTable;
-        String[] mColumns;
-        String mSelection;
-        String[] mSelectionArgs;
-        String mGroupBy;
-        String mHaving;
-        String mOrderBy;
-        Consumer<Cursor> mCallback;
+    static private void executeSelectQuery(String table, String[] columns, String selection,
+                                          String[] selectionArgs, String groupBy, String having,
+                                          String orderBy, Consumer<Cursor> callback) {
+        BackgroundTaskExecutor.execute(
+            () -> {
+                Log.v(TAG, "SelectQuery: table=" + table + ", columns=" + Arrays.toString(columns)
+                        + ", selection=" + selection + ", selectionArgs=" + Arrays.toString(selectionArgs)
+                        + ", groupBy=" + groupBy + ", having=" + having + ", orderBy=" + orderBy);
 
-        //query(String table, String[] columns, String selection, String[] selectionArgs,
-        // String groupBy, String having, String orderBy)
-        SelectQueryTask(String table, String[] columns, String selection, String[] selectionArgs,
-                        String groupBy, String having, String orderBy, Consumer<Cursor> callback) {
-            // list all the parameters like in normal class define
-            this.mTable = table;
-            this.mColumns = columns;
-            this.mSelection = selection;
-            this.mSelectionArgs = selectionArgs;
-            this.mGroupBy = groupBy;
-            this.mHaving = having;
-            this.mOrderBy = orderBy;
-            this.mCallback = callback;
+                try {
+                    Cursor resultSet = mSysLogDb.query(table, columns, selection,
+                            selectionArgs, groupBy, having, orderBy);
+                    resultSet.moveToFirst();
+                    return resultSet;
+                } catch (SQLException e) {
+                    Log.e(TAG, "SelectQuery: Error selecting Data: " + e.toString());
+                    return null;
+                } catch (IllegalArgumentException e) {
+                    Log.e(TAG, "SelectQuery: Illegal Argument Exception: " + e.toString());
+                    return null;
+                }
+            },
+            new BackgroundTaskExecutor.Callback<Cursor>() {
+                @Override
+                public void onSuccess(Cursor result) {
+                    callback.accept(result);
+                }
 
-        }
-
-        @Override
-        protected Cursor doInBackground(Void... params) {
-            Log.v(TAG, "runSelect.doInBackground()");
-            Log.v(TAG, "SelectQueryTask.doInBackground: mTable=" + mTable + ", mColumns=" + Arrays.toString(mColumns)
-                    + ", mSelection=" + mSelection + ", mSelectionArgs=" + Arrays.toString(mSelectionArgs) + ", mGroupBy=" + mGroupBy
-                    + ", mHaving =" + mHaving + ", mOrderBy=" + mOrderBy);
-
-            try {
-                Cursor resultSet = mSysLogDb.query(mTable, mColumns, mSelection,
-                        mSelectionArgs, mGroupBy, mHaving, mOrderBy);
-                resultSet.moveToFirst();
-                return (resultSet);
-            } catch (SQLException e) {
-                Log.e(TAG, "SelectQueryTask.doInBackground(): Error selecting Data: " + e.toString());
-                return (null);
-            } catch (IllegalArgumentException e) {
-                Log.e(TAG, "SelectQueryTask.doInBackground(): Illegal Argument Exception: " + e.toString());
-                return (null);
+                @Override
+                public void onError(Exception e) {
+                    Log.e(TAG, "SelectQuery error", e);
+                    callback.accept(null);
+                }
             }
-        }
-
-        @Override
-        protected void onPostExecute(final Cursor result) {
-            mCallback.accept(result);
-        }
+        );
     }
 
 

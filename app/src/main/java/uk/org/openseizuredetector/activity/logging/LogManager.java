@@ -28,6 +28,7 @@ import uk.org.openseizuredetector.comms.WebApiConnection;
 import uk.org.openseizuredetector.comms.WebApiConnection_firebase;
 import uk.org.openseizuredetector.comms.WebApiConnection_osdapi;
 import uk.org.openseizuredetector.data.SdData;
+import uk.org.openseizuredetector.utils.BackgroundTaskExecutor;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.ContentValues;
 import android.content.Context;
@@ -38,7 +39,6 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
@@ -510,7 +510,7 @@ public class LogManager {
         String[] columns = {"*"};
         String whereClause = "DataTime>? AND DataTime<?";
         String[] whereArgs = {startDateStr, endDateStr};
-        new SelectQueryTask(mDpTableName, columns, whereClause, whereArgs,
+        executeSelectQuery(mDpTableName, columns, whereClause, whereArgs,
                 null, null, "dataTime DESC", (Cursor cursor) -> {
             Log.v(TAG, "getDataPointsByDate - returned " + cursor);
             if (cursor != null) {
@@ -519,7 +519,7 @@ public class LogManager {
                 Log.w(TAG, "getDatapointsByDate() - returned null result");
                 callback.accept(null);
             }
-        }).execute();
+        });
         return (true);
     }
 
@@ -533,11 +533,10 @@ public class LogManager {
      */
     public void exportToCsvFile(Date endDate, double duration, Uri uri, BooleanCallback callback) {
         Log.v(TAG, "exportToCsvFile(): uri=" + uri.toString());
-        new ExportDataTask(endDate, duration, uri, (boolean retVal) -> {
+        executeExportData(endDate, duration, uri, (boolean retVal) -> {
             Log.v(TAG, "exportToCsvFile - returned " + retVal);
             callback.accept(retVal);
-        }).execute();
-        return;
+        });
     }
 
 
@@ -556,7 +555,7 @@ public class LogManager {
         String whereClause = getEventWhereClause(includeWarnings);
         //sqlStr = "SELECT * from " + mDbTableName + " where Status in (" + statusListStr + ") order by dataTime desc;";
         String[] columns = {"*"};
-        new SelectQueryTask(mEventsTableName, columns, whereClause, whereArgs,
+        executeSelectQuery(mEventsTableName, columns, whereClause, whereArgs,
                 null, null, "dataTime DESC", (Cursor cursor) -> {
             Log.v(TAG, "getEventsList - returned " + cursor);
             if (cursor != null) {
@@ -575,7 +574,7 @@ public class LogManager {
                 }
             }
             callback.accept(eventsList);
-        }).execute();
+        });
         return (true);
     }
 
@@ -656,7 +655,7 @@ public class LogManager {
             whereArgs[i] = whereArgsStatus[i];
         }
         whereArgs[whereArgsStatus.length] = endDateStr;
-        new SelectQueryTask(mEventsTableName, columns, whereClause, whereArgs,
+        executeSelectQuery(mEventsTableName, columns, whereClause, whereArgs,
                 null, null, "dataTime DESC", (Cursor cursor) -> {
             Long recordId = new Long(-1);
             if (cursor != null) {
@@ -671,7 +670,7 @@ public class LogManager {
                 }
             }
             callback.accept(recordId);
-        }).execute();
+        });
         return (true);
     }
 
@@ -688,7 +687,7 @@ public class LogManager {
         String[] columns = {"*", "(julianday(dataTime)-julianday(datetime('" + dateStr + "'))) as ddiff"};
         //SQLStr = "SELECT *, (julianday(dataTime)-julianday(datetime('" + dateStr + "'))) as ddiff from " + mDbTableName + " order by ABS(ddiff) asc;";
         String orderByStr = "ABS(ddiff) asc";
-        new SelectQueryTask(mDpTableName, columns, null, null,
+        executeSelectQuery(mDpTableName, columns, null, null,
                 null, null, orderByStr, (Cursor cursor) -> {
             Log.v(TAG, "getEventsNearestDatapointToDate - returned " + cursor);
             Long recordId = new Long(-1);
@@ -705,7 +704,7 @@ public class LogManager {
                 }
             }
             callback.accept(recordId);
-        }).execute();
+        });
         return (true);
     }
 
@@ -722,7 +721,7 @@ public class LogManager {
         String[] whereArgs = getEventWhereArgs(includeWarnings);
         String whereClause = getEventWhereClause(includeWarnings);
         String[] columns = {"*"};
-        new SelectQueryTask(mEventsTableName, columns, whereClause, whereArgs,
+        executeSelectQuery(mEventsTableName, columns, whereClause, whereArgs,
                 null, null, null, (Cursor cursor) -> {
             //Log.v(TAG, "getLocalEventsCount - returned " + cursor);
             Long eventCount = Long.valueOf(0);
@@ -731,7 +730,7 @@ public class LogManager {
                 Log.v(TAG, "getLocalEventsCount - returned " + eventCount + " records");
             }
             callback.accept(eventCount);
-        }).execute();
+        });
         return (true);
     }
 
@@ -745,7 +744,7 @@ public class LogManager {
         String[] whereArgs = null;
         String whereClause = null;
         String[] columns = {"*"};
-        new SelectQueryTask(mDpTableName, columns, whereClause, whereArgs,
+        executeSelectQuery(mDpTableName, columns, whereClause, whereArgs,
                 null, null, null, (Cursor cursor) -> {
             //Log.v(TAG, "getLocalDatapointsCount - returned " + cursor);
             Long eventCount = Long.valueOf(0);
@@ -754,70 +753,52 @@ public class LogManager {
                 Log.v(TAG, "getLocalDatapointsCount - returned " + eventCount + " records");
             }
             callback.accept(eventCount);
-        }).execute();
+        });
         return (true);
     }
 
 
     /**
-     * Executes the sqlite query (=SELECT statement)
-     * Use as new SelectQueryTask(xxx,xxx,xx,xxxx).execute()
+     * Executes the sqlite query (=SELECT statement) using BackgroundTaskExecutor
      */
-    static private class SelectQueryTask extends AsyncTask<Void, Void, Cursor> {
-        // Based on https://stackoverflow.com/a/21120199/2104584
-        String mTable;
-        String[] mColumns;
-        String mSelection;
-        String[] mSelectionArgs;
-        String mGroupBy;
-        String mHaving;
-        String mOrderBy;
-        CursorCallback mCallback;
+    static private void executeSelectQuery(String table, String[] columns, String selection,
+                                          String[] selectionArgs, String groupBy, String having,
+                                          String orderBy, CursorCallback callback) {
+        BackgroundTaskExecutor.execute(
+            () -> {
+                Log.v(TAG, "SelectQuery: table=" + table + ", columns=" + Arrays.toString(columns)
+                        + ", selection=" + selection + ", selectionArgs=" + Arrays.toString(selectionArgs)
+                        + ", groupBy=" + groupBy + ", having=" + having + ", orderBy=" + orderBy);
 
-        //query(String table, String[] columns, String selection, String[] selectionArgs,
-        // String groupBy, String having, String orderBy)
-        SelectQueryTask(String table, String[] columns, String selection, String[] selectionArgs,
-                        String groupBy, String having, String orderBy, CursorCallback callback) {
-            // list all the parameters like in normal class define
-            this.mTable = table;
-            this.mColumns = columns;
-            this.mSelection = selection;
-            this.mSelectionArgs = selectionArgs;
-            this.mGroupBy = groupBy;
-            this.mHaving = having;
-            this.mOrderBy = orderBy;
-            this.mCallback = callback;
+                try {
+                    Cursor resultSet = mOsdDb.query(table, columns, selection,
+                            selectionArgs, groupBy, having, orderBy);
+                    resultSet.moveToFirst();
+                    return resultSet;
+                } catch (SQLException e) {
+                    Log.e(TAG, "SelectQuery: Error selecting Data: " + e.toString());
+                    return null;
+                } catch (IllegalArgumentException e) {
+                    Log.e(TAG, "SelectQuery: Illegal Argument Exception: " + e.toString());
+                    return null;
+                } catch (NullPointerException e) {
+                    Log.e(TAG, "SelectQuery: Null Pointer Exception: " + e.toString());
+                    return null;
+                }
+            },
+            new BackgroundTaskExecutor.Callback<Cursor>() {
+                @Override
+                public void onSuccess(Cursor result) {
+                    callback.accept(result);
+                }
 
-        }
-
-        @Override
-        protected Cursor doInBackground(Void... params) {
-            //Log.v(TAG, "runSelect.doInBackground()");
-            Log.v(TAG, "SelectQueryTask.doInBackground: mTable=" + mTable + ", mColumns=" + Arrays.toString(mColumns)
-                    + ", mSelection=" + mSelection + ", mSelectionArgs=" + Arrays.toString(mSelectionArgs) + ", mGroupBy=" + mGroupBy
-                    + ", mHaving =" + mHaving + ", mOrderBy=" + mOrderBy);
-
-            try {
-                Cursor resultSet = mOsdDb.query(mTable, mColumns, mSelection,
-                        mSelectionArgs, mGroupBy, mHaving, mOrderBy);
-                resultSet.moveToFirst();
-                return (resultSet);
-            } catch (SQLException e) {
-                Log.e(TAG, "SelectQueryTask.doInBackground(): Error selecting Data: " + e.toString());
-                return (null);
-            } catch (IllegalArgumentException e) {
-                Log.e(TAG, "SelectQueryTask.doInBackground(): Illegal Argument Exception: " + e.toString());
-                return (null);
-            } catch (NullPointerException e) {
-                Log.e(TAG, "SelectQueryTask.doInBackground(): Null Pointer Exception: " + e.toString());
-                return (null);
+                @Override
+                public void onError(Exception e) {
+                    Log.e(TAG, "SelectQuery error", e);
+                    callback.accept(null);
+                }
             }
-        }
-
-        @Override
-        protected void onPostExecute(final Cursor result) {
-            mCallback.accept(result);
-        }
+        );
     }
 
     //query(String table, String[] columns, String selection, String[] selectionArgs,
@@ -825,103 +806,96 @@ public class LogManager {
 
     /**
      * Exports the contents of the local datapoints table between given dates
-     * to a .csv file.
-     * Use as new ExportDataTask(xxx,xxx,xx,xxxx).execute()
+     * to a .csv file using BackgroundTaskExecutor
      */
-    static private class ExportDataTask extends AsyncTask<Void, Void, Boolean> {
-        BooleanCallback mCallback;
-        Date mEndDate;
-        double mDuration;
-        Uri mUri;
+    static private void executeExportData(Date endDate, double duration, Uri uri, BooleanCallback callback) {
+        Log.i(TAG, "executeExportData()");
 
+        BackgroundTaskExecutor.execute(
+            () -> {
+                Log.v(TAG, "ExportData.doInBackground()");
+                long endDateMillis = endDate.getTime();
+                long durationMillis = (long) (duration * 3600. * 1000);
+                long startDateMillis = endDateMillis - durationMillis;
+                Log.v(TAG, "exportData() - endDateMillis=" + endDateMillis + ", startDateMillis=" + startDateMillis + ", durationMillis=" + durationMillis);
+                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                String sDateStr = dateFormat.format(new Date(startDateMillis));
+                String eDateStr = dateFormat.format(new Date(endDateMillis));
+                Log.v(TAG, "ExportData - sDateStr=" + sDateStr + " eDateStr=" + eDateStr);
+                String[] columns = {"*"};
+                String whereClause = "DataTime>? AND DataTime<?";
+                String[] whereArgs = {sDateStr, eDateStr};
 
-        ExportDataTask(Date endDate, double duration, Uri uri, BooleanCallback callback) {
-            Log.i(TAG, "ExportDataTask constructor()");
-            this.mCallback = callback;
-            mEndDate = endDate;
-            mDuration = duration;
-            mUri = uri;
-        }
+                try {
+                    Cursor cursor = mOsdDb.query(mDpTableName, columns, whereClause,
+                            whereArgs, null, null, "dataTime DESC");
+                    cursor.moveToFirst();
 
-        @Override
-        protected Boolean doInBackground(Void... params) {
-            Log.v(TAG, "ExportDataTask.doInBackground()");
-            long endDateMillis = mEndDate.getTime();
-            long durationMillis = (long) (mDuration * 3600. * 1000);
-            long startDateMillis = endDateMillis - durationMillis;
-            Log.v(TAG, "exportDataTask() - endDateMillis=" + endDateMillis + ", startDateMillis=" + startDateMillis + ", durationMillis=" + durationMillis);
-            DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String sDateStr = dateFormat.format(new Date(startDateMillis));
-            String eDateStr = dateFormat.format(new Date(endDateMillis));
-            Log.v(TAG, "ExportDataTask.doInBackground - sDateStr=" + sDateStr + " eDateStr=" + eDateStr);
-            String[] columns = {"*"};
-            String whereClause = "DataTime>? AND DataTime<?";
-            String[] whereArgs = {sDateStr, eDateStr};
+                    Log.v(TAG, "ExportData - returned " + cursor);
+                    if (cursor != null) {
+                        Log.d(TAG, "ExportData - query complete - writing to file....");
+                        try {
+                            ParcelFileDescriptor pfd = mContext.getContentResolver().
+                                    openFileDescriptor(uri, "w");
+                            FileOutputStream fileOutputStream =
+                                    new FileOutputStream(pfd.getFileDescriptor());
+                            fileOutputStream.write(("# dataTime, alarmState, hr, o2sat, accel*125\n").getBytes());
+                            int nRec = writeDatapointsToFile(cursor, fileOutputStream);
+                            // Let the document provider know you're done by closing the stream.
+                            fileOutputStream.close();
+                            pfd.close();
+                            Log.d(TAG, "ExportData - file written ok");
+                            return true;
+                        } catch (FileNotFoundException e) {
+                            e.printStackTrace();
+                            // Show toast on UI thread
+                            BackgroundTaskExecutor.runOnMainThread(() ->
+                                mUtil.showToast(mContext.getString(R.string.error_exporting_data))
+                            );
+                            Log.e(TAG, "ExportData - FileNotFoundException: " + e.toString());
+                            return false;
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            // Show toast on UI thread
+                            BackgroundTaskExecutor.runOnMainThread(() ->
+                                mUtil.showToast(mContext.getString(R.string.error_exporting_data))
+                            );
+                            Log.e(TAG, "ExportData - IOException: " + e.toString());
+                            return false;
+                        }
 
-            try {
-                Cursor cursor = mOsdDb.query(mDpTableName, columns, whereClause,
-                        whereArgs, null, null, "dataTime DESC");
-                cursor.moveToFirst();
-
-                Log.v(TAG, "ExportDataTask.doInBackground()  - returned " + cursor);
-                if (cursor != null) {
-                    Log.d(TAG, "ExportDataTask.doInBackground() - query complete - writing to file....");
-                    try {
-                        ParcelFileDescriptor pfd = mContext.getContentResolver().
-                                openFileDescriptor(mUri, "w");
-                        FileOutputStream fileOutputStream =
-                                new FileOutputStream(pfd.getFileDescriptor());
-                        fileOutputStream.write(("# dataTime, alarmState, hr, o2sat, accel*125\n").getBytes());
-                        int nRec = writeDatapointsToFile(cursor, fileOutputStream);
-                        // Let the document provider know you're done by closing the stream.
-                        fileOutputStream.close();
-                        pfd.close();
-                        Log.d(TAG, "ExportDataTask.doInBackground() - file written ok - notifying callback function....");
-                        mCallback.accept(true);
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                        // Show toast on UI thread
-                        new Handler(android.os.Looper.getMainLooper()).post(() ->
-                            mUtil.showToast(mContext.getString(R.string.error_exporting_data))
-                        );
-                        Log.e(TAG, "ExportDataTask.doInBackground() - FileNotFoundException: " + e.toString());
-                        mCallback.accept(false);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        // Show toast on UI thread
-                        new Handler(android.os.Looper.getMainLooper()).post(() ->
-                            mUtil.showToast(mContext.getString(R.string.error_exporting_data))
-                        );
-                        Log.e(TAG, "ExportDataTask.doInBackground() - IOException: " + e.toString());
-                        mCallback.accept(false);
+                    } else {
+                        Log.w(TAG, "ExportData - returned null result");
+                        return false;
                     }
-
-                } else {
-                    Log.w(TAG, "ExportDataTask.doInBackground() - returned null result");
-                    mCallback.accept(false);
+                } catch (SQLException e) {
+                    Log.e(TAG, "ExportData: Error selecting Data: " + e.toString());
+                    return false;
+                } catch (IllegalArgumentException e) {
+                    Log.e(TAG, "ExportData: Illegal Argument Exception: " + e.toString());
+                    return false;
+                } catch (NullPointerException e) {
+                    Log.e(TAG, "ExportData: Null Pointer Exception: " + e.toString());
+                    return false;
+                }
+            },
+            new BackgroundTaskExecutor.Callback<Boolean>() {
+                @Override
+                public void onSuccess(Boolean result) {
+                    Log.i(TAG, "ExportData.onSuccess() - result: " + result);
+                    callback.accept(result);
                 }
 
-
-                return (true);
-            } catch (SQLException e) {
-                Log.e(TAG, "ExportDataTask.doInBackground(): Error selecting Data: " + e.toString());
-                return (null);
-            } catch (IllegalArgumentException e) {
-                Log.e(TAG, "ExportDataTask.doInBackground(): Illegal Argument Exception: " + e.toString());
-                return (null);
-            } catch (NullPointerException e) {
-                Log.e(TAG, "SelectQueryTask.doInBackground(): Null Pointer Exception: " + e.toString());
-                return (null);
+                @Override
+                public void onError(Exception e) {
+                    Log.e(TAG, "ExportData error", e);
+                    callback.accept(false);
+                }
             }
-        }
+        );
+    }
 
-        @Override
-        protected void onPostExecute(final Boolean result) {
-            Log.i(TAG, "ExportDataTask.onPostExecute() - notifying callback function of result: " + result);
-            mCallback.accept(result);
-        }
-
-        private int writeDatapointsToFile(Cursor c, FileOutputStream fileOutputStream) {
+    private static int writeDatapointsToFile(Cursor c, FileOutputStream fileOutputStream) {
             Log.v(TAG, "writeDatapointsToFile()");
             int nRec = 0;
             JSONArray dataObj;
@@ -985,8 +959,6 @@ public class LogManager {
             }
         }
 
-
-    }
 
 
     private String getEventWhereClause(boolean includeWarnings) {
