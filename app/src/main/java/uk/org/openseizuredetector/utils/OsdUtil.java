@@ -49,7 +49,6 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.text.format.Time;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -68,6 +67,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -397,9 +397,8 @@ public class OsdUtil {
     public void writeToLogFile(String fname, String msgStr) {
         //Log.v(TAG, "writeToLogFile(" + fname + "," + msgStr + ")");
         //showToast("Logging " + msgStr);
-        Time tnow = new Time(Time.getCurrentTimezone());
-        tnow.setToNow();
-        String dateStr = tnow.format("%Y-%m-%d");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String dateStr = dateFormat.format(Calendar.getInstance().getTime());
 
         fname = fname + "_" + dateStr + ".txt";
         // Open output directory on SD Card.

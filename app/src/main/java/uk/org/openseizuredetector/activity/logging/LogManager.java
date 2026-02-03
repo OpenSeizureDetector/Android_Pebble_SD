@@ -43,7 +43,6 @@ import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.ParcelFileDescriptor;
 import android.preference.PreferenceManager;
-import android.text.format.Time;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -61,6 +60,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -1606,9 +1606,7 @@ public class LogManager {
             createNDAEvent();
             // Check if we have been logging NDA events for more than the set limit.  If it has, we disable it
             // and set the start time to zero so it is re-set next time NDA logging is enabled.
-            Time timeNow = new Time(Time.getCurrentTimezone());
-            timeNow.setToNow();
-            long tNow = timeNow.toMillis(true);
+            long tNow = Calendar.getInstance().getTimeInMillis();
             long tDiffMillis = (tNow - mNDATimerStartTime);
             double tDiffHrs = tDiffMillis / (3600. * 1000.);
             mNDATimeRemaining = mNDALogPeriodHours - tDiffHrs;

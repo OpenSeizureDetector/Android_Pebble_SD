@@ -38,7 +38,6 @@ import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.text.format.Time;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -49,6 +48,7 @@ import org.jtransforms.fft.DoubleFFT_1D;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -62,7 +62,7 @@ public abstract class SdDataSource {
     private Timer mStatusTimer;
     private Timer mSettingsTimer;
     private Timer mFaultCheckTimer;
-    protected Time mDataStatusTime;
+    protected long mDataStatusTimeMillis;
     protected boolean mWatchAppRunningCheck = false;
     private int mAppRestartTimeout = 10;  // Timeout before re-starting watch app (sec) if we have not received
     // data after mDataUpdatePeriod
@@ -115,13 +115,13 @@ public abstract class SdDataSource {
     protected String mBleDeviceAddr;
     protected String mBleDeviceName;
     private double mLastHrValue;
-    private Time mHrStatusTime;
+    private long mHrStatusTimeMillis;
     private double mHrFrozenPeriod = 60; // seconds
     private boolean mHrFrozenAlarm;
     private boolean mFidgetDetectorEnabled;
     private double mFidgetPeriod;
     private double mFidgetThreshold;
-    private Time mLastFidget = null;
+    private long mLastFidgetTimeMillis = 0;
 
 
     public SdDataSource(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
@@ -163,7 +163,7 @@ public abstract class SdDataSource {
 
 
         // Start timer to check status of watch regularly.
-        mDataStatusTime = new Time(Time.getCurrentTimezone());
+        mDataStatusTimeMillis = Calendar.getInstance().getTimeInMillis();
         // use a timer to check the status of the pebble app on the same frequency
         // as we get app data.
         if (mStatusTimer == null) {
@@ -182,8 +182,7 @@ public abstract class SdDataSource {
         }
 
         // Initialise time we last received a change in HR value.
-        mHrStatusTime = new Time(Time.getCurrentTimezone());
-        mHrStatusTime.setToNow();
+        mHrStatusTimeMillis = Calendar.getInstance().getTimeInMillis();
         mLastHrValue = -1;
 
         if (mFaultCheckTimer == null) {
@@ -557,13 +556,12 @@ public abstract class SdDataSource {
             }
 
             // Populate the mSdData structure to communicate with the main SdServer service.
-            mDataStatusTime.setToNow();
+            mDataStatusTimeMillis = System.currentTimeMillis();
             mSdData.specPower = (long) specPower / ACCEL_SCALE_FACTOR;
             mSdData.roiPower = (long) roiPower / ACCEL_SCALE_FACTOR;
-            Time tnow = new Time();
-            tnow.setToNow();
+            long tnow = System.currentTimeMillis();
             if (mSdData.dataTime != null) {
-                mSdData.timeDiff = (tnow.toMillis(false)
+                mSdData.timeDiff = (tnow
                         - mSdData.dataTime.toMillis(false)) / 1000f;
             } else {
                 mSdData.timeDiff = 0f;
@@ -945,11 +943,10 @@ public abstract class SdDataSource {
      */
     public void getStatus() {
         try {
-            Time tnow = new Time(Time.getCurrentTimezone());
+            long tnow = System.currentTimeMillis();
             long tdiff;
-            tnow.setToNow();
             // get time since the last data was received from the Pebble watch.
-            tdiff = (tnow.toMillis(false) - mDataStatusTime.toMillis(false));
+            tdiff = tnow - mDataStatusTimeMillis;
             Log.v(TAG, "getStatus() - mWatchAppRunningCheck=" + mWatchAppRunningCheck + " tdiff=" + tdiff);
             Log.v(TAG, "getStatus() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout);
 
@@ -978,15 +975,15 @@ public abstract class SdDataSource {
 
                 // Check we have seen a fidget within the required period, or else assume a fault because watch is not being worn
                 if (mFidgetDetectorEnabled) {
-                    if (mLastFidget == null)
-                        mLastFidget = tnow;   // Initialise last fidget time on startup.
+                    if (mLastFidgetTimeMillis == 0)
+                        mLastFidgetTimeMillis = tnow;   // Initialise last fidget time on startup.
 
                     double accStd = calcRawDataStd(mSdData);
                     if (accStd > mFidgetThreshold) {
-                        mLastFidget = tnow;
+                        mLastFidgetTimeMillis = tnow;
                     } else {
                         Log.d(TAG, "onStatus() - Fidget Detector - low movement - is watch being worn?");
-                        tdiff = (tnow.toMillis(false) - mLastFidget.toMillis(false));
+                        tdiff = tnow - mLastFidgetTimeMillis;
                         if (tdiff > (mFidgetPeriod) * 60 * 1000) {
                             Log.e(TAG, "onStatus() - Fidget Not Detected - is watch being worn?");
                             mSdDataReceiver.onSdDataFault(mSdData);
@@ -1020,12 +1017,11 @@ public abstract class SdDataSource {
      */
     private void faultCheck() {
         try {
-            Time tnow = new Time(Time.getCurrentTimezone());
+            long tnow = System.currentTimeMillis();
             long tdiff;
-            tnow.setToNow();
 
             // get time since the last data was received from the watch.
-            tdiff = (tnow.toMillis(false) - mDataStatusTime.toMillis(false));
+            tdiff = tnow - mDataStatusTimeMillis;
             //Log.v(TAG, "faultCheck() - tdiff=" + tdiff + ", mDataUpatePeriod=" + mDataUpdatePeriod + ", mAppRestartTimeout=" + mAppRestartTimeout
             //        + ", combined = " + (mDataUpdatePeriod + mAppRestartTimeout) * 1000);
             if (!mWatchAppRunningCheck &&
