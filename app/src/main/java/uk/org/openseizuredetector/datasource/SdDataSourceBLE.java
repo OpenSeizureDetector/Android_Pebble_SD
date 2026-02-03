@@ -42,7 +42,6 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Handler;
 import androidx.preference.PreferenceManager;
-import android.text.format.Time;
 import android.util.Log;
 
 import androidx.core.app.ActivityCompat;

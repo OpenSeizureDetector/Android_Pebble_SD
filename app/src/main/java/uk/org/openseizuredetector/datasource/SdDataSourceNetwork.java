@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Handler;
 import androidx.preference.PreferenceManager;
-import android.text.format.Time;
 import android.util.Log;
 
 import java.io.IOException;
@@ -24,7 +23,6 @@ import java.util.TimerTask;
  */
 public class SdDataSourceNetwork extends SdDataSource {
     private String TAG = "SdDataSourceNetwork";
-    private Time mStatusTime;
     private Timer mDataUpdateTimer;
     private int mDataUpdatePeriod = 2000;
     private int mConnnectTimeoutPeriod = 5000;
@@ -47,8 +45,6 @@ public class SdDataSourceNetwork extends SdDataSource {
         updatePrefs();
 
         // Start timer to retrieve seizure detector data regularly.
-        mStatusTime = new Time(Time.getCurrentTimezone());
-        mStatusTime.setToNow();
         if (mDataUpdateTimer == null) {
             Log.v(TAG, "start(): starting data update timer");
             mDataUpdateTimer = new Timer();
@@ -142,7 +138,6 @@ public class SdDataSourceNetwork extends SdDataSource {
                     if (sdData.batteryPc > 0) {
                         sdData.haveSettings = true;
                     }
-                    mStatusTime.setToNow();
                     Log.v(TAG, "doInBackground(): sdData = " + sdData.toString());
                 }
                 return (sdData);

@@ -29,7 +29,6 @@ import uk.org.openseizuredetector.datasource.SdDataSourceAw;
 import android.content.Context;
 import android.os.Handler;
 import androidx.preference.PreferenceManager;
-import android.text.format.Time;
 import android.util.Log;
 
 import com.google.android.gms.tasks.Task;

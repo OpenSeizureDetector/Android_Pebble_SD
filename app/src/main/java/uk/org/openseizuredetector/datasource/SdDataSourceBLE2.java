@@ -39,7 +39,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.format.Time;
 import android.util.Log;
 
 import com.welie.blessed.BluetoothBytesParser;

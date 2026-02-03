@@ -34,7 +34,6 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.preference.PreferenceManager;
-import android.text.format.Time;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -57,7 +56,7 @@ public class SdDataSourcePebble extends SdDataSource {
     private Handler mHandler = new Handler(Looper.getMainLooper());
     private Timer mSettingsTimer;
     private Timer mStatusTimer;
-    private Time mPebbleStatusTime;
+    private long mPebbleStatusTimeMillis;
     private boolean mPebbleAppRunningCheck = false;
     private int mAppRestartTimeout = 10;  // Timeout before re-starting watch app (sec) if we have not received
     // data after mDataUpdatePeriod
@@ -165,7 +164,7 @@ public class SdDataSourcePebble extends SdDataSource {
         updatePrefs();
         startPebbleServer();
         // Start timer to check status of pebble regularly.
-        mPebbleStatusTime = new Time(Time.getCurrentTimezone());
+        mPebbleStatusTimeMillis = System.currentTimeMillis();
         // use a timer to check the status of the pebble app on the same frequency
         // as we get app data.
         if (mStatusTimer == null) {
@@ -670,11 +669,10 @@ public class SdDataSourcePebble extends SdDataSource {
      * If the watch app is not running, it attempts to re-start it.
      */
     public void getPebbleStatus() {
-        Time tnow = new Time(Time.getCurrentTimezone());
+        long tnow = System.currentTimeMillis();
         long tdiff;
-        tnow.setToNow();
         // get time since the last data was received from the Pebble watch.
-        tdiff = (tnow.toMillis(false) - mPebbleStatusTime.toMillis(false));
+        tdiff = (tnow - mPebbleStatusTimeMillis);
         Log.v(TAG, "getStatus() - mPebbleAppRunningCheck=" + mPebbleAppRunningCheck + " tdiff=" + tdiff);
         // Check we are actually connected to the pebble.
         mSdData.watchConnected = PebbleKit.isWatchConnected(mContext);
@@ -697,7 +695,7 @@ public class SdDataSourcePebble extends SdDataSource {
                 Log.v(TAG, "getStatus() - Pebble App Not Running - Attempting to Re-Start");
                 mUtil.writeToSysLogFile("SdDataSourcePebble.getStatus() - Pebble App not Running - Attempting to Re-Start");
                 startWatchApp();
-                mPebbleStatusTime.setToNow();
+                mPebbleStatusTimeMillis = System.currentTimeMillis();
                 mSdDataReceiver.onSdDataFault(mSdData);
             } else {
                 Log.v(TAG, "getStatus() - Waiting for mFaultTimerPeriod before issuing audible warning...");
@@ -710,7 +708,7 @@ public class SdDataSourcePebble extends SdDataSource {
         // status time to now and initiate another check.
         if (mPebbleAppRunningCheck) {
             mPebbleAppRunningCheck = false;
-            mPebbleStatusTime.setToNow();
+            mPebbleStatusTimeMillis = System.currentTimeMillis();
         }
 
         if (!mSdData.haveSettings) {
