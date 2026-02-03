@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 
 import org.json.JSONArray;
 import org.junit.After;
@@ -24,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 
+import androidx.preference.PreferenceManager;
 import uk.org.openseizuredetector.alg.MlModelManager;
 
 @RunWith(RobolectricTestRunner.class)

@@ -5,7 +5,6 @@ import static org.junit.Assert.assertNotNull;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -14,6 +13,7 @@ import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
 
+import androidx.preference.PreferenceManager;
 import uk.org.openseizuredetector.alg.SdAlgHr;
 
 @RunWith(RobolectricTestRunner.class)

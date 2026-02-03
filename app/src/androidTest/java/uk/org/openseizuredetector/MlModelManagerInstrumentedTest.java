@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 
+import androidx.preference.PreferenceManager;
 import uk.org.openseizuredetector.alg.MlModelManager;
 
 @RunWith(AndroidJUnit4.class)
@@ -43,7 +44,7 @@ public class MlModelManagerInstrumentedTest {
 
     @Test
     public void testBundledFallbackLoadsOnDevice() throws Exception {
-        android.content.SharedPreferences sp = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        android.content.SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         sp.edit().remove("CnnModelFile").commit();
 
         MlModelManager mm = new MlModelManager(context);
@@ -66,7 +67,7 @@ public class MlModelManagerInstrumentedTest {
         fos.write(new byte[256]);
         fos.close();
 
-        android.content.SharedPreferences sp = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+        android.content.SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
         sp.edit().putString("CnnModelFile", fakeModel.getAbsolutePath()).commit();
 
         MlModelManager mm = new MlModelManager(context);
