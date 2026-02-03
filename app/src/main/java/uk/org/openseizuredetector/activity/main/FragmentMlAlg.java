@@ -97,7 +97,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
     private String getSelectedModelName() {
         try {
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
-            String selectedModel = sp.getString("SelectedMlModel", "unknown");
+            String selectedModel = sp.getString("CnnModelName", "Bundled Model");
             // Remove file extension and format nicely
             if (selectedModel.contains(".")) {
                 selectedModel = selectedModel.substring(0, selectedModel.lastIndexOf("."));

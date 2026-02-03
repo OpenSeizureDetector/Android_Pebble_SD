@@ -374,6 +374,16 @@ public class MlModelManager {
                     Log.d(TAG, "loadModel(): Loading bundled model: " + DEFAULT_BUNDLED_MODEL);
                     modelBuffer = org.tensorflow.lite.support.common.FileUtil.loadMappedFile(mContext, DEFAULT_BUNDLED_MODEL);
                     fromBundled = true;
+
+                    // Save bundled model info to preferences so UI can display it
+                    String bundledModelName = prefs.getString("CnnModelName", null);
+                    if (bundledModelName == null || bundledModelName.isEmpty()) {
+                        // Only set if not already set (don't overwrite downloaded model name)
+                        prefs.edit()
+                                .putString("CnnModelName", "Bundled Model (v0.24)")
+                                .apply();
+                        Log.d(TAG, "loadModel(): Saved bundled model name to preferences");
+                    }
                 }
 
                 if (modelBuffer == null) {
