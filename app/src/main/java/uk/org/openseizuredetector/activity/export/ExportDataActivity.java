@@ -15,6 +15,7 @@ import android.database.SQLException;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.os.Looper;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
@@ -106,7 +107,7 @@ public class ExportDataActivity extends AppCompatActivity
         });
 
 
-        mHandler = new Handler();
+        mHandler = new Handler(Looper.getMainLooper());
         mUtil = new OsdUtil(this, mHandler);
 
         mDateBtn = (Button) findViewById(R.id.dateBtn);
@@ -163,7 +164,7 @@ public class ExportDataActivity extends AppCompatActivity
             initialiseServiceConnection();
         } else {
             Log.v(TAG, "waitForConnection - waiting...");
-            new Handler().postDelayed(new Runnable() {
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     waitForConnection();

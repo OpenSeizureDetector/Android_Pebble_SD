@@ -9,7 +9,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import android.os.Looper;
+import androidx.preference.PreferenceManager;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
@@ -41,7 +42,7 @@ public class AuthenticateActivity extends AppCompatActivity {
     private EditText mUnameEt;
     private EditText mPasswdEt;
     private SdServiceConnection mConnection;
-    final Handler serverStatusHandler = new Handler();
+    final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
     private WebApiConnection mWac;
     private LogManager mLm;
     private static final String TOKEN_ID = "webApiAuthToken";
@@ -160,7 +161,7 @@ public class AuthenticateActivity extends AppCompatActivity {
             initialiseServiceConnection();
         } else {
             Log.v(TAG, "waitForConnection - waiting...");
-            new Handler().postDelayed(new Runnable() {
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     waitForConnection();

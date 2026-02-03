@@ -134,6 +134,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-tflite-support:16.4.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.preference:preference:1.2.1'
     implementation 'org.apache.commons:commons-math3:3.6.1'
     // google play services used for location finding for SMS alerts.
     //implementation 'com.google.android.gms:play-services:+'

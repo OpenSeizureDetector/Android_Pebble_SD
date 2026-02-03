@@ -41,6 +41,7 @@ import uk.org.openseizuredetector.utils.OsdUncaughtExceptionHandler;
 import android.os.Bundle;
 import uk.org.openseizuredetector.utils.OsdUncaughtExceptionHandler;
 import android.os.Handler;
+import android.os.Looper;
 import uk.org.openseizuredetector.utils.OsdUncaughtExceptionHandler;
 import android.preference.Preference;
 import uk.org.openseizuredetector.utils.OsdUncaughtExceptionHandler;
@@ -48,7 +49,7 @@ import android.preference.PreferenceActivity;
 import uk.org.openseizuredetector.utils.OsdUncaughtExceptionHandler;
 import android.preference.PreferenceFragment;
 import uk.org.openseizuredetector.utils.OsdUncaughtExceptionHandler;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import uk.org.openseizuredetector.utils.OsdUncaughtExceptionHandler;
 import android.util.Log;
 import uk.org.openseizuredetector.utils.OsdUncaughtExceptionHandler;
@@ -86,7 +87,7 @@ public class PrefActivity extends PreferenceActivity implements SharedPreference
         Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(PrefActivity.this));
         //int i = 5/0;  // Force exception to test handler.
 
-        mHandler = new Handler();
+        mHandler = new Handler(Looper.getMainLooper());
         mContext = getApplicationContext();
 
         mUtil = new OsdUtil(mContext, mHandler);

@@ -105,7 +105,7 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                 SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
                 String timeStr = timeFormat.format(new Date(mConnection.mSdServer.mSdData.dataTimeMillis));
                 tv.setText("Time =" + timeStr
-                        + "  (" + String.format("%.0f s, %.1f s)",mConnection.mSdServer.mSdData.timeDiff, tdiff));
+                        + "  (" + String.format("%.1f s, %.0f s)",mConnection.mSdServer.mSdData.timeDiff, tdiff));
                 tv.setBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
 

@@ -29,7 +29,7 @@ import uk.org.openseizuredetector.datasource.SdDataSourceGarmin;
 import uk.org.openseizuredetector.webserver.SdWebServer;
 import android.content.Context;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 
 

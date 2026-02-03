@@ -32,7 +32,7 @@ public class LocationFinder implements LocationListener {
     String TAG = "LocationFinder";
 
     public LocationFinder(Context context) {
-        mHandler = new Handler();
+        mHandler = new Handler(Looper.getMainLooper());
         mUtil = new OsdUtil(context, mHandler);
         mContext = context;
         mLocationListener = this;

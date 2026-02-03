@@ -7,6 +7,7 @@ import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -42,7 +43,7 @@ public class SdWebServer extends NanoHTTPD {
         mSdData = sdData;
         mContext = context;
         mSdServer = sdServer;
-        mHandler = new Handler();
+        mHandler = new Handler(Looper.getMainLooper());
         mUtil = new OsdUtil(mContext, mHandler);
     }
 

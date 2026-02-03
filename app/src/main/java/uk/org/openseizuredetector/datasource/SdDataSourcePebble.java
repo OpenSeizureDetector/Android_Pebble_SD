@@ -32,7 +32,8 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import android.os.Looper;
+import androidx.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 import android.widget.Toast;
@@ -53,7 +54,7 @@ import java.util.UUID;
  * network data source.
  */
 public class SdDataSourcePebble extends SdDataSource {
-    private Handler mHandler = new Handler();
+    private Handler mHandler = new Handler(Looper.getMainLooper());
     private Timer mSettingsTimer;
     private Timer mStatusTimer;
     private Time mPebbleStatusTime;
@@ -360,7 +361,7 @@ public class SdDataSourcePebble extends SdDataSource {
     private void startPebbleServer() {
         Log.v(TAG, "StartPebbleServer()");
         mUtil.writeToSysLogFile("SdDataSourcePebble.startPebbleServer()");
-        final Handler handler = new Handler();
+        final Handler handler = new Handler(Looper.getMainLooper());
         msgDataHandler = new PebbleKit.PebbleDataReceiver(SD_UUID) {
             @Override
             public void receiveData(final Context context,

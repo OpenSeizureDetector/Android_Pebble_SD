@@ -6,7 +6,7 @@ import uk.org.openseizuredetector.utils.CircBuf;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 
 import java.util.ArrayList;

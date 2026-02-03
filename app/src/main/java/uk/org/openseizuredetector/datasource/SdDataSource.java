@@ -37,7 +37,8 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import android.os.Looper;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -58,7 +59,7 @@ import java.util.TimerTask;
  * network data source.
  */
 public abstract class SdDataSource {
-    protected Handler mHandler = new Handler();
+    protected Handler mHandler = new Handler(Looper.getMainLooper());
     private Timer mStatusTimer;
     private Timer mSettingsTimer;
     private Timer mFaultCheckTimer;

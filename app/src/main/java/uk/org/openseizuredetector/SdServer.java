@@ -52,9 +52,9 @@ import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
-import android.preference.PreferenceManager;
 import android.service.notification.StatusBarNotification;
 import android.telephony.SmsManager;
 import android.util.Log;
@@ -63,6 +63,7 @@ import java.util.Calendar;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.NotificationCompat;
+import androidx.preference.PreferenceManager;
 
 import com.rohitss.uceh.UCEHandler;
 
@@ -223,7 +224,7 @@ public class SdServer extends Service implements SdDataReceiver {
     @Override
     public void onCreate() {
         Log.i(TAG, "onCreate()");
-        mHandler = new Handler();
+        mHandler = new Handler(Looper.getMainLooper());
         mSdData = new SdData();
         mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
 

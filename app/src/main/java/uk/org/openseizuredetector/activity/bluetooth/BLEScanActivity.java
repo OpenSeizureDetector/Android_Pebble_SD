@@ -39,7 +39,8 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import android.os.Looper;
+import androidx.preference.PreferenceManager;
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -111,7 +112,7 @@ public class BLEScanActivity extends ListActivity {
 
         //this.getActionBar().setTitle(R.string.title_devices);
         this.setTitle(R.string.title_devices);
-        mHandler = new Handler();
+        mHandler = new Handler(Looper.getMainLooper());
         mUtil = new OsdUtil(this, mHandler);
 
         // Use this check to determine whether BLE is supported on the device.  Then you can

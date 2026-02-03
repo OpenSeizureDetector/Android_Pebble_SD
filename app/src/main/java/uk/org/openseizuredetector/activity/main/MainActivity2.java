@@ -60,7 +60,8 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import android.os.Looper;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -97,8 +98,8 @@ public class MainActivity2 extends AppCompatActivity {
     private Context mContext;
     private OsdUtil mUtil;
     private SdServiceConnection mConnection;
-    final Handler serverStatusHandler = new Handler();
-    private Handler mHandler = new Handler();
+    final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
+    private Handler mHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -134,7 +135,7 @@ public class MainActivity2 extends AppCompatActivity {
         mConnection = new SdServiceConnection(getApplicationContext());
         mUtil.writeToSysLogFile("MainActivity2.onCreate()");
         mContext = this;
-        mHandler = new Handler();
+        mHandler = new Handler(Looper.getMainLooper());
     }
 
     /**

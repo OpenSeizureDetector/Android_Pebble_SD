@@ -13,6 +13,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.IBinder;
 
 import androidx.core.graphics.Insets;
@@ -75,7 +76,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private ArrayList<HashMap<String, String>> mSysLogList;
     private SdServiceConnection mConnection;
     private OsdUtil mUtil;
-    final Handler serverStatusHandler = new Handler();
+    final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
     private Integer mUiTimerPeriodFast = 2000;  // 2 seconds - we use fast updating while UI is blank and we are waiting for first data
     private Integer mUiTimerPeriodSlow = 60000; // 60 seconds - once data has been received and UI populated we only update once per minute.
     private boolean mUpdateSysLog = true;
@@ -225,7 +226,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
             initialiseServiceConnection();
         } else {
             Log.v(TAG, "waitForConnection - waiting...");
-            new Handler().postDelayed(new Runnable() {
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     waitForConnection();
@@ -658,7 +659,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                                     startStopNDAMenuItem.setTitle(R.string.start_nda_menu_title);
                                     mUtil.stopServer();
                                     // Wait 0.1 second to give the server chance to shutdown, then re-start it
-                                    new Handler().postDelayed(new Runnable() {
+                                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                                         public void run() {
                                             mUtil.startServer();
                                         }
@@ -679,7 +680,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                                     startStopNDAMenuItem.setTitle(R.string.stop_nda_menu_title);
                                     mUtil.stopServer();
                                     // Wait 0.1 second to give the server chance to shutdown, then re-start it
-                                    new Handler().postDelayed(new Runnable() {
+                                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                                         public void run() {
                                             mUtil.startServer();
                                         }

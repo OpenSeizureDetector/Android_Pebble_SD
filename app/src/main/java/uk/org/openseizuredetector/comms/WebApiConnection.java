@@ -3,6 +3,7 @@ package uk.org.openseizuredetector.comms;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.Context;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -65,7 +66,7 @@ public abstract class WebApiConnection {
 
     public WebApiConnection(Context context) {
         mContext = context;
-        mUtil = new OsdUtil(mContext, new Handler());
+        mUtil = new OsdUtil(mContext, new Handler(Looper.getMainLooper()));
     }
 
     public void close() {

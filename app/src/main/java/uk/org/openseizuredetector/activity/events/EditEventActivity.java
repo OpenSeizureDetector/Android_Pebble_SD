@@ -8,6 +8,7 @@ import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
@@ -39,7 +40,7 @@ public class EditEventActivity extends AppCompatActivity {
     private WebApiConnection mWac;
     private LogManager mLm;
     private SdServiceConnection mConnection;
-    final Handler serverStatusHandler = new Handler();
+    final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
     private final Handler mUiHandler = new Handler(android.os.Looper.getMainLooper());
     private OsdUtil mUtil;
     private List<String> mEventTypesList = null;
@@ -148,7 +149,7 @@ public class EditEventActivity extends AppCompatActivity {
             initialiseServiceConnection();
         } else {
             Log.v(TAG, "waitForConnection - waiting...");
-            new Handler().postDelayed(new Runnable() {
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     waitForConnection();

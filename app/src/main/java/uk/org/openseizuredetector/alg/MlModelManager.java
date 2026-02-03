@@ -3,6 +3,7 @@ package uk.org.openseizuredetector.alg;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.Context;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
@@ -90,7 +91,7 @@ public class MlModelManager {
     public MlModelManager(Context context) {
         Log.i(TAG, "MlModelManager Constructor");
         mContext = context;
-        mUtil = new OsdUtil(mContext, new Handler());
+        mUtil = new OsdUtil(mContext, new Handler(Looper.getMainLooper()));
         mQueue = Volley.newRequestQueue(mContext);
     }
 
@@ -98,7 +99,7 @@ public class MlModelManager {
     public MlModelManager(Context context, String urlBase, String indexFname) {
         Log.i(TAG, "MlModelManager Test Constructor");
         mContext = context;
-        mUtil = new OsdUtil(mContext, new Handler());
+        mUtil = new OsdUtil(mContext, new Handler(Looper.getMainLooper()));
         mQueue = Volley.newRequestQueue(mContext);
         if (urlBase != null) this.mUrlBase = urlBase;
         if (indexFname != null) this.mModelIndexFname = indexFname;

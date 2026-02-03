@@ -14,6 +14,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.Looper;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -58,7 +59,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
     private String mMsg = "Messages";
     private SdServiceConnection mConnection;
     private OsdUtil mUtil;
-    final Handler serverStatusHandler = new Handler();
+    final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
     private List<String> mEventTypesList = null;
     private HashMap<String, ArrayList<String>> mEventSubTypesHashMap = null;
     private String mEventTypeStr = null;
@@ -166,7 +167,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
             initialiseServiceConnection();
         } else {
             Log.v(TAG, "waitForConnection - waiting...");
-            new Handler().postDelayed(new Runnable() {
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     waitForConnection();

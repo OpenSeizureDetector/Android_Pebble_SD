@@ -12,7 +12,8 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
-import android.preference.PreferenceManager;
+import android.os.Looper;
+import androidx.preference.PreferenceManager;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -34,7 +35,7 @@ public class RemoteDbActivity extends AppCompatActivity {
     private WebView mWebView;
     private SdServiceConnection mConnection;
     private OsdUtil mUtil;
-    final Handler serverStatusHandler = new Handler();
+    final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
     private String TOKEN_ID = "webApiAuthToken";
     private String mRemtoteUrl = "https://osdapi.ddns.net/";
 
@@ -97,7 +98,7 @@ public class RemoteDbActivity extends AppCompatActivity {
             initialiseServiceConnection();
         } else {
             Log.v(TAG, "waitForConnection - waiting...");
-            new Handler().postDelayed(new Runnable() {
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     waitForConnection();

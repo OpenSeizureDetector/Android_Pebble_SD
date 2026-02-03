@@ -41,8 +41,9 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.ParcelFileDescriptor;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -167,7 +168,7 @@ public class LogManager {
                       SdData sdSettingsData) {
         Log.d(TAG, "LogManger Constructor");
         mContext = context;
-        Handler handler = new Handler();
+        Handler handler = new Handler(Looper.getMainLooper());
 
         mLogRemote = logRemote;
         mLogRemoteMobile = logRemoteMobile;

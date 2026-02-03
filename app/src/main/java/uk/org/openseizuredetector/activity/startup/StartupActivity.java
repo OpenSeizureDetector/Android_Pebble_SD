@@ -39,8 +39,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.text.Html;
 import android.text.SpannableString;
 import android.text.util.Linkify;
@@ -78,7 +79,7 @@ public class StartupActivity extends AppCompatActivity {
     private SdServiceConnection mConnection;
     private boolean mStartedMainActivity = false;
     private boolean mDialogDisplayed = false;
-    private Handler mHandler = new Handler();   // used to update ui from mUiTimer
+    private Handler mHandler = new Handler(Looper.getMainLooper());   // used to update ui from mUiTimer
     private boolean mUsingPebbleDataSource = true;
     private String mPebbleAppPackageName = null;
     private boolean mBatteryOptDialogDisplayed = false;
@@ -177,7 +178,7 @@ public class StartupActivity extends AppCompatActivity {
         PreferenceManager.setDefaultValues(this, R.xml.network_passive_datasource_prefs, true);
         PreferenceManager.setDefaultValues(this, R.xml.logging_prefs, true);
 
-        mHandler = new Handler();
+        mHandler = new Handler(Looper.getMainLooper());
         mUtil = new OsdUtil(getApplicationContext(), mHandler);
         mUtil.writeToSysLogFile("");
         mUtil.writeToSysLogFile("*******************************");

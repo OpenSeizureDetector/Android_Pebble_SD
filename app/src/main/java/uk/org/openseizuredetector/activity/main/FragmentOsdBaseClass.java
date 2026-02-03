@@ -10,6 +10,7 @@ import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,7 +26,7 @@ public class FragmentOsdBaseClass extends Fragment {
     Context mContext;
     OsdUtil mUtil;
     SdServiceConnection mConnection;
-    final Handler updateUiHandler = new Handler();
+    final Handler updateUiHandler = new Handler(Looper.getMainLooper());
     Timer mUiTimer;
     protected View mRootView;
 
