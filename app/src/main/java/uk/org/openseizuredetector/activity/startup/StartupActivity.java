@@ -164,12 +164,6 @@ public class StartupActivity extends AppCompatActivity {
             }
         }
 
-        // Set our custom uncaught exception handler to report issues.
-        //Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(StartupActivity.this));
-        new UCEHandler.Builder(this)
-                .addCommaSeparatedEmailAddresses("crashreports@openseizuredetector.org.uk,")
-                .build();
-
         // Read the default settings from the xml preferences files, so we do
         // not have to use the hard coded ones in the java files.
         PreferenceManager.setDefaultValues(this, R.xml.alarm_prefs, true);

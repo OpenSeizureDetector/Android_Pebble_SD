@@ -124,13 +124,8 @@ public class MainActivity2 extends AppCompatActivity {
 
         Log.i(TAG, "onCreate()");
 
-        // Set our custom uncaught exception handler to report issues.
-        //Thread.setDefaultUncaughtExceptionHandler(new OsdUncaughtExceptionHandler(MainActivity.this));
-        new UCEHandler.Builder(this)
-                .addCommaSeparatedEmailAddresses("crashreports@openseizuredetector.org.uk,")
-                .build();
+        // UCEHandler is installed in Application class (OsdApplication) to ensure a single install for the whole app.
 
-        //int i = 5/0;  // Force exception to test handler.
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
         mConnection = new SdServiceConnection(getApplicationContext());
         mUtil.writeToSysLogFile("MainActivity2.onCreate()");
@@ -731,3 +726,4 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
 }
+

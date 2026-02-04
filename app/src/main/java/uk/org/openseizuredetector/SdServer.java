@@ -233,12 +233,7 @@ public class SdServer extends Service implements SdDataReceiver {
         mUtil.writeToSysLogFile("SdServer.onCreate()");
 
         // Set our custom uncaught exception handler to report issues.
-        //Thread.setDefaultUncaughtExceptionHandler(
-        //        new OsdUncaughtExceptionHandler(SdServer.this));
-        new UCEHandler.Builder(this)
-                .addCommaSeparatedEmailAddresses("crashreports@openseizuredetector.org.uk,")
-                .build();
-        //int i = 5/0;  // Force exception to test handler.
+        // UCEHandler is installed in Application class (OsdApplication) to ensure a single install for the whole app.
 
 
         // Create a wake lock, but don't use it until the service is started.
@@ -2181,11 +2176,4 @@ public class SdServer extends Service implements SdDataReceiver {
         }
     }
 }
-
-
-
-
-
-
-
 
