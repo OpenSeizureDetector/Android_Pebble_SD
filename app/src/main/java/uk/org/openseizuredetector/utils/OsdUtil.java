@@ -103,6 +103,9 @@ public class OsdUtil {
     private final static Long mMinPruneInterval = new Long(5 * 60 * 1000); // minimum time between syslog pruning is 5 minutes
     private static Long mLastPruneMillis = new Long(0);   // Record of the last time we pruned the syslog db.
 
+    // File-based persistent logger (replaces database logging for diagnostics)
+    private static PersistentFileLogger mFileLogger = null;
+
     private static int mNbound = 0;
 
     public final String[] BT_PERMISSIONS_API30 = {
@@ -133,6 +136,13 @@ public class OsdUtil {
         mContext = context;
         mHandler = handler;
         updatePrefs();
+
+        // Initialize file logger (thread-safe singleton)
+        if (mFileLogger == null) {
+            mFileLogger = new PersistentFileLogger(context);
+            Log.i(TAG, "PersistentFileLogger initialized: " + mFileLogger.getCurrentLogPath());
+        }
+
         //Log.i(TAG,"Creating Log Manager instance");
         //mLm = new LogManager(mContext,false,false,null,0,0,false,0);
         openDb();
@@ -356,11 +366,21 @@ public class OsdUtil {
      * @param msgStr
      */
     public void writeToSysLogFile(String msgStr, String logType) {
-        writeLogEntryToLocalDb(msgStr, logType);
+        // Use file logger instead of database
+        if (mFileLogger != null) {
+            mFileLogger.log(logType.toUpperCase(), msgStr);
+        } else {
+            Log.w(TAG, "File logger not initialized: " + msgStr);
+        }
     }
 
     public void writeToSysLogFile(String msgStr) {
-        writeLogEntryToLocalDb(msgStr, "v");
+        // Use file logger instead of database
+        if (mFileLogger != null) {
+            mFileLogger.log("INFO", msgStr);
+        } else {
+            Log.w(TAG, "File logger not initialized: " + msgStr);
+        }
     }
 
 

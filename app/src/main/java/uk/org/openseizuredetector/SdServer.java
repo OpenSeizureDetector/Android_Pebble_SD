@@ -136,6 +136,15 @@ public class SdServer extends Service implements SdDataReceiver {
     private long mModelUpdateCheckPeriod = 86400;  // Model update check period in seconds (default: 1 day)
     private MlModelManager mMlModelManager = null;
 
+    // Watchdog for detecting silent failures
+    private WatchdogThread mWatchdogThread = null;
+    private long mLastDataReceivedMillis = 0;
+    private long mLastWatchdogHeartbeatMillis = 0;
+    private long mLastDatasourceRestartMillis = 0;
+    private boolean mDataSourceRestartInProgress = false;
+    private long mServiceStartMillis = 0;
+    private boolean mHasReceivedData = false;
+
     private HandlerThread thread;
     private WakeLock mWakeLock = null;
     private LocationFinder mLocationFinder = null;
@@ -278,6 +287,9 @@ public class SdServer extends Service implements SdDataReceiver {
         Log.i(TAG, "onStartCommand() - SdServer service starting");
         mUtil.writeToSysLogFile("SdServer.onStartCommand()");
 
+        // Track service start time for watchdog
+        mServiceStartMillis = System.currentTimeMillis();
+        mHasReceivedData = false;
 
         // Update preferences.
         Log.v(TAG, "onStartCommand() - calling updatePrefs()");
@@ -399,6 +411,15 @@ public class SdServer extends Service implements SdDataReceiver {
 
         checkEvents();
 
+        // Start watchdog thread to detect silent failures
+        if (mWatchdogThread == null || !mWatchdogThread.isAlive()) {
+            Log.i(TAG, "onStartCommand(): Starting watchdog thread");
+            mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting watchdog thread");
+            mWatchdogThread = new WatchdogThread();
+            mWatchdogThread.start();
+            mLastWatchdogHeartbeatMillis = System.currentTimeMillis();
+        }
+
         // Return START_NOT_STICKY so service doesn't auto-restart after user exits
         // User must explicitly start the app/service
         // This prevents confusing behavior where service restarts after "Exit"
@@ -469,6 +490,22 @@ public class SdServer extends Service implements SdDataReceiver {
             mCancelAudibleTimer = null;
         }
 
+        // Stop the watchdog thread
+        if (mWatchdogThread != null) {
+            Log.d(TAG, "onDestroy(): stopping watchdog thread");
+            mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping watchdog thread");
+            mWatchdogThread.shutdown();
+            try {
+                mWatchdogThread.join(2000); // Wait max 2 seconds
+                if (mWatchdogThread.isAlive()) {
+                    Log.w(TAG, "onDestroy(): watchdog did not stop, forcing interrupt");
+                    mWatchdogThread.interrupt();
+                }
+            } catch (InterruptedException e) {
+                Log.w(TAG, "onDestroy(): interrupted while waiting for watchdog");
+            }
+            mWatchdogThread = null;
+        }
 
         // Stop the Fault timer
         if (mFaultTimer != null) {
@@ -669,8 +706,17 @@ public class SdServer extends Service implements SdDataReceiver {
      * @param sdData
      */
     public void onSdDataReceived(SdData sdData) {
+        // Track data receipt for watchdog
+        mLastDataReceivedMillis = System.currentTimeMillis();
+        mHasReceivedData = true;
+
         Log.v(TAG, "onSdDataReceived() - " + sdData.toString());
         Log.v(TAG, "onSdDataReceived(), sdData.fallAlarmStanding=" + sdData.fallAlarmStanding);
+
+        // Enhanced logging for diagnostics
+        mUtil.writeToSysLogFile("DATA_RX: alarmState=" + sdData.alarmState +
+                                ", HR=" + sdData.mHR +
+                                ", thread=" + Thread.currentThread().getName());
 
         if (sdData.alarmState == 0) {
             if ((!mLatchAlarms) ||
@@ -907,6 +953,10 @@ public class SdServer extends Service implements SdDataReceiver {
 
     // Called by SdDataSource when a fault condition is detected.
     public void onSdDataFault(SdData sdData) {
+        Log.e(TAG, "*** onSdDataFault() CALLED - FAULT DETECTED ***");
+        mUtil.writeToSysLogFile("FAULT_DETECTED: onSdDataFault called, alarmState=" + sdData.alarmState +
+                                ", thread=" + Thread.currentThread().getName());
+
         Log.v(TAG, "onSdDataFault()");
         mSdData = sdData;
         mSdData.alarmState = 4;  // set fault alarm state.
@@ -917,19 +967,61 @@ public class SdServer extends Service implements SdDataReceiver {
         // ourselves if we have been in a fault condition for a while - signified by the mFaultTimerCompleted
         // flag.
         if (mFaultTimerCompleted) {
+            Log.e(TAG, "FAULT: Timer completed - emitting fault warning");
+            mUtil.writeToSysLogFile("FAULT: Timer completed - calling faultWarningBeep()");
             faultWarningBeep();
-            // Disable the data-source re-start for now because it was messing up BLE2 data source by ending up with multiple
-            // notifications for the same data when it reconnects.
-            if (false) {
-                // Re-start the data source to see if that fixes it
-                Log.w(TAG, "FAULT - stopping data source");
-                mSdDataSource.stop();
+
+            // Re-start the data source to attempt recovery
+            // Only restart if:
+            // 1. Not already in progress
+            // 2. Last restart was > 60 seconds ago (prevent rapid restart loops)
+            long timeSinceLastRestart = System.currentTimeMillis() - mLastDatasourceRestartMillis;
+            if (!mDataSourceRestartInProgress && timeSinceLastRestart > 60000) {
+                Log.w(TAG, "FAULT: Attempting to restart data source to recover from fault");
+                mUtil.writeToSysLogFile("FAULT: Restarting datasource to recover");
+                mDataSourceRestartInProgress = true;
+                mLastDatasourceRestartMillis = System.currentTimeMillis();
+
                 mHandler.postDelayed(new Runnable() {
                     public void run() {
-                        Log.w(TAG, "FAULT - restarting data source");
-                        mSdDataSource.start();
+                        try {
+                            Log.w(TAG, "FAULT: Stopping data source for restart");
+                            mUtil.writeToSysLogFile("FAULT: Stopping datasource");
+                            if (mSdDataSource != null) {
+                                mSdDataSource.stop();
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "FAULT: Error stopping datasource: " + e.getMessage());
+                            mUtil.writeToSysLogFile("FAULT: Error stopping datasource: " + e.getMessage());
+                        }
+
+                        mHandler.postDelayed(new Runnable() {
+                            public void run() {
+                                try {
+                                    Log.w(TAG, "FAULT: Restarting data source");
+                                    mUtil.writeToSysLogFile("FAULT: Restarting datasource");
+                                    if (mSdDataSource != null) {
+                                        mSdDataSource.start();
+                                        mLastDataReceivedMillis = System.currentTimeMillis(); // Reset watchdog timer
+                                    }
+                                } catch (Exception e) {
+                                    Log.e(TAG, "FAULT: Error restarting datasource: " + e.getMessage());
+                                    mUtil.writeToSysLogFile("FAULT: Error restarting datasource: " + e.getMessage());
+                                } finally {
+                                    mDataSourceRestartInProgress = false;
+                                }
+                            }
+                        }, 3000); // Wait 3 seconds before restart
                     }
-                }, 10000);
+                }, 1000); // Wait 1 second before stopping
+            } else {
+                if (mDataSourceRestartInProgress) {
+                    Log.w(TAG, "FAULT: Datasource restart already in progress, skipping");
+                    mUtil.writeToSysLogFile("FAULT: Datasource restart already in progress");
+                } else {
+                    Log.w(TAG, "FAULT: Last restart was " + (timeSinceLastRestart/1000) + "s ago, skipping to prevent restart loop");
+                    mUtil.writeToSysLogFile("FAULT: Skipping restart (too soon - " + (timeSinceLastRestart/1000) + "s)");
+                }
             }
         } else {
             startFaultTimer();
@@ -1399,11 +1491,11 @@ public class SdServer extends Service implements SdDataReceiver {
             }
 
             mAudibleAlarm = SP.getBoolean("AudibleAlarm", true);
-            Log.v(TAG, "updatePrefs() - mAuidbleAlarm = " + mAudibleAlarm);
-            mUtil.writeToSysLogFile("updatePrefs() - mAuidbleAlarm = " + mAudibleAlarm);
+            Log.v(TAG, "updatePrefs() - mAudibleAlarm = " + mAudibleAlarm);
+            mUtil.writeToSysLogFile("updatePrefs() - mAudibleAlarm = " + mAudibleAlarm);
             mAudibleWarning = SP.getBoolean("AudibleWarning", true);
-            Log.v(TAG, "updatePrefs() - mAuidbleWarning = " + mAudibleWarning);
-            mUtil.writeToSysLogFile("updatePrefs() - mAuidbleWarning = " + mAudibleWarning);
+            Log.v(TAG, "updatePrefs() - mAudibleWarning = " + mAudibleWarning);
+            mUtil.writeToSysLogFile("updatePrefs() - mAudibleWarning = " + mAudibleWarning);
             mMp3Alarm = SP.getBoolean("UseMp3Alarm", false);
             Log.v(TAG, "updatePrefs() - mMp3Alarm = " + mMp3Alarm);
             mUtil.writeToSysLogFile("updatePrefs() - mMp3Alarm = " + mMp3Alarm);
@@ -2175,5 +2267,94 @@ public class SdServer extends Service implements SdDataReceiver {
         public void onTick(long msRemaining) {
         }
     }
-}
 
+    /**
+     * Watchdog thread to detect silent failures
+     * Runs in background and checks if data is still being received
+     * If no data for 2 minutes, forces a fault condition
+     */
+    private class WatchdogThread extends Thread {
+        private volatile boolean mRunning = true;
+
+        public void shutdown() {
+            mRunning = false;
+            interrupt();
+        }
+
+        @Override
+        public void run() {
+            Log.i(TAG, "WatchdogThread: Starting watchdog");
+            mUtil.writeToSysLogFile("WATCHDOG: Thread started");
+
+            while (mRunning && !mIsDestroying) {
+                try {
+                    Thread.sleep(30000); // Check every 30 seconds
+
+                    long now = System.currentTimeMillis();
+                    long lastDataMillis = mHasReceivedData ? mLastDataReceivedMillis : mServiceStartMillis;
+                    long timeSinceLastData = now - lastDataMillis;
+                    long timeSinceLastHeartbeat = now - mLastWatchdogHeartbeatMillis;
+
+                    // Log heartbeat every 60 seconds
+                    if (timeSinceLastHeartbeat > 60000) {
+                        String threadState = "UNKNOWN";
+                        Thread mainThread = Looper.getMainLooper().getThread();
+                        if (mainThread != null) {
+                            threadState = mainThread.getState().toString();
+                        }
+
+                        mUtil.writeToSysLogFile(String.format(
+                            "WATCHDOG_HB: alive, lastData=%ds ago, mainThread=%s, faultTimer=%s",
+                            timeSinceLastData/1000, threadState,
+                            (mFaultTimer != null ? "running" : "stopped")
+                        ));
+                        Log.i(TAG,String.format(
+                                "WATCHDOG_HB: alive, lastData=%ds ago, mainThread=%s, faultTimer=%s",
+                                timeSinceLastData/1000, threadState,
+                                (mFaultTimer != null ? "running" : "stopped")));
+                        mLastWatchdogHeartbeatMillis = now;
+                    }
+
+                    // Check for data timeout (2 minutes with no data)
+                    if (lastDataMillis > 0 && timeSinceLastData > 120000) {
+                        Log.e(TAG, "WATCHDOG: NO DATA FOR " + (timeSinceLastData/1000) + " SECONDS - FORCING FAULT");
+                        mUtil.writeToSysLogFile(String.format(
+                            "WATCHDOG_FAULT: No data for %d seconds - forcing fault state",
+                            timeSinceLastData/1000
+                        ));
+
+                        // Force fault on main thread
+                        mHandler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                SdData faultData = mSdData;
+                                if (faultData == null) {
+                                    faultData = new SdData();
+                                }
+                                faultData.alarmState = 4; // Fault
+                                faultData.alarmPhrase = "WATCHDOG: No Data";
+                                onSdDataFault(faultData);
+                            }
+                        });
+
+                        // Reset timer to avoid rapid re-triggering
+                        mLastDataReceivedMillis = now;
+                        mHasReceivedData = true;
+                    }
+
+                } catch (InterruptedException e) {
+                    if (mRunning) {
+                        Log.w(TAG, "WatchdogThread: Interrupted");
+                    }
+                    break;
+                } catch (Exception e) {
+                    Log.e(TAG, "WatchdogThread: Exception in watchdog loop", e);
+                    mUtil.writeToSysLogFile("WATCHDOG_ERROR: " + e.getMessage());
+                }
+            }
+
+            Log.i(TAG, "WatchdogThread: Exiting");
+            mUtil.writeToSysLogFile("WATCHDOG: Thread exiting");
+        }
+    }
+}

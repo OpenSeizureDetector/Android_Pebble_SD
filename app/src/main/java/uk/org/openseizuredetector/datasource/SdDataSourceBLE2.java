@@ -26,6 +26,7 @@ package uk.org.openseizuredetector.datasource;
 import uk.org.openseizuredetector.datasource.SdDataSource;
 import uk.org.openseizuredetector.datasource.SdDataSourceBLE;
 import uk.org.openseizuredetector.datasource.SdDataSourceBLE2;
+import uk.org.openseizuredetector.data.SdData;
 import static com.welie.blessed.BluetoothBytesParser.asHexString;
 import static java.lang.Math.abs;
 
@@ -221,7 +222,21 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 bleDisconnect();
                 mShutdown = false;
                 mDisconnected = false;
-                mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
+
+                // Check if manager is still available before reconnecting
+                if (mBluetoothCentralManager != null) {
+                    mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
+                } else {
+                    Log.w(TAG, "BluetoothCentralManager is null - cannot auto-reconnect");
+                    mUtil.writeToSysLogFile("BLE2: Cannot reconnect - BluetoothCentralManager is null");
+                    // Notify fault condition
+                    if (mSdDataReceiver != null) {
+                        SdData faultData = new SdData();
+                        faultData.alarmState = 4; // Fault
+                        faultData.alarmPhrase = "BLE Manager Lost";
+                        mSdDataReceiver.onSdDataFault(faultData);
+                    }
+                }
             }
             super.onDisconnectedPeripheral(peripheral, status);
         }
