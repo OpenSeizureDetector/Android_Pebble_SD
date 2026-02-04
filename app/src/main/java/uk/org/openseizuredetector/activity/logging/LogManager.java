@@ -94,7 +94,7 @@ import java.util.HashMap;
  * <p>
  * NDA Timer creates an event periodically to record Normal Daily Activities (NDA),
  * irrespective of the alarm state.   This will upload a lot of data, so it will only run
- * for 24 hours after being activated before shutting down requiring the user to re-select
+ * for 24 hours after being activated before shutting down requring the user to re-select
  * the option to log NDA to re-start it.
  */
 public class LogManager {
@@ -229,33 +229,43 @@ public class LogManager {
      * from https://stackoverflow.com/a/20488153/2104584
      */
     private String cursor2Json(Cursor c) {
-        StringBuilder cNames = new StringBuilder();
-        for (String n : c.getColumnNames()) {
-            cNames.append(", ").append(n);
-        }
-        //Log.v(TAG,"cursor2Json() - c="+c.toString()+", columns="+cNames+", number of rows="+c.getCount());
-        c.moveToFirst();
-        //JSONObject Root = new JSONObject();
-        JSONArray dataPointArray = new JSONArray();
-        int i = 0;
-        while (!c.isAfterLast()) {
-            JSONObject datapoint = new JSONObject();
+        try {
+            StringBuilder cNames = new StringBuilder();
+            for (String n : c.getColumnNames()) {
+                cNames.append(", ").append(n);
+            }
+            //Log.v(TAG,"cursor2Json() - c="+c.toString()+", columns="+cNames+", number of rows="+c.getCount());
+            c.moveToFirst();
+            //JSONObject Root = new JSONObject();
+            JSONArray dataPointArray = new JSONArray();
+            int i = 0;
+            while (!c.isAfterLast()) {
+                JSONObject datapoint = new JSONObject();
+                try {
+                    datapoint.put("id", c.getString(c.getColumnIndex("id")));
+                    datapoint.put("dataTime", c.getString(c.getColumnIndex("dataTime")));
+                    datapoint.put("status", c.getString(c.getColumnIndex("status")));
+                    datapoint.put("dataJSON", c.getString(c.getColumnIndex("dataJSON")));
+                    datapoint.put("uploaded", c.getString(c.getColumnIndex("uploaded")));
+                    //Log.v(TAG,"cursor2json() - datapoint="+datapoint.toString());
+                    c.moveToNext();
+                    dataPointArray.put(i, datapoint);
+                    i++;
+                } catch (JSONException | NullPointerException e) {
+                    Log.e(TAG, "cursor2Json(): error creating JSON Object");
+                    e.printStackTrace();
+                }
+            }
+            return dataPointArray.toString();
+        } finally {
             try {
-                datapoint.put("id", c.getString(c.getColumnIndex("id")));
-                datapoint.put("dataTime", c.getString(c.getColumnIndex("dataTime")));
-                datapoint.put("status", c.getString(c.getColumnIndex("status")));
-                datapoint.put("dataJSON", c.getString(c.getColumnIndex("dataJSON")));
-                datapoint.put("uploaded", c.getString(c.getColumnIndex("uploaded")));
-                //Log.v(TAG,"cursor2json() - datapoint="+datapoint.toString());
-                c.moveToNext();
-                dataPointArray.put(i, datapoint);
-                i++;
-            } catch (JSONException | NullPointerException e) {
-                Log.e(TAG, "cursor2Json(): error creating JSON Object");
-                e.printStackTrace();
+                if (c != null && !c.isClosed()) {
+                    c.close();
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "cursor2Json(): error closing cursor: " + e.toString());
             }
         }
-        return dataPointArray.toString();
     }
 
     /**
@@ -266,45 +276,55 @@ public class LogManager {
      * from https://stackoverflow.com/a/20488153/2104584
      */
     private String eventCursor2Json(Cursor c) {
-        StringBuilder cNames = new StringBuilder();
-        for (String n : c.getColumnNames()) {
-            cNames.append(", ").append(n);
-        }
-        c.moveToFirst();
-        Log.v(TAG, "eventCursor2Json: size of cursor=" + c.getCount());
-        JSONArray eventsArray = new JSONArray();
-        int i = 0;
-        while (!c.isAfterLast()) {
-            JSONObject event = new JSONObject();
+        try {
+            StringBuilder cNames = new StringBuilder();
+            for (String n : c.getColumnNames()) {
+                cNames.append(", ").append(n);
+            }
+            c.moveToFirst();
+            Log.v(TAG, "eventCursor2Json: size of cursor=" + c.getCount());
+            JSONArray eventsArray = new JSONArray();
+            int i = 0;
+            while (!c.isAfterLast()) {
+                JSONObject event = new JSONObject();
+                try {
+                    String val;
+                    val = c.getString(c.getColumnIndex("id"));
+                    // We replace null values with empty string, otherwise they are completely excluded from output JSON.
+                    event.put("id", val == null ? "" : val);
+                    val = c.getString(c.getColumnIndex("dataTime"));
+                    event.put("dataTime", val == null ? "" : val);
+                    val = c.getString(c.getColumnIndex("status"));
+                    event.put("status", val == null ? "" : val);
+                    val = c.getString(c.getColumnIndex("type"));
+                    event.put("type", val == null ? "" : val);
+                    val = c.getString(c.getColumnIndex("subType"));
+                    event.put("subType", val == null ? "" : val);
+                    val = c.getString(c.getColumnIndex("notes"));
+                    event.put("desc", val == null ? "" : val);
+                    val = c.getString(c.getColumnIndex("dataJSON"));
+                    event.put("dataJSON", val == null ? "" : val);
+                    val = c.getString(c.getColumnIndex("uploaded"));
+                    event.put("uploaded", val == null ? "" : val);
+                    c.moveToNext();
+                    eventsArray.put(i, event);
+                    i++;
+                } catch (JSONException | NullPointerException e) {
+                    Log.e(TAG, "eventCursor2Json(): error creating JSON Object");
+                    e.printStackTrace();
+                }
+            }
+            Log.v(TAG, "eventCursor2JSON(): returning " + eventsArray.toString());
+            return eventsArray.toString();
+        } finally {
             try {
-                String val;
-                val = c.getString(c.getColumnIndex("id"));
-                // We replace null values with empty string, otherwise they are completely excluded from output JSON.
-                event.put("id", val == null ? "" : val);
-                val = c.getString(c.getColumnIndex("dataTime"));
-                event.put("dataTime", val == null ? "" : val);
-                val = c.getString(c.getColumnIndex("status"));
-                event.put("status", val == null ? "" : val);
-                val = c.getString(c.getColumnIndex("type"));
-                event.put("type", val == null ? "" : val);
-                val = c.getString(c.getColumnIndex("subType"));
-                event.put("subType", val == null ? "" : val);
-                val = c.getString(c.getColumnIndex("notes"));
-                event.put("desc", val == null ? "" : val);
-                val = c.getString(c.getColumnIndex("dataJSON"));
-                event.put("dataJSON", val == null ? "" : val);
-                val = c.getString(c.getColumnIndex("uploaded"));
-                event.put("uploaded", val == null ? "" : val);
-                c.moveToNext();
-                eventsArray.put(i, event);
-                i++;
-            } catch (JSONException | NullPointerException e) {
-                Log.e(TAG, "eventCursor2Json(): error creating JSON Object");
-                e.printStackTrace();
+                if (c != null && !c.isClosed()) {
+                    c.close();
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "eventCursor2Json(): error closing cursor: " + e.toString());
             }
         }
-        Log.v(TAG, "eventCursor2JSON(): returning " + eventsArray.toString());
-        return eventsArray.toString();
     }
 
 
@@ -513,11 +533,15 @@ public class LogManager {
         executeSelectQuery(mDpTableName, columns, whereClause, whereArgs,
                 null, null, "dataTime DESC", (Cursor cursor) -> {
             Log.v(TAG, "getDataPointsByDate - returned " + cursor);
-            if (cursor != null) {
-                callback.accept(cursor2Json(cursor));
-            } else {
-                Log.w(TAG, "getDatapointsByDate() - returned null result");
-                callback.accept(null);
+            try {
+                if (cursor != null) {
+                    callback.accept(cursor2Json(cursor));
+                } else {
+                    Log.w(TAG, "getDatapointsByDate() - returned null result");
+                    callback.accept(null);
+                }
+            } finally {
+                // cursor closed inside cursor2Json/eventCursor2Json; nothing to do here
             }
         });
         return (true);
@@ -558,22 +582,29 @@ public class LogManager {
         executeSelectQuery(mEventsTableName, columns, whereClause, whereArgs,
                 null, null, "dataTime DESC", (Cursor cursor) -> {
             Log.v(TAG, "getEventsList - returned " + cursor);
-            if (cursor != null) {
-                Log.v(TAG, "getEventsList - returned " + cursor.getCount() + " records");
-                while (!cursor.isAfterLast()) {
-                    HashMap<String, String> event = new HashMap<>();
-                    //event.put("id", cursor.getString(cursor.getColumnIndex("id")));
-                    event.put("dataTime", cursor.getString(cursor.getColumnIndex("dataTime")));
-                    int status = cursor.getInt(cursor.getColumnIndex("status"));
-                    String statusStr = mUtil.alarmStatusToString(status);
-                    event.put("status", statusStr);
-                    event.put("uploaded", cursor.getString(cursor.getColumnIndex("uploaded")));
-                    //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
-                    eventsList.add(event);
-                    cursor.moveToNext();
+            // use outer eventsList declared above
+            try {
+                if (cursor != null) {
+                    Log.v(TAG, "getEventsList - returned " + cursor.getCount() + " records");
+                    while (!cursor.isAfterLast()) {
+                        HashMap<String, String> event = new HashMap<>();
+                        //event.put("id", cursor.getString(cursor.getColumnIndex("id")));
+                        event.put("dataTime", cursor.getString(cursor.getColumnIndex("dataTime")));
+                        int status = cursor.getInt(cursor.getColumnIndex("status"));
+                        String statusStr = mUtil.alarmStatusToString(status);
+                        event.put("status", statusStr);
+                        event.put("uploaded", cursor.getString(cursor.getColumnIndex("uploaded")));
+                        //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
+                        eventsList.add(event);
+                        cursor.moveToNext();
+                    }
+                }
+                callback.accept(eventsList);
+            } finally {
+                if (cursor != null) {
+                    try { cursor.close(); } catch (Exception e) { Log.w(TAG, "getEventsList: error closing cursor: " + e.toString()); }
                 }
             }
-            callback.accept(eventsList);
         });
         return (true);
     }
@@ -658,18 +689,24 @@ public class LogManager {
         executeSelectQuery(mEventsTableName, columns, whereClause, whereArgs,
                 null, null, "dataTime DESC", (Cursor cursor) -> {
             Long recordId = new Long(-1);
-            if (cursor != null) {
-                Log.v(TAG, "getNextEventToUpload - returned " + cursor.getCount() + " records");
-                cursor.moveToFirst();
-                if (cursor.getCount() == 0) {
-                    Log.v(TAG, "getNextEventToUpload() - no events to Upload - exiting");
-                    recordId = new Long(-1);
-                } else {
-                    recordId = cursor.getLong(0);
-                    Log.d(TAG, "getNextEventToUpload(): id=" + recordId);
+            try {
+                if (cursor != null) {
+                    Log.v(TAG, "getNextEventToUpload - returned " + cursor.getCount() + " records");
+                    cursor.moveToFirst();
+                    if (cursor.getCount() == 0) {
+                        Log.v(TAG, "getNextEventToUpload() - no events to Upload - exiting");
+                        recordId = new Long(-1);
+                    } else {
+                        recordId = cursor.getLong(0);
+                        Log.d(TAG, "getNextEventToUpload(): id=" + recordId);
+                    }
+                }
+                callback.accept(recordId);
+            } finally {
+                if (cursor != null) {
+                    try { cursor.close(); } catch (Exception e) { Log.w(TAG, "getNextEventToUpload: error closing cursor: " + e.toString()); }
                 }
             }
-            callback.accept(recordId);
         });
         return (true);
     }
@@ -691,19 +728,25 @@ public class LogManager {
                 null, null, orderByStr, (Cursor cursor) -> {
             Log.v(TAG, "getEventsNearestDatapointToDate - returned " + cursor);
             Long recordId = new Long(-1);
-            if (cursor != null) {
-                Log.v(TAG, "getNearestDatapointToDate - returned " + cursor.getCount() + " records");
-                cursor.moveToFirst();
-                if (cursor.getCount() == 0) {
-                    Log.v(TAG, "getNearestDatapointToDate() - no events to Upload - exiting");
-                    recordId = new Long(-1);
-                } else {
-                    String recordStr = cursor.getString(3);
-                    recordId = cursor.getLong(0);
-                    Log.d(TAG, "getNearestDatapointToDate(): id=" + recordId + ", recordStr=" + recordStr);
+            try {
+                if (cursor != null) {
+                    Log.v(TAG, "getNearestDatapointToDate - returned " + cursor.getCount() + " records");
+                    cursor.moveToFirst();
+                    if (cursor.getCount() == 0) {
+                        Log.v(TAG, "getNearestDatapointToDate() - no events to Upload - exiting");
+                        recordId = new Long(-1);
+                    } else {
+                        String recordStr = cursor.getString(3);
+                        recordId = cursor.getLong(0);
+                        Log.d(TAG, "getNearestDatapointToDate(): id=" + recordId + ", recordStr=" + recordStr);
+                    }
+                }
+                callback.accept(recordId);
+            } finally {
+                if (cursor != null) {
+                    try { cursor.close(); } catch (Exception e) { Log.w(TAG, "getNearestDatapointToDate: error closing cursor: " + e.toString()); }
                 }
             }
-            callback.accept(recordId);
         });
         return (true);
     }
@@ -723,13 +766,18 @@ public class LogManager {
         String[] columns = {"*"};
         executeSelectQuery(mEventsTableName, columns, whereClause, whereArgs,
                 null, null, null, (Cursor cursor) -> {
-            //Log.v(TAG, "getLocalEventsCount - returned " + cursor);
             Long eventCount = Long.valueOf(0);
-            if (cursor != null) {
-                eventCount = Long.valueOf(cursor.getCount());
-                Log.v(TAG, "getLocalEventsCount - returned " + eventCount + " records");
+            try {
+                if (cursor != null) {
+                    eventCount = Long.valueOf(cursor.getCount());
+                    Log.v(TAG, "getLocalEventsCount - returned " + eventCount + " records");
+                }
+                callback.accept(eventCount);
+            } finally {
+                if (cursor != null) {
+                    try { cursor.close(); } catch (Exception e) { Log.w(TAG, "getLocalEventsCount: error closing cursor: " + e.toString()); }
+                }
             }
-            callback.accept(eventCount);
         });
         return (true);
     }
@@ -746,13 +794,18 @@ public class LogManager {
         String[] columns = {"*"};
         executeSelectQuery(mDpTableName, columns, whereClause, whereArgs,
                 null, null, null, (Cursor cursor) -> {
-            //Log.v(TAG, "getLocalDatapointsCount - returned " + cursor);
             Long eventCount = Long.valueOf(0);
-            if (cursor != null) {
-                eventCount = Long.valueOf(cursor.getCount());
-                Log.v(TAG, "getLocalDatapointsCount - returned " + eventCount + " records");
+            try {
+                if (cursor != null) {
+                    eventCount = Long.valueOf(cursor.getCount());
+                    Log.v(TAG, "getLocalDatapointsCount - returned " + eventCount + " records");
+                }
+                callback.accept(eventCount);
+            } finally {
+                if (cursor != null) {
+                    try { cursor.close(); } catch (Exception e) { Log.w(TAG, "getLocalDatapointsCount: error closing cursor: " + e.toString()); }
+                }
             }
-            callback.accept(eventCount);
         });
         return (true);
     }

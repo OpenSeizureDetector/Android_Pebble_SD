@@ -621,21 +621,27 @@ public class OsdUtil {
         executeSelectQuery(mSysLogTableName, columns, null, null,
                 null, null, "dataTime DESC", (Cursor cursor) -> {
             Log.v(TAG, "getSysLogList - returned " + cursor);
-            if (cursor != null) {
-                Log.v(TAG, "getSysLogList - returned " + cursor.getCount() + " records");
-                while (!cursor.isAfterLast()) {
-                    HashMap<String, String> event = new HashMap<>();
-                    //event.put("id", cursor.getString(cursor.getColumnIndex("id")));
-                    event.put("dataTime", cursor.getString(cursor.getColumnIndex("dataTime")));
-                    String loglevel = cursor.getString(cursor.getColumnIndex("logLevel"));
-                    event.put("loglevel", loglevel);
-                    event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
-                    //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
-                    eventsList.add(event);
-                    cursor.moveToNext();
+            try {
+                if (cursor != null) {
+                    Log.v(TAG, "getSysLogList - returned " + cursor.getCount() + " records");
+                    while (!cursor.isAfterLast()) {
+                        HashMap<String, String> event = new HashMap<>();
+                        //event.put("id", cursor.getString(cursor.getColumnIndex("id")));
+                        event.put("dataTime", cursor.getString(cursor.getColumnIndex("dataTime")));
+                        String loglevel = cursor.getString(cursor.getColumnIndex("logLevel"));
+                        event.put("loglevel", loglevel);
+                        event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
+                        //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
+                        eventsList.add(event);
+                        cursor.moveToNext();
+                    }
+                }
+                callback.accept(eventsList);
+            } finally {
+                if (cursor != null) {
+                    try { cursor.close(); } catch (Exception e) { Log.w(TAG, "getSysLogList: error closing cursor: " + e.toString()); }
                 }
             }
-            callback.accept(eventsList);
         });
         return (true);
     }
