@@ -852,4 +852,17 @@ public class OsdUtil {
         return(retVal);
     }
 
+    public File[] getLogFiles() {
+        if (mFileLogger != null) {
+            return mFileLogger.getLogFiles();
+        }
+        return new File[0];
+    }
+
+    public String getCurrentLogPath() {
+        if (mFileLogger != null) {
+            return mFileLogger.getCurrentLogPath();
+        }
+        return null;
+    }
 }

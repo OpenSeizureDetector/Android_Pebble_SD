@@ -144,13 +144,14 @@ public class SdServer extends Service implements SdDataReceiver {
     private boolean mDataSourceRestartInProgress = false;
     private long mServiceStartMillis = 0;
     private boolean mHasReceivedData = false;
+    private long mLastWatchdogFaultMillis = 0;
 
     private HandlerThread thread;
     private WakeLock mWakeLock = null;
     private LocationFinder mLocationFinder = null;
     public SdDataSource mSdDataSource;
     public SdData mSdData = null;
-    public String mSdDataSourceName = "undefined";  // The name of the data soruce specified in the preferences.
+    public String mSdDataSourceName = "undefined";  // The name of the data source specified in the preferences.
     private boolean mLatchAlarms = false;
     private int mLatchAlarmPeriod = 0;
     private LatchAlarmTimer mLatchAlarmTimer = null;
@@ -706,9 +707,11 @@ public class SdServer extends Service implements SdDataReceiver {
      * @param sdData
      */
     public void onSdDataReceived(SdData sdData) {
-        // Track data receipt for watchdog
-        mLastDataReceivedMillis = System.currentTimeMillis();
-        mHasReceivedData = true;
+        // Track data receipt for watchdog using the data timestamp (not wall-clock now)
+        if (sdData != null && sdData.dataTimeMillis > 0) {
+            mLastDataReceivedMillis = sdData.dataTimeMillis;
+            mHasReceivedData = true;
+        }
 
         Log.v(TAG, "onSdDataReceived() - " + sdData.toString());
         Log.v(TAG, "onSdDataReceived(), sdData.fallAlarmStanding=" + sdData.fallAlarmStanding);
@@ -1725,7 +1728,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     mUtil.showToast(messageStr);
                     for (int i = 0; i < mSMSNumbers.length; i++) {
                         Log.i(TAG, "onSdLocationReceived() - Sending to " + mSMSNumbers[i]);
-                        sendSMS(new String(mSMSNumbers[i]), messageStr);
+                        sendSMS(mSMSNumbers[i], messageStr);
                     }
                 } else {
                     Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
@@ -2294,6 +2297,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     long lastDataMillis = mHasReceivedData ? mLastDataReceivedMillis : mServiceStartMillis;
                     long timeSinceLastData = now - lastDataMillis;
                     long timeSinceLastHeartbeat = now - mLastWatchdogHeartbeatMillis;
+                    long timeSinceLastFault = now - mLastWatchdogFaultMillis;
 
                     // Log heartbeat every 60 seconds
                     if (timeSinceLastHeartbeat > 60000) {
@@ -2316,7 +2320,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     }
 
                     // Check for data timeout (2 minutes with no data)
-                    if (lastDataMillis > 0 && timeSinceLastData > 120000) {
+                    if (lastDataMillis > 0 && timeSinceLastData > 120000 && timeSinceLastFault > 120000) {
                         Log.e(TAG, "WATCHDOG: NO DATA FOR " + (timeSinceLastData/1000) + " SECONDS - FORCING FAULT");
                         mUtil.writeToSysLogFile(String.format(
                             "WATCHDOG_FAULT: No data for %d seconds - forcing fault state",

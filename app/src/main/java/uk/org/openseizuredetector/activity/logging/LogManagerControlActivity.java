@@ -6,15 +6,21 @@ import uk.org.openseizuredetector.R;
 import uk.org.openseizuredetector.client.SdServiceConnection;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.IBinder;
+import android.provider.MediaStore;
 
 import androidx.core.graphics.Insets;
 import androidx.core.view.MenuCompat;
@@ -46,11 +52,20 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -74,6 +89,8 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private ArrayList<HashMap<String, String>> mRemoteEventsList;
     private ArrayList<ArrayList<HashMap<String, String>>> mGroupedRemoteEventsList;   // Each item is a list of event objects, similar to mRemoteEventsList
     private ArrayList<HashMap<String, String>> mSysLogList;
+    private File[] mLogFiles;
+    private File mCurrentLogFile;
     private SdServiceConnection mConnection;
     private OsdUtil mUtil;
     final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
@@ -143,6 +160,19 @@ public class LogManagerControlActivity extends AppCompatActivity {
         Button remoteDbBtn =
                 (Button) findViewById(R.id.refresh_button);
         remoteDbBtn.setOnClickListener(onRefreshBtn);
+
+        Button syslogRefreshBtn = (Button) findViewById(R.id.syslog_refresh_button);
+        if (syslogRefreshBtn != null) {
+            syslogRefreshBtn.setOnClickListener(v -> refreshSysLog());
+        }
+        Button syslogSelectBtn = (Button) findViewById(R.id.syslog_select_button);
+        if (syslogSelectBtn != null) {
+            syslogSelectBtn.setOnClickListener(v -> showLogFilePicker());
+        }
+        Button syslogExportBtn = (Button) findViewById(R.id.syslog_export_button);
+        if (syslogExportBtn != null) {
+            syslogExportBtn.setOnClickListener(v -> exportCurrentLog());
+        }
 
         CheckBox includeWarningsCb =
                 (CheckBox) findViewById(R.id.include_warnings_cb);
@@ -261,11 +291,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 Log.v(TAG, "initialiseServiceConnection() - set mEventsList - Updating UI");
                 updateUi();
             });
-            mUtil.getSysLogList((ArrayList<HashMap<String, String>> syslogList) -> {
-                mSysLogList = syslogList;
-                Log.v(TAG, "initialiseServiceConnection() - set mSysLogList - Updating UI");
-                updateUi();
-            });
+            refreshSysLog();
         } else {
             Log.e(TAG, "ERROR: initialiseServiceConnection() - mLm is null");
             mUtil.showToast(getString(R.string.error_failed_to_start_log_manager));
@@ -353,7 +379,8 @@ public class LogManagerControlActivity extends AppCompatActivity {
                             return 0;
                         }
                     });
-                    if (mGroupEventsCb.isChecked()) { // Check if grouping is enabled
+                    if (mGroupEventsCb.isChecked() // Check if grouping is enabled
+                    ) {
                         createGroupedEventsList();
                         Log.v(TAG, "getRemoteEvents() - created grouped events. Updating UI");
                     } else {
@@ -1021,5 +1048,176 @@ public class LogManagerControlActivity extends AppCompatActivity {
         builder.show();
     }
 
+
+    private void refreshSysLog() {
+        mLogFiles = mUtil.getLogFiles();
+        if (mLogFiles == null || mLogFiles.length == 0) {
+            mSysLogList = new ArrayList<>();
+            updateSysLogTitle(null);
+            mUpdateSysLog = true;
+            updateUi();
+            mUtil.showToast(getString(R.string.syslog_no_files));
+            return;
+        }
+
+        // Pick newest log file by last modified
+        Arrays.sort(mLogFiles, (a, b) -> Long.compare(b.lastModified(), a.lastModified()));
+        mCurrentLogFile = mLogFiles[0];
+        loadSysLogFromFile(mCurrentLogFile);
+    }
+
+    private void showLogFilePicker() {
+        mLogFiles = mUtil.getLogFiles();
+        if (mLogFiles == null || mLogFiles.length == 0) {
+            mUtil.showToast(getString(R.string.syslog_no_files));
+            return;
+        }
+
+        Arrays.sort(mLogFiles, (a, b) -> Long.compare(b.lastModified(), a.lastModified()));
+        String[] names = new String[mLogFiles.length];
+        for (int i = 0; i < mLogFiles.length; i++) {
+            names[i] = mLogFiles[i].getName();
+        }
+
+        new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
+                .setTitle(R.string.syslog_select_file_title)
+                .setItems(names, (dialog, which) -> {
+                    mCurrentLogFile = mLogFiles[which];
+                    loadSysLogFromFile(mCurrentLogFile);
+                })
+                .show();
+    }
+
+    private void exportCurrentLog() {
+        if (mCurrentLogFile == null || !mCurrentLogFile.exists()) {
+            mUtil.showToast(getString(R.string.syslog_no_files));
+            return;
+        }
+        if (exportLogFileToDownloads(mCurrentLogFile)) {
+            mUtil.showToast(getString(R.string.syslog_exported));
+        } else {
+            mUtil.showToast(getString(R.string.syslog_export_failed));
+        }
+    }
+
+    private void updateSysLogTitle(File logFile) {
+        TextView tv = (TextView) findViewById(R.id.syslog_file_tv);
+        if (tv == null) {
+            return;
+        }
+        if (logFile == null) {
+            tv.setText(getString(R.string.syslog_current_file, "-"));
+        } else {
+            tv.setText(getString(R.string.syslog_current_file, logFile.getName()));
+        }
+    }
+
+    private void loadSysLogFromFile(File logFile) {
+        ArrayList<HashMap<String, String>> entries = new ArrayList<>();
+        if (logFile == null || !logFile.exists()) {
+            mSysLogList = entries;
+            updateSysLogTitle(null);
+            mUpdateSysLog = true;
+            updateUi();
+            return;
+        }
+
+        ArrayDeque<String> tail = new ArrayDeque<>(500);
+        try (BufferedReader br = new BufferedReader(new FileReader(logFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (tail.size() == 500) {
+                    tail.removeFirst();
+                }
+                tail.addLast(line);
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "loadSysLogFromFile: failed to read log file", e);
+        }
+
+        // Newest first
+        ArrayList<String> lines = new ArrayList<>(tail);
+        Collections.reverse(lines);
+
+        for (String line : lines) {
+            HashMap<String, String> entry = new HashMap<>();
+            parseLogLine(line, entry);
+            entries.add(entry);
+        }
+
+        mSysLogList = entries;
+        updateSysLogTitle(logFile);
+        mUpdateSysLog = true;
+        updateUi();
+    }
+
+    private void parseLogLine(String line, HashMap<String, String> entry) {
+        // Expected format: yyyy-MM-dd HH:mm:ss.SSS [LEVEL] [thread] message
+        String dataTime = "";
+        String level = "";
+        String message = line;
+        try {
+            int firstBracket = line.indexOf(" [");
+            int secondBracket = line.indexOf("] [", firstBracket + 2);
+            int thirdBracket = line.indexOf("] ", secondBracket + 3);
+            if (firstBracket > 0 && secondBracket > firstBracket && thirdBracket > secondBracket) {
+                dataTime = line.substring(0, firstBracket).trim();
+                level = line.substring(firstBracket + 2, secondBracket).trim();
+                String thread = line.substring(secondBracket + 3, thirdBracket).trim();
+                message = "[" + thread + "] " + line.substring(thirdBracket + 2).trim();
+            }
+        } catch (Exception e) {
+            // Keep defaults
+        }
+        entry.put("dataTime", dataTime);
+        entry.put("logLevel", level);
+        entry.put("dataJSON", message);
+    }
+
+    private boolean exportLogFileToDownloads(File logFile) {
+        if (logFile == null || !logFile.exists()) {
+            return false;
+        }
+        try {
+            String fileName = logFile.getName();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+                values.put(MediaStore.Downloads.MIME_TYPE, "text/plain");
+                values.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/OpenSeizureDetector");
+                Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                if (uri == null) {
+                    return false;
+                }
+                try (OutputStream os = getContentResolver().openOutputStream(uri);
+                     FileInputStream fis = new FileInputStream(logFile)) {
+                    byte[] buf = new byte[8192];
+                    int n;
+                    while ((n = fis.read(buf)) > 0) {
+                        os.write(buf, 0, n);
+                    }
+                    os.flush();
+                }
+                return true;
+            } else {
+                File destDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                File dest = new File(destDir, fileName);
+                try (OutputStream os = new java.io.FileOutputStream(dest);
+                     FileInputStream fis = new FileInputStream(logFile)) {
+                    byte[] buf = new byte[8192];
+                    int n;
+                    while ((n = fis.read(buf)) > 0) {
+                        os.write(buf, 0, n);
+                    }
+                    os.flush();
+                }
+                MediaScannerConnection.scanFile(this, new String[]{dest.getAbsolutePath()}, new String[]{"text/plain"}, null);
+                return true;
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "exportLogFileToDownloads: failed", e);
+            return false;
+        }
+    }
 
 }

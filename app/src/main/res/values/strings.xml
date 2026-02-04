@@ -614,4 +614,13 @@
     <string name="ml_model_update_later_button">Remind Me Later</string>
     <string name="ml_model_update_skip_button">Skip This Version</string>
     <string name="ml_model_checking_for_updates">Checking for ML model updates...</string>
+    <string name="syslog_current_file">Current Log: %1$s</string>
+    <string name="syslog_refresh">Refresh</string>
+    <string name="syslog_select_file">Select</string>
+    <string name="syslog_export">Export</string>
+    <string name="syslog_no_files">No log files found</string>
+    <string name="syslog_file_tv">No log file selected</string>
+    <string name="syslog_exported">Log file exported to Downloads folder</string>
+    <string name="syslog_export_failed">Failed to export log file</string>
+    <string name="syslog_select_file_title">Select Log File</string>
 </resources>
