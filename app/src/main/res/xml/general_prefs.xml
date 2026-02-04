@@ -85,6 +85,13 @@
         android:widgetLayout="@layout/pref_select_ble_device_button"
         />
 
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="first_run_complete"
+        android:summary="Prevent the welcome/setup screens displaying when the app starts (they are not needed after initial set-up)."
+        android:title="Disable Welcome Screens"
+        android:enabled="true"
+        />
     <EditTextPreference
         android:defaultValue=""
         android:key="AppVersionName"

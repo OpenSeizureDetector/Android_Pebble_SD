@@ -4,6 +4,9 @@ import uk.org.openseizuredetector.R;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
@@ -17,6 +20,10 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
+
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.graphics.Insets;
 
 import uk.org.openseizuredetector.activity.startup.StartupActivity;
 /**
@@ -44,6 +51,13 @@ public class OnboardingActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
         }
+
+        // Handle system bars insets
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.onboarding_root), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
         
         mViewPager = findViewById(R.id.onboarding_viewpager);
         mBtnNext = findViewById(R.id.btn_next);
@@ -75,7 +89,10 @@ public class OnboardingActivity extends AppCompatActivity {
                 mViewPager.setCurrentItem(mViewPager.getCurrentItem() - 1);
             }
         });
-        
+
+        // handle the system back button
+        getOnBackPressedDispatcher().addCallback(this, onBackPressedCallback);
+
         mBtnSkip.setOnClickListener(v -> finishOnboarding());
         
         // Update button visibility based on current page
@@ -88,6 +105,9 @@ public class OnboardingActivity extends AppCompatActivity {
         
         // Initial button state
         updateNavigationButtons(0);
+
+
+
     }
     
     private void updateNavigationButtons(int position) {
@@ -128,6 +148,7 @@ public class OnboardingActivity extends AppCompatActivity {
             super(fa);
         }
         
+        @NonNull
         @Override
         public Fragment createFragment(int position) {
             switch (position) {
@@ -150,7 +171,7 @@ public class OnboardingActivity extends AppCompatActivity {
         }
     }
     
-    @Override
+    /*@Override
     public void onBackPressed() {
         if (mViewPager.getCurrentItem() == 0) {
             // If on first page, exit onboarding (but mark as incomplete)
@@ -160,4 +181,22 @@ public class OnboardingActivity extends AppCompatActivity {
             mViewPager.setCurrentItem(mViewPager.getCurrentItem() - 1);
         }
     }
+
+     */
+
+    OnBackPressedCallback onBackPressedCallback = new OnBackPressedCallback(true) {
+        @Override
+        public void handleOnBackPressed() {
+            if (mViewPager.getCurrentItem() > 0) {
+                // Navigate to the previous page
+                mViewPager.setCurrentItem(mViewPager.getCurrentItem() - 1);
+            } else {
+                // If on the first page, disable this callback and trigger the default behavior
+                this.setEnabled(false);
+                getOnBackPressedDispatcher().onBackPressed();
+            }
+        }
+    };
+
+
 }

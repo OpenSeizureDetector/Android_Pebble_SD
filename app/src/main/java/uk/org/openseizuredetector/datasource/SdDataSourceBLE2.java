@@ -128,11 +128,15 @@ public class SdDataSourceBLE2 extends SdDataSource {
     BluetoothGattCharacteristic mBattChar;
     private BluetoothCentralManager mBluetoothCentralManager;
     private boolean mShutdown = false;
+    private static final int DISCONNECT_TIMEOUT_MS = 5000; // 5 seconds timeout for disconnect
+    private Handler mTimeoutHandler;
+    private volatile boolean mDisconnected = false;
 
     public SdDataSourceBLE2(Context context, Handler handler,
                             SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
         mName = "BLE2";
+        mTimeoutHandler = new Handler(Looper.getMainLooper());
     }
 
 
@@ -202,13 +206,21 @@ public class SdDataSourceBLE2 extends SdDataSource {
         @Override
         public void onDisconnectedPeripheral(BluetoothPeripheral peripheral, HciStatus status) {
             if (mShutdown) {
-                Log.i(TAG,"BluetoothCentralManagerCallback.onDisonnectedPeripheral - mShutdown is set, so not reconnecting");
+                Log.i(TAG,"BluetoothCentralManagerCallback.onDisconnectedPeripheral - mShutdown is set, completing disconnect");
+                mDisconnected = true;
+                // Cancel timeout handler
+                if (mTimeoutHandler != null) {
+                    mTimeoutHandler.removeCallbacksAndMessages(null);
+                }
+                // Complete cleanup
+                forceCleanup();
             } else {
-                Log.i(TAG,"BluetoothCentralManagerCallback.onDisonnectedPeripheral");
+                Log.i(TAG,"BluetoothCentralManagerCallback.onDisconnectedPeripheral - unexpected disconnect");
                 mUtil.showToast("WATCH CONNECTION LOST");
-                Log.i(TAG, "BluetoothCentralManagerCallback.onDisonnectedPeripheral - attempting to re-connect...");
+                Log.i(TAG, "BluetoothCentralManagerCallback.onDisconnectedPeripheral - attempting to re-connect...");
                 bleDisconnect();
-                mShutdown=false;
+                mShutdown = false;
+                mDisconnected = false;
                 mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
             }
             super.onDisconnectedPeripheral(peripheral, status);
@@ -430,7 +442,10 @@ public class SdDataSourceBLE2 extends SdDataSource {
                         mDataStatusTimeMillis = System.currentTimeMillis();
                         // Process the data to do seizure detection
                         doAnalysis();
-                        mBlePeripheral.readRemoteRssi();  // Update RSSI
+                        // Update RSSI (check peripheral is still connected)
+                        if (mBlePeripheral != null) {
+                            mBlePeripheral.readRemoteRssi();
+                        }
                         // Re-start collecting raw data.
                         nRawData = 0;
                         // Notify the device of the resulting alarm state
@@ -514,39 +529,112 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
 
     private void bleDisconnect() {
+        Log.i(TAG, "bleDisconnect() - Starting disconnect sequence");
+        mShutdown = true;
+        mDisconnected = false;
+
+        // Set timeout to force cleanup if disconnect hangs
+        mTimeoutHandler.postDelayed(() -> {
+            if (!mDisconnected) {
+                Log.w(TAG, "bleDisconnect() - Timeout reached, forcing cleanup");
+                forceCleanup();
+            }
+        }, DISCONNECT_TIMEOUT_MS);
+
         try {
             Log.i(TAG, "bleDisconnect() - Unregistering notifications");
             if (mBlePeripheral != null) {
                 if (mOsdChar != null) {
                     Log.i(TAG, "bleDisconnect() - unregistering mOsdChar");
-                    mBlePeripheral.setNotify(mOsdChar, false);
+                    try {
+                        mBlePeripheral.setNotify(mOsdChar, false);
+                    } catch (Exception e) {
+                        Log.w(TAG, "bleDisconnect() - Error unregistering mOsdChar: " + e.getMessage());
+                    }
                 } else {
                     Log.w(TAG, "bleDisconnect() - mOsdChar is null - not removing notification");
                 }
                 if (mHrChar != null) {
                     Log.i(TAG, "bleDisconnect() - unregistering mHrChar");
-                    mBlePeripheral.setNotify(mHrChar, false);
+                    try {
+                        mBlePeripheral.setNotify(mHrChar, false);
+                    } catch (Exception e) {
+                        Log.w(TAG, "bleDisconnect() - Error unregistering mHrChar: " + e.getMessage());
+                    }
                 } else {
                     Log.w(TAG, "bleDisconnect() - mHrChar is null - not removing notification");
                 }
                 if (mBattChar != null) {
                     Log.i(TAG, "bleDisconnect() - unregistering mBattChar");
-                    mBlePeripheral.setNotify(mBattChar, false);
+                    try {
+                        mBlePeripheral.setNotify(mBattChar, false);
+                    } catch (Exception e) {
+                        Log.w(TAG, "bleDisconnect() - Error unregistering mBattChar: " + e.getMessage());
+                    }
                 } else {
                     Log.w(TAG, "bleDisconnect() - mBattChar is null - not removing notification");
                 }
+
+                Log.i(TAG, "bleDisconnect() - Cancelling connection");
+                try {
+                    mBlePeripheral.cancelConnection();
+                } catch (Exception e) {
+                    Log.e(TAG, "bleDisconnect() - Error cancelling connection: " + e.getMessage());
+                    forceCleanup();
+                }
             } else {
-                Log.w(TAG, "bleDisconnect() - mBlePeripheral is null - not removing notifications");
+                Log.w(TAG, "bleDisconnect() - mBlePeripheral is null - forcing cleanup");
+                forceCleanup();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "bleDisconnect() - Error during disconnect: " + e.getMessage());
+            mUtil.showToast("Error disconnecting from watch");
+            forceCleanup();
+        }
+    }
+
+    /**
+     * Force cleanup of all BLE resources, used when disconnect fails or times out
+     */
+    private void forceCleanup() {
+        Log.i(TAG, "forceCleanup() - Forcing cleanup of BLE resources");
+        try {
+            // Cancel any pending timeout
+            if (mTimeoutHandler != null) {
+                mTimeoutHandler.removeCallbacksAndMessages(null);
             }
 
-            mShutdown = true;
-            mBlePeripheral.cancelConnection();
+            // Clear all characteristics
+            mOsdChar = null;
+            mStatusChar = null;
+            mHrChar = null;
+            mBattChar = null;
 
-            //Log.i(TAG, "bleDisconnect() - closing  BluetoothCentralManager");
-            //mBluetoothCentralManager.close();
+            // Clear peripheral reference
+            if (mBlePeripheral != null) {
+                try {
+                    mBlePeripheral.cancelConnection();
+                } catch (Exception e) {
+                    Log.w(TAG, "forceCleanup() - Error cancelling peripheral connection: " + e.getMessage());
+                }
+                mBlePeripheral = null;
+            }
+
+            // Close the central manager
+            if (mBluetoothCentralManager != null) {
+                try {
+                    mBluetoothCentralManager.close();
+                } catch (Exception e) {
+                    Log.w(TAG, "forceCleanup() - Error closing central manager: " + e.getMessage());
+                }
+                mBluetoothCentralManager = null;
+            }
+
+            mDisconnected = true;
+            Log.i(TAG, "forceCleanup() - Cleanup complete");
         } catch (Exception e) {
-            Log.e(TAG,"bleDisconnect() - Error: "+e.getMessage());
-            mUtil.showToast("Error disconnecting from watch");
+            Log.e(TAG, "forceCleanup() - Error during force cleanup: " + e.getMessage());
+            mDisconnected = true; // Mark as disconnected anyway to allow service to stop
         }
     }
 
@@ -554,16 +642,49 @@ public class SdDataSourceBLE2 extends SdDataSource {
      * Stop the datasource from updating
      */
     public void stop() {
-        Log.i(TAG, "stop()");
-        mUtil.writeToSysLogFile("SDDataSourceBLE.stop()");
+        Log.i(TAG, "stop() - Beginning shutdown sequence");
+        mUtil.writeToSysLogFile("SDDataSourceBLE2.stop()");
         super.stop();
 
         try {
             mShutdown = true;
+
+            // Stop the CurrentTimeService
+            try {
+                CurrentTimeService.stopServer();
+                Log.i(TAG, "stop() - CurrentTimeService stopped");
+            } catch (Exception e) {
+                Log.e(TAG, "stop() - Error stopping CurrentTimeService: " + e.getMessage());
+            }
+
+            // Initiate BLE disconnect with timeout
             bleDisconnect();
-            CurrentTimeService.stopServer();
+
+            // Wait briefly for disconnect to complete, but not longer than timeout
+            int waitTime = 0;
+            int maxWait = DISCONNECT_TIMEOUT_MS + 500; // Wait slightly longer than timeout
+            int checkInterval = 100;
+            while (!mDisconnected && waitTime < maxWait) {
+                try {
+                    Thread.sleep(checkInterval);
+                    waitTime += checkInterval;
+                } catch (InterruptedException e) {
+                    Log.w(TAG, "stop() - Sleep interrupted");
+                    break;
+                }
+            }
+
+            if (!mDisconnected) {
+                Log.w(TAG, "stop() - Disconnect did not complete in time, forcing cleanup");
+                forceCleanup();
+            }
+
+            Log.i(TAG, "stop() - Shutdown sequence complete");
+
         } catch (Exception e) {
-            Log.e(TAG,"stop() - Error stopping data source: "+e.getMessage());
+            Log.e(TAG, "stop() - Error stopping data source: " + e.getMessage());
+            // Ensure cleanup happens even if there's an error
+            forceCleanup();
         }
     }
 

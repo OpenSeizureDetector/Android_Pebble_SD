@@ -120,6 +120,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private NotificationCompat.Builder mNotificationBuilder;
     private Notification mNotification;
     private int mCurrentNotificationAlarmLevel = -999;
+    private boolean mIsDestroying = false;  // Flag to prevent actions during shutdown
     private SdWebServer webServer = null;
     private final static String TAG = "SdServer";
     //private Timer dataLogTimer = null;
@@ -403,13 +404,20 @@ public class SdServer extends Service implements SdDataReceiver {
 
         checkEvents();
 
-        return START_STICKY;
+        // Return START_NOT_STICKY so service doesn't auto-restart after user exits
+        // User must explicitly start the app/service
+        // This prevents confusing behavior where service restarts after "Exit"
+        return START_NOT_STICKY;
     }
 
     @Override
     public void onDestroy() {
         Log.i(TAG, "onDestroy(): SdServer Service stopping");
         mUtil.writeToSysLogFile("SdServer.onDestroy() - releasing wakelock");
+
+        // Set flag to prevent notifications and other actions during shutdown
+        mIsDestroying = true;
+
         // release the wake lock to allow CPU to sleep and reduce
         // battery drain.
         if (mWakeLock != null) {
@@ -429,7 +437,30 @@ public class SdServer extends Service implements SdDataReceiver {
         if (mSdDataSource != null) {
             Log.d(TAG, "stopping mSdDataSource");
             mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping mSdDataSource");
-            mSdDataSource.stop();
+
+            // Stop datasource in a separate thread with timeout to prevent blocking
+            final Thread stopThread = new Thread(() -> {
+                try {
+                    mSdDataSource.stop();
+                    Log.d(TAG, "onDestroy(): datasource stopped successfully");
+                } catch (Exception e) {
+                    Log.e(TAG, "onDestroy(): Error stopping datasource: " + e.getMessage());
+                }
+            });
+
+            stopThread.start();
+
+            // Wait for datasource to stop, but not indefinitely
+            try {
+                stopThread.join(6000); // Wait max 6 seconds for stop to complete
+                if (stopThread.isAlive()) {
+                    Log.w(TAG, "onDestroy(): datasource stop timed out, continuing with shutdown");
+                    mUtil.writeToSysLogFile("SdServer.onDestroy() - datasource stop timed out");
+                    stopThread.interrupt();
+                }
+            } catch (InterruptedException e) {
+                Log.w(TAG, "onDestroy(): interrupted while waiting for datasource to stop");
+            }
         } else {
             Log.e(TAG, "ERROR - mSdDataSource is null - why????");
             mUtil.writeToSysLogFile("SdServer.onDestroy() - mSdDataSource is null - why???");
@@ -514,6 +545,12 @@ public class SdServer extends Service implements SdDataReceiver {
      * Show a notification while this service is running.
      */
     private void showNotification(int alarmLevel) {
+        // Don't show notifications if service is being destroyed
+        if (mIsDestroying) {
+            Log.v(TAG, "showNotification - service is destroying, not showing notification");
+            return;
+        }
+
         int iconId;
         String titleStr;
         Uri soundUri = null;

@@ -94,7 +94,7 @@ import java.util.HashMap;
  * <p>
  * NDA Timer creates an event periodically to record Normal Daily Activities (NDA),
  * irrespective of the alarm state.   This will upload a lot of data, so it will only run
- * for 24 hours after being activated before shutting down requring the user to re-select
+ * for 24 hours after being activated before shutting down requiring the user to re-select
  * the option to log NDA to re-start it.
  */
 public class LogManager {

@@ -54,10 +54,10 @@
                 android:paddingBottom="8dp" />
 
             <RadioButton
-                android:id="@+id/radio_watch"
+                android:id="@+id/radio_pinetime"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Smartwatch"
+                android:text="PineTime Watch"
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="16sp"
                 android:padding="12dp" />
@@ -65,7 +65,26 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Recommended. Uses a smartwatch worn on the wrist for accurate detection."
+                android:text="Recommended. Uses a low-cost PineTime watch worn on the wrist for accurate detection."
+                android:textSize="12sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:paddingStart="48dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="8dp" />
+
+            <RadioButton
+                android:id="@+id/radio_garmin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Garmin Watch"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="16sp"
+                android:padding="12dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Uses a Garmin smart watch worn on the wrist for accurate detection and heart rate monitoring."
                 android:textSize="12sp"
                 android:textColor="?android:attr/textColorSecondary"
                 android:paddingStart="48dp"
@@ -111,40 +130,6 @@
                 android:textColor="?android:attr/textColorPrimary"
                 android:layout_marginBottom="16dp" />
 
-            <RadioGroup
-                android:id="@+id/watch_type_group"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <RadioButton
-                    android:id="@+id/radio_pinetime"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="PineTime Watch"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:padding="12dp"
-                    android:checked="true" />
-
-                <RadioButton
-                    android:id="@+id/radio_garmin"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Garmin Watch"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:padding="12dp" />
-
-                <RadioButton
-                    android:id="@+id/radio_other"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Other / Pebble"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textSize="16sp"
-                    android:padding="12dp" />
-
-            </RadioGroup>
 
             <!-- PineTime-specific buttons -->
             <com.google.android.material.button.MaterialButton

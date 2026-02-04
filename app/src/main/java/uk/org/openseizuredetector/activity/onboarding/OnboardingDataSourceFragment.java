@@ -26,8 +26,7 @@ public class OnboardingDataSourceFragment extends Fragment {
     private static final String TAG = "OnboardingDataSource";
 
     private RadioGroup mDataSourceGroup;
-    private LinearLayout mWatchTypeLayout;
-    private RadioGroup mWatchTypeGroup;
+
     private Button mBtnScanPineTime;
     private Button mBtnUpdatePineTime;
 
@@ -42,8 +41,6 @@ public class OnboardingDataSourceFragment extends Fragment {
         mPrefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
 
         mDataSourceGroup = view.findViewById(R.id.data_source_group);
-        mWatchTypeLayout = view.findViewById(R.id.watch_type_layout);
-        mWatchTypeGroup = view.findViewById(R.id.watch_type_group);
         mBtnScanPineTime = view.findViewById(R.id.btn_scan_pinetime);
         mBtnUpdatePineTime = view.findViewById(R.id.btn_update_pinetime);
 
@@ -53,34 +50,29 @@ public class OnboardingDataSourceFragment extends Fragment {
 
         // Show/hide watch type based on selection
         mDataSourceGroup.setOnCheckedChangeListener((group, checkedId) -> {
-            if (checkedId == R.id.radio_watch) {
-                mWatchTypeLayout.setVisibility(View.VISIBLE);
-                saveDataSource("0"); // Watch
+            if (checkedId == R.id.radio_pinetime) {
+                saveDataSource("PineTime"); // PineTime
+                mBtnScanPineTime.setVisibility(View.VISIBLE);
+                mBtnUpdatePineTime.setVisibility(View.VISIBLE);
+
+            } else if (checkedId == R.id.radio_garmin) {
+                saveDataSource("Garmin"); // Garmin
+                mBtnScanPineTime.setVisibility(View.GONE);
+                mBtnUpdatePineTime.setVisibility(View.GONE);
+
             } else if (checkedId == R.id.radio_phone) {
-                mWatchTypeLayout.setVisibility(View.GONE);
-                saveDataSource("3"); // Phone (demo mode)
+                saveDataSource("Phone"); // Phone (demo mode)
+                mBtnScanPineTime.setVisibility(View.GONE);
+                mBtnUpdatePineTime.setVisibility(View.GONE);
+
             } else if (checkedId == R.id.radio_network) {
-                mWatchTypeLayout.setVisibility(View.GONE);
-                saveDataSource("2"); // Network
+                saveDataSource("Network"); // Network
+                mBtnScanPineTime.setVisibility(View.GONE);
+                mBtnUpdatePineTime.setVisibility(View.GONE);
+
             }
         });
 
-        // Handle watch type selection
-        mWatchTypeGroup.setOnCheckedChangeListener((group, checkedId) -> {
-            if (checkedId == R.id.radio_pinetime) {
-                mBtnScanPineTime.setVisibility(View.VISIBLE);
-                mBtnUpdatePineTime.setVisibility(View.VISIBLE);
-                saveWatchType("PineTime");
-            } else if (checkedId == R.id.radio_garmin) {
-                mBtnScanPineTime.setVisibility(View.GONE);
-                mBtnUpdatePineTime.setVisibility(View.GONE);
-                saveWatchType("Garmin");
-            } else if (checkedId == R.id.radio_other) {
-                mBtnScanPineTime.setVisibility(View.GONE);
-                mBtnUpdatePineTime.setVisibility(View.GONE);
-                saveWatchType("Other");
-            }
-        });
 
         // Scan for PineTime watch
         mBtnScanPineTime.setOnClickListener(v -> {
@@ -95,52 +87,50 @@ public class OnboardingDataSourceFragment extends Fragment {
             launchPineTimeUpdater();
         });
 
-        // Initial visibility state
-        if (mDataSourceGroup.getCheckedRadioButtonId() == R.id.radio_watch) {
-            mWatchTypeLayout.setVisibility(View.VISIBLE);
-            updatePineTimeButtonVisibility();
-        } else {
-            mWatchTypeLayout.setVisibility(View.GONE);
-        }
 
         return view;
     }
 
     private void selectDataSourceRadio(String dataSource) {
-        int radioId = R.id.radio_watch; // default
-        if (dataSource.equals("0")) {
-            radioId = R.id.radio_watch;
-        } else if (dataSource.equals("3")) {
-            radioId = R.id.radio_phone;
-        } else if (dataSource.equals("2")) {
-            radioId = R.id.radio_network;
+        int radioId;
+        switch (dataSource) {
+            case "Garmin":
+                radioId = R.id.radio_garmin;
+                break;
+            case "PineTime":
+                radioId = R.id.radio_pinetime;
+                break;
+            case "Phone":
+                radioId = R.id.radio_phone;
+                break;
+            case "Network":
+                radioId = R.id.radio_network;
+                break;
+            default:
+                radioId = R.id.radio_phone;
         }
         mDataSourceGroup.check(radioId);
     }
 
-    private void saveDataSource(String value) {
-        Log.i(TAG, "saveDataSource: " + value);
+    private void saveDataSource(String dataSource) {
+        Log.i(TAG, "saveDataSource: " + dataSource);
         SharedPreferences.Editor editor = mPrefs.edit();
-        editor.putString("DataSource", value);
-        editor.apply();
-    }
-
-    private void saveWatchType(String watchType) {
-        Log.i(TAG, "saveWatchType: " + watchType);
-        SharedPreferences.Editor editor = mPrefs.edit();
-        editor.putString("WatchType", watchType);
-        editor.apply();
-    }
-
-    private void updatePineTimeButtonVisibility() {
-        if (mWatchTypeGroup.getCheckedRadioButtonId() == R.id.radio_pinetime) {
-            mBtnScanPineTime.setVisibility(View.VISIBLE);
-            mBtnUpdatePineTime.setVisibility(View.VISIBLE);
-        } else {
-            mBtnScanPineTime.setVisibility(View.GONE);
-            mBtnUpdatePineTime.setVisibility(View.GONE);
+        switch (dataSource) {
+            case "PineTime":
+                editor.putString("DataSource", "BLE2");
+                break;
+            case "Garmin":
+                editor.putString("DataSource", "Garmin");
+                break;
+            case "Network":
+                editor.putString("DataSource", "Network");
+                break;
+            default:
+                editor.putString("DataSource", "Phone");
         }
+        editor.apply();
     }
+
 
     private void launchPineTimeUpdater() {
         String pineTimePackageName = "uk.org.openseizuredetector.pinetime";

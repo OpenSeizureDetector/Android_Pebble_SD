@@ -90,6 +90,8 @@ public class StartupActivity extends AppCompatActivity {
     private boolean mPermissionsRequested;
     private boolean mActivityPermissionsRequested = false;
     private boolean mBindInProgress = false;
+    private boolean mIsShuttingDown = false;
+    private boolean mServerStopRequested = false;
 
 
     public final String[] REQUIRED_PERMISSIONS = {
@@ -313,11 +315,12 @@ public class StartupActivity extends AppCompatActivity {
         }
 
 
+        // Don't automatically stop/restart the server when returning from settings
+        // The service will reload preferences when needed
         if (mUtil.isServerRunning()) {
-            mMode = MODE_SHUTDOWN_SERVER;
-            Log.i(TAG, "onStart() - server running - stopping it - isServerRunning=" + mUtil.isServerRunning());
-            mUtil.writeToSysLogFile("StartupActivity.onStart() - server already running - stopping it.");
-            mUtil.stopServer();
+            Log.i(TAG, "onStart() - server already running - will continue with existing service");
+            mUtil.writeToSysLogFile("StartupActivity.onStart() - server already running");
+            mMode = MODE_START_SERVER; // Continue to connection checks
         } else {
             mMode = MODE_START_SERVER;
             Log.i(TAG, "onStart() - server not running - isServerRunning=" + mUtil.isServerRunning());
@@ -360,9 +363,99 @@ public class StartupActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         Log.i(TAG, "onStop() - unbinding from server");
-        mUtil.writeToSysLogFile("StartupActivity.onStop() - unbinding from server");
-        mUtil.unbindFromServer(getApplicationContext(), mConnection);
-        mUiTimer.cancel();
+        if (mUtil != null) {
+            mUtil.writeToSysLogFile("StartupActivity.onStop() - unbinding from server");
+            mUtil.unbindFromServer(getApplicationContext(), mConnection);
+        }
+        if (mUiTimer != null) {
+            mUiTimer.cancel();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.i(TAG, "onDestroy()");
+        if (mUtil != null) {
+            mUtil.writeToSysLogFile("StartupActivity.onDestroy()");
+        }
+
+        // Cancel timers to prevent any background operations
+        if (mUiTimer != null) {
+            mUiTimer.cancel();
+            mUiTimer = null;
+        }
+
+        // Remove any pending handler callbacks
+        if (mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
+        }
+
+        Log.i(TAG, "onDestroy() - cleanup complete");
+    }
+
+    @Override
+    public void onBackPressed() {
+        Log.i(TAG, "onBackPressed() - user pressed back button");
+        if (mUtil != null) {
+            mUtil.writeToSysLogFile("StartupActivity.onBackPressed() - shutting down");
+        }
+
+        // Set shutdown flag to prevent any restart attempts
+        mIsShuttingDown = true;
+
+        // Cancel the UI timer immediately to prevent further checks
+        if (mUiTimer != null) {
+            mUiTimer.cancel();
+            mUiTimer = null;
+        }
+
+        // Remove any pending handler callbacks
+        if (mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
+        }
+
+        // If server is running, stop it with timeout protection
+        if (mUtil != null && mUtil.isServerRunning()) {
+            Log.i(TAG, "onBackPressed() - stopping server before exit");
+            mUtil.writeToSysLogFile("StartupActivity.onBackPressed() - stopping server");
+
+            mServerStopRequested = true;
+
+            // Stop server in background thread with timeout
+            new Thread(() -> {
+                try {
+                    mUtil.stopServer();
+                    Log.i(TAG, "onBackPressed() - server stopped successfully");
+                } catch (Exception e) {
+                    Log.e(TAG, "onBackPressed() - error stopping server: " + e.getMessage());
+                }
+
+                // Finish activity on UI thread
+                runOnUiThread(() -> {
+                    Log.i(TAG, "onBackPressed() - finishing activity");
+                    finish();
+                });
+            }).start();
+
+            // Also set a timeout to ensure we exit even if stop hangs
+            if (mHandler != null) {
+                mHandler.postDelayed(() -> {
+                    if (!isFinishing()) {
+                        Log.w(TAG, "onBackPressed() - server stop timeout, forcing exit");
+                        if (mUtil != null) {
+                            mUtil.writeToSysLogFile("StartupActivity.onBackPressed() - timeout, forcing exit");
+                        }
+                        finish();
+                    }
+                }, 7000); // 7 seconds - slightly longer than BLE disconnect timeout
+            }
+
+        } else {
+            // Server not running, just exit
+            Log.i(TAG, "onBackPressed() - server not running, exiting immediately");
+            super.onBackPressed();
+        }
     }
 
 
@@ -374,6 +467,12 @@ public class StartupActivity extends AppCompatActivity {
      */
     final Runnable serverStatusRunnable = new Runnable() {
         public void run() {
+            // Don't do anything if we're shutting down
+            if (mIsShuttingDown) {
+                Log.v(TAG, "serverStatusRunnable() - shutting down, skipping status check");
+                return;
+            }
+
             Boolean allOk = true;
             TextView tv;
             ProgressBar pb;
@@ -478,8 +577,19 @@ public class StartupActivity extends AppCompatActivity {
                 pb = (ProgressBar) findViewById(R.id.progressBar1);
 
                 if (!mUtil.isServerRunning()) {
+                    // Don't start server if we're shutting down or a stop was requested
+                    if (mIsShuttingDown || mServerStopRequested) {
+                        Log.i(TAG, "serverStatusRunnable() - shutdown in progress, not starting server");
+                        return;
+                    }
+
                     mUtil.writeToSysLogFile("StartupActivity.onStart() - starting server  - isServerRunning=" + mUtil.isServerRunning());
                     Log.i(TAG, "onStart() - starting server -isServerRunning=" + mUtil.isServerRunning());
+
+                    // Clear the user_stopped_service flag since we're starting the service
+                    SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+                    prefs.edit().putBoolean("user_stopped_service", false).apply();
+
                     mUtil.startServer();
                     mBindInProgress = false;
                     allOk = false;
@@ -490,6 +600,12 @@ public class StartupActivity extends AppCompatActivity {
                     pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
                     mMode = MODE_START_SERVER;
                 } else {
+                    // Don't bind or continue if shutting down
+                    if (mIsShuttingDown || mServerStopRequested) {
+                        Log.i(TAG, "serverStatusRunnable() - shutdown in progress, not binding to server");
+                        return;
+                    }
+
                     tv.setText(getString(R.string.ServerRunningOK));
                     tv.setBackgroundColor(getResources().getColor(R.color.status_ok_background));
                     tv.setTextColor(getResources().getColor(R.color.status_ok_text));
@@ -582,6 +698,12 @@ public class StartupActivity extends AppCompatActivity {
             // If all the parameters are ok, close this activity and open the main
             // user interface activity instead.
             if (allOk) {
+                // Don't start MainActivity if we're shutting down
+                if (mIsShuttingDown || mServerStopRequested) {
+                    Log.i(TAG, "serverStatusRunnable() - shutdown in progress, not starting MainActivity");
+                    return;
+                }
+
                 if (!mDialogDisplayed && !mBatteryOptDialogDisplayed) {
                     if (!mStartedMainActivity) {
                         Log.i(TAG, "serverStatusRunnable() - starting main activity...");

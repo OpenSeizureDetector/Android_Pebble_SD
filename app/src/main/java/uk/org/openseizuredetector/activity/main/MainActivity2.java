@@ -170,16 +170,29 @@ public class MainActivity2 extends AppCompatActivity {
             mUtil.writeToSysLogFile("MainActivity2.onStart - Binding to Server");
             mUtil.bindToServer(getApplicationContext(), mConnection);
         } else {
-            Log.i(TAG, "MainActivity2.onStart() - Server Not Running - Starting Server");
-            mUtil.writeToSysLogFile("MainActivity2.onStart - Server Not Running - Starting Server");
-            mUtil.startServer();
-            // Give server a moment to start before binding
-            mHandler.postDelayed(new Runnable() {
-                public void run() {
-                    Log.i(TAG, "MainActivity2.onStart() - Now binding to server");
-                    mUtil.bindToServer(getApplicationContext(), mConnection);
-                }
-            }, 500);
+            // Check if user explicitly stopped the service via "Exit"
+            // If so, don't auto-start it - let the user start it explicitly
+            SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
+            boolean userStopped = prefs.getBoolean("user_stopped_service", false);
+
+            if (userStopped) {
+                Log.i(TAG, "MainActivity2.onStart() - User stopped service via Exit, not auto-starting");
+                mUtil.writeToSysLogFile("MainActivity2.onStart - User stopped service, not auto-starting");
+                // Show message and close activity
+                mUtil.showToast("Service was stopped. Please restart from launcher.");
+                finish();
+            } else {
+                Log.i(TAG, "MainActivity2.onStart() - Server Not Running - Starting Server");
+                mUtil.writeToSysLogFile("MainActivity2.onStart - Server Not Running - Starting Server");
+                mUtil.startServer();
+                // Give server a moment to start before binding
+                mHandler.postDelayed(new Runnable() {
+                    public void run() {
+                        Log.i(TAG, "MainActivity2.onStart() - Now binding to server");
+                        mUtil.bindToServer(getApplicationContext(), mConnection);
+                    }
+                }, 500);
+            }
         }
 
 
@@ -297,6 +310,12 @@ public class MainActivity2 extends AppCompatActivity {
             case R.id.action_exit:
                 // Respond to the start/stop server menu item.
                 Log.i(TAG, "action_exit: Stopping Server");
+
+                // Set flag to indicate user explicitly stopped the service
+                SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
+                prefs.edit().putBoolean("user_stopped_service", true).apply();
+                Log.i(TAG, "action_exit: Set user_stopped_service flag");
+
                 mUtil.unbindFromServer(getApplicationContext(), mConnection);
                 stopServer();
                 // We exit this activity as a crude way of forcing the fragments to disconnect from the server
@@ -476,6 +495,11 @@ public class MainActivity2 extends AppCompatActivity {
     private void startServer() {
         mUtil.writeToSysLogFile("MainActivity.startServer()");
         Log.i(TAG, "startServer(): starting Server...");
+
+        // Clear the user_stopped_service flag since we're starting the service
+        SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        prefs.edit().putBoolean("user_stopped_service", false).apply();
+
         mUtil.startServer();
     }
 
