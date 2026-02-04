@@ -545,20 +545,80 @@ public class LogManagerControlActivity extends AppCompatActivity {
             ListView lv = (ListView) findViewById(R.id.remoteEventsLv);
 
             if (mGroupEventsCb.isChecked() && mGroupedRemoteEventsList != null) {
-                // Show only the first event of each group
+                // Show group summary with start time and duration
                 ArrayList<HashMap<String, String>> displayList = new ArrayList<>();
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.getDefault());
+
                 for (ArrayList<HashMap<String, String>> group : mGroupedRemoteEventsList) {
-                    displayList.add(group.get(0));
+                    HashMap<String, String> groupSummary = new HashMap<>(group.get(0)); // Start with first event data
+
+                    // Get the start time (last/oldest event in group) and end time (first/newest event)
+                    long startTimeMillis = 0;
+                    long endTimeMillis = 0;
+                    String startTimeStr = null;
+                    String endTimeStr = null;
+
+                    try {
+                        // First event in group is newest
+                        endTimeStr = group.get(0).get("dataTime");
+                        if (endTimeStr != null && !endTimeStr.equals("null")) {
+                            try {
+                                Date endDate = sdf.parse(endTimeStr);
+                                endTimeMillis = endDate.getTime();
+                            } catch (ParseException pe) {
+                                Log.w(TAG, "Failed to parse end time: " + endTimeStr);
+                            }
+                        }
+
+                        // Last event in group is oldest
+                        startTimeStr = group.get(group.size() - 1).get("dataTime");
+                        if (startTimeStr != null && !startTimeStr.equals("null")) {
+                            try {
+                                Date startDate = sdf.parse(startTimeStr);
+                                startTimeMillis = startDate.getTime();
+                            } catch (ParseException pe) {
+                                Log.w(TAG, "Failed to parse start time: " + startTimeStr);
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error parsing group dates: " + e.getMessage());
+                    }
+
+                    // Set the group start time (oldest event) - always set it even if parsing failed
+                    if (startTimeMillis > 0) {
+                        SimpleDateFormat displayFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault());
+                        String formattedTime = displayFormat.format(new Date(startTimeMillis));
+                        Log.v(TAG, "Setting grouped event dataTime to: " + formattedTime);
+                        groupSummary.put("dataTime", formattedTime);
+                    } else if (startTimeStr != null) {
+                        // If parsing failed, use the original time string
+                        Log.v(TAG, "Using raw start time: " + startTimeStr);
+                        groupSummary.put("dataTime", startTimeStr);
+                    }
+
+                    // Calculate duration in seconds
+                    long durationSeconds = 0;
+                    if (startTimeMillis > 0 && endTimeMillis > 0) {
+                        durationSeconds = (endTimeMillis - startTimeMillis) / 1000;
+                    }
+                    groupSummary.put("duration", String.format("%d sec", durationSeconds));
+
+                    // Ensure desc is present
+                    if (!groupSummary.containsKey("desc") || groupSummary.get("desc") == null) {
+                        groupSummary.put("desc", "");
+                    }
+
+                    displayList.add(groupSummary);
                 }
                 ListAdapter adapter = new RemoteEventsAdapter(LogManagerControlActivity.this, displayList, R.layout.log_entry_layout_remote,
-                        new String[]{"id", "dataTime", "type", "subType", "osdAlarmStateStr", "desc"},
-                        new int[]{R.id.event_id_remote_tv, R.id.event_date_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
+                        new String[]{"id", "dataTime", "duration", "type", "subType", "osdAlarmStateStr", "desc"},
+                        new int[]{R.id.event_id_remote_tv, R.id.event_date_remote_tv, R.id.event_duration_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
                                 R.id.event_alarmState_remote_tv, R.id.event_notes_remote_tv});
                 lv.setAdapter(adapter);
             } else if (mRemoteEventsList != null) {
                 ListAdapter adapter = new RemoteEventsAdapter(LogManagerControlActivity.this, mRemoteEventsList, R.layout.log_entry_layout_remote,
-                        new String[]{"id", "dataTime", "type", "subType", "osdAlarmStateStr", "desc"},
-                        new int[]{R.id.event_id_remote_tv, R.id.event_date_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
+                        new String[]{"id", "dataTime", "duration", "type", "subType", "osdAlarmStateStr", "desc"},
+                        new int[]{R.id.event_id_remote_tv, R.id.event_date_remote_tv, R.id.event_duration_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
                                 R.id.event_alarmState_remote_tv, R.id.event_notes_remote_tv});
                 lv.setAdapter(adapter);
             } else {
@@ -1007,12 +1067,20 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
             // Convert date format to something more readable.
             TextView tv = (TextView) v.findViewById(R.id.event_date_remote_tv);
-            Date dataTime = null;
             String dateStr = (String) dataItem.get("dataTime");
-            dataTime = mUtil.string2date(dateStr);
-            if (dataTime != null) {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-                tv.setText(dateFormat.format(dataTime));
+
+            // Check if date is already formatted (from grouped events) or needs parsing (from API)
+            if (dateStr != null && !dateStr.equals("null")) {
+                // Try to parse as ISO format first (from API)
+                Date dataTime = mUtil.string2date(dateStr);
+                if (dataTime != null) {
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                    tv.setText(dateFormat.format(dataTime));
+                } else {
+                    // If parsing failed, assume it's already formatted and use as-is
+                    Log.v(TAG, "Date already formatted, using as-is: " + dateStr);
+                    tv.setText(dateStr);
+                }
             } else {
                 tv.setText("---");
             }

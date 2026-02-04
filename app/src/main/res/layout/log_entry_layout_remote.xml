@@ -1,78 +1,97 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
 
+    <!-- Row 1: ID, Type, SubType spread across width -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="4dp">
+
+        <TextView
+            android:id="@+id/event_id_remote_tv"
+            android:layout_width="28dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="eventId"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textStyle="bold" />
+        <TextView
+            android:id="@+id/event_date_remote_tv"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="2"
+            android:textColor="?android:attr/textColorPrimary"
+            android:text="date"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/event_duration_remote_tv"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="?android:attr/textColorPrimary"
+            android:text="duration"
+            android:gravity="end" />
+
+        <TextView
+            android:id="@+id/event_alarmState_remote_tv"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="end"
+            android:text="alarm"
+            android:textColor="?android:attr/textColorPrimary" />
+
+    </LinearLayout>
+
+    <!-- Row 2: DateTime and Duration spread across width -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="4dp">
+
+        <TextView
+            android:id="@+id/event_type_remote_tv"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.25"
+            android:gravity="start"
+            android:text="---"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/event_subtype_remote_tv"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.75"
+            android:gravity="start"
+            android:text="---"
+            android:textColor="?android:attr/textColorPrimary" />
+
+    </LinearLayout>
+
+    <!-- Row 3: Description and Alarm State -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/event_notes_remote_tv"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_weight="2"
+            android:textColor="?android:attr/textColorPrimary"
+            android:text="notes"
+            android:textStyle="italic" />
 
-            <TextView
-                android:id="@+id/event_date_remote_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
-                android:text="date"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/event_type_remote_tv"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:text="---"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:text=" : " />
-
-                <TextView
-                    android:id="@+id/event_subtype_remote_tv"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:text="---" />
-
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/event_alarmState_remote_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
-                android:text="alarm" />
-
-            <TextView
-                android:id="@+id/event_notes_remote_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
-                android:text="notes"
-                android:textStyle="italic" />
-
-            <TextView
-                android:id="@+id/event_id_remote_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="10dp"
-                android:textColor="?android:attr/textColorPrimary"
-                android:text="eventId"
-                android:textAppearance="?android:attr/textAppearanceSmall" />
-        </LinearLayout>
     </LinearLayout>
 </LinearLayout>
