@@ -348,7 +348,11 @@ public class LogManager {
         try {
             if (mOsdDb == null) {
                 Log.i(TAG, "openDb: mOsdDb is null - initialising");
-                mOsdDb = new OsdDbHelper(mContext).getWritableDatabase();
+                Log.d(TAG, "openDb: Creating OsdDbHelper and getting writable database");
+                OsdDbHelper helper = new OsdDbHelper(mContext);
+                mOsdDb = helper.getWritableDatabase();
+                Log.i(TAG, "openDb: Database opened successfully");
+                Log.d(TAG, "openDb: Database version is now: " + mOsdDb.getVersion());
             } else {
                 Log.i(TAG, "openDb: mOsdDb has been initialised already so not doing anything");
             }
@@ -361,6 +365,24 @@ public class LogManager {
                     Log.d(TAG, "table " + tableName + " exists ok");
                 }
             }
+
+            // Log the schema to help debug
+            try {
+                Cursor schemaCursor = mOsdDb.rawQuery("PRAGMA table_info(datapoints)", null);
+                Log.d(TAG, "openDb: Datapoints table has " + schemaCursor.getCount() + " columns");
+                int nameIdx = schemaCursor.getColumnIndex("name");
+                schemaCursor.moveToFirst();
+                StringBuilder columns = new StringBuilder("Columns: ");
+                while (!schemaCursor.isAfterLast()) {
+                    columns.append(schemaCursor.getString(nameIdx)).append(", ");
+                    schemaCursor.moveToNext();
+                }
+                Log.d(TAG, "openDb: " + columns.toString());
+                schemaCursor.close();
+            } catch (Exception e) {
+                Log.w(TAG, "openDb: Could not log schema info: " + e.getMessage());
+            }
+
         } catch (SQLException e) {
             Log.e(TAG, "Failed to open Database: " + e.toString());
             return false;
@@ -383,46 +405,98 @@ public class LogManager {
         return tableExists;
     }
 
+    /**
+     * Static getter to access the database for history loading operations.
+     * Called by CircBufHistoryLoader to restore persisted history on app startup.
+     *
+     * @return The SQLiteDatabase instance, or null if not initialized
+     */
+    public static SQLiteDatabase getDatabase() {
+        return mOsdDb;
+    }
+
 
     /**
-     * Write data to local database
-     * FIXME - I am sure we should not be using raw SQL Srings to do this!
+     * Write data to local database including history CircBuf data
+     * Executes on background thread to avoid blocking UI
+     * History buffers are now stored in SdDataHistory instead of SdData
      */
-    public void writeDatapointToLocalDb(SdData sdData) {
+    public void writeDatapointToLocalDb(SdData sdData, uk.org.openseizuredetector.data.SdDataHistory sdDataHistory) {
         //Log.v(TAG, "writeDatapointToLocalDb()");
         Date curDate = new Date();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-        String dateStr = dateFormat.format(curDate);
-        String SQLStr = "SQLStr";
+        final String dateStr = dateFormat.format(curDate);
 
         if (mOsdDb == null) {
             Log.e(TAG, "writeDatapointToLocalDb(): mOsdDb is null - doing nothing");
             return;
         }
-        try {
-            // Write Datapoint to database
-            SQLStr = "INSERT INTO " + mDpTableName
-                    + "(dataTime, status, dataJSON, uploaded)"
-                    + " VALUES("
-                    + "'" + dateStr + "',"
-                    + sdData.alarmState + ","
-                    + DatabaseUtils.sqlEscapeString(sdData.toDatapointJSON()) + ","
-                    + 0
-                    + ")";
-            mOsdDb.execSQL(SQLStr);
-            Log.v(TAG, "writeDatapointToLocalDb(): datapoint written to database");
 
-            if (sdData.alarmState != 0) {
-                Log.i(TAG, "writeDatapointToLocalDb(): adding event to local DB");
-                createLocalEvent(dateStr, sdData.alarmState, null, null, null, sdData.toSettingsJSON());
+        // Execute database write on background thread to avoid UI blocking
+        BackgroundTaskExecutor.executeAndForget(() -> {
+            try {
+                Log.d(TAG, "writeDatapointToLocalDb(): Starting to serialize history buffers");
+
+                // Serialize history CircBuf objects to JSON
+                String watchBattHist = uk.org.openseizuredetector.utils.CircBufPersistenceManager
+                        .serializeCircBuf(sdDataHistory.watchBattBuff);
+                Log.d(TAG, "writeDatapointToLocalDb(): watchBattHist serialized, length=" + (watchBattHist != null ? watchBattHist.length() : 0));
+
+                String phoneBattHist = uk.org.openseizuredetector.utils.CircBufPersistenceManager
+                        .serializeCircBuf(sdDataHistory.phoneBattBuff);
+                Log.d(TAG, "writeDatapointToLocalDb(): phoneBattHist serialized, length=" + (phoneBattHist != null ? phoneBattHist.length() : 0));
+
+                String signalStrengthHist = uk.org.openseizuredetector.utils.CircBufPersistenceManager
+                        .serializeCircBuf(sdDataHistory.watchSignalStrengthBuff);
+                Log.d(TAG, "writeDatapointToLocalDb(): signalStrengthHist serialized, length=" + (signalStrengthHist != null ? signalStrengthHist.length() : 0));
+
+                String pseudSeizureHist = uk.org.openseizuredetector.utils.CircBufPersistenceManager
+                        .serializeCircBuf(sdDataHistory.mPseizureHistBuf);
+                Log.d(TAG, "writeDatapointToLocalDb(): pseudSeizureHist serialized, length=" + (pseudSeizureHist != null ? pseudSeizureHist.length() : 0));
+
+                String accelMagStdDevHist = uk.org.openseizuredetector.utils.CircBufPersistenceManager
+                        .serializeCircBuf(sdDataHistory.mAccelMagStdDevHistBuf);
+                Log.d(TAG, "writeDatapointToLocalDb(): accelMagStdDevHist serialized, length=" + (accelMagStdDevHist != null ? accelMagStdDevHist.length() : 0));
+
+                String hrHist = uk.org.openseizuredetector.utils.CircBufPersistenceManager
+                        .serializeCircBuf(sdDataHistory.mHrHistBuf);
+                Log.d(TAG, "writeDatapointToLocalDb(): hrHist serialized, length=" + (hrHist != null ? hrHist.length() : 0));
+
+                // Build INSERT statement with history columns
+                String SQLStr = "INSERT INTO " + mDpTableName
+                        + "(dataTime, status, dataJSON, uploaded, watchBattHist, phoneBattHist, "
+                        + "signalStrengthHist, pseudSeizureHist, accelMagStdDevHist, hrHist)"
+                        + " VALUES("
+                        + "'" + dateStr + "',"
+                        + sdData.alarmState + ","
+                        + DatabaseUtils.sqlEscapeString(sdData.toDatapointJSON()) + ","
+                        + "0,"  // uploaded = 0 (not uploaded)
+                        + DatabaseUtils.sqlEscapeString(watchBattHist != null ? watchBattHist : "") + ","
+                        + DatabaseUtils.sqlEscapeString(phoneBattHist != null ? phoneBattHist : "") + ","
+                        + DatabaseUtils.sqlEscapeString(signalStrengthHist != null ? signalStrengthHist : "") + ","
+                        + DatabaseUtils.sqlEscapeString(pseudSeizureHist != null ? pseudSeizureHist : "") + ","
+                        + DatabaseUtils.sqlEscapeString(accelMagStdDevHist != null ? accelMagStdDevHist : "") + ","
+                        + DatabaseUtils.sqlEscapeString(hrHist != null ? hrHist : "")
+                        + ")";
+
+                mOsdDb.execSQL(SQLStr);
+                Log.v(TAG, "writeDatapointToLocalDb(): datapoint with history written to database");
+
+                if (sdData.alarmState != 0) {
+                    Log.i(TAG, "writeDatapointToLocalDb(): adding event to local DB");
+                    createLocalEvent(dateStr, sdData.alarmState, null, null, null, sdData.toSettingsJSON());
+                }
+            } catch (SQLException e) {
+                Log.e(TAG, "writeDatapointToLocalDb(): SQL Error Writing Data: " + e.toString());
+                e.printStackTrace();
+            } catch (NullPointerException e) {
+                Log.e(TAG, "writeDatapointToLocalDb(): Null Pointer Exception: " + e.toString());
+                e.printStackTrace();
+            } catch (Exception e) {
+                Log.e(TAG, "writeDatapointToLocalDb(): Unexpected error: " + e.toString());
+                e.printStackTrace();
             }
-        } catch (SQLException e) {
-            Log.e(TAG, "writeToLocalDb(): Error Writing Data: " + e.toString());
-            Log.e(TAG, "SQLStr was " + SQLStr);
-        } catch (NullPointerException e) {
-            Log.e(TAG, "writeToLocalDb(): Null Pointer Exception: " + e.toString());
-        }
+        });
     }
 
     public boolean createLocalEvent(String dataTime, long status) {
@@ -1597,13 +1671,13 @@ public class LogManager {
 
     public static class OsdDbHelper extends SQLiteOpenHelper {
         // If you change the database schema, you must increment the database version.
-        public static final int DATABASE_VERSION = 1;
+        public static final int DATABASE_VERSION = 3;
         public static final String DATABASE_NAME = "OsdData.db";
         private static final String TAG = "LogManager.OsdDbHelper";
 
         public OsdDbHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);
-            Log.d(TAG, "OsdDbHelper constructor");
+            Log.d(TAG, "OsdDbHelper constructor - DATABASE_VERSION=" + DATABASE_VERSION);
         }
 
         public void onCreate(SQLiteDatabase db) {
@@ -1613,9 +1687,17 @@ public class LogManager {
                     + "dataTime DATETIME,"
                     + "status INT,"
                     + "dataJSON TEXT,"
-                    + "uploaded TEXT"  // Stores the ID of the datapoint in the remote database if uploaded, otherwise empty
+                    + "uploaded TEXT,"  // Stores the ID of the datapoint in the remote database if uploaded, otherwise empty
+                    // Circular buffer history columns (JSON-encoded)
+                    + "watchBattHist TEXT,"           // Watch battery history (24 hour buffer, 1 sample per 5 sec)
+                    + "phoneBattHist TEXT,"           // Phone battery history (24 hour buffer, 1 sample per 5 sec)
+                    + "signalStrengthHist TEXT,"      // Watch signal strength history (10 minute buffer)
+                    + "pseudSeizureHist TEXT,"        // ML seizure probability history (10 minute buffer)
+                    + "accelMagStdDevHist TEXT,"      // Acceleration magnitude std dev history (10 minute buffer)
+                    + "hrHist TEXT"                   // Heart rate history (10 minute buffer)
                     + ");";
             db.execSQL(SQLStr);
+            Log.i(TAG, "onCreate - Created " + mDpTableName + " with history columns");
             Log.i(TAG, "onCreate - TableName=" + mEventsTableName);
             SQLStr = "CREATE TABLE IF NOT EXISTS " + mEventsTableName + "("
                     + "id INTEGER PRIMARY KEY,"
@@ -1628,18 +1710,88 @@ public class LogManager {
                     + "uploaded TEXT"  // stores the id of the event in the remote dabase if uploaded, otherwise empty
                     + ");";
             db.execSQL(SQLStr);
+            Log.i(TAG, "onCreate - Created " + mEventsTableName);
         }
 
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             // This database is only a cache for online data, so its upgrade policy is
-            // to simply to discard the data and start over
-            Log.i(TAG, "onUpgrade()");
-            db.execSQL("Drop table if exists " + mDpTableName + ";");
-            onCreate(db);
+            // to add new columns if upgrading from v1 to v2, or discard and start over for other scenarios
+            Log.i(TAG, "onUpgrade() - CALLED: oldVersion=" + oldVersion + ", newVersion=" + newVersion);
+
+            if (oldVersion == 1 && newVersion == 2) {
+                // Add new history columns to existing datapoints table
+                Log.i(TAG, "onUpgrade() - Detected v1->v2 migration, adding history columns to " + mDpTableName);
+                try {
+                    Log.d(TAG, "onUpgrade() - Adding watchBattHist column");
+                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN watchBattHist TEXT;");
+                    Log.d(TAG, "onUpgrade() - Adding phoneBattHist column");
+                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN phoneBattHist TEXT;");
+                    Log.d(TAG, "onUpgrade() - Adding signalStrengthHist column");
+                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN signalStrengthHist TEXT;");
+                    Log.d(TAG, "onUpgrade() - Adding pseudSeizureHist column");
+                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN pseudSeizureHist TEXT;");
+                    Log.d(TAG, "onUpgrade() - Adding accelMagStdDevHist column");
+                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN accelMagStdDevHist TEXT;");
+                    Log.i(TAG, "✅ onUpgrade() - History columns added successfully - MIGRATION COMPLETE");
+                } catch (SQLException e) {
+                    Log.e(TAG, "❌ onUpgrade() - Error adding columns: " + e.getMessage());
+                    e.printStackTrace();
+                    // If adding columns fails, fall back to recreating the table
+                    Log.w(TAG, "onUpgrade() - Falling back to table recreation");
+                    db.execSQL("DROP TABLE IF EXISTS " + mDpTableName + ";");
+                    onCreate(db);
+                }
+            } else if (oldVersion == 1 && newVersion == 3) {
+                // Direct v1->v3 migration (for users skipping v2)
+                // Add all history columns in one go
+                Log.i(TAG, "onUpgrade() - Detected v1->v3 migration, adding all history columns to " + mDpTableName);
+                try {
+                    Log.d(TAG, "onUpgrade() - Adding watchBattHist column");
+                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN watchBattHist TEXT;");
+                    Log.d(TAG, "onUpgrade() - Adding phoneBattHist column");
+                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN phoneBattHist TEXT;");
+                    Log.d(TAG, "onUpgrade() - Adding signalStrengthHist column");
+                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN signalStrengthHist TEXT;");
+                    Log.d(TAG, "onUpgrade() - Adding pseudSeizureHist column");
+                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN pseudSeizureHist TEXT;");
+                    Log.d(TAG, "onUpgrade() - Adding accelMagStdDevHist column");
+                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN accelMagStdDevHist TEXT;");
+                    Log.d(TAG, "onUpgrade() - Adding hrHist column");
+                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN hrHist TEXT;");
+                    Log.i(TAG, "✅ onUpgrade() - All history columns added successfully - MIGRATION COMPLETE");
+                } catch (SQLException e) {
+                    Log.e(TAG, "❌ onUpgrade() - Error adding columns: " + e.getMessage());
+                    e.printStackTrace();
+                    // If adding columns fails, fall back to recreating the table
+                    Log.w(TAG, "onUpgrade() - Falling back to table recreation");
+                    db.execSQL("DROP TABLE IF EXISTS " + mDpTableName + ";");
+                    onCreate(db);
+                }
+            } else if (oldVersion == 2 && newVersion == 3) {
+                // Add hrHist column for heart rate history persistence
+                Log.i(TAG, "onUpgrade() - Detected v2->v3 migration, adding hrHist column to " + mDpTableName);
+                try {
+                    Log.d(TAG, "onUpgrade() - Adding hrHist column");
+                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN hrHist TEXT;");
+                    Log.i(TAG, "✅ onUpgrade() - hrHist column added successfully - MIGRATION COMPLETE");
+                } catch (SQLException e) {
+                    Log.e(TAG, "❌ onUpgrade() - Error adding hrHist column: " + e.getMessage());
+                    e.printStackTrace();
+                    // If adding column fails, fall back to recreating the table
+                    Log.w(TAG, "onUpgrade() - Falling back to table recreation");
+                    db.execSQL("DROP TABLE IF EXISTS " + mDpTableName + ";");
+                    onCreate(db);
+                }
+            } else {
+                // For any other version change, discard and start over
+                Log.w(TAG, "onUpgrade() - Unsupported version change (v" + oldVersion + "->v" + newVersion + "), recreating tables");
+                db.execSQL("DROP TABLE IF EXISTS " + mDpTableName + ";");
+                onCreate(db);
+            }
         }
 
         public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            Log.i(TAG, "onDowngrade()");
+            Log.i(TAG, "onDowngrade() - oldVersion=" + oldVersion + ", newVersion=" + newVersion);
             onUpgrade(db, oldVersion, newVersion);
         }
     }

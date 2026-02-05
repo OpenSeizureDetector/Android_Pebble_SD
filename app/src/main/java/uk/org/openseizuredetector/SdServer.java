@@ -89,6 +89,7 @@ import uk.org.openseizuredetector.datasource.SdDataSourceNetwork;
 import uk.org.openseizuredetector.datasource.SdDataSourcePebble;
 import uk.org.openseizuredetector.datasource.SdDataSourcePhone;
 import uk.org.openseizuredetector.data.SdData;
+import uk.org.openseizuredetector.utils.CircBufHistoryLoader;
 import uk.org.openseizuredetector.utils.LocationFinder;
 import uk.org.openseizuredetector.utils.SdLocationReceiver;
 import uk.org.openseizuredetector.utils.OsdUtil;
@@ -151,6 +152,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private LocationFinder mLocationFinder = null;
     public SdDataSource mSdDataSource;
     public SdData mSdData = null;
+    public uk.org.openseizuredetector.data.SdDataHistory mSdDataHistory = null;  // Persistent history buffers
     public String mSdDataSourceName = "undefined";  // The name of the data source specified in the preferences.
     private boolean mLatchAlarms = false;
     private int mLatchAlarmPeriod = 0;
@@ -237,6 +239,7 @@ public class SdServer extends Service implements SdDataReceiver {
         Log.i(TAG, "onCreate()");
         mHandler = new Handler(Looper.getMainLooper());
         mSdData = new SdData();
+        mSdDataHistory = new uk.org.openseizuredetector.data.SdDataHistory();  // Initialize history buffers
         mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
 
         mUtil = new OsdUtil(getApplicationContext(), mHandler);
@@ -348,6 +351,33 @@ public class SdServer extends Service implements SdDataReceiver {
         // Create our log manager.
         mLm = new LogManager(this, mLogDataRemote, mLogDataRemoteMobile, mAuthToken, mEventDuration,
                 mRemoteLogPeriod, mLogNDA, mAutoPruneDb, mDataRetentionPeriod, mSdData);
+
+        // Load persisted CircBuf history from database to restore graph history on startup
+        // This is done asynchronously on a background thread to avoid UI blocking
+        if (mLogData && mSdDataHistory != null) {
+            Log.d(TAG, "onStartCommand() - mLogData=true, loading CircBuf history from database into SdDataHistory");
+            CircBufHistoryLoader.loadHistoryFromDatabase(
+                mSdDataHistory,
+                new CircBufHistoryLoader.HistoryLoadCallback() {
+                    @Override
+                    public void onHistoryLoaded(boolean success) {
+                        Log.d(TAG, "onHistoryLoaded() callback invoked with success=" + success);
+                        if (success) {
+                            Log.i(TAG, "CircBuf history loaded successfully into SdDataHistory");
+                            mUtil.writeToSysLogFile("SdServer - CircBuf history restored from database");
+                        } else {
+                            Log.i(TAG, "No history data found in database (first run or empty DB)");
+                        }
+                    }
+                }
+            );
+        } else {
+            if (!mLogData) {
+                Log.d(TAG, "onStartCommand() - Data logging is disabled (mLogData=false), skipping history load");
+            } else {
+                Log.e(TAG, "onStartCommand() - SdDataHistory is null, cannot load history");
+            }
+        }
 
         if (mSMSAlarm) {
             Log.v(TAG, "Creating LocationFinder");
@@ -951,6 +981,13 @@ public class SdServer extends Service implements SdDataReceiver {
 
         if (webServer != null) webServer.setSdData(mSdData);
         Log.v(TAG, "onSdDataReceived() - setting mSdData to " + mSdData.toString());
+
+        // Add current data point to the persistent history (SdDataHistory persists across SdData replacements)
+        if (mSdDataHistory != null) {
+            mSdDataHistory.addDataPoint(sdData.batteryPc, sdData.phoneBatteryPc,
+                                       sdData.watchSignalStrength, sdData.mPseizure, 0.0, sdData.mHR);
+        }
+
         mLm.updateSdData(mSdData);
 
         logData();
@@ -1445,7 +1482,7 @@ public class SdServer extends Service implements SdDataReceiver {
             if (mLm != null) {
                 Log.v(TAG, "logData() - writing data to Database");
                 //writeToSD();
-                mLm.writeDatapointToLocalDb(mSdData);
+                mLm.writeDatapointToLocalDb(mSdData, mSdDataHistory);
             } else {
                 Log.e(TAG, "logData() - mLm is null - this should not happen");
             }

@@ -187,8 +187,8 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
                 return;
             }
 
-            // Get history data from circular buffer
-            double[] historyData = sdData.mPseizureHistBuf.getVals();
+            // Get history data from circular buffer in SdDataHistory
+            double[] historyData = mConnection.mSdServer.mSdDataHistory.mPseizureHistBuf.getVals();
 
             if (historyData == null || historyData.length == 0) {
                 Log.d(TAG, "No seizure probability history data available yet");

@@ -104,4 +104,24 @@ public class CircBuf {
         return (retVal);
     }
 
+    /**
+     * Returns the total capacity (buffer length) of this circular buffer.
+     * Useful for serialization/persistence operations.
+     *
+     * @return The size of the buffer
+     */
+    public int getBufferLength() {
+        return mBuffLen;
+    }
+
+    /**
+     * Returns the error value for this buffer.
+     * Useful for persistence and recreation.
+     *
+     * @return The error value used to mark invalid entries
+     */
+    public double getErrorValue() {
+        return mErrVal;
+    }
+
 }

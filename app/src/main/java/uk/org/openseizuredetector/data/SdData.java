@@ -72,10 +72,6 @@ public class SdData implements Parcelable {
     public long batteryPc;  // watch battery
     public int phoneBatteryPc;
 
-    public CircBuf watchBattBuff = new CircBuf(24*3600/5, -1);  // 24 hour buffer
-    public CircBuf phoneBattBuff = new CircBuf(24*3600/5, -1);  // 24 hour buffer
-    public CircBuf watchSignalStrengthBuff = new CircBuf(10*60/5, -1); // 10 minute buffer
-
     /* Heart Rate Alarm Settings */
     public boolean mHRAlarmActive = false;
     public boolean mHRNullAsAlarm = false;
@@ -144,21 +140,12 @@ public class SdData implements Parcelable {
     public double mPseizure = 0.;
     public float watchSignalStrength;
 
-    // Circular buffer to store ML seizure probability history for the last 10 minutes
-    // At 5-second analysis intervals, 10 minutes = 600 seconds / 5 = 120 samples
-    public CircBuf mPseizureHistBuf = new CircBuf(120, -1.0);
-
     public SdData() {
         simpleSpec = new int[10];
         rawData = new double[N_RAW_DATA];
         rawData3D = new double[N_RAW_DATA * 3];
         dataTimeMillis = System.currentTimeMillis();
         timeDiff = 0f;
-
-        // Initialize the history buffer with zeros so we have initial data for the chart
-        for (int i = 0; i < 120; i++) {
-            mPseizureHistBuf.add(0.0);
-        }
     }
 
     /*
@@ -189,7 +176,6 @@ public class SdData implements Parcelable {
             specPower = jo.optInt("specPower");
             roiPower = jo.optInt("roiPower");
             batteryPc = jo.optInt("batteryPc");
-            watchBattBuff.add(batteryPc);
             watchConnected = jo.optBoolean("watchConnected");
             watchAppRunning = jo.optBoolean("watchAppRunning");
             alarmState = jo.optInt("alarmState");

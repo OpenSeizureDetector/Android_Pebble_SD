@@ -1,7 +1,6 @@
 package uk.org.openseizuredetector.activity.main;
 import uk.org.openseizuredetector.R;
 
-import uk.org.openseizuredetector.utils.CircBuf;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -123,14 +122,12 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                         .append(mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding)
                         .toString());
 
-                if (Objects.nonNull(mConnection.mSdServer.mSdDataSource.mSdAlgHr)) {
-                    CircBuf hrHist = mConnection.mSdServer.mSdDataSource.mSdAlgHr.getHrHistBuff();
-                    int nHistArr = hrHist.getNumVals();
-                    double hrHistArr[] = hrHist.getVals();
+                // Get heart rate history from SdDataHistory (persistent history across restarts)
+                int nHistArr = mConnection.mSdServer.mSdDataHistory.mHrHistBuf.getNumVals();
+                double hrHistArr[] = mConnection.mSdServer.mSdDataHistory.mHrHistBuf.getVals();
 
-                    if (Objects.nonNull(hrHist) && nHistArr > 0) {
-                        displayHistoryChart(hrHistArr, nHistArr);
-                    }
+                if (Objects.nonNull(hrHistArr) && nHistArr > 0) {
+                    displayHistoryChart(hrHistArr, nHistArr);
                 }
             }
         } else {

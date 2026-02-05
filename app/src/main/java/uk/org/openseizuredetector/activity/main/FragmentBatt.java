@@ -76,12 +76,12 @@ public class FragmentBatt extends FragmentOsdBaseClass {
         Log.d(TAG, "updateUi()");
         
         if (mConnection.mBound) {
-            int nWatchBattArr = mConnection.mSdServer.mSdData.watchBattBuff.getNumVals();
-            double watchBattArr[] = mConnection.mSdServer.mSdData.watchBattBuff.getVals();
-            
+            int nWatchBattArr = mConnection.mSdServer.mSdDataHistory.watchBattBuff.getNumVals();
+            double watchBattArr[] = mConnection.mSdServer.mSdDataHistory.watchBattBuff.getVals();
+
             Log.i(TAG,"updateUi() - nWatchBattArr="+nWatchBattArr);
             
-            if (Objects.nonNull(mConnection.mSdServer.mSdData.watchBattBuff) && nWatchBattArr > 0) {
+            if (Objects.nonNull(mConnection.mSdServer.mSdDataHistory.watchBattBuff) && nWatchBattArr > 0) {
                 displayHistoryChart(watchBattArr, nWatchBattArr);
             }
         }

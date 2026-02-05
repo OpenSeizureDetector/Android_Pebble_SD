@@ -497,8 +497,6 @@ public abstract class SdDataSource {
         double[] fft = null;
         // Update phone battery level - it is done here so it is called for all data sources.
         mSdData.phoneBatteryPc = getPhoneBatteryLevel();
-        mSdData.phoneBattBuff.add(mSdData.phoneBatteryPc);
-        mSdData.watchBattBuff.add(mSdData.batteryPc);
         try {
             // FIXME - Use specified sampleFreq, not this hard coded one
             mSampleFreq = 25;
@@ -1062,8 +1060,6 @@ public abstract class SdDataSource {
                 float pSeizure = mSdAlgNn.getPseizure(mSdData);
                 Log.d(TAG, "nnAnalysis - nnResult=" + pSeizure);
                 mSdData.mPseizure = pSeizure;
-                // Record seizure probability in history buffer for display in UI
-                mSdData.mPseizureHistBuf.add(pSeizure);
             } catch(Exception e) {
                 Log.e(TAG,"nnAnalysis - Error running Analysis - "+e.getMessage());
             }

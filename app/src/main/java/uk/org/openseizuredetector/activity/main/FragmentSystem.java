@@ -23,6 +23,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 import uk.org.openseizuredetector.activity.settings.PrefActivity;
+
 public class FragmentSystem extends FragmentOsdBaseClass {
     String TAG = "FragmentSystem";
 
@@ -74,6 +75,13 @@ public class FragmentSystem extends FragmentOsdBaseClass {
         });
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // History is loaded by SdServer during initialization, so we just display what's there
+        // No need to reload history here
+    }
+
     private void setupBatteryChart() {
         mBattLineChart.getViewport().setYAxisBoundsManual(true);
         mBattLineChart.getViewport().setMinY(0);
@@ -97,13 +105,14 @@ public class FragmentSystem extends FragmentOsdBaseClass {
             mBattLineChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (hours)");
             mBattLineChart.getGridLabelRenderer().setHorizontalAxisTitleColor(textColor);
 
-            // Format X-axis to show hours instead of seconds
+            // Format X-axis to show hours ago instead of hours from start
             mBattLineChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {
                 @Override
                 public String formatLabel(double value, boolean isValueX) {
                     if (isValueX) {
-                        // Convert seconds to hours
-                        return String.format("%.0f", value / 3600.0);
+                        // Convert seconds to hours ago (24 hour buffer = 86400 seconds)
+                        double hoursAgo = (86400.0 - value) / 3600.0;
+                        return String.format("%.0f", hoursAgo);
                     } else {
                         return super.formatLabel(value, isValueX);
                     }
@@ -137,13 +146,14 @@ public class FragmentSystem extends FragmentOsdBaseClass {
             mSignalLineChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (minutes)");
             mSignalLineChart.getGridLabelRenderer().setHorizontalAxisTitleColor(textColor);
 
-            // Format X-axis to show minutes instead of seconds
+            // Format X-axis to show minutes ago instead of minutes from start
             mSignalLineChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {
                 @Override
                 public String formatLabel(double value, boolean isValueX) {
                     if (isValueX) {
-                        // Convert seconds to minutes
-                        return String.format("%.0f", value / 60.0);
+                        // Convert seconds to minutes ago (10 minute buffer = 600 seconds)
+                        double minutesAgo = (600.0 - value) / 60.0;
+                        return String.format("%.0f", minutesAgo);
                     } else {
                         return super.formatLabel(value, isValueX);
                     }
@@ -336,10 +346,10 @@ public class FragmentSystem extends FragmentOsdBaseClass {
             return;
         }
         try {
-            double watchBattArr[] = mConnection.mSdServer.mSdData.watchBattBuff.getVals();
+            // Read from SdDataHistory which maintains persistent history across SdData replacements
+            double watchBattArr[] = mConnection.mSdServer.mSdDataHistory.watchBattBuff.getVals();
             int nWatchBattArr = watchBattArr.length;
             if (Objects.nonNull(watchBattArr) && nWatchBattArr > 0) {
-                Log.v(TAG, "Battery buffer contains " + nWatchBattArr + " values");
 
                 // Create data points with forward time axis (like ML graph)
                 // Index 0 = oldest data (left side, time=0)
@@ -382,6 +392,17 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                 mBattLineChart.setTitleTextSize(24f);
                 mBattLineChart.setTitleColor(Color.WHITE);
 
+                // If we have a large time span, scroll to show the most recent data (right side)
+                if (validPoints > 10) {
+                    double maxTime = validPoints * 5.0;
+                    double viewportWidth = 86400; // 24 hours in seconds
+                    if (maxTime > viewportWidth) {
+                        // Scroll to show the end (most recent data)
+                        mBattLineChart.getViewport().setMaxX(maxTime);
+                        mBattLineChart.getViewport().setMinX(Math.max(0, maxTime - viewportWidth));
+                    }
+                }
+
                 Log.d(TAG, "Battery chart updated with " + validPoints + " data points");
             }
         } catch (Exception e) {
@@ -393,10 +414,10 @@ public class FragmentSystem extends FragmentOsdBaseClass {
             return;
         }
         try {
-            double signalArr[] = mConnection.mSdServer.mSdData.watchSignalStrengthBuff.getVals();
+            // Read from SdDataHistory which maintains persistent history across SdData replacements
+            double signalArr[] = mConnection.mSdServer.mSdDataHistory.watchSignalStrengthBuff.getVals();
             int nSignalArr = signalArr.length;
             if (Objects.nonNull(signalArr) && nSignalArr > 0) {
-                Log.v(TAG, "Signal buffer contains " + nSignalArr + " values");
 
                 // Create data points with forward time axis (like ML graph)
                 // Index 0 = oldest data (left side, time=0)
@@ -438,6 +459,17 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                         + String.format("%.1f", xSpan) + " minutes");
                 mSignalLineChart.setTitleTextSize(24f);
                 mSignalLineChart.setTitleColor(Color.WHITE);
+
+                // If we have more than ~200 samples (10 minutes), scroll to show the most recent data
+                if (validPoints > 200) {
+                    double maxTime = validPoints * 5.0;
+                    double viewportWidth = 600; // 10 minutes in seconds
+                    if (maxTime > viewportWidth) {
+                        // Scroll to show the end (most recent data)
+                        mSignalLineChart.getViewport().setMaxX(maxTime);
+                        mSignalLineChart.getViewport().setMinX(Math.max(0, maxTime - viewportWidth));
+                    }
+                }
 
                 Log.d(TAG, "Signal chart updated with " + validPoints + " data points");
             }

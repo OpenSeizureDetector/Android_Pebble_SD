@@ -82,7 +82,7 @@ public class FragmentWatchSig extends FragmentOsdBaseClass {
             if (Objects.nonNull(tvCurrSigStren))
                 tvCurrSigStren.setText(String.valueOf((int) mConnection.mSdServer.mSdData.watchSignalStrength));
             
-            double histArr[] = mConnection.mSdServer.mSdData.watchSignalStrengthBuff.getVals();
+            double histArr[] = mConnection.mSdServer.mSdDataHistory.watchSignalStrengthBuff.getVals();
             int nHist = histArr.length;
             
             if (Objects.nonNull(histArr) && nHist > 0) {
