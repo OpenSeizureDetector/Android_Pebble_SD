@@ -4,6 +4,8 @@ import uk.org.openseizuredetector.R;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
@@ -26,6 +28,8 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.graphics.Insets;
 
 import uk.org.openseizuredetector.activity.startup.StartupActivity;
+import uk.org.openseizuredetector.utils.OsdUtil;
+
 /**
  * Onboarding wizard shown on first run to guide user through initial setup
  */
@@ -37,7 +41,9 @@ public class OnboardingActivity extends AppCompatActivity {
     private Button mBtnBack;
     private Button mBtnSkip;
     private TabLayout mTabIndicator;
-    
+    private OsdUtil mUtil;
+    private Handler mHandler = new Handler(Looper.getMainLooper());
+
     private OnboardingAdapter mAdapter;
     
     @Override
@@ -46,7 +52,10 @@ public class OnboardingActivity extends AppCompatActivity {
         setContentView(R.layout.activity_onboarding);
         
         Log.i(TAG, "onCreate()");
-        
+        mUtil = new OsdUtil(this, mHandler);
+        mUtil.writeToSysLogFile("OnboardingActivity.onCreate()", "LIFECYCLE");
+        mUtil.writeMemoryLog("OnboardingActivity.onCreate");
+
         // Hide action bar for cleaner onboarding experience
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
@@ -198,5 +207,14 @@ public class OnboardingActivity extends AppCompatActivity {
         }
     };
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.i(TAG, "onDestroy()");
+        if (mUtil != null) {
+            mUtil.writeToSysLogFile("OnboardingActivity.onDestroy()", "LIFECYCLE");
+            mUtil.writeMemoryLog("OnboardingActivity.onDestroy");
+        }
+    }
 
 }

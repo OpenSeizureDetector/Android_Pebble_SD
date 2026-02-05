@@ -98,7 +98,8 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         mContext = getApplicationContext();
 
         mUtil = new OsdUtil(mContext, mHandler);
-        mUtil.writeToSysLogFile("PrefActvity.onCreate()");
+        mUtil.writeToSysLogFile("PrefActivity.onCreate()", "LIFECYCLE");
+        mUtil.writeMemoryLog("PrefActivity.onCreate");
 
         setContentView(R.layout.activity_pref);
 
@@ -375,6 +376,15 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.pebble_datasource_prefs, rootKey);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (mUtil != null) {
+            mUtil.writeToSysLogFile("PrefActivity.onDestroy()", "LIFECYCLE");
+            mUtil.writeMemoryLog("PrefActivity.onDestroy");
         }
     }
 

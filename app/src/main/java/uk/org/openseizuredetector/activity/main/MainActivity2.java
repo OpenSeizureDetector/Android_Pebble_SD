@@ -98,6 +98,11 @@ public class MainActivity2 extends AppCompatActivity {
     private Context mContext;
     private OsdUtil mUtil;
     private SdServiceConnection mConnection;
+
+    // Tab position persistence
+    private static final String PREF_ACTIVE_TAB = "main_activity_active_tab";
+    private static final int DEFAULT_TAB = 0;
+
     final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
     private Handler mHandler = new Handler(Looper.getMainLooper());
 
@@ -128,7 +133,8 @@ public class MainActivity2 extends AppCompatActivity {
 
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
         mConnection = new SdServiceConnection(getApplicationContext());
-        mUtil.writeToSysLogFile("MainActivity2.onCreate()");
+        mUtil.writeToSysLogFile("MainActivity2.onCreate()", "LIFECYCLE");
+        mUtil.writeMemoryLog("MainActivity2.onCreate");
         mContext = this;
         mHandler = new Handler(Looper.getMainLooper());
     }
@@ -206,6 +212,17 @@ public class MainActivity2 extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         Log.i(TAG, "onPause()");
+        if (mUtil != null) {
+            mUtil.writeToSysLogFile("MainActivity2.onPause()", "LIFECYCLE");
+        }
+
+        // Save the current tab position before detaching
+        if (mFragmentPager != null) {
+            int currentTab = mFragmentPager.getCurrentItem();
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            prefs.edit().putInt(PREF_ACTIVE_TAB, currentTab).apply();
+            Log.d(TAG, "Saved active tab position: " + currentTab);
+        }
 
         // Detach TabLayoutMediator to prevent memory leaks
         if (mTabLayoutMediator != null) {
@@ -217,6 +234,10 @@ public class MainActivity2 extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         Log.i(TAG, "onResume()");
+        if (mUtil != null) {
+            mUtil.writeToSysLogFile("MainActivity2.onResume()", "LIFECYCLE");
+            mUtil.writeMemoryLog("MainActivity2.onResume");
+        }
         // Instantiate a ViewPager2 and a PagerAdapter.
         mFragmentPager = findViewById(R.id.fragment_pager);
         mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
@@ -254,6 +275,12 @@ public class MainActivity2 extends AppCompatActivity {
                 });
         mTabLayoutMediator.attach();
 
+        // Restore the previously active tab position
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        int savedTab = prefs.getInt(PREF_ACTIVE_TAB, DEFAULT_TAB);
+        mFragmentPager.setCurrentItem(savedTab, false); // false = no animation on restore
+        Log.d(TAG, "Restored active tab position: " + savedTab);
+
         getSupportFragmentManager().beginTransaction()
                 .setReorderingAllowed(true)
                 .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
@@ -267,14 +294,12 @@ public class MainActivity2 extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (Objects.isNull(mFragmentPager) || mFragmentPager.getCurrentItem() == 0) {
-            // If the user is currently looking at the first step, allow the system to handle the
-            // Back button. This calls finish() on this activity and pops the back stack.
-            super.onBackPressed();
-        } else {
-            // Otherwise, select the previous step.
-            mFragmentPager.setCurrentItem(mFragmentPager.getCurrentItem() - 1);
+        // Close MainActivity2 - users can navigate tabs with swipe or tab clicks
+        // The back button always exits the activity
+        if (mUtil != null) {
+            mUtil.writeToSysLogFile("MainActivity2.onBackPressed() - closing activity", "LIFECYCLE");
         }
+        super.onBackPressed();
     }
 
     @Override

@@ -286,7 +286,7 @@ public class SdServer extends Service implements SdDataReceiver {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "onStartCommand() - SdServer service starting");
-        mUtil.writeToSysLogFile("SdServer.onStartCommand()");
+        mUtil.writeToSysLogFile("SdServer.onStartCommand()", "LIFECYCLE");
 
         // Track service start time for watchdog
         mServiceStartMillis = System.currentTimeMillis();
@@ -429,6 +429,9 @@ public class SdServer extends Service implements SdDataReceiver {
 
     @Override
     public void onDestroy() {
+        mUtil.writeToSysLogFile("SdServer.onDestroy()", "LIFECYCLE");
+        mUtil.writeMemoryLog("SdServer.onDestroy");
+
         Log.i(TAG, "onDestroy(): SdServer Service stopping");
         mUtil.writeToSysLogFile("SdServer.onDestroy() - releasing wakelock");
 
@@ -1841,15 +1844,30 @@ public class SdServer extends Service implements SdDataReceiver {
 
         @Override
         public void onFinish() {
-            mFaultTimerCompleted = true;
-            Log.v(TAG, "mFaultTimer - removing mFaultTimerRunning flag");
+            try {
+                mFaultTimerCompleted = true;
+                Log.v(TAG, "mFaultTimer - removing mFaultTimerRunning flag");
+                mUtil.writeToSysLogFile("FaultTimer.onFinish()", "TIMER");
+            } catch (Exception e) {
+                Log.e(TAG, "Error in FaultTimer.onFinish()", e);
+                mUtil.writeExceptionLog("FaultTimer", "onFinish", e);
+            }
         }
 
         @Override
         public void onTick(long msRemaining) {
-            mFaultTimerRemaining = msRemaining / 1000;
-            Log.v(TAG, "mFaultTimer - onTick() - Time Remaining = "
-                    + mFaultTimerRemaining);
+            try {
+                mFaultTimerRemaining = msRemaining / 1000;
+                Log.v(TAG, "mFaultTimer - onTick() - Time Remaining = " + mFaultTimerRemaining);
+
+                // Log memory status every minute (every 60 ticks at 1-second interval)
+                if (mFaultTimerRemaining % 60 == 0) {
+                    mUtil.writeMemoryLog("FaultTimer heartbeat");
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error in FaultTimer.onTick()", e);
+                mUtil.writeExceptionLog("FaultTimer", "onTick", e);
+            }
         }
 
     }
@@ -1949,17 +1967,24 @@ public class SdServer extends Service implements SdDataReceiver {
 
         @Override
         public void onFinish() {
-            Log.v(TAG, "CheckEventsTimer.onFinish()");
-            checkEvents();
-            if (mIsRunning) {
-                // Restart this timer.
-                Log.v(TAG, "CheckEventsTimer.onFinish() - mIsRunning is true, so re-starting timer");
-                start();
+            try {
+                Log.v(TAG, "CheckEventsTimer.onFinish()");
+                mUtil.writeToSysLogFile("CheckEventsTimer.onFinish()", "TIMER");
+                checkEvents();
+                if (mIsRunning) {
+                    // Restart this timer.
+                    Log.v(TAG, "CheckEventsTimer.onFinish() - mIsRunning is true, so re-starting timer");
+                    start();
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error in CheckEventsTimer.onFinish()", e);
+                mUtil.writeExceptionLog("CheckEventsTimer", "onFinish", e);
             }
         }
 
         @Override
         public void onTick(long msRemaining) {
+            // Silent operation during tick
         }
     }
 
@@ -2287,7 +2312,7 @@ public class SdServer extends Service implements SdDataReceiver {
         @Override
         public void run() {
             Log.i(TAG, "WatchdogThread: Starting watchdog");
-            mUtil.writeToSysLogFile("WATCHDOG: Thread started");
+            mUtil.writeToSysLogFile("WATCHDOG: Thread started", "LIFECYCLE");
 
             while (mRunning && !mIsDestroying) {
                 try {
@@ -2307,15 +2332,18 @@ public class SdServer extends Service implements SdDataReceiver {
                             threadState = mainThread.getState().toString();
                         }
 
-                        mUtil.writeToSysLogFile(String.format(
-                            "WATCHDOG_HB: alive, lastData=%ds ago, mainThread=%s, faultTimer=%s",
+                        String heartbeatMsg = String.format(
+                            "alive, lastData=%ds ago, mainThread=%s, faultTimer=%s",
                             timeSinceLastData/1000, threadState,
                             (mFaultTimer != null ? "running" : "stopped")
-                        ));
-                        Log.i(TAG,String.format(
-                                "WATCHDOG_HB: alive, lastData=%ds ago, mainThread=%s, faultTimer=%s",
-                                timeSinceLastData/1000, threadState,
-                                (mFaultTimer != null ? "running" : "stopped")));
+                        );
+
+                        mUtil.writeToSysLogFile("WATCHDOG_HB: " + heartbeatMsg, "WATCHDOG");
+                        Log.i(TAG, "WATCHDOG_HB: " + heartbeatMsg);
+
+                        // Log memory status alongside heartbeat for trend analysis
+                        mUtil.writeMemoryLog("Watchdog heartbeat");
+
                         mLastWatchdogHeartbeatMillis = now;
                     }
 
@@ -2325,7 +2353,7 @@ public class SdServer extends Service implements SdDataReceiver {
                         mUtil.writeToSysLogFile(String.format(
                             "WATCHDOG_FAULT: No data for %d seconds - forcing fault state",
                             timeSinceLastData/1000
-                        ));
+                        ), "WATCHDOG");
 
                         // Force fault on main thread
                         mHandler.post(new Runnable() {
@@ -2349,16 +2377,17 @@ public class SdServer extends Service implements SdDataReceiver {
                 } catch (InterruptedException e) {
                     if (mRunning) {
                         Log.w(TAG, "WatchdogThread: Interrupted");
+                        mUtil.writeToSysLogFile("WATCHDOG: Thread interrupted", "LIFECYCLE");
                     }
                     break;
                 } catch (Exception e) {
                     Log.e(TAG, "WatchdogThread: Exception in watchdog loop", e);
-                    mUtil.writeToSysLogFile("WATCHDOG_ERROR: " + e.getMessage());
+                    mUtil.writeExceptionLog("WatchdogThread", "run", e);
                 }
             }
 
             Log.i(TAG, "WatchdogThread: Exiting");
-            mUtil.writeToSysLogFile("WATCHDOG: Thread exiting");
+            mUtil.writeToSysLogFile("WATCHDOG: Thread exiting", "LIFECYCLE");
         }
     }
 }

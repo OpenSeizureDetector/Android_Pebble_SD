@@ -135,6 +135,9 @@ public class StartupActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.i(TAG, "onCreate()");
+        mUtil = new OsdUtil(this, mHandler);
+        mUtil.writeToSysLogFile("StartupActivity.onCreate()", "LIFECYCLE");
+        mUtil.writeMemoryLog("StartupActivity.onCreate");
 
         // Check if this is the first run - if so, launch onboarding wizard
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -142,6 +145,7 @@ public class StartupActivity extends AppCompatActivity {
 
         if (!firstRunComplete) {
             Log.i(TAG, "First run detected - launching onboarding wizard");
+            mUtil.writeToSysLogFile("StartupActivity.onCreate - Launching onboarding", "LIFECYCLE");
             Intent onboardingIntent = new Intent(this, OnboardingActivity.class);
             startActivity(onboardingIntent);
             finish();
@@ -371,7 +375,8 @@ public class StartupActivity extends AppCompatActivity {
         super.onDestroy();
         Log.i(TAG, "onDestroy()");
         if (mUtil != null) {
-            mUtil.writeToSysLogFile("StartupActivity.onDestroy()");
+            mUtil.writeToSysLogFile("StartupActivity.onDestroy()", "LIFECYCLE");
+            mUtil.writeMemoryLog("StartupActivity.onDestroy");
         }
 
         // Cancel timers to prevent any background operations
@@ -386,6 +391,9 @@ public class StartupActivity extends AppCompatActivity {
         }
 
         Log.i(TAG, "onDestroy() - cleanup complete");
+        if (mUtil != null) {
+            mUtil.writeToSysLogFile("StartupActivity.onDestroy - cleanup complete", "LIFECYCLE");
+        }
     }
 
     @Override

@@ -365,21 +365,105 @@ public class OsdUtil {
      *
      * @param msgStr
      */
+    /**
+     * Write to system log file with specified log type and exception handling.
+     * Wraps all logging operations in try-catch to prevent crashes during logging.
+     * Log types: INFO, LIFECYCLE, MEMORY, EXCEPTION, SHUTDOWN, TIMER, WARNING, etc.
+     */
     public void writeToSysLogFile(String msgStr, String logType) {
-        // Use file logger instead of database
-        if (mFileLogger != null) {
-            mFileLogger.log(logType.toUpperCase(), msgStr);
-        } else {
-            Log.w(TAG, "File logger not initialized: " + msgStr);
+        try {
+            if (mFileLogger != null) {
+                mFileLogger.log(logType.toUpperCase(), msgStr);
+            } else {
+                Log.w(TAG, "File logger not initialized: " + msgStr);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error writing to sys log file: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Write to system log file with INFO log level and exception handling.
+     */
     public void writeToSysLogFile(String msgStr) {
-        // Use file logger instead of database
-        if (mFileLogger != null) {
-            mFileLogger.log("INFO", msgStr);
-        } else {
-            Log.w(TAG, "File logger not initialized: " + msgStr);
+        try {
+            if (mFileLogger != null) {
+                mFileLogger.log("INFO", msgStr);
+            } else {
+                Log.w(TAG, "File logger not initialized: " + msgStr);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error writing to sys log file: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Write memory status (used by watchdog or periodic timers).
+     * Log level: MEMORY
+     * Usage: mUtil.writeToSysLogFile("Memory check reason", "MEMORY")
+     */
+    public void writeMemoryLog(String reason) {
+        try {
+            Runtime runtime = Runtime.getRuntime();
+            long totalMemory = runtime.totalMemory();
+            long freeMemory = runtime.freeMemory();
+            long maxMemory = runtime.maxMemory();
+            long usedMemory = totalMemory - freeMemory;
+
+            // Get memory info from ActivityManager
+            ActivityManager actMgr = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+            ActivityManager.MemoryInfo memInfo = new ActivityManager.MemoryInfo();
+            if (actMgr != null) {
+                actMgr.getMemoryInfo(memInfo);
+            }
+
+            String memMsg = String.format(
+                "Used=%dMB, Free=%dMB, Total=%dMB, Max=%dMB, AvailSystemMem=%dMB, LowMemory=%s [Reason: %s, PID=%d]",
+                usedMemory / (1024 * 1024),
+                freeMemory / (1024 * 1024),
+                totalMemory / (1024 * 1024),
+                maxMemory / (1024 * 1024),
+                memInfo.availMem / (1024 * 1024),
+                memInfo.lowMemory,
+                reason,
+                android.os.Process.myPid()
+            );
+
+            if (mFileLogger != null) {
+                mFileLogger.log("MEMORY", memMsg);
+            } else {
+                Log.i(TAG, memMsg);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error writing memory log: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Log an exception with full stack trace for shutdown diagnosis.
+     * Log level: EXCEPTION
+     * Usage: mUtil.writeToSysLogFile("ComponentName.method - " + exception.getMessage(), "EXCEPTION")
+     */
+    public void writeExceptionLog(String component, String method, Throwable exception) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            sb.append(component).append(".").append(method);
+            sb.append(" - ").append(exception.getClass().getSimpleName());
+            sb.append(": ").append(exception.getMessage());
+
+            if (mFileLogger != null) {
+                mFileLogger.log("EXCEPTION", sb.toString());
+
+                // Log stack trace elements
+                StackTraceElement[] stackTrace = exception.getStackTrace();
+                for (int i = 0; i < Math.min(stackTrace.length, 5); i++) {
+                    mFileLogger.log("EXCEPTION", "  at " + stackTrace[i].toString());
+                }
+            } else {
+                Log.e(TAG, sb.toString(), exception);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error writing exception log: " + e.getMessage(), e);
         }
     }
 
@@ -507,28 +591,62 @@ public class OsdUtil {
     /**
      * string2date - returns a Date object represented by string dateStr
      * It first attempts to parse it as a long integer, in which case it is assumed to
-     * be a unix timestamp.
-     * If that fails it attempts to parse it as yyyy-MM-dd'T'HH:mm:ss'Z' format.
+     * be a unix timestamp (milliseconds).
+     * If that fails it attempts to parse it as ISO 8601 format with various timezone representations:
+     * - yyyy-MM-dd'T'HH:mm:ss'Z' (UTC)
+     * - yyyy-MM-dd'T'HH:mm:ss+00:00 (with timezone offset)
+     * - yyyy-MM-dd HH:mm:ss (basic datetime without timezone)
      *
-     * @param dateStr String reprenting a date
+     * @param dateStr String representing a date
      * @return Date object or null if parsing fails.
      */
     public Date string2date(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            Log.w(TAG, "string2date: Empty or null date string provided");
+            return null;
+        }
+
         Date dataTime = null;
         try {
+            // First try parsing as unix timestamp (milliseconds)
             Long tstamp = Long.parseLong(dateStr);
             dataTime = new Date(tstamp);
+            Log.v(TAG, "string2date: Successfully parsed as unix timestamp");
+            return dataTime;
         } catch (NumberFormatException e) {
-            Log.v(TAG, "remoteEventsAdapter.getView: Error Parsing dataDate as Long: " + e.getLocalizedMessage() + " trying as string");
+            Log.v(TAG, "string2date: Not a unix timestamp, attempting ISO 8601 format");
+        }
+
+        // Try various ISO 8601 formats
+        String[] dateFormats = {
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",           // UTC with Z suffix
+            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",       // UTC with milliseconds and Z suffix
+            "yyyy-MM-dd'T'HH:mm:ss",              // Without timezone
+            "yyyy-MM-dd'T'HH:mm:ss.SSS",          // With milliseconds
+            "yyyy-MM-dd HH:mm:ss",                // Space separator
+            "yyyy-MM-dd HH:mm:ss.SSS"             // Space separator with milliseconds
+        };
+
+        for (String format : dateFormats) {
             try {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-                dataTime = dateFormat.parse(dateStr);
+                SimpleDateFormat dateFormat = new SimpleDateFormat(format, Locale.US);
+                dateFormat.setLenient(false);
+
+                // Remove timezone offset if present (e.g., +00:00, -05:00)
+                String cleanedDateStr = dateStr.replaceAll("[+-]\\d{2}:\\d{2}$", "");
+
+                dataTime = dateFormat.parse(cleanedDateStr);
+                Log.v(TAG, "string2date: Successfully parsed using format: " + format);
+                return dataTime;
             } catch (ParseException e2) {
-                Log.e(TAG, "remoteEventsAdapter.getView: Error Parsing dataDate " + e2.getLocalizedMessage());
-                dataTime = null;
+                Log.v(TAG, "string2date: Format '" + format + "' failed, trying next");
+                // Continue to next format
             }
         }
-        return (dataTime);
+
+        // If all parsing attempts fail
+        Log.e(TAG, "string2date: Failed to parse date string: " + dateStr);
+        return null;
     }
 
 

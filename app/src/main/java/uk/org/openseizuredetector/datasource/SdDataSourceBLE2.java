@@ -148,7 +148,8 @@ public class SdDataSourceBLE2 extends SdDataSource {
     public void start() {
         super.start();
         Log.i(TAG, "start() - mBleDeviceAddr="+mBleDeviceAddr);
-        mUtil.writeToSysLogFile("SdDataSourceBLE.start() - mBleDeviceAddr=" + mBleDeviceAddr);
+        mUtil.writeToSysLogFile("SdDataSourceBLE2.start() - mBleDeviceAddr=" + mBleDeviceAddr, "LIFECYCLE");
+        mUtil.writeMemoryLog("SdDataSourceBLE2.start");
 
         if (mBleDeviceAddr == "" || mBleDeviceAddr == null) {
             final Intent intent = new Intent(this.mContext, BLEScanActivity.class);
@@ -658,7 +659,8 @@ public class SdDataSourceBLE2 extends SdDataSource {
      */
     public void stop() {
         Log.i(TAG, "stop() - Beginning shutdown sequence");
-        mUtil.writeToSysLogFile("SDDataSourceBLE2.stop()");
+        mUtil.writeToSysLogFile("SdDataSourceBLE2.stop() - beginning shutdown", "LIFECYCLE");
+        mUtil.writeMemoryLog("SdDataSourceBLE2.stop");
         super.stop();
 
         try {
@@ -670,6 +672,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 Log.i(TAG, "stop() - CurrentTimeService stopped");
             } catch (Exception e) {
                 Log.e(TAG, "stop() - Error stopping CurrentTimeService: " + e.getMessage());
+                mUtil.writeExceptionLog("SdDataSourceBLE2", "stop - CurrentTimeService", e);
             }
 
             // Initiate BLE disconnect with timeout
