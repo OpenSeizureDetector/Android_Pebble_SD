@@ -166,8 +166,10 @@ public class OnboardingActivity extends AppCompatActivity {
                 case 1:
                     return new OnboardingDataSourceFragment();
                 case 2:
-                    return new OnboardingAlgorithmsFragment();
+                    return new OnboardingDataSourceConfigFragment();
                 case 3:
+                    return new OnboardingAlgorithmsFragment();
+                case 4:
                     return new OnboardingCompleteFragment();
                 default:
                     return new OnboardingWelcomeFragment();
@@ -176,7 +178,7 @@ public class OnboardingActivity extends AppCompatActivity {
         
         @Override
         public int getItemCount() {
-            return 4; // Welcome, DataSource, Algorithms, Complete
+            return 5; // Welcome, DataSource, DataSourceConfig, Algorithms, Complete
         }
     }
     

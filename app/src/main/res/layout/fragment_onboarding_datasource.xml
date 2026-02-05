@@ -112,49 +112,6 @@
 
         </RadioGroup>
 
-        <!-- Watch Type Section (visible only when Watch is selected) -->
-        <LinearLayout
-            android:id="@+id/watch_type_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone"
-            android:layout_marginTop="16dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Select Watch Type"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="?android:attr/textColorPrimary"
-                android:layout_marginBottom="16dp" />
-
-
-            <!-- PineTime-specific buttons -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_scan_pinetime"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:visibility="gone"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                app:strokeColor="@color/button_stroke_color"
-                android:textColor="@color/button_text_color"
-                android:text="Scan for PineTime Watch" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_update_pinetime"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:visibility="gone"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                app:strokeColor="@color/button_stroke_color"
-                android:textColor="@color/button_text_color"
-                android:text="Update PineTime Firmware" />
-
-        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>
