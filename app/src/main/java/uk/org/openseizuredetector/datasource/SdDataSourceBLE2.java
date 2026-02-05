@@ -78,7 +78,6 @@ public class SdDataSourceBLE2 extends SdDataSource {
     private BluetoothAdapter mBluetoothAdapter;
     private String mBluetoothDeviceAddress;
     private BluetoothGatt mBluetoothGatt;
-    private int mConnectionState = STATE_DISCONNECTED;
 
     private int nRawData = 0;
     private double[] rawData = new double[MAX_RAW_DATA];
@@ -133,11 +132,26 @@ public class SdDataSourceBLE2 extends SdDataSource {
     private Handler mTimeoutHandler;
     private volatile boolean mDisconnected = false;
 
+    // Connection state machine
+    private enum ConnectionState {
+        IDLE, SCANNING, CONNECTING, CONNECTED, DISCONNECTING, CLEANUP
+    }
+    private volatile ConnectionState mConnectionState = ConnectionState.IDLE;
+
+    // Reconnection management
+    private Handler mReconnectionHandler;
+    private int mReconnectionAttempt = 0;
+    private static final int[] BACKOFF_DELAYS_MS = {1000, 2000, 4000, 8000, 16000}; // exponential backoff
+    // After exhausting the array, continue retrying with the last delay indefinitely
+    private volatile boolean mIsShuttingDown = false;
+
     public SdDataSourceBLE2(Context context, Handler handler,
                             SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
         mName = "BLE2";
         mTimeoutHandler = new Handler(Looper.getMainLooper());
+        mReconnectionHandler = new Handler(Looper.getMainLooper());
+        mConnectionState = ConnectionState.IDLE;
     }
 
 
@@ -172,16 +186,34 @@ public class SdDataSourceBLE2 extends SdDataSource {
     }
 
     private void bleConnect() {
+        Log.i(TAG, "bleConnect() - Starting connection sequence");
 
-        // Create BluetoothCentral and receive callbacks on the main thread
-        mBluetoothCentralManager = new BluetoothCentralManager(mContext,
-                mBluetoothCentralManagerCallback,
-                new Handler(Looper.getMainLooper())
-        );
+        // Reset shutdown flag - we're starting fresh
+        mIsShuttingDown = false;
+        mShutdown = false;
+
+        // Only create new manager if we don't already have one
+        if (mBluetoothCentralManager == null) {
+            Log.i(TAG,"bleConnect() - Creating new BluetoothCentralManager");
+            // Create BluetoothCentral and receive callbacks on the main thread
+            mBluetoothCentralManager = new BluetoothCentralManager(mContext,
+                    mBluetoothCentralManagerCallback,
+                    new Handler(Looper.getMainLooper())
+            );
+        } else {
+            Log.i(TAG,"bleConnect() - BluetoothCentralManager already exists, reusing it");
+        }
+
         // Look for the specified device
         Log.i(TAG,"bleConnect() - scanning for device: "+mBleDeviceAddr);
-        mShutdown = false;
-        mBluetoothCentralManager.scanForPeripheralsWithAddresses(new String[]{mBleDeviceAddr});
+        setConnectionState(ConnectionState.SCANNING);
+
+        try {
+            mBluetoothCentralManager.scanForPeripheralsWithAddresses(new String[]{mBleDeviceAddr});
+        } catch (Exception e) {
+            Log.e(TAG, "bleConnect() - Error starting scan: " + e.getMessage());
+            scheduleReconnection();
+        }
     }
 
 
@@ -189,26 +221,75 @@ public class SdDataSourceBLE2 extends SdDataSource {
         @Override
         public void onDiscoveredPeripheral(BluetoothPeripheral peripheral, ScanResult scanResult) {
             Log.i(TAG,"BluetoothCentralManagerCallback.onDiscoveredPeripheral()");
-            mBluetoothCentralManager.stopScan();
-            mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
+
+            // CRITICAL: Null-safety check - manager can be destroyed during extended disconnections
+            if (mBluetoothCentralManager == null) {
+                Log.w(TAG, "onDiscoveredPeripheral() - BluetoothCentralManager is null, ignoring scan result");
+                mUtil.writeToSysLogFile("BLE2.onDiscoveredPeripheral: Manager null, cannot process discovery", "ERROR");
+                return;
+            }
+
+            // Check if we're shutting down - ignore new discoveries during shutdown
+            if (mIsShuttingDown || mShutdown) {
+                Log.w(TAG, "onDiscoveredPeripheral() - System is shutting down, ignoring discovery");
+                return;
+            }
+
+            try {
+                // Update state machine
+                setConnectionState(ConnectionState.CONNECTING);
+
+                mBluetoothCentralManager.stopScan();
+                mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
+
+                // Reset reconnection attempt counter on successful discovery
+                mReconnectionAttempt = 0;
+                Log.i(TAG, "onDiscoveredPeripheral() - Successfully initiated connection");
+            } catch (NullPointerException e) {
+                Log.e(TAG, "onDiscoveredPeripheral() - NPE while processing discovery: " + e.getMessage());
+                mUtil.writeExceptionLog("SdDataSourceBLE2", "onDiscoveredPeripheral NPE", e);
+                scheduleReconnection();
+            } catch (Exception e) {
+                Log.e(TAG, "onDiscoveredPeripheral() - Error during discovery: " + e.getMessage());
+                mUtil.writeExceptionLog("SdDataSourceBLE2", "onDiscoveredPeripheral", e);
+                scheduleReconnection();
+            }
         }
         @Override
         public void onConnectedPeripheral(BluetoothPeripheral peripheral) {
             Log.i(TAG,"BluetoothCentralManagerCallback.onConnectedPeripheral()");
+            setConnectionState(ConnectionState.CONNECTED);
+            mReconnectionAttempt = 0; // Reset reconnection counter on successful connection
             mUtil.showToast("Watch Connected");
             super.onConnectedPeripheral(peripheral);
         }
         @Override
         public void onConnectionFailed(BluetoothPeripheral peripheral, HciStatus status) {
-            Log.i(TAG,"BluetoothCentralManagerCallback.onConnectionFailed() - attempting to reconnect");
+            Log.i(TAG,"BluetoothCentralManagerCallback.onConnectionFailed() - status=" + status);
+            setConnectionState(ConnectionState.IDLE);
             mUtil.showToast("Failed to Connect to Watch - Retrying");
-            mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
+
+            // Defensive null-check
+            if (mBluetoothCentralManager != null && !mIsShuttingDown && !mShutdown) {
+                try {
+                    mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
+                } catch (Exception e) {
+                    Log.w(TAG, "onConnectionFailed() - Error attempting reconnection: " + e.getMessage());
+                    scheduleReconnection();
+                }
+            } else {
+                Log.w(TAG, "onConnectionFailed() - Manager null or shutting down, scheduling reconnection");
+                scheduleReconnection();
+            }
             super.onConnectionFailed(peripheral, status);
         }
         @Override
         public void onDisconnectedPeripheral(BluetoothPeripheral peripheral, HciStatus status) {
+            Log.i(TAG,"BluetoothCentralManagerCallback.onDisconnectedPeripheral() - status=" + status);
+
             if (mShutdown) {
-                Log.i(TAG,"BluetoothCentralManagerCallback.onDisconnectedPeripheral - mShutdown is set, completing disconnect");
+                Log.i(TAG,"onDisconnectedPeripheral() - mShutdown is set, completing disconnect");
+                setConnectionState(ConnectionState.CLEANUP);
                 mDisconnected = true;
                 // Cancel timeout handler
                 if (mTimeoutHandler != null) {
@@ -217,26 +298,26 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 // Complete cleanup
                 forceCleanup();
             } else {
-                Log.i(TAG,"BluetoothCentralManagerCallback.onDisconnectedPeripheral - unexpected disconnect");
+                Log.i(TAG,"onDisconnectedPeripheral() - unexpected disconnect");
+                setConnectionState(ConnectionState.IDLE);
                 mUtil.showToast("WATCH CONNECTION LOST");
-                Log.i(TAG, "BluetoothCentralManagerCallback.onDisconnectedPeripheral - attempting to re-connect...");
+                Log.i(TAG, "onDisconnectedPeripheral() - attempting to re-connect with backoff");
                 bleDisconnect();
                 mShutdown = false;
                 mDisconnected = false;
 
                 // Check if manager is still available before reconnecting
-                if (mBluetoothCentralManager != null) {
-                    mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
-                } else {
-                    Log.w(TAG, "BluetoothCentralManager is null - cannot auto-reconnect");
-                    mUtil.writeToSysLogFile("BLE2: Cannot reconnect - BluetoothCentralManager is null");
-                    // Notify fault condition
-                    if (mSdDataReceiver != null) {
-                        SdData faultData = new SdData();
-                        faultData.alarmState = 4; // Fault
-                        faultData.alarmPhrase = "BLE Manager Lost";
-                        mSdDataReceiver.onSdDataFault(faultData);
+                if (mBluetoothCentralManager != null && !mIsShuttingDown) {
+                    try {
+                        mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
+                    } catch (Exception e) {
+                        Log.w(TAG, "onDisconnectedPeripheral() - Error attempting immediate reconnection: " + e.getMessage());
+                        scheduleReconnection();
                     }
+                } else {
+                    Log.w(TAG, "onDisconnectedPeripheral() - BluetoothCentralManager is null or shutting down");
+                    mUtil.writeToSysLogFile("BLE2.onDisconnectedPeripheral: Manager null, scheduling reconnection", "WARNING");
+                    scheduleReconnection();
                 }
             }
             super.onDisconnectedPeripheral(peripheral, status);
@@ -545,8 +626,14 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
     private void bleDisconnect() {
         Log.i(TAG, "bleDisconnect() - Starting disconnect sequence");
+        setConnectionState(ConnectionState.DISCONNECTING);
         mShutdown = true;
         mDisconnected = false;
+
+        // Cancel any pending reconnection attempts
+        if (mReconnectionHandler != null) {
+            mReconnectionHandler.removeCallbacksAndMessages(null);
+        }
 
         // Set timeout to force cleanup if disconnect hangs
         mTimeoutHandler.postDelayed(() -> {
@@ -613,10 +700,17 @@ public class SdDataSourceBLE2 extends SdDataSource {
      */
     private void forceCleanup() {
         Log.i(TAG, "forceCleanup() - Forcing cleanup of BLE resources");
+        setConnectionState(ConnectionState.CLEANUP);
+
         try {
             // Cancel any pending timeout
             if (mTimeoutHandler != null) {
                 mTimeoutHandler.removeCallbacksAndMessages(null);
+            }
+
+            // Cancel any pending reconnection attempts
+            if (mReconnectionHandler != null) {
+                mReconnectionHandler.removeCallbacksAndMessages(null);
             }
 
             // Clear all characteristics
@@ -664,6 +758,8 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
         try {
             mShutdown = true;
+            mIsShuttingDown = true; // Prevent reconnection attempts during shutdown
+            setConnectionState(ConnectionState.DISCONNECTING);
 
             // Stop the CurrentTimeService
             try {
@@ -732,6 +828,61 @@ public class SdDataSourceBLE2 extends SdDataSource {
             return (retArr);
         }
 
+    /**
+     * Update the connection state and log state transitions
+     */
+    private synchronized void setConnectionState(ConnectionState newState) {
+        if (mConnectionState != newState) {
+            Log.i(TAG, "setConnectionState() - Transition: " + mConnectionState + " -> " + newState);
+            mConnectionState = newState;
+            mUtil.writeToSysLogFile("BLE2 State: " + newState.name(), "STATE");
+        }
+    }
 
+    /**
+     * Schedule a reconnection attempt with exponential backoff
+     * Retries indefinitely - continues with the last backoff delay once the array is exhausted
+     */
+    private void scheduleReconnection() {
+        // Don't schedule if we're shutting down
+        if (mIsShuttingDown || mShutdown) {
+            Log.w(TAG, "scheduleReconnection() - Shutdown in progress, not scheduling reconnection");
+            return;
+        }
+
+        // Calculate backoff delay - use last element if we've exhausted the array
+        int delayMs;
+        if (mReconnectionAttempt < BACKOFF_DELAYS_MS.length) {
+            delayMs = BACKOFF_DELAYS_MS[mReconnectionAttempt];
+        } else {
+            // Continue with the last delay indefinitely
+            delayMs = BACKOFF_DELAYS_MS[BACKOFF_DELAYS_MS.length - 1];
+        }
+
+        mReconnectionAttempt++;
+
+        Log.i(TAG, "scheduleReconnection() - Scheduling reconnection attempt " + mReconnectionAttempt
+                + " in " + delayMs + "ms");
+        mUtil.showToast("Reconnecting to watch in " + (delayMs / 1000) + " seconds...");
+
+        // Schedule the reconnection
+        mReconnectionHandler.postDelayed(() -> {
+            if (!mIsShuttingDown && !mShutdown) {
+                Log.i(TAG, "scheduleReconnection() - Executing reconnection attempt " + mReconnectionAttempt);
+                setConnectionState(ConnectionState.SCANNING);
+                bleConnect();
+            } else {
+                Log.w(TAG, "scheduleReconnection() - Shutdown in progress, cancelling reconnection");
+            }
+        }, delayMs);
+    }
+
+    /**
+     * Reset the reconnection counter when connection is successful
+     */
+    private void resetReconnectionCounter() {
+        mReconnectionAttempt = 0;
+        Log.i(TAG, "resetReconnectionCounter() - Reconnection counter reset");
+    }
 
 }
