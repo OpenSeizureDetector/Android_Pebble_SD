@@ -745,12 +745,14 @@ public class LogManagerControlActivity extends AppCompatActivity {
                                     MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
                                     startStopNDAMenuItem.setTitle(R.string.start_nda_menu_title);
                                     mUtil.stopServer();
-                                    // Wait 0.1 second to give the server chance to shutdown, then re-start it
+                                    // Wait 0.5 second to give the server chance to shutdown, then re-start it
+                                    // CRITICAL: 100ms was too short and caused duplicate SdDataSource instances
+                                    // Increased to 500ms to allow proper cleanup before restart
                                     new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                                         public void run() {
                                             mUtil.startServer();
                                         }
-                                    }, 100);
+                                    }, 500);
                                 }
                             })
                             .setNegativeButton(android.R.string.no, null)

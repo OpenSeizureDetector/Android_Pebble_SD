@@ -246,11 +246,13 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                                            String permissions[], int[] grantResults) {
         Log.i(TAG, "onRequestPermissionsResult - Permission" + permissions + " = " + grantResults);
         mUtil.stopServer();
+        // Increased delay from 100ms to 500ms to ensure server fully stops before restarting
+        // CRITICAL: 100ms was too short and could cause duplicate SdDataSource instances
         mHandler.postDelayed(new Runnable() {
             public void run() {
                 mUtil.startServer();
             }
-        }, 100);
+        }, 500);
 
     }
 

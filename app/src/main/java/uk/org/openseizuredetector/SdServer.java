@@ -295,6 +295,20 @@ public class SdServer extends Service implements SdDataReceiver {
         mServiceStartMillis = System.currentTimeMillis();
         mHasReceivedData = false;
 
+        // CRITICAL: Stop any existing data source to prevent duplicate instances
+        // This can happen if onStartCommand() is called multiple times due to service restarts
+        if (mSdDataSource != null) {
+            try {
+                Log.w(TAG, "onStartCommand() - Stopping existing SdDataSource instance to prevent duplicates");
+                mUtil.writeToSysLogFile("onStartCommand() - Stopping existing SdDataSource instance");
+                mSdDataSource.stop();
+                mSdDataSource = null;
+            } catch (Exception e) {
+                Log.e(TAG, "Error stopping existing SdDataSource: " + e.getMessage());
+                mUtil.writeToSysLogFile("ERROR: Failed to stop SdDataSource: " + e.getMessage());
+            }
+        }
+
         // Update preferences.
         Log.v(TAG, "onStartCommand() - calling updatePrefs()");
         updatePrefs();
