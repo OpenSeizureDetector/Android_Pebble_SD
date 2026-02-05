@@ -30,14 +30,18 @@ import uk.org.openseizuredetector.comms.WebApiConnection_osdapi;
 import uk.org.openseizuredetector.data.SdData;
 import uk.org.openseizuredetector.utils.BackgroundTaskExecutor;
 import uk.org.openseizuredetector.utils.OsdUtil;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -131,6 +135,7 @@ public class LogManager {
     private boolean mAutoPruneDb;
     private AutoPruneTimer mAutoPruneTimer;
     private SdData mSdSettingsData;
+    private NetworkChangeReceiver mNetworkChangeReceiver;
 
     public interface CursorCallback {
         void accept(Cursor retVal);
@@ -197,6 +202,16 @@ public class LogManager {
         }
 
         mWac.setStoredToken(mAuthToken);
+
+        // Register the network change receiver to listen for connectivity changes
+        mNetworkChangeReceiver = new NetworkChangeReceiver();
+        IntentFilter intentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        try {
+            mContext.registerReceiver(mNetworkChangeReceiver, intentFilter, Context.RECEIVER_NOT_EXPORTED);
+            Log.i(TAG, "NetworkChangeReceiver registered successfully");
+        } catch (Exception e) {
+            Log.e(TAG, "Error registering NetworkChangeReceiver: " + e.getMessage());
+        }
 
         if (mLogRemote) {
             Log.i(TAG, "Starting Remote Log Timer");
@@ -1108,6 +1123,42 @@ public class LogManager {
         uploadSdData();
     }
 
+    /**
+     * Handle network state changes.
+     * Called when network connectivity changes (WiFi to mobile data, connected to disconnected, etc.)
+     * This method attempts to restart logging/uploading when a suitable network becomes available.
+     */
+    public void onNetworkStateChanged() {
+        Log.i(TAG, "onNetworkStateChanged() - Network state has changed, attempting to resume operations");
+
+        if (mShutdownRequested) {
+            Log.d(TAG, "onNetworkStateChanged() - Shutdown requested, not attempting any operations");
+            return;
+        }
+
+        // Check if we have network connectivity
+        if (!mUtil.isNetworkConnected()) {
+            Log.d(TAG, "onNetworkStateChanged() - No network connection available");
+            return;
+        }
+
+        // Check if we can upload (based on mLogRemoteMobile setting)
+        if (!mLogRemoteMobile) {
+            if (mUtil.isMobileDataActive()) {
+                Log.v(TAG, "onNetworkStateChanged() - Using mobile data but mLogRemoteMobile is false");
+                return;
+            }
+        }
+
+        // If we reach here, we have a valid network connection
+        Log.i(TAG, "onNetworkStateChanged() - Valid network connection available, attempting to upload data");
+
+        // Attempt to upload immediately
+        if (mLogRemote) {
+            writeToRemoteServer();
+        }
+    }
+
 
     /**
      * Upload a batch of seizure detector data records to the server..
@@ -1364,6 +1415,18 @@ public class LogManager {
         // Stop the timers and shutdown the remote API connection.
         Log.i(TAG, "stop() - initiating shutdown");
         mShutdownRequested = true;
+
+        // Unregister the network change receiver
+        if (mNetworkChangeReceiver != null) {
+            try {
+                mContext.unregisterReceiver(mNetworkChangeReceiver);
+                Log.i(TAG, "stop() - NetworkChangeReceiver unregistered successfully");
+            } catch (IllegalArgumentException e) {
+                Log.w(TAG, "stop() - NetworkChangeReceiver was not registered: " + e.getMessage());
+            } catch (Exception e) {
+                Log.e(TAG, "stop() - Error unregistering NetworkChangeReceiver: " + e.getMessage());
+            }
+        }
 
         stopRemoteLogTimer();
         stopAutoPruneTimer();
@@ -1681,6 +1744,52 @@ public class LogManager {
             }
         }
 
+    }
+
+
+    /**
+     * BroadcastReceiver to listen for network connectivity changes.
+     * When the network becomes available (and it's WiFi or mobile data is allowed),
+     * it triggers an immediate upload attempt.
+     */
+    private class NetworkChangeReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent == null || intent.getAction() == null) {
+                return;
+            }
+
+            if (!intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+                return;
+            }
+
+            Log.i(TAG, "NetworkChangeReceiver.onReceive() - Network connectivity changed");
+
+            if (mShutdownRequested) {
+                Log.d(TAG, "NetworkChangeReceiver - Shutdown requested, not attempting upload");
+                return;
+            }
+
+            // Check if we have network connectivity
+            if (!mUtil.isNetworkConnected()) {
+                Log.d(TAG, "NetworkChangeReceiver - No network connection");
+                return;
+            }
+
+            // Check if we can upload (based on mLogRemoteMobile setting)
+            if (!mLogRemoteMobile) {
+                if (mUtil.isMobileDataActive()) {
+                    Log.v(TAG, "NetworkChangeReceiver - Using mobile data but mLogRemoteMobile is false, not uploading");
+                    return;
+                }
+            }
+
+            // If we reach here, we have a valid network connection (WiFi or mobile data is allowed)
+            Log.i(TAG, "NetworkChangeReceiver - Network is now available, attempting to upload data");
+
+            // Attempt to upload immediately
+            writeToRemoteServer();
+        }
     }
 
 
