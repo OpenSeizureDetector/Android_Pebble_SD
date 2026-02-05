@@ -1151,10 +1151,17 @@ public class LogManager {
         }
 
         // If we reach here, we have a valid network connection
-        Log.i(TAG, "onNetworkStateChanged() - Valid network connection available, attempting to upload data");
+        Log.i(TAG, "onNetworkStateChanged() - Valid network connection available");
+
+        // If upload flag is stuck from a previous failure, reset it to allow retry
+        if (mUploadInProgress) {
+            Log.w(TAG, "onNetworkStateChanged() - Upload flag was stuck as true, resetting it to allow retry");
+            mUploadInProgress = false;
+        }
 
         // Attempt to upload immediately
         if (mLogRemote) {
+            Log.i(TAG, "onNetworkStateChanged() - Triggering immediate upload");
             writeToRemoteServer();
         }
     }
@@ -1270,8 +1277,10 @@ public class LogManager {
                     return;
                 }
                 if (eventObj == null) {
-                    Log.e(TAG, "createEventCallback() - eventObj is null - failed to create event");
+                    Log.e(TAG, "createEventCallback() - eventObj is null - failed to create event (network error?)");
                     showToastSafe(mContext.getString(R.string.error_creating_remote_event_msg));
+                    Log.i(TAG, "createEventCallback() - Resetting upload flag to allow retry on next network connection");
+                    finishUpload();
                 } else {
                     Log.v(TAG, "createEventCallback() - eventObj=" + eventObj.toString());
                     Date eventDate;
@@ -1785,7 +1794,15 @@ public class LogManager {
             }
 
             // If we reach here, we have a valid network connection (WiFi or mobile data is allowed)
-            Log.i(TAG, "NetworkChangeReceiver - Network is now available, attempting to upload data");
+            Log.i(TAG, "NetworkChangeReceiver - Network is now available");
+
+            // If upload flag is stuck as true from a previous failed attempt, reset it to allow retry
+            if (mUploadInProgress) {
+                Log.w(TAG, "NetworkChangeReceiver - Upload flag was stuck as true, likely from a failed network attempt. Resetting it to allow retry.");
+                mUploadInProgress = false;
+            }
+
+            Log.i(TAG, "NetworkChangeReceiver - Attempting to upload stored data");
 
             // Attempt to upload immediately
             writeToRemoteServer();
