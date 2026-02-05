@@ -138,6 +138,7 @@ public class SdData implements Parcelable {
     public double mO2Sat = 0;
 
     public double mPseizure = 0.;
+    public double mAccelMagStdDev = 0.;  // Standard deviation of acceleration magnitude (0-100%)
     public float watchSignalStrength;
 
     public SdData() {

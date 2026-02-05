@@ -985,7 +985,7 @@ public class SdServer extends Service implements SdDataReceiver {
         // Add current data point to the persistent history (SdDataHistory persists across SdData replacements)
         if (mSdDataHistory != null) {
             mSdDataHistory.addDataPoint(sdData.batteryPc, sdData.phoneBatteryPc,
-                                       sdData.watchSignalStrength, sdData.mPseizure, 0.0, sdData.mHR);
+                                       sdData.watchSignalStrength, sdData.mPseizure, sdData.mAccelMagStdDev, sdData.mHR);
         }
 
         mLm.updateSdData(mSdData);

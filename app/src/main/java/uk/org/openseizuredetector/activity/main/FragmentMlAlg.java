@@ -69,8 +69,8 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
             long pSeizurePc = (long) (sdData.mPseizure * 100);
 
             ((TextView) mRootView.findViewById(R.id.fragment_ml_alg_probability_label))
-                    .setText(getString(R.string.seizure_probability) + " : " + pSeizurePc + "%");
-
+                    .setText(String.format("%s %d%%, AccStDev %.1f%%",
+                            getString(R.string.seizure_probability), pSeizurePc, sdData.mAccelMagStdDev));
             ProgressBar pb = ((ProgressBar) mRootView.findViewById(R.id.fragment_ml_alg_progress_bar));
             pb.setMax(100);
             pb.setProgress((int) pSeizurePc);
@@ -129,10 +129,8 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         historyChart.getViewport().setScalable(true);
         historyChart.getViewport().setScrollable(true);
 
-
         // Configure number of tick marks and grid lines
-        // Setting to 11 to try to force more labels (GraphView may reduce this)
-        historyChart.getGridLabelRenderer().setNumHorizontalLabels(11);
+        historyChart.getGridLabelRenderer().setNumHorizontalLabels(6);
         historyChart.getGridLabelRenderer().setNumVerticalLabels(6);   // 0, 20, 40, 60, 80, 100%
 
         // Ensure labels don't get culled
@@ -168,14 +166,12 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
 
             // Set axis title colors to match labels
             historyChart.getGridLabelRenderer().setHorizontalAxisTitleColor(textColor);
-            historyChart.getGridLabelRenderer().setVerticalAxisTitleColor(textColor);
         } catch (Exception e) {
             Log.w(TAG, "Error setting chart colors: " + e.getMessage());
         }
 
-        // Set axis titles after colors are configured
+        // Set horizontal axis title only (vertical title takes up too much space and hides the 0 label)
         historyChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (minutes ago)");
-        historyChart.getGridLabelRenderer().setVerticalAxisTitle("Seizure Probability (%)");
 
         Log.d(TAG, "Chart view initialized");
     }
@@ -187,62 +183,98 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
                 return;
             }
 
-            // Get history data from circular buffer in SdDataHistory
-            double[] historyData = mConnection.mSdServer.mSdDataHistory.mPseizureHistBuf.getVals();
+            // Get seizure probability history data from circular buffer
+            double[] seizureHistoryData = mConnection.mSdServer.mSdDataHistory.mPseizureHistBuf.getVals();
 
-            if (historyData == null || historyData.length == 0) {
+            if (seizureHistoryData == null || seizureHistoryData.length == 0) {
                 Log.d(TAG, "No seizure probability history data available yet");
                 historyChart.removeAllSeries();
                 return;
             }
 
-            // Create data points with time-based x-axis
-            // Each sample is 5 seconds apart, oldest data is at index 0
-            DataPoint[] dataPoints = new DataPoint[historyData.length];
-            int validPoints = 0;
+            // Create data points for seizure probability with time-based x-axis
+            DataPoint[] seizureDataPoints = new DataPoint[seizureHistoryData.length];
+            int validSeizurePoints = 0;
 
-            for (int i = 0; i < historyData.length; i++) {
-                // Calculate time in seconds from oldest sample
-                // Sample at index 0 is the oldest (10 minutes ago)
-                // Sample at index (length-1) is the newest (now)
+            for (int i = 0; i < seizureHistoryData.length; i++) {
                 double timeInSeconds = i * 5.0; // 5 seconds per sample
 
-                // Don't filter out zeros - they're valid initial values
-                // Only filter out the error value (-1.0)
-                if (historyData[i] >= 0.0) {
-                    dataPoints[validPoints] = new DataPoint(timeInSeconds, historyData[i] * 100.0);
-                    validPoints++;
+                if (seizureHistoryData[i] >= 0.0) {
+                    seizureDataPoints[validSeizurePoints] = new DataPoint(timeInSeconds, seizureHistoryData[i] * 100.0);
+                    validSeizurePoints++;
                 }
             }
 
-            if (validPoints == 0) {
-                Log.d(TAG, "No valid data points in history");
+            if (validSeizurePoints == 0) {
+                Log.d(TAG, "No valid seizure data points in history");
                 historyChart.removeAllSeries();
                 return;
             }
 
-            // Create series with only valid points
-            DataPoint[] validDataPoints = new DataPoint[validPoints];
-            System.arraycopy(dataPoints, 0, validDataPoints, 0, validPoints);
+            // Create seizure probability series with only valid points
+            DataPoint[] validSeizureDataPoints = new DataPoint[validSeizurePoints];
+            System.arraycopy(seizureDataPoints, 0, validSeizureDataPoints, 0, validSeizurePoints);
 
-            LineGraphSeries<DataPoint> series = new LineGraphSeries<>(validDataPoints);
+            LineGraphSeries<DataPoint> seizureSeries = new LineGraphSeries<>(validSeizureDataPoints);
 
             try {
                 int lineColor = mContext.getResources().getColor(R.color.okTextColor, null);
-                series.setColor(lineColor);
+                seizureSeries.setColor(lineColor);
             } catch (Exception e) {
-                series.setColor(Color.BLUE);
+                seizureSeries.setColor(Color.BLUE);
             }
 
-            series.setThickness(3);
-            series.setDrawDataPoints(false);
-            series.setDrawBackground(false);
+            seizureSeries.setThickness(3);
+            seizureSeries.setDrawDataPoints(false);
+            seizureSeries.setDrawBackground(false);
 
-            // Remove old series and add new one
+            // Remove old series
             historyChart.removeAllSeries();
-            historyChart.addSeries(series);
 
-            Log.d(TAG, "Chart updated with " + validPoints + " data points");
+            // Add seizure probability series
+            historyChart.addSeries(seizureSeries);
+
+            // Get acceleration magnitude standard deviation history data
+            double[] accelStdDevData = mConnection.mSdServer.mSdDataHistory.mAccelMagStdDevHistBuf.getVals();
+
+            if (accelStdDevData != null && accelStdDevData.length > 0) {
+                // Create data points for acceleration std dev
+                DataPoint[] accelDataPoints = new DataPoint[accelStdDevData.length];
+                int validAccelPoints = 0;
+
+                for (int i = 0; i < accelStdDevData.length; i++) {
+                    double timeInSeconds = i * 5.0; // 5 seconds per sample
+
+                    if (accelStdDevData[i] >= 0.0) {
+                        accelDataPoints[validAccelPoints] = new DataPoint(timeInSeconds, accelStdDevData[i]);
+                        validAccelPoints++;
+                    }
+                }
+
+                if (validAccelPoints > 0) {
+                    // Create acceleration std dev series with only valid points
+                    DataPoint[] validAccelDataPoints = new DataPoint[validAccelPoints];
+                    System.arraycopy(accelDataPoints, 0, validAccelDataPoints, 0, validAccelPoints);
+
+                    LineGraphSeries<DataPoint> accelSeries = new LineGraphSeries<>(validAccelDataPoints);
+
+                    // Set faint color for acceleration std dev (gray or light color)
+                    accelSeries.setColor(Color.argb(180, 150, 150, 150)); // Light gray with slight transparency
+
+                    accelSeries.setThickness(1); // Thinner line to make it less prominent
+                    accelSeries.setDrawDataPoints(false);
+                    accelSeries.setDrawBackground(false);
+
+                    // Add acceleration series to the chart
+                    historyChart.addSeries(accelSeries);
+
+                    Log.d(TAG, "Chart updated with " + validSeizurePoints + " seizure points and " + validAccelPoints + " accel points");
+                } else {
+                    Log.d(TAG, "No valid accel data points in history");
+                }
+            } else {
+                Log.d(TAG, "No acceleration std dev history data available yet");
+            }
 
         } catch (Exception e) {
             Log.e(TAG, "Error updating chart: " + e.getMessage(), e);

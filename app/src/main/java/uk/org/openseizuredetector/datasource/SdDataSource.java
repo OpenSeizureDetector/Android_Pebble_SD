@@ -582,6 +582,9 @@ public abstract class SdDataSource {
 
             // Because we have received data, set flag to show watch app running.
             mWatchAppRunningCheck = true;
+
+            // Calculate acceleration magnitude standard deviation from 3D data
+            mSdData.mAccelMagStdDev = calcAccelMagStdDev(mSdData);
         } catch (Exception e) {
             Log.e(TAG, "doAnalysis - Exception during Analysis");
             mUtil.writeToSysLogFile("doAnalysis - Exception during analysis - " + e.toString());
@@ -932,6 +935,52 @@ public abstract class SdDataSource {
         // Convert standard deviation from milli-g to %
         standardDeviation = 100. * standardDeviation / mean;
         return (standardDeviation);
+    }
+
+    /**
+     * Calculate the standard deviation of acceleration magnitude from 3D data.
+     * rawData3D contains X,Y,Z values as: [x0, y0, z0, x1, y1, z1, ...]
+     * Calculates magnitude for each 3D point, then returns the standard deviation as a percentage (0-100).
+     * @param sdData The SdData instance containing rawData3D
+     * @return Standard deviation as a percentage (0-100)
+     */
+    private double calcAccelMagStdDev(SdData sdData) {
+        // Calculate magnitude for each 3D point
+        // rawData3D has 125 samples * 3 axes = 375 values
+        int numSamples = 125; // FIXME - should use mSdData.mNsamp / 3 or get from rawData3D.length
+        double[] magnitudes = new double[numSamples];
+
+        for (int i = 0; i < numSamples; i++) {
+            double x = sdData.rawData3D[i * 3];
+            double y = sdData.rawData3D[i * 3 + 1];
+            double z = sdData.rawData3D[i * 3 + 2];
+            magnitudes[i] = Math.sqrt(x * x + y * y + z * z);
+        }
+
+        // Calculate mean magnitude
+        double sum = 0.0;
+        for (int i = 0; i < numSamples; i++) {
+            sum += magnitudes[i];
+        }
+        double mean = sum / numSamples;
+
+        if (mean == 0) {
+            return 0.0;
+        }
+
+        // Calculate standard deviation
+        double sumSquaredDiff = 0.0;
+        for (int i = 0; i < numSamples; i++) {
+            double diff = magnitudes[i] - mean;
+            sumSquaredDiff += diff * diff;
+        }
+        double stdDev = Math.sqrt(sumSquaredDiff / numSamples);
+
+        // Convert to percentage (0-100)
+        double stdDevPercent = 100.0 * stdDev / mean;
+
+        Log.d(TAG, "calcAccelMagStdDev: mean=" + mean + ", stdDev=" + stdDev + ", stdDevPercent=" + stdDevPercent);
+        return stdDevPercent;
     }
 
     /**

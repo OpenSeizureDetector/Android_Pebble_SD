@@ -67,7 +67,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="?attr/colorOnPrimary"
-            android:text="History (Last 10 Minutes):"
+            android:text="Seizure Probability History (%) (Last 10 Minutes):"
             android:paddingTop="16dp"
             android:paddingBottom="8dp" />
 
