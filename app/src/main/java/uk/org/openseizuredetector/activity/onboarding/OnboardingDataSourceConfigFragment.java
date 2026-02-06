@@ -133,17 +133,24 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
     }
 
     /**
-     * Configure Network configuration: IP address input
+     * Configure Network configuration: IP address input with server validation
      */
     private void configureNetworkConfig(View configView) {
         TextInputLayout ipInputLayout = configView.findViewById(R.id.ip_address_input_layout);
         EditText ipInput = configView.findViewById(R.id.ip_address_input);
         TextView validationText = configView.findViewById(R.id.ip_validation_text);
+        MaterialButton retryButton = configView.findViewById(R.id.btn_retry_validation);
 
         // Load saved IP if available
         String savedIp = mPrefs.getString("NetworkIP", "");
         if (!savedIp.isEmpty()) {
             ipInput.setText(savedIp);
+            // Validate the saved IP on fragment load
+            if (isValidIpAddress(savedIp)) {
+                validationText.setText("Validating server...");
+                validationText.setTextColor(requireContext().getColor(android.R.color.darker_gray));
+                validateServer(savedIp, validationText, retryButton);
+            }
         }
 
         // Validate IP address as user types
@@ -154,29 +161,38 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 String ip = s.toString().trim();
+                retryButton.setVisibility(View.GONE);
+
                 if (ip.isEmpty()) {
                     ipInputLayout.setError(null);
                     validationText.setText("Enter the IP address of the OpenSeizureDetector device");
                     validationText.setTextColor(requireContext().getColor(android.R.color.darker_gray));
+                    disableNextButton();
                 } else if (isValidIpAddress(ip)) {
                     ipInputLayout.setError(null);
-                    validationText.setText("✓ Valid IP address");
-                    validationText.setTextColor(requireContext().getColor(android.R.color.holo_green_dark));
-                    // Save IP preference
-                    Log.i(TAG, "onTextChanged - saving Network Datasource IP: " + ip + "and setting default update and timeout periods");
-                    mPrefs.edit().putString("ServerIP", ip).apply();
-                    mPrefs.edit().putString("DataUpdatePeriod", "2000").apply();
-                    mPrefs.edit().putString("ConnectTimeoutPeriod", "5000").apply();
-                    mPrefs.edit().putString("ReadTimeoutPeriod", "5000").apply();
+                    validationText.setText("Validating server...");
+                    validationText.setTextColor(requireContext().getColor(android.R.color.darker_gray));
+                    validateServer(ip, validationText, retryButton);
                 } else {
                     ipInputLayout.setError("Invalid IP address format");
                     validationText.setText("Please enter a valid IP address (e.g., 192.168.1.100)");
-                    validationText.setTextColor(requireContext().getColor(android.R.color.holo_red_dark));
+                    validationText.setTextColor(requireContext().getColor(android.R.color.holo_orange_light));
+                    disableNextButton();
                 }
             }
 
             @Override
             public void afterTextChanged(Editable s) {}
+        });
+
+        retryButton.setOnClickListener(v -> {
+            String ip = ipInput.getText().toString().trim();
+            if (isValidIpAddress(ip)) {
+                validationText.setText("Validating server...");
+                validationText.setTextColor(requireContext().getColor(android.R.color.darker_gray));
+                retryButton.setVisibility(View.GONE);
+                validateServer(ip, validationText, retryButton);
+            }
         });
     }
 
@@ -234,6 +250,98 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
             Log.e(TAG, "Error launching PineTime Updater: " + ex.toString());
             Toast.makeText(requireContext(), "Error: " + ex.getMessage(),
                     Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Validate server by attempting HTTP connection to http://<ip>:8080/data
+     */
+    private void validateServer(String ip, TextView validationText, MaterialButton retryButton) {
+        new Thread(() -> {
+            try {
+                String url = "http://" + ip + ":8080/data";
+                Log.i(TAG, "Validating server at: " + url);
+
+                java.net.HttpURLConnection connection = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+                connection.setRequestMethod("GET");
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(5000);
+
+                int responseCode = connection.getResponseCode();
+                connection.disconnect();
+
+                Log.i(TAG, "Server validation response code: " + responseCode);
+
+                requireActivity().runOnUiThread(() -> {
+                    if (responseCode == 200) {
+                        onServerValidationSuccess(ip, validationText, retryButton);
+                    } else {
+                        showValidationError(validationText, retryButton);
+                    }
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "Server validation failed: " + e.getMessage());
+                requireActivity().runOnUiThread(() -> showValidationError(validationText, retryButton));
+            }
+        }).start();
+    }
+
+    /**
+     * Handle successful server validation
+     */
+    private void onServerValidationSuccess(String ip, TextView validationText, MaterialButton retryButton) {
+        validationText.setText("✓ Server validated successfully");
+        validationText.setTextColor(requireContext().getColor(android.R.color.holo_green_dark));
+
+        // Save preferences
+        Log.i(TAG, "Server validated - saving Network Datasource IP: " + ip);
+        mPrefs.edit().putString("ServerIP", ip).apply();
+        mPrefs.edit().putString("NetworkIP", ip).apply();
+        mPrefs.edit().putString("DataUpdatePeriod", "2000").apply();
+        mPrefs.edit().putString("ConnectTimeoutPeriod", "5000").apply();
+        mPrefs.edit().putString("ReadTimeoutPeriod", "5000").apply();
+
+        enableNextButton();
+        retryButton.setVisibility(View.GONE);
+    }
+
+    /**
+     * Handle server validation error
+     */
+    private void showValidationError(TextView validationText, MaterialButton retryButton) {
+        validationText.setText("✗ Cannot reach server. Please check:\n• IP address is correct\n• Server is running\n• Device is on the same WiFi network");
+        validationText.setTextColor(requireContext().getColor(android.R.color.holo_orange_light));
+        retryButton.setVisibility(View.VISIBLE);
+        disableNextButton();
+    }
+
+    /**
+     * Enable the next button in the onboarding activity
+     */
+    private void enableNextButton() {
+        try {
+            MaterialButton nextButton = requireActivity().findViewById(R.id.btn_next);
+            if (nextButton != null) {
+                nextButton.setEnabled(true);
+                Log.i(TAG, "Next button enabled");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error enabling next button: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Disable the next button in the onboarding activity
+     */
+    private void disableNextButton() {
+        try {
+            MaterialButton nextButton = requireActivity().findViewById(R.id.btn_next);
+            if (nextButton != null) {
+                nextButton.setEnabled(false);
+                Log.i(TAG, "Next button disabled");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error disabling next button: " + e.getMessage());
         }
     }
 }

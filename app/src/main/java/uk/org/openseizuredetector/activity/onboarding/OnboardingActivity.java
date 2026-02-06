@@ -86,8 +86,22 @@ public class OnboardingActivity extends AppCompatActivity {
         
         // Handle navigation buttons
         mBtnNext.setOnClickListener(v -> {
-            if (mViewPager.getCurrentItem() < mAdapter.getItemCount() - 1) {
-                mViewPager.setCurrentItem(mViewPager.getCurrentItem() + 1);
+            int currentPosition = mViewPager.getCurrentItem();
+
+            // Special handling for algorithm selection fragment (position 3)
+            if (currentPosition == 3) {
+                Fragment currentFragment = getSupportFragmentManager().findFragmentByTag("f" + currentPosition);
+                if (currentFragment instanceof OnboardingAlgorithmsFragment) {
+                    OnboardingAlgorithmsFragment algFragment = (OnboardingAlgorithmsFragment) currentFragment;
+                    if (algFragment.handleNextClick()) {
+                        // Fragment handled the click and wants to stay on current page
+                        return;
+                    }
+                }
+            }
+
+            if (currentPosition < mAdapter.getItemCount() - 1) {
+                mViewPager.setCurrentItem(currentPosition + 1);
             } else {
                 finishOnboarding();
             }

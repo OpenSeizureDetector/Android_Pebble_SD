@@ -27,11 +27,53 @@
             android:textColor="?android:attr/textColorSecondary"
             android:layout_marginBottom="24dp" />
 
+        <!-- ML Algorithm - First (Recommended) -->
+        <CheckBox
+            android:id="@+id/check_ml_alg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ML Algorithm (Recommended)"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:padding="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="AI-powered detection using machine learning. Requires model download."
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:paddingStart="48dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="12dp" />
+
+        <!-- Heart Rate Algorithm - Second -->
+        <CheckBox
+            android:id="@+id/check_hr_alg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Heart Rate Alerts"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Detects abnormal heart rate patterns. Requires heart rate monitor."
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:paddingStart="48dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="12dp" />
+
+        <!-- Original OSD Algorithm - Third -->
         <CheckBox
             android:id="@+id/check_osd_alg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Original OSD Algorithm"
+            android:text="Original OpenSeizureDetector Deterministic Algorithm (OSD)"
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="16sp"
             android:checked="true"
@@ -40,18 +82,19 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Recommended. The original movement-based seizure detection algorithm."
+            android:text="The classic movement-based seizure detection algorithm."
             android:textSize="12sp"
             android:textColor="?android:attr/textColorSecondary"
             android:paddingStart="48dp"
             android:paddingEnd="12dp"
             android:paddingBottom="12dp" />
 
+        <!-- OSD with Flap Detection - Fourth -->
         <CheckBox
             android:id="@+id/check_flap_alg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="OSD with Flap Detection"
+            android:text="OSD Model with 'Flap' Detection"
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="16sp"
             android:padding="8dp" />
@@ -66,43 +109,15 @@
             android:paddingEnd="12dp"
             android:paddingBottom="12dp" />
 
-        <CheckBox
-            android:id="@+id/check_ml_alg"
+        <!-- Configuration Message Container -->
+        <FrameLayout
+            android:id="@+id/config_message_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Machine Learning Algorithm"
-            android:textColor="?android:attr/textColorPrimary"
-            android:textSize="16sp"
-            android:padding="8dp" />
+            android:layout_marginTop="24dp"
+            android:visibility="gone" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="AI-powered detection using machine learning. Requires model download."
-            android:textSize="12sp"
-            android:textColor="?android:attr/textColorSecondary"
-            android:paddingStart="48dp"
-            android:paddingEnd="12dp"
-            android:paddingBottom="12dp" />
 
-        <CheckBox
-            android:id="@+id/check_hr_alg"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Heart Rate Algorithm"
-            android:textColor="?android:attr/textColorPrimary"
-            android:textSize="16sp"
-            android:padding="8dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Detects abnormal heart rate patterns. Requires heart rate monitor."
-            android:textSize="12sp"
-            android:textColor="?android:attr/textColorSecondary"
-            android:paddingStart="48dp"
-            android:paddingEnd="12dp"
-            android:paddingBottom="12dp" />
 
         <TextView
             android:layout_width="match_parent"
