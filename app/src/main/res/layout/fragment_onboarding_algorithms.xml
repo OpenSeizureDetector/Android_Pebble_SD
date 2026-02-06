@@ -41,7 +41,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="AI-powered detection using machine learning. Requires model download."
+            android:text="Machine Learning ('AI') detection.\nGives good seizure detection reliability with fewer false alarms than the original OSD Algorithm.\nFalse alarm performance should improve over time as users report false alarms and real seizures using our 'Data Sharing' facility."
             android:textSize="12sp"
             android:textColor="?android:attr/textColorSecondary"
             android:paddingStart="48dp"
@@ -61,7 +61,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Detects abnormal heart rate patterns. Requires heart rate monitor."
+            android:text="Detects abnormal heart rate patterns. Currently requires Garmin watch for reliable heart rate measurement."
             android:textSize="12sp"
             android:textColor="?android:attr/textColorSecondary"
             android:paddingStart="48dp"
@@ -73,7 +73,7 @@
             android:id="@+id/check_osd_alg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Original OpenSeizureDetector Deterministic Algorithm (OSD)"
+            android:text="OSD Algorithm"
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="16sp"
             android:checked="true"
@@ -82,7 +82,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="The classic movement-based seizure detection algorithm."
+            android:text="Original OpenSeizureDetector Deterministic Algorithm (OSD)\nProven tonic-clonic seizure detection - good for night time use, but gives false alarms for some normal activities that involve repetitive movements (brushing teeth, washing dishes etc.)."
             android:textSize="12sp"
             android:textColor="?android:attr/textColorSecondary"
             android:paddingStart="48dp"
@@ -94,7 +94,7 @@
             android:id="@+id/check_flap_alg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="OSD Model with 'Flap' Detection"
+            android:text="OSD Algorithm with 'Flap' Detection"
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="16sp"
             android:padding="8dp" />
@@ -102,7 +102,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Enhanced OSD algorithm that detects arm flapping movements."
+            android:text="Enhanced OSD algorithm that detects arm flapping movements for maximum night time tonic-clonic seizure detection performance."
             android:textSize="12sp"
             android:textColor="?android:attr/textColorSecondary"
             android:paddingStart="48dp"

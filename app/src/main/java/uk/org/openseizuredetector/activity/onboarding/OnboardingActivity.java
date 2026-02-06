@@ -36,6 +36,13 @@ import uk.org.openseizuredetector.utils.OsdUtil;
 public class OnboardingActivity extends AppCompatActivity {
     private static final String TAG = "OnboardingActivity";
     
+    // Fragment position constants
+    private static final int FRAG_WELCOME = 0;
+    private static final int FRAG_DATASOURCE = 1;
+    private static final int FRAG_DATASOURCE_CONFIG = 2;
+    private static final int FRAG_ALGORITHMS = 3;
+    private static final int FRAG_COMPLETE = 4;
+
     private ViewPager2 mViewPager;
     private Button mBtnNext;
     private Button mBtnBack;
@@ -88,8 +95,8 @@ public class OnboardingActivity extends AppCompatActivity {
         mBtnNext.setOnClickListener(v -> {
             int currentPosition = mViewPager.getCurrentItem();
 
-            // Special handling for algorithm selection fragment (position 3)
-            if (currentPosition == 3) {
+            // Special handling for algorithm selection fragment
+            if (currentPosition == FRAG_ALGORITHMS) {
                 Fragment currentFragment = getSupportFragmentManager().findFragmentByTag("f" + currentPosition);
                 if (currentFragment instanceof OnboardingAlgorithmsFragment) {
                     OnboardingAlgorithmsFragment algFragment = (OnboardingAlgorithmsFragment) currentFragment;
@@ -97,6 +104,17 @@ public class OnboardingActivity extends AppCompatActivity {
                         // Fragment handled the click and wants to stay on current page
                         return;
                     }
+                }
+            }
+
+            // If on DataSourceConfig and Network Data Source is selected, skip to Complete
+            if (currentPosition == FRAG_DATASOURCE_CONFIG) {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                String dataSource = prefs.getString("DataSource", "Phone");
+                if ("Network".equals(dataSource)) {
+                    // Skip algorithm selection, go straight to complete
+                    mViewPager.setCurrentItem(FRAG_COMPLETE);
+                    return;
                 }
             }
 
@@ -108,8 +126,21 @@ public class OnboardingActivity extends AppCompatActivity {
         });
         
         mBtnBack.setOnClickListener(v -> {
-            if (mViewPager.getCurrentItem() > 0) {
-                mViewPager.setCurrentItem(mViewPager.getCurrentItem() - 1);
+            int currentPosition = mViewPager.getCurrentItem();
+
+            // If on Complete (position 4) and Network Data Source is selected, skip to DataSourceConfig
+            if (currentPosition == FRAG_COMPLETE) {
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+                String dataSource = prefs.getString("DataSource", "Phone");
+                if ("Network".equals(dataSource)) {
+                    // Skip algorithm selection, go straight to config
+                    mViewPager.setCurrentItem(FRAG_DATASOURCE_CONFIG);
+                    return;
+                }
+            }
+
+            if (currentPosition > FRAG_WELCOME) {
+                mViewPager.setCurrentItem(currentPosition - 1);
             }
         });
 
@@ -127,7 +158,7 @@ public class OnboardingActivity extends AppCompatActivity {
         });
         
         // Initial button state
-        updateNavigationButtons(0);
+        updateNavigationButtons(FRAG_WELCOME);
 
 
 
@@ -175,15 +206,15 @@ public class OnboardingActivity extends AppCompatActivity {
         @Override
         public Fragment createFragment(int position) {
             switch (position) {
-                case 0:
+                case FRAG_WELCOME:
                     return new OnboardingWelcomeFragment();
-                case 1:
+                case FRAG_DATASOURCE:
                     return new OnboardingDataSourceFragment();
-                case 2:
+                case FRAG_DATASOURCE_CONFIG:
                     return new OnboardingDataSourceConfigFragment();
-                case 3:
+                case FRAG_ALGORITHMS:
                     return new OnboardingAlgorithmsFragment();
-                case 4:
+                case FRAG_COMPLETE:
                     return new OnboardingCompleteFragment();
                 default:
                     return new OnboardingWelcomeFragment();

@@ -35,6 +35,63 @@
             android:textSize="16sp"
             android:textColor="?android:attr/textColorPrimary"
             android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Configuration Summary Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="?attr/colorSecondary"
+            android:padding="16dp"
+            android:layout_marginBottom="24dp"
+            android:alpha="0.1" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Configuration Summary"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Data Source:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/config_data_source"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Loading..."
+            android:textSize="14sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:paddingStart="16dp"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Enabled Algorithms:"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/config_algorithms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Loading..."
+            android:textSize="14sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:paddingStart="16dp"
             android:layout_marginBottom="32dp" />
 
         <TextView
@@ -47,6 +104,7 @@
             android:gravity="center"
             android:layout_marginBottom="16dp" />
 
+        <!--
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -64,6 +122,6 @@
             android:textSize="14sp"
             android:textColor="?android:attr/textColorSecondary"
             android:lineSpacingMultiplier="1.3" />
-
+    -->
     </LinearLayout>
 </ScrollView>

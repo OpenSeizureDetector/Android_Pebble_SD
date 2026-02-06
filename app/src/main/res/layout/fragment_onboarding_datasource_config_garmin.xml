@@ -17,7 +17,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Set up your Garmin watch for seizure detection"
+        android:text="Set up your Garmin watch for seizure detection - refer to the 'Garmin Seizure Detector' page on the OpenSeizureDetector.org.uk web site for detailed instructions"
         android:textSize="14sp"
         android:textColor="?android:attr/textColorSecondary"
         android:layout_marginBottom="24dp" />
@@ -34,7 +34,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="1. Visit the Garmin App Store on your watch"
+        android:text="1. Pair the watch with your phone using the Garmin Connect app as per the Garmin instructions."
         android:textSize="14sp"
         android:textColor="?android:attr/textColorPrimary"
         android:layout_marginBottom="12dp" />
@@ -42,7 +42,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="2. Search for &quot;OpenSeizureDetector&quot;"
+        android:text="2. Download the GarminSD watch app file from the OpenSeizureDetector source code repository onto a computer (the installation can not be carried out on a phone)"
         android:textSize="14sp"
         android:textColor="?android:attr/textColorPrimary"
         android:layout_marginBottom="12dp" />
@@ -50,7 +50,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="3. Install the application on your watch"
+        android:text="3. Connect your watch to the computer via USB."
         android:textSize="14sp"
         android:textColor="?android:attr/textColorPrimary"
         android:layout_marginBottom="12dp" />
@@ -58,7 +58,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="4. Launch the OpenSeizureDetector app on your watch"
+        android:text="4. Copy the watch app file from the computer onto the watch."
         android:textSize="14sp"
         android:textColor="?android:attr/textColorPrimary"
         android:layout_marginBottom="12dp" />
@@ -66,10 +66,11 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="5. Pair your watch with this phone via Bluetooth in your phone's Bluetooth settings"
+        android:text="5. Launch the OpenSeizureDetector app on your watch"
         android:textSize="14sp"
         android:textColor="?android:attr/textColorPrimary"
         android:layout_marginBottom="24dp" />
+
 
     <TextView
         android:layout_width="match_parent"
@@ -83,7 +84,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="• Make sure the Garmin watch app is running before connecting\n• Heart rate data requires a supported Garmin watch model\n• For help, visit: https://github.com/OpenSeizureDetector/OpenSeizureDetector"
+        android:text="• Make sure the Garmin watch app is running before continuing"
         android:textSize="12sp"
         android:textColor="?android:attr/textColorSecondary"
         android:layout_marginBottom="24dp" />

@@ -76,9 +76,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginStart="4dp"
-                    style="@style/Widget.MaterialComponents.Button"
-                    android:backgroundTint="?attr/colorAccent"
-                    android:textColor="#FFFFFF"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:strokeColor="@color/btn_next_stroke_color"
+                    android:textColor="@color/btn_next_text_color"
                     android:text="Next" />
             </LinearLayout>
         </LinearLayout>

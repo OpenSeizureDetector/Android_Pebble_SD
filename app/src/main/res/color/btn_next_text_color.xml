@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Enabled state: Use button text color (matches Back/Skip buttons) -->
+    <item android:state_enabled="true" android:color="@color/button_text_color" />
+    <!-- Disabled state: Dark grey text for high contrast -->
+    <item android:state_enabled="false" android:color="#616161" />
+</selector>
+
+
