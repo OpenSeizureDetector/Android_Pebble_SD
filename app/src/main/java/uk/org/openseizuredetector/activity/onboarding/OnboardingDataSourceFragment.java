@@ -83,15 +83,19 @@ public class OnboardingDataSourceFragment extends Fragment {
         SharedPreferences.Editor editor = mPrefs.edit();
         switch (dataSource) {
             case "PineTime":
+                Log.d(TAG, "PineTime selected - setting DataSource to BLE2");
                 editor.putString("DataSource", "BLE2");
                 break;
             case "Garmin":
+                Log.d(TAG, "Garmin selected - setting DataSource to Garmin");
                 editor.putString("DataSource", "Garmin");
                 break;
             case "Network":
+                Log.d(TAG, "Network selected - setting DataSource to Network");
                 editor.putString("DataSource", "Network");
                 break;
             default:
+                Log.d(TAG, "Default switch branch - setting DataSource to Phone");
                 editor.putString("DataSource", "Phone");
         }
         editor.apply();

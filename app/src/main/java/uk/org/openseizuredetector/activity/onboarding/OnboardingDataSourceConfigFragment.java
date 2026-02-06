@@ -7,11 +7,9 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -44,49 +42,81 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
     private SharedPreferences mPrefs;
     private ScrollView mScrollView;
     private LinearLayout mConfigContainer;
+    private View mMainView;
+
+    // Store references to all inflated config views
+    private View mPineTimeConfigView;
+    private View mGarminConfigView;
+    private View mNetworkConfigView;
+    private View mPhoneConfigView;
+    private View mOtherConfigView;
+
+    // Track current data source to avoid unnecessary updates
+    private String mCurrentDataSource = null;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_onboarding_datasource_config, container, false);
+        mMainView = inflater.inflate(R.layout.fragment_onboarding_datasource_config, container, false);
 
         mPrefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
-        mScrollView = view.findViewById(R.id.config_scrollview);
-        mConfigContainer = view.findViewById(R.id.config_container);
+        mScrollView = mMainView.findViewById(R.id.config_scrollview);
+        mConfigContainer = mMainView.findViewById(R.id.config_container);
 
-        // Get the selected data source from preferences
+        // Inflate all configuration views in onCreate
+        mPineTimeConfigView = inflater.inflate(R.layout.fragment_onboarding_datasource_config_pinetime, mConfigContainer, false);
+        mGarminConfigView = inflater.inflate(R.layout.fragment_onboarding_datasource_config_garmin, mConfigContainer, false);
+        mNetworkConfigView = inflater.inflate(R.layout.fragment_onboarding_datasource_config_network, mConfigContainer, false);
+        mPhoneConfigView = inflater.inflate(R.layout.fragment_onboarding_datasource_config_phone, mConfigContainer, false);
+        mOtherConfigView = inflater.inflate(R.layout.fragment_onboarding_datasource_config_other, mConfigContainer, false);
+
+        // Configure event listeners for each view type
+        configurePineTimeConfig(mPineTimeConfigView);
+        configureNetworkConfig(mNetworkConfigView);
+
+        return mMainView;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        // Get the currently selected data source
         String dataSource = mPrefs.getString("DataSource", "Phone");
 
-        Log.i(TAG, "onCreateView() - Configuring for data source: " + dataSource);
+        // Only update UI if data source has changed
+        if (!dataSource.equals(mCurrentDataSource)) {
+            mCurrentDataSource = dataSource;
+            Log.i(TAG, "onResume - Updating UI for data source: " + dataSource);
 
-        // Show appropriate configuration UI based on data source
-        switch (dataSource) {
-            case "BLE2":
-                showPineTimeConfig(inflater);
-                break;
-            case "Garmin":
-                showGarminConfig(inflater);
-                break;
-            case "Network":
-                showNetworkConfig(inflater);
-                break;
-            case "Phone":
-                showPhoneConfig(inflater);
-                break;
-            default:
-                showOtherConfig(inflater);
+            // Clear the container and add the appropriate config view
+            mConfigContainer.removeAllViews();
+
+            switch (dataSource) {
+                case "BLE2":
+                    mConfigContainer.addView(mPineTimeConfigView);
+                    break;
+                case "Garmin":
+                    mConfigContainer.addView(mGarminConfigView);
+                    break;
+                case "Network":
+                    mConfigContainer.addView(mNetworkConfigView);
+                    break;
+                case "Phone":
+                    mConfigContainer.addView(mPhoneConfigView);
+                    break;
+                default:
+                    mConfigContainer.addView(mOtherConfigView);
+            }
         }
 
-        return view;
     }
 
     /**
-     * Show PineTime configuration: scan and firmware update buttons
+     * Configure PineTime configuration: set up scan and firmware update buttons
      */
-    private void showPineTimeConfig(LayoutInflater inflater) {
-        View configView = inflater.inflate(R.layout.fragment_onboarding_datasource_config_pinetime, mConfigContainer, false);
-
+    private void configurePineTimeConfig(View configView) {
         MaterialButton btnScan = configView.findViewById(R.id.btn_scan_pinetime);
         MaterialButton btnUpdate = configView.findViewById(R.id.btn_update_pinetime);
 
@@ -100,24 +130,12 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
             Log.i(TAG, "Update PineTime firmware button clicked");
             launchPineTimeUpdater();
         });
-
-        mConfigContainer.addView(configView);
     }
 
     /**
-     * Show Garmin configuration: installation instructions
+     * Configure Network configuration: IP address input
      */
-    private void showGarminConfig(LayoutInflater inflater) {
-        View configView = inflater.inflate(R.layout.fragment_onboarding_datasource_config_garmin, mConfigContainer, false);
-        mConfigContainer.addView(configView);
-    }
-
-    /**
-     * Show Network configuration: IP address input
-     */
-    private void showNetworkConfig(LayoutInflater inflater) {
-        View configView = inflater.inflate(R.layout.fragment_onboarding_datasource_config_network, mConfigContainer, false);
-
+    private void configureNetworkConfig(View configView) {
         TextInputLayout ipInputLayout = configView.findViewById(R.id.ip_address_input_layout);
         EditText ipInput = configView.findViewById(R.id.ip_address_input);
         TextView validationText = configView.findViewById(R.id.ip_validation_text);
@@ -145,7 +163,11 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
                     validationText.setText("✓ Valid IP address");
                     validationText.setTextColor(requireContext().getColor(android.R.color.holo_green_dark));
                     // Save IP preference
-                    mPrefs.edit().putString("NetworkIP", ip).apply();
+                    Log.i(TAG, "onTextChanged - saving Network Datasource IP: " + ip + "and setting default update and timeout periods");
+                    mPrefs.edit().putString("ServerIP", ip).apply();
+                    mPrefs.edit().putString("DataUpdatePeriod", "2000").apply();
+                    mPrefs.edit().putString("ConnectTimeoutPeriod", "5000").apply();
+                    mPrefs.edit().putString("ReadTimeoutPeriod", "5000").apply();
                 } else {
                     ipInputLayout.setError("Invalid IP address format");
                     validationText.setText("Please enter a valid IP address (e.g., 192.168.1.100)");
@@ -156,24 +178,6 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
             @Override
             public void afterTextChanged(Editable s) {}
         });
-
-        mConfigContainer.addView(configView);
-    }
-
-    /**
-     * Show Phone (demo mode) configuration
-     */
-    private void showPhoneConfig(LayoutInflater inflater) {
-        View configView = inflater.inflate(R.layout.fragment_onboarding_datasource_config_phone, mConfigContainer, false);
-        mConfigContainer.addView(configView);
-    }
-
-    /**
-     * Show Other/Unknown configuration
-     */
-    private void showOtherConfig(LayoutInflater inflater) {
-        View configView = inflater.inflate(R.layout.fragment_onboarding_datasource_config_other, mConfigContainer, false);
-        mConfigContainer.addView(configView);
     }
 
     /**

@@ -143,6 +143,8 @@ public class StartupActivity extends AppCompatActivity {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean firstRunComplete = prefs.getBoolean("first_run_complete", false);
 
+        //firstRunComplete = false;  // FIXME - forced to false for testing
+
         if (!firstRunComplete) {
             Log.i(TAG, "First run detected - launching onboarding wizard");
             mUtil.writeToSysLogFile("StartupActivity.onCreate - Launching onboarding", "LIFECYCLE");

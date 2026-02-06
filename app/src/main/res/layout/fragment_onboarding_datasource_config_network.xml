@@ -18,15 +18,44 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Connect to a remote OpenSeizureDetector device"
+        android:text="About Network Mode:"
         android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="?android:attr/textColorPrimary"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="16dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="• Connects to another device running OpenSeizureDetector to generate Alarm and Warning Notifications\n\n• This device will receive alarm notifications from the remote device\n\n• Both devices must be on the same WiFi network\n\n• Useful if you can not hear the main OpenSeizureDevice alarms from another part of the house"
+        android:textSize="12sp"
         android:textColor="?android:attr/textColorSecondary"
         android:layout_marginBottom="24dp" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Network Device IP Address"
+        android:text="To find the remote device's IP address, look on the 'System' tab of the main OpenSeizureDetector screen for\n'Access Server at: http://xxx.xxx.xxx.xxx:8080',\nor check your router's client list."
+        android:textSize="12sp"
+        android:textColor="?android:attr/textColorSecondary"
+        android:layout_marginBottom="16dp"
+        android:textStyle="italic" />
+
+    <!--
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Connect to a remote OpenSeizureDetector device"
+        android:textSize="14sp"
+        android:textColor="?android:attr/textColorSecondary"
+        android:layout_marginBottom="24dp" />
+    -->
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Remote Device IP Address"
         android:textSize="14sp"
         android:textStyle="bold"
         android:textColor="?android:attr/textColorPrimary"
@@ -54,36 +83,10 @@
         android:id="@+id/ip_validation_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Enter the IP address of the OpenSeizureDetector device"
+        android:text="Enter the IP address of the OpenSeizureDetector device above"
         android:textSize="12sp"
         android:textColor="?android:attr/textColorSecondary"
         android:layout_marginBottom="16dp" />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="About Network Mode:"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        android:textColor="?android:attr/textColorPrimary"
-        android:layout_marginBottom="8dp"
-        android:layout_marginTop="16dp" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="• Requires another device running OpenSeizureDetector\n• Both devices must be on the same network\n• This device will receive alarm notifications from the remote device\n• Useful for remote monitoring of patients"
-        android:textSize="12sp"
-        android:textColor="?android:attr/textColorSecondary"
-        android:layout_marginBottom="24dp" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="To find the IP address, check your router's client list or look at the device's settings screen."
-        android:textSize="12sp"
-        android:textColor="?android:attr/textColorSecondary"
-        android:layout_marginBottom="16dp"
-        android:textStyle="italic" />
 
 </LinearLayout>
