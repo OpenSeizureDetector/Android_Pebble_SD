@@ -43,6 +43,9 @@ public class OnboardingActivity extends AppCompatActivity {
     private static final int FRAG_ALGORITHMS = 3;
     private static final int FRAG_COMPLETE = 4;
 
+    // Key for saving ViewPager position
+    private static final String SAVED_VIEWPAGER_POSITION = "viewpager_position";
+
     private ViewPager2 mViewPager;
     private Button mBtnNext;
     private Button mBtnBack;
@@ -160,8 +163,28 @@ public class OnboardingActivity extends AppCompatActivity {
         // Initial button state
         updateNavigationButtons(FRAG_WELCOME);
 
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Restore ViewPager position when returning from other activities (e.g., BLEScanActivity)
+        // This ensures we return to the same fragment we were on before leaving
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        int savedPosition = prefs.getInt(SAVED_VIEWPAGER_POSITION, FRAG_WELCOME);
+        if (mViewPager.getCurrentItem() != savedPosition) {
+            mViewPager.setCurrentItem(savedPosition, false);
+        }
+    }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        // Save ViewPager position to restore if activity is recreated
+        outState.putInt(SAVED_VIEWPAGER_POSITION, mViewPager.getCurrentItem());
+        // Also save to preferences for when returning from other activities
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        prefs.edit().putInt(SAVED_VIEWPAGER_POSITION, mViewPager.getCurrentItem()).apply();
     }
     
     private void updateNavigationButtons(int position) {
@@ -181,10 +204,11 @@ public class OnboardingActivity extends AppCompatActivity {
     private void finishOnboarding() {
         Log.i(TAG, "finishOnboarding() - marking first run as complete");
         
-        // Mark first run as complete
+        // Mark first run as complete and clear ViewPager position for next run
         SharedPreferences.Editor editor = PreferenceManager
                 .getDefaultSharedPreferences(this).edit();
         editor.putBoolean("first_run_complete", true);
+        editor.remove(SAVED_VIEWPAGER_POSITION); // Clear position so next time starts from welcome
         editor.apply();
         
         // Launch StartupActivity

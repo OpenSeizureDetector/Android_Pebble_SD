@@ -103,23 +103,35 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
         setContentView(R.layout.activity_pref);
 
-        // Ensure content isn't hidden behind system bars (navigation bar)
+        // Calculate ActionBar height to add to top padding
+        final int actionBarHeight;
+        android.util.TypedValue tv = new android.util.TypedValue();
+        if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+            actionBarHeight = android.util.TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
+        } else {
+            actionBarHeight = 0;
+        }
+
+        // Ensure content isn't hidden behind system bars (navigation bar) or ActionBar
         View rootView = findViewById(android.R.id.content);
         ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
+            int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top + actionBarHeight;
             int bottomInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+
             View fragmentContainer = findViewById(R.id.pref_fragment_container);
             if (fragmentContainer != null) {
-                // preserve any existing padding on top/left/right
+                // Add top padding for ActionBar
                 fragmentContainer.setPadding(fragmentContainer.getPaddingLeft(),
-                        fragmentContainer.getPaddingTop(),
+                        topInset,
                         fragmentContainer.getPaddingRight(),
                         bottomInset);
             }
-            // Also add padding to header list so it's not overlapped if needed
+
+            // Add top padding to header list so it's not overlapped by ActionBar
             ListView headerList = findViewById(R.id.pref_header_list);
             if (headerList != null) {
                 headerList.setPadding(headerList.getPaddingLeft(),
-                        headerList.getPaddingTop(),
+                        topInset,
                         headerList.getPaddingRight(),
                         0);
             }
