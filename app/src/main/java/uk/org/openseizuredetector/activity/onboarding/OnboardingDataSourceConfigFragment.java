@@ -109,6 +109,12 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
                 default:
                     mConfigContainer.addView(mOtherConfigView);
             }
+        } else if (dataSource.equals("BLE2")) {
+            // If we're already on BLE2 config, refresh the device display in case user returned from scan
+            TextView tvSelectedDevice = mPineTimeConfigView.findViewById(R.id.tv_selected_device);
+            if (tvSelectedDevice != null) {
+                updateSelectedDeviceDisplay(tvSelectedDevice);
+            }
         }
 
     }
@@ -119,6 +125,10 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
     private void configurePineTimeConfig(View configView) {
         MaterialButton btnScan = configView.findViewById(R.id.btn_scan_pinetime);
         MaterialButton btnUpdate = configView.findViewById(R.id.btn_update_pinetime);
+        TextView tvSelectedDevice = configView.findViewById(R.id.tv_selected_device);
+
+        // Display currently selected device if available
+        updateSelectedDeviceDisplay(tvSelectedDevice);
 
         btnScan.setOnClickListener(v -> {
             Log.i(TAG, "Scan PineTime button clicked");
@@ -130,6 +140,23 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
             Log.i(TAG, "Update PineTime firmware button clicked");
             launchPineTimeUpdater();
         });
+    }
+
+    /**
+     * Update the TextView to show the currently selected BLE device
+     */
+    private void updateSelectedDeviceDisplay(TextView tvSelectedDevice) {
+        String deviceName = mPrefs.getString("BLE_Device_Name", null);
+        String deviceAddr = mPrefs.getString("BLE_Device_Addr", null);
+
+        if (deviceName != null && deviceAddr != null) {
+            String displayText = "Selected: " + deviceName + " (" + deviceAddr + ")";
+            tvSelectedDevice.setText(displayText);
+            tvSelectedDevice.setTextColor(requireContext().getColor(android.R.color.white));
+        } else {
+            tvSelectedDevice.setText("No device selected");
+            tvSelectedDevice.setTextColor(requireContext().getColor(android.R.color.white));
+        }
     }
 
     /**

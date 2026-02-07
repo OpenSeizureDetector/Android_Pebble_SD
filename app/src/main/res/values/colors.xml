@@ -72,4 +72,8 @@
     <color name="material3_outline">#9E9EAE</color>
     <color name="material3_outline_variant">#49454E</color>
     <color name="material3_scrim">#000000</color>
+
+    <!-- Card Colors for BLE Scan Activity -->
+    <color name="card_background_light_blue">#5B6FD8</color>  <!-- Lighter blue for card backgrounds -->
+    <color name="card_stroke_light_blue">#6B7FE8</color>      <!-- Slightly lighter for subtle stroke -->
 </resources>
