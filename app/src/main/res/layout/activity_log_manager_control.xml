@@ -6,187 +6,101 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="uk.org.openseizuredetector.LogManager">
+    tools:context="uk.org.openseizuredetector.activity.logging.LogManagerControlActivity">
 
     <LinearLayout
+        android:id="@+id/log_manager_control_content_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="?attr/colorPrimary"
-        android:paddingLeft="@dimen/activity_horizontal_margin"
-        android:paddingTop="@dimen/activity_vertical_margin"
-        android:paddingRight="@dimen/activity_horizontal_margin"
-        android:paddingBottom="@dimen/activity_vertical_margin"
-        android:id="@+id/log_manager_control_content_layout"
-        tools:context="uk.org.openseizuredetector.LogManager">
+        android:background="?attr/colorPrimary">
 
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/local_database"
-            android:textColor="?android:attr/textColorPrimary"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
-
-        <LinearLayout
+        <!-- Data View Selection Tabs at the TOP -->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/data_view_tabs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:background="?attr/colorPrimaryDark"
+            app:tabTextColor="@color/tabUnselected"
+            app:tabSelectedTextColor="@color/tabSelected"
+            app:tabIndicatorColor="@color/tabIndicator"
+            app:tabIndicatorHeight="4dp" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
-                android:text="@string/num_local_events" />
-
-            <TextView
-                android:id="@+id/num_local_events_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
-                android:text="000" />
-        </LinearLayout>
-
-        <!--
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/num_local_datapoints" />
-
-            <TextView
-                android:id="@+id/num_local_datapoints_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="000" />
-        </LinearLayout>
-        -->
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
-                android:text="@string/NDATimeRemaining" />
-
-            <TextView
-                android:id="@+id/nda_time_remaining_tv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
-                android:text="000" />
-        </LinearLayout>
-
-
-        <RadioGroup xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <RadioButton
-                android:id="@+id/shared_data_rb"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
-                android:checked="true"
-                android:onClick="onRadioButtonClicked"
-                android:text="@string/shared_data" />
-
-            <RadioButton
-                android:id="@+id/local_data_rb"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
-                android:checked="false"
-                android:onClick="onRadioButtonClicked"
-                android:text="@string/local_data" />
-
-            <RadioButton
-                android:id="@+id/syslog_rb"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
-                android:checked="false"
-                android:onClick="onRadioButtonClicked"
-                android:text="@string/system_logs" />
-        </RadioGroup>
-
+        <!-- Remote/Shared Data Section -->
         <LinearLayout
             android:id="@+id/shared_data_ll"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:orientation="vertical"
+            android:padding="16dp"
             android:visibility="visible">
 
             <TextView
-                android:layout_width="fill_parent"
+                android:id="@+id/shared_data_title_tv"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
+                android:textColor="@android:color/white"
                 android:text="@string/remote_database"
-                android:textAppearance="?android:attr/textAppearanceLarge" />
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp" />
 
             <TextView
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
-                android:text="@string/check_seizures_message" />
+                android:textColor="@android:color/white"
+                android:text="@string/check_seizures_message"
+                android:layout_marginBottom="8dp" />
 
+            <!-- Buttons -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
 
-                <TextView
-                    android:id="@+id/authStatusTv"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:text="@string/not_authenticated" /> <!-- Space after TextView -->
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/auth_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginEnd="8dp"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    app:strokeColor="#FFFFFF"
-                    android:textColor="#FFFFFF"
-                    android:text="@string/authenticate" /> <!-- Space after this button -->
+                    app:strokeColor="@android:color/white"
+                    android:textColor="@android:color/white"
+                    android:text="@string/authenticate"
+                    android:layout_marginEnd="4dp"
+                    android:minWidth="0dp"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="8dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/refresh_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    app:strokeColor="#FFFFFF"
-                    android:textColor="#FFFFFF"
-                    android:text="@string/refreshBtn" /> <!-- Space before this button -->
-                <!-- No marginEnd needed if ProgressBar is last and you want it close,
-                     or add marginEnd if you want space before ProgressBar too -->
+                    app:strokeColor="@android:color/white"
+                    android:textColor="@android:color/white"
+                    android:text="@string/refreshBtn"
+                    android:minWidth="0dp"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="8dp" />
 
                 <ProgressBar
                     android:id="@+id/remoteAccessPb"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_marginStart="8dp" /> <!-- Space before ProgressBar -->
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginStart="8dp"
+                    android:visibility="invisible" />
             </LinearLayout>
 
+            <!-- Checkboxes in horizontal layout -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
 
                 <CheckBox
                     android:id="@+id/group_events_cb"
@@ -194,109 +108,186 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:checked="true"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:text="@string/group_remote_events" />
+                    android:textColor="@android:color/white"
+                    android:text="@string/group_remote_events"
+                    android:buttonTint="@android:color/white"
+                    android:textSize="12sp" />
 
                 <CheckBox
                     android:id="@+id/include_warnings_cb"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:text="@string/include_warnings" />
+                    android:textColor="@android:color/white"
+                    android:text="@string/include_warnings"
+                    android:buttonTint="@android:color/white"
+                    android:textSize="12sp" />
 
                 <CheckBox
                     android:id="@+id/include_nda_cb"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:text="@string/include_nda" />
+                    android:textColor="@android:color/white"
+                    android:text="@string/include_nda"
+                    android:buttonTint="@android:color/white"
+                    android:textSize="12sp" />
             </LinearLayout>
 
-            <ListView
-                android:id="@+id/remoteEventsLv"
+            <!-- Remote Events List Card - FILLING REMAINING SPACE -->
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp" />
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="@android:color/white"
+                app:strokeColor="@color/card_stroke_light_blue"
+                app:strokeWidth="1dp"
+                app:cardCornerRadius="8dp">
+                <ListView
+                    android:id="@+id/remoteEventsLv"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:divider="@android:color/darker_gray"
+                    android:dividerHeight="1dp" />
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
 
-
+        <!-- Local Data Section -->
         <LinearLayout
             android:id="@+id/local_data_ll"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:orientation="vertical"
+            android:padding="16dp"
             android:visibility="gone">
 
             <TextView
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
+                android:textColor="@android:color/white"
                 android:text="@string/EventsInLocalDb"
-                android:textAppearance="?android:attr/textAppearanceLarge" />
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
 
-            <ListView
-                android:id="@+id/eventLogListView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp" />
+            <!-- Local Events List Card - FILLING REMAINING SPACE -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="@android:color/white"
+                app:strokeColor="@color/card_stroke_light_blue"
+                app:strokeWidth="1dp"
+                app:cardCornerRadius="8dp">
+                <ListView
+                    android:id="@+id/eventLogListView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:divider="@android:color/darker_gray"
+                    android:dividerHeight="1dp" />
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
 
+        <!-- System Logs Section -->
         <LinearLayout
             android:id="@+id/syslog_ll"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:orientation="vertical"
+            android:padding="16dp"
             android:visibility="gone">
 
             <TextView
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="?android:attr/textColorPrimary"
+                android:textColor="@android:color/white"
                 android:text="@string/system_logs"
-                android:textAppearance="?android:attr/textAppearanceLarge" />
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
 
             <TextView
                 android:id="@+id/syslog_file_tv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/syslog_current_file"
-                android:textColor="?android:attr/textColorPrimary" />
+                android:textColor="@android:color/white"
+                android:layout_marginBottom="8dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/syslog_refresh_button"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="@string/syslog_refresh" />
+                    android:layout_weight="1"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:strokeColor="@android:color/white"
+                    android:textColor="@android:color/white"
+                    android:text="@string/syslog_refresh"
+                    android:layout_marginEnd="4dp"
+                    android:padding="0dp"
+                    android:minWidth="0dp"
+                    android:textSize="12sp" />
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/syslog_select_button"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="@string/syslog_select_file" />
+                    android:layout_weight="1"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:strokeColor="@android:color/white"
+                    android:textColor="@android:color/white"
+                    android:text="@string/syslog_select_file"
+                    android:layout_marginEnd="4dp"
+                    android:padding="0dp"
+                    android:minWidth="0dp"
+                    android:textSize="12sp" />
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/syslog_export_button"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="@string/syslog_export" />
+                    android:layout_weight="1"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:strokeColor="@android:color/white"
+                    android:textColor="@android:color/white"
+                    android:text="@string/syslog_export"
+                    android:padding="0dp"
+                    android:minWidth="0dp"
+                    android:textSize="12sp" />
             </LinearLayout>
 
-            <ListView
-                android:id="@+id/sysLogListView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp" />
+            <!-- System Logs List Card - FILLING REMAINING SPACE -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="@android:color/white"
+                app:strokeColor="@color/card_stroke_light_blue"
+                app:strokeWidth="1dp"
+                app:cardCornerRadius="8dp">
+                <ListView
+                    android:id="@+id/sysLogListView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:divider="@android:color/darker_gray"
+                    android:dividerHeight="1dp" />
+            </com.google.android.material.card.MaterialCardView>
+
         </LinearLayout>
 
 
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
-

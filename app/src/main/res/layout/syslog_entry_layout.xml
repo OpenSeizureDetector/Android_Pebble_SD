@@ -14,21 +14,22 @@
             android:id="@+id/syslog_entry_date_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="?android:attr/textColorPrimary"
+            android:textColor="@android:color/black"
             android:text="date" />
         <TextView
             android:id="@+id/syslog_level_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="?android:attr/textColorPrimary"
+            android:textColor="@android:color/black"
             android:text="---" />
 
     </LinearLayout>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="?android:attr/textColorPrimary"
+        android:textColor="@android:color/black"
         android:text="date"
         android:id="@+id/syslog_entry_text_tv" />
 
 </LinearLayout>
+

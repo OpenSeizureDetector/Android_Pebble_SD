@@ -48,6 +48,8 @@ import android.widget.RadioButton;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
+import com.google.android.material.tabs.TabLayout;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -96,12 +98,10 @@ public class LogManagerControlActivity extends AppCompatActivity {
     final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
     private Integer mUiTimerPeriodFast = 2000;  // 2 seconds - we use fast updating while UI is blank and we are waiting for first data
     private Integer mUiTimerPeriodSlow = 60000; // 60 seconds - once data has been received and UI populated we only update once per minute.
-    private boolean mUpdateSysLog = true;
+    private String mUserId = null;
+    private CheckBox mGroupEventsCb;
     private Menu mMenu;
-    private CheckBox mGroupEventsCb; // Declare the CheckBox member
-    //private Integer UI_MODE_LOCAL = 0;
-    //private Integer UI_MODE_SHARED = 1;
-    //private Integer mUiMode = UI_MODE_SHARED;
+    private boolean mUpdateSysLog = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -187,11 +187,39 @@ public class LogManagerControlActivity extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 // When the checkbox state changes, re-process and update the UI
                 if (mRemoteEventsList != null && !mRemoteEventsList.isEmpty()) {
+                    // Clear adapter to force UI rebuild with/without grouping
+                    ListView lv = (ListView) findViewById(R.id.remoteEventsLv);
+                    if (lv != null) lv.setAdapter(null);
+
                     if (isChecked) {
                         createGroupedEventsList();
                     }
                     updateUi(); // Update UI to reflect grouped or non-grouped list
                 }
+            }
+        });
+
+        // Setup TabLayout for data view selection
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.data_view_tabs);
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.shared_data).setIcon(null), 0, true);
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.local_data).setIcon(null), 1, false);
+        tabLayout.addTab(tabLayout.newTab().setText(R.string.system_logs).setIcon(null), 2, false);
+
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                Log.v(TAG, "Tab selected: " + tab.getPosition());
+                onTabChanged(tab.getPosition());
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+                // Not needed for this implementation
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+                // Not needed for this implementation
             }
         });
 
@@ -500,18 +528,18 @@ public class LogManagerControlActivity extends AppCompatActivity {
         boolean stopUpdating = true;
         TextView tv;
         Button btn;
-        // Local Database Information
+        // Local Database Information - removed from UI to save space
         if (mLm != null) {
+            // Update local events count in background for internal tracking
             mLm.getLocalEventsCount(true, (Long eventCount) -> {
-                TextView tv1 = (TextView) findViewById(R.id.num_local_events_tv);
-                tv1.setText(String.format("%d", eventCount));
+                // TextView removed from layout to save space
+                // TextView tv1 = (TextView) findViewById(R.id.num_local_events_tv);
+                // tv1.setText(String.format("%d", eventCount));
+                Log.v(TAG, "Local events count: " + eventCount);
             });
-            //mLm.getLocalDatapointsCount((Long datapointsCount) -> {
-            //    TextView tv2 = (TextView) findViewById(R.id.num_local_datapoints_tv);
-            //    tv2.setText(String.format("%d", datapointsCount));
-            //});
-            TextView tv3 = (TextView) findViewById(R.id.nda_time_remaining_tv);
-            tv3.setText(String.format("%.1f hrs", mLm.mNDATimeRemaining));
+            // NDA time remaining tracking
+            // TextView tv3 = (TextView) findViewById(R.id.nda_time_remaining_tv);
+            // tv3.setText(String.format("%.1f hrs", mLm.mNDATimeRemaining));
             Log.d(TAG, "mNDATimeRemaining = " + String.format("%.1f hrs", mLm.mNDATimeRemaining));
         } else {
             stopUpdating = false;
@@ -633,14 +661,34 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
         // Remote Database Information
         if (mLm != null) {
-            tv = (TextView) findViewById(R.id.authStatusTv);
+            tv = (TextView) findViewById(R.id.shared_data_title_tv);
             btn = (Button) findViewById(R.id.auth_button);
             if (mLm.mWac.isLoggedIn()) {
-                tv.setText(getString(R.string.logged_in_with_token));
-                btn.setText(getString(R.string.logout));
+                if (mUserId == null) {
+                    mLm.mWac.getUserProfile((JSONObject profileObj) -> {
+                        try {
+                            if (profileObj != null) {
+                                mUserId = profileObj.getString("id");
+                                TextView tv2 = (TextView) findViewById(R.id.shared_data_title_tv);
+                                if (tv2 != null)
+                                    tv2.setText(getString(R.string.remote_database) + ": " + getString(R.string.logged_in_as_user_id).replace("%s","") + " " + mUserId);
+                            }
+                        } catch (JSONException e) {
+                            Log.e(TAG, "Error getting UserID");
+                        }
+                    });
+                    if (tv != null)
+                        tv.setText(getString(R.string.remote_database) + ": " + getString(R.string.logged_in_with_token));
+                } else {
+                    if (tv != null)
+                        tv.setText(getString(R.string.remote_database) + ": " + getString(R.string.logged_in_as_user_id).replace("%s","") + " " + mUserId);
+                }
+                btn.setText(getString(R.string.logout) + "...");
             } else {
-                tv.setText(getString(R.string.not_authenticated));
-                btn.setText(getString(R.string.login));
+                mUserId = null;
+                if (tv != null)
+                    tv.setText(getString(R.string.remote_database) + ": " + getString(R.string.not_authenticated));
+                btn.setText(getString(R.string.login) + "...");
             }
         } else {
             stopUpdating = false;
@@ -655,38 +703,32 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
     }  //updateUi();
 
-    public void onRadioButtonClicked(View view) {
+    /**
+     * onTabChanged() - Handle tab selection for data view switching
+     * @param tabPosition The position of the selected tab (0=Remote, 1=Local, 2=Syslog)
+     */
+    public void onTabChanged(int tabPosition) {
         LinearLayout localDataLl = (LinearLayout) findViewById(R.id.local_data_ll);
         LinearLayout sharedDataLl = (LinearLayout) findViewById(R.id.shared_data_ll);
         LinearLayout syslogLl = (LinearLayout) findViewById(R.id.syslog_ll);
-        // Is the button now checked?
-        boolean checked = ((RadioButton) view).isChecked();
 
-        // Check which radio button was clicked
-        switch (view.getId()) {
-            case R.id.local_data_rb:
-                if (checked) {
-                    // Switch to the local data view
-                    localDataLl.setVisibility(View.VISIBLE);
-                    sharedDataLl.setVisibility(View.GONE);
-                    syslogLl.setVisibility(View.GONE);
-                }
+        Log.v(TAG, "onTabChanged() - Tab position: " + tabPosition);
+
+        switch (tabPosition) {
+            case 0: // Remote/Shared Data
+                localDataLl.setVisibility(View.GONE);
+                sharedDataLl.setVisibility(View.VISIBLE);
+                syslogLl.setVisibility(View.GONE);
                 break;
-            case R.id.shared_data_rb:
-                if (checked) {
-                    // Switch to the local data view
-                    localDataLl.setVisibility(View.GONE);
-                    sharedDataLl.setVisibility(View.VISIBLE);
-                    syslogLl.setVisibility(View.GONE);
-                }
+            case 1: // Local Data
+                localDataLl.setVisibility(View.VISIBLE);
+                sharedDataLl.setVisibility(View.GONE);
+                syslogLl.setVisibility(View.GONE);
                 break;
-            case R.id.syslog_rb:
-                if (checked) {
-                    // Switch to the local data view
-                    localDataLl.setVisibility(View.GONE);
-                    sharedDataLl.setVisibility(View.GONE);
-                    syslogLl.setVisibility(View.VISIBLE);
-                }
+            case 2: // System Logs
+                localDataLl.setVisibility(View.GONE);
+                sharedDataLl.setVisibility(View.GONE);
+                syslogLl.setVisibility(View.VISIBLE);
                 break;
         }
     }
@@ -895,6 +937,20 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
                     Log.v(TAG, "onRefreshBtn");
+                    // Clear the current adapters so updateUi will re-populate them with new data
+                    ListView lv = (ListView) findViewById(R.id.eventLogListView);
+                    lv.setAdapter(null);
+                    lv = (ListView) findViewById(R.id.remoteEventsLv);
+                    lv.setAdapter(null);
+
+                    // Show progress bar again
+                    ProgressBar pb = (ProgressBar) findViewById(R.id.remoteAccessPb);
+                    pb.setVisibility(View.VISIBLE);
+                    pb.setIndeterminate(true);
+
+                    // Re-enable the UI timer to poll for the new data
+                    startUiTimer(mUiTimerPeriodFast);
+
                     initialiseServiceConnection();
                 }
             };
@@ -1020,11 +1076,13 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
         @Override
         public void onFinish() {
-            //Log.v(TAG, "UiTimer - onFinish - Updating UI");
+            Log.v(TAG, "UiTimer - onFinish - Updating UI");
             updateUi();
-            // Restart this timer.
-            if (mUiTimer != null)
-                start();
+            // Restarting the timer here was causing the list to reset.
+            // It will now be stopped in updateUi() once data is loaded,
+            // or started manually by the refresh button.
+            // if (mUiTimer != null)
+            //    start();
         }
 
     }
