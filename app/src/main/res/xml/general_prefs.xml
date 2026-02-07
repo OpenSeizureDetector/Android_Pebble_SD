@@ -80,9 +80,7 @@
         />
     <Preference
         android:key="SelectBLEDevice"
-        android:title="@string/select_ble_device_title"
-        android:summary="@string/select_ble_device_desc"
-        android:widgetLayout="@layout/pref_select_ble_device_button"
+        android:widgetLayout="@layout/preference_widget_ble_button"
         />
 
     <CheckBoxPreference

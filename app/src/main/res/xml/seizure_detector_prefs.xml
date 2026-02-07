@@ -1,4 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?><!-- The ListPreference data is defined in pebble_datasource_values.xml -->
+<?xml version="1.0" encoding="utf-8"?><!-- Seizure Detection Algorithm Settings
+This screen shows all algorithm checkboxes and their detailed configuration options.
+When viewed from the Seizure Detector settings header, this occupies the full screen.
+-->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="@string/AlgorithmSelectionTitle">
         <CheckBoxPreference
@@ -44,11 +47,6 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/SeizureDetectorSettingsTitle">
-        <CheckBoxPreference
-            android:defaultValue="true"
-            android:key="OsdAlarmActive"
-            android:summary="@string/OsdAlarmEnabledSummary"
-            android:title="@string/OsdAlarmEnabledTitle" />
         <EditTextPreference
             android:defaultValue="5"
             android:key="WarnTime"
@@ -69,7 +67,6 @@
             android:key="AlarmRatioThresh"
             android:summary="@string/AlarmRatioThreshSummary"
             android:title="@string/AlarmRatioThreshTitle" />
-
         <EditTextPreference
             android:defaultValue="3"
             android:key="AlarmFreqMin"
@@ -80,7 +77,6 @@
             android:key="AlarmFreqMax"
             android:summary="@string/AlarmFreqMaxSummary"
             android:title="@string/AlarmFreqMaxTitle" />
-
         <EditTextPreference
             android:defaultValue="5"
             android:enabled="false"
@@ -90,11 +86,6 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Flap Alarm Settings">
-        <CheckBoxPreference
-            android:defaultValue="true"
-            android:key="FlapAlarmActive"
-            android:summary="Enable the experimental alarm to detect arm 'flapping' motion"
-            android:title="Enable Flap Alarm" />
         <EditTextPreference
             android:defaultValue="5000"
             android:key="FlapAlarmThresh"
@@ -105,7 +96,6 @@
             android:key="FlapAlarmRatioThresh"
             android:summary="Flap Alarm Ratio Threshold"
             android:title="Flap Alarm Ratio Threshold" />
-
         <EditTextPreference
             android:defaultValue="2"
             android:key="FlapAlarmFreqMin"
@@ -118,14 +108,7 @@
             android:title="@string/AlarmFreqMaxTitle" />
     </PreferenceCategory>
 
-
-
     <PreferenceCategory android:title="@string/ml_sd_settings_title">
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="CnnAlarmActive"
-            android:summary="@string/CnnAlarmEnabledSummary"
-            android:title="@string/CnnAlarmEnabledTitle" />
         <EditTextPreference
             android:defaultValue="5"
             android:key="CnnAlarmThreshold"
@@ -150,12 +133,8 @@
             android:defaultValue="86400"
             android:dialogTitle="@string/ml_model_update_check_title" />
     </PreferenceCategory>
+
     <PreferenceCategory android:title="@string/HeartRateAlarmSettingsTitle">
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="HRAlarmActive"
-            android:summary="@string/HRAlarmEnabledSummary"
-            android:title="@string/HRAlarmEnabledTitle" />
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="HrFrozenAlarm"
@@ -177,12 +156,8 @@
             android:summary="@string/HRThreshMaxSummary"
             android:title="@string/HRThreshMaxTitle" />
     </PreferenceCategory>
+
     <PreferenceCategory android:title="@string/HeartRateAdaptiveAlarmSettingsTitle">
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="HRAdaptiveAlarmActive"
-            android:summary="@string/HRAlarmEnabledSummary"
-            android:title="@string/HRAdaptiveAlarmEnabledTitle" />
         <EditTextPreference
             android:defaultValue="30"
             android:key="HRAdaptiveAlarmWindowSecs"
@@ -194,10 +169,74 @@
             android:summary="@string/HRAdaptiveThreshSummary"
             android:title="@string/HRAdaptiveThreshTitle" />
     </PreferenceCategory>
-    <PreferenceCategory android:title="@string/HeartRateAverageAlarmSettingsTitle">
 
+    <PreferenceCategory android:title="@string/HeartRateAverageAlarmSettingsTitle">
+        <EditTextPreference
+            android:defaultValue="40"
+            android:key="HRAverageAlarmThreshMin"
+            android:summary="@string/HRAverageThreshMinSummary"
+            android:title="@string/HRAverageThreshMinTitle" />
+        <EditTextPreference
+            android:defaultValue="120"
+            android:key="HRAverageAlarmThreshMax"
+            android:summary="@string/HRAverageThreshMaxSummary"
+            android:title="@string/HRAverageThreshMaxTitle" />
+        <EditTextPreference
+            android:defaultValue="120"
+            android:key="HRAverageAlarmWindowSecs"
+            android:summary="@string/HRAverageAlarmWindowSummary"
+            android:title="@string/HRAverageAlarmWindowTitle" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/O2SatSettingsTitle">
         <CheckBoxPreference
             android:defaultValue="false"
+            android:key="O2SatNullAsAlarm"
+            android:summary="@string/O2SatNullAlarmSummary"
+            android:title="@string/O2SatNullAlarmTitle" />
+        <EditTextPreference
+            android:defaultValue="80"
+            android:key="O2SatThreshMin"
+            android:summary="@string/O2SatThreshMinSummary"
+            android:title="@string/O2SatThreshMinTitle" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/fall_detect_title">
+        <EditTextPreference
+            android:defaultValue="1500"
+            android:key="FallThreshMin"
+            android:summary=""
+            android:title="@string/fall_thresh_min_title" />
+        <EditTextPreference
+            android:defaultValue="3500"
+            android:key="FallThreshMax"
+            android:summary=""
+            android:title="@string/fall_thresh_max_title" />
+        <EditTextPreference
+            android:defaultValue="1500"
+            android:key="FallWindow"
+            android:summary=""
+            android:title="@string/fall_window_title" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/FidgetSettingsTitle">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="FidgetDetectorEnabled"
+            android:summary="@string/FidgetDetectorEnabledSummary"
+            android:title="@string/FidgetDetectorEnabledTitle" />
+        <EditTextPreference
+            android:defaultValue="0.6"
+            android:key="FidgetDetectorThreshold"
+            android:summary="@string/FidgetDetectorThresholdSummary"
+            android:title="@string/FidgetDetectorThresholdTitle" />
+        <EditTextPreference
+            android:defaultValue="20"
+            android:key="FidgetDetectorPeriod"
+            android:summary="@string/FidgetDetectorPeriodSummary"
+            android:title="@string/FidgetDetectorPeriodTitle" />
+    </PreferenceCategory>
+</PreferenceScreen>
             android:key="HRAverageAlarmActive"
             android:summary="@string/HRAverageAlarmEnabledSummary"
             android:title="@string/HRAverageAlarmEnabledTitle" />

@@ -47,6 +47,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -73,6 +74,8 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     private Button mSelectBLEButton;
 
     private List<HeaderItem> mHeaders = new ArrayList<>();
+    private List<HeaderItem> mAllHeaders = new ArrayList<>();
+    private ArrayAdapter<String> mHeaderAdapter;
 
     private static class HeaderItem {
         String fragmentClass;
@@ -147,8 +150,8 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             String t = (h.titleRes != 0) ? getString(h.titleRes) : "";
             titles.add(t);
         }
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, titles);
-        lv.setAdapter(adapter);
+        mHeaderAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, titles);
+        lv.setAdapter(mHeaderAdapter);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -157,11 +160,29 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             }
         });
 
+        // Filter headers based on current datasource
+        updateHeadersForDatasource();
+
         // If the activity was started with an intent specifying a fragment, show it directly
         String fragmentToShow = getIntent().getStringExtra("fragment");
         if (fragmentToShow != null) {
             showPreferenceFragment(fragmentToShow);
         }
+
+        // Listen for fragment back stack changes to show/hide master list
+        getSupportFragmentManager().addOnBackStackChangedListener(() -> {
+            if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
+                // No fragments on back stack, show master list
+                ListView headerList = findViewById(R.id.pref_header_list);
+                FrameLayout detailContainer = findViewById(R.id.pref_fragment_container);
+                if (headerList != null) {
+                    headerList.setVisibility(View.VISIBLE);
+                }
+                if (detailContainer != null) {
+                    detailContainer.setVisibility(View.GONE);
+                }
+            }
+        });
     }
 
     private void loadHeadersFromXml() {
@@ -177,7 +198,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                         String fragment = xrp.getAttributeValue(ANDROID_NS, "fragment");
                         int titleRes = xrp.getAttributeResourceValue(ANDROID_NS, "title", 0);
                         int summaryRes = xrp.getAttributeResourceValue(ANDROID_NS, "summary", 0);
-                        mHeaders.add(new HeaderItem(fragment, titleRes, summaryRes));
+                        mAllHeaders.add(new HeaderItem(fragment, titleRes, summaryRes));
                     }
                 }
                 eventType = xrp.next();
@@ -192,6 +213,19 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         try {
             Class<?> cls = Class.forName(fragmentClassName);
             androidx.fragment.app.Fragment frag = (androidx.fragment.app.Fragment) cls.getDeclaredConstructor().newInstance();
+
+            // Hide the master list and show the detail container
+            ListView headerList = findViewById(R.id.pref_header_list);
+            FrameLayout detailContainer = findViewById(R.id.pref_fragment_container);
+
+            if (headerList != null) {
+                headerList.setVisibility(View.GONE);
+            }
+            if (detailContainer != null) {
+                detailContainer.setVisibility(View.VISIBLE);
+            }
+
+            // Show the fragment with back stack so back button returns to list
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.pref_fragment_container, frag)
@@ -199,6 +233,49 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                     .commit();
         } catch (Exception e) {
             Log.e(TAG, "showPreferenceFragment() - failed to instantiate fragment " + fragmentClassName + ": " + e.toString());
+        }
+    }
+
+    /**
+     * Updates the list of visible headers based on the current datasource setting.
+     * Only shows datasource-specific settings (Pebble, Network) when relevant.
+     */
+    private void updateHeadersForDatasource() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        String currentDatasource = sp.getString("DataSource", "Phone");
+
+        // Clear the filtered list
+        mHeaders.clear();
+
+        // Add headers that are always visible
+        for (HeaderItem h : mAllHeaders) {
+            String fragmentName = h.fragmentClass;
+
+            // Filter out datasource-specific headers if not relevant
+            if (fragmentName.contains("PebbleDatasourcePrefsFragment")) {
+                if ("Pebble".equals(currentDatasource)) {
+                    mHeaders.add(h);
+                }
+            } else if (fragmentName.contains("NetworkDatasourcePrefsFragment")) {
+                if ("Network".equals(currentDatasource)) {
+                    mHeaders.add(h);
+                }
+            } else {
+                // Always show non-datasource-specific headers
+                mHeaders.add(h);
+            }
+        }
+
+        // Update the adapter
+        if (mHeaderAdapter != null) {
+            ArrayList<String> titles = new ArrayList<>();
+            for (HeaderItem h : mHeaders) {
+                String t = (h.titleRes != 0) ? getString(h.titleRes) : "";
+                titles.add(t);
+            }
+            mHeaderAdapter.clear();
+            mHeaderAdapter.addAll(titles);
+            mHeaderAdapter.notifyDataSetChanged();
         }
     }
 
@@ -228,6 +305,9 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 mPrefChanged = true;
             }
         } else if (s.equals("DataSource"))  {
+            Log.i(TAG, "onSharedPreferenceChanged(): Data Source Changed");
+            // Update the headers list to show/hide datasource-specific settings
+            updateHeadersForDatasource();
             Log.i(TAG, "onSharedPreferenceChanged(): Data Source Changed - Restarting start-up activity to check permissions");
             mUtil.showToast("Restarting OpenSeizureDetector");
             mUtil.stopServer();
@@ -345,6 +425,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.seizure_detector_prefs, rootKey);
 
+            // Setup ML Model preference
             Preference modelPref = findPreference("MlModelSelector");
             if (modelPref != null) {
                 SharedPreferences spInit = PreferenceManager.getDefaultSharedPreferences(getContext());
@@ -383,6 +464,20 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                     return true;
                 });
             }
+
+            // Note: Dynamic visibility toggling is no longer needed since we're using
+            // full-screen detail views for each algorithm section
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            // No longer need preference change listener for visibility toggling
+        }
+
+        @Override
+        public void onPause() {
+            super.onPause();
         }
     }
 
