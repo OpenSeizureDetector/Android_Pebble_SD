@@ -84,6 +84,7 @@ public class StartupActivity extends AppCompatActivity {
     private String mPebbleAppPackageName = null;
     private boolean mBatteryOptDialogDisplayed = false;
     private AlertDialog mBatteryOptDialog;
+    private boolean mBleDeviceConfigDialogDisplayed = false;  // Flag to prevent re-creating the BLE device config dialog
     private boolean mLocationPermissions1Requested;
     private boolean mLocationPermissions2Requested;
     private boolean mSmsPermissionsRequested;
@@ -520,15 +521,17 @@ public class StartupActivity extends AppCompatActivity {
                         requestBTPermissions();
                         allOk = false;
                     } else if (mBleDeviceAddr.equals("")) {
-                        Log.i(TAG, "BLE data source selected, but no device address specified - starting BLEScanActivity");
-                        Intent i;
-                        i = new Intent(getApplicationContext(), BLEScanActivity.class);
-                        startActivity(i);
-                        finish();
+                        Log.i(TAG, "BLE data source selected, but no device address specified - showing dialog");
+                        // Only show the dialog once - check flag to prevent multiple re-creations
+                        if (!mBleDeviceConfigDialogDisplayed) {
+                            mBleDeviceConfigDialogDisplayed = true;
+                            showBleDeviceConfigDialog();
+                        }
                         return;
                     }
-                } else if (!mUtil.areActivityPermissionsOk()) {
-                    Log.i(TAG, "Activity permissions NOT OK");
+                } else if (mSdDataSourceName.equals("Phone") && !mUtil.areActivityPermissionsOk()) {
+                    // Activity permissions (ACTIVITY_RECOGNITION) only needed for Phone datasource
+                    Log.i(TAG, "Activity permissions NOT OK for Phone datasource");
                     tv.setText(getString(R.string.ActivityPermissionWarning));
                     tv.setBackgroundColor(getResources().getColor(R.color.status_warning_background));
                     tv.setTextColor(getResources().getColor(R.color.status_warning_text));
@@ -1126,6 +1129,62 @@ public class StartupActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Show a dialog when BLE/BLE2 datasource is selected but no device is configured.
+     * Gives user options to: scan now, configure later, or go to settings.
+     */
+    private void showBleDeviceConfigDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        // Create the dialog with title and message
+        AlertDialog dialog = builder.setTitle("BLE Device Not Selected")
+                .setMessage("You selected a BLE data source but haven't configured a device yet. What would you like to do?")
+                .setCancelable(false)
+                .setPositiveButton("Scan for Device", (dialogInterface, which) -> {
+                    Log.i(TAG, "User chose to scan for BLE device");
+                    Intent i = new Intent(getApplicationContext(), BLEScanActivity.class);
+                    startActivity(i);
+                })
+                .setNeutralButton("Configure Later", (dialogInterface, which) -> {
+                    Log.i(TAG, "User chose to configure later - continuing with app");
+                    dialogInterface.dismiss();
+                    // Continue with normal startup - the app will use the BLE datasource without a device
+                    // and may show warnings or reduced functionality
+                })
+                .setNegativeButton("Go to Settings", (dialogInterface, which) -> {
+                    Log.i(TAG, "User chose to go to settings to change datasource");
+                    Intent i = new Intent(this, PrefActivity.class);
+                    startActivity(i);
+                })
+                .create();
+
+        // Fix text color visibility - ensure title and message are readable (black text)
+        dialog.setOnShowListener(dialogInterface -> {
+            // Set title color to black (or dark color)
+            int titleId = getResources().getIdentifier("alertTitle", "id", "android");
+            if (titleId > 0) {
+                TextView titleView = dialog.findViewById(titleId);
+                if (titleView != null) {
+                    titleView.setTextColor(android.graphics.Color.BLACK);
+                }
+            }
+
+            // Set message color to black (or dark color)
+            int messageId = android.R.id.message;
+            TextView messageView = dialog.findViewById(messageId);
+            if (messageView != null) {
+                messageView.setTextColor(android.graphics.Color.BLACK);
+            }
+        });
+
+        // Reset the flag if the dialog is dismissed so it can be shown again if needed
+        dialog.setOnDismissListener(dialogInterface -> {
+            Log.i(TAG, "BLE device config dialog dismissed");
+            mBleDeviceConfigDialogDisplayed = false;
+        });
+
+        dialog.show();
+    }
 
 
     @Override

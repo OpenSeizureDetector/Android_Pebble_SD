@@ -6,8 +6,11 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:onClick="onClick"
-    android:padding="12dp"
+    android:padding="8dp"
     android:layout_margin="0dp"
-    android:minHeight="40dp"
+    android:minHeight="0dp"
+    android:textSize="14sp"
     />
+
+
 

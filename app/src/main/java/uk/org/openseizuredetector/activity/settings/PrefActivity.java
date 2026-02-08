@@ -396,10 +396,47 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     }
 
     /* Preference fragments converted to androidx.preference.PreferenceFragmentCompat */
-    public static class GeneralPrefsFragment extends PreferenceFragmentCompat {
+    public static class GeneralPrefsFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.general_prefs, rootKey);
+            updateBleButtonVisibility();
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
+            sp.registerOnSharedPreferenceChangeListener(this);
+        }
+
+        @Override
+        public void onPause() {
+            super.onPause();
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
+            sp.unregisterOnSharedPreferenceChangeListener(this);
+        }
+
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            if ("DataSource".equals(key)) {
+                updateBleButtonVisibility();
+            }
+        }
+
+        /**
+         * Show/hide the BLE device selection button based on datasource selection
+         */
+        private void updateBleButtonVisibility() {
+            Preference bleButton = findPreference("SelectBLEDevice");
+            if (bleButton != null) {
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
+                String datasource = sp.getString("DataSource", "Phone");
+
+                // Only show BLE button if BLE or BLE2 datasource is selected
+                boolean isBleDataSource = datasource.equals("BLE") || datasource.equals("BLE2");
+                bleButton.setVisible(isBleDataSource);
+            }
         }
     }
 

@@ -8,61 +8,12 @@
         android:entryValues="@array/datasource_list_values"
         android:defaultValue="Phone"
         android:dialogTitle="@string/select_datasource_title" />
-    <!--
-    <CheckBoxPreference
-        android:defaultValue="true"
-        android:key="LogAlarms"
-        android:summary="@string/log_alarms_summary"
-        android:title="@string/log_alarms_title" />
-    <CheckBoxPreference
-        android:defaultValue="true"
-        android:key="LogData"
-        android:summary="@string/log_data_summary"
-        android:title="@string/log_data_title" />
-    <CheckBoxPreference
-        android:defaultValue="false"
-        android:key="LogDataRemote"
-        android:summary="@string/log_data_remote_summary"
-        android:title="@string/log_data_remote_title" />
-    <CheckBoxPreference
-        android:defaultValue="false"
-        android:key="LogDataRemoteMobile"
-        android:summary="@string/log_data_remote_mobile_summary"
-        android:title="@string/log_data_remote_mobile_title" />
-    <EditTextPreference
-        android:defaultValue="user_name"
-        android:key="OSDUname"
-        android:title="@string/remote_uname_title"
-        android:summary="@string/remote_uname_summary" />
-    <EditTextPreference
-        android:defaultValue="password"
-        android:key="OSDPasswd"
-        android:summary="@string/remote_passwd_summary"
-        android:title="@string/remote_passwd_title" />
-    <EditTextPreference
-        android:defaultValue="0"
-        android:key="OSDWearerId"
-        android:summary="@string/wearer_id_summary"
-        android:title="@string/wearer_id_title" />
 
-    <EditTextPreference
-        android:defaultValue="http://openseizuredetector.org.uk/webApi/"
-        android:key="OSDUrl"
-        android:summary="@string/remote_url_summary"
-        android:title="@string/remote_url_title" />
+    <Preference
+        android:key="SelectBLEDevice"
+        android:widgetLayout="@layout/preference_widget_ble_button"
+        />
 
-
-    <CheckBoxPreference
-        android:defaultValue="false"
-        android:key="PreventSleep"
-        android:summary="@string/prevent_sleep_summary"
-        android:title="@string/prevent_sleep_title" />
-        -->
-    <!--<EditTextPreference
-        android:defaultValue="1000"
-        android:key="UpdatePeriod"
-        android:summary="@string/data_update_period_summary"
-        android:title="@string/data_update_period_title" />-->
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="AutoStart"
@@ -78,10 +29,6 @@
         android:title="@string/prevent_bat_opt_title"
         android:enabled="true"
         />
-    <Preference
-        android:key="SelectBLEDevice"
-        android:widgetLayout="@layout/preference_widget_ble_button"
-        />
 
     <CheckBoxPreference
         android:defaultValue="false"
@@ -95,15 +42,6 @@
         android:key="AppVersionName"
         android:summary="@string/app_version_summary"
         android:title="@string/app_version_title" />
-<!--
-    <CheckBoxPreference
-        android:defaultValue="false"
-        android:key="UseIpCamera"
-        android:summary="Use IP Camera to View Images"
-        android:title="Enable IP Camera"
-        android:enabled="false"
-        />
-        -->
 
 
 </PreferenceScreen>
