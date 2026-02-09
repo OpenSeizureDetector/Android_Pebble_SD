@@ -110,7 +110,7 @@ When viewed from the Seizure Detector settings header, this occupies the full sc
 
     <PreferenceCategory android:title="@string/ml_sd_settings_title">
         <EditTextPreference
-            android:defaultValue="5"
+            android:defaultValue="2"
             android:key="CnnAlarmThreshold"
             android:summary="@string/ml_sd_threshold_summary"
             android:title="@string/ml_sd_threshold_title" />

@@ -11,9 +11,8 @@ import android.util.Log;
 
 import java.util.ArrayList;
 
-public class SdAlgHr {
+public class SdAlgHr extends SdAlgBase {
     private final static String TAG = "SdAlgHr";
-    private Context mContext;
     private boolean mSimpleHrAlarmActive;
     private double mSimpleHrAlarmThreshMin;
     private double mSimpleHrAlarmThreshMax;
@@ -33,8 +32,8 @@ public class SdAlgHr {
     private CircBuf mHrHist;
 
     public SdAlgHr(Context context) {
+        super(context);
         Log.i(TAG, "SdAlgHr Constructor");
-        mContext = context;
         updatePrefs();
         mAdaptiveHrBuff = new CircBuf(mAdaptiveHrAlarmWindowDp, -1.0);
         mAverageHrBuff = new CircBuf(mAverageHrAlarmWindowDp, -1.0);
@@ -42,26 +41,82 @@ public class SdAlgHr {
         mHrHist = new CircBuf((int) (10 * 60 / 5), -1);
     }
 
+    @Override
     public void close() {
         Log.d(TAG, "close()");
+        super.close();
+    }
+
+    @Override
+    public boolean isActive() {
+        return mSimpleHrAlarmActive || mAdaptiveHrAlarmActive || mAverageHrAlarmActive;
+    }
+
+    @Override
+    public String getAlarmCause() {
+        // This will be determined in processSdData
+        return "HR";
+    }
+
+    @Override
+    public int processSdData(SdData sdData) {
+        if (!isActive()) {
+            return -1;
+        }
+
+        Log.v(TAG, "processSdData()");
+        ArrayList<Boolean> checkResults;
+        checkResults = checkHr(sdData.mHR);
+
+        // Populate mSdData so that the heart rate data is logged and is accessible to user interface components.
+        sdData.mAdaptiveHrAverage = getAdaptiveHrAverage();
+        sdData.mAverageHrAverage = getAverageHrAverage();
+        sdData.mAdaptiveHrBuf = getAdaptiveHrBuff();
+        sdData.mAverageHrBuf = getAverageHrBuff();
+
+        /* Check for heart rate fault condition */
+        if (mSimpleHrAlarmActive) {
+            if (sdData.mHR < 0) {
+                if (sdData.mHRNullAsAlarm) {
+                    Log.i(TAG, "Heart Rate Null - Alarming");
+                    sdData.mHRFaultStanding = false;
+                    sdData.mHRAlarmStanding = true;
+                    sdData.mAdaptiveHrAlarmStanding = false;
+                    sdData.mAverageHrAlarmStanding = false;
+                    return 2;  // ALARM
+                } else {
+                    Log.i(TAG, "Heart Rate Fault (HR<0)");
+                    sdData.mHRFaultStanding = true;
+                    sdData.mHRAlarmStanding = false;
+                    sdData.mAdaptiveHrAlarmStanding = false;
+                    sdData.mAverageHrAlarmStanding = false;
+                    return 0;  // Fault but not alarming
+                }
+            } else {
+                sdData.mHRFaultStanding = false;
+                sdData.mHRAlarmStanding = checkResults.get(0);
+                sdData.mAdaptiveHrAlarmStanding = checkResults.get(1);
+                sdData.mAverageHrAlarmStanding = checkResults.get(2);
+
+                // Show an ALARM state if any of the HR alarms is standing.
+                if (sdData.mHRAlarmStanding | sdData.mAdaptiveHrAlarmStanding | sdData.mAverageHrAlarmStanding) {
+                    return 2;  // ALARM
+                }
+            }
+        } else {
+            sdData.mHRFaultStanding = false;
+            sdData.mHRAlarmStanding = false;
+            sdData.mAdaptiveHrAlarmStanding = false;
+            sdData.mAverageHrAlarmStanding = false;
+        }
+
+        return 0;  // OK
     }
 
     public float getAlarmState(SdData sdData) {
         return (0);
     }
 
-    private double readDoublePref(SharedPreferences SP, String prefName, String defVal) {
-        String prefValStr;
-        double retVal = -1;
-        try {
-            prefValStr = SP.getString(prefName, defVal);
-            retVal = Double.parseDouble(prefValStr);
-        } catch (Exception ex) {
-            Log.v(TAG, "readDoublePref() - Problem with preference!");
-            //mUtil.showToast(TAG+":"+mContext.getString(R.string.problem_parsing_preferences));
-        }
-        return retVal;
-    }
 
     private void updatePrefs() {
         /**
@@ -70,29 +125,27 @@ public class SdAlgHr {
          */
         Log.i(TAG, "updatePrefs()");
 
-        SharedPreferences SP = PreferenceManager
-                .getDefaultSharedPreferences(mContext);
-        mSimpleHrAlarmActive = SP.getBoolean("HRAlarmActive", false);
-        mSimpleHrAlarmThreshMin = readDoublePref(SP, "HRThreshMin", "20");
-        mSimpleHrAlarmThreshMax = readDoublePref(SP, "HRThreshMax", "150");
+        mSimpleHrAlarmActive = mSP.getBoolean("HRAlarmActive", false);
+        mSimpleHrAlarmThreshMin = readDoublePref("HRThreshMin", "20");
+        mSimpleHrAlarmThreshMax = readDoublePref("HRThreshMax", "150");
         Log.d(TAG, "updatePrefs(): mSimpleHrAlarmActive=" + mSimpleHrAlarmActive);
         Log.d(TAG, "updatePrefs(): mSimpleHrAlarmThreshMin=" + mSimpleHrAlarmThreshMin);
         Log.d(TAG, "updatePrefs(): mSimpleHrAlarmThreshMax=" + mSimpleHrAlarmThreshMax);
 
-        mAdaptiveHrAlarmActive = SP.getBoolean("HRAdaptiveAlarmActive", false);
-        mAdaptiveHrAlarmWindowSecs = readDoublePref(SP, "HRAdaptiveAlarmWindowSecs", "30");
+        mAdaptiveHrAlarmActive = mSP.getBoolean("HRAdaptiveAlarmActive", false);
+        mAdaptiveHrAlarmWindowSecs = readDoublePref("HRAdaptiveAlarmWindowSecs", "30");
         mAdaptiveHrAlarmWindowDp = (int) Math.round(mAdaptiveHrAlarmWindowSecs / 5.0);
-        mAdaptiveHrAlarmThresh = readDoublePref(SP, "HRAdaptiveAlarmThresh", "20");
+        mAdaptiveHrAlarmThresh = readDoublePref("HRAdaptiveAlarmThresh", "20");
         Log.d(TAG, "updatePrefs(): mAdaptiveHrAlarmActive=" + mAdaptiveHrAlarmActive);
         Log.d(TAG, "updatePrefs(): mAdaptiveHrWindowSecs=" + mAdaptiveHrAlarmWindowSecs);
         Log.d(TAG, "updatePrefs(): mAdaptiveHrWindowDp=" + mAdaptiveHrAlarmWindowDp);
         Log.d(TAG, "updatePrefs(): mAdaptiveHrAlarmThresh=" + mAdaptiveHrAlarmThresh);
 
-        mAverageHrAlarmActive = SP.getBoolean("HRAverageAlarmActive", false);
-        mAverageHrAlarmWindowSecs = readDoublePref(SP, "HRAverageAlarmWindowSecs", "120");
+        mAverageHrAlarmActive = mSP.getBoolean("HRAverageAlarmActive", false);
+        mAverageHrAlarmWindowSecs = readDoublePref("HRAverageAlarmWindowSecs", "120");
         mAverageHrAlarmWindowDp = (int) Math.round(mAverageHrAlarmWindowSecs / 5.0);
-        mAverageHrAlarmThreshMin = readDoublePref(SP, "HRAverageAlarmThreshMin", "40");
-        mAverageHrAlarmThreshMax = readDoublePref(SP, "HRAverageAlarmThreshMax", "120");
+        mAverageHrAlarmThreshMin = readDoublePref("HRAverageAlarmThreshMin", "40");
+        mAverageHrAlarmThreshMax = readDoublePref("HRAverageAlarmThreshMax", "120");
         Log.d(TAG, "updatePrefs(): mAverageHrAlarmActive=" + mAverageHrAlarmActive);
         Log.d(TAG, "updatePrefs(): mAverageHrAlarmWindowSecs=" + mAverageHrAlarmWindowSecs);
         Log.d(TAG, "updatePrefs(): mAverageHrAlarmWindowDp=" + mAverageHrAlarmWindowDp);

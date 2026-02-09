@@ -54,6 +54,7 @@ public class SdData implements Parcelable {
     public short mDataUpdatePeriod;
     public short mMutePeriod;
     public short mManAlarmPeriod;
+    public int mMute = 0;  // !=0 means muted by keypress on watch.
     public boolean mFallActive;
     public short mFallThreshMin;
     public short mFallThreshMax;

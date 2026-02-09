@@ -19,12 +19,10 @@ import org.pytorch.executorch.EValue;
 import org.pytorch.executorch.Module;
 import org.pytorch.executorch.Tensor;
 
-public class SdAlgNn {
+public class SdAlgNn extends SdAlgBase {
     private final static String TAG = "SdAlgNn";
     private InterpreterApi interpreter;
-    private Context mContext;
     private MlModelManager mMm;
-    private Handler mHandler;
 
     private double mSdThresh;  // Acceleration Standard Deviation Threshold required to activate analysis (%)
     private int mInputFormat; // ID of input format required for model (populated from SharedPreferences)
@@ -63,22 +61,19 @@ public class SdAlgNn {
 
 
     public SdAlgNn(Context context) {
+        super(context);
         Log.d(TAG, "SdAlgNn Constructor");
-        mContext = context;
         mMm = new MlModelManager(mContext);
-        mHandler = new Handler(Looper.getMainLooper());
 
-        SharedPreferences SP = PreferenceManager
-                .getDefaultSharedPreferences(mContext);
         try {
-            String threshStr = SP.getString("CnnAlarmThreshold", "5");
+            String threshStr = mSP.getString("CnnAlarmThreshold", "2");
             mSdThresh = Double.parseDouble(threshStr);
             Log.v(TAG, "SdAlgNn Constructor mSdThresh = " + mSdThresh);
-            String inputFmtStr = SP.getString("CnnInputFormatStr", null);
-            int legacyInputFmt = SP.getInt("CnnInputFormat", 1);
+            String inputFmtStr = mSP.getString("CnnInputFormatStr", null);
+            int legacyInputFmt = mSP.getInt("CnnInputFormat", 1);
             mInputFormat = mapInputFormat(inputFmtStr, legacyInputFmt);
-            mInputSize = SP.getInt("CnnInputSize", 125);
-            mFramework = SP.getString("CnnFramework", "tflite");
+            mInputSize = mSP.getInt("CnnInputSize", 125);
+            mFramework = mSP.getString("CnnFramework", "tflite");
             Log.v(TAG, "SdAlgNn Constructor inputFormat=" + mInputFormat + ", inputSize=" + mInputSize + ", framework=" + mFramework);
         } catch (Exception ex) {
             Log.v(TAG, "SdAlgNn Constructor - problem parsing preferences. " + ex.toString());
@@ -87,7 +82,7 @@ public class SdAlgNn {
 
         // Load model depending on selected framework
         if ("pytorch".equalsIgnoreCase(mFramework) || "executorch".equalsIgnoreCase(mFramework)) {
-            mMm.loadModel(SP, result -> {
+            mMm.loadModel(mSP, result -> {
                 if (result == null) {
                     Log.e(TAG, "Failed to load any model - result is null");
                     showToast("Problem Loading Model", Toast.LENGTH_SHORT);
@@ -143,7 +138,7 @@ public class SdAlgNn {
             initializeTask.addOnSuccessListener(a -> {
                         Log.d(TAG, "TfLite initialized, loading model...");
                         // Use MlModelManager to load the model (handles both downloaded and bundled models)
-                        mMm.loadModel(SP, result -> {
+                        mMm.loadModel(mSP, result -> {
                             if (result == null) {
                                 Log.e(TAG, "Failed to load any model - result is null");
                                 return;
@@ -173,20 +168,40 @@ public class SdAlgNn {
         Log.d(TAG, "constructor finished - Note, NOT using hardware acceleration yet!!!!");
     }
 
-    /**
-     * Helper method to show Toast on the main thread safely
-     */
-    private void showToast(String message, int duration) {
-        mHandler.post(() -> Toast.makeText(mContext, message, duration).show());
+    @Override
+    public boolean isActive() {
+        return mSP.getBoolean("CnnAlgActive", false);
+    }
+
+    @Override
+    public String getAlarmCause() {
+        return "CnnAlg";
+    }
+
+    @Override
+    public int processSdData(SdData sdData) {
+        if (!isActive()) {
+            return -1;
+        }
+
+        try {
+            float pSeizure = getPseizure(sdData);
+            Log.d(TAG, "processSdData() - nnResult=" + pSeizure);
+            sdData.mPseizure = pSeizure;
+
+            if (pSeizure > 0.5) {
+                return 2;  // ALARM
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "processSdData() - Error running Analysis - " + e.getMessage());
+        }
+
+        return 0;  // OK
     }
 
     public void close() {
         Log.d(TAG, "close()");
-
-        // Clear all pending handler callbacks to prevent lingering threads
-        if (mHandler != null) {
-            mHandler.removeCallbacksAndMessages(null);
-        }
+        super.close();
 
         if (interpreter != null) {
             interpreter.close();
@@ -284,14 +299,6 @@ public class SdAlgNn {
     public float getPseizure(SdData sdData) {
         int i;
 
-        // First check that we have enough movement to analyse by comparing the acceleration standard deviation to a threshold.
-        double stdDev;
-        stdDev = calcRawDataStd(sdData);
-        if (stdDev < mSdThresh) {
-            Log.d(TAG, "getPseizure - acceleration stdev below movement threshold: std=" + stdDev + ", thresh=" + mSdThresh);
-            return (0);
-        }
-
         float pSeizure;
         switch (mInputFormat) {
             case 1:
@@ -302,6 +309,13 @@ public class SdAlgNn {
                 pSeizure = 0;
         }
 
+        // Now check that we have enough movement to justify this being a seizure by comparing the acceleration standard deviation to a threshold.
+        double stdDev;
+        stdDev = calcRawDataStd(sdData);
+        if (stdDev < mSdThresh) {
+            Log.d(TAG, "getPseizure - acceleration stdev below movement threshold: std=" + stdDev + ", thresh=" + mSdThresh);
+            return (0);
+        }
         return (pSeizure);
     }
 

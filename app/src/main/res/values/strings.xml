@@ -167,7 +167,7 @@
     <string name="menu_stop">STOP</string>
     <string name="menu_scan">SCAN</string>
     <string name="unknown_device">Unknown Device</string>
-    <string name="select_ble_device_title">Select BLE Device (for Buetooth Data Source Only)</string>
+    <string name="select_ble_device_title">Select BLE Device</string>
     <string name="select_ble_device_desc">Select Bluetooth Low Energy (BLE) Device to provide seizure (acceleration and heart rate) data) when using the Bluetooth Device data source.</string>
     <string name="basic_settings_title">Basic</string>
     <string name="basic_settings_summary">Basic Settings</string>

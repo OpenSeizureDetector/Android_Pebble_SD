@@ -768,6 +768,9 @@ public class SdServer extends Service implements SdDataReceiver {
                                 ", HR=" + sdData.mHR +
                                 ", thread=" + Thread.currentThread().getName());
 
+        // Apply mute check (from either watch button or phone UI button)
+        muteCheck(sdData);
+
         if (sdData.alarmState == 0) {
             if ((!mLatchAlarms) ||
                     (mLatchAlarms &&
@@ -1655,6 +1658,41 @@ public class SdServer extends Service implements SdDataReceiver {
         intent.setAction("uk.org.openseizuredetector.dialler.ALARM");
         intent.putExtra("NUMBERS", mSMSNumbers);
         sendBroadcast(intent);
+    }
+
+    /**
+     * muteCheck() - Check if mute is active from either source:
+     * 1. Watch button: mMute value received from watch
+     * 2. Phone UI button: mCancelAudible flag set by user clicking mute button
+     *
+     * If muted, sets alarmState to 6 (MUTE state)
+     */
+    public void muteCheck(SdData sdData) {
+        if (sdData == null) return;
+
+        // Check watch button mute (from watch JSON data)
+        if (sdData.mMute != 0) {
+            Log.v(TAG, "muteCheck() - Mute active from watch button");
+            sdData.alarmState = 6;  // MUTE state
+            return;
+        }
+
+        // Check phone UI button mute (from mCancelAudible)
+        if (mCancelAudible) {
+            Log.v(TAG, "muteCheck() - Mute active from phone UI button");
+            sdData.alarmState = 6;  // MUTE state
+            return;
+        }
+    }
+
+    /**
+     * muteAlarm() - Public method for UI to call when user clicks mute button on phone
+     * Sets mCancelAudible flag to activate mute
+     */
+    public void muteAlarm() {
+        Log.v(TAG, "muteAlarm() - User clicked mute on phone UI");
+        mCancelAudible = true;
+        // The mute will be applied on next data reception via muteCheck()
     }
 
 

@@ -1,6 +1,6 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
-    V4.4.0 - Tidied up build settings (into gradle.properties)
+    V5.0.0A - Tidied up build settings (into gradle.properties)
             - Added MlModelManager to download ML models from web service.
             - Added support for pytorch models (executorch) (As well as TFLite)
             - Added initial support for AndroidWear from Dylan Griffiths (not tested, but included to make sure it doesn't break anything else)
@@ -12,6 +12,8 @@
             - Improved UI consistency with unified Material Design color scheme
             - Improved settings experience - system now only restarts when exiting settings screen, not on every change
             - CRITICAL FIX: Fixed server lifecycle bug that caused multiple server instances and FAULT/OK oscillation after changing settings
+            - Added onboarding setup wizard that covers PineTime, Garmin or Network data source, and OSD, ML or HR algorithms.
+            - Created a separate SeizureDetector class rather than having the seizure detection analysis in SdDataSource
     V4.3.1 - Fixed corrupted user interface issues on Android 15 and Android 16.
     V4.3.0 - 2025-07-16
              - Added support for Android 15 (API 35) to allow publishing on Play Store.
@@ -235,5 +237,3 @@
 	- Added ability to latch alarms so they have to be actively accepted to silence the alarm, rather than it re-setting when the movement stops.
 	- Fixed problem with the system being difficult to shut down if as multiple instances of main screen could be active at once.
 
-
-	
