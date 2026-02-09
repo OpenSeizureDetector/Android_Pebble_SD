@@ -70,11 +70,6 @@ public class SdAlgOsd extends SdAlgBase {
     }
 
     @Override
-    public boolean isActive() {
-        return mSP.getBoolean("OsdAlgActive", true);
-    }
-
-    @Override
     public String getAlarmCause() {
         return "OsdAlg";
     }
@@ -82,9 +77,7 @@ public class SdAlgOsd extends SdAlgBase {
     @Override
     public int processSdData(SdData sdData) {
         Log.d(TAG, "processSdData()");
-        if (!isActive()) {
-            return -1;
-        }
+        // ...existing code...
 
         int nMin = 0;
         int nMax = 0;

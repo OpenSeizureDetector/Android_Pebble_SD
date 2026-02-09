@@ -48,11 +48,6 @@ public class SdAlgHr extends SdAlgBase {
     }
 
     @Override
-    public boolean isActive() {
-        return mSimpleHrAlarmActive || mAdaptiveHrAlarmActive || mAverageHrAlarmActive;
-    }
-
-    @Override
     public String getAlarmCause() {
         // This will be determined in processSdData
         return "HR";
@@ -60,9 +55,7 @@ public class SdAlgHr extends SdAlgBase {
 
     @Override
     public int processSdData(SdData sdData) {
-        if (!isActive()) {
-            return -1;
-        }
+        // ...existing code...
 
         Log.v(TAG, "processSdData()");
         ArrayList<Boolean> checkResults;

@@ -79,6 +79,7 @@ import java.util.Timer;
 
 import uk.org.openseizuredetector.activity.logging.LogManager;
 import uk.org.openseizuredetector.alg.MlModelManager;
+import uk.org.openseizuredetector.alg.SeizureDetector;
 import uk.org.openseizuredetector.datasource.SdDataReceiver;
 import uk.org.openseizuredetector.datasource.SdDataSource;
 import uk.org.openseizuredetector.datasource.SdDataSourceAw;
@@ -154,6 +155,7 @@ public class SdServer extends Service implements SdDataReceiver {
     public SdData mSdData = null;
     public uk.org.openseizuredetector.data.SdDataHistory mSdDataHistory = null;  // Persistent history buffers
     public String mSdDataSourceName = "undefined";  // The name of the data source specified in the preferences.
+    private SeizureDetector mSeizureDetector = null;  // Coordinator for all seizure detection algorithms
     private boolean mLatchAlarms = false;
     private int mLatchAlarmPeriod = 0;
     private LatchAlarmTimer mLatchAlarmTimer = null;
@@ -245,8 +247,14 @@ public class SdServer extends Service implements SdDataReceiver {
         mUtil = new OsdUtil(getApplicationContext(), mHandler);
         mUtil.writeToSysLogFile("SdServer.onCreate()");
 
-        // Set our custom uncaught exception handler to report issues.
-        // UCEHandler is installed in Application class (OsdApplication) to ensure a single install for the whole app.
+        // Initialize SeizureDetector for coordinating all seizure detection algorithms
+        if (mSeizureDetector == null) {
+            mSeizureDetector = new SeizureDetector(getApplicationContext());
+            Log.i(TAG, "onCreate() - SeizureDetector initialized");
+            mUtil.writeToSysLogFile("SdServer.onCreate() - SeizureDetector initialized");
+        }
+
+        // ...existing code...
 
 
         // Create a wake lock, but don't use it until the service is started.
@@ -530,6 +538,13 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.writeToSysLogFile("SdServer.onDestroy() - mSdDataSource is null - why???");
         }
 
+        // Close the SeizureDetector
+        if (mSeizureDetector != null) {
+            Log.d(TAG, "onDestroy(): closing SeizureDetector");
+            mSeizureDetector.close();
+            mSeizureDetector = null;
+        }
+
         // Stop the Cancel Audible timer
         if (mCancelAudibleTimer != null) {
             Log.d(TAG, "onDestroy(): cancelling Cancel_Audible timer");
@@ -767,6 +782,17 @@ public class SdServer extends Service implements SdDataReceiver {
         mUtil.writeToSysLogFile("DATA_RX: alarmState=" + sdData.alarmState +
                                 ", HR=" + sdData.mHR +
                                 ", thread=" + Thread.currentThread().getName());
+
+        // Process data through SeizureDetector to run all seizure detection algorithms
+        if (mSeizureDetector != null) {
+            int alarmState = mSeizureDetector.processData(sdData);
+            sdData.alarmState = alarmState;
+            Log.v(TAG, "onSdDataReceived() - SeizureDetector returned alarmState=" + alarmState);
+            mUtil.writeToSysLogFile("SeizureDetector: alarmState=" + alarmState);
+        } else {
+            Log.e(TAG, "onSdDataReceived() - mSeizureDetector is null!");
+            mUtil.writeToSysLogFile("ERROR: SeizureDetector is null in onSdDataReceived()");
+        }
 
         // Apply mute check (from either watch button or phone UI button)
         muteCheck(sdData);

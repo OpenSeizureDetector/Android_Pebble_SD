@@ -859,6 +859,21 @@ public abstract class SdDataSource {
             Log.v(TAG, "updatePrefs() FidgetThreshold = " + mFidgetThreshold);
             mUtil.writeToSysLogFile("updatePrefs() FidgetThreshold = " + mFidgetThreshold);
 
+            // Load algorithm active flags into SdData for logging/UI (using correct keys from seizure_detector_prefs.xml)
+            mSdData.mOsdAlarmActive = SP.getBoolean("OsdAlarmActive", true);
+            mSdData.mFlapAlarmActive = SP.getBoolean("FlapAlarmActive", false);
+            mSdData.mCnnAlarmActive = SP.getBoolean("CnnAlarmActive", false);
+            mSdData.mHRAlarmActive = SP.getBoolean("HRAlarmActive", false);
+            mSdData.mO2SatAlarmActive = SP.getBoolean("O2SatAlarmActive", false);
+            mSdData.mFallActive = SP.getBoolean("FallActive", false);
+
+            Log.v(TAG, "updatePrefs() - OsdAlarmActive=" + mSdData.mOsdAlarmActive);
+            Log.v(TAG, "updatePrefs() - FlapAlarmActive=" + mSdData.mFlapAlarmActive);
+            Log.v(TAG, "updatePrefs() - CnnAlarmActive=" + mSdData.mCnnAlarmActive);
+            Log.v(TAG, "updatePrefs() - HRAlarmActive=" + mSdData.mHRAlarmActive);
+            Log.v(TAG, "updatePrefs() - O2SatAlarmActive=" + mSdData.mO2SatAlarmActive);
+            Log.v(TAG, "updatePrefs() - FallActive=" + mSdData.mFallActive);
+
             /* REMOVED: Algorithm-specific preference loading - algorithms load their own preferences now
              * This includes: mDebug, mDisplaySpectrum, mPebbleSdMode, mSampleFreq, mSamplePeriod,
              * mAlarmFreqMin, mAlarmFreqMax, mWarnTime, mAlarmTime, mAlarmThresh, mAlarmRatioThresh,

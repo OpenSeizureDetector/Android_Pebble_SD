@@ -42,20 +42,13 @@ public class SdAlgFall extends SdAlgBase {
     }
 
     @Override
-    public boolean isActive() {
-        return mSP.getBoolean("FallActive", false);
-    }
-
-    @Override
     public String getAlarmCause() {
         return "FALL";
     }
 
     @Override
     public int processSdData(SdData sdData) {
-        if (!isActive()) {
-            return -1;
-        }
+        // ...existing code...
 
         int i, j;
         double minAcc, maxAcc;

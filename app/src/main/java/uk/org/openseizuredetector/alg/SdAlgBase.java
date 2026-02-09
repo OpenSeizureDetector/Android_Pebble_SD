@@ -36,14 +36,8 @@ public abstract class SdAlgBase {
     public abstract int processSdData(SdData sdData);
 
     /**
-     * Check if this algorithm is currently active
-     * @return true if algorithm should be used, false otherwise
-     */
-    public abstract boolean isActive();
-
-    /**
      * Get a string describing the cause if this algorithm is in alarm state
-     * @return alarm cause string (e.g., "OsdAlg", "HR", "FALL") or empty string
+     * @param return alarm cause string (e.g., "OsdAlg", "HR", "FALL") or empty string
      */
     public abstract String getAlarmCause();
 

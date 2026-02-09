@@ -21,12 +21,19 @@ public class SeizureDetector {
     private Context mContext;
     private SharedPreferences mSP;
 
-    // Algorithm instances
+    // Algorithm instances - only created if algorithm is active
     private SdAlgOsd mSdAlgOsd;
     private SdAlgFlap mSdAlgFlap;
     private SdAlgFall mSdAlgFall;
     private SdAlgNn mSdAlgNn;
     private SdAlgHr mSdAlgHr;
+
+    // Track which algorithms are active
+    private boolean mOsdAlarmActive;
+    private boolean mFlapAlarmActive;
+    private boolean mFallActive;
+    private boolean mCnnAlarmActive;
+    private boolean mHRAlarmActive;
 
     // State machine for WARNING/ALARM transitions
     private int mAlarmCount = 0;  // Time in alarm state (seconds)
@@ -35,44 +42,86 @@ public class SeizureDetector {
     private short mSamplePeriod;
 
     public SeizureDetector(Context context) {
-        Log.d(TAG, "SeizureDetector Constructor");
+        Log.i(TAG, "SeizureDetector Constructor");
         mContext = context;
         mSP = PreferenceManager.getDefaultSharedPreferences(mContext);
 
-        // Load timing parameters
+        // Load timing parameters and algorithm active flags
         updatePrefs();
 
-        // Instantiate all algorithm instances
-        mSdAlgOsd = new SdAlgOsd(mContext);
-        mSdAlgFlap = new SdAlgFlap(mContext);
-        mSdAlgFall = new SdAlgFall(mContext);
-        mSdAlgNn = new SdAlgNn(mContext);
-        mSdAlgHr = new SdAlgHr(mContext);
+        // Instantiate only the algorithms that are active
+        if (mOsdAlarmActive) {
+            mSdAlgOsd = new SdAlgOsd(mContext);
+            Log.i(TAG, "SeizureDetector - SdAlgOsd initialized (ACTIVE)");
+        }
 
-        Log.i(TAG, "SeizureDetector initialized with all algorithms");
+        if (mFlapAlarmActive) {
+            mSdAlgFlap = new SdAlgFlap(mContext);
+            Log.i(TAG, "SeizureDetector - SdAlgFlap initialized (ACTIVE)");
+        }
+
+        if (mFallActive) {
+            mSdAlgFall = new SdAlgFall(mContext);
+            Log.i(TAG, "SeizureDetector - SdAlgFall initialized (ACTIVE)");
+        }
+
+        if (mCnnAlarmActive) {
+            mSdAlgNn = new SdAlgNn(mContext);
+            Log.i(TAG, "SeizureDetector - SdAlgNn initialized (ACTIVE)");
+        }
+
+        if (mHRAlarmActive) {
+            mSdAlgHr = new SdAlgHr(mContext);
+            Log.i(TAG, "SeizureDetector - SdAlgHr initialized (ACTIVE)");
+        }
+
+        Log.i(TAG, "SeizureDetector initialized - OsdAlarmActive:" + mOsdAlarmActive +
+                " FlapAlarmActive:" + mFlapAlarmActive + " FallActive:" + mFallActive +
+                " CnnAlarmActive:" + mCnnAlarmActive + " HRAlarmActive:" + mHRAlarmActive);
     }
 
     private void updatePrefs() {
         try {
+            // Load timing parameters
             String warnTimeStr = mSP.getString("WarnTime", "5");
             mWarnTime = Short.parseShort(warnTimeStr);
             String alarmTimeStr = mSP.getString("AlarmTime", "15");
             mAlarmTime = Short.parseShort(alarmTimeStr);
             String samplePeriodStr = mSP.getString("DataUpdatePeriod", "5");
             mSamplePeriod = Short.parseShort(samplePeriodStr);
+
+            // Load algorithm active flags from preferences (using correct keys from seizure_detector_prefs.xml)
+            mOsdAlarmActive = mSP.getBoolean("OsdAlarmActive", true);
+            mFlapAlarmActive = mSP.getBoolean("FlapAlarmActive", false);
+            mFallActive = mSP.getBoolean("FallActive", false);
+            mCnnAlarmActive = mSP.getBoolean("CnnAlarmActive", false);
+            mHRAlarmActive = mSP.getBoolean("HRAlarmActive", false);
+
             Log.v(TAG, "updatePrefs(): mWarnTime=" + mWarnTime +
                     ", mAlarmTime=" + mAlarmTime +
                     ", mSamplePeriod=" + mSamplePeriod);
+            Log.v(TAG, "updatePrefs(): OsdAlarmActive=" + mOsdAlarmActive +
+                    ", FlapAlarmActive=" + mFlapAlarmActive +
+                    ", FallActive=" + mFallActive +
+                    ", CnnAlarmActive=" + mCnnAlarmActive +
+                    ", HRAlarmActive=" + mHRAlarmActive);
         } catch (Exception ex) {
             Log.e(TAG, "updatePrefs() - Problem parsing preferences: " + ex.toString());
             mWarnTime = 5;
             mAlarmTime = 15;
             mSamplePeriod = 5;
+            // Default to OSD only if preferences can't be read
+            mOsdAlarmActive = true;
+            mFlapAlarmActive = false;
+            mFallActive = false;
+            mCnnAlarmActive = false;
+            mHRAlarmActive = false;
         }
     }
 
     /**
      * Process SdData through all active algorithms and determine overall alarm state.
+     * Only algorithms that were initialized as active are processed.
      * Algorithms are OR'd together - if any algorithm reports ALARM, overall state is ALARM.
      *
      * @param sdData - The seizure detector data to analyze
@@ -81,50 +130,76 @@ public class SeizureDetector {
     public int processData(SdData sdData) {
         Log.v(TAG, "processData()");
 
+        // Store which algorithms are active in SdData for logging/UI purposes
+        sdData.mOsdAlarmActive = mOsdAlarmActive;
+        sdData.mFlapAlarmActive = mFlapAlarmActive;
+        sdData.mCnnAlarmActive = mCnnAlarmActive;
+        sdData.mHRAlarmActive = mHRAlarmActive;
+        sdData.mFallActive = mFallActive;
+
         // Clear alarm cause before processing
         sdData.alarmCause = "";
 
         boolean anyAlarm = false;
         List<String> alarmCauses = new ArrayList<>();
 
-        // Process each algorithm
-        int osdResult = mSdAlgOsd.processSdData(sdData);
-        if (osdResult == 2) {
-            anyAlarm = true;
-            alarmCauses.add(mSdAlgOsd.getAlarmCause());
-        }
-
-        int flapResult = mSdAlgFlap.processSdData(sdData);
-        if (flapResult == 2) {
-            anyAlarm = true;
-            alarmCauses.add(mSdAlgFlap.getAlarmCause());
-        }
-
-        int fallResult = mSdAlgFall.processSdData(sdData);
-        if (fallResult == 2) {
-            anyAlarm = true;
-            alarmCauses.add(mSdAlgFall.getAlarmCause());
-            sdData.fallAlarmStanding = true;
-        }
-
-        int nnResult = mSdAlgNn.processSdData(sdData);
-        if (nnResult == 2) {
-            anyAlarm = true;
-            alarmCauses.add(mSdAlgNn.getAlarmCause());
-        }
-
-        int hrResult = mSdAlgHr.processSdData(sdData);
-        if (hrResult == 2) {
-            anyAlarm = true;
-            // HR algorithm sets its own alarm cause strings
-            if (sdData.mHRAlarmStanding) {
-                alarmCauses.add("HR");
+        // Process OSD algorithm if initialized (active)
+        if (mSdAlgOsd != null) {
+            Log.v(TAG, "processData() - Running SdAlgOsd");
+            int osdResult = mSdAlgOsd.processSdData(sdData);
+            if (osdResult == 2) {
+                anyAlarm = true;
+                alarmCauses.add(mSdAlgOsd.getAlarmCause());
             }
-            if (sdData.mAdaptiveHrAlarmStanding) {
-                alarmCauses.add("HR_ADAPT");
+        }
+
+        // Process FLAP algorithm if initialized (active)
+        if (mSdAlgFlap != null) {
+            Log.v(TAG, "processData() - Running SdAlgFlap");
+            int flapResult = mSdAlgFlap.processSdData(sdData);
+            if (flapResult == 2) {
+                anyAlarm = true;
+                alarmCauses.add(mSdAlgFlap.getAlarmCause());
             }
-            if (sdData.mAverageHrAlarmStanding) {
-                alarmCauses.add("HR_AVG");
+        }
+
+        // Process FALL algorithm if initialized (active)
+        if (mSdAlgFall != null) {
+            Log.v(TAG, "processData() - Running SdAlgFall");
+            int fallResult = mSdAlgFall.processSdData(sdData);
+            if (fallResult == 2) {
+                anyAlarm = true;
+                alarmCauses.add(mSdAlgFall.getAlarmCause());
+                sdData.fallAlarmStanding = true;
+            }
+        }
+
+        // Process NN (ML) algorithm if initialized (active)
+        if (mSdAlgNn != null) {
+            Log.v(TAG, "processData() - Running SdAlgNn");
+            int nnResult = mSdAlgNn.processSdData(sdData);
+            if (nnResult == 2) {
+                anyAlarm = true;
+                alarmCauses.add(mSdAlgNn.getAlarmCause());
+            }
+        }
+
+        // Process HR algorithm if initialized (active)
+        if (mSdAlgHr != null) {
+            Log.v(TAG, "processData() - Running SdAlgHr");
+            int hrResult = mSdAlgHr.processSdData(sdData);
+            if (hrResult == 2) {
+                anyAlarm = true;
+                // HR algorithm sets its own alarm cause strings
+                if (sdData.mHRAlarmStanding) {
+                    alarmCauses.add("HR");
+                }
+                if (sdData.mAdaptiveHrAlarmStanding) {
+                    alarmCauses.add("HR_ADAPT");
+                }
+                if (sdData.mAverageHrAlarmStanding) {
+                    alarmCauses.add("HR_AVG");
+                }
             }
         }
 

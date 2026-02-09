@@ -169,20 +169,13 @@ public class SdAlgNn extends SdAlgBase {
     }
 
     @Override
-    public boolean isActive() {
-        return mSP.getBoolean("CnnAlgActive", false);
-    }
-
-    @Override
     public String getAlarmCause() {
         return "CnnAlg";
     }
 
     @Override
     public int processSdData(SdData sdData) {
-        if (!isActive()) {
-            return -1;
-        }
+        // ...existing code...
 
         try {
             float pSeizure = getPseizure(sdData);

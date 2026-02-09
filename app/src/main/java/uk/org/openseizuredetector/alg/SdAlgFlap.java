@@ -50,11 +50,6 @@ public class SdAlgFlap extends SdAlgBase {
     }
 
     @Override
-    public boolean isActive() {
-        return mSP.getBoolean("FlapAlgActive", false);
-    }
-
-    @Override
     public String getAlarmCause() {
         return "Flap";
     }
@@ -75,9 +70,7 @@ public class SdAlgFlap extends SdAlgBase {
 
     @Override
     public int processSdData(SdData sdData) {
-        if (!isActive()) {
-            return -1;
-        }
+        // ...existing code...
 
         boolean flapDetected = false;
         int nMin = 0;
