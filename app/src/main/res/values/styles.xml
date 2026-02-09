@@ -14,6 +14,8 @@
         <item name="android:textColorSecondary">#E0E0E0</item>
         <!-- Dialog theme -->
         <item name="alertDialogTheme">@style/AppTheme.AlertDialog</item>
+        <!-- Preference dialog theme to ensure proper text colors in edit dialogs -->
+        <item name="preferenceTheme">@style/AppTheme.PreferenceTheme</item>
     </style>
 
     <!-- Alert dialog theme that ensures proper colors and visibility -->
@@ -43,6 +45,44 @@
         <item name="buttonBarPositiveButtonStyle">@style/AppTheme.AlertDialog.Button</item>
         <item name="buttonBarNegativeButtonStyle">@style/AppTheme.AlertDialog.Button</item>
         <item name="buttonBarNeutralButtonStyle">@style/AppTheme.AlertDialog.Button</item>
+    </style>
+
+    <!-- Preference theme to fix white text on white background in EditTextPreference dialogs -->
+    <style name="AppTheme.PreferenceTheme" parent="PreferenceThemeOverlay.v14.Material">
+        <!-- Dialog appearance -->
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:colorBackground">@android:color/white</item>
+
+        <!-- Text colors - all must be black for readability -->
+        <item name="android:textColorPrimary">@android:color/black</item>
+        <item name="android:textColorSecondary">#757575</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textColorHint">#BDBDBD</item>
+
+        <!-- EditText specific -->
+        <item name="android:editTextColor">@android:color/black</item>
+        <item name="android:editTextBackground">?android:attr/selectableItemBackground</item>
+
+        <!-- Alert dialog styling for preference dialogs -->
+        <item name="alertDialogTheme">@style/AppTheme.PreferenceAlertDialog</item>
+    </style>
+
+    <!-- Explicit alert dialog theme for preference dialogs -->
+    <style name="AppTheme.PreferenceAlertDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:textColorPrimary">@android:color/black</item>
+        <item name="android:textColorSecondary">#757575</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textColorHint">#BDBDBD</item>
+        <!-- Force EditText to have black text -->
+        <item name="android:editTextStyle">@style/AppTheme.EditTextStyle</item>
+    </style>
+
+    <!-- EditText style for preference dialogs -->
+    <style name="AppTheme.EditTextStyle" parent="Widget.AppCompat.EditText">
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textColorHint">#BDBDBD</item>
+        <item name="android:textColorLink">@android:color/black</item>
     </style>
 
     <!-- Dialog button style for better visibility -->
