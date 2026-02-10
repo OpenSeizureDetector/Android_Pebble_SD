@@ -341,6 +341,7 @@ public class FragmentSystem extends FragmentOsdBaseClass {
             e.printStackTrace();
         }
     }
+
     private void updateBatteryGraph() {
         if (mBattLineChart == null || !mConnection.mBound) {
             return;

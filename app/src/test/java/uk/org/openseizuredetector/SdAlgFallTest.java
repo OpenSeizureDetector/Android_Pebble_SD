@@ -54,7 +54,6 @@ public class SdAlgFallTest {
     @Test
     public void testAlgorithmCreation() throws Exception {
         assertNotNull("SdAlgFall should be created", mSdAlgFall);
-        assertTrue("Algorithm should be active", mSdAlgFall.isActive());
         assertEquals("Alarm cause should be FALL", "FALL", mSdAlgFall.getAlarmCause());
     }
 
@@ -118,7 +117,9 @@ public class SdAlgFallTest {
         // Recreate algorithm
         mSdAlgFall = new SdAlgFall(mContext);
 
-        // Even with fall pattern, should return -1 (inactive)
+        // Note: With the refactoring, algorithms no longer check their own active state.
+        // SeizureDetector controls which algorithms are active and doesn't call inactive ones.
+        // Fall pattern should still be detected if the algorithm is called
         for (int i = 0; i < mSdData.rawData.length; i++) {
             if (i < 50) {
                 mSdData.rawData[i] = 200;
@@ -128,7 +129,8 @@ public class SdAlgFallTest {
         }
 
         int result = mSdAlgFall.processSdData(mSdData);
-        assertEquals("Inactive algorithm should return -1", -1, result);
+        // Algorithm processes data normally - SeizureDetector handles the active/inactive logic
+        assertTrue("Algorithm processes data regardless of preference", result >= 0);
     }
 
     @Test

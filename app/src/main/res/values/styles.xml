@@ -62,9 +62,13 @@
         <!-- EditText specific -->
         <item name="android:editTextColor">@android:color/black</item>
         <item name="android:editTextBackground">?android:attr/selectableItemBackground</item>
+        <item name="android:editTextStyle">@style/AppTheme.EditTextStyle</item>
 
         <!-- Alert dialog styling for preference dialogs -->
         <item name="alertDialogTheme">@style/AppTheme.PreferenceAlertDialog</item>
+
+        <!-- Material EditText style -->
+        <item name="editTextPreferenceStyle">@style/AppTheme.EditTextPreferenceStyle</item>
     </style>
 
     <!-- Explicit alert dialog theme for preference dialogs -->
@@ -83,6 +87,10 @@
         <item name="android:textColor">@android:color/black</item>
         <item name="android:textColorHint">#BDBDBD</item>
         <item name="android:textColorLink">@android:color/black</item>
+    </style>
+
+    <!-- EditTextPreference style - critical for fixing white text on white background -->
+    <style name="AppTheme.EditTextPreferenceStyle" parent="@style/Preference.DialogPreference">
     </style>
 
     <!-- Dialog button style for better visibility -->

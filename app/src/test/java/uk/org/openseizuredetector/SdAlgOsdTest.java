@@ -57,7 +57,6 @@ public class SdAlgOsdTest {
     @Test
     public void testAlgorithmCreation() throws Exception {
         assertNotNull("SdAlgOsd should be created", mSdAlgOsd);
-        assertTrue("Algorithm should be active", mSdAlgOsd.isActive());
         assertEquals("Alarm cause should be OsdAlg", "OsdAlg", mSdAlgOsd.getAlarmCause());
     }
 
@@ -105,21 +104,27 @@ public class SdAlgOsdTest {
 
     @Test
     public void testProcessSdData_Inactive() throws Exception {
-        // Disable algorithm
+        // Note: With the refactoring, algorithms no longer check their own active state.
+        // SeizureDetector controls which algorithms are active and doesn't call inactive ones.
+        // This test verifies the algorithm still processes data normally regardless of the preference.
+
+        // Disable algorithm preference (but algorithm will still process if called)
         SharedPreferences.Editor editor = mSP.edit();
-        editor.putBoolean("OsdAlgActive", false);
+        editor.putBoolean("OsdAlarmActive", false);
         editor.apply();
 
         // Recreate algorithm
         mSdAlgOsd = new SdAlgOsd(mContext);
 
-        // Even with high amplitude in ROI, should return -1 (inactive)
+        // High amplitude in ROI should still be processed and return alarm state
+        // (SeizureDetector would check the preference and not call this algorithm)
         for (int i = 0; i < mSdData.rawData.length; i++) {
             mSdData.rawData[i] = 1000 + 200 * Math.sin(2 * Math.PI * 5 * i / 25.0);
         }
 
         int result = mSdAlgOsd.processSdData(mSdData);
-        assertEquals("Inactive algorithm should return -1", -1, result);
+        // Algorithm processes data normally - SeizureDetector handles the active/inactive logic
+        assertTrue("Algorithm processes data regardless of preference", result >= 0);
     }
 
     @Test

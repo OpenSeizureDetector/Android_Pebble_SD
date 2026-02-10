@@ -615,6 +615,22 @@
     <string name="ml_model_update_later_button">Remind Me Later</string>
     <string name="ml_model_update_skip_button">Skip This Version</string>
     <string name="ml_model_checking_for_updates">Checking for ML model updates...</string>
+
+    <!-- Multi-model ML preferences -->
+    <string name="ml_use_multi_model_title">Use Multiple ML Models</string>
+    <string name="ml_use_multi_model_summary">Enable running multiple ML models simultaneously for voting</string>
+    <string name="ml_num_models_title">Number of ML Models</string>
+    <string name="ml_num_models_summary">How many ML models to use (1-5)</string>
+    <string name="ml_model_slot_title">ML Model %1$d</string>
+    <string name="ml_model_slot_summary">Configure ML model slot %1$d</string>
+    <string name="ml_model_enabled_title">Enable Model %1$d</string>
+    <string name="ml_model_weight_title">Model %1$d Weight</string>
+    <string name="ml_model_weight_summary">Weight for weighted voting (default 1.0)</string>
+
+    <!-- Voting strategy preferences -->
+    <string name="voting_strategy_title">Algorithm Voting Strategy</string>
+    <string name="voting_strategy_summary">How to combine results from multiple algorithms</string>
+
     <string name="syslog_current_file">Current Log: %1$s</string>
     <string name="syslog_refresh">Refresh</string>
     <string name="syslog_select_file">Select</string>

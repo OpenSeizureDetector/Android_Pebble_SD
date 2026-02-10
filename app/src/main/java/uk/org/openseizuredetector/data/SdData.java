@@ -142,12 +142,34 @@ public class SdData implements Parcelable {
     public double mAccelMagStdDev = 0.;  // Standard deviation of acceleration magnitude (0-100%)
     public float watchSignalStrength;
 
+    // Individual ML Model Results (for multi-model voting)
+    public String[] mlModelNames = new String[5];     // Model names
+    public double[] mlModelProbs = new double[5];     // Probabilities (0-1)
+    public int[] mlModelStates = new int[5];          // States (0=OK, 1=WARNING, 2=ALARM)
+    public boolean[] mlModelActive = new boolean[5];   // Which models are active
+    public int mlNumModels = 0;                        // Number of active models
+
+    // Individual Algorithm States (for UI display)
+    public int osdAlgState = 0;    // 0=OK, 1=WARNING, 2=ALARM
+    public int flapAlgState = 0;
+    public int fallAlgState = 0;
+    public int hrAlgState = 0;
+    public int cnnAlgState = 0;    // Combined ML state (for backward compatibility)
+
     public SdData() {
         simpleSpec = new int[10];
         rawData = new double[N_RAW_DATA];
         rawData3D = new double[N_RAW_DATA * 3];
         dataTimeMillis = System.currentTimeMillis();
         timeDiff = 0f;
+
+        // Initialize ML model arrays
+        for (int i = 0; i < 5; i++) {
+            mlModelNames[i] = "";
+            mlModelProbs[i] = 0.0;
+            mlModelStates[i] = 0;
+            mlModelActive[i] = false;
+        }
     }
 
     /*

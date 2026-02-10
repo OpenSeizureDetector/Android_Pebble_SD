@@ -60,12 +60,15 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
 
             SdData sdData = mConnection.mSdServer.mSdData;
 
-            // Display model name
+            // Display model name (for single model or first model in multi-model)
             String modelName = getSelectedModelName();
+            if (sdData.mlNumModels > 1) {
+                modelName = sdData.mlNumModels + " Models Active";
+            }
             ((TextView) mRootView.findViewById(R.id.fragment_ml_alg_model_name))
                     .setText("Model: " + modelName);
 
-            // Display current seizure probability as progress bar
+            // Display current seizure probability as progress bar (overall/max)
             long pSeizurePc = (long) (sdData.mPseizure * 100);
 
             ((TextView) mRootView.findViewById(R.id.fragment_ml_alg_probability_label))
@@ -86,11 +89,100 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
             ((TextView) mRootView.findViewById(R.id.fragment_ml_alg_probability_value))
                     .setText(String.format("%.1f%%", sdData.mPseizure * 100));
 
+            // Display individual model states if multi-model is active
+            updateIndividualModelDisplay(sdData);
+
             // Update history chart
             displayHistoryChart(sdData);
 
         } catch (Exception e) {
             Log.e(TAG, "Error updating UI: " + e.getMessage(), e);
+        }
+    }
+
+    private void updateIndividualModelDisplay(SdData sdData) {
+        // Find the container for individual model displays
+        ViewGroup modelsContainer = mRootView.findViewById(R.id.individual_models_container);
+        if (modelsContainer == null) {
+            Log.w(TAG, "Individual models container not found in layout");
+            return;
+        }
+
+        // Clear existing views
+        modelsContainer.removeAllViews();
+
+        // If no models or only one model, hide the container
+        if (sdData.mlNumModels <= 1) {
+            modelsContainer.setVisibility(View.GONE);
+            return;
+        }
+
+        modelsContainer.setVisibility(View.VISIBLE);
+
+        // Create a row for each active model
+        for (int i = 0; i < sdData.mlNumModels && i < 5; i++) {
+            if (!sdData.mlModelActive[i]) continue;
+
+            // Create horizontal layout for model row
+            android.widget.LinearLayout modelRow = new android.widget.LinearLayout(mContext);
+            modelRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            modelRow.setPadding(0, 8, 0, 8);
+
+            // Model name
+            TextView nameView = new TextView(mContext);
+            nameView.setText(sdData.mlModelNames[i] + ":");
+            nameView.setTextColor(Color.WHITE);
+            nameView.setTextSize(14);
+            nameView.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                    0, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f));
+            modelRow.addView(nameView);
+
+            // Probability
+            TextView probView = new TextView(mContext);
+            probView.setText(String.format("%.1f%%", sdData.mlModelProbs[i] * 100));
+            probView.setTextColor(Color.WHITE);
+            probView.setTextSize(14);
+            probView.setGravity(android.view.Gravity.END);
+            probView.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT));
+            probView.setPadding(16, 0, 16, 0);
+            modelRow.addView(probView);
+
+            // Status indicator
+            TextView statusView = new TextView(mContext);
+            String statusText;
+            int bgColor;
+            int textColor;
+
+            switch (sdData.mlModelStates[i]) {
+                case 2: // ALARM
+                    statusText = "ALARM";
+                    bgColor = Color.RED;
+                    textColor = Color.BLACK;
+                    break;
+                case 1: // WARNING
+                    statusText = "WARN";
+                    bgColor = Color.MAGENTA;
+                    textColor = Color.WHITE;
+                    break;
+                default: // OK
+                    statusText = "OK";
+                    bgColor = Color.BLUE;
+                    textColor = Color.WHITE;
+                    break;
+            }
+
+            statusView.setText(statusText);
+            statusView.setBackgroundColor(bgColor);
+            statusView.setTextColor(textColor);
+            statusView.setTextSize(12);
+            statusView.setPadding(16, 4, 16, 4);
+            statusView.setGravity(android.view.Gravity.CENTER);
+            statusView.setMinWidth(80);
+            modelRow.addView(statusView);
+
+            modelsContainer.addView(modelRow);
         }
     }
 

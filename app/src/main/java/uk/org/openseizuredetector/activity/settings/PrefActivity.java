@@ -31,6 +31,7 @@ import uk.org.openseizuredetector.utils.OsdUtil;
 import android.app.AlertDialog;
 import uk.org.openseizuredetector.utils.OsdUncaughtExceptionHandler;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -50,6 +51,7 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.Toast;
+import android.view.ViewGroup;
 
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -455,7 +457,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     }
 
     public static class SeizureDetectorPrefsFragment extends PreferenceFragmentCompat {
-        private Dialog mProgressDialog;
+        private ProgressDialog mProgressDialog;
         private AtomicBoolean mDownloadCancelFlag;
 
         @Override
@@ -473,31 +475,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                     modelPref.setSummary(getString(R.string.ml_model_select_summary) + "\n" + getString(R.string.no_model_selected));
                 }
                 modelPref.setOnPreferenceClickListener(pref -> {
-                    Context ctx = getActivity();
-                    MlModelManager mm = new MlModelManager(ctx);
-                    // show progress and download index
-                    mm.getMlModelIndex(arr -> {
-                        if (arr == null) {
-                            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
-                            String existingPath = sp.getString("CnnModelFile", null);
-                            Preference modelPref3 = findPreference("MlModelSelector");
-                            if (existingPath != null && new File(existingPath).exists()) {
-                                Toast.makeText(ctx, getString(R.string.ml_model_download_failed) + " - using existing model", Toast.LENGTH_LONG).show();
-                            } else {
-                                Toast.makeText(ctx, R.string.ml_model_download_failed, Toast.LENGTH_SHORT).show();
-                                if (modelPref3 != null) {
-                                    modelPref3.setSummary(getString(R.string.ml_model_select_summary) + "\n" + getString(R.string.no_model_selected));
-                                }
-                            }
-                            return;
-                        }
-                        if (getActivity() != null) {
-                            getActivity().runOnUiThread(() -> {
-                                // showModelDialog - reuse existing helper from activity (not available here), so just toast for now
-                                Toast.makeText(getActivity(), "Model index received (" + arr.length() + ")", Toast.LENGTH_SHORT).show();
-                            });
-                        }
-                    });
+                    showMlModelSelector();
                     return true;
                 });
             }
@@ -506,15 +484,158 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             // full-screen detail views for each algorithm section
         }
 
-        @Override
-        public void onResume() {
-            super.onResume();
-            // No longer need preference change listener for visibility toggling
+        private void showMlModelSelector() {
+            Context ctx = getActivity();
+            if (ctx == null) return;
+
+            MlModelManager mm = new MlModelManager(ctx);
+
+            // Show progress dialog while downloading
+            mProgressDialog = new ProgressDialog(ctx);
+            mProgressDialog.setTitle("Downloading ML Models");
+            mProgressDialog.setMessage("Fetching available models...");
+            mProgressDialog.setCancelable(true);
+            mProgressDialog.show();
+
+            mDownloadCancelFlag = new AtomicBoolean(false);
+            mProgressDialog.setOnCancelListener(dialog -> mDownloadCancelFlag.set(true));
+
+            // Download model index
+            mm.getMlModelIndex(arr -> {
+                if (mProgressDialog != null && mProgressDialog.isShowing()) {
+                    mProgressDialog.dismiss();
+                }
+
+                if (arr == null || mDownloadCancelFlag.get()) {
+                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+                    String existingPath = sp.getString("CnnModelFile", null);
+                    if (existingPath != null && new File(existingPath).exists()) {
+                        Toast.makeText(ctx, "Download failed - using existing model", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(ctx, "Failed to download model list", Toast.LENGTH_SHORT).show();
+                    }
+                    return;
+                }
+
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        showModelSelectionDialog(ctx, arr);
+                    });
+                }
+            });
+        }
+
+        private void showModelSelectionDialog(Context ctx, JSONArray modelArray) {
+            try {
+                List<String> modelNames = new ArrayList<>();
+                List<String> modelDetails = new ArrayList<>();
+
+                for (int i = 0; i < modelArray.length(); i++) {
+                    try {
+                        JSONObject model = modelArray.getJSONObject(i);
+                        String name = model.optString("name", "Unknown");
+                        String size = model.optString("size", "");
+                        String version = model.optString("version", "");
+
+                        modelNames.add(name);
+                        modelDetails.add("v" + version + " (" + size + ")");
+                    } catch (org.json.JSONException e) {
+                        Log.w(TAG, "Error parsing model " + i + ": " + e.getMessage());
+                    }
+                }
+
+                ArrayAdapter<String> adapter = new ArrayAdapter<String>(ctx,
+                        android.R.layout.simple_list_item_2,
+                        android.R.id.text1,
+                        modelNames) {
+                    @Override
+                    public View getView(int position, View convertView, ViewGroup parent) {
+                        View view = super.getView(position, convertView, parent);
+                        android.widget.TextView text1 = view.findViewById(android.R.id.text1);
+                        android.widget.TextView text2 = view.findViewById(android.R.id.text2);
+                        text1.setText(modelNames.get(position));
+                        text2.setText(modelDetails.get(position));
+                        // Ensure text is readable
+                        text1.setTextColor(android.graphics.Color.BLACK);
+                        text2.setTextColor(android.graphics.Color.GRAY);
+                        return view;
+                    }
+                };
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+                builder.setTitle("Select ML Model")
+                        .setAdapter(adapter, (dialog, which) -> {
+                            try {
+                                downloadAndSelectModel(ctx, modelArray.getJSONObject(which));
+                            } catch (org.json.JSONException e) {
+                                Log.e(TAG, "Error getting selected model: " + e.getMessage());
+                                Toast.makeText(ctx, "Error selecting model", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            } catch (Exception e) {
+                Log.e(TAG, "Error showing model selection dialog: " + e.getMessage(), e);
+                Toast.makeText(ctx, "Error loading models list", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        private void downloadAndSelectModel(Context ctx, JSONObject selectedModel) {
+            try {
+                String modelName = selectedModel.optString("name", "Unknown");
+                String fileName = selectedModel.optString("file", "");
+
+                if (fileName.isEmpty()) {
+                    Toast.makeText(ctx, "Invalid model data", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Show download progress
+                mProgressDialog = new ProgressDialog(ctx);
+                mProgressDialog.setTitle("Downloading Model");
+                mProgressDialog.setMessage(modelName);
+                mProgressDialog.setCancelable(true);
+                mProgressDialog.show();
+
+                mDownloadCancelFlag = new AtomicBoolean(false);
+                mProgressDialog.setOnCancelListener(dialog -> mDownloadCancelFlag.set(true));
+
+                MlModelManager mm = new MlModelManager(ctx);
+                mm.downloadModel(fileName, mDownloadCancelFlag, (success, file) -> {
+                    if (mProgressDialog != null && mProgressDialog.isShowing()) {
+                        mProgressDialog.dismiss();
+                    }
+
+                    if (success && !mDownloadCancelFlag.get()) {
+                        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+                        sp.edit()
+                                .putString("CnnModelName", modelName)
+                                .putString("CnnModelFile", file.getAbsolutePath())
+                                .apply();
+
+                        Preference modelPref = findPreference("MlModelSelector");
+                        if (modelPref != null) {
+                            modelPref.setSummary(getString(R.string.ml_model_select_summary) + "\n" +
+                                    getString(R.string.selected_model_label, modelName));
+                        }
+                        Toast.makeText(ctx, "Model selected: " + modelName, Toast.LENGTH_SHORT).show();
+                    } else if (!mDownloadCancelFlag.get()) {
+                        Toast.makeText(ctx, "Failed to download model", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "Error downloading model: " + e.getMessage(), e);
+                Toast.makeText(ctx, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
         }
 
         @Override
-        public void onPause() {
-            super.onPause();
+        public void onResume() {
+            super.onResume();
+            // Apply light theme to preference screen for readability
+            if (getView() != null) {
+                getView().setBackgroundColor(android.graphics.Color.parseColor("#3F51B5"));
+            }
         }
     }
 

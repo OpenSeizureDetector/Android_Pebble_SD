@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
@@ -110,96 +111,54 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                 tv.setTextColor(okTextColour);
 
 
+                // Update overall alarm status (now in a card)
                 tv = (TextView) mRootView.findViewById(R.id.alarmTv);
+                com.google.android.material.card.MaterialCardView alarmCard =
+                        (com.google.android.material.card.MaterialCardView) mRootView.findViewById(R.id.alarmStatusCard);
+
                 if ((mConnection.mSdServer.mSdData.alarmState == 0)
                         && !mConnection.mSdServer.mSdData.alarmStanding
                         && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
                     tv.setText(getString(R.string.okBtnTxt));
-                    tv.setBackgroundColor(okColour);
+                    alarmCard.setCardBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
                 }
                 if ((mConnection.mSdServer.mSdData.alarmState == 1)
                         && !mConnection.mSdServer.mSdData.alarmStanding
                         && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
                     tv.setText(R.string.Warning);
-                    tv.setBackgroundColor(warnColour);
+                    alarmCard.setCardBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
                 }
                 if (mConnection.mSdServer.mSdData.alarmState == 6) {
                     tv.setText(R.string.Mute);
-                    tv.setBackgroundColor(warnColour);
+                    alarmCard.setCardBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
                 }
                 if (mConnection.mSdServer.mSdData.alarmStanding) {
                     tv.setText(getString(R.string.Alarm) + "\n" + mConnection.mSdServer.mSdData.alarmCause);
-                    tv.setBackgroundColor(alarmColour);
+                    alarmCard.setCardBackgroundColor(alarmColour);
                     tv.setTextColor(alarmTextColour);
                 }
                 if (mConnection.mSdServer.mSdData.fallAlarmStanding) {
                     tv.setText(R.string.Fall);
-                    tv.setBackgroundColor(alarmColour);
+                    alarmCard.setCardBackgroundColor(alarmColour);
                     tv.setTextColor(alarmTextColour);
                 }
                 if (mConnection.mSdServer.mSdData.alarmState == 4) {
                     tv.setText(R.string.Fault);
-                    tv.setBackgroundColor(warnColour);
+                    alarmCard.setCardBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
                 }
                 if (mConnection.mSdServer.mSdData.alarmState == 7) {
                     tv.setText(R.string.NetFault);
-                    tv.setBackgroundColor(warnColour);
+                    alarmCard.setCardBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
                 }
 
 
-                tv = (TextView) mRootView.findViewById(R.id.algsTv);
-                tv.setText(R.string.algorithms);
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
-                tv = (TextView) mRootView.findViewById(R.id.osdAlgTv);
-                tv.setText("OSD ");
-                if (mConnection.mSdServer.mSdData.mOsdAlarmActive) {
-                    tv.setBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
-                    tv.setPaintFlags(tv.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
-                } else {
-                    tv.setBackgroundColor(warnColour);
-                    tv.setTextColor(warnTextColour);
-                    tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
-                }
-                tv = (TextView) mRootView.findViewById(R.id.cnnAlgTv);
-                tv.setText("CNN ");
-                if (mConnection.mSdServer.mSdData.mCnnAlarmActive) {
-                    tv.setBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
-                    tv.setPaintFlags(tv.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
-                } else {
-                    tv.setBackgroundColor(okColour);
-                    tv.setTextColor(Color.GRAY);
-                    tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
-                }
-                tv = (TextView) mRootView.findViewById(R.id.hrAlgTv);
-                tv.setText("HR ");
-                if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
-                    tv.setBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
-                    tv.setPaintFlags(tv.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
-                } else {
-                    tv.setBackgroundColor(okColour);
-                    tv.setTextColor(Color.GRAY);
-                    tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
-                }
-                tv = (TextView) mRootView.findViewById(R.id.o2AlgTv);
-                tv.setText("O2 ");
-                if (mConnection.mSdServer.mSdData.mO2SatAlarmActive) {
-                    tv.setBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
-                    tv.setPaintFlags(tv.getPaintFlags() & ~Paint.STRIKE_THRU_TEXT_FLAG);
-                } else {
-                    tv.setBackgroundColor(okColour);
-                    tv.setTextColor(Color.GRAY);
-                    tv.setPaintFlags(tv.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
-                }
+                // Update algorithm status display with color-coded individual algorithm states
+                updateAlgorithmStatusDisplay();
 
                 tv = (TextView) mRootView.findViewById(R.id.dataSourceInfoTv);
                 tv.setBackgroundColor(okColour);
@@ -282,5 +241,112 @@ public class FragmentCommon extends FragmentOsdBaseClass {
             }
 
 
+    }
+
+    private void updateAlgorithmStatusDisplay() {
+        ViewGroup algorithmsContainer = mRootView.findViewById(R.id.algorithms_status_container);
+        if (algorithmsContainer == null || !mConnection.mBound) {
+            return;
+        }
+
+        algorithmsContainer.removeAllViews();
+
+        try {
+            uk.org.openseizuredetector.data.SdData sdData = mConnection.mSdServer.mSdData;
+
+            // Display OSD algorithm status
+            if (sdData.mOsdAlarmActive) {
+                addAlgorithmStatusRow(algorithmsContainer, "OSD", sdData.osdAlgState);
+            }
+
+            // Display FLAP algorithm status
+            if (sdData.mFlapAlarmActive) {
+                addAlgorithmStatusRow(algorithmsContainer, "FLAP", sdData.flapAlgState);
+            }
+
+            // Display FALL algorithm status
+            if (sdData.mFallActive) {
+                addAlgorithmStatusRow(algorithmsContainer, "FALL", sdData.fallAlgState);
+            }
+
+            // Display ML algorithm(s) status
+            if (sdData.mCnnAlarmActive) {
+                if (sdData.mlNumModels > 1) {
+                    // Show individual models
+                    for (int i = 0; i < sdData.mlNumModels && i < 5; i++) {
+                        if (sdData.mlModelActive[i]) {
+                            String modelName = sdData.mlModelNames[i];
+                            if (modelName == null || modelName.isEmpty()) {
+                                modelName = "ML" + (i + 1);
+                            }
+                            addAlgorithmStatusRow(algorithmsContainer, modelName, sdData.mlModelStates[i]);
+                        }
+                    }
+                } else {
+                    // Single model - just show "CNN"
+                    addAlgorithmStatusRow(algorithmsContainer, "CNN", sdData.cnnAlgState);
+                }
+            }
+
+            // Display HR algorithm status
+            if (sdData.mHRAlarmActive) {
+                addAlgorithmStatusRow(algorithmsContainer, "HR", sdData.hrAlgState);
+            }
+
+            // Display O2Sat algorithm status if active
+            if (sdData.mO2SatAlarmActive) {
+                // O2Sat doesn't have individual state tracking yet, show as active
+                addAlgorithmStatusRow(algorithmsContainer, "O2", 0);
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating algorithm status: " + e.getMessage(), e);
+        }
+    }
+
+    private void addAlgorithmStatusRow(ViewGroup container, String algorithmName, int state) {
+        // Create a compact badge with the algorithm name and color-coded background
+        TextView badge = new TextView(mContext);
+        badge.setText(algorithmName);
+        badge.setTextSize(13);
+        badge.setTypeface(null, android.graphics.Typeface.BOLD);
+        badge.setPadding(16, 8, 16, 8);
+        badge.setGravity(android.view.Gravity.CENTER);
+
+        // Set background color based on state
+        int bgColor;
+        int textColor;
+
+        switch (state) {
+            case 2: // ALARM
+                bgColor = alarmColour;
+                textColor = alarmTextColour;
+                break;
+            case 1: // WARNING
+                bgColor = warnColour;
+                textColor = warnTextColour;
+                break;
+            default: // OK
+                bgColor = okColour;
+                textColor = okTextColour;
+                break;
+        }
+
+        badge.setTextColor(textColor);
+
+        // Create rounded background
+        android.graphics.drawable.GradientDrawable background = new android.graphics.drawable.GradientDrawable();
+        background.setColor(bgColor);
+        background.setCornerRadius(20f);
+        badge.setBackground(background);
+
+        // Add margin between badges
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMargins(4, 0, 4, 0);
+        badge.setLayoutParams(params);
+
+        container.addView(badge);
     }
 }

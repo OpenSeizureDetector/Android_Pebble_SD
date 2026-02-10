@@ -32,71 +32,52 @@
             android:layout_height="wrap_content"
             android:text="---" />
 
-        <LinearLayout
-            android:id="@+id/statusLayout"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="?attr/colorPrimary">
-
-
-
-
-                <TextView
-                    android:id="@+id/algsTv"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Algorithms: " />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal"
-                    android:background="?attr/colorPrimary">
-
-                    <TextView
-                        android:id="@+id/osdAlgTv"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="---" />
-
-                    <TextView
-                        android:id="@+id/cnnAlgTv"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="---" />
-
-                    <TextView
-                        android:id="@+id/hrAlgTv"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="---" />
-
-                    <TextView
-                        android:id="@+id/o2AlgTv"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="---" />
-
-                    <!--<TextView
-                        android:id="@+id/fallAlgTv"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text=""
-                        android:visibility="gone"/>
-                        -->
-
-            </LinearLayout>
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/alarmTv"
+        <!-- Overall Alarm Status Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/alarmStatusCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="---"
-            android:textSize="32sp" />
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            app:cardElevation="6dp"
+            app:cardCornerRadius="12dp"
+            app:cardBackgroundColor="@color/card_background_light_blue">
 
+            <TextView
+                android:id="@+id/alarmTv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="---"
+                android:textSize="36sp"
+                android:textStyle="bold"
+                android:padding="20dp" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Algorithm Status Card - Compact Single Row -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/algorithmsCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
+            app:cardElevation="6dp"
+            app:cardCornerRadius="12dp"
+            app:cardBackgroundColor="@color/card_background_light_blue">
+
+            <LinearLayout
+                android:id="@+id/algorithms_status_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:gravity="center" />
+
+        </com.google.android.material.card.MaterialCardView>
 
         <LinearLayout
             android:layout_width="match_parent"

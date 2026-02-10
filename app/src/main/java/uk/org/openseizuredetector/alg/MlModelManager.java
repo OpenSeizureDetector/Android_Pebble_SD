@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 
 // This class manages machine learning models by downloading them from a remote server when necessary.
+// Supports managing multiple models simultaneously (up to MAX_MODELS).
 // Design note:
 //   - getMlModelIndex() uses Volley (async callback-based) for index retrieval
 //   - downloadModel() uses background thread + raw HttpURLConnection for file downloads
@@ -45,6 +46,9 @@ public class MlModelManager {
     protected OsdUtil mUtil;
     private final String TAG = "MlModelManager";
     private final String DEFAULT_BUNDLED_MODEL = "cnn_v0.24.tflite";
+
+    // Maximum number of ML models that can be managed simultaneously
+    public static final int MAX_MODELS = 5;
 
     public boolean mServerConnectionOk = false;
     public boolean mModelReady = false;

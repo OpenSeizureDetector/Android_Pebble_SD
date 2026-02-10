@@ -63,6 +63,16 @@
 
         </LinearLayout>
 
+        <!-- Container for individual model displays (multi-model) -->
+        <LinearLayout
+            android:id="@+id/individual_models_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="16dp"
+            android:paddingBottom="8dp"
+            android:visibility="gone" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
