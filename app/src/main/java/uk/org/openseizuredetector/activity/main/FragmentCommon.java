@@ -182,13 +182,6 @@ public class FragmentCommon extends FragmentOsdBaseClass {
             tv.setText(R.string.ServerStopped);
             tv.setBackgroundColor(warnColour);
             tv.setTextColor(warnTextColour);
-
-            /**  FIXME - check this is not needed for this fragment
-             tv = (TextView) mRootView.findViewById(R.id.serverIpTv);
-             tv.setText("--");
-             tv.setBackgroundColor(warnColour);
-             tv.setTextColor(warnTextColour);
-             */
         }
 
 
@@ -201,11 +194,11 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                 acceptAlarmButton.setText(getString(R.string.SMSWillBeSentIn) + " " +
                         mConnection.mSdServer.mSmsTimer.mTimeLeft / 1000 +
                         " s - " + getString(R.string.Cancel));
-                acceptAlarmButton.setBackgroundColor(alarmColour);
+                // REMOVED manual background color setting - use Material state handling
                 acceptAlarmButton.setEnabled(true);
             } else {
                 acceptAlarmButton.setText(R.string.AcceptAlarm);
-                acceptAlarmButton.setBackgroundColor(Color.GRAY);
+                // REMOVED manual background color setting - use Material state handling
                 if (mConnection.mBound)
                     if ((mConnection.mSdServer.isLatchAlarms())
                             || mConnection.mSdServer.mSdData.mFallActive) {
@@ -214,10 +207,6 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                         acceptAlarmButton.setEnabled(false);
                     }
             }
-        } else {
-            // acceptAlarmButton.setText(getString(R.string.AcceptAlarm));
-            // acceptAlarmButton.setBackgroundColor(Color.DKGRAY);
-            // acceptAlarmButton.setEnabled(false);
         }
 
         // Deal with Cancel Audible button
@@ -308,9 +297,9 @@ public class FragmentCommon extends FragmentOsdBaseClass {
         // Create a compact badge with the algorithm name and color-coded background
         TextView badge = new TextView(mContext);
         badge.setText(algorithmName);
-        badge.setTextSize(13);
+        badge.setTextSize(11);
         badge.setTypeface(null, android.graphics.Typeface.BOLD);
-        badge.setPadding(16, 8, 16, 8);
+        badge.setPadding(12, 4, 12, 4);
         badge.setGravity(android.view.Gravity.CENTER);
 
         // Set background color based on state
@@ -337,14 +326,14 @@ public class FragmentCommon extends FragmentOsdBaseClass {
         // Create rounded background
         android.graphics.drawable.GradientDrawable background = new android.graphics.drawable.GradientDrawable();
         background.setColor(bgColor);
-        background.setCornerRadius(20f);
+        background.setCornerRadius(16f);
         badge.setBackground(background);
 
         // Add margin between badges
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(4, 0, 4, 0);
+        params.setMargins(2, 0, 2, 0);
         badge.setLayoutParams(params);
 
         container.addView(badge);

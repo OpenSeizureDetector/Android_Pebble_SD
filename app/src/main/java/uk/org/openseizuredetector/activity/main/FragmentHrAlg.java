@@ -59,10 +59,9 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         mLineChart.getViewport().setMinY(40);
         mLineChart.getViewport().setMaxY(240);
 
-        // Set X-axis to show full 10 minutes (in seconds, like ML graph)
         mLineChart.getViewport().setXAxisBoundsManual(true);
         mLineChart.getViewport().setMinX(0);
-        mLineChart.getViewport().setMaxX(600); // 10 minutes = 600 seconds
+        mLineChart.getViewport().setMaxX(600);
 
         mLineChart.getViewport().setScalable(true);
         mLineChart.getViewport().setScrollable(true);
@@ -70,37 +69,29 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         mLineChart.getGridLabelRenderer().setNumVerticalLabels(6);
         mLineChart.getGridLabelRenderer().setNumHorizontalLabels(6);
 
-        // Set text color for better visibility
-        try {
-            int textColor = mContext.getResources().getColor(R.color.okTextColor, null);
-            mLineChart.getGridLabelRenderer().setHorizontalLabelsColor(textColor);
-            mLineChart.getGridLabelRenderer().setVerticalLabelsColor(textColor);
-            mLineChart.getGridLabelRenderer().setGridColor(Color.GRAY);
-            mLineChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (minutes)");
-            mLineChart.getGridLabelRenderer().setHorizontalAxisTitleColor(textColor);
+        // Use okTextColour from base class which is resolved from theme
+        mLineChart.getGridLabelRenderer().setHorizontalLabelsColor(okTextColour);
+        mLineChart.getGridLabelRenderer().setVerticalLabelsColor(okTextColour);
+        mLineChart.getGridLabelRenderer().setGridColor(Color.GRAY);
+        mLineChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (minutes)");
+        mLineChart.getGridLabelRenderer().setHorizontalAxisTitleColor(okTextColour);
 
-            // Format X-axis to show minutes instead of seconds
-            mLineChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {
-                @Override
-                public String formatLabel(double value, boolean isValueX) {
-                    if (isValueX) {
-                        // Convert seconds to minutes
-                        return String.format("%.0f", value / 60.0);
-                    } else {
-                        return super.formatLabel(value, isValueX);
-                    }
+        mLineChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {
+            @Override
+            public String formatLabel(double value, boolean isValueX) {
+                if (isValueX) {
+                    return String.format("%.0f", value / 60.0);
+                } else {
+                    return super.formatLabel(value, isValueX);
                 }
-            });
-        } catch (Exception e) {
-            Log.w(TAG, "Error setting chart colors: " + e.getMessage());
-        }
+            }
+        });
 
-        Log.d(TAG, "Chart view initialized");
+        Log.d(TAG, "Chart view initialized with theme-aware colors");
     }
 
     @Override
     protected void updateUi() {
-        Log.d(TAG, "updateUi()");
         tv = (TextView) mRootView.findViewById(R.id.fragment_hr_alg_tv1);
         tvHr = (TextView) mRootView.findViewById(R.id.current_hr_tv);
         tvAvgAHr = (TextView) mRootView.findViewById(R.id.adaptive_avg_hr_tv);
@@ -122,7 +113,6 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                         .append(mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding)
                         .toString());
 
-                // Get heart rate history from SdDataHistory (persistent history across restarts)
                 int nHistArr = mConnection.mSdServer.mSdDataHistory.mHrHistBuf.getNumVals();
                 double hrHistArr[] = mConnection.mSdServer.mSdDataHistory.mHrHistBuf.getVals();
 
@@ -145,17 +135,11 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                 return;
             }
 
-            // Create data points with forward time axis (like ML graph)
-            // Index 0 = oldest data (left side, time=0)
-            // Index N-1 = newest data (right side, time=max)
             DataPoint[] dataPoints = new DataPoint[length];
             int validPoints = 0;
 
             for (int i = 0; i < length; i++) {
-                // Calculate time in seconds from oldest sample
-                double timeInSeconds = i * 5.0; // 5 seconds per sample
-
-                // Filter out error values (-1.0) but keep zeros
+                double timeInSeconds = i * 5.0; 
                 if (historyData[i] >= 0.0) {
                     dataPoints[validPoints] = new DataPoint(timeInSeconds, historyData[i]);
                     validPoints++;
@@ -163,12 +147,10 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
             }
 
             if (validPoints == 0) {
-                Log.d(TAG, "No valid data points in history");
                 mLineChart.removeAllSeries();
                 return;
             }
 
-            // Create series with only valid points
             DataPoint[] validDataPoints = new DataPoint[validPoints];
             System.arraycopy(dataPoints, 0, validDataPoints, 0, validPoints);
 
@@ -185,7 +167,6 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
             series.setDrawDataPoints(false);
             series.setDrawBackground(false);
 
-            // Remove old series and add new one
             mLineChart.removeAllSeries();
             mLineChart.addSeries(series);
 
@@ -193,9 +174,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
             mLineChart.setTitle(getString(R.string.heart_rate_history_bpm)
                     + " " + String.format("%.1f", xSpan) + " minutes");
             mLineChart.setTitleTextSize(36f);
-            mLineChart.setTitleColor(Color.WHITE);
-
-            Log.d(TAG, "Chart updated with " + validPoints + " data points");
+            mLineChart.setTitleColor(okTextColour);
 
         } catch (Exception e) {
             Log.e(TAG, "Error updating chart: " + e.getMessage(), e);

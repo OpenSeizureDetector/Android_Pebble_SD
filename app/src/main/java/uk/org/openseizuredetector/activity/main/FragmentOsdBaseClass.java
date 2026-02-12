@@ -4,14 +4,17 @@ import uk.org.openseizuredetector.R;
 import uk.org.openseizuredetector.client.SdServiceConnection;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.os.Bundle;
 
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,10 +33,13 @@ public class FragmentOsdBaseClass extends Fragment {
     Timer mUiTimer;
     protected View mRootView;
 
-    protected int okColour = Color.BLUE;
+    // Use transparent for OK state by default to allow theme background to show through
+    protected int okColour = Color.TRANSPARENT;
     protected int warnColour = Color.MAGENTA;
     protected int alarmColour = Color.RED;
-    protected int okTextColour = Color.WHITE;
+    
+    // Default text colors that work with the theme
+    protected int okTextColour = Color.BLACK; 
     protected int warnTextColour = Color.WHITE;
     protected int alarmTextColour = Color.BLACK;
 
@@ -52,25 +58,44 @@ public class FragmentOsdBaseClass extends Fragment {
         mUtil = new OsdUtil(mContext, updateUiHandler);
         mConnection = new SdServiceConnection(mContext);
 
-        // Load Material Design colors from resources
-        try {
-            okColour = mContext.getResources().getColor(R.color.okBackgroundColor, null);
-            warnColour = Color.MAGENTA;
-            alarmColour = Color.RED;
-            okTextColour = mContext.getResources().getColor(R.color.okTextColor, null);
-            warnTextColour = Color.WHITE;
-            alarmTextColour = Color.BLACK;
-        } catch (Exception e) {
-            Log.w(TAG, "Error loading colors from resources, using defaults");
-            // Keep the hard-coded defaults as fallback
-        }
+        updateColorsFromTheme();
+    }
 
+    /**
+     * Updates the status and text colors based on the current theme.
+     * This ensures high contrast in both light and dark modes.
+     */
+    protected void updateColorsFromTheme() {
+        if (mContext == null) return;
+        
+        try {
+            okColour = Color.TRANSPARENT;
+            warnColour = ContextCompat.getColor(mContext, R.color.status_warning_background);
+            alarmColour = ContextCompat.getColor(mContext, R.color.status_error_background);
+            warnTextColour = ContextCompat.getColor(mContext, R.color.status_warning_text);
+            alarmTextColour = ContextCompat.getColor(mContext, R.color.status_error_text);
+            
+            // Resolve primary text color robustly from the theme
+            okTextColour = getThemeColor(android.R.attr.textColorPrimary);
+        } catch (Exception e) {
+            Log.w(TAG, "Error loading colors from theme: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Helper to resolve a color attribute from the current theme.
+     */
+    protected int getThemeColor(int attr) {
+        int[] attrs = new int[] { attr };
+        TypedArray ta = mContext.obtainStyledAttributes(attrs);
+        int color = ta.getColor(0, Color.BLACK);
+        ta.recycle();
+        return color;
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_sd_data_viewer, container, false);
     }
 
@@ -81,20 +106,11 @@ public class FragmentOsdBaseClass extends Fragment {
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        Log.i(TAG, "onStart()");
-    }
-
-    @Override
     public void onResume() {
         super.onResume();
-        Log.i(TAG, "onResume()");
+        updateColorsFromTheme(); // Refresh colors in case theme changed
         if (mUtil.isServerRunning()) {
-            Log.i(TAG, "onResume() - Binding to Server");
             mUtil.bindToServer(mContext, mConnection);
-        } else {
-            Log.i(TAG, "onResume() - Server Not Running");
         }
         mUiTimer = new Timer();
         mUiTimer.schedule(new TimerTask() {
@@ -108,52 +124,36 @@ public class FragmentOsdBaseClass extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        Log.i(TAG, "onPause()");
-        mUiTimer.cancel();
+        if (mUiTimer != null) {
+            mUiTimer.cancel();
+        }
         mUtil.unbindFromServer(mContext, mConnection);
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-        Log.i(TAG, "onStop()");
-    }
-
-    /**
-     * If we don't use this .post() trick, we get errors about the wrong thread trying to
-     * update the user interface views...
-     */
     private void updateUiOnUiThread() {
         updateUiHandler.post(new Runnable() {
             @Override
             public void run() {
-                // Check for context being null is an attempt to stop the crashes reported in Issue No 176
-                if (mContext != null) {
+                if (mContext != null && mRootView != null) {
                     try {
                         updateUi();
                     } catch (Exception e) {
                         Log.e(TAG,"upateUiOnUiThread() - exception updating UI - "+e.getMessage());
                     }
-                } else {
-                    Log.e(TAG,"updateUionUiThread() - mContext is null??  Can't show a Toast message because context is null....");
                 }
             }
         });
     }
 
-    /**
-     * The subclasses should override this to draw their own UI.
-     */
     protected void updateUi() {
-        Log.d(TAG, "updateUi()");
-        TextView tv;
-        tv = (TextView) mRootView.findViewById(R.id.fragment_sddata_viewer_tv1);
-        if (mConnection.mBound) {
-            tv.setText("Bound to Server");
-        } else {
-            tv.setText("****NOT BOUND TO SERVER***");
+        TextView tv = (TextView) mRootView.findViewById(R.id.fragment_sddata_viewer_tv1);
+        if (tv != null) {
+            if (mConnection.mBound) {
+                tv.setText("Bound to Server");
+            } else {
+                tv.setText("****NOT BOUND TO SERVER***");
+            }
         }
-
     }
 
 }

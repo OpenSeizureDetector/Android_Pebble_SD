@@ -49,6 +49,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -521,7 +522,7 @@ public class MainActivity2 extends AppCompatActivity {
         View aboutView = getLayoutInflater().inflate(R.layout.about_layout, null, false);
         String versionName = mUtil.getAppVersionName();
         Log.i(TAG, "showAbout() - version name = " + versionName);
-        AlertDialog.Builder builder = new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setIcon(R.drawable.icon_24x24);
         builder.setTitle("OpenSeizureDetector V" + versionName);
         builder.setNeutralButton(getString(R.string.closeBtnTxt), new DialogInterface.OnClickListener() {
@@ -557,7 +558,7 @@ public class MainActivity2 extends AppCompatActivity {
     private void showDataSharingDialog() {
         mUtil.writeToSysLogFile("MainActivity.showDataSharingDialog()");
         View aboutView = getLayoutInflater().inflate(R.layout.data_sharing_dialog_layout, null, false);
-        AlertDialog.Builder builder = new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setIcon(R.drawable.datasharing_fault_24x24);
         builder.setTitle(R.string.data_sharing_dialog_title);
         builder.setNegativeButton(getString(R.string.cancel), null);
@@ -621,7 +622,7 @@ public class MainActivity2 extends AppCompatActivity {
      * Show warning dialog before launching PineTime Updater explaining that the service will stop
      */
     private void showPineTimeUpdaterWarningDialog(final String pineTimePackageName) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle("Update PineTime Firmware");
         builder.setMessage("To update your PineTime watch firmware:\n\n" +
                 "1. The OpenSeizureDetector monitoring service will be stopped\n" +
@@ -693,7 +694,7 @@ public class MainActivity2 extends AppCompatActivity {
      * Show dialog prompting user to install PineTime Updater app
      */
     private void showPineTimeUpdaterInstallDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle("PineTime Firmware Updater");
         builder.setMessage("The PineTime Firmware Updater app is not installed.\n\n" +
                 "This companion app is required to update the firmware on your PineTime watch.\n\n" +
@@ -737,4 +738,3 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
 }
-

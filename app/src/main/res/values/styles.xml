@@ -1,115 +1,53 @@
 <resources>
 
-    <!-- AppCompat theme - ignores Material3 dynamic colors and uses our explicit blue palette -->
-    <style name="AppTheme" parent="Theme.AppCompat.DayNight">
-        <!-- Explicitly set blue colors -->
-        <item name="colorPrimary">#3F51B5</item>
-        <item name="colorPrimaryDark">#303F9F</item>
-        <item name="colorAccent">#FF4081</item>
-        <!-- Blue backgrounds for consistency across all screens -->
-        <item name="android:windowBackground">@color/colorPrimary</item>
-        <item name="android:colorBackground">@color/colorPrimary</item>
-        <!-- White text for contrast on blue background -->
-        <item name="android:textColorPrimary">#FFFFFF</item>
-        <item name="android:textColorSecondary">#E0E0E0</item>
-        <!-- Dialog theme -->
-        <item name="alertDialogTheme">@style/AppTheme.AlertDialog</item>
-        <!-- Preference dialog theme to ensure proper text colors in edit dialogs -->
-        <item name="preferenceTheme">@style/AppTheme.PreferenceTheme</item>
+    <!-- Base application theme using Material 3. -->
+    <style name="AppTheme" parent="Theme.Material3.DayNight">
+        <!-- Brand colors -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSecondary">@color/colorAccent</item>
+        <item name="colorOnSecondary">@android:color/white</item>
+
+        <!-- ActionBar styling -->
+        <item name="android:actionBarStyle">@style/AppTheme.ActionBar</item>
+        <item name="actionBarStyle">@style/AppTheme.ActionBar</item>
+        <item name="android:actionBarTheme">@style/AppTheme.ActionBarTheme</item>
+        <item name="actionBarTheme">@style/AppTheme.ActionBarTheme</item>
+
+        <!-- Force title color at the theme level -->
+        <item name="android:titleTextColor">@android:color/white</item>
+        <item name="titleTextColor">@android:color/white</item>
+
+        <!-- Standard preference and dialog themes -->
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+        <item name="alertDialogTheme">@style/ThemeOverlay.Material3.MaterialAlertDialog</item>
     </style>
 
-    <!-- Alert dialog theme that ensures proper colors and visibility -->
-    <!-- Use Light theme parent and explicitly override ALL text-related attributes -->
-    <style name="AppTheme.AlertDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <!-- Color palette -->
-        <item name="colorPrimary">#3F51B5</item>
-        <item name="colorPrimaryDark">#303F9F</item>
-        <item name="colorAccent">#FF4081</item>
-
-        <!-- Dialog background must be light -->
-        <item name="android:windowBackground">@android:color/white</item>
-
-        <!-- CRITICAL: Override text colors from activity theme -->
-        <!-- Using both namespaced and non-namespaced versions for compatibility -->
-        <item name="android:textColorPrimary">@android:color/black</item>
-        <item name="android:textColorSecondary">#757575</item>
-        <item name="textColorAlertDialogListItem">@android:color/black</item>
-
-        <!-- Additional text appearance overrides to ensure black text -->
-        <item name="android:textAppearance">@style/TextAppearance.AppCompat</item>
-        <item name="android:textAppearanceLarge">@style/TextAppearance.AppCompat.Large</item>
-        <item name="android:textAppearanceMedium">@style/TextAppearance.AppCompat.Medium</item>
-        <item name="android:textAppearanceSmall">@style/TextAppearance.AppCompat.Small</item>
-
-        <!-- Button styles -->
-        <item name="buttonBarPositiveButtonStyle">@style/AppTheme.AlertDialog.Button</item>
-        <item name="buttonBarNegativeButtonStyle">@style/AppTheme.AlertDialog.Button</item>
-        <item name="buttonBarNeutralButtonStyle">@style/AppTheme.AlertDialog.Button</item>
+    <!-- Branded ActionBar Style -->
+    <style name="AppTheme.ActionBar" parent="Widget.Material3.ActionBar.Solid">
+        <item name="android:background">@color/colorPrimary</item>
+        <item name="background">@color/colorPrimary</item>
+        <item name="android:titleTextStyle">@style/AppTheme.ActionBar.TitleTextStyle</item>
+        <item name="titleTextStyle">@style/AppTheme.ActionBar.TitleTextStyle</item>
     </style>
 
-    <!-- Preference theme to fix white text on white background in EditTextPreference dialogs -->
-    <style name="AppTheme.PreferenceTheme" parent="PreferenceThemeOverlay.v14.Material">
-        <!-- Dialog appearance -->
-        <item name="android:windowBackground">@android:color/white</item>
-        <item name="android:colorBackground">@android:color/white</item>
-
-        <!-- Text colors - all must be black for readability -->
-        <item name="android:textColorPrimary">@android:color/black</item>
-        <item name="android:textColorSecondary">#757575</item>
-        <item name="android:textColor">@android:color/black</item>
-        <item name="android:textColorHint">#BDBDBD</item>
-
-        <!-- EditText specific -->
-        <item name="android:editTextColor">@android:color/black</item>
-        <item name="android:editTextBackground">?android:attr/selectableItemBackground</item>
-        <item name="android:editTextStyle">@style/AppTheme.EditTextStyle</item>
-
-        <!-- Alert dialog styling for preference dialogs -->
-        <item name="alertDialogTheme">@style/AppTheme.PreferenceAlertDialog</item>
-
-        <!-- Material EditText style -->
-        <item name="editTextPreferenceStyle">@style/AppTheme.EditTextPreferenceStyle</item>
+    <!-- Explicit White Title Style -->
+    <style name="AppTheme.ActionBar.TitleTextStyle" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textColor">@android:color/white</item>
     </style>
 
-    <!-- Explicit alert dialog theme for preference dialogs -->
-    <style name="AppTheme.PreferenceAlertDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <item name="android:windowBackground">@android:color/white</item>
-        <item name="android:textColorPrimary">@android:color/black</item>
-        <item name="android:textColorSecondary">#757575</item>
-        <item name="android:textColor">@android:color/black</item>
-        <item name="android:textColorHint">#BDBDBD</item>
-        <!-- Force EditText to have black text -->
-        <item name="android:editTextStyle">@style/AppTheme.EditTextStyle</item>
+    <!-- Force Dark Overlay for the ActionBar -->
+    <style name="AppTheme.ActionBarTheme" parent="ThemeOverlay.Material3.Dark.ActionBar">
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:titleTextColor">@android:color/white</item>
+        <item name="titleTextColor">@android:color/white</item>
+        <item name="colorControlNormal">@android:color/white</item>
     </style>
 
-    <!-- EditText style for preference dialogs -->
-    <style name="AppTheme.EditTextStyle" parent="Widget.AppCompat.EditText">
-        <item name="android:textColor">@android:color/black</item>
-        <item name="android:textColorHint">#BDBDBD</item>
-        <item name="android:textColorLink">@android:color/black</item>
-    </style>
+    <!-- Legacy style name kept for compatibility -->
+    <style name="AppTheme.AlertDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog" />
 
-    <!-- EditTextPreference style - critical for fixing white text on white background -->
-    <style name="AppTheme.EditTextPreferenceStyle" parent="@style/Preference.DialogPreference">
-    </style>
-
-    <!-- Dialog button style for better visibility -->
-    <style name="AppTheme.AlertDialog.Button" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
-        <!-- Explicitly set button text color to colorAccent (pink) for visibility -->
-        <item name="android:textColor">?attr/colorAccent</item>
-    </style>
-
-    <!-- Alert dialog theme overlay using Material Design colors -->
-    <style name="ThemeOverlay.Osd.AlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
-        <!-- Material Design colors automatically apply here -->
-    </style>
-
-    <!-- AppCompat alert dialog theme overlay -->
-    <style name="ThemeOverlay.Osd.AppCompatAlertDialog" parent="ThemeOverlay.AppCompat.Dialog.Alert">
-        <!-- Material Design colors automatically apply here -->
-    </style>
-
-    <!-- Tab text appearance for better visibility and clickability indication -->
+    <!-- Style for text in tabs -->
     <style name="TabTextAppearance" parent="TextAppearance.Design.Tab">
         <item name="android:textSize">14sp</item>
         <item name="android:textStyle">bold</item>

@@ -6,16 +6,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="uk.org.openseizuredetector.LogManager">
-
+    tools:context="uk.org.openseizuredetector.activity.main.MainActivity2">
 
     <LinearLayout
         android:id="@+id/activity_main2_content_layout"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <androidx.fragment.app.FragmentContainerView xmlns:android="http://schemas.android.com/apk/res/android"
+        <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fragment_common_container_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
@@ -24,15 +23,13 @@
             android:id="@+id/tab_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/tabBackground"
-            android:elevation="4dp"
+            app:tabIndicatorColor="?attr/colorPrimary"
+            app:tabSelectedTextColor="?attr/colorPrimary"
+            app:tabTextColor="?android:attr/textColorSecondary"
             app:tabMode="scrollable"
             app:tabGravity="fill"
-            app:tabTextColor="@color/tabUnselected"
-            app:tabSelectedTextColor="@color/tabSelected"
-            app:tabIndicatorColor="@color/tabIndicator"
             app:tabIndicatorHeight="4dp"
-            app:tabRippleColor="#40FFFFFF"
+            app:tabRippleColor="?attr/colorPrimaryVariant"
             app:tabPaddingStart="16dp"
             app:tabPaddingEnd="16dp"
             app:tabMinWidth="72dp"

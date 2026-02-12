@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?android:attr/windowBackground">
 
     <!-- Master list of settings categories -->
     <ListView
         android:id="@+id/pref_header_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="?android:attr/windowBackground"
+        android:divider="?android:attr/listDivider"
         android:dividerHeight="1dp" />
 
     <!-- Detail fragment container - shown when a category is selected -->
@@ -15,6 +18,7 @@
         android:id="@+id/pref_fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="?android:attr/windowBackground"
         android:visibility="gone" />
 
 </FrameLayout>

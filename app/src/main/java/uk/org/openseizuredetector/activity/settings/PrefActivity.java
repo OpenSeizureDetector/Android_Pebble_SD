@@ -555,9 +555,8 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                         android.widget.TextView text2 = view.findViewById(android.R.id.text2);
                         text1.setText(modelNames.get(position));
                         text2.setText(modelDetails.get(position));
-                        // Ensure text is readable
-                        text1.setTextColor(android.graphics.Color.BLACK);
-                        text2.setTextColor(android.graphics.Color.GRAY);
+                        // Ensure text is readable - use theme attributes instead of hardcoded colors
+                        // removed manual text color setting
                         return view;
                     }
                 };
@@ -629,14 +628,6 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             }
         }
 
-        @Override
-        public void onResume() {
-            super.onResume();
-            // Apply light theme to preference screen for readability
-            if (getView() != null) {
-                getView().setBackgroundColor(android.graphics.Color.parseColor("#3F51B5"));
-            }
-        }
     }
 
     public static class PebbleDatasourcePrefsFragment extends PreferenceFragmentCompat {

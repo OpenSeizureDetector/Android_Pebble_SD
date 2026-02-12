@@ -4,9 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".FragmentOsdBaseClass">
+    tools:context=".activity.main.FragmentSystem">
 
-    <!-- ScrollView to allow vertical scrolling when content is too tall -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -16,25 +15,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:id="@+id/fragment_ll">
-
-            <!--
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="OpenSeizureDetector System Status"
-            android:textColor="?attr/colorOnPrimary"
-            android:background="?attr/colorPrimary"
-        />
-        -->
-
+            android:id="@+id/fragment_ll"
+            android:padding="16dp">
 
         <!-- Two-column layout: System Status on left, Signal Strength Graph on right -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:baselineAligned="false">
+            android:baselineAligned="false"
+            android:layout_marginBottom="16dp">
 
             <!-- Left column: System Status Information -->
             <LinearLayout
@@ -47,22 +37,24 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
 
                     <ImageButton
                         android:id="@+id/settingsButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:src="@android:drawable/ic_menu_manage" />
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@android:drawable/ic_menu_manage"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:layout_marginEnd="8dp" />
 
                     <TextView
                         android:id="@+id/textView"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Edit Settings"
-                        android:textColor="?attr/colorOnPrimary"
-                        android:background="?attr/colorPrimary"
-                        android:textSize="12sp"/>
+                        android:textAppearance="?android:attr/textAppearanceSmall" />
                 </LinearLayout>
 
                 <TextView
@@ -70,13 +62,12 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="---"
-                    android:textSize="12sp"/>
+                    android:textSize="12sp" />
 
                 <TextView
                     android:id="@+id/data_time_tv"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="left"
                     android:text="---"
                     android:textSize="12sp"/>
 
@@ -98,7 +89,6 @@
                     android:id="@+id/serverIpTv"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="left"
                     android:text="---"
                     android:textSize="12sp"/>
 
@@ -116,24 +106,18 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Signal Strength History"
-                    android:textColor="?attr/colorOnPrimary"
-                    android:background="?attr/colorPrimary"
-                    android:textSize="12sp"/>
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="4dp"/>
 
                 <com.jjoe64.graphview.GraphView
                     android:id="@+id/system_signal_line_chart"
                     android:layout_width="match_parent"
-                    android:layout_height="200dp"
-                    android:background="#1A000000" />
+                    android:layout_height="120dp" />
 
             </LinearLayout>
 
         </LinearLayout>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="" />
 
         <!-- Two-column layout: Watch Status on left, Battery Graph on right -->
         <LinearLayout
@@ -154,8 +138,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Watch Status"
-                    android:textColor="?attr/colorOnPrimary"
-                    android:background="?attr/colorPrimary" />
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -164,7 +149,6 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="?attr/colorOnPrimary"
                         android:text="Manufacturer: "
                         android:textSize="12sp"/>
                     <TextView
@@ -182,7 +166,6 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="?attr/colorOnPrimary"
                         android:text="Part No: "
                         android:textSize="12sp"/>
                     <TextView
@@ -200,7 +183,6 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="?attr/colorOnPrimary"
                         android:text="FW Ver: "
                         android:textSize="12sp"/>
                     <TextView
@@ -218,7 +200,6 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="?attr/colorOnPrimary"
                         android:text="App Name: "
                         android:textSize="12sp"/>
                     <TextView
@@ -236,7 +217,6 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="?attr/colorOnPrimary"
                         android:text="App Ver: "
                         android:textSize="12sp"/>
                     <TextView
@@ -261,7 +241,6 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="?attr/colorOnPrimary"
                         android:text="Battery: "
                         android:textSize="12sp"/>
                     <TextView
@@ -279,7 +258,6 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="?attr/colorOnPrimary"
                         android:text="Signal: "
                         android:textSize="12sp"/>
                     <TextView
@@ -304,21 +282,21 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Battery History"
-                    android:textColor="?attr/colorOnPrimary"
-                    android:background="?attr/colorPrimary" />
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="4dp" />
 
                 <com.jjoe64.graphview.GraphView
                     android:id="@+id/system_batt_line_chart"
                     android:layout_width="match_parent"
-                    android:layout_height="200dp"
-                    android:background="#1A000000" />
+                    android:layout_height="120dp" />
 
             </LinearLayout>
 
         </LinearLayout>
 
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+        </androidx.appcompat.widget.LinearLayoutCompat>
 
     </ScrollView>
 

@@ -4,44 +4,43 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".FragmentOsdBaseClass">
+    tools:context=".activity.main.FragmentMlAlg">
 
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="?attr/colorPrimary"
         android:padding="16dp">
 
         <TextView
             android:id="@+id/fragment_ml_alg_tv1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="?attr/colorOnPrimary"
-            android:textSize="18sp"
+            android:textAppearance="?android:attr/textAppearanceMedium"
             android:textStyle="bold"
-            android:text="Machine Learning Algorithm Status" />
+            android:text="Machine Learning Algorithm Status"
+            android:layout_marginBottom="8dp" />
 
         <TextView
             android:id="@+id/fragment_ml_alg_model_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="?attr/colorOnPrimary"
             android:text="Model: ---"
-            android:paddingBottom="8dp" />
+            android:layout_marginBottom="16dp" />
 
         <TextView
             android:id="@+id/fragment_ml_alg_probability_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="?attr/colorOnPrimary"
-            android:text="@string/seizure_probability" />
+            android:text="@string/seizure_probability"
+            android:layout_marginBottom="4dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:layout_marginBottom="24dp">
 
             <ProgressBar
                 android:id="@+id/fragment_ml_alg_progress_bar"
@@ -49,13 +48,13 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:minHeight="20dp" />
+                android:minHeight="20dp"
+                android:progressBackgroundTint="#EEEEEE" />
 
             <TextView
                 android:id="@+id/fragment_ml_alg_probability_value"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="?attr/colorOnPrimary"
                 android:text="0%"
                 android:minWidth="60dp"
                 android:gravity="end"
@@ -69,26 +68,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingTop="16dp"
-            android:paddingBottom="8dp"
+            android:layout_marginBottom="16dp"
             android:visibility="gone" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="?attr/colorOnPrimary"
             android:text="Seizure Probability History (%) (Last 10 Minutes):"
-            android:paddingTop="16dp"
-            android:paddingBottom="8dp" />
+            android:layout_marginBottom="8dp" />
 
         <com.jjoe64.graphview.GraphView
             android:id="@+id/seizure_history_chart"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:layout_margin="8dp"
-            android:background="#1A000000" />
+            android:layout_height="200dp" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
-
 
 </FrameLayout>

@@ -31,6 +31,8 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -87,18 +89,15 @@ public class ReportSeizureActivity extends AppCompatActivity {
         mConnection = new SdServiceConnection(getApplicationContext());
 
         setContentView(R.layout.activity_report_seizure);
-        // Handle system window insets for all API levels
+        // Handle system window insets
         View rootView = findViewById(R.id.root_layout_report_seizure);
         ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
-            // Get the system bar insets
             int top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
             int bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
-
-            // Apply padding to your main content view
             LinearLayout content = findViewById(R.id.report_seizure_content_layout);
-            content.setPadding(0, top, 0, bottom);
-
-            // Return the insets so they keep propagating
+            if (content != null) {
+                content.setPadding(16, top + 16, 16, bottom + 16);
+            }
             return WindowInsetsCompat.CONSUMED;
         });
 
@@ -159,9 +158,6 @@ public class ReportSeizureActivity extends AppCompatActivity {
     }
 
     private void waitForConnection() {
-        // We want the UI to update as soon as it is displayed, but it takes a finite time for
-        // the mConnection to bind to the service, so we delay half a second to give it chance
-        // to connect before trying to update the UI for the first time (it happens again periodically using the uiTimer)
         if (mConnection.mBound) {
             Log.v(TAG, "waitForConnection - Bound!");
             initialiseServiceConnection();
@@ -181,10 +177,6 @@ public class ReportSeizureActivity extends AppCompatActivity {
         mWac = mConnection.mSdServer.mLm.mWac;
 
         if (mWac.isLoggedIn()) {
-
-            // Retrieve the JSONObject containing the standard event types.
-            // Note this obscure syntax is to avoid having to create another interface, so it is worth it :)
-            // See https://medium.com/@pra4mesh/callback-function-in-java-20fa48b27797
             mWac.getEventTypes(new WebApiConnection.JSONObjectCallback() {
                 @Override
                 public void accept(JSONObject eventTypesObj) {
@@ -218,7 +210,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
                 }
             });
         } else {
-            new AlertDialog.Builder(new android.view.ContextThemeWrapper(mContext, R.style.AppTheme_AlertDialog))
+            new MaterialAlertDialogBuilder(this)
                     .setTitle(R.string.not_logged_in_dialog_title)
                     .setMessage(R.string.not_logged_in_dialog_message)
                     .setIcon(android.R.drawable.ic_dialog_alert)
@@ -234,7 +226,6 @@ public class ReportSeizureActivity extends AppCompatActivity {
 
 
     private void updateUi() {
-        //Log.v(TAG,"updateUi()");
         TextView tv;
         Button btn;
         RadioButton b;
@@ -242,7 +233,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
         tv = (TextView) findViewById(R.id.date_day_tv);
         tv.setText(String.format("%02d", mDay));
         tv = (TextView) findViewById(R.id.date_mon_tv);
-        tv.setText(String.format("%02d", mMonth + 1));   // Month counted from zero
+        tv.setText(String.format("%02d", mMonth + 1));
         tv = (TextView) findViewById(R.id.date_year_tv);
         tv.setText(String.format("%04d", mYear));
         tv = (TextView) findViewById(R.id.time_hh_tv);
@@ -252,17 +243,14 @@ public class ReportSeizureActivity extends AppCompatActivity {
         tv = (TextView) findViewById(R.id.msg_tv);
         tv.setText(mMsg);
 
-        // Populate event type button group if necessary
+        // Populate event type button group
         if (mEventTypesList != null && mRedrawEventTypesList) {
             Log.v(TAG, "updateUi: " + mEventTypesList.toString());
             mEventTypeRg.removeAllViews();
             for (String eventTypeStr : mEventTypesList) {
                 b = new RadioButton(this);
                 b.setText(eventTypeStr);
-                // Use theme's primary text color for consistency
-                android.util.TypedValue typedValue = new android.util.TypedValue();
-                getTheme().resolveAttribute(android.R.attr.textColorPrimary, typedValue, true);
-                b.setTextColor(typedValue.data);
+                // REMOVED manual text color setting - let theme handle it
                 mEventTypeRg.addView(b);
             }
             mRedrawEventTypesList = false;
@@ -270,31 +258,21 @@ public class ReportSeizureActivity extends AppCompatActivity {
 
 
         String seizureTypeStr = null;
-        // Find which seizure type is selected
         int checkedRadioButtonId = mEventTypeRg.getCheckedRadioButtonId();
-        //Log.i(TAG,"updateUi(): checkedRadioButtonId="+checkedRadioButtonId);
         b = (RadioButton) findViewById(checkedRadioButtonId);
         if (b != null) {
             seizureTypeStr = b.getText().toString();
         }
-        Log.i(TAG, "updateUi - SeizureType=" + seizureTypeStr);
 
         // Populate the event sub-types radio button list.
-        Log.v(TAG, "updateUi() - meventsubtypeshashmap=" + mEventSubTypesHashMap + ", mEventSubtypesListChanged=" + mEventSubTypesListChanged);
         if (mEventSubTypesHashMap != null && mRedrawEventSubTypesList) {
-            Log.v(TAG, "UpdateUi() - populating event sub types list");
             if (seizureTypeStr != null) {
-                // based on https://androidexample.com/create-a-simple-listview
                 ArrayList<String> subtypesArrayList = mEventSubTypesHashMap.get(seizureTypeStr);
-                Log.v(TAG, "updateUi() - eventType=" + seizureTypeStr + ", subtypes=" + subtypesArrayList);
                 mEventSubTypeRg.removeAllViews();
                 for (String eventSubTypeStr : subtypesArrayList) {
                     b = new RadioButton(this);
                     b.setText(eventSubTypeStr);
-                    // Use theme's primary text color for consistency
-                    android.util.TypedValue typedValue = new android.util.TypedValue();
-                    getTheme().resolveAttribute(android.R.attr.textColorPrimary, typedValue, true);
-                    b.setTextColor(typedValue.data);
+                    // REMOVED manual text color setting - let theme handle it
                     mEventSubTypeRg.addView(b);
                 }
                 mRedrawEventSubTypesList = false;
@@ -302,157 +280,82 @@ public class ReportSeizureActivity extends AppCompatActivity {
         }
     }
 
-    View.OnClickListener onOk =
-            new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    RadioButton b;
-                    String seizureTypeStr = null;
-                    String seizureSubTypeStr = null;
-                    String notesStr = null;
-                    Log.v(TAG, "onOk");
-                    //SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                    String dateStr = String.format("%4d-%02d-%02d %02d:%02d:30", mYear, mMonth + 1, mDay, mHour, mMinute);
-                    Log.v(TAG, "onOk() - dateSTr=" + dateStr);
+    View.OnClickListener onOk = view -> {
+        RadioButton b;
+        String seizureTypeStr = null;
+        String seizureSubTypeStr = null;
+        String notesStr = null;
+        String dateStr = String.format("%4d-%02d-%02d %02d:%02d:30", mYear, mMonth + 1, mDay, mHour, mMinute);
 
-                    // Read seizure type from radio buttons
-                    int checkedRadioButtonId = mEventTypeRg.getCheckedRadioButtonId();
-                    b = (RadioButton) findViewById(checkedRadioButtonId);
-                    if (b != null) {
-                        seizureTypeStr = b.getText().toString();
-                    }
-                    Log.i(TAG, "onOk() - SeizureType=" + seizureTypeStr);
-
-                    checkedRadioButtonId = mEventSubTypeRg.getCheckedRadioButtonId();
-                    b = (RadioButton) findViewById(checkedRadioButtonId);
-                    if (b != null) {
-                        seizureSubTypeStr = b.getText().toString();
-                    }
-                    Log.i(TAG, "onOk() - SeizureSubType=" + seizureSubTypeStr);
-
-                    TextView tv = (TextView) findViewById(R.id.eventNotesTv);
-                    notesStr = tv.getText().toString();
-
-                    mLm.createLocalEvent(dateStr, 5, seizureTypeStr, seizureSubTypeStr, notesStr,
-                            mConnection.mSdServer.mSdData.toSettingsJSON());
-                    mUtil.showToast("Seizure Event Created");
-                    finish();
-                }
-            };
-    View.OnClickListener onCancel =
-            new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Log.v(TAG, "onCancel");
-                    finish();
-                }
-            };
-    View.OnClickListener onSelectDate =
-            new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Log.v(TAG, "onSelectDate()");
-                    DatePickerDialog datePickerDialog = new DatePickerDialog(mContext,
-                            new DatePickerDialog.OnDateSetListener() {
-                                @Override
-                                public void onDateSet(DatePicker view, int year,
-                                                      int monthOfYear, int dayOfMonth) {
-
-                                    mYear = year;
-                                    mMonth = monthOfYear;
-                                    mDay = dayOfMonth;
-                                }
-                            }, mYear, mMonth, mDay);
-                    datePickerDialog.show();
-                }
-            };
-
-    View.OnClickListener onSelectTime =
-            new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Log.v(TAG, "onSelectTime()");
-                    TimePickerDialog timePickerDialog = new TimePickerDialog(mContext,
-                            new TimePickerDialog.OnTimeSetListener() {
-
-                                @Override
-                                public void onTimeSet(TimePicker view, int hourOfDay,
-                                                      int minute) {
-
-                                    mHour = hourOfDay;
-                                    mMinute = minute;
-                                }
-                            }, mHour, mMinute, true);
-                    timePickerDialog.show();
-                }
-            };
-
-
-    RadioGroup.OnCheckedChangeListener onEventTypeChange =
-            new RadioGroup.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(RadioGroup group, int checkedId) {
-                    mRedrawEventSubTypesList = true;
-                    updateUi();
-                }
-            };
-    RadioGroup.OnCheckedChangeListener onEventSubTypeChange =
-            new RadioGroup.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(RadioGroup group, int checkedId) {
-                    updateUi();
-                }
-            };
-
-
-    /*
-     * Start the timer that will upload data to the remote server after a given period.
-     */
-    private void startUiTimer() {
-        if (mUiTimer != null) {
-            Log.v(TAG, "startUiTimer -timer already running - cancelling it");
-            mUiTimer.cancel();
-            mUiTimer = null;
+        int checkedRadioButtonId = mEventTypeRg.getCheckedRadioButtonId();
+        b = (RadioButton) findViewById(checkedRadioButtonId);
+        if (b != null) {
+            seizureTypeStr = b.getText().toString();
         }
-        Log.v(TAG, "startUiTimer() - starting UiTimer");
-        mUiTimer =
-                new UiTimer(1000, 1000);
-        mUiTimer.start();
-    }
 
-    /*
-     * Cancel the remote logging timer to prevent attempts to upload to remote database.
-     */
+        checkedRadioButtonId = mEventSubTypeRg.getCheckedRadioButtonId();
+        b = (RadioButton) findViewById(checkedRadioButtonId);
+        if (b != null) {
+            seizureSubTypeStr = b.getText().toString();
+        }
+
+        TextView tv = (TextView) findViewById(R.id.eventNotesTv);
+        notesStr = tv.getText().toString();
+
+        mLm.createLocalEvent(dateStr, 5, seizureTypeStr, seizureSubTypeStr, notesStr,
+                mConnection.mSdServer.mSdData.toSettingsJSON());
+        mUtil.showToast("Seizure Event Created");
+        finish();
+    };
+
+    View.OnClickListener onCancel = view -> finish();
+
+    View.OnClickListener onSelectDate = view -> {
+        DatePickerDialog datePickerDialog = new DatePickerDialog(mContext,
+                (view1, year, monthOfYear, dayOfMonth) -> {
+                    mYear = year;
+                    mMonth = monthOfYear;
+                    mDay = dayOfMonth;
+                    updateUi();
+                }, mYear, mMonth, mDay);
+        datePickerDialog.show();
+    };
+
+    View.OnClickListener onSelectTime = view -> {
+        TimePickerDialog timePickerDialog = new TimePickerDialog(mContext,
+                (view1, hourOfDay, minute) -> {
+                    mHour = hourOfDay;
+                    mMinute = minute;
+                    updateUi();
+                }, mHour, mMinute, true);
+        timePickerDialog.show();
+    };
+
+
+    RadioGroup.OnCheckedChangeListener onEventTypeChange = (group, checkedId) -> {
+        mRedrawEventSubTypesList = true;
+        updateUi();
+    };
+    RadioGroup.OnCheckedChangeListener onEventSubTypeChange = (group, checkedId) -> updateUi();
+
+
     public void stopUiTimer() {
         if (mUiTimer != null) {
-            Log.v(TAG, "stopUiTimer(): cancelling Ui timer");
             mUiTimer.cancel();
             mUiTimer = null;
         }
     }
 
-    /**
-     * Update User Interface Periodically
-     */
     private class UiTimer extends CountDownTimer {
         public UiTimer(long startTime, long interval) {
             super(startTime, interval);
         }
-
         @Override
-        public void onTick(long l) {
-            // Do Nothing
-        }
-
+        public void onTick(long l) {}
         @Override
         public void onFinish() {
-            //Log.v(TAG, "UiTimer - onFinish - Updating UI");
             updateUi();
-            // Restart this timer.
             start();
         }
-
     }
-
-
 }

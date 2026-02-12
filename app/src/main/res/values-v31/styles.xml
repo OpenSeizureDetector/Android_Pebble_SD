@@ -1,66 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Material Design theme for Android 12+ with blue as the base color -->
-    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight">
-        <!-- Set blue as primary - Material Design will derive contrasting colors -->
-        <item name="colorPrimary">#3F51B5</item>
-        <item name="colorPrimaryDark">#303F9F</item>
-        <item name="colorPrimaryVariant">#303F9F</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="colorSecondary">#3F51B5</item>
-        <item name="colorSecondaryVariant">#303F9F</item>
-        <item name="colorOnSecondary">#FFFFFF</item>
-        <item name="colorAccent">#FF4081</item>
-        <!-- Blue backgrounds for consistency across all screens -->
-        <item name="android:windowBackground">@color/colorPrimary</item>
-        <item name="android:colorBackground">@color/colorPrimary</item>
-        <item name="colorOnBackground">#FFFFFF</item>
-        <!-- Dark surfaces for dialogs -->
-        <item name="colorSurface">#2A2A3F</item>
-        <item name="colorOnSurface">#E8E8F0</item>
-        <!-- Text colors -->
-        <item name="android:textColorPrimary">#FFFFFF</item>
-        <item name="android:textColorSecondary">#E0E0E0</item>
-        <!-- Preference dialog theme to ensure proper text colors in edit dialogs -->
-        <item name="preferenceTheme">@style/AppTheme.PreferenceTheme</item>
-    </style>
+    <!-- Material Design theme for Android 12+ -->
+    <style name="AppTheme" parent="Theme.Material3.DayNight">
+        <!-- Sync brand colors -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSecondary">@color/colorAccent</item>
+        <item name="colorOnSecondary">@android:color/white</item>
 
-    <!-- Preference theme to fix white text on white background in EditTextPreference dialogs -->
-    <style name="AppTheme.PreferenceTheme" parent="PreferenceThemeOverlay.v14.Material">
-        <!-- Dialog appearance -->
-        <item name="android:windowBackground">@android:color/white</item>
-        <item name="android:colorBackground">@android:color/white</item>
+        <!-- Restore branded ActionBar (Blue background, White text) -->
+        <item name="android:actionBarStyle">@style/AppTheme.ActionBar</item>
+        <item name="actionBarStyle">@style/AppTheme.ActionBar</item>
+        <item name="android:actionBarTheme">@style/AppTheme.ActionBarTheme</item>
+        <item name="actionBarTheme">@style/AppTheme.ActionBarTheme</item>
 
-        <!-- Text colors - all must be black for readability -->
-        <item name="android:textColorPrimary">@android:color/black</item>
-        <item name="android:textColorSecondary">#757575</item>
-        <item name="android:textColor">@android:color/black</item>
-        <item name="android:textColorHint">#BDBDBD</item>
-
-        <!-- EditText specific -->
-        <item name="android:editTextColor">@android:color/black</item>
-        <item name="android:editTextBackground">?android:attr/selectableItemBackground</item>
-
-        <!-- Alert dialog styling for preference dialogs -->
-        <item name="alertDialogTheme">@style/AppTheme.PreferenceAlertDialog</item>
-    </style>
-
-    <!-- Explicit alert dialog theme for preference dialogs -->
-    <style name="AppTheme.PreferenceAlertDialog" parent="Theme.MaterialComponents.Light.Dialog.Alert">
-        <item name="android:windowBackground">@android:color/white</item>
-        <item name="android:textColorPrimary">@android:color/black</item>
-        <item name="android:textColorSecondary">#757575</item>
-        <item name="android:textColor">@android:color/black</item>
-        <item name="android:textColorHint">#BDBDBD</item>
-        <!-- Force EditText to have black text -->
-        <item name="android:editTextStyle">@style/AppTheme.EditTextStyle</item>
-    </style>
-
-    <!-- EditText style for preference dialogs -->
-    <style name="AppTheme.EditTextStyle" parent="Widget.AppCompat.EditText">
-        <item name="android:textColor">@android:color/black</item>
-        <item name="android:textColorHint">#BDBDBD</item>
-        <item name="android:textColorLink">@android:color/black</item>
+        <!-- Standard preference and dialog themes -->
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+        <item name="alertDialogTheme">@style/ThemeOverlay.Material3.MaterialAlertDialog</item>
     </style>
 </resources>
-

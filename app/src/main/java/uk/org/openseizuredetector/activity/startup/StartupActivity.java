@@ -57,6 +57,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.rohitss.uceh.UCEHandler;
 
 import java.util.Timer;
@@ -156,20 +157,6 @@ public class StartupActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.startup_activity);
-
-        // Fix ActionBar overlap by adding top padding to content
-        if (getSupportActionBar() != null) {
-            View contentView = findViewById(android.R.id.content);
-            if (contentView != null) {
-                // Get ActionBar height
-                android.util.TypedValue tv = new android.util.TypedValue();
-                if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
-                    int actionBarHeight = android.util.TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
-                    // Add padding to account for ActionBar
-                    contentView.setPadding(0, actionBarHeight, 0, 0);
-                }
-            }
-        }
 
         // Read the default settings from the xml preferences files, so we do
         // not have to use the hard coded ones in the java files.
@@ -507,8 +494,8 @@ public class StartupActivity extends AppCompatActivity {
                 Log.i(TAG,"arePermissionsOK=true");
                 Log.i(TAG,"mSdDataSourceName = "+ mSdDataSourceName);
                 tv.setText(getString(R.string.AppPermissionsOk));
-                tv.setBackgroundColor(getResources().getColor(R.color.status_ok_background));
-                tv.setTextColor(getResources().getColor(R.color.status_ok_text));
+                tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_background));
+                tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_text));
                 pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
                 pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
 
@@ -516,8 +503,8 @@ public class StartupActivity extends AppCompatActivity {
                     if (!mUtil.areBtPermissionsOk()) {
                         Log.i(TAG, "Bluetooth permissions NOT OK");
                         tv.setText(getString(R.string.BTPermissionWarning));
-                        tv.setBackgroundColor(getResources().getColor(R.color.status_warning_background));
-                        tv.setTextColor(getResources().getColor(R.color.status_warning_text));
+                        tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
+                        tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
                         requestBTPermissions();
                         allOk = false;
                     } else if (mBleDeviceAddr.equals("")) {
@@ -533,37 +520,37 @@ public class StartupActivity extends AppCompatActivity {
                     // Activity permissions (ACTIVITY_RECOGNITION) only needed for Phone datasource
                     Log.i(TAG, "Activity permissions NOT OK for Phone datasource");
                     tv.setText(getString(R.string.ActivityPermissionWarning));
-                    tv.setBackgroundColor(getResources().getColor(R.color.status_warning_background));
-                    tv.setTextColor(getResources().getColor(R.color.status_warning_text));
+                    tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
+                    tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
                     requestActivityPermissions();
                     allOk = false;
 
                 } else if (smsAlarmsActive && !areSMSPermissions1OK()) {
                     Log.i(TAG, "SMS permissions NOT OK");
                     tv.setText(getString(R.string.SmsPermissionWarning));
-                    tv.setBackgroundColor(getResources().getColor(R.color.status_warning_background));
-                    tv.setTextColor(getResources().getColor(R.color.status_warning_text));
+                    tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
+                    tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
                     requestSMSPermissions();
                     allOk = false;
                 } else if (smsAlarmsActive && !areLocationPermissions1OK()) {
                     Log.i(TAG, "Location permissions NOT OK");
                     tv.setText(getString(R.string.SmsPermissionWarning));
-                    tv.setBackgroundColor(getResources().getColor(R.color.status_warning_background));
-                    tv.setTextColor(getResources().getColor(R.color.status_warning_text));
+                    tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
+                    tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
                     requestLocationPermissions1();
                     allOk = false;
                 } else if (smsAlarmsActive && !areLocationPermissions2OK()) {
                     Log.i(TAG, "Location permissions2 NOT OK");
                     tv.setText(getString(R.string.SmsPermissionWarning));
-                    tv.setBackgroundColor(getResources().getColor(R.color.status_warning_background));
-                    tv.setTextColor(getResources().getColor(R.color.status_warning_text));
+                    tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
+                    tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
                     requestLocationPermissions2();
                     allOk = false;
                 }
             } else {
                 tv.setText(getString(R.string.AppPermissionsWarning));
-                tv.setBackgroundColor(getResources().getColor(R.color.status_error_background));
-                tv.setTextColor(getResources().getColor(R.color.status_error_text));
+                tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_error_background));
+                tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_error_text));
                 pb.setIndeterminate(true);
                 allOk = false;
                 requestPermissions(StartupActivity.this);
@@ -572,8 +559,8 @@ public class StartupActivity extends AppCompatActivity {
             // If phone alarms are selected, we need to have the uk.org.openseizuredetector.dialler package installed to do the actual dialling.
             if (phoneAlarmsActive && !mUtil.isPackageInstalled("uk.org.openseizuredetector.dialler")) {
                 tv.setText(getText(R.string.DiallerNotInstalledWarning));
-                tv.setBackgroundColor(getResources().getColor(R.color.status_error_background));
-                tv.setTextColor(getResources().getColor(R.color.status_error_text));
+                tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_error_background));
+                tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_error_text));
                 pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
                 pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
                 allOk = false;
@@ -601,8 +588,8 @@ public class StartupActivity extends AppCompatActivity {
                     mBindInProgress = false;
                     allOk = false;
                     tv.setText("Starting Server");
-                    tv.setBackgroundColor(getResources().getColor(R.color.status_warning_background));
-                    tv.setTextColor(getResources().getColor(R.color.status_warning_text));
+                    tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
+                    tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
                     pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
                     pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
                     mMode = MODE_START_SERVER;
@@ -614,8 +601,8 @@ public class StartupActivity extends AppCompatActivity {
                     }
 
                     tv.setText(getString(R.string.ServerRunningOK));
-                    tv.setBackgroundColor(getResources().getColor(R.color.status_ok_background));
-                    tv.setTextColor(getResources().getColor(R.color.status_ok_text));
+                    tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_background));
+                    tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_text));
                     pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
                     pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
                     if (mBindInProgress) {
@@ -636,14 +623,14 @@ public class StartupActivity extends AppCompatActivity {
             pb = (ProgressBar) findViewById(R.id.progressBar2);
             if (mConnection.mBound) {
                 tv.setText(getString(R.string.BoundToServiceOk));
-                tv.setBackgroundColor(getResources().getColor(R.color.status_ok_background));
-                tv.setTextColor(getResources().getColor(R.color.status_ok_text));
+                tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_background));
+                tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_text));
                 pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
                 pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
             } else {
                 tv.setText(getString(R.string.BindingToService));
-                tv.setBackgroundColor(getResources().getColor(R.color.status_warning_background));
-                tv.setTextColor(getResources().getColor(R.color.status_warning_text));
+                tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
+                tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
                 pb.setIndeterminate(true);
                 allOk = false;
             }
@@ -653,14 +640,14 @@ public class StartupActivity extends AppCompatActivity {
             pb = (ProgressBar) findViewById(R.id.progressBar3);
             if (mConnection.watchConnected()) {
                 tv.setText(getString(R.string.WatchConnectedOk));
-                tv.setBackgroundColor(getResources().getColor(R.color.status_ok_background));
-                tv.setTextColor(getResources().getColor(R.color.status_ok_text));
+                tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_background));
+                tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_text));
                 pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
                 pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
             } else {
                 tv.setText(getString(R.string.WatchNotConnected));
-                tv.setBackgroundColor(getResources().getColor(R.color.status_warning_background));
-                tv.setTextColor(getResources().getColor(R.color.status_warning_text));
+                tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
+                tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
                 pb.setIndeterminate(true);
                 allOk = false;
             }
@@ -671,14 +658,14 @@ public class StartupActivity extends AppCompatActivity {
             pb = (ProgressBar) findViewById(R.id.progressBar5);
             if (mConnection.hasSdData()) {
                 tv.setText(getString(R.string.SeizureDetectorDataReceived));
-                tv.setBackgroundColor(getResources().getColor(R.color.status_ok_background));
-                tv.setTextColor(getResources().getColor(R.color.status_ok_text));
+                tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_background));
+                tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_text));
                 pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
                 pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
             } else {
                 tv.setText(getString(R.string.WaitingForSeizureDetectorData));
-                tv.setBackgroundColor(getResources().getColor(R.color.status_warning_background));
-                tv.setTextColor(getResources().getColor(R.color.status_warning_text));
+                tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
+                tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
                 pb.setIndeterminate(true);
                 allOk = false;
             }
@@ -689,14 +676,14 @@ public class StartupActivity extends AppCompatActivity {
             pb = (ProgressBar) findViewById(R.id.progressBar6);
             if (mConnection.hasSdSettings()) {
                 tv.setText(getString(R.string.SeizureDetectorSettingsReceived));
-                tv.setBackgroundColor(getResources().getColor(R.color.status_ok_background));
-                tv.setTextColor(getResources().getColor(R.color.status_ok_text));
+                tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_background));
+                tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_text));
                 pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
                 pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
             } else {
                 tv.setText(getString(R.string.WaitingForSeizureDetectorSettings));
-                tv.setBackgroundColor(getResources().getColor(R.color.status_warning_background));
-                tv.setTextColor(getResources().getColor(R.color.status_warning_text));
+                tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
+                tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
                 pb.setIndeterminate(true);
                 allOk = false;
             }
@@ -778,8 +765,7 @@ public class StartupActivity extends AppCompatActivity {
         // CHeck for new installation
         //storedVersionName = null;  // FIXME Force first run dialog for easier testing ****************************
         if (storedVersionName == null || storedVersionName.length() == 0) {
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
+            MaterialAlertDialogBuilder alertDialogBuilder = new MaterialAlertDialogBuilder(this);
             final String s = new String(
                     getString(R.string.FirstRunDlgMsg));
             alertDialogBuilder
@@ -824,8 +810,7 @@ public class StartupActivity extends AppCompatActivity {
             mDialogDisplayed = true;
         } else if (!storedVersionName.equals(versionName)) {
             // Check for update of installed application
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
+            MaterialAlertDialogBuilder alertDialogBuilder = new MaterialAlertDialogBuilder(this);
             final String s = new String(
                     getString(R.string.UpgradeMsg) + getString(R.string.changelog)
             );
@@ -877,10 +862,7 @@ public class StartupActivity extends AppCompatActivity {
     }
 
     private void showBatteryOptimisationWarningDialog() {
-        // Use ContextThemeWrapper to explicitly apply dialog theme
-        // This prevents inheriting white text from activity theme
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
+        MaterialAlertDialogBuilder alertDialogBuilder = new MaterialAlertDialogBuilder(this);
         final SpannableString s = new SpannableString(
                 getString(R.string.battery_usage_optimisation_dialog_text)
         );
@@ -988,8 +970,7 @@ public class StartupActivity extends AppCompatActivity {
         } else {
             Log.i(TAG, "requestSMSPermissions() - requesting permissions");
             mSmsPermissionsRequested = true;
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
+            MaterialAlertDialogBuilder alertDialogBuilder = new MaterialAlertDialogBuilder(this);
             alertDialogBuilder
                     .setTitle(R.string.permissions_required)
                     .setMessage(R.string.sms_permissions_rationale_1)
@@ -1020,8 +1001,7 @@ public class StartupActivity extends AppCompatActivity {
         } else {
             Log.i(TAG, "requestLocationPermissions1() - requesting permissions");
             mLocationPermissions1Requested = true;
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
+            MaterialAlertDialogBuilder alertDialogBuilder = new MaterialAlertDialogBuilder(this);
             alertDialogBuilder
                     .setTitle(R.string.permissions_required)
                     .setMessage(R.string.location_permissions_rationale_1)
@@ -1052,8 +1032,7 @@ public class StartupActivity extends AppCompatActivity {
             Log.i(TAG, "requestSMSPermissions2() - requesting permissions");
             mLocationPermissions2Requested = true;
 
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
+            MaterialAlertDialogBuilder alertDialogBuilder = new MaterialAlertDialogBuilder(this);
             alertDialogBuilder
                     .setTitle(R.string.permissions_required)
                     .setMessage(R.string.location_permissions_2_rationale)
@@ -1083,8 +1062,7 @@ public class StartupActivity extends AppCompatActivity {
         } else {
             Log.i(TAG, "requestBTPermissions() - requesting permissions");
             mBTPermissionsRequested = true;
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
+            MaterialAlertDialogBuilder alertDialogBuilder = new MaterialAlertDialogBuilder(this);
             alertDialogBuilder
                     .setTitle(R.string.BTpermissions_required)
                     .setMessage(R.string.BT_permissions_rationale)
@@ -1109,8 +1087,7 @@ public class StartupActivity extends AppCompatActivity {
         } else {
             Log.i(TAG, "requestActivityPermissions() - requesting permissions");
             mActivityPermissionsRequested = true;
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
+            MaterialAlertDialogBuilder alertDialogBuilder = new MaterialAlertDialogBuilder(this);
             alertDialogBuilder
                     .setTitle(R.string.activity_permissions_required)
                     .setMessage(R.string.activity_permissions_rationale)
@@ -1134,7 +1111,7 @@ public class StartupActivity extends AppCompatActivity {
      * Gives user options to: scan now, configure later, or go to settings.
      */
     private void showBleDeviceConfigDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
 
         // Create the dialog with title and message
         AlertDialog dialog = builder.setTitle("BLE Device Not Selected")
@@ -1157,25 +1134,6 @@ public class StartupActivity extends AppCompatActivity {
                     startActivity(i);
                 })
                 .create();
-
-        // Fix text color visibility - ensure title and message are readable (black text)
-        dialog.setOnShowListener(dialogInterface -> {
-            // Set title color to black (or dark color)
-            int titleId = getResources().getIdentifier("alertTitle", "id", "android");
-            if (titleId > 0) {
-                TextView titleView = dialog.findViewById(titleId);
-                if (titleView != null) {
-                    titleView.setTextColor(android.graphics.Color.BLACK);
-                }
-            }
-
-            // Set message color to black (or dark color)
-            int messageId = android.R.id.message;
-            TextView messageView = dialog.findViewById(messageId);
-            if (messageView != null) {
-                messageView.setTextColor(android.graphics.Color.BLACK);
-            }
-        });
 
         // Reset the flag if the dialog is dismissed so it can be shown again if needed
         dialog.setOnDismissListener(dialogInterface -> {

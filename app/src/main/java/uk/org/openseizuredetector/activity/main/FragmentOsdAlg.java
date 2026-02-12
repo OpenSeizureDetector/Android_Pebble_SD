@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -75,7 +76,6 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             pb.setMax(100);
             pb.setProgress((int) powerPc);
             pbDrawable = mContext.getDrawable(R.drawable.progress_bar_blue);
-            //pbDrawable = mRootView.getResources().getDrawable(R.drawable.progress_bar_blue);
             if (powerPc > 75)
                 pbDrawable = mContext.getDrawable(R.drawable.progress_bar_yellow);
             if (powerPc > 100)
@@ -88,17 +88,12 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             pb = ((ProgressBar) mRootView.findViewById(R.id.spectrumProgressBar));
             pb.setMax(100);
             pb.setProgress((int) specPc);
-            //pbDrawable = mRootView.getResources().getDrawable(R.drawable.progress_bar_blue);
             pbDrawable = mContext.getDrawable(R.drawable.progress_bar_blue);
             if (specPc > 75)
                 pbDrawable = mContext.getDrawable(R.drawable.progress_bar_yellow);
             if (specPc > 100)
                 pbDrawable = mContext.getDrawable(R.drawable.progress_bar_red);
             pb.setProgressDrawable(pbDrawable);
-
-            ////////////////////////////////////////////////////////////
-            // set progressbar seizure probability
-            ////////////////////////////////////////////////////////////
 
             long pSeizurePc;
             pSeizurePc = (long) (mConnection.mSdServer.mSdData.mPseizure * 100);
@@ -113,18 +108,15 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
                 pbDrawable = mContext.getDrawable(R.drawable.progress_bar_yellow);
             if (pSeizurePc > 50)
                 pbDrawable = mContext.getDrawable(R.drawable.progress_bar_red);
-            //pb.getProgressDrawable().setColorFilter(colour, PorterDuff.Mode.SRC_IN);
             pb.setProgressDrawable(pbDrawable);
 
             ////////////////////////////////////////////////////////////
             // Produce graph using GraphView with smoothed line
             GraphView mChart = (GraphView) mRootView.findViewById(R.id.chart1);
 
-            // Clear any previous series
             mChart.removeAllSeries();
 
             try {
-                // Create data points for the entire spectrum
                 DataPoint[] dataPoints = new DataPoint[10];
                 for (int i = 0; i < 10; i++) {
                     if (mConnection.mSdServer != null) {
@@ -134,12 +126,9 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
                     }
                 }
 
-                // Convert long to int for array indexing
                 int alarmFreqMin = (int) mConnection.mSdServer.mSdData.alarmFreqMin;
                 int alarmFreqMax = (int) mConnection.mSdServer.mSdData.alarmFreqMax;
 
-                // Create separate line segments to control colors
-                // Gray segments before alarm range
                 if (alarmFreqMin > 0) {
                     DataPoint[] graySegmentBefore = new DataPoint[alarmFreqMin + 1];
                     for (int i = 0; i <= alarmFreqMin; i++) {
@@ -154,7 +143,6 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
                     mChart.addSeries(graySeriesBefore);
                 }
 
-                // Red segment for alarm range
                 int alarmRangeSize = alarmFreqMax - alarmFreqMin + 1;
                 DataPoint[] redSegment = new DataPoint[alarmRangeSize];
                 for (int i = 0; i < alarmRangeSize; i++) {
@@ -168,7 +156,6 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
                 redSeries.setDataPointsRadius(6);
                 mChart.addSeries(redSeries);
 
-                // Gray segment after alarm range
                 if (alarmFreqMax < 9) {
                     int grayAfterSize = 10 - alarmFreqMax;
                     DataPoint[] graySegmentAfter = new DataPoint[grayAfterSize];
@@ -188,7 +175,6 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
                 Log.e(TAG, "Exception creating spectrum graph: " + e.getMessage());
             }
 
-            // Configure viewport
             mChart.getViewport().setYAxisBoundsManual(true);
             mChart.getViewport().setMinY(0);
             mChart.getViewport().setMaxY(3000);
@@ -199,14 +185,13 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             mChart.getViewport().setScalable(false);
             mChart.getViewport().setScrollable(false);
 
-            // Configure grid and labels
+            // Use theme-aware text color from base class
             mChart.getGridLabelRenderer().setNumHorizontalLabels(10);
             mChart.getGridLabelRenderer().setNumVerticalLabels(5);
-            mChart.getGridLabelRenderer().setHorizontalLabelsColor(Color.WHITE);
-            mChart.getGridLabelRenderer().setVerticalLabelsColor(Color.WHITE);
+            mChart.getGridLabelRenderer().setHorizontalLabelsColor(okTextColour);
+            mChart.getGridLabelRenderer().setVerticalLabelsColor(okTextColour);
             mChart.getGridLabelRenderer().setGridColor(Color.GRAY);
 
-            // Custom label formatter for X-axis to show frequency ranges
             mChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {
                 @Override
                 public String formatLabel(double value, boolean isValueX) {
@@ -222,11 +207,7 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
                 }
             });
 
-            // Disable legend
             mChart.getLegendRenderer().setVisible(false);
-
-
-
         }
     }
 }
