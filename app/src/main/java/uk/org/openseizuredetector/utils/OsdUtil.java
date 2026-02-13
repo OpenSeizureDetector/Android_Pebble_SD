@@ -52,6 +52,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -148,6 +149,34 @@ public class OsdUtil {
         openDb();
         writeToSysLogFile("OsdUtil() - initialised");
 
+    }
+
+    /**
+     * Centralised method to apply the application theme based on user preference.
+     * Supports: "system" (default), "light", and "dark".
+     */
+    public static void applyTheme(Context context) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        String themePref = sp.getString("darkMode", "system");
+        
+        Log.i(TAG, "applyTheme(): Setting theme to: " + themePref);
+        
+        switch (themePref) {
+            case "light":
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                break;
+            case "dark":
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                break;
+            case "system":
+            default:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+                } else {
+                    AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY);
+                }
+                break;
+        }
     }
 
     /**

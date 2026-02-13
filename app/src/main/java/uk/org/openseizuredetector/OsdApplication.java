@@ -17,10 +17,15 @@ public class OsdApplication extends Application {
     public void onCreate() {
         super.onCreate();
         try {
+            Log.i(TAG, "onCreate() - Application starting");
             // Initialize logging as the very first thing in application lifecycle
-            // This ensures all components can log from their creation onwards
             Handler mainHandler = new Handler(Looper.getMainLooper());
             sUtils = new OsdUtil(this, mainHandler);
+            
+            // Apply the user's selected theme (Light/Dark/System)
+            Log.d(TAG, "Applying theme");
+            OsdUtil.applyTheme(this);
+            
             sUtils.writeToSysLogFile("OsdApplication.onCreate() - Application starting", "LIFECYCLE");
             sUtils.writeMemoryLog("OsdApplication.onCreate - Application startup");
 
@@ -38,7 +43,6 @@ public class OsdApplication extends Application {
 
     /**
      * Static accessor to get the OsdUtil instance from anywhere in the app.
-     * This is initialized in onCreate() before any activities/services start.
      */
     public static OsdUtil getUtils() {
         return sUtils;

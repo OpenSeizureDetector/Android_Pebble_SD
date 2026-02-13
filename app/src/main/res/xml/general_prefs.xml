@@ -9,6 +9,15 @@
         android:defaultValue="Phone"
         android:dialogTitle="@string/select_datasource_title" />
 
+    <ListPreference
+        android:key="darkMode"
+        android:title="App Theme"
+        android:summary="Choose between light, dark, or system default theme"
+        android:entries="@array/dark_mode_entries"
+        android:entryValues="@array/dark_mode_values"
+        android:defaultValue="system"
+        android:dialogTitle="Select Theme" />
+
     <Preference
         android:key="SelectBLEDevice"
         android:widgetLayout="@layout/preference_widget_ble_button"

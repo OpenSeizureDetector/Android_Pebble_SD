@@ -29,10 +29,9 @@ import uk.org.openseizuredetector.R;
 import uk.org.openseizuredetector.alg.MlModelManager;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import android.app.AlertDialog;
-import uk.org.openseizuredetector.utils.OsdUncaughtExceptionHandler;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -43,7 +42,6 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
-import androidx.preference.TwoStatePreference;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -77,7 +75,6 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     private boolean mPrefChanged = false;
     private Context mContext;
     private Handler mHandler;
-    private Button mSelectBLEButton;
 
     private List<HeaderItem> mHeaders = new ArrayList<>();
     private List<HeaderItem> mAllHeaders = new ArrayList<>();
@@ -96,6 +93,13 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         }
     }
 
+    /**
+     * Centralised method to initialise all default preference values from XML files.
+     * This should be called once during app startup (e.g., in StartupActivity).
+     *
+     * @param context The application context
+     * @param readAgain Whether to force-read the defaults even if they have been read before.
+     */
     public static void initialiseDefaultValues(Context context, boolean readAgain) {
         Log.i(TAG, "initialiseDefaultValues(force=" + readAgain + ")");
         
@@ -302,6 +306,10 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         Log.i(TAG, "SharedPreference " + s + " Changed.");
+
+        if (s.equals("darkMode")) {
+            OsdUtil.applyTheme(this);
+        }
 
         if (s.equals("DataSource")) {
             updateHeaders();
@@ -518,10 +526,6 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         }
     }
 
-    /**
-     * Sophisticated ML model management interface.
-     * Displays a list of installed models with delete icons and a '+' button to add new models.
-     */
     public static class MlAlgPrefsFragment extends PreferenceFragmentCompat {
         private MlModelManager mMm;
         private ProgressDialog mProgressDialog;
@@ -615,9 +619,6 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         }
     }
 
-    /**
-     * Custom preference class for installed ML models with a delete button.
-     */
     private static class MlModelPreference extends Preference {
         private final JSONObject mModel;
         private final MlModelManager mMm;
