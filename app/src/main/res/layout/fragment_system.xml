@@ -65,6 +65,13 @@
                     android:textSize="12sp" />
 
                 <TextView
+                    android:id="@+id/dataSourceInfoTv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="---"
+                    android:textSize="12sp" />
+
+                <TextView
                     android:id="@+id/data_time_tv"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

@@ -10,12 +10,12 @@
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-
+  
   Android_SD is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-
+  
   You should have received a copy of the GNU General Public License
   along with Android_SD.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -43,6 +43,10 @@ public class SdDataHistory {
     public CircBuf phoneBattBuff = new CircBuf(24 * 3600 / 5, -1);      // 24 hour buffer
     public CircBuf watchSignalStrengthBuff = new CircBuf(10 * 60 / 5, -1); // 10 minute buffer
     public CircBuf mPseizureHistBuf = new CircBuf(120, -1.0);           // 10 minute buffer (120 samples)
+    
+    // Separate buffers for up to 5 individual ML models
+    public CircBuf[] mlModelProbBuffs = new CircBuf[5];
+    
     public CircBuf mAccelMagStdDevHistBuf = new CircBuf(120, -1.0);     // 10 minute buffer (120 samples)
     public CircBuf mHrHistBuf = new CircBuf(120, -1.0);                 // 10 minute heart rate history (120 samples)
 
@@ -55,14 +59,24 @@ public class SdDataHistory {
             mAccelMagStdDevHistBuf.add(0.0);
             mHrHistBuf.add(0.0);
         }
+        
+        // Initialize individual ML model buffers
+        for (int i = 0; i < 5; i++) {
+            mlModelProbBuffs[i] = new CircBuf(120, -1.0);
+            for (int j = 0; j < 120; j++) {
+                mlModelProbBuffs[i].add(0.0);
+            }
+        }
     }
 
     /**
      * Add a new data point to all history buffers.
+     * Including individual ML model probabilities.
      * Called every time new data arrives via SdData.
      */
     public void addDataPoint(long batteryPc, int phoneBatteryPc, double watchSignalStrength,
-                             double pSeizure, double accelMagStdDev, double heartRate) {
+                             double pSeizure, double accelMagStdDev, double heartRate,
+                             double[] mlModelProbs) {
         if (batteryPc >= 0) {
             watchBattBuff.add(batteryPc);
         }
@@ -80,6 +94,13 @@ public class SdDataHistory {
         }
         if (heartRate >= 0) {
             mHrHistBuf.add(heartRate);
+        }
+        
+        // Add individual ML model probabilities
+        if (mlModelProbs != null) {
+            for (int i = 0; i < Math.min(mlModelProbs.length, 5); i++) {
+                mlModelProbBuffs[i].add(mlModelProbs[i]);
+            }
         }
     }
 }

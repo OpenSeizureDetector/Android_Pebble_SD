@@ -3,10 +3,8 @@ import uk.org.openseizuredetector.R;
 
 import uk.org.openseizuredetector.data.SdData;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,11 +16,16 @@ import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
-import java.util.ArrayList;
+import java.util.Locale;
 
 public class FragmentMlAlg extends FragmentOsdBaseClass {
     String TAG = "FragmentMlAlg";
     private GraphView historyChart;
+
+    // Define colors for up to 6 models in the graph
+    private final int[] SERIES_COLORS = {
+        Color.BLUE, Color.RED, Color.GREEN, Color.MAGENTA, Color.CYAN, Color.parseColor("#FF8C00") // Orange
+    };
 
     public FragmentMlAlg() {
         // Required empty public constructor
@@ -46,14 +49,16 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         try {
             SdData sdData = mConnection.mSdServer.mSdData;
 
-            // Simplified status text: "N models active"
+            // Header row: "N models active | AccStDev: X%"
             TextView modelStatusTv = mRootView.findViewById(R.id.fragment_ml_alg_model_name);
-            modelStatusTv.setText(sdData.mlNumModels + " model(s) active");
+            String statusText = String.format(Locale.getDefault(), "%d model(s) active  |  AccStDev: %.1f%%", 
+                                            sdData.mlNumModels, sdData.mAccelMagStdDev);
+            modelStatusTv.setText(statusText);
 
-            // Update the 2-column grid of models
+            // Update the 2-column grid of model statuses
             updateIndividualModelDisplay(sdData);
 
-            // Update history chart
+            // Update history chart with multiple model lines
             displayHistoryChart(sdData);
 
         } catch (Exception e) {
@@ -73,12 +78,12 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
             // Create a compact vertical layout for each model cell
             android.widget.LinearLayout cell = new android.widget.LinearLayout(mContext);
             cell.setOrientation(android.widget.LinearLayout.VERTICAL);
-            cell.setPadding(8, 8, 8, 8);
+            cell.setPadding(8, 4, 8, 4);
             
             // Header: "ML1 (OK)"
             TextView headerView = new TextView(mContext);
             String statusText = getStatusText(sdData.mlModelStates[i]);
-            headerView.setText(sdData.mlModelNames[i] + " (" + statusText + ")");
+            headerView.setText(String.format(Locale.getDefault(), "%s (%s)", sdData.mlModelNames[i], statusText));
             headerView.setTextColor(okTextColour);
             headerView.setTextSize(12);
             headerView.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -87,7 +92,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
             // Probability: "15.2%"
             TextView probView = new TextView(mContext);
             float probPc = (float) (sdData.mlModelProbs[i] * 100.0);
-            probView.setText(String.format("%.1f%%", probPc));
+            probView.setText(String.format(Locale.getDefault(), "%.1f%%", probPc));
             probView.setTextColor(okTextColour);
             probView.setTextSize(11);
             cell.addView(probView);
@@ -95,7 +100,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
             // Mini Progress Bar
             ProgressBar pb = new ProgressBar(mContext, null, android.R.attr.progressBarStyleHorizontal);
             pb.setLayoutParams(new android.widget.LinearLayout.LayoutParams(
-                    android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 12)); // fixed height
+                    android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 12));
             pb.setMax(100);
             pb.setProgress((int) probPc);
             pb.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#EEEEEE")));
@@ -148,7 +153,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
                     double minutesAgo = (600 - value) / 60.0;
                     double rounded = Math.round(minutesAgo);
                     if (Math.abs(minutesAgo - rounded) < 0.3 && rounded % 2 == 0 && rounded >= 0 && rounded <= 10) {
-                        return String.format("%d", (int)rounded);
+                        return String.format(Locale.getDefault(), "%d", (int)rounded);
                     }
                     return ""; 
                 }
@@ -161,39 +166,23 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         historyChart.getGridLabelRenderer().setGridColor(Color.GRAY);
         historyChart.getGridLabelRenderer().setHorizontalAxisTitleColor(okTextColour);
         historyChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (minutes ago)");
+
+        // Enable legend - visibility will be controlled dynamically when drawing series
+        historyChart.getLegendRenderer().setVisible(true);
+        historyChart.getLegendRenderer().setAlign(com.jjoe64.graphview.LegendRenderer.LegendAlign.TOP);
+        historyChart.getLegendRenderer().setBackgroundColor(Color.argb(160, 255, 255, 255)); // Light semi-transparent background
+        historyChart.getLegendRenderer().setTextColor(Color.BLACK); // Force black text for contrast on light bg
+        historyChart.getLegendRenderer().setTextSize(24f);
     }
 
     private void displayHistoryChart(SdData sdData) {
         try {
             if (historyChart == null) return;
-            double[] seizureHistoryData = mConnection.mSdServer.mSdDataHistory.mPseizureHistBuf.getVals();
-            if (seizureHistoryData == null || seizureHistoryData.length == 0) {
-                historyChart.removeAllSeries();
-                return;
-            }
-
-            DataPoint[] seizureDataPoints = new DataPoint[seizureHistoryData.length];
-            int validSeizurePoints = 0;
-            for (int i = 0; i < seizureHistoryData.length; i++) {
-                if (seizureHistoryData[i] >= 0.0) {
-                    seizureDataPoints[validSeizurePoints] = new DataPoint(i * 5.0, seizureHistoryData[i] * 100.0);
-                    validSeizurePoints++;
-                }
-            }
-
-            if (validSeizurePoints == 0) {
-                historyChart.removeAllSeries();
-                return;
-            }
-
-            DataPoint[] validSeizureDataPoints = new DataPoint[validSeizurePoints];
-            System.arraycopy(seizureDataPoints, 0, validSeizureDataPoints, 0, validSeizurePoints);
-            LineGraphSeries<DataPoint> seizureSeries = new LineGraphSeries<>(validSeizureDataPoints);
-            seizureSeries.setColor(Color.BLUE);
-            seizureSeries.setThickness(3);
+            
+            // Clear existing series to redraw with updated history
             historyChart.removeAllSeries();
-            historyChart.addSeries(seizureSeries);
 
+            // 1. Draw Acceleration StdDev as a faint background line
             double[] accelStdDevData = mConnection.mSdServer.mSdDataHistory.mAccelMagStdDevHistBuf.getVals();
             if (accelStdDevData != null && accelStdDevData.length > 0) {
                 DataPoint[] accelDataPoints = new DataPoint[accelStdDevData.length];
@@ -208,11 +197,50 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
                     DataPoint[] validAccelDataPoints = new DataPoint[validAccelPoints];
                     System.arraycopy(accelDataPoints, 0, validAccelDataPoints, 0, validAccelPoints);
                     LineGraphSeries<DataPoint> accelSeries = new LineGraphSeries<>(validAccelDataPoints);
-                    accelSeries.setColor(Color.argb(180, 150, 150, 150)); 
-                    accelSeries.setThickness(1); 
+                    accelSeries.setColor(Color.argb(100, 180, 180, 180)); // Very faint gray
+                    accelSeries.setThickness(2);
+                    accelSeries.setTitle("Std");
                     historyChart.addSeries(accelSeries);
                 }
             }
+
+            // 2. Draw lines for each ML model using the new history buffs
+            boolean addedAnyModelSeries = false;
+            int maxModels = Math.min(5, sdData.mlNumModels);
+            for (int i = 0; i < maxModels; i++) {
+                // Only include models that are marked active
+                if (sdData.mlModelActive == null || i >= sdData.mlModelActive.length || !sdData.mlModelActive[i]) continue;
+
+                double[] modelHistory = mConnection.mSdServer.mSdDataHistory.mlModelProbBuffs[i].getVals();
+                if (modelHistory != null && modelHistory.length > 0) {
+                    DataPoint[] modelPoints = new DataPoint[modelHistory.length];
+                    int validPoints = 0;
+                    for (int j = 0; j < modelHistory.length; j++) {
+                        if (modelHistory[j] >= 0.0) {
+                            modelPoints[validPoints] = new DataPoint(j * 5.0, modelHistory[j] * 100.0);
+                            validPoints++;
+                        }
+                    }
+                    if (validPoints > 0) {
+                        DataPoint[] validPointsArr = new DataPoint[validPoints];
+                        System.arraycopy(modelPoints, 0, validPointsArr, 0, validPoints);
+                        LineGraphSeries<DataPoint> series = new LineGraphSeries<>(validPointsArr);
+                        series.setColor(SERIES_COLORS[i % SERIES_COLORS.length]);
+                        series.setThickness(4);
+                        // Prefer descriptive name if available, else fallback to MLx
+                        String title = (sdData.mlModelNames != null && i < sdData.mlModelNames.length && sdData.mlModelNames[i] != null && !sdData.mlModelNames[i].isEmpty())
+                                ? sdData.mlModelNames[i]
+                                : ("ML" + (i + 1));
+                        series.setTitle(title);
+                        historyChart.addSeries(series);
+                        addedAnyModelSeries = true;
+                    }
+                }
+            }
+
+            // Show legend only if we added at least one model series (movement line alone doesn't require legend)
+            historyChart.getLegendRenderer().setVisible(addedAnyModelSeries);
+
         } catch (Exception e) {
             Log.e(TAG, "Error updating chart: " + e.getMessage(), e);
         }

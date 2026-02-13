@@ -161,14 +161,30 @@ public class FragmentSystem extends FragmentOsdBaseClass {
 
             tv = (TextView) mRootView.findViewById(R.id.serverStatusTv);
             if (mConnection.mBound) {
-                if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
-                    tv.setText(mConnection.mSdServer.mLogNDA ? getString(R.string.DataSource) + " = Phone (Demo Mode)\nNDA Logging" : getString(R.string.DataSource) + " = Phone (Demo Mode)");
-                    tv.setBackgroundColor(warnColour);
-                    tv.setTextColor(warnTextColour);
+                // Show server running status, adding NDA suffix if enabled
+                if (mConnection.mSdServer.mLogNDA) {
+                    tv.setText(getString(R.string.ServerRunningOK) + " - NDA Logging");
                 } else {
-                    tv.setText(mConnection.mSdServer.mLogNDA ? getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName + ": NDA Logging" : getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
-                    tv.setBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
+                    tv.setText(getString(R.string.ServerRunningOK));
+                }
+                tv.setBackgroundColor(okColour);
+                tv.setTextColor(okTextColour);
+
+                // Set data source info text and color (moved from FragmentCommon)
+                TextView dsTv = (TextView) mRootView.findViewById(R.id.dataSourceInfoTv);
+                dsTv.setBackgroundColor(okColour);
+                dsTv.setTextColor(okTextColour);
+                if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
+                    dsTv.setText(getString(R.string.DataSource) + " = " + "Phone (Demo Mode)");
+                    dsTv.setBackgroundColor(warnColour);
+                    dsTv.setTextColor(warnTextColour);
+                } else if (mConnection.mSdServer.mSdDataSourceName.equals("BLE")
+                    || mConnection.mSdServer.mSdDataSourceName.equals("BLE2")) {
+                    dsTv.setText(getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName
+                            + " ("+ mConnection.mSdServer.mSdData.watchSdName + ", "
+                            + mConnection.mSdServer.mSdData.watchSerNo+")");
+                } else {
+                    dsTv.setText(getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
                 }
             }
             tv = (TextView) mRootView.findViewById(R.id.serverIpTv);
@@ -181,6 +197,13 @@ public class FragmentSystem extends FragmentOsdBaseClass {
             tv.setText(R.string.ServerStopped);
             tv.setBackgroundColor(warnColour);
             tv.setTextColor(warnTextColour);
+            // When server stopped, clear data source info and serverIp
+            TextView dsTv = (TextView) mRootView.findViewById(R.id.dataSourceInfoTv);
+            if (dsTv != null) {
+                dsTv.setText("--");
+                dsTv.setBackgroundColor(warnColour);
+                dsTv.setTextColor(warnTextColour);
+            }
             tv = (TextView) mRootView.findViewById(R.id.serverIpTv);
             tv.setText("--");
             tv.setBackgroundColor(warnColour);

@@ -89,99 +89,70 @@ public class FragmentCommon extends FragmentOsdBaseClass {
         //Log.d(TAG,"updateUi()");
         TextView tv;
 
-        if (mUtil.isServerRunning()) {
-            tv = (TextView) mRootView.findViewById(R.id.serverStatusTv);
-            if (mConnection.mBound) {
-                if (mConnection.mSdServer.mLogNDA)
-                    tv.setText(getString(R.string.ServerRunningOK) + " - NDA Logging");
-                else
-                    tv.setText(getString(R.string.ServerRunningOK));
-                tv.setBackgroundColor(okColour);
+        // Update data time if we have a connection
+        if (mConnection.mBound) {
+            tv = (TextView) mRootView.findViewById(R.id.data_time_tv);
+            long tnow = System.currentTimeMillis();
+            double tdiff;
+            tdiff = (tnow - mConnection.mSdServer.mSdData.dataTimeMillis) / 1000.;
+            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+            String timeStr = timeFormat.format(new Date(mConnection.mSdServer.mSdData.dataTimeMillis));
+            tv.setText("Time =" + timeStr
+                    + "  (" + String.format(Locale.getDefault(), "%.1f s, %.0f s",mConnection.mSdServer.mSdData.timeDiff, tdiff) + ")");
+            tv.setBackgroundColor(okColour);
+            tv.setTextColor(okTextColour);
+
+            // Update overall alarm status (now in a card)
+            tv = (TextView) mRootView.findViewById(R.id.alarmTv);
+            com.google.android.material.card.MaterialCardView alarmCard =
+                    (com.google.android.material.card.MaterialCardView) mRootView.findViewById(R.id.alarmStatusCard);
+
+            if ((mConnection.mSdServer.mSdData.alarmState == 0)
+                    && !mConnection.mSdServer.mSdData.alarmStanding
+                    && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
+                tv.setText(getString(R.string.okBtnTxt));
+                alarmCard.setCardBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
-
-                tv = (TextView) mRootView.findViewById(R.id.data_time_tv);
-                long tnow = System.currentTimeMillis();
-                double tdiff;
-                tdiff = (tnow - mConnection.mSdServer.mSdData.dataTimeMillis) / 1000.;
-                SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
-                String timeStr = timeFormat.format(new Date(mConnection.mSdServer.mSdData.dataTimeMillis));
-                tv.setText("Time =" + timeStr
-                        + "  (" + String.format("%.1f s, %.0f s)",mConnection.mSdServer.mSdData.timeDiff, tdiff));
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
-
-
-                // Update overall alarm status (now in a card)
-                tv = (TextView) mRootView.findViewById(R.id.alarmTv);
-                com.google.android.material.card.MaterialCardView alarmCard =
-                        (com.google.android.material.card.MaterialCardView) mRootView.findViewById(R.id.alarmStatusCard);
-
-                if ((mConnection.mSdServer.mSdData.alarmState == 0)
-                        && !mConnection.mSdServer.mSdData.alarmStanding
-                        && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
-                    tv.setText(getString(R.string.okBtnTxt));
-                    alarmCard.setCardBackgroundColor(okColour);
-                    tv.setTextColor(okTextColour);
-                }
-                if ((mConnection.mSdServer.mSdData.alarmState == 1)
-                        && !mConnection.mSdServer.mSdData.alarmStanding
-                        && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
-                    tv.setText(R.string.Warning);
-                    alarmCard.setCardBackgroundColor(warnColour);
-                    tv.setTextColor(warnTextColour);
-                }
-                if (mConnection.mSdServer.mSdData.alarmState == 6) {
-                    tv.setText(R.string.Mute);
-                    alarmCard.setCardBackgroundColor(warnColour);
-                    tv.setTextColor(warnTextColour);
-                }
-                if (mConnection.mSdServer.mSdData.alarmStanding) {
-                    tv.setText(getString(R.string.Alarm) + "\n" + mConnection.mSdServer.mSdData.alarmCause);
-                    alarmCard.setCardBackgroundColor(alarmColour);
-                    tv.setTextColor(alarmTextColour);
-                }
-                if (mConnection.mSdServer.mSdData.fallAlarmStanding) {
-                    tv.setText(R.string.Fall);
-                    alarmCard.setCardBackgroundColor(alarmColour);
-                    tv.setTextColor(alarmTextColour);
-                }
-                if (mConnection.mSdServer.mSdData.alarmState == 4) {
-                    tv.setText(R.string.Fault);
-                    alarmCard.setCardBackgroundColor(warnColour);
-                    tv.setTextColor(warnTextColour);
-                }
-                if (mConnection.mSdServer.mSdData.alarmState == 7) {
-                    tv.setText(R.string.NetFault);
-                    alarmCard.setCardBackgroundColor(warnColour);
-                    tv.setTextColor(warnTextColour);
-                }
-
-
-                // Update algorithm status display with color-coded individual algorithm states
-                updateAlgorithmStatusDisplay();
-
-                tv = (TextView) mRootView.findViewById(R.id.dataSourceInfoTv);
-                tv.setBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
-                if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
-                    tv.setText(getString(R.string.DataSource) + " = " + "Phone (Demo Mode)");
-                    tv.setBackgroundColor(warnColour);
-                    tv.setTextColor(warnTextColour);
-                } else if (mConnection.mSdServer.mSdDataSourceName.equals("BLE")
-                    || mConnection.mSdServer.mSdDataSourceName.equals("BLE2")) {
-                    tv.setText(getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName
-                            + " ("+ mConnection.mSdServer.mSdData.watchSdName + ", "
-                            + mConnection.mSdServer.mSdData.watchSerNo+")");
-                } else {
-                    tv.setText(getString(R.string.DataSource) + " = " + mConnection.mSdServer.mSdDataSourceName);
-                }
-
             }
-        } else {
-            tv = (TextView) mRootView.findViewById(R.id.serverStatusTv);
-            tv.setText(R.string.ServerStopped);
-            tv.setBackgroundColor(warnColour);
-            tv.setTextColor(warnTextColour);
+            if ((mConnection.mSdServer.mSdData.alarmState == 1)
+                    && !mConnection.mSdServer.mSdData.alarmStanding
+                    && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
+                tv.setText(R.string.Warning);
+                alarmCard.setCardBackgroundColor(warnColour);
+                tv.setTextColor(warnTextColour);
+            }
+            if (mConnection.mSdServer.mSdData.alarmState == 6) {
+                tv.setText(R.string.Mute);
+                alarmCard.setCardBackgroundColor(warnColour);
+                tv.setTextColor(warnTextColour);
+            }
+            if (mConnection.mSdServer.mSdData.alarmStanding) {
+                tv.setText(getString(R.string.Alarm) + "\n" + mConnection.mSdServer.mSdData.alarmCause);
+                alarmCard.setCardBackgroundColor(alarmColour);
+                tv.setTextColor(alarmTextColour);
+            }
+            if (mConnection.mSdServer.mSdData.fallAlarmStanding) {
+                tv.setText(R.string.Fall);
+                alarmCard.setCardBackgroundColor(alarmColour);
+                tv.setTextColor(alarmTextColour);
+            }
+            if (mConnection.mSdServer.mSdData.alarmState == 4) {
+                tv.setText(R.string.Fault);
+                alarmCard.setCardBackgroundColor(warnColour);
+                tv.setTextColor(warnTextColour);
+            }
+            if (mConnection.mSdServer.mSdData.alarmState == 7) {
+                tv.setText(R.string.NetFault);
+                alarmCard.setCardBackgroundColor(warnColour);
+                tv.setTextColor(warnTextColour);
+            }
+
+
+            // Update algorithm status display with color-coded individual algorithm states
+            updateAlgorithmStatusDisplay();
+
+            // The dataSourceInfoTv and serverStatusTv are now shown in FragmentSystem
+
         }
 
 
