@@ -28,7 +28,8 @@ public class SdAlgMl extends SdAlgBase {
     private MlModelManager mMm;
 
     private static class ModelInstance {
-        String name;
+        String label; // Short label like ML1, ML2
+        String name;  // Full descriptive name
         String framework;
         InterpreterApi tfliteInterpreter;
         Module pytorchModule;
@@ -84,9 +85,11 @@ public class SdAlgMl extends SdAlgBase {
         List<MlModelManager.ModelLoadResult> results = mMm.loadAllActiveModels();
         Log.i(TAG, "loadAllActiveModels(): Found " + results.size() + " model(s)");
 
-        for (MlModelManager.ModelLoadResult res : results) {
+        for (int i = 0; i < results.size(); i++) {
+            MlModelManager.ModelLoadResult res = results.get(i);
             try {
                 ModelInstance model = new ModelInstance();
+                model.label = "ML" + (i + 1);
                 model.name = res.name;
                 model.framework = res.framework;
                 model.inputFormat = res.inputFormat;
@@ -99,17 +102,17 @@ public class SdAlgMl extends SdAlgBase {
                                 new InterpreterApi.Options().setRuntime(
                                         InterpreterApi.Options.TfLiteRuntime.FROM_SYSTEM_ONLY));
                         mModels.add(model);
-                        Log.d(TAG, "Loaded TFLite model: " + model.name);
+                        Log.d(TAG, "Loaded TFLite model " + model.label + ": " + model.name);
                     } else {
-                        Log.e(TAG, "Failed to load TFLite model " + model.name + " - buffer is null");
+                        Log.e(TAG, "Failed to load TFLite model " + res.name + " - buffer is null");
                     }
                 } else if ("pytorch".equalsIgnoreCase(res.framework) || "executorch".equalsIgnoreCase(res.framework)) {
                     if (res.file != null && res.file.exists()) {
                         model.pytorchModule = Module.load(res.file.getAbsolutePath());
                         mModels.add(model);
-                        Log.d(TAG, "Loaded PyTorch/ExecuTorch model: " + model.name);
+                        Log.d(TAG, "Loaded PyTorch/ExecuTorch model " + model.label + ": " + model.name);
                     } else {
-                        Log.e(TAG, "Failed to load PyTorch model " + model.name + " - file not found");
+                        Log.e(TAG, "Failed to load PyTorch model " + res.name + " - file not found");
                     }
                 }
             } catch (Exception e) {
@@ -138,19 +141,19 @@ public class SdAlgMl extends SdAlgBase {
 
             try {
                 float pSeizure = evaluateModel(model, sdData);
-                Log.v(TAG, "evaluateAllModels(): Model " + model.name + " pSeizure=" + pSeizure);
+                Log.v(TAG, "evaluateAllModels(): Model " + model.label + " pSeizure=" + pSeizure);
 
                 // Use 0.5 as a standard probability threshold for alarm
                 int alarmState = (pSeizure > 0.5) ? 2 : 0;
 
                 results.add(new AlgorithmResult(
-                        model.name,
+                        model.label, // Use short label for voting results
                         alarmState,
                         pSeizure,
                         model.weight
                 ));
             } catch (Exception e) {
-                Log.e(TAG, "Error evaluating model " + model.name + ": " + e.getMessage());
+                Log.e(TAG, "Error evaluating model " + model.label + ": " + e.getMessage());
             }
         }
 

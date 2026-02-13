@@ -333,8 +333,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                     Intent i = new Intent(getApplicationContext(), StartupActivity.class);
                     startActivity(i);
                     finish();
-                }
-            }, 1000);
+                }}, 1000);
             return;
         } else if (s.equals("advancedMode")) {
             startActivity(getIntent());
@@ -564,7 +563,8 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             for (int i = 0; i < installed.length(); i++) {
                 try {
                     JSONObject m = installed.getJSONObject(i);
-                    category.addPreference(new MlModelPreference(getContext(), m, mMm, this::refreshInstalledModelsList));
+                    String label = "ML" + (i + 1);
+                    category.addPreference(new MlModelPreference(getContext(), m, label, mMm, this::refreshInstalledModelsList));
                 } catch (Exception ignored) {}
             }
         }
@@ -621,16 +621,18 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
     private static class MlModelPreference extends Preference {
         private final JSONObject mModel;
+        private final String mLabel;
         private final MlModelManager mMm;
         private final Runnable mOnDeleted;
 
-        public MlModelPreference(Context context, JSONObject model, MlModelManager mm, Runnable onDeleted) {
+        public MlModelPreference(Context context, JSONObject model, String label, MlModelManager mm, Runnable onDeleted) {
             super(context);
             mModel = model;
+            mLabel = label;
             mMm = mm;
             mOnDeleted = onDeleted;
             setLayoutResource(R.layout.ml_model_list_item);
-            setTitle(model.optString("name", "Unknown Model"));
+            setTitle(label + ": " + model.optString("name", "Unknown Model"));
             setSummary("v" + model.optString("version", "?") + " (" + model.optString("size", "?") + ")");
         }
 
@@ -641,12 +643,12 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             TextView details = (TextView) holder.findViewById(R.id.model_details);
             ImageButton delete = (ImageButton) holder.findViewById(R.id.delete_button);
 
-            title.setText(mModel.optString("name", "Unknown"));
+            title.setText(mLabel + ": " + mModel.optString("name", "Unknown"));
             details.setText("Version: " + mModel.optString("version", "?") + " | Size: " + mModel.optString("size", "?"));
             
             delete.setOnClickListener(v -> {
                 new AlertDialog.Builder(getContext())
-                    .setTitle("Delete Model?")
+                    .setTitle("Delete Model " + mLabel + "?")
                     .setMessage("Are you sure you want to remove " + mModel.optString("name") + "?")
                     .setPositiveButton("Delete", (dialog, which) -> {
                         mMm.deleteModel(mModel.optString("fname"));
