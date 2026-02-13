@@ -1,37 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory android:title="@string/ml_sd_settings_title">
         <Preference
             android:key="ml_description"
             android:summary="@string/CnnAlarmEnabledSummary"
             android:selectable="false" />
 
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="MlUseMultiModel"
-            android:summary="@string/ml_use_multi_model_summary"
-            android:title="@string/ml_use_multi_model_title" />
-        <EditTextPreference
-            android:defaultValue="1"
-            android:key="MlNumModels"
-            android:inputType="number"
-            android:summary="@string/ml_num_models_summary"
-            android:title="@string/ml_num_models_title" />
-        <EditTextPreference
-            android:defaultValue="2"
-            android:key="CnnAlarmThreshold"
-            android:summary="@string/ml_sd_threshold_summary"
-            android:title="@string/ml_sd_threshold_title" />
-        <EditTextPreference
-            android:defaultValue="1"
-            android:key="CnnModelId"
-            android:enabled="false"
-            android:summary="@string/ml_sd_modelid_summary"
-            android:title="@string/ml_sd_modelid_title" />
+        <!-- Placeholder for the dynamic list of installed models -->
+        <PreferenceCategory
+            android:key="installed_models_category"
+            android:title="Installed Models">
+            <!-- Items added programmatically -->
+        </PreferenceCategory>
+
         <Preference
-            android:key="MlModelSelector"
-            android:title="@string/ml_model_select_title"
-            android:summary="@string/ml_model_select_summary" />
+            android:key="add_ml_model"
+            android:title="Add ML Model"
+            android:summary="Download and install a new seizure detection model"
+            app:iconSpaceReserved="false" />
+
         <ListPreference
             android:key="MlModelUpdateCheckPeriod"
             android:title="@string/ml_model_update_check_title"

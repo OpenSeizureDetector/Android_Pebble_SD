@@ -29,6 +29,7 @@ import uk.org.openseizuredetector.R;
 import uk.org.openseizuredetector.alg.MlModelManager;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import android.app.AlertDialog;
+import uk.org.openseizuredetector.utils.OsdUncaughtExceptionHandler;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -50,6 +51,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -94,18 +96,9 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         }
     }
 
-    /**
-     * Centralised method to initialise all default preference values from XML files.
-     * This should be called once during app startup (e.g., in StartupActivity).
-     *
-     * @param context The application context
-     * @param readAgain Whether to force-read the defaults even if they have been read before.
-     *                  Set to false for normal startup, true if defaults have changed.
-     */
     public static void initialiseDefaultValues(Context context, boolean readAgain) {
         Log.i(TAG, "initialiseDefaultValues(force=" + readAgain + ")");
         
-        // List of all preference XML resource IDs
         int[] prefResources = {
                 R.xml.general_prefs,
                 R.xml.alarm_prefs,
@@ -281,8 +274,6 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 continue;
             }
 
-            // In the main header list, we only show non-algorithm-specific headers
-            // Option B: Algorithm settings are now moved INSIDE AlgorithmSelectionPrefsFragment
             if (h.algorithmKey != null && !h.algorithmKey.isEmpty()) {
                 continue;
             }
@@ -433,10 +424,6 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         }
     }
 
-    /**
-     * Option B implementation: This fragment now handles both the algorithm toggle switches
-     * AND dynamically provides access to their settings sub-screens.
-     */
     public static class AlgorithmSelectionPrefsFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
         private PreferenceCategory mSettingsCategory;
 
@@ -444,7 +431,6 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.sd_prefs_main, rootKey);
             
-            // Add a dynamic category for settings sub-screens
             mSettingsCategory = new PreferenceCategory(getPreferenceManager().getContext());
             mSettingsCategory.setTitle("Algorithm Settings");
             getPreferenceScreen().addPreference(mSettingsCategory);
@@ -471,49 +457,32 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             }
         }
 
-        /**
-         * Dynamically adds or removes sub-screen links based on which algorithms are enabled.
-         */
         private void updateDynamicSettings() {
             if (mSettingsCategory == null) return;
             mSettingsCategory.removeAll();
             
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
             
-            // Add Voting Settings (Always visible if any algorithm might be enabled)
             addSettingLink("Algorithm Voting", "Configure how multiple algorithms work together", VotingPrefsFragment.class.getName());
 
-            // Add OSD Settings
             if (sp.getBoolean("OsdAlarmActive", true)) {
                 addSettingLink("OSD Algorithm Settings", "Core vibration detection parameters", OsdAlgPrefsFragment.class.getName());
             }
-            
-            // Add Flap Settings
             if (sp.getBoolean("FlapAlarmActive", true)) {
                 addSettingLink("Flap Alarm Settings", "Experimental arm flapping detection", FlapAlgPrefsFragment.class.getName());
             }
-            
-            // Add ML Settings
             if (sp.getBoolean("CnnAlarmActive", false)) {
                 addSettingLink("Machine Learning Settings", "Manage models and sensitivity", MlAlgPrefsFragment.class.getName());
             }
-            
-            // Add HR Settings
             if (sp.getBoolean("HRAlarmActive", false)) {
                 addSettingLink("Heart Rate Settings", "Threshold and adaptive alarms", HrAlgPrefsFragment.class.getName());
             }
-            
-            // Add O2 Settings
             if (sp.getBoolean("O2SatAlarmActive", false)) {
                 addSettingLink("O2 Saturation Settings", "Oxygen saturation alarm levels", O2SatPrefsFragment.class.getName());
             }
-            
-            // Add Fall Settings
             if (sp.getBoolean("FallActive", false)) {
                 addSettingLink("Fall Detection Settings", "Fall detection sensitivity", FallAlgPrefsFragment.class.getName());
             }
-            
-            // Add Fidget Settings
             if (sp.getBoolean("FidgetDetectorEnabled", false)) {
                 addSettingLink("Fidget Settings", "Configure fidget detector parameters", FidgetAlgPrefsFragment.class.getName());
             }
@@ -549,80 +518,141 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         }
     }
 
+    /**
+     * Sophisticated ML model management interface.
+     * Displays a list of installed models with delete icons and a '+' button to add new models.
+     */
     public static class MlAlgPrefsFragment extends PreferenceFragmentCompat {
+        private MlModelManager mMm;
         private ProgressDialog mProgressDialog;
-        private AtomicBoolean mDownloadCancelFlag;
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.sd_prefs_ml, rootKey);
-            Preference modelPref = findPreference("MlModelSelector");
-            if (modelPref != null) {
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
-                String modelName = sp.getString("CnnModelName", null);
-                modelPref.setSummary(getString(R.string.ml_model_select_summary) + "\n" + (modelName != null ? getString(R.string.selected_model_label, modelName) : getString(R.string.no_model_selected)));
-                modelPref.setOnPreferenceClickListener(pref -> { showMlModelSelector(); return true; });
+            mMm = new MlModelManager(getContext());
+            
+            Preference addPref = findPreference("add_ml_model");
+            if (addPref != null) {
+                addPref.setOnPreferenceClickListener(pref -> {
+                    showAvailableModelsDialog();
+                    return true;
+                });
+            }
+            
+            refreshInstalledModelsList();
+        }
+
+        private void refreshInstalledModelsList() {
+            PreferenceCategory category = findPreference("installed_models_category");
+            if (category == null) return;
+            
+            category.removeAll();
+            JSONArray installed = mMm.getInstalledModels();
+            
+            if (installed.length() == 0) {
+                Preference empty = new Preference(getContext());
+                empty.setTitle("No models installed");
+                empty.setSummary("Click 'Add ML Model' below to download one.");
+                empty.setSelectable(false);
+                category.addPreference(empty);
+            }
+
+            for (int i = 0; i < installed.length(); i++) {
+                try {
+                    JSONObject m = installed.getJSONObject(i);
+                    category.addPreference(new MlModelPreference(getContext(), m, mMm, this::refreshInstalledModelsList));
+                } catch (Exception ignored) {}
             }
         }
 
-        private void showMlModelSelector() {
-            Context ctx = getActivity();
-            if (ctx == null) return;
-            MlModelManager mm = new MlModelManager(ctx);
-            mProgressDialog = new ProgressDialog(ctx);
-            mProgressDialog.setTitle("Downloading ML Models");
-            mProgressDialog.setMessage("Fetching available models...");
-            mProgressDialog.setCancelable(true);
-            mProgressDialog.show();
-            mDownloadCancelFlag = new AtomicBoolean(false);
-            mProgressDialog.setOnCancelListener(dialog -> mDownloadCancelFlag.set(true));
-            mm.getMlModelIndex(arr -> {
-                if (mProgressDialog != null && mProgressDialog.isShowing()) mProgressDialog.dismiss();
-                if (arr == null || mDownloadCancelFlag.get()) return;
-                if (getActivity() != null) getActivity().runOnUiThread(() -> showModelSelectionDialog(ctx, arr));
+        private void showAvailableModelsDialog() {
+            mProgressDialog = ProgressDialog.show(getContext(), "Checking Server", "Fetching available models...", true);
+            mMm.getMlModelIndex(arr -> {
+                if (mProgressDialog != null) mProgressDialog.dismiss();
+                if (arr == null) {
+                    Toast.makeText(getContext(), "Failed to fetch model list", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                List<String> names = new ArrayList<>();
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject obj = arr.optJSONObject(i);
+                    String label = obj.optString("name", "Unknown");
+                    if (obj.optBoolean("recommended", false)) label += " (Recommended)";
+                    names.add(label);
+                }
+
+                new AlertDialog.Builder(getContext())
+                    .setTitle("Select Model to Download")
+                    .setAdapter(new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_2, android.R.id.text1, names) {
+                        @Override
+                        public View getView(int pos, View convert, ViewGroup parent) {
+                            View v = super.getView(pos, convert, parent);
+                            JSONObject obj = arr.optJSONObject(pos);
+                            ((TextView)v.findViewById(android.R.id.text1)).setText(names.get(pos));
+                            ((TextView)v.findViewById(android.R.id.text2)).setText(obj.optString("description", "No description available."));
+                            return v;
+                        }
+                    }, (dialog, which) -> downloadModel(arr.optJSONObject(which)))
+                    .setNegativeButton("Cancel", null)
+                    .show();
             });
         }
 
-        private void showModelSelectionDialog(Context ctx, JSONArray modelArray) {
-            List<String> modelNames = new ArrayList<>();
-            List<String> modelDetails = new ArrayList<>();
-            for (int i = 0; i < modelArray.length(); i++) {
-                JSONObject model = modelArray.optJSONObject(i);
-                if (model != null) {
-                    modelNames.add(model.optString("name", "Unknown"));
-                    modelDetails.add("v" + model.optString("version", "") + " (" + model.optString("size", "") + ")");
-                }
-            }
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(ctx, android.R.layout.simple_list_item_2, android.R.id.text1, modelNames) {
-                @Override
-                public View getView(int position, View convertView, ViewGroup parent) {
-                    View view = super.getView(position, convertView, parent);
-                    ((TextView)view.findViewById(android.R.id.text1)).setText(modelNames.get(position));
-                    ((TextView)view.findViewById(android.R.id.text2)).setText(modelDetails.get(position));
-                    return view;
-                }
-            };
-            new AlertDialog.Builder(ctx).setTitle("Select ML Model").setAdapter(adapter, (dialog, which) -> downloadAndSelectModel(ctx, modelArray.optJSONObject(which))).setNegativeButton("Cancel", null).show();
+        private void downloadModel(JSONObject modelInfo) {
+            mProgressDialog = ProgressDialog.show(getContext(), "Downloading", modelInfo.optString("name"), true);
+            mMm.downloadAndInstallModel(modelInfo, (success, file) -> {
+                if (mProgressDialog != null) mProgressDialog.dismiss();
+                getActivity().runOnUiThread(() -> {
+                    if (success) {
+                        refreshInstalledModelsList();
+                        Toast.makeText(getContext(), "Model installed successfully", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(getContext(), "Failed to download model", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            });
+        }
+    }
+
+    /**
+     * Custom preference class for installed ML models with a delete button.
+     */
+    private static class MlModelPreference extends Preference {
+        private final JSONObject mModel;
+        private final MlModelManager mMm;
+        private final Runnable mOnDeleted;
+
+        public MlModelPreference(Context context, JSONObject model, MlModelManager mm, Runnable onDeleted) {
+            super(context);
+            mModel = model;
+            mMm = mm;
+            mOnDeleted = onDeleted;
+            setLayoutResource(R.layout.ml_model_list_item);
+            setTitle(model.optString("name", "Unknown Model"));
+            setSummary("v" + model.optString("version", "?") + " (" + model.optString("size", "?") + ")");
         }
 
-        private void downloadAndSelectModel(Context ctx, JSONObject selectedModel) {
-            if (selectedModel == null) return;
-            String modelName = selectedModel.optString("name", "Unknown");
-            String fileName = selectedModel.optString("file", "");
-            mProgressDialog = new ProgressDialog(ctx);
-            mProgressDialog.setTitle("Downloading Model");
-            mProgressDialog.setMessage(modelName);
-            mProgressDialog.setCancelable(true);
-            mProgressDialog.show();
-            mDownloadCancelFlag = new AtomicBoolean(false);
-            MlModelManager mm = new MlModelManager(ctx);
-            mm.downloadModel(fileName, mDownloadCancelFlag, (success, file) -> {
-                if (mProgressDialog != null && mProgressDialog.isShowing()) mProgressDialog.dismiss();
-                if (success && !mDownloadCancelFlag.get()) {
-                    PreferenceManager.getDefaultSharedPreferences(ctx).edit().putString("CnnModelName", modelName).putString("CnnModelFile", file.getAbsolutePath()).apply();
-                    Preference modelPref = findPreference("MlModelSelector");
-                    if (modelPref != null) modelPref.setSummary(getString(R.string.ml_model_select_summary) + "\n" + getString(R.string.selected_model_label, modelName));
-                }
+        @Override
+        public void onBindViewHolder(androidx.preference.PreferenceViewHolder holder) {
+            super.onBindViewHolder(holder);
+            TextView title = (TextView) holder.findViewById(R.id.model_name);
+            TextView details = (TextView) holder.findViewById(R.id.model_details);
+            ImageButton delete = (ImageButton) holder.findViewById(R.id.delete_button);
+
+            title.setText(mModel.optString("name", "Unknown"));
+            details.setText("Version: " + mModel.optString("version", "?") + " | Size: " + mModel.optString("size", "?"));
+            
+            delete.setOnClickListener(v -> {
+                new AlertDialog.Builder(getContext())
+                    .setTitle("Delete Model?")
+                    .setMessage("Are you sure you want to remove " + mModel.optString("name") + "?")
+                    .setPositiveButton("Delete", (dialog, which) -> {
+                        mMm.deleteModel(mModel.optString("fname"));
+                        mOnDeleted.run();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
             });
         }
     }
