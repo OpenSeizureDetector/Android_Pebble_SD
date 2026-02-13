@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="@string/SeizureDetectorSettingsTitle">
+    <PreferenceCategory
+        android:title="OSD Algorithm"
+        android:summary="@string/OsdAlarmEnabledSummary">
+
+        <Preference
+            android:key="osd_description"
+            android:summary="@string/OsdAlarmEnabledSummary"
+            android:selectable="false" />
+
         <EditTextPreference
             android:defaultValue="5"
             android:key="WarnTime"

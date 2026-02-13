@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="@string/HeartRateAlarmSettingsTitle">
+    <PreferenceCategory android:title="Heart Rate Algorithm">
+        <Preference
+            android:key="hr_description"
+            android:summary="Configure heart rate based seizure detection using a compatible watch."
+            android:selectable="false" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="HRAdaptiveAlarmActive"
+            android:title="Enable Adaptive Threshold"
+            android:summary="Adjusts heart rate alarm thresholds based on recent average heart rate." />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="HRAverageAlarmActive"
+            android:title="Enable Rolling Average"
+            android:summary="Uses a moving average of heart rate to detect significant changes." />
+
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="HrFrozenAlarm"
@@ -23,7 +40,7 @@
             android:title="@string/HRThreshMaxTitle" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/HeartRateAdaptiveAlarmSettingsTitle">
+    <PreferenceCategory android:title="Adaptive Threshold Settings">
         <EditTextPreference
             android:defaultValue="30"
             android:key="HRAdaptiveAlarmWindowSecs"
@@ -36,7 +53,7 @@
             android:title="@string/HRAdaptiveThreshTitle" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/HeartRateAverageAlarmSettingsTitle">
+    <PreferenceCategory android:title="Rolling Average Settings">
         <EditTextPreference
             android:defaultValue="40"
             android:key="HRAverageAlarmThreshMin"

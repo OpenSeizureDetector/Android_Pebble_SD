@@ -29,7 +29,6 @@ import uk.org.openseizuredetector.R;
 import uk.org.openseizuredetector.alg.MlModelManager;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import android.app.AlertDialog;
-import uk.org.openseizuredetector.utils.OsdUncaughtExceptionHandler;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -40,8 +39,10 @@ import android.os.Handler;
 import android.os.Looper;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.Preference;
+import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
+import androidx.preference.TwoStatePreference;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -132,8 +133,6 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Note: UncaughtExceptionHandler is now installed at the app level in OsdApplication.
-
         mHandler = new Handler(Looper.getMainLooper());
         mContext = getApplicationContext();
 
@@ -219,7 +218,6 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                     if ("header".equals(name)) {
                         String fragment = xrp.getAttributeValue(ANDROID_NS, "fragment");
                         
-                        // Handle both resource references and literal strings for the title
                         int titleRes = xrp.getAttributeResourceValue(ANDROID_NS, "title", 0);
                         String title;
                         if (titleRes != 0) {
@@ -283,10 +281,10 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 continue;
             }
 
+            // In the main header list, we only show non-algorithm-specific headers
+            // Option B: Algorithm settings are now moved INSIDE AlgorithmSelectionPrefsFragment
             if (h.algorithmKey != null && !h.algorithmKey.isEmpty()) {
-                if (!sp.getBoolean(h.algorithmKey, false)) {
-                    continue;
-                }
+                continue;
             }
 
             mHeaders.add(h);
@@ -314,7 +312,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         Log.i(TAG, "SharedPreference " + s + " Changed.");
 
-        if (s.endsWith("Active") || s.equals("DataSource")) {
+        if (s.equals("DataSource")) {
             updateHeaders();
         }
 
@@ -435,11 +433,98 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         }
     }
 
-    /* Algorithm Fragments */
-    public static class AlgorithmSelectionPrefsFragment extends PreferenceFragmentCompat {
+    /**
+     * Option B implementation: This fragment now handles both the algorithm toggle switches
+     * AND dynamically provides access to their settings sub-screens.
+     */
+    public static class AlgorithmSelectionPrefsFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
+        private PreferenceCategory mSettingsCategory;
+
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.sd_prefs_main, rootKey);
+            
+            // Add a dynamic category for settings sub-screens
+            mSettingsCategory = new PreferenceCategory(getPreferenceManager().getContext());
+            mSettingsCategory.setTitle("Algorithm Settings");
+            getPreferenceScreen().addPreference(mSettingsCategory);
+            
+            updateDynamicSettings();
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            PreferenceManager.getDefaultSharedPreferences(getContext()).registerOnSharedPreferenceChangeListener(this);
+        }
+
+        @Override
+        public void onPause() {
+            super.onPause();
+            PreferenceManager.getDefaultSharedPreferences(getContext()).unregisterOnSharedPreferenceChangeListener(this);
+        }
+
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            if (key.endsWith("Active") || key.equals("FidgetDetectorEnabled")) {
+                updateDynamicSettings();
+            }
+        }
+
+        /**
+         * Dynamically adds or removes sub-screen links based on which algorithms are enabled.
+         */
+        private void updateDynamicSettings() {
+            if (mSettingsCategory == null) return;
+            mSettingsCategory.removeAll();
+            
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
+            
+            // Add Voting Settings (Always visible if any algorithm might be enabled)
+            addSettingLink("Algorithm Voting", "Configure how multiple algorithms work together", VotingPrefsFragment.class.getName());
+
+            // Add OSD Settings
+            if (sp.getBoolean("OsdAlarmActive", true)) {
+                addSettingLink("OSD Algorithm Settings", "Core vibration detection parameters", OsdAlgPrefsFragment.class.getName());
+            }
+            
+            // Add Flap Settings
+            if (sp.getBoolean("FlapAlarmActive", true)) {
+                addSettingLink("Flap Alarm Settings", "Experimental arm flapping detection", FlapAlgPrefsFragment.class.getName());
+            }
+            
+            // Add ML Settings
+            if (sp.getBoolean("CnnAlarmActive", false)) {
+                addSettingLink("Machine Learning Settings", "Manage models and sensitivity", MlAlgPrefsFragment.class.getName());
+            }
+            
+            // Add HR Settings
+            if (sp.getBoolean("HRAlarmActive", false)) {
+                addSettingLink("Heart Rate Settings", "Threshold and adaptive alarms", HrAlgPrefsFragment.class.getName());
+            }
+            
+            // Add O2 Settings
+            if (sp.getBoolean("O2SatAlarmActive", false)) {
+                addSettingLink("O2 Saturation Settings", "Oxygen saturation alarm levels", O2SatPrefsFragment.class.getName());
+            }
+            
+            // Add Fall Settings
+            if (sp.getBoolean("FallActive", false)) {
+                addSettingLink("Fall Detection Settings", "Fall detection sensitivity", FallAlgPrefsFragment.class.getName());
+            }
+            
+            // Add Fidget Settings
+            if (sp.getBoolean("FidgetDetectorEnabled", false)) {
+                addSettingLink("Fidget Settings", "Configure fidget detector parameters", FidgetAlgPrefsFragment.class.getName());
+            }
+        }
+
+        private void addSettingLink(String title, String summary, String fragmentClass) {
+            Preference pref = new Preference(getPreferenceManager().getContext());
+            pref.setTitle(title);
+            pref.setSummary(summary);
+            pref.setFragment(fragmentClass);
+            mSettingsCategory.addPreference(pref);
         }
     }
 
