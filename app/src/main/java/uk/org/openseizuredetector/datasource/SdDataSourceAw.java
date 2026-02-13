@@ -78,9 +78,7 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
                           SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
         mName = "Android Wear";
-        // Set default settings from XML files (mContext is set by super().
-        PreferenceManager.setDefaultValues(mContext,
-                R.xml.seizure_detector_prefs, true);
+        // REMOVED redundant setDefaultValues() - now centralized in PrefActivity.initialiseDefaultValues()
     }
 
 

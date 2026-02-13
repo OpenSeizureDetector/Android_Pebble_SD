@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="@string/O2SatSettingsTitle">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="O2SatNullAsAlarm"
+            android:summary="@string/O2SatNullAlarmSummary"
+            android:title="@string/O2SatNullAlarmTitle" />
+        <EditTextPreference
+            android:defaultValue="80"
+            android:key="O2SatThreshMin"
+            android:summary="@string/O2SatThreshMinSummary"
+            android:title="@string/O2SatThreshMinTitle" />
+    </PreferenceCategory>
+</PreferenceScreen>

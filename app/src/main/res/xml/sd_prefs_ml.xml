@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="@string/ml_sd_settings_title">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="MlUseMultiModel"
+            android:summary="@string/ml_use_multi_model_summary"
+            android:title="@string/ml_use_multi_model_title" />
+        <EditTextPreference
+            android:defaultValue="1"
+            android:key="MlNumModels"
+            android:inputType="number"
+            android:summary="@string/ml_num_models_summary"
+            android:title="@string/ml_num_models_title" />
+        <EditTextPreference
+            android:defaultValue="2"
+            android:key="CnnAlarmThreshold"
+            android:summary="@string/ml_sd_threshold_summary"
+            android:title="@string/ml_sd_threshold_title" />
+        <EditTextPreference
+            android:defaultValue="1"
+            android:key="CnnModelId"
+            android:enabled="false"
+            android:summary="@string/ml_sd_modelid_summary"
+            android:title="@string/ml_sd_modelid_title" />
+        <Preference
+            android:key="MlModelSelector"
+            android:title="@string/ml_model_select_title"
+            android:summary="@string/ml_model_select_summary" />
+        <ListPreference
+            android:key="MlModelUpdateCheckPeriod"
+            android:title="@string/ml_model_update_check_title"
+            android:summary="@string/ml_model_update_check_summary"
+            android:entries="@array/ml_model_update_periods"
+            android:entryValues="@array/ml_model_update_periods_values"
+            android:defaultValue="86400"
+            android:dialogTitle="@string/ml_model_update_check_title" />
+    </PreferenceCategory>
+</PreferenceScreen>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Flap Alarm Settings">
+        <EditTextPreference
+            android:defaultValue="5000"
+            android:key="FlapAlarmThresh"
+            android:summary="Flap Alarm Threshold"
+            android:title="Flap Alarm Threshold" />
+        <EditTextPreference
+            android:defaultValue="90"
+            android:key="FlapAlarmRatioThresh"
+            android:summary="Flap Alarm Ratio Threshold"
+            android:title="Flap Alarm Ratio Threshold" />
+        <EditTextPreference
+            android:defaultValue="2"
+            android:key="FlapAlarmFreqMin"
+            android:summary="@string/AlarmFreqMinSummary"
+            android:title="@string/AlarmFreqMinTitle" />
+        <EditTextPreference
+            android:defaultValue="4"
+            android:key="FlapAlarmFreqMax"
+            android:summary="@string/AlarmFreqMaxSummary"
+            android:title="@string/AlarmFreqMaxTitle" />
+    </PreferenceCategory>
+</PreferenceScreen>

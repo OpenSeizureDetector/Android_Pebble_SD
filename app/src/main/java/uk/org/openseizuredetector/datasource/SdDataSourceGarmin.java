@@ -46,9 +46,7 @@ public class SdDataSourceGarmin extends SdDataSource {
                               SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
         mName = "Garmin";
-        // Set default settings from XML files (mContext is set by super().
-        PreferenceManager.setDefaultValues(mContext,
-                R.xml.network_passive_datasource_prefs, true);
+        // REMOVED redundant setDefaultValues() - now centralized in PrefActivity.initialiseDefaultValues()
     }
 
 
@@ -71,8 +69,3 @@ public class SdDataSourceGarmin extends SdDataSource {
         super.stop();
     }
 }
-
-
-
-
-

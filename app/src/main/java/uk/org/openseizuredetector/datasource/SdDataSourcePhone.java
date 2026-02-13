@@ -67,9 +67,7 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                              SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
         mName = "Phone";
-        // Set default settings from XML files (mContext is set by super().
-        PreferenceManager.setDefaultValues(mContext,
-                R.xml.network_passive_datasource_prefs, true);
+        // REMOVED redundant setDefaultValues() - now centralized in PrefActivity.initialiseDefaultValues()
     }
 
 
@@ -184,8 +182,3 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
 
 
 }
-
-
-
-
-

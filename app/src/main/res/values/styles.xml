@@ -18,6 +18,10 @@
         <item name="android:titleTextColor">@android:color/white</item>
         <item name="titleTextColor">@android:color/white</item>
 
+        <!-- CRITICAL: Define text colors based on the theme (Black in Light, White in Dark) -->
+        <item name="android:textColorPrimary">?attr/colorOnSurface</item>
+        <item name="android:textColorSecondary">?attr/colorOnSurfaceVariant</item>
+
         <!-- Standard preference and dialog themes -->
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
         <item name="alertDialogTheme">@style/ThemeOverlay.Material3.MaterialAlertDialog</item>

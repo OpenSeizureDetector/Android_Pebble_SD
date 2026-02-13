@@ -2,11 +2,6 @@
 <preference-headers
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!--<header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$BasicPrefsFragment"
-        android:icon="@drawable/icon_24x24"
-        android:title="@string/basic_settings_title"
-        android:summary="@string/basic_settings_summary" />-->
-
     <header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$GeneralPrefsFragment"
         android:icon="@drawable/icon_24x24"
         android:title="@string/general_settings_title"
@@ -22,11 +17,61 @@
         android:title="@string/logging_settings_title"
         android:summary="@string/logging_settings_summary" />
 
-    <header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$SeizureDetectorPrefsFragment"
+    <!-- Core Seizure Detection Setup -->
+    <header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$AlgorithmSelectionPrefsFragment"
         android:icon="@drawable/icon_24x24"
         android:title="@string/seizure_detector_settings_title"
-        android:summary="@string/seizure_detector_settings_summary" />
+        android:summary="Enable or disable specific detection algorithms" />
 
+    <header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$VotingPrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="@string/voting_strategy_title"
+        android:summary="@string/voting_strategy_summary" />
+
+    <!-- Individual Algorithm Settings - Conditionally visible -->
+    <header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$OsdAlgPrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="OSD Algorithm Settings"
+        android:summary="Configure core vibration detection parameters"
+        algorithmKey="OsdAlarmActive" />
+
+    <header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$FlapAlgPrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="Flap Alarm Settings"
+        android:summary="Configure experimental arm flapping detection"
+        algorithmKey="FlapAlarmActive" />
+
+    <header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$MlAlgPrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="Machine Learning Settings"
+        android:summary="Manage ML models and detection sensitivity"
+        algorithmKey="CnnAlarmActive" />
+
+    <header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$HrAlgPrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="Heart Rate Settings"
+        android:summary="Configure heart rate threshold and adaptive alarms"
+        algorithmKey="HRAlarmActive" />
+
+    <header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$O2SatPrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="O2 Saturation Settings"
+        android:summary="Configure oxygen saturation alarm levels"
+        algorithmKey="O2SatAlarmActive" />
+
+    <header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$FallAlgPrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="Fall Detection Settings"
+        android:summary="Configure fall detection sensitivity"
+        algorithmKey="FallActive" />
+
+    <header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$FidgetAlgPrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="Fidget Settings"
+        android:summary="Configure fidget detector parameters"
+        algorithmKey="FidgetDetectorEnabled" />
+
+    <!-- Datasource specific -->
     <header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$PebbleDatasourcePrefsFragment"
         android:icon="@drawable/icon_24x24"
         android:title="@string/pebble_datasource_title"
@@ -36,6 +81,5 @@
         android:icon="@drawable/icon_24x24"
         android:title="@string/network_datasource_title"
         android:summary="@string/network_datasource_summary" />
-
 
 </preference-headers>

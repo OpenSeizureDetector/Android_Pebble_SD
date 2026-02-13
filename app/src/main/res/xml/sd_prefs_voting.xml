@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Algorithm Voting">
+        <ListPreference
+            android:key="VotingStrategy"
+            android:title="@string/voting_strategy_title"
+            android:summary="@string/voting_strategy_summary"
+            android:entries="@array/voting_strategies"
+            android:entryValues="@array/voting_strategies_values"
+            android:defaultValue="ANY"
+            android:dialogTitle="@string/voting_strategy_title" />
+    </PreferenceCategory>
+</PreferenceScreen>

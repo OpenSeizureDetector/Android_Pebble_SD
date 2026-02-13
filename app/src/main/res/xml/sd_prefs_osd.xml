@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="@string/SeizureDetectorSettingsTitle">
+        <EditTextPreference
+            android:defaultValue="5"
+            android:key="WarnTime"
+            android:summary="@string/WarnTimeSummary"
+            android:title="@string/WarnTimeTitle" />
+        <EditTextPreference
+            android:defaultValue="10"
+            android:key="AlarmTime"
+            android:summary="@string/AlarmTimeSummary"
+            android:title="@string/AlarmTimeTitle" />
+        <EditTextPreference
+            android:defaultValue="100"
+            android:key="AlarmThresh"
+            android:summary="@string/AlarmThreshSummary"
+            android:title="@string/AlarmThreshTitle" />
+        <EditTextPreference
+            android:defaultValue="57"
+            android:key="AlarmRatioThresh"
+            android:summary="@string/AlarmRatioThreshSummary"
+            android:title="@string/AlarmRatioThreshTitle" />
+        <EditTextPreference
+            android:defaultValue="3"
+            android:key="AlarmFreqMin"
+            android:summary="@string/AlarmFreqMinSummary"
+            android:title="@string/AlarmFreqMinTitle" />
+        <EditTextPreference
+            android:defaultValue="8"
+            android:key="AlarmFreqMax"
+            android:summary="@string/AlarmFreqMaxSummary"
+            android:title="@string/AlarmFreqMaxTitle" />
+        <EditTextPreference
+            android:defaultValue="5"
+            android:enabled="false"
+            android:key="SamplePeriod"
+            android:summary="@string/sample_period_summary"
+            android:title="@string/sample_period_title" />
+    </PreferenceCategory>
+</PreferenceScreen>

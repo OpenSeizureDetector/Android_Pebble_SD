@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="@string/HeartRateAlarmSettingsTitle">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="HrFrozenAlarm"
+            android:summary="@string/HrFrozenSummary"
+            android:title="@string/HrFrozenTitle" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="HRNullAsAlarm"
+            android:summary="@string/HRNullAlarmSummary"
+            android:title="@string/HRNullAlarmTitle" />
+        <EditTextPreference
+            android:defaultValue="40"
+            android:key="HRThreshMin"
+            android:summary="@string/HRThreshMinSummary"
+            android:title="@string/HRThreshMinTitle" />
+        <EditTextPreference
+            android:defaultValue="150"
+            android:key="HRThreshMax"
+            android:summary="@string/HRThreshMaxSummary"
+            android:title="@string/HRThreshMaxTitle" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/HeartRateAdaptiveAlarmSettingsTitle">
+        <EditTextPreference
+            android:defaultValue="30"
+            android:key="HRAdaptiveAlarmWindowSecs"
+            android:summary="@string/HRAdaptiveAlarmWindowSummary"
+            android:title="@string/HRAdaptiveAlarmWindowTitle" />
+        <EditTextPreference
+            android:defaultValue="20"
+            android:key="HRAdaptiveAlarmThresh"
+            android:summary="@string/HRAdaptiveThreshSummary"
+            android:title="@string/HRAdaptiveThreshTitle" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/HeartRateAverageAlarmSettingsTitle">
+        <EditTextPreference
+            android:defaultValue="40"
+            android:key="HRAverageAlarmThreshMin"
+            android:summary="@string/HRAverageThreshMinSummary"
+            android:title="@string/HRAverageThreshMinTitle" />
+        <EditTextPreference
+            android:defaultValue="120"
+            android:key="HRAverageAlarmThreshMax"
+            android:summary="@string/HRAverageThreshMaxSummary"
+            android:title="@string/HRAverageThreshMaxTitle" />
+        <EditTextPreference
+            android:defaultValue="120"
+            android:key="HRAverageAlarmWindowSecs"
+            android:summary="@string/HRAverageAlarmWindowSummary"
+            android:title="@string/HRAverageAlarmWindowTitle" />
+    </PreferenceCategory>
+</PreferenceScreen>

@@ -148,9 +148,7 @@ public class SdDataSourcePebble extends SdDataSource {
                               SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
         mName = "Pebble";
-        // Set default settings from XML files (mContext is set by super().
-        PreferenceManager.setDefaultValues(mContext,
-                R.xml.seizure_detector_prefs, true);
+        // REMOVED redundant setDefaultValues() - now centralized in PrefActivity.initialiseDefaultValues()
     }
 
 
@@ -776,8 +774,3 @@ public class SdDataSourcePebble extends SdDataSource {
 
 
 }
-
-
-
-
-
