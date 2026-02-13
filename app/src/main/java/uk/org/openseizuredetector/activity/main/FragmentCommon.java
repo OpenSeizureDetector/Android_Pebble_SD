@@ -258,22 +258,17 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                 addAlgorithmStatusRow(algorithmsContainer, "FALL", sdData.fallAlgState);
             }
 
-            // Display ML algorithm(s) status
+            // Display ML algorithm(s) status - now consistently using "ML" labeling
             if (sdData.mCnnAlarmActive) {
-                if (sdData.mlNumModels > 1) {
-                    // Show individual models
-                    for (int i = 0; i < sdData.mlNumModels && i < 5; i++) {
-                        if (sdData.mlModelActive[i]) {
-                            String modelName = sdData.mlModelNames[i];
-                            if (modelName == null || modelName.isEmpty()) {
-                                modelName = "ML" + (i + 1);
-                            }
-                            addAlgorithmStatusRow(algorithmsContainer, modelName, sdData.mlModelStates[i]);
+                for (int i = 0; i < sdData.mlNumModels && i < 5; i++) {
+                    if (sdData.mlModelActive[i]) {
+                        String modelLabel = sdData.mlModelNames[i];
+                        // If for some reason the name isn't set, fallback to MLx
+                        if (modelLabel == null || modelLabel.isEmpty() || modelLabel.equals("CNN")) {
+                            modelLabel = "ML" + (i + 1);
                         }
+                        addAlgorithmStatusRow(algorithmsContainer, modelLabel, sdData.mlModelStates[i]);
                     }
-                } else {
-                    // Single model - just show "CNN"
-                    addAlgorithmStatusRow(algorithmsContainer, "CNN", sdData.cnnAlgState);
                 }
             }
 
