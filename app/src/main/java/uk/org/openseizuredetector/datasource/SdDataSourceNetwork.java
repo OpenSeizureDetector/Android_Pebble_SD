@@ -1,6 +1,7 @@
 package uk.org.openseizuredetector.datasource;
 
 import uk.org.openseizuredetector.data.SdData;
+import uk.org.openseizuredetector.data.AlarmState;
 import uk.org.openseizuredetector.utils.BackgroundTaskExecutor;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -28,8 +29,6 @@ public class SdDataSourceNetwork extends SdDataSource {
     private int mConnnectTimeoutPeriod = 5000;
     private int mReadTimeoutPeriod = 5000;
     private String mServerIP = "unknown";
-
-    private int ALARM_STATE_NETFAULT = 7;
 
 
     public SdDataSourceNetwork(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
@@ -122,7 +121,7 @@ public class SdDataSourceNetwork extends SdDataSource {
                         sdData.serverOK = false;
                         sdData.watchConnected = false;
                         sdData.watchAppRunning = false;
-                        sdData.alarmState = ALARM_STATE_NETFAULT;
+                        sdData.alarmState = AlarmState.NETFAULT;
                         sdData.alarmPhrase = "Warning - No Connection to Server";
                         Log.v(TAG, "No Connection to Server - sdData = " + sdData.toString());
                     } else {
@@ -140,7 +139,7 @@ public class SdDataSourceNetwork extends SdDataSource {
                     sdData.serverOK = false;
                     sdData.watchConnected = false;
                     sdData.watchAppRunning = false;
-                    sdData.alarmState = ALARM_STATE_NETFAULT;
+                    sdData.alarmState = AlarmState.NETFAULT;
                     sdData.alarmPhrase = "Warning - No Connection to Server";
                     Log.v(TAG, "IOException - " + e.toString());
                     return sdData;
@@ -160,7 +159,7 @@ public class SdDataSourceNetwork extends SdDataSource {
                     errorData.serverOK = false;
                     errorData.watchConnected = false;
                     errorData.watchAppRunning = false;
-                    errorData.alarmState = ALARM_STATE_NETFAULT;
+                    errorData.alarmState = AlarmState.NETFAULT;
                     errorData.alarmPhrase = "Warning - Error downloading data";
                     mSdDataReceiver.onSdDataReceived(errorData);
                 }

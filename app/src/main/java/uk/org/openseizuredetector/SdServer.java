@@ -80,6 +80,7 @@ import java.util.Timer;
 import uk.org.openseizuredetector.activity.logging.LogManager;
 import uk.org.openseizuredetector.alg.MlModelManager;
 import uk.org.openseizuredetector.alg.SeizureDetector;
+import uk.org.openseizuredetector.data.AlarmState;
 import uk.org.openseizuredetector.datasource.SdDataReceiver;
 import uk.org.openseizuredetector.datasource.SdDataSource;
 import uk.org.openseizuredetector.datasource.SdDataSourceAw;
@@ -253,9 +254,6 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.i(TAG, "onCreate() - SeizureDetector initialized");
             mUtil.writeToSysLogFile("SdServer.onCreate() - SeizureDetector initialized");
         }
-
-        // ...existing code...
-
 
         // Create a wake lock, but don't use it until the service is started.
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
@@ -758,7 +756,7 @@ public class SdServer extends Service implements SdDataReceiver {
     public void raiseManualAlarm() {
         Log.d(TAG, "raiseManualAlarm()");
         SdData sdData = mSdData;
-        sdData.alarmState = 5;
+        sdData.alarmState = AlarmState.MANUAL;
         onSdDataReceived(sdData);
     }
 
@@ -797,7 +795,7 @@ public class SdServer extends Service implements SdDataReceiver {
         // Apply mute check (from either watch button or phone UI button)
         muteCheck(sdData);
 
-        if (sdData.alarmState == 0) {
+        if (sdData.alarmState == AlarmState.OK) {
             if ((!mLatchAlarms) ||
                     (mLatchAlarms &&
                             (!mSdData.alarmStanding && !mSdData.fallAlarmStanding))) {
@@ -808,14 +806,14 @@ public class SdServer extends Service implements SdDataReceiver {
             }
         }
         // Handle manual mute from watch buttons.
-        if (sdData.alarmState == 6) {
+        if (sdData.alarmState == AlarmState.MUTE) {
             sdData.alarmPhrase = "MUTE";
             sdData.alarmStanding = false;
             sdData.fallAlarmStanding = false;
             showNotification(0);
         }
         // Handle warning alarm state
-        if (sdData.alarmState == 1) {
+        if (sdData.alarmState == AlarmState.WARNING) {
             if ((!mLatchAlarms) ||
                     (mLatchAlarms &&
                             (!mSdData.alarmStanding && !mSdData.fallAlarmStanding))) {
@@ -832,8 +830,8 @@ public class SdServer extends Service implements SdDataReceiver {
             warningBeep();
             showNotification(1);
         }
-        // respond to normal alarms (2) and manual alarms (5)
-        if ((sdData.alarmState == 2) || (sdData.alarmState == 5)) {
+        // respond to normal alarms and manual alarms
+        if ((sdData.alarmState == AlarmState.ALARM) || (sdData.alarmState == AlarmState.MANUAL)) {
             sdData.alarmPhrase = "ALARM";
             sdData.alarmStanding = true;
             if (mLogAlarms) {
@@ -880,7 +878,7 @@ public class SdServer extends Service implements SdDataReceiver {
         }
         // Handle fall alarm
         Log.v(TAG, "sdData.fallAlarmStanding=" + sdData.fallAlarmStanding);
-        if ((sdData.alarmState == 3) || (sdData.fallAlarmStanding)) {
+        if ((sdData.alarmState == AlarmState.FALL) || (sdData.fallAlarmStanding)) {
             sdData.alarmPhrase = "FALL";
             sdData.fallAlarmStanding = true;
             if (mLogAlarms) {
@@ -1010,11 +1008,11 @@ public class SdServer extends Service implements SdDataReceiver {
         }
 
         // Fault
-        if ((sdData.alarmState) == 4 || (sdData.alarmState == 7) || (sdData.mHRFaultStanding) || (sdData.mHrFrozenFaultStanding)) {
+        if ((sdData.alarmState) == AlarmState.FAULT || (sdData.alarmState == AlarmState.NETFAULT) || (sdData.mHRFaultStanding) || (sdData.mHrFrozenFaultStanding)) {
             sdData.alarmPhrase = "FAULT";
-            //writeAlarmToSD();
-            faultWarningBeep();
-            showNotification(-1);
+            sdData.alarmStanding = false;
+            sdData.fallAlarmStanding = false;
+            showNotification(1);
         } else {
             stopFaultTimer();
         }
@@ -1047,7 +1045,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         Log.v(TAG, "onSdDataFault()");
         mSdData = sdData;
-        mSdData.alarmState = 4;  // set fault alarm state.
+        mSdData.alarmState = AlarmState.FAULT;  // set fault alarm state.
         mSdData.alarmPhrase = "FAULT";
         mSdData.alarmStanding = false;
         if (webServer != null) webServer.setSdData(mSdData);
@@ -1698,17 +1696,17 @@ public class SdServer extends Service implements SdDataReceiver {
     public void muteCheck(SdData sdData) {
         if (sdData == null) return;
 
-        // Check watch button mute (from watch JSON data)
+        // Check watch button mute (from the watch JSON data)
         if (sdData.mMute != 0) {
             Log.v(TAG, "muteCheck() - Mute active from watch button");
-            sdData.alarmState = 6;  // MUTE state
+            sdData.alarmState = AlarmState.MUTE;  // MUTE state
             return;
         }
 
         // Check phone UI button mute (from mCancelAudible)
         if (mCancelAudible) {
             Log.v(TAG, "muteCheck() - Mute active from phone UI button");
-            sdData.alarmState = 6;  // MUTE state
+            sdData.alarmState = AlarmState.MUTE;  // MUTE state
             return;
         }
     }
@@ -2480,7 +2478,7 @@ public class SdServer extends Service implements SdDataReceiver {
                                 if (faultData == null) {
                                     faultData = new SdData();
                                 }
-                                faultData.alarmState = 4; // Fault
+                                faultData.alarmState = AlarmState.FAULT; // Fault
                                 faultData.alarmPhrase = "WATCHDOG: No Data";
                                 onSdDataFault(faultData);
                             }

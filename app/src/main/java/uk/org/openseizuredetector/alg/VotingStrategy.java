@@ -4,6 +4,8 @@ import android.util.Log;
 
 import java.util.List;
 
+import uk.org.openseizuredetector.data.AlarmState;
+
 /**
  * VotingStrategy - Implements different voting strategies for combining multiple algorithm results.
  */
@@ -27,12 +29,12 @@ public class VotingStrategy {
      * Apply the voting strategy to a list of algorithm results.
      *
      * @param results List of AlgorithmResult from different algorithms
-     * @return Combined alarm state (0=OK, 1=WARNING, 2=ALARM)
+     * @return Combined alarm state (use AlarmState constants)
      */
     public int vote(List<AlgorithmResult> results) {
         if (results == null || results.isEmpty()) {
             Log.w(TAG, "vote(): No results to vote on");
-            return 0;
+            return AlarmState.OK;
         }
 
         switch (mStrategy) {
@@ -51,25 +53,24 @@ public class VotingStrategy {
     }
 
     /**
-     * ANY strategy: If any algorithm reports ALARM (2), return ALARM.
-     * This is the current default behavior (OR logic).
+     * ANY strategy: If any algorithm reports ALARM, return ALARM.
      */
     private int anyVote(List<AlgorithmResult> results) {
         boolean hasAlarm = false;
         boolean hasWarning = false;
 
         for (AlgorithmResult result : results) {
-            if (result.alarmState == 2) {
+            if (result.alarmState == AlarmState.ALARM) {
                 hasAlarm = true;
                 break;
-            } else if (result.alarmState == 1) {
+            } else if (result.alarmState == AlarmState.WARNING) {
                 hasWarning = true;
             }
         }
 
-        if (hasAlarm) return 2;
-        if (hasWarning) return 1;
-        return 0;
+        if (hasAlarm) return AlarmState.ALARM;
+        if (hasWarning) return AlarmState.WARNING;
+        return AlarmState.OK;
     }
 
     /**
@@ -81,22 +82,22 @@ public class VotingStrategy {
         int total = results.size();
 
         for (AlgorithmResult result : results) {
-            if (result.alarmState == 2) {
+            if (result.alarmState == AlarmState.ALARM) {
                 alarmCount++;
-            } else if (result.alarmState == 1) {
+            } else if (result.alarmState == AlarmState.WARNING) {
                 warningCount++;
             }
         }
 
         // Need more than 50% for ALARM
         if (alarmCount > total / 2.0) {
-            return 2;
+            return AlarmState.ALARM;
         }
         // If we have any warnings and haven't reached alarm threshold
         if (warningCount > 0 || alarmCount > 0) {
-            return 1;
+            return AlarmState.WARNING;
         }
-        return 0;
+        return AlarmState.OK;
     }
 
     /**
@@ -107,17 +108,17 @@ public class VotingStrategy {
         boolean anyWarning = false;
 
         for (AlgorithmResult result : results) {
-            if (result.alarmState != 2) {
+            if (result.alarmState != AlarmState.ALARM) {
                 allAlarm = false;
             }
-            if (result.alarmState == 1) {
+            if (result.alarmState == AlarmState.WARNING) {
                 anyWarning = true;
             }
         }
 
-        if (allAlarm) return 2;
-        if (anyWarning) return 1;
-        return 0;
+        if (allAlarm) return AlarmState.ALARM;
+        if (anyWarning) return AlarmState.WARNING;
+        return AlarmState.OK;
     }
 
     /**
@@ -137,7 +138,7 @@ public class VotingStrategy {
 
         if (totalWeight == 0.0) {
             Log.w(TAG, "weightedVote(): Total weight is zero");
-            return 0;
+            return AlarmState.OK;
         }
 
         double weightedAverage = weightedSum / totalWeight;
@@ -146,15 +147,15 @@ public class VotingStrategy {
                    ", totalWeight=" + totalWeight +
                    ", weightedAverage=" + weightedAverage);
 
-        // Threshold for ALARM (2) is > 1.5
+        // Threshold for ALARM is > 1.5
         if (weightedAverage > 1.5) {
-            return 2;
+            return AlarmState.ALARM;
         }
-        // Threshold for WARNING (1) is > 0.5
+        // Threshold for WARNING is > 0.5
         if (weightedAverage > 0.5) {
-            return 1;
+            return AlarmState.WARNING;
         }
-        return 0;
+        return AlarmState.OK;
     }
 
     public Strategy getStrategy() {

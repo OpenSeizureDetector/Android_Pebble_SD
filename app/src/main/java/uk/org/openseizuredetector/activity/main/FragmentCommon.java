@@ -16,6 +16,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import uk.org.openseizuredetector.data.AlarmState;
+
 public class FragmentCommon extends FragmentOsdBaseClass {
     String TAG = "FragmentCommon";
 
@@ -107,21 +109,23 @@ public class FragmentCommon extends FragmentOsdBaseClass {
             com.google.android.material.card.MaterialCardView alarmCard =
                     (com.google.android.material.card.MaterialCardView) mRootView.findViewById(R.id.alarmStatusCard);
 
-            if ((mConnection.mSdServer.mSdData.alarmState == 0)
+            long currentState = mConnection.mSdServer.mSdData.alarmState;
+
+            if ((currentState == AlarmState.OK)
                     && !mConnection.mSdServer.mSdData.alarmStanding
                     && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
                 tv.setText(getString(R.string.okBtnTxt));
                 alarmCard.setCardBackgroundColor(okColour);
                 tv.setTextColor(okTextColour);
             }
-            if ((mConnection.mSdServer.mSdData.alarmState == 1)
+            if ((currentState == AlarmState.WARNING)
                     && !mConnection.mSdServer.mSdData.alarmStanding
                     && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
                 tv.setText(R.string.Warning);
                 alarmCard.setCardBackgroundColor(warnColour);
                 tv.setTextColor(warnTextColour);
             }
-            if (mConnection.mSdServer.mSdData.alarmState == 6) {
+            if (currentState == AlarmState.MUTE) {
                 tv.setText(R.string.Mute);
                 alarmCard.setCardBackgroundColor(warnColour);
                 tv.setTextColor(warnTextColour);
@@ -136,12 +140,12 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                 alarmCard.setCardBackgroundColor(alarmColour);
                 tv.setTextColor(alarmTextColour);
             }
-            if (mConnection.mSdServer.mSdData.alarmState == 4) {
+            if (currentState == AlarmState.FAULT) {
                 tv.setText(R.string.Fault);
                 alarmCard.setCardBackgroundColor(warnColour);
                 tv.setTextColor(warnTextColour);
             }
-            if (mConnection.mSdServer.mSdData.alarmState == 7) {
+            if (currentState == AlarmState.NETFAULT) {
                 tv.setText(R.string.NetFault);
                 alarmCard.setCardBackgroundColor(warnColour);
                 tv.setTextColor(warnTextColour);
@@ -273,11 +277,11 @@ public class FragmentCommon extends FragmentOsdBaseClass {
         int textColor;
 
         switch (state) {
-            case 2: // ALARM
+            case AlarmState.ALARM: // ALARM
                 bgColor = alarmColour;
                 textColor = alarmTextColour;
                 break;
-            case 1: // WARNING
+            case AlarmState.WARNING: // WARNING
                 bgColor = warnColour;
                 textColor = warnTextColour;
                 break;

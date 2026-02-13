@@ -14,6 +14,7 @@
             - CRITICAL FIX: Fixed server lifecycle bug that caused multiple server instances and FAULT/OK oscillation after changing settings
             - Added onboarding setup wizard that covers PineTime, Garmin or Network data source, and OSD, ML or HR algorithms.
             - Created a separate SeizureDetector class rather than having the seizure detection analysis in SdDataSource
+            - Added support for multiple ML models, and voting between models to decide whether to alarm or not
     V4.3.1 - Fixed corrupted user interface issues on Android 15 and Android 16.
     V4.3.0 - 2025-07-16
              - Added support for Android 15 (API 35) to allow publishing on Play Store.

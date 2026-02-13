@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import uk.org.openseizuredetector.data.SdData;
+import uk.org.openseizuredetector.data.AlarmState;
 
 /**
  * SeizureDetector - Coordinates all seizure detection algorithms.
@@ -129,21 +130,21 @@ public class SeizureDetector {
             int osdResult = mSdAlgOsd.processSdData(sdData);
             sdData.osdAlgState = osdResult;
             algorithmResults.add(new AlgorithmResult("OSD", osdResult, 1.0f, 1.0f));
-            if (osdResult == 2) alarmCauses.add(mSdAlgOsd.getAlarmCause());
+            if (osdResult == AlarmState.ALARM) alarmCauses.add(mSdAlgOsd.getAlarmCause());
         }
 
         if (mSdAlgFlap != null) {
             int flapResult = mSdAlgFlap.processSdData(sdData);
             sdData.flapAlgState = flapResult;
             algorithmResults.add(new AlgorithmResult("FLAP", flapResult, 1.0f, 1.0f));
-            if (flapResult == 2) alarmCauses.add(mSdAlgFlap.getAlarmCause());
+            if (flapResult == AlarmState.ALARM) alarmCauses.add(mSdAlgFlap.getAlarmCause());
         }
 
         if (mSdAlgFall != null) {
             int fallResult = mSdAlgFall.processSdData(sdData);
             sdData.fallAlgState = fallResult;
             algorithmResults.add(new AlgorithmResult("FALL", fallResult, 1.0f, 1.0f));
-            if (fallResult == 2) {
+            if (fallResult == AlarmState.ALARM) {
                 alarmCauses.add(mSdAlgFall.getAlarmCause());
                 sdData.fallAlarmStanding = true;
             }
@@ -152,7 +153,7 @@ public class SeizureDetector {
         if (mSdAlgMl != null) {
             List<AlgorithmResult> mlResults = mSdAlgMl.evaluateAllModels(sdData);
             sdData.mlNumModels = Math.min(mlResults.size(), 5);
-            int maxState = 0;
+            int maxState = AlarmState.OK;
             float maxProb = 0.0f;
             for (int i = 0; i < sdData.mlNumModels; i++) {
                 AlgorithmResult result = mlResults.get(i);
@@ -168,7 +169,7 @@ public class SeizureDetector {
 
             algorithmResults.addAll(mlResults);
             for (AlgorithmResult result : mlResults) {
-                if (result.alarmState == 2) alarmCauses.add(result.algorithmName);
+                if (result.alarmState == AlarmState.ALARM) alarmCauses.add(result.algorithmName);
             }
         }
 
@@ -176,7 +177,7 @@ public class SeizureDetector {
             int hrResult = mSdAlgHr.processSdData(sdData);
             sdData.hrAlgState = hrResult;
             algorithmResults.add(new AlgorithmResult("HR", hrResult, 1.0f, 1.0f));
-            if (hrResult == 2) {
+            if (hrResult == AlarmState.ALARM) {
                 if (sdData.mHRAlarmStanding) alarmCauses.add("HR");
                 if (sdData.mAdaptiveHrAlarmStanding) alarmCauses.add("HR_ADAPT");
                 if (sdData.mAverageHrAlarmStanding) alarmCauses.add("HR_AVG");
@@ -189,9 +190,9 @@ public class SeizureDetector {
         } else {
             boolean anyAlarm = false;
             for (AlgorithmResult result : algorithmResults) {
-                if (result.alarmState == 2) { anyAlarm = true; break; }
+                if (result.alarmState == AlarmState.ALARM) { anyAlarm = true; break; }
             }
-            combinedAlarmState = anyAlarm ? 2 : 0;
+            combinedAlarmState = anyAlarm ? AlarmState.ALARM : AlarmState.OK;
         }
 
         for (String cause : alarmCauses) {
@@ -199,22 +200,22 @@ public class SeizureDetector {
         }
 
         int alarmState;
-        if (combinedAlarmState == 2) {
+        if (combinedAlarmState == AlarmState.ALARM) {
             mAlarmCount += mSamplePeriod;
             if (mAlarmCount > mAlarmTime) {
-                alarmState = 2;
+                alarmState = AlarmState.ALARM;
                 sdData.alarmStanding = true;
             } else if (mAlarmCount > mWarnTime) {
-                alarmState = 1;
+                alarmState = AlarmState.WARNING;
             } else {
-                alarmState = 0;
+                alarmState = AlarmState.OK;
             }
         } else {
-            if (sdData.alarmState == 2) {
-                alarmState = 1;
+            if (sdData.alarmState == AlarmState.ALARM) {
+                alarmState = AlarmState.WARNING;
                 mAlarmCount = mWarnTime + 1;
             } else {
-                alarmState = 0;
+                alarmState = AlarmState.OK;
                 mAlarmCount = 0;
                 sdData.alarmStanding = false;
             }

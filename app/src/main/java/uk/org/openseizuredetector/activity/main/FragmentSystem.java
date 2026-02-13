@@ -23,6 +23,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 import uk.org.openseizuredetector.activity.settings.PrefActivity;
+import uk.org.openseizuredetector.data.AlarmState;
 
 public class FragmentSystem extends FragmentOsdBaseClass {
     String TAG = "FragmentSystem";
@@ -264,7 +265,7 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                 tv.setTextColor(okTextColour);
 
                 tv = (TextView) mRootView.findViewById(R.id.alarmTv);
-                if ((mConnection.mSdServer.mSdData.alarmState == 0) && !mConnection.mSdServer.mSdData.alarmStanding && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
+                if ((mConnection.mSdServer.mSdData.alarmState == AlarmState.OK) && !mConnection.mSdServer.mSdData.alarmStanding && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
                     tv.setText(getString(R.string.okBtnTxt));
                     tv.setBackgroundColor(okColour);
                     tv.setTextColor(okTextColour);
@@ -273,7 +274,7 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                     tv.setBackgroundColor(alarmColour);
                     tv.setTextColor(alarmTextColour);
                 } else {
-                    tv.setText(mConnection.mSdServer.mSdData.alarmState == 6 ? getString(R.string.Mute) : (mConnection.mSdServer.mSdData.alarmState == 4 ? getString(R.string.Fault) : getString(R.string.Warning)));
+                    tv.setText(mConnection.mSdServer.mSdData.alarmState == AlarmState.MUTE ? getString(R.string.Mute) : (mConnection.mSdServer.mSdData.alarmState == AlarmState.FAULT ? getString(R.string.Fault) : getString(R.string.Warning)));
                     tv.setBackgroundColor(warnColour);
                     tv.setTextColor(warnTextColour);
                 }

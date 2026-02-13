@@ -18,6 +18,7 @@ import java.util.List;
 
 import uk.org.openseizuredetector.data.SdData;
 import uk.org.openseizuredetector.utils.CircBuf;
+import uk.org.openseizuredetector.data.AlarmState;
 
 /**
  * SdAlgMl - Multi-model ML algorithm that coordinates the evaluation of all installed ML models.
@@ -144,7 +145,7 @@ public class SdAlgMl extends SdAlgBase {
                 Log.v(TAG, "evaluateAllModels(): Model " + model.label + " pSeizure=" + pSeizure);
 
                 // Use 0.5 as a standard probability threshold for alarm
-                int alarmState = (pSeizure > 0.5) ? 2 : 0;
+                int alarmState = (pSeizure > 0.5) ? AlarmState.ALARM : AlarmState.OK;
 
                 results.add(new AlgorithmResult(
                         model.label, // Use short label for voting results
@@ -173,14 +174,14 @@ public class SdAlgMl extends SdAlgBase {
         float maxProbability = 0.0f;
 
         for (AlgorithmResult result : results) {
-            if (result.alarmState == 2) {
+            if (result.alarmState == AlarmState.ALARM) {
                 anyAlarm = true;
             }
             maxProbability = Math.max(maxProbability, result.confidence);
         }
 
         sdData.mPseizure = maxProbability;
-        return anyAlarm ? 2 : 0;
+        return anyAlarm ? AlarmState.ALARM : AlarmState.OK;
     }
 
     private float evaluateModel(ModelInstance model, SdData sdData) {

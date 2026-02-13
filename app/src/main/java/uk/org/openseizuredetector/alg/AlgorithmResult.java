@@ -1,12 +1,14 @@
 package uk.org.openseizuredetector.alg;
 
+import uk.org.openseizuredetector.data.AlarmState;
+
 /**
  * AlgorithmResult - Encapsulates the result from a single algorithm evaluation.
  * Used for voting across multiple algorithms.
  */
 public class AlgorithmResult {
     public final String algorithmName;
-    public final int alarmState;      // 0=OK, 1=WARNING, 2=ALARM
+    public final int alarmState;      // use AlarmState constants
     public final float confidence;    // 0.0 to 1.0 (for ML models, this is the probability)
     public final float weight;        // Weight for weighted voting
 
@@ -27,4 +29,3 @@ public class AlgorithmResult {
                 '}';
     }
 }
-
