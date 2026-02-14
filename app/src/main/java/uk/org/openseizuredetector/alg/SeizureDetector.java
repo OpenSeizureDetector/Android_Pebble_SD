@@ -42,9 +42,9 @@ public class SeizureDetector {
     private boolean mUseVoting = false;
 
     // State machine for WARNING/ALARM transitions
-    private int mAlarmCount = 0;  
-    private short mWarnTime;
-    private short mAlarmTime;
+    private int mAlarmTime = 0;
+    private short mWarnTimeThreshold;
+    private short mAlarmTimeThreshold;
     private short mSamplePeriod;
 
     public SeizureDetector(Context context) {
@@ -97,20 +97,21 @@ public class SeizureDetector {
     private void updatePrefs() {
         try {
             String warnTimeStr = mSP.getString("WarnTime", "5");
-            mWarnTime = Short.parseShort(warnTimeStr);
+            mWarnTimeThreshold = Short.parseShort(warnTimeStr);
             String alarmTimeStr = mSP.getString("AlarmTime", "15");
-            mAlarmTime = Short.parseShort(alarmTimeStr);
-            String samplePeriodStr = mSP.getString("DataUpdatePeriod", "5");
-            mSamplePeriod = Short.parseShort(samplePeriodStr);
+            mAlarmTimeThreshold = Short.parseShort(alarmTimeStr);
+            mSamplePeriod = 5;
+            Log.v(TAG,"updatePrefs() - WarnTime=" + mWarnTimeThreshold + " AlarmTime=" + mAlarmTimeThreshold + " SamplePeriod=" + mSamplePeriod + "");
 
             mOsdAlarmActive = mSP.getBoolean("OsdAlarmActive", true);
             mFlapAlarmActive = mSP.getBoolean("FlapAlarmActive", false);
             mFallActive = mSP.getBoolean("FallActive", false);
             mCnnAlarmActive = mSP.getBoolean("CnnAlarmActive", false);
             mHRAlarmActive = mSP.getBoolean("HRAlarmActive", false);
+            Log.v(TAG,"updatePrefs() - mOsdAlarmActive=" + mOsdAlarmActive + " mFlapAlarmActive=" + mFlapAlarmActive + " mFallActive=" + mFallActive + " mCnnAlarmActive=" + mCnnAlarmActive + " mHRAlarmActive=" + mHRAlarmActive + "");
         } catch (Exception ex) {
             Log.e(TAG, "updatePrefs() - Problem parsing preferences: " + ex.toString());
-            mWarnTime = 5; mAlarmTime = 15; mSamplePeriod = 5;
+            mWarnTimeThreshold = 5; mAlarmTimeThreshold = 15; mSamplePeriod = 5;
             mOsdAlarmActive = true;
         }
     }
@@ -128,6 +129,7 @@ public class SeizureDetector {
 
         if (mSdAlgOsd != null) {
             int osdResult = mSdAlgOsd.processSdData(sdData);
+            Log.d(TAG,"osdResult=" + osdResult);
             sdData.osdAlgState = osdResult;
             algorithmResults.add(new AlgorithmResult("OSD", osdResult, 1.0f, 1.0f));
             if (osdResult == AlarmState.ALARM) alarmCauses.add(mSdAlgOsd.getAlarmCause());
@@ -135,6 +137,7 @@ public class SeizureDetector {
 
         if (mSdAlgFlap != null) {
             int flapResult = mSdAlgFlap.processSdData(sdData);
+            Log.d(TAG,"flapResult=" + flapResult);
             sdData.flapAlgState = flapResult;
             algorithmResults.add(new AlgorithmResult("FLAP", flapResult, 1.0f, 1.0f));
             if (flapResult == AlarmState.ALARM) alarmCauses.add(mSdAlgFlap.getAlarmCause());
@@ -142,6 +145,7 @@ public class SeizureDetector {
 
         if (mSdAlgFall != null) {
             int fallResult = mSdAlgFall.processSdData(sdData);
+            Log.d(TAG,"fallResult=" + fallResult);
             sdData.fallAlgState = fallResult;
             algorithmResults.add(new AlgorithmResult("FALL", fallResult, 1.0f, 1.0f));
             if (fallResult == AlarmState.ALARM) {
@@ -152,7 +156,7 @@ public class SeizureDetector {
 
         if (mSdAlgMl != null) {
             List<AlgorithmResult> mlResults = mSdAlgMl.evaluateAllModels(sdData);
-            sdData.mlNumModels = Math.min(mlResults.size(), 5);
+            sdData.mlNumModels = mlResults.size();
             int maxState = AlarmState.OK;
             float maxProb = 0.0f;
             for (int i = 0; i < sdData.mlNumModels; i++) {
@@ -163,7 +167,9 @@ public class SeizureDetector {
                 sdData.mlModelActive[i] = true;
                 maxState = Math.max(maxState, result.alarmState);
                 maxProb = Math.max(maxProb, result.confidence);
+                Log.d(TAG, "ML Model " + sdData.mlModelNames[i] + " State=" + sdData.mlModelStates[i] + " Prob=" + sdData.mlModelProbs[i]);
             }
+            // we set the old cnnAlgState and mPseizure to the maximum value of the active models.
             sdData.cnnAlgState = maxState;
             sdData.mPseizure = maxProb;
 
@@ -175,6 +181,7 @@ public class SeizureDetector {
 
         if (mSdAlgHr != null) {
             int hrResult = mSdAlgHr.processSdData(sdData);
+            Log.d(TAG,"hrResult=" + hrResult);
             sdData.hrAlgState = hrResult;
             algorithmResults.add(new AlgorithmResult("HR", hrResult, 1.0f, 1.0f));
             if (hrResult == AlarmState.ALARM) {
@@ -186,46 +193,62 @@ public class SeizureDetector {
 
         int combinedAlarmState;
         if (mUseVoting && algorithmResults.size() > 1) {
+            Log.d(TAG, "Applying voting strategy");
             combinedAlarmState = mVotingStrategy.vote(algorithmResults);
+            Log.d(TAG, "Voting strategy returned " + combinedAlarmState);
         } else {
+            Log.d(TAG, "Applying 'OR' strategy for alarms");
             boolean anyAlarm = false;
             for (AlgorithmResult result : algorithmResults) {
                 if (result.alarmState == AlarmState.ALARM) { anyAlarm = true; break; }
             }
             combinedAlarmState = anyAlarm ? AlarmState.ALARM : AlarmState.OK;
+            Log.d(TAG, "OR strategy returned " + combinedAlarmState);
         }
 
         for (String cause : alarmCauses) {
             sdData.alarmCause += cause + " ";
         }
+        Log.d(TAG, "sdData.alarmCause=" + sdData.alarmCause);
 
+        // Now Determine Alarm State based on recent history of algorithm results.
         int alarmState;
         if (combinedAlarmState == AlarmState.ALARM) {
-            mAlarmCount += mSamplePeriod;
-            if (mAlarmCount > mAlarmTime) {
+            mAlarmTime += mSamplePeriod;
+            Log.d(TAG, "mAlarmTime=" + mAlarmTime + " mWarnTimeThreshold=" + mWarnTimeThreshold + " mAlarmTimeThreshold=" + mAlarmTimeThreshold);
+            if (mAlarmTime > mAlarmTimeThreshold) {
+                Log.d(TAG,"Setting ALARM state");
                 alarmState = AlarmState.ALARM;
                 sdData.alarmStanding = true;
-            } else if (mAlarmCount > mWarnTime) {
+            } else if (mAlarmTime > mWarnTimeThreshold) {
+                Log.d(TAG,"Setting WARNING state");
                 alarmState = AlarmState.WARNING;
+                sdData.alarmStanding = false;
             } else {
+                Log.d(TAG,"Setting OK state");
                 alarmState = AlarmState.OK;
+                sdData.alarmStanding = false;
             }
         } else {
             if (sdData.alarmState == AlarmState.ALARM) {
+                Log.d(TAG,"Setting WARMING state");
                 alarmState = AlarmState.WARNING;
-                mAlarmCount = mWarnTime + 1;
+                mAlarmTime = mWarnTimeThreshold + 1;
+                sdData.alarmStanding = false;
             } else {
+                Log.d(TAG,"Setting OK state");
                 alarmState = AlarmState.OK;
-                mAlarmCount = 0;
+                mAlarmTime = 0;
                 sdData.alarmStanding = false;
             }
         }
 
+        Log.i(TAG, "processData() - returning " + alarmState);
         return alarmState;
     }
 
     public void resetAlarmState() {
-        mAlarmCount = 0;
+        mAlarmTime = 0;
     }
 
     public void close() {

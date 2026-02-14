@@ -790,6 +790,7 @@ public class SdServer extends Service implements SdDataReceiver {
         } else {
             Log.e(TAG, "onSdDataReceived() - mSeizureDetector is null!");
             mUtil.writeToSysLogFile("ERROR: SeizureDetector is null in onSdDataReceived()");
+            mUtil.showToast("ERROR- Seizure Detector Not Initialised - this should not happen!");
         }
 
         // Apply mute check (from either watch button or phone UI button)
@@ -924,12 +925,6 @@ public class SdServer extends Service implements SdDataReceiver {
         // Handle heart rate alarm
         if ((sdData.mHRAlarmActive) && (sdData.mHRAlarmStanding)) {
             sdData.alarmPhrase = "HR ABNORMAL";
-            if (mLogAlarms) {
-                Log.v(TAG, "***HEART RATE*** - Logging to SD Card");
-                //writeAlarmToSD();
-            } else {
-                Log.v(TAG, "***HEART RATE***");
-            }
             // Make alarm beep tone
             alarmBeep();
             showNotification(2);

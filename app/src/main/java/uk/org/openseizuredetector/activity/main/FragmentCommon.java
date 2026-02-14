@@ -131,7 +131,7 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                 tv.setTextColor(warnTextColour);
             }
             if (mConnection.mSdServer.mSdData.alarmStanding) {
-                tv.setText(getString(R.string.Alarm) + "\n" + mConnection.mSdServer.mSdData.alarmCause);
+                tv.setText(getString(R.string.Alarm) + " : " + mConnection.mSdServer.mSdData.alarmCause);
                 alarmCard.setCardBackgroundColor(alarmColour);
                 tv.setTextColor(alarmTextColour);
             }
