@@ -248,13 +248,6 @@ public class SdServer extends Service implements SdDataReceiver {
         mUtil = new OsdUtil(getApplicationContext(), mHandler);
         mUtil.writeToSysLogFile("SdServer.onCreate()");
 
-        // Initialize SeizureDetector for coordinating all seizure detection algorithms
-        if (mSeizureDetector == null) {
-            mSeizureDetector = new SeizureDetector(getApplicationContext());
-            Log.i(TAG, "onCreate() - SeizureDetector initialized");
-            mUtil.writeToSysLogFile("SdServer.onCreate() - SeizureDetector initialized");
-        }
-
         // Create a wake lock, but don't use it until the service is started.
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         mWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
@@ -276,12 +269,12 @@ public class SdServer extends Service implements SdDataReceiver {
         // show the service is running.
         if (Build.VERSION.SDK_INT >= 26) {
             Log.v(TAG, "showing Notification and calling startForeground (Android 8 and higher)");
-            mUtil.writeToSysLogFile("SdServer.onStartCommand() - showing Notification and calling startForeground (Android 8 and higher)");
+            mUtil.writeToSysLogFile("SdServer.onCreate() - showing Notification and calling startForeground (Android 8 and higher)");
             showNotification(0);
             startForeground(NOTIFICATION_ID, mNotification);
         } else {
             Log.v(TAG, "showing Notification");
-            mUtil.writeToSysLogFile("SdServer.onStartCommand() - showing Notification");
+            mUtil.writeToSysLogFile("SdServer.onCreate() - showing Notification");
             showNotification(0);
         }
 
@@ -301,11 +294,16 @@ public class SdServer extends Service implements SdDataReceiver {
         mServiceStartMillis = System.currentTimeMillis();
         mHasReceivedData = false;
 
+        // Update preferences.
+        Log.v(TAG, "onStartCommand() - calling updatePrefs()");
+        updatePrefs();
+
+
         // CRITICAL: Stop any existing data source to prevent duplicate instances
         // This can happen if onStartCommand() is called multiple times due to service restarts
         if (mSdDataSource != null) {
             try {
-                Log.w(TAG, "onStartCommand() - Stopping existing SdDataSource instance to prevent duplicates");
+                Log.i(TAG, "onStartCommand() - Stopping existing SdDataSource instance to prevent duplicates");
                 mUtil.writeToSysLogFile("onStartCommand() - Stopping existing SdDataSource instance");
                 mSdDataSource.stop();
                 mSdDataSource = null;
@@ -315,48 +313,44 @@ public class SdServer extends Service implements SdDataReceiver {
             }
         }
 
-        // Update preferences.
-        Log.v(TAG, "onStartCommand() - calling updatePrefs()");
-        updatePrefs();
-
-        Log.v(TAG, "onStartCommand: Datasource =" + mSdDataSourceName + ", phoneAppVersion=" + mUtil.getAppVersionName());
+        Log.i(TAG, "onStartCommand: Datasource =" + mSdDataSourceName + ", phoneAppVersion=" + mUtil.getAppVersionName());
         mSdData.dataSourceName = mSdDataSourceName;
         mSdData.phoneAppVersion = mUtil.getAppVersionName();
         switch (mSdDataSourceName) {
             case "Pebble":
-                Log.v(TAG, "Selecting Pebble DataSource");
+                Log.i(TAG, "Selecting Pebble DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePebble");
                 mSdDataSource = new SdDataSourcePebble(this.getApplicationContext(), mHandler, this);
                 break;
             case "AndroidWear":
-                Log.v(TAG, "Selecting Android Wear DataSource");
+                Log.i(TAG, "Selecting Android Wear DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceAw");
                 mSdDataSource = new SdDataSourceAw(this.getApplicationContext(), mHandler, this);
                 break;
             case "Network":
-                Log.v(TAG, "Selecting Network DataSource");
+                Log.i(TAG, "Selecting Network DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceNetwork");
                 mSdDataSource = new SdDataSourceNetwork(this.getApplicationContext(), mHandler, this);
                 Log.i(TAG, "Disabling remote logging when using network data source");
                 mLogDataRemote = false;
                 break;
             case "Garmin":
-                Log.v(TAG, "Selecting Garmin DataSource");
+                Log.i(TAG, "Selecting Garmin DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceGarmin");
                 mSdDataSource = new SdDataSourceGarmin(this.getApplicationContext(), mHandler, this);
                 break;
             case "BLE":
-                Log.v(TAG, "Selecting BLE DataSource");
+                Log.i(TAG, "Selecting BLE DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceBLE");
                 mSdDataSource = new SdDataSourceBLE(this.getApplicationContext(), mHandler, this);
                 break;
             case "BLE2":
-                Log.v(TAG, "Selecting BLE2 DataSource");
+                Log.i(TAG, "Selecting BLE2 DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceBLE2");
                 mSdDataSource = new SdDataSourceBLE2(this.getApplicationContext(), mHandler, this);
                 break;
             case "Phone":
-                Log.v(TAG, "Selecting Phone Sensor DataSource");
+                Log.i(TAG, "Selecting Phone Sensor DataSource");
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePhone");
                 mSdDataSource = new SdDataSourcePhone(this.getApplicationContext(), mHandler, this);
                 break;
@@ -367,6 +361,21 @@ public class SdServer extends Service implements SdDataReceiver {
                 mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePhone");
                 mSdDataSource = new SdDataSourcePhone(this.getApplicationContext(), mHandler, this);
         }
+
+
+        // Ensure SeizureDetector is fresh by closing any pre-existing instance
+        if (mSeizureDetector != null) {
+            Log.i(TAG, "onStartCommand() - Closing existing SeizureDetector");
+            mSeizureDetector.close();
+            mSeizureDetector = null; // Clear it so we know to make a new one
+        }
+        // Create the seizure detector instance
+        // Initialize SeizureDetector for coordinating all seizure detection algorithms
+        mSeizureDetector = new SeizureDetector(getApplicationContext());
+        Log.i(TAG, "onStartCommand() - SeizureDetector initialized");
+        mUtil.writeToSysLogFile("SdServer.onStartCommand() - SeizureDetector initialized");
+
+
 
         // Create our log manager.
         mLm = new LogManager(this, mLogDataRemote, mLogDataRemoteMobile, mAuthToken, mEventDuration,

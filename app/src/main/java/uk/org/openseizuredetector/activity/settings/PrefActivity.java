@@ -374,6 +374,17 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         if (mPrefChanged) {
             mUtil.showToast("Settings changed - server will restart...");
             mUtil.stopServer();
+
+            // Use a handler to start the server after a short delay
+            // to allow the old service instance to finish closing native resources
+            mHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Log.i(TAG, "Restarting server after preference change.");
+                    mUtil.startServer();
+                }
+            }, 1500); // 1.5 second delay is usually enough for GC/Cleanup
+
             mPrefChanged = false;
         }
     }
