@@ -122,7 +122,6 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
             }
         } else {
             tv.setText("****NOT BOUND TO SERVER***");
-            return;
         }
     }
 

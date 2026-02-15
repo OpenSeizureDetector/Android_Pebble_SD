@@ -121,20 +121,6 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_log_manager_control);
 
-        // Handle system window insets for all API levels
-        View rootView = findViewById(R.id.root_layout_log_manager_control);
-        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
-            // Get the system bar insets
-            int top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
-            int bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
-
-            // Apply padding to your main content view
-            LinearLayout content = findViewById(R.id.log_manager_control_content_layout); // Add this ID to your LinearLayout
-            content.setPadding(0, top, 0, bottom);
-
-            // Return the insets so they keep propagating
-            return WindowInsetsCompat.CONSUMED;
-        });
         /* Force display of overflow menu - from stackoverflow
          * "how to force use of..."
          */
@@ -706,30 +692,64 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
     /**
      * onTabChanged() - Handle tab selection for data view switching
+     * Supports both portrait (LinearLayout containers) and landscape (MaterialCardView containers)
      * @param tabPosition The position of the selected tab (0=Remote, 1=Local, 2=Syslog)
      */
     public void onTabChanged(int tabPosition) {
+        Log.v(TAG, "onTabChanged() - Tab position: " + tabPosition);
+
+        // Portrait layout - uses LinearLayout containers
         LinearLayout localDataLl = (LinearLayout) findViewById(R.id.local_data_ll);
         LinearLayout sharedDataLl = (LinearLayout) findViewById(R.id.shared_data_ll);
         LinearLayout syslogLl = (LinearLayout) findViewById(R.id.syslog_ll);
 
-        Log.v(TAG, "onTabChanged() - Tab position: " + tabPosition);
+        // Landscape layout - uses MaterialCardView containers
+        View remoteListCard = findViewById(R.id.remote_list_card);
+        View localListCard = findViewById(R.id.local_list_card);
+        View syslogListCard = findViewById(R.id.syslog_list_card);
+
+        // Determine if we're in landscape or portrait based on which views exist
+        boolean isLandscape = remoteListCard != null;
 
         switch (tabPosition) {
             case 0: // Remote/Shared Data
-                localDataLl.setVisibility(View.GONE);
-                sharedDataLl.setVisibility(View.VISIBLE);
-                syslogLl.setVisibility(View.GONE);
+                if (isLandscape) {
+                    // Landscape layout
+                    if (remoteListCard != null) remoteListCard.setVisibility(View.VISIBLE);
+                    if (localListCard != null) localListCard.setVisibility(View.GONE);
+                    if (syslogListCard != null) syslogListCard.setVisibility(View.GONE);
+                } else {
+                    // Portrait layout
+                    if (localDataLl != null) localDataLl.setVisibility(View.GONE);
+                    if (sharedDataLl != null) sharedDataLl.setVisibility(View.VISIBLE);
+                    if (syslogLl != null) syslogLl.setVisibility(View.GONE);
+                }
                 break;
             case 1: // Local Data
-                localDataLl.setVisibility(View.VISIBLE);
-                sharedDataLl.setVisibility(View.GONE);
-                syslogLl.setVisibility(View.GONE);
+                if (isLandscape) {
+                    // Landscape layout
+                    if (remoteListCard != null) remoteListCard.setVisibility(View.GONE);
+                    if (localListCard != null) localListCard.setVisibility(View.VISIBLE);
+                    if (syslogListCard != null) syslogListCard.setVisibility(View.GONE);
+                } else {
+                    // Portrait layout
+                    if (localDataLl != null) localDataLl.setVisibility(View.VISIBLE);
+                    if (sharedDataLl != null) sharedDataLl.setVisibility(View.GONE);
+                    if (syslogLl != null) syslogLl.setVisibility(View.GONE);
+                }
                 break;
             case 2: // System Logs
-                localDataLl.setVisibility(View.GONE);
-                sharedDataLl.setVisibility(View.GONE);
-                syslogLl.setVisibility(View.VISIBLE);
+                if (isLandscape) {
+                    // Landscape layout
+                    if (remoteListCard != null) remoteListCard.setVisibility(View.GONE);
+                    if (localListCard != null) localListCard.setVisibility(View.GONE);
+                    if (syslogListCard != null) syslogListCard.setVisibility(View.VISIBLE);
+                } else {
+                    // Portrait layout
+                    if (localDataLl != null) localDataLl.setVisibility(View.GONE);
+                    if (sharedDataLl != null) sharedDataLl.setVisibility(View.GONE);
+                    if (syslogLl != null) syslogLl.setVisibility(View.VISIBLE);
+                }
                 break;
         }
     }

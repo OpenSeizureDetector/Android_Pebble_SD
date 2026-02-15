@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RadioGroup;
+import android.widget.RadioButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,11 +19,16 @@ import androidx.fragment.app.Fragment;
  * Data Source selection page - choose between phone (demo), PineTime, Garmin, or Network
  * This fragment handles selection only. Configuration of the selected source
  * is handled by OnboardingDataSourceConfigFragment.
+ * Supports both portrait (RadioGroup) and landscape (individual RadioButtons) layouts.
  */
 public class OnboardingDataSourceFragment extends Fragment {
     private static final String TAG = "OnboardingDataSource";
 
     private RadioGroup mDataSourceGroup;
+    private RadioButton mRadioPhone;
+    private RadioButton mRadioPineTime;
+    private RadioButton mRadioGarmin;
+    private RadioButton mRadioNetwork;
     private SharedPreferences mPrefs;
 
     @Nullable
@@ -33,25 +39,55 @@ public class OnboardingDataSourceFragment extends Fragment {
 
         mPrefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
 
+        // Try to find RadioGroup (portrait layout)
         mDataSourceGroup = view.findViewById(R.id.data_source_group);
+
+        // Also find individual RadioButtons (landscape layout)
+        mRadioPhone = view.findViewById(R.id.radio_phone);
+        mRadioPineTime = view.findViewById(R.id.radio_pinetime);
+        mRadioGarmin = view.findViewById(R.id.radio_garmin);
+        mRadioNetwork = view.findViewById(R.id.radio_network);
 
         // Load saved preference
         String currentDataSource = mPrefs.getString("DataSource", "0");
         selectDataSourceRadio(currentDataSource);
 
-        // Save selection when changed
-        mDataSourceGroup.setOnCheckedChangeListener((group, checkedId) -> {
-            if (checkedId == R.id.radio_pinetime) {
-                saveDataSource("PineTime");
-            } else if (checkedId == R.id.radio_garmin) {
-                saveDataSource("Garmin");
-            } else if (checkedId == R.id.radio_phone) {
-                saveDataSource("Phone");
-            } else if (checkedId == R.id.radio_network) {
-                saveDataSource("Network");
-            }
-        });
+        // Setup listeners for portrait layout (RadioGroup)
+        if (mDataSourceGroup != null) {
+            mDataSourceGroup.setOnCheckedChangeListener((group, checkedId) -> {
+                if (checkedId == R.id.radio_pinetime) {
+                    saveDataSource("PineTime");
+                } else if (checkedId == R.id.radio_garmin) {
+                    saveDataSource("Garmin");
+                } else if (checkedId == R.id.radio_phone) {
+                    saveDataSource("Phone");
+                } else if (checkedId == R.id.radio_network) {
+                    saveDataSource("Network");
+                }
+            });
+        }
 
+        // Setup listeners for landscape layout (individual RadioButtons)
+        if (mRadioPhone != null) {
+            mRadioPhone.setOnCheckedChangeListener((button, isChecked) -> {
+                if (isChecked) saveDataSource("Phone");
+            });
+        }
+        if (mRadioPineTime != null) {
+            mRadioPineTime.setOnCheckedChangeListener((button, isChecked) -> {
+                if (isChecked) saveDataSource("PineTime");
+            });
+        }
+        if (mRadioGarmin != null) {
+            mRadioGarmin.setOnCheckedChangeListener((button, isChecked) -> {
+                if (isChecked) saveDataSource("Garmin");
+            });
+        }
+        if (mRadioNetwork != null) {
+            mRadioNetwork.setOnCheckedChangeListener((button, isChecked) -> {
+                if (isChecked) saveDataSource("Network");
+            });
+        }
 
         return view;
     }
@@ -75,7 +111,22 @@ public class OnboardingDataSourceFragment extends Fragment {
             default:
                 radioId = R.id.radio_phone;
         }
-        mDataSourceGroup.check(radioId);
+
+        // For portrait layout with RadioGroup
+        if (mDataSourceGroup != null) {
+            mDataSourceGroup.check(radioId);
+        }
+
+        // For landscape layout with individual RadioButtons
+        if (radioId == R.id.radio_phone && mRadioPhone != null) {
+            mRadioPhone.setChecked(true);
+        } else if (radioId == R.id.radio_pinetime && mRadioPineTime != null) {
+            mRadioPineTime.setChecked(true);
+        } else if (radioId == R.id.radio_garmin && mRadioGarmin != null) {
+            mRadioGarmin.setChecked(true);
+        } else if (radioId == R.id.radio_network && mRadioNetwork != null) {
+            mRadioNetwork.setChecked(true);
+        }
     }
 
     private void saveDataSource(String dataSource) {

@@ -5,11 +5,16 @@
     android:layout_height="match_parent"
     tools:context=".activity.main.FragmentHrAlg">
 
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:fillViewport="true">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
 
         <TextView
             android:layout_width="match_parent"
@@ -79,8 +84,9 @@
         <com.jjoe64.graphview.GraphView
             android:id="@+id/lineChart"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="250dp" />
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+        </androidx.appcompat.widget.LinearLayoutCompat>
+    </ScrollView>
 
 </FrameLayout>

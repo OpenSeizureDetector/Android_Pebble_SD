@@ -18,6 +18,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.util.Timer;
@@ -32,6 +33,8 @@ public class FragmentOsdBaseClass extends Fragment {
     final Handler updateUiHandler = new Handler(Looper.getMainLooper());
     Timer mUiTimer;
     protected View mRootView;
+    private ScrollView mCachedScrollView;
+    private long mLastDataTime = 0;
 
     // Use transparent for OK state by default to allow theme background to show through
     protected int okColour = Color.TRANSPARENT;
@@ -103,6 +106,8 @@ public class FragmentOsdBaseClass extends Fragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mRootView = view;
+        // Find and cache the ScrollView on first use
+        mCachedScrollView = findScrollView(mRootView);
     }
 
     @Override
@@ -127,6 +132,10 @@ public class FragmentOsdBaseClass extends Fragment {
         if (mUiTimer != null) {
             mUiTimer.cancel();
         }
+        // Clear cached ScrollView on pause
+        mCachedScrollView = null;
+        // Reset dataTime so UI updates when fragment is resumed
+        mLastDataTime = 0;
         mUtil.unbindFromServer(mContext, mConnection);
     }
 
@@ -136,13 +145,68 @@ public class FragmentOsdBaseClass extends Fragment {
             public void run() {
                 if (mContext != null && mRootView != null) {
                     try {
-                        updateUi();
+                        // Check if new data has arrived by comparing dataTime
+                        long currentDataTime = 0;
+                        if (mConnection.mBound && mConnection.mSdServer != null &&
+                            mConnection.mSdServer.mSdData != null) {
+                            currentDataTime = mConnection.mSdServer.mSdData.dataTimeMillis;
+                        }
+
+                        // Only update UI if data has changed (new data arrived)
+                        if (currentDataTime != mLastDataTime) {
+                            mLastDataTime = currentDataTime;
+
+                            // Use cached ScrollView to avoid repeated searches
+                            if (mCachedScrollView == null) {
+                                mCachedScrollView = findScrollView(mRootView);
+                            }
+
+                            // Save scroll position before UI update
+                            final int scrollY = mCachedScrollView != null ? mCachedScrollView.getScrollY() : 0;
+
+                            // Perform UI update
+                            updateUi();
+
+                            // Always restore scroll position after UI update to prevent reset
+                            if (mCachedScrollView != null && scrollY > 0) {
+                                mCachedScrollView.post(() -> mCachedScrollView.scrollTo(0, scrollY));
+                            }
+                        }
+                        // If data hasn't changed, skip UI update entirely - no flicker, no wasted work
                     } catch (Exception e) {
                         Log.e(TAG,"upateUiOnUiThread() - exception updating UI - "+e.getMessage());
                     }
                 }
             }
         });
+    }
+
+    /**
+     * Find the first ScrollView in the view hierarchy.
+     * This searches the root view and its ancestors for a ScrollView.
+     */
+    private ScrollView findScrollView(View view) {
+        if (view instanceof ScrollView) {
+            return (ScrollView) view;
+        }
+
+        // Check if parent is a ScrollView
+        if (view.getParent() instanceof ScrollView) {
+            return (ScrollView) view.getParent();
+        }
+
+        // Search child views
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                ScrollView found = findScrollView(group.getChildAt(i));
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+
+        return null;
     }
 
     protected void updateUi() {

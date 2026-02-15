@@ -211,9 +211,10 @@ public class MainActivity2 extends AppCompatActivity {
             Log.d(TAG, "Saved active tab position: " + currentTab);
         }
 
-        // Detach TabLayoutMediator to prevent memory leaks
+        // Detach TabLayoutMediator to prevent memory leaks (only if it exists - portrait layout)
         if (mTabLayoutMediator != null) {
             mTabLayoutMediator.detach();
+            Log.d(TAG, "onPause() - Detached TabLayoutMediator");
         }
     }
 
@@ -230,37 +231,42 @@ public class MainActivity2 extends AppCompatActivity {
         mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
         mFragmentPager.setAdapter(mFragmentStateAdapter);
 
-        // Set up TabLayout with ViewPager2
+        // Set up TabLayout with ViewPager2 (portrait layout)
+        // The landscape layout doesn't have a TabLayout - it uses sidebar navigation instead
         mTabLayout = findViewById(R.id.tab_layout);
-        mTabLayoutMediator = new TabLayoutMediator(mTabLayout, mFragmentPager,
-                new TabLayoutMediator.TabConfigurationStrategy() {
-                    @Override
-                    public void onConfigureTab(TabLayout.Tab tab, int position) {
-                        switch (position) {
-                            case 0:
-                                tab.setText("OSD");
-                                break;
-                            case 1:
-                                tab.setText("ML");
-                                break;
-                            case 2:
-                                tab.setText("Heart Rate");
-                                break;
-                            case 3:
-                                tab.setText("System");
-                                break;
-                            //case 4:
-                            //    tab.setText("Signal");
-                            //    break;
-                            //case 5:
-                            //    tab.setText("Battery");
-                            //    break;
-                            default:
-                                tab.setText("Screen " + position);
+        if (mTabLayout != null) {
+            mTabLayoutMediator = new TabLayoutMediator(mTabLayout, mFragmentPager,
+                    new TabLayoutMediator.TabConfigurationStrategy() {
+                        @Override
+                        public void onConfigureTab(TabLayout.Tab tab, int position) {
+                            switch (position) {
+                                case 0:
+                                    tab.setText("OSD");
+                                    break;
+                                case 1:
+                                    tab.setText("ML");
+                                    break;
+                                case 2:
+                                    tab.setText("Heart Rate");
+                                    break;
+                                case 3:
+                                    tab.setText("System");
+                                    break;
+                                //case 4:
+                                //    tab.setText("Signal");
+                                //    break;
+                                //case 5:
+                                //    tab.setText("Battery");
+                                //    break;
+                                default:
+                                    tab.setText("Screen " + position);
+                            }
                         }
-                    }
-                });
-        mTabLayoutMediator.attach();
+                    });
+            mTabLayoutMediator.attach();
+        } else {
+            Log.d(TAG, "onResume() - TabLayout not found (landscape layout detected), skipping TabLayoutMediator");
+        }
 
         // Restore the previously active tab position
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
