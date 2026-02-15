@@ -73,6 +73,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     private static final String TAG = "PreferenceActivity";
     private OsdUtil mUtil;
     private boolean mPrefChanged = false;
+    private boolean mUiRestartNeeded = false;
     private Context mContext;
     private Handler mHandler;
 
@@ -315,6 +316,13 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             updateHeaders();
         }
 
+        // Preferences that require UI restart (going through StartupActivity)
+        // These affect whether onboarding should be shown
+        if (s.equals("first_run_complete")) {
+            mUiRestartNeeded = true;
+            return;
+        }
+
         if (s.equals("SMSAlarm"))  {
             if (sharedPreferences.getBoolean("SMSAlarm", false) == true) {
                 mUtil.showToast("Restarting OpenSeizureDetector");
@@ -371,21 +379,39 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     @Override
     protected void onStop() {
         super.onStop();
-        if (mPrefChanged) {
-            mUtil.showToast("Settings changed - server will restart...");
-            mUtil.stopServer();
+        if (mPrefChanged || mUiRestartNeeded) {
+            // If UI restart is needed (e.g., onboarding setting changed), restart the entire app
+            // by going through StartupActivity to properly handle the onboarding flow
+            if (mUiRestartNeeded) {
+                mUtil.showToast("Settings changed - restarting app...");
+                mUtil.stopServer();
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        Intent i = new Intent(getApplicationContext(), StartupActivity.class);
+                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                        startActivity(i);
+                        finish();
+                    }
+                }, 1000);
+            } else {
+                // For other preference changes, just restart the server
+                mUtil.showToast("Settings changed - server will restart...");
+                mUtil.stopServer();
 
-            // Use a handler to start the server after a short delay
-            // to allow the old service instance to finish closing native resources
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    Log.i(TAG, "Restarting server after preference change.");
-                    mUtil.startServer();
-                }
-            }, 1500); // 1.5 second delay is usually enough for GC/Cleanup
+                // Use a handler to start the server after a short delay
+                // to allow the old service instance to finish closing native resources
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.i(TAG, "Restarting server after preference change.");
+                        mUtil.startServer();
+                    }
+                }, 1500); // 1.5 second delay is usually enough for GC/Cleanup
+            }
 
             mPrefChanged = false;
+            mUiRestartNeeded = false;
         }
     }
 
