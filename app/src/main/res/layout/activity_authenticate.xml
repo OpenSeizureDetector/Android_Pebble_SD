@@ -4,7 +4,7 @@
     android:id="@+id/authenticate_root_layout"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:background="?attr/colorPrimary"
+    android:background="?attr/colorSurface"
     android:orientation="vertical"
     android:fitsSystemWindows="true">
 
@@ -36,8 +36,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
                     app:cardElevation="4dp"
-                    app:cardBackgroundColor="@color/card_background_light_blue"
-                    app:strokeColor="@color/card_stroke_light_blue"
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:strokeColor="?attr/colorOutline"
                     app:strokeWidth="1dp"
                     app:cardCornerRadius="8dp">
                     <LinearLayout
@@ -90,8 +90,8 @@
                         android:layout_weight="1"
                         android:layout_marginEnd="4dp"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        app:strokeColor="@android:color/white"
-                        android:textColor="@android:color/white"
+                        app:strokeColor="?attr/colorOutline"
+                        android:textColor="?attr/colorOnSurface"
                         android:text="@string/back" />
 
                     <com.google.android.material.button.MaterialButton
@@ -101,8 +101,8 @@
                         android:layout_weight="1"
                         android:layout_marginStart="4dp"
                         style="@style/Widget.MaterialComponents.Button"
-                        app:backgroundTint="@android:color/white"
-                        android:textColor="?attr/colorPrimary"
+                        app:backgroundTint="?attr/colorPrimary"
+                        android:textColor="?attr/colorOnPrimary"
                         android:text="@string/authenticate" />
                 </LinearLayout>
 
@@ -120,8 +120,8 @@
                         android:layout_weight="1"
                         android:layout_marginEnd="4dp"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        app:strokeColor="@android:color/white"
-                        android:textColor="@android:color/white"
+                        app:strokeColor="?attr/colorOutline"
+                        android:textColor="?attr/colorOnSurface"
                         android:text="@string/register" />
 
                     <com.google.android.material.button.MaterialButton
@@ -131,8 +131,8 @@
                         android:layout_weight="1"
                         android:layout_marginStart="4dp"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        app:strokeColor="@android:color/white"
-                        android:textColor="@android:color/white"
+                        app:strokeColor="?attr/colorOutline"
+                        android:textColor="?attr/colorOnSurface"
                         android:text="@string/reset_password" />
                 </LinearLayout>
 
@@ -151,8 +151,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
                     app:cardElevation="4dp"
-                    app:cardBackgroundColor="@color/card_background_light_blue"
-                    app:strokeColor="@color/card_stroke_light_blue"
+                    app:cardBackgroundColor="?attr/colorSurface"
+                    app:strokeColor="?attr/colorOutline"
                     app:strokeWidth="1dp"
                     app:cardCornerRadius="8dp">
                     <LinearLayout
@@ -164,7 +164,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@android:color/white"
+                            android:textColor="?attr/colorOnSurface"
                             android:textAppearance="?android:attr/textAppearanceLarge"
                             android:textStyle="bold"
                             android:text="@string/logged_in_as_user_id"
@@ -179,7 +179,7 @@
                                 android:id="@+id/userIdTv"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textColor="@android:color/white"
+                                android:textColor="?attr/colorOnSurface"
                                 android:textAppearance="?android:attr/textAppearanceLarge"
                                 android:text="userId" />
                         </LinearLayout>
@@ -193,7 +193,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textColor="@android:color/white"
+                                android:textColor="?attr/colorOnSurface"
                                 android:textAppearance="?android:attr/textAppearanceMedium"
                                 android:text=" (" />
 
@@ -201,14 +201,14 @@
                                 android:id="@+id/usernameTv"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textColor="@android:color/white"
+                                android:textColor="?attr/colorOnSurface"
                                 android:textAppearance="?android:attr/textAppearanceMedium"
                                 android:text="username" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:textColor="@android:color/white"
+                                android:textColor="?attr/colorOnSurface"
                                 android:textAppearance="?android:attr/textAppearanceMedium"
                                 android:text=")" />
                         </LinearLayout>
@@ -229,8 +229,8 @@
                         android:layout_weight="1"
                         android:layout_marginEnd="4dp"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                        app:strokeColor="@android:color/white"
-                        android:textColor="@android:color/white"
+                        app:strokeColor="?attr/colorOutline"
+                        android:textColor="?attr/colorOnSurface"
                         android:text="@string/back" />
 
                     <com.google.android.material.button.MaterialButton
@@ -240,8 +240,8 @@
                         android:layout_weight="1"
                         android:layout_marginStart="4dp"
                         style="@style/Widget.MaterialComponents.Button"
-                        app:backgroundTint="@android:color/white"
-                        android:textColor="?attr/colorPrimary"
+                        app:backgroundTint="?attr/colorPrimary"
+                        android:textColor="?attr/colorOnPrimary"
                         android:text="@string/logout" />
                 </LinearLayout>
 

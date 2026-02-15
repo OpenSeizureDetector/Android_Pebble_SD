@@ -19,14 +19,14 @@
             android:layout_weight="1"
             android:text="eventId"
             android:textAppearance="?android:attr/textAppearanceSmall"
-            android:textColor="@android:color/black"
+            android:textColor="?attr/colorOnSurface"
             android:textStyle="bold" />
         <TextView
             android:id="@+id/event_date_remote_tv"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="2"
-            android:textColor="@android:color/black"
+            android:textColor="?attr/colorOnSurface"
             android:text="date"
             android:textStyle="bold" />
 
@@ -35,7 +35,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="@android:color/black"
+            android:textColor="?attr/colorOnSurface"
             android:text="duration"
             android:gravity="end" />
 
@@ -46,7 +46,7 @@
             android:layout_weight="1"
             android:gravity="end"
             android:text="alarm"
-            android:textColor="@android:color/black" />
+            android:textColor="?attr/colorOnSurface" />
 
     </LinearLayout>
 
@@ -64,7 +64,7 @@
             android:layout_weight="0.25"
             android:gravity="start"
             android:text="---"
-            android:textColor="@android:color/black"
+            android:textColor="?attr/colorOnSurface"
             android:textStyle="bold" />
 
         <TextView
@@ -74,7 +74,7 @@
             android:layout_weight="0.75"
             android:gravity="start"
             android:text="---"
-            android:textColor="@android:color/black" />
+            android:textColor="?attr/colorOnSurface" />
 
     </LinearLayout>
 
@@ -89,7 +89,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="2"
-            android:textColor="@android:color/black"
+            android:textColor="?attr/colorOnSurface"
             android:text="notes"
             android:textStyle="italic" />
 

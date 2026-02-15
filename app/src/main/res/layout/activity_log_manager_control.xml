@@ -13,17 +13,17 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="?attr/colorPrimary">
+        android:background="?attr/colorSurface">
 
         <!-- Data View Selection Tabs at the TOP -->
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/data_view_tabs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="?attr/colorPrimaryDark"
-            app:tabTextColor="@color/tabUnselected"
-            app:tabSelectedTextColor="@color/tabSelected"
-            app:tabIndicatorColor="@color/tabIndicator"
+            android:background="?attr/colorSurfaceVariant"
+            app:tabTextColor="?attr/colorOnSurfaceVariant"
+            app:tabSelectedTextColor="?attr/colorOnSurface"
+            app:tabIndicatorColor="?attr/colorPrimary"
             app:tabIndicatorHeight="4dp" />
 
         <!-- Remote/Shared Data Section -->
@@ -40,7 +40,7 @@
                 android:id="@+id/shared_data_title_tv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@android:color/white"
+                android:textColor="?attr/colorOnSurface"
                 android:text="@string/remote_database"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:textStyle="bold"
@@ -49,7 +49,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@android:color/white"
+                android:textColor="?attr/colorOnSurface"
                 android:text="@string/check_seizures_message"
                 android:layout_marginBottom="8dp" />
 
@@ -67,8 +67,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    app:strokeColor="@android:color/white"
-                    android:textColor="@android:color/white"
+                    app:strokeColor="?attr/colorOutline"
+                    android:textColor="?attr/colorOnSurface"
                     android:text="@string/authenticate"
                     android:layout_marginEnd="4dp"
                     android:minWidth="0dp"
@@ -80,8 +80,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    app:strokeColor="@android:color/white"
-                    android:textColor="@android:color/white"
+                    app:strokeColor="?attr/colorOutline"
+                    android:textColor="?attr/colorOnSurface"
                     android:text="@string/refreshBtn"
                     android:minWidth="0dp"
                     android:paddingLeft="8dp"
@@ -108,9 +108,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:checked="true"
-                    android:textColor="@android:color/white"
+                    android:textColor="?attr/colorOnSurface"
                     android:text="@string/group_remote_events"
-                    android:buttonTint="@android:color/white"
+                    android:buttonTint="?attr/colorOnSurface"
                     android:textSize="12sp" />
 
                 <CheckBox
@@ -118,9 +118,9 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textColor="@android:color/white"
+                    android:textColor="?attr/colorOnSurface"
                     android:text="@string/include_warnings"
-                    android:buttonTint="@android:color/white"
+                    android:buttonTint="?attr/colorOnSurface"
                     android:textSize="12sp" />
 
                 <CheckBox
@@ -128,9 +128,9 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textColor="@android:color/white"
+                    android:textColor="?attr/colorOnSurface"
                     android:text="@string/include_nda"
-                    android:buttonTint="@android:color/white"
+                    android:buttonTint="?attr/colorOnSurface"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -140,8 +140,8 @@
                 android:layout_height="0dp"
                 android:layout_weight="1"
                 app:cardElevation="4dp"
-                app:cardBackgroundColor="@android:color/white"
-                app:strokeColor="@color/card_stroke_light_blue"
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:strokeColor="?attr/colorOutline"
                 app:strokeWidth="1dp"
                 app:cardCornerRadius="8dp">
                 <ListView
@@ -167,7 +167,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@android:color/white"
+                android:textColor="?attr/colorOnSurface"
                 android:text="@string/EventsInLocalDb"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:textStyle="bold"
@@ -179,8 +179,8 @@
                 android:layout_height="0dp"
                 android:layout_weight="1"
                 app:cardElevation="4dp"
-                app:cardBackgroundColor="@android:color/white"
-                app:strokeColor="@color/card_stroke_light_blue"
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:strokeColor="?attr/colorOutline"
                 app:strokeWidth="1dp"
                 app:cardCornerRadius="8dp">
                 <ListView
@@ -206,7 +206,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@android:color/white"
+                android:textColor="?attr/colorOnSurface"
                 android:text="@string/system_logs"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:textStyle="bold"
@@ -217,7 +217,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/syslog_current_file"
-                android:textColor="@android:color/white"
+                android:textColor="?attr/colorOnSurface"
                 android:layout_marginBottom="8dp" />
 
             <LinearLayout
@@ -232,8 +232,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    app:strokeColor="@android:color/white"
-                    android:textColor="@android:color/white"
+                    app:strokeColor="?attr/colorOutline"
+                    android:textColor="?attr/colorOnSurface"
                     android:text="@string/syslog_refresh"
                     android:layout_marginEnd="4dp"
                     android:padding="0dp"
@@ -246,8 +246,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    app:strokeColor="@android:color/white"
-                    android:textColor="@android:color/white"
+                    app:strokeColor="?attr/colorOutline"
+                    android:textColor="?attr/colorOnSurface"
                     android:text="@string/syslog_select_file"
                     android:layout_marginEnd="4dp"
                     android:padding="0dp"
@@ -260,8 +260,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    app:strokeColor="@android:color/white"
-                    android:textColor="@android:color/white"
+                    app:strokeColor="?attr/colorOutline"
+                    android:textColor="?attr/colorOnSurface"
                     android:text="@string/syslog_export"
                     android:padding="0dp"
                     android:minWidth="0dp"
@@ -274,8 +274,8 @@
                 android:layout_height="0dp"
                 android:layout_weight="1"
                 app:cardElevation="4dp"
-                app:cardBackgroundColor="@android:color/white"
-                app:strokeColor="@color/card_stroke_light_blue"
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:strokeColor="?attr/colorOutline"
                 app:strokeWidth="1dp"
                 app:cardCornerRadius="8dp">
                 <ListView

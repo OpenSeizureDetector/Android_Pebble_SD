@@ -22,6 +22,8 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
+import com.google.android.material.color.MaterialColors;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -256,10 +258,7 @@ public class EditEventActivity extends AppCompatActivity {
             for (String eventTypeStr : mEventTypesList) {
                 b = new RadioButton(this);
                 b.setText(eventTypeStr);
-                // Use theme's primary text color for consistency
-                android.util.TypedValue typedValue = new android.util.TypedValue();
-                getTheme().resolveAttribute(android.R.attr.textColorPrimary, typedValue, true);
-                b.setTextColor(typedValue.data);
+                b.setTextColor(MaterialColors.getColor(b, com.google.android.material.R.attr.colorOnSurface));
                 mEventTypeRg.addView(b);
             }
             mEventTypesListChanged = false;
@@ -316,10 +315,7 @@ public class EditEventActivity extends AppCompatActivity {
                         for (String eventSubTypeStr : subtypesArrayList) {
                             b = new RadioButton(this);
                             b.setText(eventSubTypeStr);
-                            // Use theme's primary text color for consistency
-                            android.util.TypedValue typedValue = new android.util.TypedValue();
-                            getTheme().resolveAttribute(android.R.attr.textColorPrimary, typedValue, true);
-                            b.setTextColor(typedValue.data);
+                            b.setTextColor(MaterialColors.getColor(b, com.google.android.material.R.attr.colorOnSurface));
                             mEventSubTypeRg.addView(b);
                         }
                         mEventSubTypesListChanged = false;

@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?attr/colorPrimary"
+    android:background="?attr/colorSurface"
     android:paddingLeft="16dp"
     android:paddingRight="16dp"
     android:paddingTop="16dp"
@@ -77,7 +77,7 @@
         android:text="Available Devices"
         android:textSize="14sp"
         android:textStyle="bold"
-        android:textColor="@android:color/white"
+        android:textColor="?attr/colorOnSurface"
         android:layout_marginBottom="12dp" />
     <!-- Device List Card -->
     <com.google.android.material.card.MaterialCardView
@@ -118,7 +118,7 @@
         android:id="@+id/ble_connection_warning_tv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@android:color/white"
+        android:textColor="?attr/colorOnSurfaceVariant"
         android:textSize="12sp"
         android:text="@string/ble_connected_warning_text" />
 </LinearLayout>

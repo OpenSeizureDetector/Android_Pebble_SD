@@ -9,13 +9,13 @@
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="?attr/colorPrimary"
+        android:background="?attr/colorSurface"
         android:orientation="vertical">
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Watch Signal Strength History"
-            android:textColor="?attr/colorOnPrimary"/>
+            android:textColor="?attr/colorOnSurface"/>
 
 
         <androidx.appcompat.widget.LinearLayoutCompat
@@ -26,20 +26,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Current Signal Strength: "
-                android:textColor="?attr/colorOnPrimary" />
+                android:textColor="?attr/colorOnSurface" />
 
             <TextView
                 android:id="@+id/current_sig_strength_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="---"
-                android:textColor="?attr/colorOnPrimary" />
+                android:textColor="?attr/colorOnSurface" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=" dB"
-                android:textColor="?attr/colorOnPrimary" />
+                android:textColor="?attr/colorOnSurface" />
         </androidx.appcompat.widget.LinearLayoutCompat>
 
         <FrameLayout

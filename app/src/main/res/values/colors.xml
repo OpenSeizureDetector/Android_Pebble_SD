@@ -76,4 +76,10 @@
     <!-- Card Colors for BLE Scan Activity -->
     <color name="card_background_light_blue">#5B6FD8</color>  <!-- Lighter blue for card backgrounds -->
     <color name="card_stroke_light_blue">#6B7FE8</color>      <!-- Slightly lighter for subtle stroke -->
+
+    <!-- Highlight Colors for Remote Events (Light Theme) -->
+    <color name="remote_event_validated_bg">#D1E7DD</color>
+    <color name="remote_event_validated_text">#0F5132</color>
+    <color name="remote_event_unvalidated_bg">#FFF1F1</color>
+    <color name="remote_event_seizure_bg">#FFC1C1</color>
 </resources>

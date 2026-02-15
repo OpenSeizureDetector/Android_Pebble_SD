@@ -12,7 +12,7 @@
         android:id="@+id/export_data_content_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="?attr/colorPrimary"
+        android:background="?attr/colorSurface"
         android:orientation="vertical"
         android:padding="16dp">
 
@@ -48,8 +48,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                app:strokeColor="#FFFFFF"
-                android:textColor="#FFFFFF"
+                app:strokeColor="?attr/colorOutline"
+                android:textColor="?attr/colorOnSurface"
                 android:text="Select Date" />
 
 
@@ -74,8 +74,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                app:strokeColor="#FFFFFF"
-                android:textColor="#FFFFFF"
+                app:strokeColor="?attr/colorOutline"
+                android:textColor="?attr/colorOnSurface"
                 android:text="Select Time" />
 
 
@@ -106,8 +106,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                app:strokeColor="#FFFFFF"
-                android:textColor="#FFFFFF"
+                app:strokeColor="?attr/colorOutline"
+                android:textColor="?attr/colorOnSurface"
                 android:text="Export Data" />
 
             <ProgressBar

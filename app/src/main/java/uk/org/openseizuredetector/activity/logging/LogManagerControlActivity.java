@@ -28,6 +28,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.content.ContextCompat;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -1116,10 +1117,10 @@ public class LogManagerControlActivity extends AppCompatActivity {
             switch (dataItem.get("type").toString()) {
                 case "null":
                 case "":
-                    v.setBackgroundColor(Color.parseColor("#ffaaaa"));
+                    v.setBackgroundColor(ContextCompat.getColor(LogManagerControlActivity.this, R.color.remote_event_unvalidated_bg));
                     break;
                 case "Seizure":
-                    v.setBackgroundColor(Color.parseColor("#ff6060"));
+                    v.setBackgroundColor(ContextCompat.getColor(LogManagerControlActivity.this, R.color.remote_event_seizure_bg));
                     break;
                 default:
                     v.setBackgroundColor(Color.TRANSPARENT);

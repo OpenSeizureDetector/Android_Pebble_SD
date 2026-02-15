@@ -12,7 +12,7 @@
         android:id="@+id/edit_event_content_layout"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:background="?attr/colorPrimary"
+        android:background="?attr/colorSurface"
         android:orientation="vertical">
 
         <LinearLayout
@@ -27,8 +27,8 @@
                 android:layout_weight="1"
                 android:layout_marginEnd="4dp"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                app:strokeColor="#FFFFFF"
-                android:textColor="#FFFFFF"
+                app:strokeColor="?attr/colorOutline"
+                android:textColor="?attr/colorOnSurface"
                 android:text="@string/cancel" />
 
             <com.google.android.material.button.MaterialButton
@@ -38,8 +38,8 @@
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                app:strokeColor="#FFFFFF"
-                android:textColor="#FFFFFF"
+                app:strokeColor="?attr/colorOutline"
+                android:textColor="?attr/colorOnSurface"
                 android:text="@string/save" />
         </LinearLayout>
 
@@ -195,7 +195,7 @@
                     android:layout_marginTop="16dp"
                     android:layout_marginRight="4dp"
                     android:layout_marginBottom="4dp"
-                    android:textColor="?android:attr/textColorPrimary"
+                    android:textColor="?attr/colorOnSurface"
                     android:hint="@string/notes_about_event" />
 
 
