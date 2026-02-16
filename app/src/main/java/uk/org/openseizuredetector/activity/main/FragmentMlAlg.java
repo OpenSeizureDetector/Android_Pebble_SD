@@ -167,12 +167,9 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         historyChart.getGridLabelRenderer().setHorizontalAxisTitleColor(okTextColour);
         historyChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (minutes ago)");
 
-        // Enable legend - visibility will be controlled dynamically when drawing series
-        historyChart.getLegendRenderer().setVisible(true);
-        historyChart.getLegendRenderer().setAlign(com.jjoe64.graphview.LegendRenderer.LegendAlign.TOP);
-        historyChart.getLegendRenderer().setBackgroundColor(Color.argb(160, 255, 255, 255)); // Light semi-transparent background
-        historyChart.getLegendRenderer().setTextColor(Color.BLACK); // Force black text for contrast on light bg
-        historyChart.getLegendRenderer().setTextSize(24f);
+        // Disable GraphView's built-in legend due to sizing issues
+        // We use a custom legend below instead
+        historyChart.getLegendRenderer().setVisible(false);
     }
 
     private void displayHistoryChart(SdData sdData) {
@@ -239,10 +236,97 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
             }
 
             // Show legend only if we added at least one model series (movement line alone doesn't require legend)
-            historyChart.getLegendRenderer().setVisible(addedAnyModelSeries);
+            // Instead of using GraphView's broken legend, we use a custom legend
+            if (addedAnyModelSeries) {
+                updateCustomLegend(sdData);
+            } else {
+                clearCustomLegend();
+            }
 
         } catch (Exception e) {
             Log.e(TAG, "Error updating chart: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Updates the custom legend display with model names and colored indicators
+     * This replaces GraphView's built-in legend which has sizing issues
+     */
+    private void updateCustomLegend(SdData sdData) {
+        if (mRootView == null) return;
+
+        android.widget.LinearLayout legendLayout = mRootView.findViewById(R.id.custom_legend_layout);
+        if (legendLayout == null) return;
+
+        legendLayout.removeAllViews();
+
+        // Add acceleration StdDev indicator first
+        android.widget.LinearLayout stdDevItem = new android.widget.LinearLayout(mContext);
+        stdDevItem.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        stdDevItem.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        stdDevItem.setPadding(12, 4, 12, 4);
+
+        // Create faint gray square for StdDev
+        android.widget.FrameLayout stdDevSquare = new android.widget.FrameLayout(mContext);
+        android.widget.LinearLayout.LayoutParams squareParams = new android.widget.LinearLayout.LayoutParams(24, 24);
+        squareParams.rightMargin = 8;
+        stdDevSquare.setLayoutParams(squareParams);
+        stdDevSquare.setBackgroundColor(Color.argb(100, 180, 180, 180)); // Very faint gray
+        stdDevItem.addView(stdDevSquare);
+
+        // Create text view for StdDev label
+        TextView stdDevTv = new TextView(mContext);
+        stdDevTv.setText("Std");
+        stdDevTv.setTextSize(12);
+        stdDevTv.setTextColor(Color.BLACK);
+        stdDevItem.addView(stdDevTv);
+
+        legendLayout.addView(stdDevItem);
+
+        // Add colored square + model name for each active model
+        int maxModels = Math.min(5, sdData.mlNumModels);
+        for (int i = 0; i < maxModels; i++) {
+            if (sdData.mlModelActive == null || i >= sdData.mlModelActive.length || !sdData.mlModelActive[i]) {
+                continue;
+            }
+
+            // Create container for legend item (colored square + text)
+            android.widget.LinearLayout legendItem = new android.widget.LinearLayout(mContext);
+            legendItem.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            legendItem.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            legendItem.setPadding(12, 4, 12, 4);
+
+            // Create colored square (20x20dp)
+            android.widget.FrameLayout colorSquare = new android.widget.FrameLayout(mContext);
+            android.widget.LinearLayout.LayoutParams colorSquareParams = new android.widget.LinearLayout.LayoutParams(24, 24);
+            colorSquareParams.rightMargin = 8;
+            colorSquare.setLayoutParams(colorSquareParams);
+            colorSquare.setBackgroundColor(SERIES_COLORS[i % SERIES_COLORS.length]);
+            legendItem.addView(colorSquare);
+
+            // Create text view with model name
+            TextView modelNameTv = new TextView(mContext);
+            String modelName = (sdData.mlModelNames != null && i < sdData.mlModelNames.length &&
+                    sdData.mlModelNames[i] != null && !sdData.mlModelNames[i].isEmpty())
+                    ? sdData.mlModelNames[i]
+                    : ("ML" + (i + 1));
+            modelNameTv.setText(modelName);
+            modelNameTv.setTextSize(12);
+            modelNameTv.setTextColor(Color.BLACK);
+            legendItem.addView(modelNameTv);
+
+            legendLayout.addView(legendItem);
+        }
+    }
+
+    /**
+     * Clears the custom legend display
+     */
+    private void clearCustomLegend() {
+        if (mRootView == null) return;
+        android.widget.LinearLayout legendLayout = mRootView.findViewById(R.id.custom_legend_layout);
+        if (legendLayout != null) {
+            legendLayout.removeAllViews();
         }
     }
 }

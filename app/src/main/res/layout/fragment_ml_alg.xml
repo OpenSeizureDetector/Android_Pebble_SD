@@ -53,10 +53,27 @@
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp" />
 
+            <!-- Custom Legend Display (bypasses GraphView's broken legend sizing) -->
+            <HorizontalScrollView
+                android:id="@+id/legend_scroll_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:scrollbars="none">
+                <LinearLayout
+                    android:id="@+id/custom_legend_layout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="8dp"
+                    android:background="@android:color/white" />
+            </HorizontalScrollView>
+
             <com.jjoe64.graphview.GraphView
                 android:id="@+id/seizure_history_chart"
                 android:layout_width="match_parent"
-                android:layout_height="200dp" />
+                android:layout_height="280dp" />
 
         </androidx.appcompat.widget.LinearLayoutCompat>
     </ScrollView>
