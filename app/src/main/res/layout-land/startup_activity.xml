@@ -68,7 +68,7 @@
             android:layout_weight="1"
             android:layout_marginEnd="4dp"
             android:text="Help"
-            style="@style/Widget.Material3.Button.OutlinedButton" />
+            style="@style/Widget.Material3.Button.TonalButton" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/troubleshootingButton"
@@ -78,7 +78,7 @@
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
             android:text="Troubleshoot"
-            style="@style/Widget.Material3.Button.OutlinedButton" />
+            style="@style/Widget.Material3.Button.TonalButton" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/settingsButton"
@@ -87,7 +87,7 @@
             android:layout_weight="1"
             android:layout_marginStart="4dp"
             android:text="@string/edit_settings"
-            style="@style/Widget.Material3.Button.OutlinedButton" />
+            style="@style/Widget.Material3.Button.TonalButton" />
     </LinearLayout>
 
     <!-- Status Items: 2-Column Grid -->
@@ -215,7 +215,7 @@
                 android:textSize="10sp"
                 android:paddingStart="4dp"
                 android:paddingEnd="4dp"
-                style="@style/Widget.Material3.Button.OutlinedButton" />
+                style="@style/Widget.Material3.Button.TonalButton" />
         </LinearLayout>
 
         <!-- Status Item 6: Settings Status -->

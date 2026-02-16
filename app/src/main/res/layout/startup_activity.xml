@@ -54,7 +54,7 @@
             android:layout_marginEnd="4dp"
             android:text="Help"
             android:id="@+id/instructionsButton"
-            style="@style/Widget.Material3.Button.OutlinedButton" />
+            style="@style/Widget.Material3.Button.TonalButton" />
 
         <com.google.android.material.button.MaterialButton
             android:layout_width="0dp"
@@ -64,7 +64,7 @@
             android:layout_marginEnd="4dp"
             android:text="Trouble-\nshooting"
             android:id="@+id/troubleshootingButton"
-            style="@style/Widget.Material3.Button.OutlinedButton" />
+            style="@style/Widget.Material3.Button.TonalButton" />
 
         <com.google.android.material.button.MaterialButton
             android:layout_width="0dp"
@@ -74,7 +74,7 @@
             android:layout_marginEnd="4dp"
             android:text="@string/edit_settings"
             android:id="@+id/settingsButton"
-            style="@style/Widget.Material3.Button.OutlinedButton" />
+            style="@style/Widget.Material3.Button.TonalButton" />
 
     </LinearLayout>
 
@@ -168,7 +168,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/install_watch_app"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:id="@+id/installOsdAppButton" />
         </LinearLayout>
 
