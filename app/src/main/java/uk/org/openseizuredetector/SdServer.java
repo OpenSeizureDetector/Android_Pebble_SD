@@ -797,9 +797,13 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "onSdDataReceived() - SeizureDetector returned alarmState=" + alarmState);
             mUtil.writeToSysLogFile("SeizureDetector: alarmState=" + alarmState);
         } else {
-            Log.e(TAG, "onSdDataReceived() - mSeizureDetector is null!");
-            mUtil.writeToSysLogFile("ERROR: SeizureDetector is null in onSdDataReceived()");
-            mUtil.showToast("ERROR- Seizure Detector Not Initialised - this should not happen!");
+            if (mIsDestroying) {
+                Log.e(TAG, "onSdDataReceived() - received data after shutting down seizuredetector - ignoring");
+            } else {
+                Log.e(TAG, "onSdDataReceived() - mSeizureDetector is null!");
+                mUtil.writeToSysLogFile("ERROR: SeizureDetector is null in onSdDataReceived()");
+                mUtil.showToast("ERROR- Seizure Detector Not Initialised - this should not happen!");
+            }
         }
 
         // Apply mute check (from either watch button or phone UI button)
@@ -1043,6 +1047,10 @@ public class SdServer extends Service implements SdDataReceiver {
 
     // Called by SdDataSource when a fault condition is detected.
     public void onSdDataFault(SdData sdData) {
+        if (mIsDestroying) {
+            Log.i(TAG,"onSdDataFault called while shutting down system - ignoring");
+            return;
+        }
         Log.e(TAG, "*** onSdDataFault() CALLED - FAULT DETECTED ***");
         mUtil.writeToSysLogFile("FAULT_DETECTED: onSdDataFault called, alarmState=" + sdData.alarmState +
                                 ", thread=" + Thread.currentThread().getName());
@@ -1494,7 +1502,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 if (!isWiFi) {
                     Log.v(TAG, "NetworkBroadcastReceiver - no Wifi Connection");
                     mUtil.writeToSysLogFile("Network State Changed - no Wifi Connection");
-                    mUtil.showToast(getString(R.string.no_wifi_connection));
+                    //mUtil.showToast(getString(R.string.no_wifi_connection));
                     // If mobile data logging is enabled, trigger upload
                     if (mLogDataRemoteMobile && mLm != null) {
                         Log.i(TAG, "NetworkBroadcastReceiver - Mobile data connected and remote mobile logging enabled - triggering upload");
@@ -1515,7 +1523,7 @@ public class SdServer extends Service implements SdDataReceiver {
             } else {
                 Log.v(TAG, "NetworkBroadcastReceiver - No Active Network");
                 mUtil.writeToSysLogFile("Network State Changed - No Active Network");
-                mUtil.showToast(getString(R.string.no_active_network));
+                //mUtil.showToast(getString(R.string.no_active_network));
             }
         }
     }
