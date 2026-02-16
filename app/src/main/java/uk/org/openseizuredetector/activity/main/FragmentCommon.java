@@ -59,6 +59,8 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                         Log.v(TAG, "acceptAlarmButton.onClick() - Accepting Alarm");
                         mConnection.mSdServer.acceptAlarm();
                     }
+                    // Force immediate UI update so user sees status change right away
+                    updateUi();
                 }
             }
         });
@@ -70,6 +72,8 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                 Log.v(TAG, "cancelAudibleButton.onClick()");
                 if (mConnection.mBound) {
                     mConnection.mSdServer.cancelAudible();
+                    // Force immediate UI update so user sees MUTE status right away
+                    updateUi();
                 }
             }
         });
@@ -160,49 +164,55 @@ public class FragmentCommon extends FragmentOsdBaseClass {
         }
 
 
-        // deal with latch alarms button
+        // deal with latch alarms button (Accept Alarm)
         Button acceptAlarmButton = (Button) mRootView.findViewById(R.id.acceptAlarmButton);
 
         if (mConnection.mBound) {
-            if ((mConnection.mSdServer.mSmsTimer != null)
-                    && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0)) {
-                acceptAlarmButton.setText(getString(R.string.SMSWillBeSentIn) + " " +
-                        mConnection.mSdServer.mSmsTimer.mTimeLeft / 1000 +
-                        " s - " + getString(R.string.Cancel));
-                // REMOVED manual background color setting - use Material state handling
+            // Check if latch alarms preference is enabled
+            boolean latchAlarmsEnabled = mConnection.mSdServer.isLatchAlarms();
+            boolean fallActive = mConnection.mSdServer.mSdData.mFallActive;
+
+            // Show/hide Accept Alarm button based on preferences
+            if (latchAlarmsEnabled || fallActive) {
+                Log.d(TAG, "latchAlarmsEnabled: " + latchAlarmsEnabled + ", fallActive: " + fallActive+ " - enabling acceptAlarm button");
                 acceptAlarmButton.setEnabled(true);
+                acceptAlarmButton.setVisibility(View.VISIBLE);
             } else {
-                acceptAlarmButton.setText(R.string.AcceptAlarm);
-                // REMOVED manual background color setting - use Material state handling
-                if (mConnection.mBound)
-                    if ((mConnection.mSdServer.isLatchAlarms())
-                            || mConnection.mSdServer.mSdData.mFallActive) {
-                        acceptAlarmButton.setEnabled(true);
-                    } else {
-                        acceptAlarmButton.setEnabled(false);
-                    }
+                Log.d(TAG,"latchAlarmsEnabled: " + latchAlarmsEnabled + ", fallActive: " + fallActive+ " - disabling acceptAlarm button");
+                acceptAlarmButton.setVisibility(View.GONE);
+            }
+
+            // Handle the  SMS countdown timer button
+            if ((mConnection.mSdServer.mSmsTimer != null)
+                && (mConnection.mSdServer.mSmsTimer.mTimeLeft > 0)) {
+                    acceptAlarmButton.setText(getString(R.string.SMSWillBeSentIn) + " " +
+                            mConnection.mSdServer.mSmsTimer.mTimeLeft / 1000 +
+                            " s - " + getString(R.string.Cancel));
+                    acceptAlarmButton.setVisibility(View.VISIBLE);
+                    acceptAlarmButton.setEnabled(true);
+            } else {
+                    acceptAlarmButton.setText(R.string.AcceptAlarm);
+                    acceptAlarmButton.setEnabled(true);
             }
         }
 
-        // Deal with Cancel Audible button
+        // Deal with Mute/Cancel Audible button - should ALWAYS be active regardless of audible alarms
+        // This is because it also mutes SMS alerts
         Button cancelAudibleButton =
                 (Button) mRootView.findViewById(R.id.cancelAudibleButton);
-        if (mConnection.mBound)
+        if (mConnection.mBound) {
             if (mConnection.mSdServer.isAudibleCancelled()) {
                 cancelAudibleButton.setText(getString(R.string.AudibleAlarmsCancelledFor)
                         + " " + mConnection.mSdServer.
                         cancelAudibleTimeRemaining()
                         + " sec");
-                cancelAudibleButton.setEnabled(true);
             } else {
-                if (mConnection.mSdServer.mAudibleAlarm) {
-                    cancelAudibleButton.setText(R.string.CancelAudibleAlarms);
-                    cancelAudibleButton.setEnabled(true);
-                } else {
-                    cancelAudibleButton.setText(R.string.AudibleAlarmsOff);
-                    cancelAudibleButton.setEnabled(false);
-                }
+                cancelAudibleButton.setText(R.string.CancelAudibleAlarms);
             }
+            // Always enable the mute button - it should be active regardless of audible alarm state
+            // since it also mutes SMS messages
+            cancelAudibleButton.setEnabled(true);
+        }
 
 
     }

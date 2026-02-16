@@ -278,7 +278,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         TextView stdDevTv = new TextView(mContext);
         stdDevTv.setText("Std");
         stdDevTv.setTextSize(12);
-        stdDevTv.setTextColor(Color.BLACK);
+        stdDevTv.setTextColor(okTextColour);
         stdDevItem.addView(stdDevTv);
 
         legendLayout.addView(stdDevItem);
@@ -312,7 +312,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
                     : ("ML" + (i + 1));
             modelNameTv.setText(modelName);
             modelNameTv.setTextSize(12);
-            modelNameTv.setTextColor(Color.BLACK);
+            modelNameTv.setTextColor(okTextColour);
             legendItem.addView(modelNameTv);
 
             legendLayout.addView(legendItem);

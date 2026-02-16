@@ -67,7 +67,7 @@
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
                     android:padding="8dp"
-                    android:background="@android:color/white" />
+                    android:background="?attr/colorSurfaceVariant" />
             </HorizontalScrollView>
 
             <com.jjoe64.graphview.GraphView

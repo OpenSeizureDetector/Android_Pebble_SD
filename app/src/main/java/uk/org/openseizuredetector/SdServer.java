@@ -1405,6 +1405,9 @@ public class SdServer extends Service implements SdDataReceiver {
         } else {
             Log.i(TAG, "cancelAudible(): starting cancel audible timer");
             mCancelAudible = true;
+            // Initialize the time remaining to the full duration before starting the timer
+            // so the UI displays the correct value immediately
+            mCancelAudibleTimeRemaining = mCancelAudiblePeriod * 60;
             mCancelAudibleTimer =
                     // conver to ms.
                     new CancelAudibleTimer(mCancelAudiblePeriod * 60 * 1000, 1000);

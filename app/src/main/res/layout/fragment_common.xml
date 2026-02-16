@@ -66,38 +66,42 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Centered button row with consistent styling -->
+        <!-- Centered button row with consistent Material Design 3 styling -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:spacing="2dp">
 
+            <!-- Accept Alarm button - secondary action (tonal) -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/acceptAlarmButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="2dp"
+                android:layout_marginEnd="4dp"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
                 style="@style/Widget.Material3.Button.TonalButton"
                 android:text="@string/AcceptAlarmBtnTxt"
                 android:textSize="11sp" />
 
+            <!-- Mute/Cancel Audible button - secondary action (tonal button with visible background) -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/cancelAudibleButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="2dp"
-                android:layout_marginEnd="2dp"
+                android:layout_marginEnd="4dp"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
                 style="@style/Widget.Material3.Button.TonalButton"
                 android:text="@string/CancelAudibleButtonTxt"
                 android:textSize="11sp" />
 
+            <!-- Raise Alarm button - primary action (prominent filled button) -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/manualAlarmButton"
                 android:layout_width="0dp"
@@ -107,9 +111,9 @@
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
                 style="@style/Widget.Material3.Button"
-                android:backgroundTint="?attr/colorError"
                 android:text="@string/ManualAlarmBtnTxt"
-                android:textSize="11sp" />
+                android:textSize="11sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
     </androidx.appcompat.widget.LinearLayoutCompat>
