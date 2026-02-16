@@ -22,65 +22,33 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:padding="16dp"
-            android:background="?attr/colorSurfaceVariant">
+            android:background="?attr/colorSurfaceVariant"
+            android:gravity="end">
 
-            <!-- Page indicator dots -->
-            <com.google.android.material.tabs.TabLayout
-                android:id="@+id/tab_indicator"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_back"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="16dp"
-                app:tabBackground="@drawable/tab_indicator_selector"
-                app:tabGravity="center"
-                app:tabIndicatorHeight="0dp"
-                app:tabMaxWidth="12dp"
-                app:tabMinWidth="12dp"
-                app:tabPaddingEnd="4dp"
-                app:tabPaddingStart="4dp" />
+                android:layout_marginEnd="8dp"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:text="Back" />
 
-            <!-- Navigation buttons -->
-            <LinearLayout
-                android:layout_width="match_parent"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_skip"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_marginEnd="8dp"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:text="Skip" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_back"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="4dp"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    app:strokeColor="@color/button_stroke_color"
-                    android:textColor="@color/button_text_color"
-                    android:text="Back" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_skip"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    app:strokeColor="@color/button_stroke_color"
-                    android:textColor="@color/button_text_color"
-                    android:text="Skip" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_next"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="4dp"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    app:strokeColor="@color/btn_next_stroke_color"
-                    android:textColor="@color/btn_next_text_color"
-                    android:text="Next" />
-            </LinearLayout>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_next"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                style="@style/Widget.MaterialComponents.Button"
+                android:text="Next" />
         </LinearLayout>
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

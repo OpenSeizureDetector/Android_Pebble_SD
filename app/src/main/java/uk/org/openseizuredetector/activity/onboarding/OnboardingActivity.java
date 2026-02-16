@@ -20,9 +20,6 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.google.android.material.tabs.TabLayout;
-import com.google.android.material.tabs.TabLayoutMediator;
-
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.graphics.Insets;
@@ -50,7 +47,6 @@ public class OnboardingActivity extends AppCompatActivity {
     private Button mBtnNext;
     private Button mBtnBack;
     private Button mBtnSkip;
-    private TabLayout mTabIndicator;
     private OsdUtil mUtil;
     private Handler mHandler = new Handler(Looper.getMainLooper());
 
@@ -82,18 +78,12 @@ public class OnboardingActivity extends AppCompatActivity {
         mBtnNext = findViewById(R.id.btn_next);
         mBtnBack = findViewById(R.id.btn_back);
         mBtnSkip = findViewById(R.id.btn_skip);
-        mTabIndicator = findViewById(R.id.tab_indicator);
-        
+
         // Set up adapter with onboarding fragments
         mAdapter = new OnboardingAdapter(this);
         mViewPager.setAdapter(mAdapter);
         
-        // Set up tab indicator dots
-        new TabLayoutMediator(mTabIndicator, mViewPager,
-                (tab, position) -> {
-                    // Just show dots, no text
-                }).attach();
-        
+
         // Handle navigation buttons
         mBtnNext.setOnClickListener(v -> {
             int currentPosition = mViewPager.getCurrentItem();
