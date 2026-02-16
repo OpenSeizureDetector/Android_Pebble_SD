@@ -269,8 +269,17 @@ public class MainActivity2 extends AppCompatActivity {
         }
 
         // Restore the previously active tab position
+        // If no saved preference, choose tab based on enabled algorithms
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        int savedTab = prefs.getInt(PREF_ACTIVE_TAB, DEFAULT_TAB);
+        int savedTab = prefs.getInt(PREF_ACTIVE_TAB, -1); // -1 means not set
+
+        if (savedTab == -1) {
+            // No saved preference - select tab based on algorithm preferences
+            // Priority order: ML (1), OSD (0), HR (2)
+            savedTab = getDefaultTabFromAlgorithmSettings(prefs);
+            Log.d(TAG, "No saved tab preference, selected tab based on algorithm settings: " + savedTab);
+        }
+
         mFragmentPager.setCurrentItem(savedTab, false); // false = no animation on restore
         Log.d(TAG, "Restored active tab position: " + savedTab);
 
@@ -741,6 +750,40 @@ public class MainActivity2 extends AppCompatActivity {
 
         builder.create();
         builder.show();
+    }
+
+    /**
+     * Determines which tab to show based on enabled algorithms
+     * Priority order: ML (tab 1), OSD (tab 0), HR (tab 2)
+     * Returns the tab index (0-3) or DEFAULT_TAB if no algorithms are enabled
+     */
+    private int getDefaultTabFromAlgorithmSettings(SharedPreferences prefs) {
+        // Check algorithms in priority order: ML, OSD, HR
+
+        // Tab 1: ML Algorithm
+        boolean mlEnabled = prefs.getBoolean("CnnAlarmActive", false);
+        if (mlEnabled) {
+            Log.d(TAG, "ML algorithm is enabled - selecting ML tab (position 1)");
+            return 1;
+        }
+
+        // Tab 0: OSD Algorithm
+        boolean osdEnabled = prefs.getBoolean("OsdAlarmActive", false);
+        if (osdEnabled) {
+            Log.d(TAG, "OSD algorithm is enabled - selecting OSD tab (position 0)");
+            return 0;
+        }
+
+        // Tab 2: Heart Rate Algorithm
+        boolean hrEnabled = prefs.getBoolean("HRAlarmActive", false);
+        if (hrEnabled) {
+            Log.d(TAG, "HR algorithm is enabled - selecting HR tab (position 2)");
+            return 2;
+        }
+
+        // No algorithms enabled - use default (OSD tab)
+        Log.d(TAG, "No algorithms enabled - using default tab (position 0)");
+        return DEFAULT_TAB;
     }
 
 }
