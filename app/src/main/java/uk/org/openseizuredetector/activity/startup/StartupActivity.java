@@ -573,6 +573,23 @@ public class StartupActivity extends AppCompatActivity {
                 tv = (TextView) findViewById(R.id.textItem1);
                 pb = (ProgressBar) findViewById(R.id.progressBar1);
 
+                // Check health foreground service permissions on Android 12+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !areHealthForegroundServicePermissionsOK()) {
+                    Log.i(TAG, "Health foreground service permissions not granted - requesting");
+                    tv.setText("Requesting Permissions");
+                    tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
+                    tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
+                    pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
+                    pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
+
+                    // Request activity recognition permission (also covers health monitoring)
+                    ActivityCompat.requestPermissions(StartupActivity.this,
+                            new String[]{android.Manifest.permission.ACTIVITY_RECOGNITION},
+                            1);
+                    allOk = false;
+                    return;
+                }
+
                 if (!mUtil.isServerRunning()) {
                     // Don't start server if we're shutting down or a stop was requested
                     if (mIsShuttingDown || mServerStopRequested) {
@@ -947,6 +964,34 @@ public class StartupActivity extends AppCompatActivity {
         return allOk;
     }
 
+    /**
+     * Check if health foreground service permissions are granted (Android 12+)
+     * Required for starting foreground service with type health
+     */
+    public boolean areHealthForegroundServicePermissionsOK() {
+        Log.v(TAG, "areHealthForegroundServicePermissionsOK() - SDK=" + Build.VERSION.SDK_INT);
+
+        // Only required on Android 12+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            Log.d(TAG, "areHealthForegroundServicePermissionsOK() - SDK <31 (Android 12), permission not required");
+            return true;
+        }
+
+        // Need either ACTIVITY_RECOGNITION or BODY_SENSORS
+        boolean hasActivityRecognition = ContextCompat.checkSelfPermission(this,
+                android.Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
+        boolean hasBodySensors = ContextCompat.checkSelfPermission(this,
+                android.Manifest.permission.BODY_SENSORS) == PackageManager.PERMISSION_GRANTED;
+
+        if (!hasActivityRecognition && !hasBodySensors) {
+            Log.i(TAG, "Health foreground service permissions not granted");
+            return false;
+        }
+
+        Log.d(TAG, "Health foreground service permissions OK");
+        return true;
+    }
+
 
 
     public void requestPermissions(AppCompatActivity activity) {
@@ -1152,10 +1197,33 @@ public class StartupActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
         Log.i(TAG, "onRequestPermissionsResult - requestCode="+requestCode+" nPermissions="+permissions.length);
-        Log.i(TAG, "onRequestPermissionsResult: "+permissions[0]+": "+grantResults[0]);
+
+        // Handle health foreground service permission request
+        if (requestCode == 1) {  // Health service permission request code
+            Log.i(TAG, "Health service permission request result received");
+
+            // Check if array is not empty before accessing
+            if (permissions.length > 0 && grantResults.length > 0) {
+                Log.i(TAG, "Permission: " + permissions[0] + " = " + grantResults[0]);
+
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.i(TAG, "Health service permission GRANTED - server can now start with foreground");
+                    // Permission granted - the server status check will retry starting the server
+                } else {
+                    Log.w(TAG, "Health service permission DENIED - server will start without foreground");
+                    // Permission denied - the server will still try to start but in degraded mode
+                }
+            } else {
+                Log.w(TAG, "Permission arrays are empty - permission may have been cancelled");
+            }
+            // Trigger UI update to retry server startup
+            mHandler.post(serverStatusRunnable);
+            return;
+        }
+
+        // Original permission handling for other requests
         for (int i = 0; i < permissions.length; i++) {
             Log.i(TAG, String.format("onRequestPermissionsResult: i="+i+", Permission " + permissions[i].toString() + " = " + grantResults[i]));
-            //Log.i(TAG,"i="+i);
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }

@@ -40,6 +40,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
@@ -271,7 +272,25 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "showing Notification and calling startForeground (Android 8 and higher)");
             mUtil.writeToSysLogFile("SdServer.onCreate() - showing Notification and calling startForeground (Android 8 and higher)");
             showNotification(0);
-            startForeground(NOTIFICATION_ID, mNotification);
+
+            // Check for required permissions before starting foreground service (Android 12+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                // Android 12+ requires either ACTIVITY_RECOGNITION or BODY_SENSORS
+                boolean hasActivityRecognition = checkSelfPermission(android.Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
+                boolean hasBodySensors = checkSelfPermission(android.Manifest.permission.BODY_SENSORS) == PackageManager.PERMISSION_GRANTED;
+
+                if (hasActivityRecognition || hasBodySensors) {
+                    startForeground(NOTIFICATION_ID, mNotification);
+                    Log.v(TAG, "Started foreground service with health type");
+                } else {
+                    // Permissions not granted - should have been checked by StartupActivity
+                    Log.w(TAG, "Required permissions for health foreground service not granted - starting without foreground");
+                    mUtil.writeToSysLogFile("SdServer.onCreate() - Health permissions not granted - starting without foreground");
+                }
+            } else {
+                // Android 8-11: just start foreground
+                startForeground(NOTIFICATION_ID, mNotification);
+            }
         } else {
             Log.v(TAG, "showing Notification");
             mUtil.writeToSysLogFile("SdServer.onCreate() - showing Notification");
