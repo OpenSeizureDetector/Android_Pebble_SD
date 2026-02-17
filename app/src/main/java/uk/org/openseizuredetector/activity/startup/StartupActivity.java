@@ -56,6 +56,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.rohitss.uceh.UCEHandler;
@@ -157,6 +160,13 @@ public class StartupActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.startup_activity);
+
+        // Handle system bars insets - apply to bottom/left/right only (action bar handles top)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.startup_root), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom);
+            return insets;
+        });
 
         // Centralised preference initialisation from XML files
         PrefActivity.initialiseDefaultValues(this, false);

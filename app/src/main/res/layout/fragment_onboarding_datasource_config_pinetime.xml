@@ -1,82 +1,102 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="16dp">
 
+    <!-- Step 1: Install PineTime Updater App -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Configure PineTime Watch"
-        android:textSize="24sp"
+        android:text="@string/onboarding_pinetime_config_step1_title"
+        android:textSize="16sp"
         android:textStyle="bold"
-        android:textColor="?android:attr/textColorPrimary"
-        android:layout_marginBottom="8dp" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Set up your PineTime watch for seizure detection"
-        android:textSize="14sp"
-        android:textColor="?android:attr/textColorSecondary"
-        android:layout_marginBottom="24dp" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="1. Install OpenSeizureDetector Firmware onto PineTime Watch"
-        android:textSize="14sp"
         android:textColor="?android:attr/textColorPrimary"
         android:layout_marginBottom="8dp"
         android:layout_marginTop="8dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_install_pinetime_updater"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:text="@string/onboarding_pinetime_config_install_updater_btn"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tv_updater_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/onboarding_pinetime_config_checking_status"
+        android:textSize="12sp"
+        android:textColor="?android:attr/textColorSecondary"
+        android:layout_marginBottom="16dp" />
+
+
+    <!-- Step 2: Install OpenSeizureDetector Firmware -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/onboarding_pinetime_config_step2_title"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="?android:attr/textColorPrimary"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="16dp" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_update_pinetime"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        app:strokeColor="@color/button_stroke_color"
-        android:textColor="@color/button_text_color"
-        android:text="Install PineTime Firmware" />
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:text="@string/onboarding_pinetime_config_install_firmware_btn" />
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="The PineTime Updater app must be installed from the Google Play Store to update firmware.  You will be prompted to install it if it is not already installed."
+        android:text="@string/onboarding_pinetime_config_firmware_note"
         android:textSize="12sp"
         android:textColor="?android:attr/textColorSecondary"
         android:layout_marginBottom="16dp" />
 
 
+    <!-- Step 3: Connect PineTime Watch -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="2. Connect your PineTime watch to OpenSeizureDetector via Bluetooth"
-        android:textSize="14sp"
+        android:text="@string/onboarding_pinetime_config_step3_title"
+        android:textSize="16sp"
+        android:textStyle="bold"
         android:textColor="?android:attr/textColorPrimary"
         android:layout_marginBottom="8dp"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="16dp" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_scan_pinetime"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        app:strokeColor="@color/button_stroke_color"
-        android:textColor="@color/button_text_color"
-        android:text="Scan for PineTime Watch" />
+        style="@style/Widget.Material3.Button.TonalButton"
+        android:text="@string/onboarding_pinetime_config_scan_btn" />
 
     <TextView
         android:id="@+id/tv_selected_device"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="No device selected"
+        android:text="@string/onboarding_pinetime_config_no_device_selected"
         android:textSize="12sp"
-        android:textColor="@android:color/white"
+        android:textColor="?android:attr/textColorSecondary"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:layout_marginBottom="16dp" />
@@ -85,7 +105,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Next, we'll configure the seizure detection algorithm."
+        android:text="@string/onboarding_pinetime_config_next_step"
         android:textSize="14sp"
         android:textColor="?android:attr/textColorPrimary"
         android:layout_marginTop="16dp" />

@@ -9,7 +9,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Configure Network Connection"
+        android:text="@string/onboarding_network_config_title"
         android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="?android:attr/textColorPrimary"
@@ -18,7 +18,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="About Network Mode:"
+        android:text="@string/onboarding_network_config_about_title"
         android:textSize="14sp"
         android:textStyle="bold"
         android:textColor="?android:attr/textColorPrimary"
@@ -28,7 +28,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="• Connects to another device running OpenSeizureDetector to generate Alarm and Warning Notifications\n\n• This device will receive alarm notifications from the remote device\n\n• Both devices must be on the same WiFi network\n\n• Useful if you can not hear the main OpenSeizureDevice alarms from another part of the house"
+        android:text="@string/onboarding_network_config_description"
         android:textSize="12sp"
         android:textColor="?android:attr/textColorSecondary"
         android:layout_marginBottom="24dp" />
@@ -36,26 +36,16 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="To find the remote device's IP address, look on the 'System' tab of the main OpenSeizureDetector screen for\n'Access Server at: http://xxx.xxx.xxx.xxx:8080',\nor check your router's client list."
+        android:text="@string/onboarding_network_config_find_device"
         android:textSize="12sp"
         android:textColor="?android:attr/textColorSecondary"
         android:layout_marginBottom="16dp"
         android:textStyle="italic" />
 
-    <!--
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Connect to a remote OpenSeizureDetector device"
-        android:textSize="14sp"
-        android:textColor="?android:attr/textColorSecondary"
-        android:layout_marginBottom="24dp" />
-    -->
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Remote Device IP Address"
+        android:text="@string/onboarding_network_config_ip_label"
         android:textSize="14sp"
         android:textStyle="bold"
         android:textColor="?android:attr/textColorPrimary"
@@ -72,7 +62,7 @@
             android:id="@+id/ip_address_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="192.168.1.100"
+            android:hint="@string/onboarding_network_config_ip_hint"
             android:inputType="text"
             android:textColor="?android:attr/textColorPrimary"
             android:textColorHint="?android:attr/textColorSecondary" />
@@ -83,7 +73,7 @@
         android:id="@+id/ip_validation_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Enter the IP address of the OpenSeizureDetector device above"
+        android:text="@string/onboarding_network_config_validation_prompt"
         android:textSize="12sp"
         android:textColor="?android:attr/textColorSecondary"
         android:layout_marginBottom="16dp" />
@@ -92,7 +82,7 @@
         android:id="@+id/btn_retry_validation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Retry Validation"
+        android:text="@string/onboarding_network_config_retry_btn"
         android:visibility="gone"
         android:layout_marginTop="16dp" />
 

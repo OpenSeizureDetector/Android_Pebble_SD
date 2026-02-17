@@ -640,4 +640,101 @@
     <string name="syslog_exported">Log file exported to Downloads folder</string>
     <string name="syslog_export_failed">Failed to export log file</string>
     <string name="syslog_select_file_title">Select Log File</string>
+
+    <!-- Onboarding Welcome Fragment -->
+    <string name="onboarding_welcome_title">Welcome to OpenSeizureDetector</string>
+    <string name="onboarding_welcome_subtitle">This wizard will help you configure OpenSeizureDetector for your needs.</string>
+    <string name="onboarding_welcome_description">You will be asked to:\n\n• Choose your data source\n• Configure the data source\n• Select seizure detection algorithms\n\nYou can change these settings later in the Settings menu.</string>
+
+    <!-- Onboarding Data Source Fragment -->
+    <string name="onboarding_datasource_title">Choose Data Source</string>
+    <string name="onboarding_datasource_subtitle">Select where seizure detection data will come from:</string>
+    <string name="onboarding_datasource_phone">Phone (Demo Mode)</string>
+    <string name="onboarding_datasource_phone_desc">Uses phone\'s accelerometer for testing. Not suitable for real seizure detection.</string>
+    <string name="onboarding_datasource_pinetime">PineTime Watch (Recommended)</string>
+    <string name="onboarding_datasource_pinetime_desc">Uses a low-cost PineTime watch for reliable seizure detection.</string>
+    <string name="onboarding_datasource_garmin">Garmin Watch</string>
+    <string name="onboarding_datasource_garmin_desc">Uses a Garmin smart watch for reliable seizure detection and heart rate monitoring.</string>
+    <string name="onboarding_datasource_network">Network (Remote Monitoring)</string>
+    <string name="onboarding_datasource_network_desc">Connect to another device running OpenSeizureDetector for remote alarm annunciation.</string>
+
+    <!-- Onboarding Algorithms Fragment -->
+    <string name="onboarding_algorithms_title">Select Detection Algorithms</string>
+    <string name="onboarding_algorithms_subtitle">Choose which seizure detection algorithms to use. You can enable multiple algorithms.</string>
+    <string name="onboarding_algorithms_ml">ML Algorithm (Recommended)</string>
+    <string name="onboarding_algorithms_ml_desc">Machine Learning (\'AI\') detection.\nGives good seizure detection reliability with fewer false alarms than the original OSD Algorithm.\nFalse alarm performance should improve over time as users report false alarms and real seizures using our \'Data Sharing\' facility.</string>
+    <string name="onboarding_algorithms_hr">Heart Rate Alerts</string>
+    <string name="onboarding_algorithms_hr_desc">Detects abnormal heart rate patterns. Currently requires Garmin watch for reliable heart rate measurement.</string>
+    <string name="onboarding_algorithms_osd">OSD Algorithm</string>
+    <string name="onboarding_algorithms_osd_desc">Original OpenSeizureDetector Deterministic Algorithm (OSD)\nProven tonic-clonic seizure detection - good for night time use, but gives false alarms for some normal activities that involve repetitive movements (brushing teeth, washing dishes etc.).</string>
+    <string name="onboarding_algorithms_flap">OSD Algorithm with \'Flap\' Detection</string>
+    <string name="onboarding_algorithms_flap_desc">Enhanced OSD algorithm that detects arm flapping movements for maximum night time tonic-clonic seizure detection performance.</string>
+    <string name="onboarding_algorithms_note">Note: At least one algorithm should be enabled for seizure detection to work.</string>
+
+    <!-- Onboarding Complete Fragment -->
+    <string name="onboarding_complete_title">Setup Complete!</string>
+    <string name="onboarding_complete_subtitle">OpenSeizureDetector is ready to use.</string>
+    <string name="onboarding_complete_summary_title">Configuration Summary</string>
+    <string name="onboarding_complete_datasource_label">Data Source:</string>
+    <string name="onboarding_complete_algorithms_label">Enabled Algorithms:</string>
+    <string name="onboarding_complete_loading">Loading...</string>
+    <string name="onboarding_complete_description">You can change these settings at any time from the Settings menu.\n\nPress \'Get Started\' to begin using OpenSeizureDetector.</string>
+
+    <!-- Onboarding PineTime Configuration Fragment -->
+    <string name="onboarding_pinetime_config_step1_title">1. Install PineTime Updater App</string>
+    <string name="onboarding_pinetime_config_install_updater_btn">Install PineTime Updater App</string>
+    <string name="onboarding_pinetime_config_checking_status">Checking if PineTime Updater app is installed...</string>
+    <string name="onboarding_pinetime_config_updater_installed">✓ PineTime Updater app is installed</string>
+    <string name="onboarding_pinetime_config_updater_not_installed">✗ PineTime Updater app is not installed. Please install it from the Google Play Store using the button above, then press the back button to return to this screen.</string>
+    <string name="onboarding_pinetime_config_error_checking">Error checking app status</string>
+    <string name="onboarding_pinetime_config_step2_title">2. Install OpenSeizureDetector Firmware onto PineTime Watch</string>
+    <string name="onboarding_pinetime_config_install_firmware_btn">Install PineTime Firmware</string>
+    <string name="onboarding_pinetime_config_firmware_note">Install the custom OpenSeizureDetector firmware onto the PineTime watch, so that it will collect and send the data needed for seizure detection.\nNote:  You will be asked to grant the permissions needed to access the watch over bluetooth and display a notification to show progress during the update.</string>
+    <string name="onboarding_pinetime_config_step3_title">3. Connect your PineTime watch to OpenSeizureDetector via Bluetooth</string>
+    <string name="onboarding_pinetime_config_scan_btn">Scan for PineTime Watch</string>
+    <string name="onboarding_pinetime_config_no_device_selected">No device selected</string>
+    <string name="onboarding_pinetime_config_next_step">Next, we\'ll configure the seizure detection algorithm.</string>
+
+    <!-- Onboarding Phone Configuration Fragment -->
+    <string name="onboarding_phone_config_title">Demo Mode Configuration</string>
+    <string name="onboarding_phone_config_about_title">About Demo Mode:</string>
+    <string name="onboarding_phone_config_description">Demo mode uses your phone\'s built-in accelerometer to detect movement to demonstrate OpenSeizureDetector.  This is useful for testing the app\'s functionality, but it MUST NOT be used as a seizure detector in this mode.\n\nWhen the main app starts, you will be asked for permissions about monitoring activity in order to enable access to the accelerometer.</string>
+    <string name="onboarding_phone_config_important_title">Important:</string>
+    <string name="onboarding_phone_config_warning">⚠ Demo mode is NOT suitable for real seizure detection. The phone\'s accelerometer cannot reliably detect seizures when the phone is not attached to the wrist.\n\nFor real seizure detection, please use a wrist watch (PineTime or Garmin).</string>
+    <string name="onboarding_phone_config_switch_later">To switch to a different data source later, go to Settings menu in the main app screen after this wizard completes.</string>
+    <string name="onboarding_phone_config_next_step">Next, we\'ll configure the seizure detection algorithm.</string>
+
+    <!-- Onboarding Network Configuration Fragment -->
+    <string name="onboarding_network_config_title">Configure Network Connection</string>
+    <string name="onboarding_network_config_about_title">About Network Mode:</string>
+    <string name="onboarding_network_config_description">• Connects to another device running OpenSeizureDetector to generate Alarm and Warning Notifications\n\n• This device will receive alarm notifications from the remote device\n\n• Both devices must be on the same WiFi network\n\n• Useful if you can not hear the main OpenSeizureDevice alarms from another part of the house</string>
+    <string name="onboarding_network_config_find_device">To find the remote device\'s IP address, look on the \'System\' tab of the main OpenSeizureDetector screen for\n\'Access Server at: http://xxx.xxx.xxx.xxx:8080\',\nor check your router\'s client list.</string>
+    <string name="onboarding_network_config_ip_label">Remote Device IP Address</string>
+    <string name="onboarding_network_config_ip_hint">192.168.1.100</string>
+    <string name="onboarding_network_config_validation_prompt">Enter the IP address of the OpenSeizureDetector device above</string>
+    <string name="onboarding_network_config_retry_btn">Retry Validation</string>
+
+    <!-- Onboarding Other Configuration Fragment -->
+    <string name="onboarding_other_config_title">Data Source Configuration</string>
+    <string name="onboarding_other_config_subtitle">Complete your setup in Settings</string>
+    <string name="onboarding_other_config_needed_title">Additional Configuration Needed</string>
+    <string name="onboarding_other_config_needed_desc">Your selected data source may require additional configuration that cannot be completed in this wizard.</string>
+    <string name="onboarding_other_config_complete_title">To complete your configuration:</string>
+    <string name="onboarding_other_config_instructions">1. Finish this wizard by tapping \'Get Started\'\n2. Go to Settings in the main application\n3. Look for \'Data Source\' or \'Bluetooth\' settings\n4. Complete any additional setup steps there</string>
+    <string name="onboarding_other_config_help_title">Need Help?</string>
+    <string name="onboarding_other_config_help_text">For detailed instructions on configuring your specific device, please visit:\n\nhttps://github.com/OpenSeizureDetector/OpenSeizureDetector\n\nYou can also contact our support team through the app\'s settings.</string>
+    <string name="onboarding_other_config_next_step">Next, we\'ll configure the seizure detection algorithm.</string>
+
+    <!-- Onboarding Garmin Configuration Fragment -->
+    <string name="onboarding_garmin_config_title">Configure Garmin Watch</string>
+    <string name="onboarding_garmin_config_subtitle">Set up your Garmin watch for seizure detection - refer to the \'Garmin Seizure Detector\' page on the OpenSeizureDetector.org.uk web site for detailed instructions</string>
+    <string name="onboarding_garmin_config_steps_title">Installation Steps:</string>
+    <string name="onboarding_garmin_config_step1">1. Pair the watch with your phone using the Garmin Connect app as per the Garmin instructions.</string>
+    <string name="onboarding_garmin_config_step2">2. Download the GarminSD watch app file from the OpenSeizureDetector source code repository onto a computer (the installation can not be carried out on a phone)</string>
+    <string name="onboarding_garmin_config_step3">3. Connect your watch to the computer via USB.</string>
+    <string name="onboarding_garmin_config_step4">4. Copy the watch app file from the computer onto the watch.</string>
+    <string name="onboarding_garmin_config_step5">5. Launch the OpenSeizureDetector app on your watch</string>
+    <string name="onboarding_garmin_config_important_title">Important:</string>
+    <string name="onboarding_garmin_config_important_note">• Make sure the Garmin watch app is running before continuing</string>
+    <string name="onboarding_garmin_config_next_step">Next, we\'ll configure the seizure detection algorithm.</string>
 </resources>

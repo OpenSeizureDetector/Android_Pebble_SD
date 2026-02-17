@@ -8,7 +8,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Data Source Configuration"
+        android:text="@string/onboarding_other_config_title"
         android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="?android:attr/textColorPrimary"
@@ -17,7 +17,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Complete your setup in Settings"
+        android:text="@string/onboarding_other_config_subtitle"
         android:textSize="14sp"
         android:textColor="?android:attr/textColorSecondary"
         android:layout_marginBottom="24dp" />
@@ -25,7 +25,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Additional Configuration Needed"
+        android:text="@string/onboarding_other_config_needed_title"
         android:textSize="16sp"
         android:textStyle="bold"
         android:textColor="?android:attr/textColorPrimary"
@@ -34,7 +34,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Your selected data source may require additional configuration that cannot be completed in this wizard."
+        android:text="@string/onboarding_other_config_needed_desc"
         android:textSize="13sp"
         android:textColor="?android:attr/textColorPrimary"
         android:layout_marginBottom="16dp" />
@@ -42,7 +42,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="To complete your configuration:"
+        android:text="@string/onboarding_other_config_complete_title"
         android:textSize="14sp"
         android:textStyle="bold"
         android:textColor="?android:attr/textColorPrimary"
@@ -52,7 +52,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="1. Finish this wizard by tapping 'Get Started'\n2. Go to Settings in the main application\n3. Look for 'Data Source' or 'Bluetooth' settings\n4. Complete any additional setup steps there"
+        android:text="@string/onboarding_other_config_instructions"
         android:textSize="12sp"
         android:textColor="?android:attr/textColorSecondary"
         android:paddingStart="12dp"
@@ -61,7 +61,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Need Help?"
+        android:text="@string/onboarding_other_config_help_title"
         android:textSize="14sp"
         android:textStyle="bold"
         android:textColor="?android:attr/textColorPrimary"
@@ -71,7 +71,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="For detailed instructions on configuring your specific device, please visit:\n\nhttps://github.com/OpenSeizureDetector/OpenSeizureDetector\n\nYou can also contact our support team through the app's settings."
+        android:text="@string/onboarding_other_config_help_text"
         android:textSize="12sp"
         android:textColor="?android:attr/textColorSecondary"
         android:layout_marginBottom="24dp" />
@@ -79,7 +79,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Next, we'll configure the seizure detection algorithm."
+        android:text="@string/onboarding_other_config_next_step"
         android:textSize="14sp"
         android:textColor="?android:attr/textColorPrimary"
         android:layout_marginTop="16dp" />

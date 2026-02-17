@@ -85,61 +85,137 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
         // Get the currently selected data source
         String dataSource = mPrefs.getString("DataSource", "Phone");
 
-        // Only update UI if data source has changed
-        if (!dataSource.equals(mCurrentDataSource)) {
-            mCurrentDataSource = dataSource;
-            Log.i(TAG, "onResume - Updating UI for data source: " + dataSource);
+        // Always update the displayed config to match the current datasource preference
+        // This ensures we show the correct config even if user changed datasource and returned
+        Log.i(TAG, "onResume - Current data source: " + dataSource + ", Previously shown: " + mCurrentDataSource);
 
-            // Clear the container and add the appropriate config view
-            mConfigContainer.removeAllViews();
+        // Clear the container and add the appropriate config view
+        mConfigContainer.removeAllViews();
 
-            switch (dataSource) {
-                case "BLE2":
-                    mConfigContainer.addView(mPineTimeConfigView);
-                    break;
-                case "Garmin":
-                    mConfigContainer.addView(mGarminConfigView);
-                    break;
-                case "Network":
-                    mConfigContainer.addView(mNetworkConfigView);
-                    break;
-                case "Phone":
-                    mConfigContainer.addView(mPhoneConfigView);
-                    break;
-                default:
-                    mConfigContainer.addView(mOtherConfigView);
-            }
-        } else if (dataSource.equals("BLE2")) {
-            // If we're already on BLE2 config, refresh the device display in case user returned from scan
-            TextView tvSelectedDevice = mPineTimeConfigView.findViewById(R.id.tv_selected_device);
-            if (tvSelectedDevice != null) {
-                updateSelectedDeviceDisplay(tvSelectedDevice);
-            }
+        // Update mCurrentDataSource to reflect what we're about to display
+        mCurrentDataSource = dataSource;
+
+        switch (dataSource) {
+            case "BLE2":
+                mConfigContainer.addView(mPineTimeConfigView);
+                // Check PineTime Updater status when BLE2 is displayed
+                checkPineTimeUpdaterStatusOnDisplay();
+                break;
+            case "Garmin":
+                mConfigContainer.addView(mGarminConfigView);
+                break;
+            case "Network":
+                mConfigContainer.addView(mNetworkConfigView);
+                break;
+            case "Phone":
+                mConfigContainer.addView(mPhoneConfigView);
+                break;
+            default:
+                mConfigContainer.addView(mOtherConfigView);
         }
-
     }
 
     /**
      * Configure PineTime configuration: set up scan and firmware update buttons
      */
     private void configurePineTimeConfig(View configView) {
-        MaterialButton btnScan = configView.findViewById(R.id.btn_scan_pinetime);
+        MaterialButton btnInstallUpdater = configView.findViewById(R.id.btn_install_pinetime_updater);
         MaterialButton btnUpdate = configView.findViewById(R.id.btn_update_pinetime);
+        MaterialButton btnScan = configView.findViewById(R.id.btn_scan_pinetime);
+        TextView tvUpdaterStatus = configView.findViewById(R.id.tv_updater_status);
         TextView tvSelectedDevice = configView.findViewById(R.id.tv_selected_device);
+
+
+        // Install Updater button - open Google Play Store
+        btnInstallUpdater.setOnClickListener(v -> {
+            Log.i(TAG, "Install PineTime Updater button clicked");
+            launchGooglePlayStore("uk.org.openseizuredetector.pinetime");
+        });
 
         // Display currently selected device if available
         updateSelectedDeviceDisplay(tvSelectedDevice);
 
+        // Scan button
         btnScan.setOnClickListener(v -> {
             Log.i(TAG, "Scan PineTime button clicked");
             Intent intent = new Intent(requireActivity(), BLEScanActivity.class);
             startActivity(intent);
         });
 
+        // Firmware Update button
         btnUpdate.setOnClickListener(v -> {
             Log.i(TAG, "Update PineTime firmware button clicked");
             launchPineTimeUpdater();
         });
+    }
+
+    /**
+     * Check if PineTime Updater app is installed and update UI accordingly
+     * Called automatically when the PineTime config is displayed
+     */
+    private void checkPineTimeUpdaterStatusOnDisplay() {
+        MaterialButton btnInstallUpdater = mPineTimeConfigView.findViewById(R.id.btn_install_pinetime_updater);
+        MaterialButton btnUpdate = mPineTimeConfigView.findViewById(R.id.btn_update_pinetime);
+        TextView tvUpdaterStatus = mPineTimeConfigView.findViewById(R.id.tv_updater_status);
+
+        if (btnInstallUpdater == null || btnUpdate == null || tvUpdaterStatus == null) {
+            Log.w(TAG, "PineTime config views not found");
+            return;
+        }
+
+        String pineTimePackageName = "uk.org.openseizuredetector.pinetime";
+
+        try {
+            boolean isInstalled = false;
+            try {
+                requireActivity().getPackageManager().getPackageInfo(pineTimePackageName, 0);
+                isInstalled = true;
+            } catch (PackageManager.NameNotFoundException e) {
+                isInstalled = false;
+            }
+
+            if (isInstalled) {
+                // Updater app is installed
+                tvUpdaterStatus.setText(requireContext().getString(R.string.onboarding_pinetime_config_updater_installed));
+                tvUpdaterStatus.setTextColor(requireContext().getColor(android.R.color.holo_green_dark));
+
+                btnInstallUpdater.setVisibility(View.GONE);
+
+                // Enable firmware update button
+                btnUpdate.setEnabled(true);
+
+                Log.i(TAG, "PineTime Updater app is installed");
+            } else {
+                // Updater app is not installed
+                tvUpdaterStatus.setText(requireContext().getString(R.string.onboarding_pinetime_config_updater_not_installed));
+                tvUpdaterStatus.setTextColor(requireContext().getColor(android.R.color.holo_red_light));
+
+                btnInstallUpdater.setVisibility(View.VISIBLE);
+
+                // Disable firmware update button
+                btnUpdate.setEnabled(false);
+
+                Log.i(TAG, "PineTime Updater app is not installed");
+            }
+        } catch (Exception ex) {
+            Log.e(TAG, "Error checking PineTime Updater status: " + ex.toString());
+            tvUpdaterStatus.setText(requireContext().getString(R.string.onboarding_pinetime_config_error_checking));
+            tvUpdaterStatus.setTextColor(requireContext().getColor(android.R.color.holo_orange_light));
+        }
+    }
+
+    /**
+     * Launch Google Play Store to install the PineTime Updater app
+     */
+    private void launchGooglePlayStore(String packageName) {
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(android.net.Uri.parse("https://play.google.com/store/apps/details?id=" + packageName));
+            startActivity(intent);
+        } catch (Exception ex) {
+            Log.e(TAG, "Error launching Google Play Store: " + ex.toString());
+            Toast.makeText(requireContext(), "Cannot open Google Play Store", Toast.LENGTH_SHORT).show();
+        }
     }
 
     /**

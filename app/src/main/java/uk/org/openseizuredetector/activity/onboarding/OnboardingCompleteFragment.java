@@ -103,12 +103,12 @@ public class OnboardingCompleteFragment extends Fragment {
         }
 
         // Check which algorithms are enabled
-        // Use the same defaults as the XML preference definitions to match what was set in onboarding
-        if (prefs.getBoolean("OsdAlarmActive", true)) {
+        // Use false as defaults to match what was set in onboarding
+        if (prefs.getBoolean("OsdAlarmActive", false)) {
             algorithms.add("Original OpenSeizureDetector (OSD)");
         }
 
-        if (prefs.getBoolean("FlapAlarmActive", true)) {
+        if (prefs.getBoolean("FlapAlarmActive", false)) {
             algorithms.add("OSD with Flap Detection");
         }
 

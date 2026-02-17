@@ -21,7 +21,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Setup Complete!"
+            android:text="@string/onboarding_complete_title"
             android:textSize="28sp"
             android:textStyle="bold"
             android:textColor="?android:attr/textColorPrimary"
@@ -31,7 +31,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="OpenSeizureDetector is ready to use."
+            android:text="@string/onboarding_complete_subtitle"
             android:textSize="16sp"
             android:textColor="?android:attr/textColorPrimary"
             android:gravity="center"
@@ -50,7 +50,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Configuration Summary"
+            android:text="@string/onboarding_complete_summary_title"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="?android:attr/textColorPrimary"
@@ -59,7 +59,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Data Source:"
+            android:text="@string/onboarding_complete_datasource_label"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="?android:attr/textColorPrimary"
@@ -69,7 +69,7 @@
             android:id="@+id/config_data_source"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Loading..."
+            android:text="@string/onboarding_complete_loading"
             android:textSize="14sp"
             android:textColor="?android:attr/textColorSecondary"
             android:paddingStart="16dp"
@@ -78,7 +78,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Enabled Algorithms:"
+            android:text="@string/onboarding_complete_algorithms_label"
             android:textSize="14sp"
             android:textStyle="bold"
             android:textColor="?android:attr/textColorPrimary"
@@ -88,7 +88,7 @@
             android:id="@+id/config_algorithms"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Loading..."
+            android:text="@string/onboarding_complete_loading"
             android:textSize="14sp"
             android:textColor="?android:attr/textColorSecondary"
             android:paddingStart="16dp"
@@ -97,7 +97,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="You can change these settings at any time from the Settings menu.\n\nPress 'Get Started' to begin using OpenSeizureDetector."
+            android:text="@string/onboarding_complete_description"
             android:textSize="14sp"
             android:textColor="?android:attr/textColorSecondary"
             android:lineSpacingMultiplier="1.3"

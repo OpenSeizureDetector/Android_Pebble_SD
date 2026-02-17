@@ -72,15 +72,31 @@ public class OnboardingAlgorithmsFragment extends Fragment {
         mCheckOsdAlg = view.findViewById(R.id.check_osd_alg);
         mCheckFlapAlg = view.findViewById(R.id.check_flap_alg);
         mConfigMessageContainer = view.findViewById(R.id.config_message_container);
-
+        // ...existing code...
         // Get next button from parent activity
         mNextButton = requireActivity().findViewById(R.id.btn_next);
 
         // Load saved preferences using correct preference keys from seizure_detector_prefs.xml
-        mCheckMlAlg.setChecked(mPrefs.getBoolean("CnnAlarmActive", false));
-        mCheckHrAlg.setChecked(mPrefs.getBoolean("HRAlarmActive", false));
-        mCheckOsdAlg.setChecked(mPrefs.getBoolean("OsdAlarmActive", true));
-        mCheckFlapAlg.setChecked(mPrefs.getBoolean("FlapAlarmActive", true));
+        boolean mlAlgActive = mPrefs.getBoolean("CnnAlarmActive", false);
+        boolean hrAlgActive = mPrefs.getBoolean("HRAlarmActive", false);
+        boolean osdAlgActive = mPrefs.getBoolean("OsdAlarmActive", false);
+        boolean flapAlgActive = mPrefs.getBoolean("FlapAlarmActive", false);
+
+        // Check if any algorithm is already selected
+        boolean anySelected = mlAlgActive || hrAlgActive || osdAlgActive || flapAlgActive;
+
+        // If none are selected, default to ML algorithm only
+        if (!anySelected) {
+            Log.i(TAG, "No algorithms currently selected - defaulting to ML Algorithm");
+            mlAlgActive = true;
+            mPrefs.edit().putBoolean("CnnAlarmActive", true).apply();
+        }
+
+        // Set checkbox states based on loaded preferences
+        mCheckMlAlg.setChecked(mlAlgActive);
+        mCheckHrAlg.setChecked(hrAlgActive);
+        mCheckOsdAlg.setChecked(osdAlgActive);
+        mCheckFlapAlg.setChecked(flapAlgActive);
 
         // Add change listeners to all checkboxes
         mCheckMlAlg.setOnCheckedChangeListener((buttonView, isChecked) -> {

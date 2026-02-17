@@ -21,7 +21,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Welcome to OpenSeizureDetector"
+            android:text="@string/onboarding_welcome_title"
             android:textSize="28sp"
             android:textStyle="bold"
             android:textColor="?android:attr/textColorPrimary"
@@ -31,7 +31,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="This wizard will help you configure OpenSeizureDetector for your needs."
+            android:text="@string/onboarding_welcome_subtitle"
             android:textSize="16sp"
             android:textColor="?android:attr/textColorPrimary"
             android:gravity="center"
@@ -40,7 +40,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="You will be asked to:\n\n• Choose your data source\n• Select seizure detection algorithms\n• Configure watch settings (if applicable)\n\nYou can change these settings later in the Settings menu."
+            android:text="@string/onboarding_welcome_description"
             android:textSize="14sp"
             android:textColor="?android:attr/textColorSecondary"
             android:lineSpacingMultiplier="1.3"

@@ -48,8 +48,9 @@ public class OnboardingDataSourceFragment extends Fragment {
         mRadioGarmin = view.findViewById(R.id.radio_garmin);
         mRadioNetwork = view.findViewById(R.id.radio_network);
 
-        // Load saved preference
-        String currentDataSource = mPrefs.getString("DataSource", "0");
+        // Load saved preference - default to "Phone" if not set
+        String currentDataSource = mPrefs.getString("DataSource", "Phone");
+        Log.i(TAG, "onCreateView - Loaded DataSource from preferences: " + currentDataSource);
         selectDataSourceRadio(currentDataSource);
 
         // Setup listeners for portrait layout (RadioGroup)
@@ -94,8 +95,14 @@ public class OnboardingDataSourceFragment extends Fragment {
 
 
     private void selectDataSourceRadio(String dataSource) {
+        Log.d(TAG, "selectDataSourceRadio - dataSource: " + dataSource);
         int radioId;
+
         switch (dataSource) {
+            case "BLE2":
+                // BLE2 is the saved value for PineTime
+                radioId = R.id.radio_pinetime;
+                break;
             case "Garmin":
                 radioId = R.id.radio_garmin;
                 break;
@@ -109,8 +116,11 @@ public class OnboardingDataSourceFragment extends Fragment {
                 radioId = R.id.radio_network;
                 break;
             default:
+                Log.w(TAG, "Unknown data source: " + dataSource + ", defaulting to Phone");
                 radioId = R.id.radio_phone;
         }
+
+        Log.d(TAG, "selectDataSourceRadio - selected radioId: " + radioId);
 
         // For portrait layout with RadioGroup
         if (mDataSourceGroup != null) {

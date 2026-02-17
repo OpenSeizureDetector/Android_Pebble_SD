@@ -62,15 +62,16 @@ public class OnboardingActivity extends AppCompatActivity {
         mUtil.writeToSysLogFile("OnboardingActivity.onCreate()", "LIFECYCLE");
         mUtil.writeMemoryLog("OnboardingActivity.onCreate");
 
-        // Hide action bar for cleaner onboarding experience
+        // Show action bar with title
         if (getSupportActionBar() != null) {
-            getSupportActionBar().hide();
+            getSupportActionBar().setTitle(R.string.app_name);
+            getSupportActionBar().show();
         }
 
-        // Handle system bars insets
+        // Handle system bars insets - apply to bottom/left/right only (action bar handles top)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.onboarding_root), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom);
             return insets;
         });
         

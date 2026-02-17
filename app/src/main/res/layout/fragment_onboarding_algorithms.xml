@@ -13,7 +13,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Select Detection Algorithms"
+            android:text="@string/onboarding_algorithms_title"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="?android:attr/textColorPrimary"
@@ -22,7 +22,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Choose which seizure detection algorithms to use. You can enable multiple algorithms."
+            android:text="@string/onboarding_algorithms_subtitle"
             android:textSize="14sp"
             android:textColor="?android:attr/textColorSecondary"
             android:layout_marginBottom="24dp" />
@@ -32,7 +32,7 @@
             android:id="@+id/check_ml_alg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="ML Algorithm (Recommended)"
+            android:text="@string/onboarding_algorithms_ml"
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="16sp"
             android:textStyle="bold"
@@ -41,7 +41,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Machine Learning ('AI') detection.\nGives good seizure detection reliability with fewer false alarms than the original OSD Algorithm.\nFalse alarm performance should improve over time as users report false alarms and real seizures using our 'Data Sharing' facility."
+            android:text="@string/onboarding_algorithms_ml_desc"
             android:textSize="12sp"
             android:textColor="?android:attr/textColorSecondary"
             android:paddingStart="48dp"
@@ -53,7 +53,7 @@
             android:id="@+id/check_hr_alg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Heart Rate Alerts"
+            android:text="@string/onboarding_algorithms_hr"
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="16sp"
             android:padding="8dp" />
@@ -61,7 +61,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Detects abnormal heart rate patterns. Currently requires Garmin watch for reliable heart rate measurement."
+            android:text="@string/onboarding_algorithms_hr_desc"
             android:textSize="12sp"
             android:textColor="?android:attr/textColorSecondary"
             android:paddingStart="48dp"
@@ -73,7 +73,7 @@
             android:id="@+id/check_osd_alg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="OSD Algorithm"
+            android:text="@string/onboarding_algorithms_osd"
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="16sp"
             android:checked="true"
@@ -82,7 +82,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Original OpenSeizureDetector Deterministic Algorithm (OSD)\nProven tonic-clonic seizure detection - good for night time use, but gives false alarms for some normal activities that involve repetitive movements (brushing teeth, washing dishes etc.)."
+            android:text="@string/onboarding_algorithms_osd_desc"
             android:textSize="12sp"
             android:textColor="?android:attr/textColorSecondary"
             android:paddingStart="48dp"
@@ -94,7 +94,7 @@
             android:id="@+id/check_flap_alg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="OSD Algorithm with 'Flap' Detection"
+            android:text="@string/onboarding_algorithms_flap"
             android:textColor="?android:attr/textColorPrimary"
             android:textSize="16sp"
             android:padding="8dp" />
@@ -102,7 +102,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Enhanced OSD algorithm that detects arm flapping movements for maximum night time tonic-clonic seizure detection performance."
+            android:text="@string/onboarding_algorithms_flap_desc"
             android:textSize="12sp"
             android:textColor="?android:attr/textColorSecondary"
             android:paddingStart="48dp"
@@ -117,12 +117,10 @@
             android:layout_marginTop="24dp"
             android:visibility="gone" />
 
-
-
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Note: At least one algorithm should be enabled for seizure detection to work."
+            android:text="@string/onboarding_algorithms_note"
             android:textSize="12sp"
             android:textStyle="italic"
             android:textColor="?android:attr/textColorSecondary"

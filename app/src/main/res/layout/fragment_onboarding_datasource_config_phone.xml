@@ -8,7 +8,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Demo Mode Configuration"
+        android:text="@string/onboarding_phone_config_title"
         android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="?android:attr/textColorPrimary"
@@ -17,7 +17,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="About Demo Mode:"
+        android:text="@string/onboarding_phone_config_about_title"
         android:textSize="16sp"
         android:textStyle="bold"
         android:textColor="?android:attr/textColorPrimary"
@@ -26,7 +26,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Demo mode uses your phone's built-in accelerometer to detect movement to demonstrate OpenSeizureDetector.  This is useful for testing the app's functionality, but it MUST NOT be used as a seizure detector in this mode.\n\nWhen the main app starts, you will be asked for permissions about monitoring activity in order to enable access to the accelerometer."
+        android:text="@string/onboarding_phone_config_description"
         android:textSize="13sp"
         android:textColor="?android:attr/textColorPrimary"
         android:layout_marginBottom="12dp" />
@@ -35,7 +35,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Important:"
+        android:text="@string/onboarding_phone_config_important_title"
         android:textSize="14sp"
         android:textStyle="bold"
         android:textColor="?android:attr/textColorPrimary"
@@ -45,7 +45,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="⚠ Demo mode is NOT suitable for real seizure detection. The phone's accelerometer cannot reliably detect seizures when the phone is not attached to the wrist.\n\nFor real seizure detection, please use a wrist watch (PineTime or Garmin)."
+        android:text="@string/onboarding_phone_config_warning"
         android:textSize="12sp"
         android:textColor="?android:attr/textColorSecondary"
         android:layout_marginBottom="24dp" />
@@ -53,7 +53,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="To switch to a different data source later, go to Settings menu in the main app screen after this wizard completes."
+        android:text="@string/onboarding_phone_config_switch_later"
         android:textSize="12sp"
         android:textColor="?android:attr/textColorSecondary"
         android:layout_marginBottom="16dp"
@@ -62,7 +62,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Next, we'll configure the seizure detection algorithm."
+        android:text="@string/onboarding_phone_config_next_step"
         android:textSize="14sp"
         android:textColor="?android:attr/textColorPrimary"
         android:layout_marginTop="16dp" />

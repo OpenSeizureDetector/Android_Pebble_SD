@@ -14,7 +14,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Choose Data Source"
+            android:text="@string/onboarding_datasource_title"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="?android:attr/textColorPrimary"
@@ -23,7 +23,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Select where seizure detection data will come from:"
+            android:text="@string/onboarding_datasource_subtitle"
             android:textSize="14sp"
             android:textColor="?android:attr/textColorSecondary"
             android:layout_marginBottom="24dp" />
@@ -38,7 +38,7 @@
                 android:id="@+id/radio_phone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Phone (Demo Mode)"
+                android:text="@string/onboarding_datasource_phone"
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="16sp"
                 android:padding="12dp" />
@@ -46,7 +46,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Uses phone's accelerometer for testing. Not suitable for real seizure detection."
+                android:text="@string/onboarding_datasource_phone_desc"
                 android:textSize="12sp"
                 android:textColor="?android:attr/textColorSecondary"
                 android:paddingStart="48dp"
@@ -57,7 +57,7 @@
                 android:id="@+id/radio_pinetime"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="PineTime Watch"
+                android:text="@string/onboarding_datasource_pinetime"
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="16sp"
                 android:padding="12dp" />
@@ -65,7 +65,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Recommended. Uses a low-cost PineTime watch worn on the wrist for accurate detection."
+                android:text="@string/onboarding_datasource_pinetime_desc"
                 android:textSize="12sp"
                 android:textColor="?android:attr/textColorSecondary"
                 android:paddingStart="48dp"
@@ -76,7 +76,7 @@
                 android:id="@+id/radio_garmin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Garmin Watch"
+                android:text="@string/onboarding_datasource_garmin"
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="16sp"
                 android:padding="12dp" />
@@ -84,7 +84,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Uses a Garmin smart watch worn on the wrist for accurate detection and heart rate monitoring."
+                android:text="@string/onboarding_datasource_garmin_desc"
                 android:textSize="12sp"
                 android:textColor="?android:attr/textColorSecondary"
                 android:paddingStart="48dp"
@@ -95,7 +95,7 @@
                 android:id="@+id/radio_network"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Network (Remote Monitoring)"
+                android:text="@string/onboarding_datasource_network"
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="16sp"
                 android:padding="12dp" />
@@ -103,7 +103,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Connect to another device running OpenSeizureDetector for remote alarm annunciation."
+                android:text="@string/onboarding_datasource_network_desc"
                 android:textSize="12sp"
                 android:textColor="?android:attr/textColorSecondary"
                 android:paddingStart="48dp"
