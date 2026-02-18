@@ -352,8 +352,8 @@
     <string name="refreshBtn">Refresh</string>
     <string name="back">Back</string>
     <string name="unvalidatedEventsTitle">Un-Confirmed Seizure Events</string>
-    <string name="register">Register New User</string>
-    <string name="reset_password">Reset Password</string>
+    <string name="register">Register\nNew User</string>
+    <string name="reset_password">Reset\nPassword</string>
     <string name="login_to_osdapi">Log in to Share Data</string>
     <string name="login">Log In</string>
     <string name="data_sharing_status">Data Sharing</string>
@@ -435,8 +435,8 @@
         and selecting <b>Apps->OpenSeizureDetector->Permissions</b>.
     </string>
     <string name="permissions_required">Permissions Disclosure</string>
-    <string name="about_data_sharing">About Data Sharing</string>
-    <string name="privacy_policy">Privacy Policy</string>
+    <string name="about_data_sharing">About\nData Sharing</string>
+    <string name="privacy_policy">Privacy\nPolicy</string>
     <string name="more_information">More Information</string>
     <string name="mark_unverified_events_as_unknown">Mark Unverified Events as Unknown</string>
     <string name="mark_unverified_events_unknown_dialog_title">Mark All Unverified Events as Unknown?</string>
