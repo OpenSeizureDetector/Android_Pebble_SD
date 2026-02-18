@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/startup_root"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/startup_root_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context="uk.org.openseizuredetector.activity.startup.StartupActivity">
+
+<ScrollView
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true">
 
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    tools:context="uk.org.openseizuredetector.activity.startup.StartupActivity"
     android:orientation="vertical"
     android:padding="16dp">
 
@@ -196,3 +201,6 @@
 
 </LinearLayout>
 </ScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+
