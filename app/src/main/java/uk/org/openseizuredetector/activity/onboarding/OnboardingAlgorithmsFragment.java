@@ -77,22 +77,15 @@ public class OnboardingAlgorithmsFragment extends Fragment {
         mNextButton = requireActivity().findViewById(R.id.btn_next);
 
         // Load saved preferences using correct preference keys from seizure_detector_prefs.xml
-        boolean mlAlgActive = mPrefs.getBoolean("CnnAlarmActive", false);
-        boolean hrAlgActive = mPrefs.getBoolean("HRAlarmActive", false);
-        boolean osdAlgActive = mPrefs.getBoolean("OsdAlarmActive", false);
-        boolean flapAlgActive = mPrefs.getBoolean("FlapAlarmActive", false);
+        // These will use the default values defined in sd_prefs_main.xml if not explicitly set:
+        // OsdAlarmActive: default=true, FlapAlarmActive: default=true,
+        // CnnAlarmActive: default=false, HRAlarmActive: default=false
+        boolean osdAlgActive = mPrefs.getBoolean("OsdAlarmActive", true);   // Default: true
+        boolean flapAlgActive = mPrefs.getBoolean("FlapAlarmActive", true); // Default: true
+        boolean mlAlgActive = mPrefs.getBoolean("CnnAlarmActive", false);   // Default: false
+        boolean hrAlgActive = mPrefs.getBoolean("HRAlarmActive", false);    // Default: false
 
-        // Check if any algorithm is already selected
-        boolean anySelected = mlAlgActive || hrAlgActive || osdAlgActive || flapAlgActive;
-
-        // If none are selected, default to ML algorithm only
-        if (!anySelected) {
-            Log.i(TAG, "No algorithms currently selected - defaulting to ML Algorithm");
-            mlAlgActive = true;
-            mPrefs.edit().putBoolean("CnnAlarmActive", true).apply();
-        }
-
-        // Set checkbox states based on loaded preferences
+        // Set checkbox states based on loaded preferences (which include XML defaults)
         mCheckMlAlg.setChecked(mlAlgActive);
         mCheckHrAlg.setChecked(hrAlgActive);
         mCheckOsdAlg.setChecked(osdAlgActive);
@@ -263,6 +256,7 @@ public class OnboardingAlgorithmsFragment extends Fragment {
 
             if (recommendedModel != null) {
                 final String modelName = recommendedName;
+                final JSONObject modelToDownload = recommendedModel;
                 if (getActivity() != null && !getActivity().isDestroyed()) {
                     getActivity().runOnUiThread(() -> {
                         progressDialog.dismiss();
@@ -273,19 +267,8 @@ public class OnboardingAlgorithmsFragment extends Fragment {
 
                         Log.i(TAG, "Selected recommended ML model: " + modelName);
 
-                        // Show confirmation message
-                        new MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("ML Algorithm Configuration")
-                            .setMessage("ML Algorithm has been configured with the recommended model:\n" +
-                                       modelName + "\n\n" +
-                                       "You can select a different model in the Settings menu when the app starts.")
-                            .setPositiveButton("OK", (d, w) -> {
-                                if (mNextButton != null) {
-                                    mNextButton.performClick();
-                                }
-                            })
-                            .setCancelable(false)
-                            .show();
+                        // Now download the model with progress feedback
+                        showDownloadProgressDialog(mm, modelToDownload, modelName);
                     });
                 }
             } else {
@@ -306,6 +289,57 @@ public class OnboardingAlgorithmsFragment extends Fragment {
                             .show();
                     });
                 }
+            }
+        });
+    }
+
+    /**
+     * Download the selected ML model with progress feedback
+     */
+    private void showDownloadProgressDialog(MlModelManager mm, JSONObject modelInfo, String modelName) {
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Downloading ML Model")
+            .setMessage("Downloading " + modelName + "...\nPlease wait...")
+            .setCancelable(false);
+
+        AlertDialog downloadDialog = builder.show();
+
+        // Start model download
+        mm.downloadAndInstallModel(modelInfo, (success, file) -> {
+            if (getActivity() != null && !getActivity().isDestroyed()) {
+                getActivity().runOnUiThread(() -> {
+                    downloadDialog.dismiss();
+
+                    if (success) {
+                        Log.i(TAG, "ML Model downloaded successfully: " + modelName);
+                        new MaterialAlertDialogBuilder(requireContext())
+                            .setTitle("ML Algorithm Configuration")
+                            .setMessage("ML Algorithm model has been configured and downloaded:\n" +
+                                       modelName + "\n\n" +
+                                       "You can select a different model in the Settings menu when the app starts.")
+                            .setPositiveButton("OK", (d, w) -> {
+                                if (mNextButton != null) {
+                                    mNextButton.performClick();
+                                }
+                            })
+                            .setCancelable(false)
+                            .show();
+                    } else {
+                        Log.e(TAG, "Failed to download ML model: " + modelName);
+                        new MaterialAlertDialogBuilder(requireContext())
+                            .setTitle("Download Failed")
+                            .setMessage("Failed to download " + modelName + ".\n\n" +
+                                       "The app will use the default model configuration.\n" +
+                                       "You can try downloading a different model in the Settings menu when the app starts.")
+                            .setPositiveButton("OK", (d, w) -> {
+                                if (mNextButton != null) {
+                                    mNextButton.performClick();
+                                }
+                            })
+                            .setCancelable(false)
+                            .show();
+                    }
+                });
             }
         });
     }

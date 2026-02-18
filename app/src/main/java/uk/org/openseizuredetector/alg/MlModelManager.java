@@ -210,11 +210,13 @@ public class MlModelManager {
     }
 
     public JSONArray getInstalledModels() {
+        Log.i(TAG,"getInstalledModels()");
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
         String json = sp.getString(PREF_INSTALLED_MODELS, "[]");
         try {
             return new JSONArray(json);
         } catch (JSONException e) {
+            Log.e(TAG,"getInstalledModels() - failed to parse list of installed models - returning empty list");
             return new JSONArray();
         }
     }

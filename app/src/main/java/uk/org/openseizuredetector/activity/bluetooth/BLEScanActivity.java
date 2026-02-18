@@ -236,7 +236,8 @@ public class BLEScanActivity extends AppCompatActivity {
             }
 
             if (allGranted) {
-                Log.i(TAG, "onRequestPermissionsResult - All permissions granted");
+                Log.i(TAG, "onRequestPermissionsResult - All permissions granted, starting scan");
+                scanLeDevice(true);
             } else {
                 Log.e(TAG, "onRequestPermissionsResult - Some permissions denied");
                 Toast.makeText(this, "Permissions required for Bluetooth scanning", Toast.LENGTH_SHORT).show();
@@ -255,19 +256,20 @@ public class BLEScanActivity extends AppCompatActivity {
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
 
-        if (!mUtil.areBtPermissionsOk()) {
-            Log.i(TAG, "onResume - calling requestBTPermissions()");
-            requestBTPermissions(this);
-        } else {
-            Log.i(TAG, "onResume - Bluetooth Permissions OK");
-        }
-
-        // Clear devices and restart scan (adapter already initialized in onCreate)
+        // Clear devices
         if (mLeDeviceListAdapter != null) {
             mLeDeviceListAdapter.clear();
         }
 
-        scanLeDevice(true);
+        // Check permissions and start scan only if permissions are OK
+        if (!mUtil.areBtPermissionsOk()) {
+            Log.i(TAG, "onResume - calling requestBTPermissions()");
+            requestBTPermissions(this);
+            // Scan will start after permissions are granted in onRequestPermissionsResult
+        } else {
+            Log.i(TAG, "onResume - Bluetooth Permissions OK, starting scan");
+            scanLeDevice(true);
+        }
     }
 
     // ...existing code...
