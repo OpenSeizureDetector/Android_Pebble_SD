@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/error_activity_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?attr/colorPrimary"
+    android:background="?attr/colorSurface"
     android:gravity="center"
     android:orientation="vertical"
     android:padding="16dp">
@@ -27,53 +29,60 @@
                 android:gravity="center"
                 android:text="@string/ask_for_error_log"
                 android:textColor="?android:attr/textColorPrimary"
-                android:textSize="18sp"/>
+                android:textSize="18sp"
+                android:textStyle="bold"/>
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_view_error_log"
-                android:layout_width="150dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="View Error Log"
-                android:visibility="gone"/>
+                android:visibility="gone"
+                style="@style/Widget.Material3.Button.ElevatedButton"/>
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_copy_error_log"
-                android:layout_width="150dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="8dp"
                 android:text="Copy Error Log"
-                android:visibility="gone"/>
+                android:visibility="gone"
+                style="@style/Widget.Material3.Button.OutlinedButton"/>
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_share_error_log"
-                android:layout_width="150dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="8dp"
                 android:text="Share Error Log"
-                android:visibility="gone"/>
+                android:visibility="gone"
+                style="@style/Widget.Material3.Button.OutlinedButton"/>
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_email_error_log"
-                android:layout_width="150dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Email Error Log"/>
+                android:layout_marginTop="8dp"
+                android:text="Email Error Log"
+                style="@style/Widget.Material3.Button.ElevatedButton"/>
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_save_error_log"
-                android:layout_width="150dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="8dp"
                 android:text="Save Error Log"
-                android:visibility="gone"/>
+                android:visibility="gone"
+                style="@style/Widget.Material3.Button.OutlinedButton"/>
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/button_close_app"
-                android:layout_width="150dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Close App"/>
+                android:text="Close App"
+                style="@style/Widget.Material3.Button.TonalButton"/>
         </LinearLayout>
     </ScrollView>
 
@@ -83,6 +92,6 @@
         android:layout_marginTop="16dp"
         android:gravity="center"
         android:text="@string/copyright_info"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="14sp"/>
+        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="12sp"/>
 </LinearLayout>

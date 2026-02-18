@@ -47,6 +47,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
 import uk.org.openseizuredetector.R;
 
 /**
@@ -62,10 +65,22 @@ public final class UCEDefaultActivity extends AppCompatActivity {
     @SuppressLint("PrivateResource")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        setTheme(android.R.style.Theme_Holo_Light_DarkActionBar);
+        // Use the app's Material Design theme that adapts to light/dark mode
+        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         Log.i(TAG,"onCreate()");
         setContentView(R.layout.default_error_activity);
+
+        // Handle system window insets for proper spacing with system bars
+        View rootView = findViewById(R.id.error_activity_root);
+        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
+            int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
+            int bottomInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+            v.setPadding(v.getPaddingLeft(), topInset, v.getPaddingRight(), bottomInset);
+            return WindowInsetsCompat.CONSUMED;
+        });
+
+        // ...existing code...
         findViewById(R.id.button_close_app).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

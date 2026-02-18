@@ -1,13 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <ListPreference
-        android:key="DataSource"
-        android:title="@string/select_datasource_title"
-        android:summary="@string/select_datasource_summary"
-        android:entries="@array/datasource_list"
-        android:entryValues="@array/datasource_list_values"
-        android:defaultValue="Phone"
-        android:dialogTitle="@string/select_datasource_title" />
 
     <ListPreference
         android:key="darkMode"
@@ -18,10 +10,6 @@
         android:defaultValue="system"
         android:dialogTitle="Select Theme" />
 
-    <Preference
-        android:key="SelectBLEDevice"
-        android:widgetLayout="@layout/preference_widget_ble_button"
-        />
 
     <CheckBoxPreference
         android:defaultValue="false"

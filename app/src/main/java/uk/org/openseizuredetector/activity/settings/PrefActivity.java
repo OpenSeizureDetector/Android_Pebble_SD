@@ -74,6 +74,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     private OsdUtil mUtil;
     private boolean mPrefChanged = false;
     private boolean mUiRestartNeeded = false;
+    private boolean mIsShuttingDown = false;  // Flag to prevent operations during shutdown
     private Context mContext;
     private Handler mHandler;
 
@@ -106,6 +107,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         
         int[] prefResources = {
                 R.xml.general_prefs,
+                R.xml.data_source_prefs,
                 R.xml.alarm_prefs,
                 R.xml.logging_prefs,
                 R.xml.sd_prefs_main,
@@ -325,6 +327,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
         if (s.equals("SMSAlarm"))  {
             if (sharedPreferences.getBoolean("SMSAlarm", false) == true) {
+                mIsShuttingDown = true;
                 mUtil.showToast("Restarting OpenSeizureDetector");
                 Intent i = new Intent(this, StartupActivity.class);
                 startActivity(i);
@@ -334,6 +337,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 mPrefChanged = true;
             }
         } else if (s.equals("DataSource"))  {
+            mIsShuttingDown = true;
             mUtil.showToast("Restarting OpenSeizureDetector");
             mUtil.stopServer();
             mHandler.postDelayed(new Runnable() {
@@ -353,10 +357,13 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        if (mIsShuttingDown) return;
         mUtil.stopServer();
         mHandler.postDelayed(new Runnable() {
             public void run() {
-                mUtil.startServer();
+                if (!mIsShuttingDown) {
+                    mUtil.startServer();
+                }
             }
         }, 500);
     }
@@ -404,8 +411,19 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 mHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
+                        // Check if we're shutting down to avoid trying to start service from background
+                        if (mIsShuttingDown) {
+                            Log.i(TAG, "Shutdown in progress, skipping server restart.");
+                            return;
+                        }
                         Log.i(TAG, "Restarting server after preference change.");
-                        mUtil.startServer();
+                        try {
+                            mUtil.startServer();
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error restarting server after preference change: " + e.getMessage());
+                            mUtil.writeToSysLogFile("Error restarting server after preference change: " + e.getMessage());
+                            mUtil.showToast("Error restarting server. Please restart the app.");
+                        }
                     }
                 }, 1500); // 1.5 second delay is usually enough for GC/Cleanup
             }
@@ -425,26 +443,37 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     }
 
     /* Core Fragments */
-    public static class GeneralPrefsFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
+    public static class GeneralPrefsFragment extends PreferenceFragmentCompat {
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.general_prefs, rootKey);
+        }
+    }
+
+    public static class DataSourcePrefsFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
+        @Override
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+            setPreferencesFromResource(R.xml.data_source_prefs, rootKey);
             updateBleButtonVisibility();
         }
+
         @Override
         public void onResume() {
             super.onResume();
             PreferenceManager.getDefaultSharedPreferences(getContext()).registerOnSharedPreferenceChangeListener(this);
         }
+
         @Override
         public void onPause() {
             super.onPause();
             PreferenceManager.getDefaultSharedPreferences(getContext()).unregisterOnSharedPreferenceChangeListener(this);
         }
+
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             if ("DataSource".equals(key)) updateBleButtonVisibility();
         }
+
         private void updateBleButtonVisibility() {
             Preference bleButton = findPreference("SelectBLEDevice");
             if (bleButton != null) {

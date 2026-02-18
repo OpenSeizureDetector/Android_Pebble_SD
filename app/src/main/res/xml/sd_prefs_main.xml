@@ -6,9 +6,9 @@
             android:key="OsdAlarmActive"
             android:title="@string/OsdAlarmEnabledTitle" />
         <CheckBoxPreference
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="FlapAlarmActive"
-            android:title="Enable Flap Alarm" />
+            android:title="@string/flap_alarm_title" />
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="CnnAlarmActive"

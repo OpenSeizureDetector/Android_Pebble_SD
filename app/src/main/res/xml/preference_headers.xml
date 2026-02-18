@@ -7,6 +7,16 @@
         android:title="@string/general_settings_title"
         android:summary="@string/general_settings_summary" />
 
+    <header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$DataSourcePrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="@string/data_source_settings_title"
+        android:summary="@string/data_source_settings_summary" />
+
+    <header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$AlgorithmSelectionPrefsFragment"
+        android:icon="@drawable/icon_24x24"
+        android:title="@string/seizure_detector_settings_title"
+        android:summary="Manage detection algorithms and voting strategies" />
+
     <header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$AlarmPrefsFragment"
         android:icon="@drawable/icon_24x24"
         android:title="@string/alarms_settings_title"
@@ -17,10 +27,6 @@
         android:title="@string/logging_settings_title"
         android:summary="@string/logging_settings_summary" />
 
-    <header android:fragment="uk.org.openseizuredetector.activity.settings.PrefActivity$AlgorithmSelectionPrefsFragment"
-        android:icon="@drawable/icon_24x24"
-        android:title="@string/seizure_detector_settings_title"
-        android:summary="Manage detection algorithms and voting strategies" />
 
     <!-- Individual algorithm headers removed from here - they are now
          managed dynamically inside AlgorithmSelectionPrefsFragment -->
