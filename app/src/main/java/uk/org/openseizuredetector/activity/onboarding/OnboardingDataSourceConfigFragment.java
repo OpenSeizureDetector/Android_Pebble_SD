@@ -98,7 +98,8 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
         switch (dataSource) {
             case "BLE2":
                 mConfigContainer.addView(mPineTimeConfigView);
-                // Check PineTime Updater status when BLE2 is displayed
+                // Refresh the selected device display and check PineTime Updater status
+                refreshPineTimeDisplay();
                 checkPineTimeUpdaterStatusOnDisplay();
                 break;
             case "Garmin":
@@ -112,6 +113,16 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
                 break;
             default:
                 mConfigContainer.addView(mOtherConfigView);
+        }
+    }
+
+    /**
+     * Refresh the PineTime device display
+     */
+    private void refreshPineTimeDisplay() {
+        TextView tvSelectedDevice = mPineTimeConfigView.findViewById(R.id.tv_selected_device);
+        if (tvSelectedDevice != null) {
+            updateSelectedDeviceDisplay(tvSelectedDevice);
         }
     }
 
@@ -226,12 +237,12 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
         String deviceAddr = mPrefs.getString("BLE_Device_Addr", null);
 
         if (deviceName != null && deviceAddr != null) {
-            String displayText = "Selected: " + deviceName + " (" + deviceAddr + ")";
+            String displayText = "✓ " + deviceName + "\nMAC: " + deviceAddr;
             tvSelectedDevice.setText(displayText);
-            tvSelectedDevice.setTextColor(requireContext().getColor(android.R.color.white));
+            tvSelectedDevice.setTextColor(requireContext().getColor(android.R.color.holo_green_dark));
         } else {
             tvSelectedDevice.setText("No device selected");
-            tvSelectedDevice.setTextColor(requireContext().getColor(android.R.color.white));
+            tvSelectedDevice.setTextColor(requireContext().getColor(android.R.color.holo_orange_light));
         }
     }
 

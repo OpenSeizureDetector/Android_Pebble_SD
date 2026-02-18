@@ -50,7 +50,7 @@ public class OnboardingCompleteFragment extends Fragment {
 
         // Get data source
         String dataSource = prefs.getString("DataSource", "Phone");
-        String dataSourceDisplay = getDataSourceDisplay(dataSource);
+        String dataSourceDisplay = getDataSourceDisplay(dataSource, prefs);
 
         Log.i(TAG, "DataSource: " + dataSource);
         Log.i(TAG, "OsdAlarmActive: " + prefs.getBoolean("OsdAlarmActive", true));
@@ -73,12 +73,18 @@ public class OnboardingCompleteFragment extends Fragment {
     }
 
     /**
-     * Get human-readable data source name
+     * Get human-readable data source name with additional details for some sources
      */
-    private String getDataSourceDisplay(String dataSource) {
+    private String getDataSourceDisplay(String dataSource, SharedPreferences prefs) {
         switch (dataSource) {
             case "BLE2":
-                return "PineTime Watch (BLE)";
+                String deviceName = prefs.getString("BLE_Device_Name", null);
+                String deviceAddr = prefs.getString("BLE_Device_Addr", null);
+                if (deviceName != null && deviceAddr != null) {
+                    return "PineTime Watch (BLE)\n" + deviceName + "\n" + deviceAddr;
+                } else {
+                    return "PineTime Watch (BLE)\n(No device selected)";
+                }
             case "Garmin":
                 return "Garmin Watch";
             case "Network":

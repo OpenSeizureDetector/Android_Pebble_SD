@@ -95,11 +95,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/onboarding_pinetime_config_no_device_selected"
-        android:textSize="12sp"
-        android:textColor="?android:attr/textColorSecondary"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="?android:attr/textColorPrimary"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:layout_marginBottom="16dp" />
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:layout_marginBottom="16dp"
+        android:background="?attr/colorSurfaceVariant" />
 
 
     <TextView
