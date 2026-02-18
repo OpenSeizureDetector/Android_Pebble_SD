@@ -3,6 +3,7 @@ import uk.org.openseizuredetector.R;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -19,10 +20,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
-
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.graphics.Insets;
 
 import uk.org.openseizuredetector.activity.startup.StartupActivity;
 import uk.org.openseizuredetector.utils.OsdUtil;
@@ -68,13 +65,27 @@ public class OnboardingActivity extends AppCompatActivity {
             getSupportActionBar().show();
         }
 
-        // Handle system bars insets - apply to bottom/left/right only (action bar handles top)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.onboarding_root), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, 0, systemBars.right, systemBars.bottom);
-            return insets;
-        });
-        
+        // Configure system bar appearance - ensure icons are visible
+        android.os.Build.VERSION_CODES VERSION_CODES = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            // Set transparent system bars so our background shows through
+            getWindow().setNavigationBarColor(getColor(android.R.color.transparent));
+            getWindow().setStatusBarColor(getColor(android.R.color.transparent));
+
+            // Configure icon colors based on theme
+            View decorView = getWindow().getDecorView();
+            int flags = decorView.getSystemUiVisibility();
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                boolean isLightMode = isLightTheme();
+                if (isLightMode) {
+                    flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                } else {
+                    flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                }
+                decorView.setSystemUiVisibility(flags);
+            }
+        }
+
         mViewPager = findViewById(R.id.onboarding_viewpager);
         mBtnNext = findViewById(R.id.btn_next);
         mBtnBack = findViewById(R.id.btn_back);
@@ -277,6 +288,14 @@ public class OnboardingActivity extends AppCompatActivity {
             mUtil.writeToSysLogFile("OnboardingActivity.onDestroy()", "LIFECYCLE");
             mUtil.writeMemoryLog("OnboardingActivity.onDestroy");
         }
+    }
+
+    /**
+     * Check if the current theme is light mode
+     */
+    private boolean isLightTheme() {
+        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
     }
 
 }

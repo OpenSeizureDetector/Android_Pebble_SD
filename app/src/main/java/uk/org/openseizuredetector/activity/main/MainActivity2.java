@@ -59,6 +59,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -112,8 +113,6 @@ public class MainActivity2 extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
 
-
-
         Log.i(TAG, "onCreate()");
 
         // UCEHandler is installed in Application class (OsdApplication) to ensure a single install for the whole app.
@@ -124,6 +123,39 @@ public class MainActivity2 extends AppCompatActivity {
         mUtil.writeMemoryLog("MainActivity2.onCreate");
         mContext = this;
         mHandler = new Handler(Looper.getMainLooper());
+
+        // Configure system bar appearance - ensure icons are visible
+        // The system will show light icons on dark background and dark icons on light background
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            // Get the window and set it to draw edge-to-edge
+            getWindow().setNavigationBarColor(getColor(android.R.color.transparent));
+            getWindow().setStatusBarColor(getColor(android.R.color.transparent));
+
+            // Let system determine icon colors based on the background
+            // In light mode: dark icons; in dark mode: light icons
+            View decorView = getWindow().getDecorView();
+            int flags = decorView.getSystemUiVisibility();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                // Check if in light mode (light background requires dark icons)
+                boolean isLightMode = isLightTheme();
+                if (isLightMode) {
+                    // Light mode: use dark icons for status bar
+                    flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                } else {
+                    // Dark mode: use light icons (default)
+                    flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                }
+                decorView.setSystemUiVisibility(flags);
+            }
+        }
+    }
+
+    /**
+     * Check if the current theme is light mode
+     */
+    private boolean isLightTheme() {
+        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
     }
 
     /**

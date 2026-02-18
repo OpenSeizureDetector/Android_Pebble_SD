@@ -1209,15 +1209,18 @@ public class StartupActivity extends AppCompatActivity {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Log.i(TAG, "Health service permission GRANTED - server can now start with foreground");
                     // Permission granted - the server status check will retry starting the server
+                    // Trigger UI update to retry server startup
+                    mHandler.post(serverStatusRunnable);
                 } else {
-                    Log.w(TAG, "Health service permission DENIED - server will start without foreground");
-                    // Permission denied - the server will still try to start but in degraded mode
+                    // Permission denied - must exit app
+                    Log.e(TAG, "Health service permission DENIED - exiting application");
+                    showPermissionDeniedDialog();
                 }
             } else {
-                Log.w(TAG, "Permission arrays are empty - permission may have been cancelled");
+                // Permission cancelled - treat same as denied
+                Log.w(TAG, "Permission arrays are empty - permission request was cancelled - exiting");
+                showPermissionDeniedDialog();
             }
-            // Trigger UI update to retry server startup
-            mHandler.post(serverStatusRunnable);
             return;
         }
 
@@ -1226,6 +1229,24 @@ public class StartupActivity extends AppCompatActivity {
             Log.i(TAG, String.format("onRequestPermissionsResult: i="+i+", Permission " + permissions[i].toString() + " = " + grantResults[i]));
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    /**
+     * Show error dialog and exit app when health foreground service permission is denied
+     */
+    private void showPermissionDeniedDialog() {
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+        builder.setTitle("Permission Required")
+                .setMessage("OpenSeizureDetector requires the 'Activity Recognition' permission to start the health monitoring service on Android 12 and later. " +
+                           "Without this permission, the app cannot function properly. " +
+                           "Please grant the permission and try again.")
+                .setCancelable(false)
+                .setPositiveButton("Exit", (dialog, which) -> {
+                    Log.i(TAG, "User acknowledged permission denied - exiting app");
+                    finish();
+                });
+
+        builder.show();
     }
 
 

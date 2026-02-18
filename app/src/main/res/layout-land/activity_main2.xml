@@ -9,14 +9,14 @@
     android:id="@+id/activity_main2_root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
     tools:context="uk.org.openseizuredetector.activity.main.MainActivity2">
 
     <LinearLayout
         android:id="@+id/activity_main2_content_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:paddingTop="?attr/actionBarSize">
 
         <!-- Left Column: Status Card (FragmentCommon) - Fixed width 280dp for readable buttons -->
         <androidx.fragment.app.FragmentContainerView

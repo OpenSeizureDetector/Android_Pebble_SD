@@ -283,9 +283,11 @@ public class SdServer extends Service implements SdDataReceiver {
                     startForeground(NOTIFICATION_ID, mNotification);
                     Log.v(TAG, "Started foreground service with health type");
                 } else {
-                    // Permissions not granted - should have been checked by StartupActivity
-                    Log.w(TAG, "Required permissions for health foreground service not granted - starting without foreground");
-                    mUtil.writeToSysLogFile("SdServer.onCreate() - Health permissions not granted - starting without foreground");
+                    // Permissions not granted - should not reach here as StartupActivity should have exited
+                    // But if we do get here, throw exception to alert
+                    Log.e(TAG, "FATAL: Health foreground service permissions not granted!");
+                    mUtil.writeToSysLogFile("FATAL: SdServer.onCreate() - Health permissions not granted");
+                    throw new SecurityException("Health foreground service permissions not granted - app should have exited in StartupActivity");
                 }
             } else {
                 // Android 8-11: just start foreground
