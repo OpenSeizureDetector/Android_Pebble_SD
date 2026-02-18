@@ -784,7 +784,7 @@ public class SdServer extends Service implements SdDataReceiver {
     }
 
     public void raiseManualAlarm() {
-        Log.d(TAG, "raiseManualAlarm()");
+        Log.i(TAG, "raiseManualAlarm()");
         SdData sdData = mSdData;
         sdData.alarmState = AlarmState.MANUAL;
         onSdDataReceived(sdData);
@@ -808,15 +808,19 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Enhanced logging for diagnostics
         mUtil.writeToSysLogFile("DATA_RX: alarmState=" + sdData.alarmState +
-                                ", HR=" + sdData.mHR +
-                                ", thread=" + Thread.currentThread().getName());
+                ", HR=" + sdData.mHR +
+                ", thread=" + Thread.currentThread().getName());
 
-        // Process data through SeizureDetector to run all seizure detection algorithms
+        // Process data through SeizureDetector to run all seizure detection algorithm.
         if (mSeizureDetector != null) {
-            int alarmState = mSeizureDetector.processData(sdData);
-            sdData.alarmState = alarmState;
-            Log.v(TAG, "onSdDataReceived() - SeizureDetector returned alarmState=" + alarmState);
-            mUtil.writeToSysLogFile("SeizureDetector: alarmState=" + alarmState);
+            if (sdData.alarmState == AlarmState.MANUAL) {
+                Log.i(TAG, "onSdDataReceived() called with AlarmState == MANUAL - not processing data, just going straight to alarm");
+            } else {
+                int alarmState = mSeizureDetector.processData(sdData);
+                sdData.alarmState = alarmState;
+                Log.v(TAG, "onSdDataReceived() - SeizureDetector returned alarmState=" + alarmState);
+                mUtil.writeToSysLogFile("SeizureDetector: alarmState=" + alarmState);
+            }
         } else {
             if (mIsDestroying) {
                 Log.e(TAG, "onSdDataReceived() - received data after shutting down seizuredetector - ignoring");
@@ -908,7 +912,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
                 Log.v(TAG, "mSMSAlarm is false - not sending");
             }
-            Log.v(TAG,"calling startLatchTimer()");
+            Log.v(TAG, "calling startLatchTimer()");
             startLatchTimer();
         }
         // Handle fall alarm
@@ -1063,8 +1067,12 @@ public class SdServer extends Service implements SdDataReceiver {
         mLm.updateSdData(mSdData);
 
         logData();
-    }
 
+        if (mSdData.alarmState == AlarmState.MANUAL) {
+            Log.i(TAG, "onSdDataReceived() called with AlarmState == MANUAL - resetting back to WARNING status");
+            mSdData.alarmState = AlarmState.WARNING;
+        }
+    }
 
     // Called by SdDataSource when a fault condition is detected.
     public void onSdDataFault(SdData sdData) {
