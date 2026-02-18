@@ -5,14 +5,14 @@
     android:id="@+id/activity_main2_root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     tools:context="uk.org.openseizuredetector.activity.main.MainActivity2">
 
     <LinearLayout
         android:id="@+id/activity_main2_content_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:paddingTop="?attr/actionBarSize">
+        android:orientation="vertical">
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fragment_common_container_view"
