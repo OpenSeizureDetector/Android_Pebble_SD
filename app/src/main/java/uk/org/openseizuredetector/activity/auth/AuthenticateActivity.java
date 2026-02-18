@@ -8,6 +8,7 @@ import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.preference.PreferenceManager;
