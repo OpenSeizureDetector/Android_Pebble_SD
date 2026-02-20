@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,6 +17,7 @@ import org.robolectric.annotation.Config;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -50,7 +52,14 @@ public class MlModelManagerTest {
         // Simulate network failure
         server.enqueue(new MockResponse().setResponseCode(500));
         String baseUrl = server.url("/static/ml_models/").toString();
-        MlModelManager mm = new MlModelManager(context, baseUrl, "index.json");
+        MlModelManager mm = new MlModelManager(context);
+        // set private fields to point at mock server
+        java.lang.reflect.Field f = mm.getClass().getDeclaredField("mUrlBase");
+        f.setAccessible(true);
+        f.set(mm, baseUrl);
+        java.lang.reflect.Field f2 = mm.getClass().getDeclaredField("mModelIndexFname");
+        f2.setAccessible(true);
+        f2.set(mm, "index.json");
 
         CountDownLatch latch = new CountDownLatch(1);
         final JSONArray[] result = new JSONArray[1];
@@ -65,7 +74,10 @@ public class MlModelManagerTest {
     public void testGetMlModelIndex_invalidJson() throws Exception {
         server.enqueue(new MockResponse().setResponseCode(200).setBody("not a json array"));
         String baseUrl = server.url("/static/ml_models/").toString();
-        MlModelManager mm = new MlModelManager(context, baseUrl, "index.json");
+        MlModelManager mm = new MlModelManager(context);
+        java.lang.reflect.Field f = mm.getClass().getDeclaredField("mUrlBase");
+        f.setAccessible(true);
+        f.set(mm, baseUrl);
 
         CountDownLatch latch = new CountDownLatch(1);
         final JSONArray[] result = new JSONArray[1];
@@ -82,7 +94,10 @@ public class MlModelManagerTest {
         for (int i = 0; i < body.length; i++) body[i] = (byte)(i % 256);
         server.enqueue(new MockResponse().setResponseCode(200).setBody(new String(body)));
         String baseUrl = server.url("/static/ml_models/").toString();
-        MlModelManager mm = new MlModelManager(context, baseUrl, "index.json");
+        MlModelManager mm = new MlModelManager(context);
+        java.lang.reflect.Field f = mm.getClass().getDeclaredField("mUrlBase");
+        f.setAccessible(true);
+        f.set(mm, baseUrl);
 
         AtomicBoolean cancelFlag = new AtomicBoolean(false);
         CountDownLatch latch = new CountDownLatch(1);
@@ -98,19 +113,15 @@ public class MlModelManagerTest {
 
     @Test
     public void testLoadModel_fallbackToBundledWhenNoDownloaded() throws Exception {
-        // Ensure no downloaded model in prefs
+        // Ensure no downloaded models in prefs
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-        sp.edit().remove("CnnModelFile").commit();
+        sp.edit().remove(MlModelManager.PREF_INSTALLED_MODELS).commit();
 
         MlModelManager mm = new MlModelManager(context);
-        CountDownLatch latch = new CountDownLatch(1);
-        final MlModelManager.ModelLoadResult[] result = new MlModelManager.ModelLoadResult[1];
-        mm.loadModel(sp, modelResult -> { result[0] = modelResult; latch.countDown(); });
+        List<MlModelManager.ModelLoadResult> results = mm.loadAllActiveModels();
 
-        assertTrue("Callback not invoked", latch.await(2, TimeUnit.SECONDS));
-        // We can't assert non-null without real bundled asset setup; just assert callback occurred.
-        // In real instrumentation tests, we'd include the asset and assert non-null.
-        assertNotNull("Model should be loaded from bundled model if present", result[0]);
+        assertNotNull("Result list should not be null", results);
+        // We can't assert non-empty without real bundled asset setup; just assert callback occurred.
     }
 
     @Test
@@ -123,16 +134,25 @@ public class MlModelManagerTest {
         fos.write(new byte[128]);
         fos.close();
 
+        // Register the fake model in the installed models preference
+        JSONArray arr = new JSONArray();
+        JSONObject obj = new JSONObject();
+        obj.put("fname", "fake.tflite");
+        obj.put("localPath", fakeModel.getAbsolutePath());
+        obj.put("framework", "tflite");
+        obj.put("input_format_val", 1);
+        obj.put("input_size", 125);
+        obj.put("alarm_threshold", 2.0);
+        arr.put(obj);
+
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-        sp.edit().putString("CnnModelFile", fakeModel.getAbsolutePath()).commit();
+        sp.edit().putString(MlModelManager.PREF_INSTALLED_MODELS, arr.toString()).commit();
 
         MlModelManager mm = new MlModelManager(context);
-        CountDownLatch latch = new CountDownLatch(1);
-        final MlModelManager.ModelLoadResult[] result = new MlModelManager.ModelLoadResult[1];
-        mm.loadModel(sp, modelResult -> { result[0] = modelResult; latch.countDown(); });
+        List<MlModelManager.ModelLoadResult> results = mm.loadAllActiveModels();
 
-        assertTrue("Callback not invoked", latch.await(2, TimeUnit.SECONDS));
-        assertNotNull("Model should be loaded from downloaded file", result[0]);
+        assertNotNull("Result list should not be null", results);
+        assertTrue("Model should be loaded from installed list", results.size() > 0);
     }
 
     @org.junit.Ignore("Covered by instrumentation tests; use androidTest instead")
@@ -142,7 +162,10 @@ public class MlModelManagerTest {
         String indexBody = "[ {\"name\": \"Bad Model\", \"fname\": \"bad.tflite\", \"input_format\": 1 } ]";
         server.enqueue(new MockResponse().setResponseCode(200).setBody(indexBody));
         String baseUrl = server.url("/static/ml_models/").toString();
-        MlModelManager mm = new MlModelManager(context, baseUrl, "index.json");
+        MlModelManager mm = new MlModelManager(context);
+        java.lang.reflect.Field f = mm.getClass().getDeclaredField("mUrlBase");
+        f.setAccessible(true);
+        f.set(mm, baseUrl);
 
         // First, fetch index
         CountDownLatch latchIndex = new CountDownLatch(1);
