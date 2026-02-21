@@ -72,20 +72,17 @@ public class OnboardingAlgorithmsFragment extends Fragment {
         mCheckOsdAlg = view.findViewById(R.id.check_osd_alg);
         mCheckFlapAlg = view.findViewById(R.id.check_flap_alg);
         mConfigMessageContainer = view.findViewById(R.id.config_message_container);
-        // ...existing code...
+        
         // Get next button from parent activity
         mNextButton = requireActivity().findViewById(R.id.btn_next);
 
         // Load saved preferences using correct preference keys from seizure_detector_prefs.xml
-        // These will use the default values defined in sd_prefs_main.xml if not explicitly set:
-        // OsdAlarmActive: default=true, FlapAlarmActive: default=true,
-        // CnnAlarmActive: default=false, HRAlarmActive: default=false
-        boolean osdAlgActive = mPrefs.getBoolean("OsdAlarmActive", true);   // Default: true
-        boolean flapAlgActive = mPrefs.getBoolean("FlapAlarmActive", true); // Default: true
-        boolean mlAlgActive = mPrefs.getBoolean("CnnAlarmActive", false);   // Default: false
-        boolean hrAlgActive = mPrefs.getBoolean("HRAlarmActive", false);    // Default: false
+        boolean osdAlgActive = mPrefs.getBoolean("OsdAlarmActive", true);
+        boolean flapAlgActive = mPrefs.getBoolean("FlapAlarmActive", true);
+        boolean mlAlgActive = mPrefs.getBoolean("CnnAlarmActive", false);
+        boolean hrAlgActive = mPrefs.getBoolean("HRAlarmActive", false);
 
-        // Set checkbox states based on loaded preferences (which include XML defaults)
+        // Set checkbox states based on loaded preferences
         mCheckMlAlg.setChecked(mlAlgActive);
         mCheckHrAlg.setChecked(hrAlgActive);
         mCheckOsdAlg.setChecked(osdAlgActive);
@@ -217,80 +214,67 @@ public class OnboardingAlgorithmsFragment extends Fragment {
         // Fetch available ML models from server
         MlModelManager mm = new MlModelManager(requireContext());
         mm.getMlModelIndex(modelArray -> {
-            if (modelArray == null) {
-                // Failed to fetch models
-                if (getActivity() != null && !getActivity().isDestroyed()) {
-                    getActivity().runOnUiThread(() -> {
-                        progressDialog.dismiss();
-                        new MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("ML Algorithm Configuration")
-                            .setMessage("Using default ML model configuration.\n\n" +
-                                       "You can select a different model in the Settings menu when the app starts.")
-                            .setPositiveButton("OK", (d, w) -> {
-                                if (mNextButton != null) {
-                                    mNextButton.performClick();
-                                }
-                            })
-                            .setCancelable(false)
-                            .show();
-                    });
-                }
-                return;
-            }
+            if (getActivity() == null || getActivity().isDestroyed()) return;
+            
+            getActivity().runOnUiThread(() -> {
+                progressDialog.dismiss();
 
-            // Find the recommended model
-            JSONObject recommendedModel = null;
-            String recommendedName = "Unknown";
-            try {
-                for (int i = 0; i < modelArray.length(); i++) {
-                    JSONObject modelObj = modelArray.getJSONObject(i);
-                    if (modelObj.optBoolean("recommended", false)) {
-                        recommendedModel = modelObj;
-                        recommendedName = modelObj.optString("name", "Unknown Model");
-                        break;
+                if (modelArray == null) {
+                    showMlIncompatibilityDialog("Failed to connect to the model server. Please check your internet connection.");
+                    return;
+                }
+
+                // Check for compatible models
+                List<JSONObject> compatibleModels = new ArrayList<>();
+                JSONObject recommendedModel = null;
+
+                try {
+                    for (int i = 0; i < modelArray.length(); i++) {
+                        JSONObject modelObj = modelArray.getJSONObject(i);
+                        if (mm.isDeviceCompatible(modelObj)) {
+                            compatibleModels.add(modelObj);
+                            if (modelObj.optBoolean("recommended", false)) {
+                                recommendedModel = modelObj;
+                            }
+                        }
                     }
+                } catch (JSONException e) {
+                    Log.e(TAG, "Error parsing model list: " + e.getMessage());
                 }
-            } catch (JSONException e) {
-                Log.e(TAG, "Error parsing model list: " + e.getMessage());
-            }
 
-            if (recommendedModel != null) {
-                final String modelName = recommendedName;
-                final JSONObject modelToDownload = recommendedModel;
-                if (getActivity() != null && !getActivity().isDestroyed()) {
-                    getActivity().runOnUiThread(() -> {
-                        progressDialog.dismiss();
-
-                        // Save recommended model preference
-                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
-                        prefs.edit().putString("CnnModelName", modelName).apply();
-
-                        Log.i(TAG, "Selected recommended ML model: " + modelName);
-
-                        // Now download the model with progress feedback
-                        showDownloadProgressDialog(mm, modelToDownload, modelName);
-                    });
+                if (compatibleModels.isEmpty()) {
+                    showMlIncompatibilityDialog("Your device is not compatible with the available ML models. This is usually due to missing CPU features (e.g. dotprod). The ML algorithm will be disabled.");
+                } else {
+                    // Use recommended if compatible, otherwise pick the first compatible one
+                    JSONObject modelToDownload = (recommendedModel != null) ? recommendedModel : compatibleModels.get(0);
+                    String modelName = modelToDownload.optString("name", "Unknown Model");
+                    
+                    // Save recommended model preference
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+                    prefs.edit().putString("CnnModelName", modelName).apply();
+                    
+                    showDownloadProgressDialog(mm, modelToDownload, modelName);
                 }
-            } else {
-                // No recommended model found, use default
-                if (getActivity() != null && !getActivity().isDestroyed()) {
-                    getActivity().runOnUiThread(() -> {
-                        progressDialog.dismiss();
-                        new MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("ML Algorithm Configuration")
-                            .setMessage("Using default ML model configuration.\n\n" +
-                                       "You can select a different model in the Settings menu when the app starts.")
-                            .setPositiveButton("OK", (d, w) -> {
-                                if (mNextButton != null) {
-                                    mNextButton.performClick();
-                                }
-                            })
-                            .setCancelable(false)
-                            .show();
-                    });
-                }
-            }
+            });
         });
+    }
+
+    private void showMlIncompatibilityDialog(String message) {
+        // Disable ML algorithm in preferences
+        mPrefs.edit().putBoolean("CnnAlarmActive", false).apply();
+        if (mCheckMlAlg != null) mCheckMlAlg.setChecked(false);
+
+        new MaterialAlertDialogBuilder(requireContext())
+            .setTitle("ML Algorithm Disabled")
+            .setMessage(message)
+            .setPositiveButton("OK", (d, w) -> {
+                // Skip to next algorithm or next page
+                if (mNextButton != null) {
+                    mNextButton.performClick();
+                }
+            })
+            .setCancelable(false)
+            .show();
     }
 
     /**

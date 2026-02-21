@@ -25,6 +25,7 @@
 package uk.org.openseizuredetector.activity.startup;
 import uk.org.openseizuredetector.R;
 
+import uk.org.openseizuredetector.alg.MlModelManager;
 import uk.org.openseizuredetector.client.SdServiceConnection;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import android.Manifest;
@@ -63,6 +64,8 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.rohitss.uceh.UCEHandler;
 
+import org.json.JSONArray;
+
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -89,6 +92,7 @@ public class StartupActivity extends AppCompatActivity {
     private boolean mBatteryOptDialogDisplayed = false;
     private AlertDialog mBatteryOptDialog;
     private boolean mBleDeviceConfigDialogDisplayed = false;  // Flag to prevent re-creating the BLE device config dialog
+    private boolean mMlIncompatibilityDialogDisplayed = false;
     private boolean mLocationPermissions1Requested;
     private boolean mLocationPermissions2Requested;
     private boolean mSmsPermissionsRequested;
@@ -331,6 +335,9 @@ public class StartupActivity extends AppCompatActivity {
         // Check to see if this is the first time the app has been run, and display welcome dialog if it is.
         checkFirstRun();
 
+        // Check ML compatibility
+        checkMlCompatibility();
+
         // start timer to refresh user interface every second.
         mUiTimer = new Timer();
         mUiTimer.schedule(new TimerTask() {
@@ -569,7 +576,7 @@ public class StartupActivity extends AppCompatActivity {
 
                 // Check health foreground service permissions on Android 12+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !areHealthForegroundServicePermissionsOK()) {
-                    Log.i(TAG, "Health foreground service permissions not granted - requesting");
+                    Log.i(TAG, "health foreground service permissions not granted - requesting");
                     tv.setText("Requesting Permissions");
                     tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                     tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
@@ -712,7 +719,7 @@ public class StartupActivity extends AppCompatActivity {
                     return;
                 }
 
-                if (!mDialogDisplayed && !mBatteryOptDialogDisplayed) {
+                if (!mDialogDisplayed && !mBatteryOptDialogDisplayed && !mMlIncompatibilityDialogDisplayed) {
                     if (!mStartedMainActivity) {
                         Log.i(TAG, "serverStatusRunnable() - starting main activity...");
                         mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - all checks ok - starting main activity.");
@@ -896,6 +903,40 @@ public class StartupActivity extends AppCompatActivity {
         Log.i(TAG, "Displaying Update Dialog");
         mBatteryOptDialog.show();
         mBatteryOptDialogDisplayed = true;
+    }
+
+    private void checkMlCompatibility() {
+        if (mMlIncompatibilityDialogDisplayed) return;
+
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        if (sp.getBoolean("CnnAlarmActive", false)) {
+            MlModelManager mm = new MlModelManager(this);
+            JSONArray installed = mm.getInstalledModels();
+
+            boolean anyCompatible = false;
+            if (installed.length() > 0) {
+                for (int i = 0; i < installed.length(); i++) {
+                    if (mm.isDeviceCompatible(installed.optJSONObject(i))) {
+                        anyCompatible = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!anyCompatible) {
+                mMlIncompatibilityDialogDisplayed = true;
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle("ML Compatibility Error")
+                        .setMessage("The Machine Learning algorithm is enabled, but no compatible models are installed for this device's CPU.\n\nPlease install a compatible model (e.g. one without 'dotprod' requirements) or disable the ML algorithm.")
+                        .setCancelable(false)
+                        .setPositiveButton("Open Settings", (dialog, which) -> {
+                            Intent intent = new Intent(this, PrefActivity.class);
+                            intent.putExtra("fragment", "uk.org.openseizuredetector.activity.settings.PrefActivity$MlAlgPrefsFragment");
+                            startActivity(intent);
+                        })
+                        .show();
+            }
+        }
     }
 
     /*****************************************************************************/

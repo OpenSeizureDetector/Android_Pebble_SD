@@ -20,7 +20,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,7 +36,6 @@ public class MlModelManager {
     protected Context mContext;
     protected OsdUtil mUtil;
     private final static String TAG = "MlModelManager";
-    private final String DEFAULT_BUNDLED_MODEL = "cnn_v0.24.tflite";
     public static final String PREF_INSTALLED_MODELS = "InstalledMlModels";
 
     // Maximum number of ML models that can be managed simultaneously
@@ -90,6 +92,15 @@ public class MlModelManager {
         mContext = context;
         mUtil = new OsdUtil(mContext, new Handler(Looper.getMainLooper()));
         mQueue = Volley.newRequestQueue(mContext);
+    }
+
+    /**
+     * Constructor for testing that allows overriding the base URL and index filename.
+     */
+    public MlModelManager(Context context, String urlBase, String indexFname) {
+        this(context);
+        this.mUrlBase = urlBase;
+        this.mModelIndexFname = indexFname;
     }
 
     public void close() {
@@ -274,6 +285,72 @@ public class MlModelManager {
         return filtered;
     }
 
+    /**
+     * Checks if the device is compatible with the model based on its requirements.
+     */
+    public boolean isDeviceCompatible(JSONObject modelInfo) {
+        JSONArray requiredFeatures = modelInfo.optJSONArray("min_cpu_features");
+        if (requiredFeatures == null || requiredFeatures.length() == 0) {
+            return true; // Assume compatible if no specific features are required
+        }
+
+        for (int i = 0; i < requiredFeatures.length(); i++) {
+            String feature = requiredFeatures.optString(i);
+            if (!feature.isEmpty() && !hasCpuFeature(feature)) {
+                Log.w(TAG, "Device is incompatible with model: missing CPU feature '" + feature + "'");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private Set<String> mDetectedCpuFeatures = null;
+
+    /**
+     * Checks if a specific CPU feature is present by reading /proc/cpuinfo.
+     */
+    public boolean hasCpuFeature(String feature) {
+        if (mDetectedCpuFeatures == null) {
+            mDetectedCpuFeatures = detectCpuFeatures();
+        }
+        
+        boolean found = mDetectedCpuFeatures.contains(feature.toLowerCase());
+        
+        // Handle common aliases
+        if (!found && feature.equalsIgnoreCase("dotprod")) {
+            found = mDetectedCpuFeatures.contains("asimddp");
+        }
+        
+        return found;
+    }
+
+    private Set<String> detectCpuFeatures() {
+        Set<String> featuresSet = new HashSet<>();
+        try (BufferedReader br = new BufferedReader(new FileReader("/proc/cpuinfo"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String trimmed = line.trim();
+                // Match "Features : ..." line (case insensitive)
+                if (trimmed.toLowerCase().startsWith("features")) {
+                    int colonIndex = trimmed.indexOf(':');
+                    if (colonIndex != -1) {
+                        String featuresPart = trimmed.substring(colonIndex + 1).trim();
+                        String[] parts = featuresPart.split("\\s+");
+                        for (String f : parts) {
+                            if (!f.isEmpty()) {
+                                featuresSet.add(f.toLowerCase());
+                            }
+                        }
+                    }
+                }
+            }
+            Log.i(TAG, "Detected CPU Features: " + featuresSet.toString());
+        } catch (IOException e) {
+            Log.e(TAG, "Error reading /proc/cpuinfo: " + e.getMessage());
+        }
+        return featuresSet;
+    }
+
     public List<ModelLoadResult> loadAllActiveModels() {
         List<ModelLoadResult> results = new ArrayList<>();
         JSONArray installed = getInstalledModels();
@@ -281,6 +358,13 @@ public class MlModelManager {
         for (int i = 0; i < installed.length(); i++) {
             try {
                 JSONObject m = installed.getJSONObject(i);
+                
+                // Compatibility Check
+                if (!isDeviceCompatible(m)) {
+                    Log.w(TAG, "Skipping model " + m.optString("name") + " due to device incompatibility.");
+                    continue;
+                }
+
                 String path = m.getString("localPath");
                 String framework = m.optString("framework", "tflite");
                 int inputFormat = m.optInt("input_format_val", 1); // fallback to 1
@@ -296,7 +380,7 @@ public class MlModelManager {
                         results.add(new ModelLoadResult(m.getString("name"), framework, buffer, f, inputFormat, inputSize, threshold));
                         fis.close();
                     } else {
-                        // PyTorch/other frameworks
+                        // PyTorch/ExecuTorch
                         results.add(new ModelLoadResult(m.getString("name"), framework, null, f, inputFormat, inputSize, threshold));
                     }
                 }
@@ -305,15 +389,6 @@ public class MlModelManager {
             }
         }
 
-        // Fallback to bundled if none installed
-        if (results.isEmpty()) {
-            try {
-                java.nio.MappedByteBuffer buffer = org.tensorflow.lite.support.common.FileUtil.loadMappedFile(mContext, DEFAULT_BUNDLED_MODEL);
-                results.add(new ModelLoadResult("Bundled Model", "tflite", buffer, null, 1, 125, 2.0));
-            } catch (Exception e) {
-                Log.e(TAG, "Failed to load bundled model fallback");
-            }
-        }
         return results;
     }
 
@@ -328,8 +403,11 @@ public class MlModelManager {
                 for (int i = 0; i < arr.length(); i++) {
                     JSONObject model = arr.getJSONObject(i);
                     if (model.optBoolean("recommended", false)) {
-                        recommendedModel = model;
-                        break;
+                        // Only recommend if compatible
+                        if (isDeviceCompatible(model)) {
+                            recommendedModel = model;
+                            break;
+                        }
                     }
                 }
                 if (recommendedModel != null) {

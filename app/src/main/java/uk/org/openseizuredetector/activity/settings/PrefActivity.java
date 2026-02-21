@@ -140,6 +140,8 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         mUtil.writeToSysLogFile("PrefActivity.onCreate()", "LIFECYCLE");
         mUtil.writeMemoryLog("PrefActivity.onCreate");
 
+        OsdUtil.applyTheme(this);
+
         setContentView(R.layout.activity_pref);
 
         final int actionBarHeight;
@@ -525,6 +527,28 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            if (key.equals("CnnAlarmActive") && sharedPreferences.getBoolean(key, false)) {
+                // Compatibility check when enabling ML
+                MlModelManager mm = new MlModelManager(getContext());
+                JSONArray installed = mm.getInstalledModels();
+                if (installed.length() > 0) {
+                    boolean anyCompatible = false;
+                    for (int i = 0; i < installed.length(); i++) {
+                        if (mm.isDeviceCompatible(installed.optJSONObject(i))) {
+                            anyCompatible = true;
+                            break;
+                        }
+                    }
+                    if (!anyCompatible) {
+                        new AlertDialog.Builder(getContext())
+                            .setTitle("CPU Incompatibility")
+                            .setMessage("None of your installed ML models are compatible with this device's CPU. " +
+                                       "You may need to download a 'generic' version of the model if available.")
+                            .setPositiveButton("OK", null)
+                            .show();
+                    }
+                }
+            }
             if (key.endsWith("Active") || key.equals("FidgetDetectorEnabled")) {
                 updateDynamicSettings();
             }
@@ -647,8 +671,10 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 List<String> names = new ArrayList<>();
                 for (int i = 0; i < arr.length(); i++) {
                     JSONObject obj = arr.optJSONObject(i);
+                    boolean isCompatible = mMm.isDeviceCompatible(obj);
                     String label = obj.optString("name", "Unknown");
                     if (obj.optBoolean("recommended", false)) label += " (Recommended)";
+                    if (!isCompatible) label += " [INCOMPATIBLE]";
                     names.add(label);
                 }
 
@@ -661,9 +687,29 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                             JSONObject obj = arr.optJSONObject(pos);
                             ((TextView)v.findViewById(android.R.id.text1)).setText(names.get(pos));
                             ((TextView)v.findViewById(android.R.id.text2)).setText(obj.optString("description", "No description available."));
+
+                            boolean isCompatible = mMm.isDeviceCompatible(obj);
+                            if (!isCompatible) {
+                                ((TextView)v.findViewById(android.R.id.text1)).setTextColor(0xFFFF0000);
+                            } else {
+                                // Reset to default color if compatible
+                                ((TextView)v.findViewById(android.R.id.text1)).setTextColor(ViewCompat.MEASURED_STATE_MASK); // or use a theme color
+                            }
                             return v;
                         }
-                    }, (dialog, which) -> downloadModel(arr.optJSONObject(which)))
+                    }, (dialog, which) -> {
+                        JSONObject selected = arr.optJSONObject(which);
+                        if (!mMm.isDeviceCompatible(selected)) {
+                            new AlertDialog.Builder(getContext())
+                                .setTitle("Compatibility Warning")
+                                .setMessage("This model is marked as incompatible with your device's CPU and will likely crash if used. Download anyway?")
+                                .setPositiveButton("Download", (d, w) -> downloadModel(selected))
+                                .setNegativeButton("Cancel", null)
+                                .show();
+                        } else {
+                            downloadModel(selected);
+                        }
+                    })
                     .setNegativeButton("Cancel", null)
                     .show();
             });
@@ -709,7 +755,14 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             TextView details = (TextView) holder.findViewById(R.id.model_details);
             ImageButton delete = (ImageButton) holder.findViewById(R.id.delete_button);
 
-            title.setText(mLabel + ": " + mModel.optString("name", "Unknown"));
+            boolean isCompatible = mMm.isDeviceCompatible(mModel);
+            String titleText = mLabel + ": " + mModel.optString("name", "Unknown");
+            if (!isCompatible) {
+                titleText += " [INCOMPATIBLE]";
+                title.setTextColor(0xFFFF0000);
+            }
+            title.setText(titleText);
+
             details.setText("Version: " + mModel.optString("version", "?") + " | Size: " + mModel.optString("size", "?"));
             
             delete.setOnClickListener(v -> {
