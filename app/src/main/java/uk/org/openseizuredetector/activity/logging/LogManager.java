@@ -1352,7 +1352,7 @@ public class LogManager {
                 }
                 if (eventObj == null) {
                     Log.e(TAG, "createEventCallback() - eventObj is null - failed to create event (network error?)");
-                    showToastSafe(mContext.getString(R.string.error_creating_remote_event_msg));
+                    //showToastSafe(mContext.getString(R.string.error_creating_remote_event_msg));
                     Log.i(TAG, "createEventCallback() - Resetting upload flag to allow retry on next network connection");
                     finishUpload();
                 } else {
