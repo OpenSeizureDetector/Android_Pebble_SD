@@ -20,6 +20,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import uk.org.openseizuredetector.alg.MlModelManager;
+import uk.org.openseizuredetector.utils.OsdUtil;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,6 +50,7 @@ public class OnboardingAlgorithmsFragment extends Fragment {
 
     private SharedPreferences mPrefs;
     private MaterialButton mNextButton;
+    private OsdUtil mOsdUtil;
 
     // Track which algorithms need configuration
     private boolean[] mSelectedAlgorithms = new boolean[4]; // ML, HR, OSD, Flap
@@ -65,6 +67,7 @@ public class OnboardingAlgorithmsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_onboarding_algorithms, container, false);
 
         mPrefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        mOsdUtil = new OsdUtil(requireContext(), new android.os.Handler(android.os.Looper.getMainLooper()));
 
         // Get checkbox references (reordered: ML, HR, OSD, Flap)
         mCheckMlAlg = view.findViewById(R.id.check_ml_alg);
@@ -204,6 +207,11 @@ public class OnboardingAlgorithmsFragment extends Fragment {
     private void showMlAlgorithmConfiguration() {
         Log.i(TAG, "Configuring ML Algorithm");
 
+        if (!mOsdUtil.isNetworkConnected()) {
+            handleMlNetworkError("No network connectivity. Please connect to the internet to download the ML model index.");
+            return;
+        }
+
         // Show progress while fetching model index
         MaterialAlertDialogBuilder progressBuilder = new MaterialAlertDialogBuilder(requireContext())
             .setTitle("ML Algorithm Configuration")
@@ -220,7 +228,7 @@ public class OnboardingAlgorithmsFragment extends Fragment {
                 progressDialog.dismiss();
 
                 if (modelArray == null) {
-                    showMlIncompatibilityDialog("Failed to connect to the model server. Please check your internet connection.");
+                    handleMlNetworkError("Failed to connect to the model server. Please check your internet connection.");
                     return;
                 }
 
@@ -257,6 +265,40 @@ public class OnboardingAlgorithmsFragment extends Fragment {
                 }
             });
         });
+    }
+
+    private void handleMlNetworkError(String message) {
+        MlModelManager mm = new MlModelManager(requireContext());
+        JSONArray installedModels = mm.getInstalledModels();
+
+        if (installedModels.length() == 0) {
+            // No models installed, must disable ML algorithm
+            mPrefs.edit().putBoolean("CnnAlarmActive", false).apply();
+            if (mCheckMlAlg != null) mCheckMlAlg.setChecked(false);
+
+            new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("ML Algorithm Disabled")
+                .setMessage(message + "\n\nAs no models are currently installed, the ML algorithm has been disabled. You can enable it and download models later in the Settings menu.")
+                .setPositiveButton("OK", (d, w) -> {
+                    if (mNextButton != null) {
+                        mNextButton.performClick();
+                    }
+                })
+                .setCancelable(false)
+                .show();
+        } else {
+            // Models are already installed, allow proceeding with a warning
+            new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Connection Error")
+                .setMessage(message + "\n\nThe app will use your existing installed models.")
+                .setPositiveButton("OK", (d, w) -> {
+                    if (mNextButton != null) {
+                        mNextButton.performClick();
+                    }
+                })
+                .setCancelable(false)
+                .show();
+        }
     }
 
     private void showMlIncompatibilityDialog(String message) {
@@ -310,18 +352,7 @@ public class OnboardingAlgorithmsFragment extends Fragment {
                             .show();
                     } else {
                         Log.e(TAG, "Failed to download ML model: " + modelName);
-                        new MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("Download Failed")
-                            .setMessage("Failed to download " + modelName + ".\n\n" +
-                                       "The app will use the default model configuration.\n" +
-                                       "You can try downloading a different model in the Settings menu when the app starts.")
-                            .setPositiveButton("OK", (d, w) -> {
-                                if (mNextButton != null) {
-                                    mNextButton.performClick();
-                                }
-                            })
-                            .setCancelable(false)
-                            .show();
+                        handleMlNetworkError("Failed to download " + modelName + ".");
                     }
                 });
             }

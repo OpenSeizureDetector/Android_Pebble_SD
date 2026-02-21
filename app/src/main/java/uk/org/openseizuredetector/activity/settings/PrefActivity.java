@@ -617,12 +617,14 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
     public static class MlAlgPrefsFragment extends PreferenceFragmentCompat {
         private MlModelManager mMm;
+        private OsdUtil mOsdUtil;
         private ProgressDialog mProgressDialog;
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.sd_prefs_ml, rootKey);
             mMm = new MlModelManager(getContext());
+            mOsdUtil = new OsdUtil(getContext(), new Handler(Looper.getMainLooper()));
             
             Preference addPref = findPreference("add_ml_model");
             if (addPref != null) {
@@ -660,11 +662,24 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         }
 
         private void showAvailableModelsDialog() {
+            if (!mOsdUtil.isNetworkConnected()) {
+                new AlertDialog.Builder(getContext())
+                    .setTitle("No Connection")
+                    .setMessage("You must be connected to the internet to browse and download ML models.")
+                    .setPositiveButton("OK", null)
+                    .show();
+                return;
+            }
+
             mProgressDialog = ProgressDialog.show(getContext(), "Checking Server", "Fetching available models...", true);
             mMm.getMlModelIndex(arr -> {
                 if (mProgressDialog != null) mProgressDialog.dismiss();
                 if (arr == null) {
-                    Toast.makeText(getContext(), "Failed to fetch model list", Toast.LENGTH_SHORT).show();
+                    new AlertDialog.Builder(getContext())
+                        .setTitle("Connection Error")
+                        .setMessage("Failed to fetch the list of available models from the server. Please check your internet connection.")
+                        .setPositiveButton("OK", null)
+                        .show();
                     return;
                 }
                 
@@ -716,7 +731,8 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         }
 
         private void downloadModel(JSONObject modelInfo) {
-            mProgressDialog = ProgressDialog.show(getContext(), "Downloading", modelInfo.optString("name"), true);
+            String modelName = modelInfo.optString("name", "Model");
+            mProgressDialog = ProgressDialog.show(getContext(), "Downloading", modelName, true);
             mMm.downloadAndInstallModel(modelInfo, (success, file) -> {
                 if (mProgressDialog != null) mProgressDialog.dismiss();
                 getActivity().runOnUiThread(() -> {
@@ -724,7 +740,11 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                         refreshInstalledModelsList();
                         Toast.makeText(getContext(), "Model installed successfully", Toast.LENGTH_SHORT).show();
                     } else {
-                        Toast.makeText(getContext(), "Failed to download model", Toast.LENGTH_SHORT).show();
+                        new AlertDialog.Builder(getContext())
+                            .setTitle("Download Failed")
+                            .setMessage("Failed to download " + modelName + ". Please check your internet connection and try again.")
+                            .setPositiveButton("OK", null)
+                            .show();
                     }
                 });
             });

@@ -192,27 +192,42 @@ public class MlModelManager {
         String urlStr = mUrlBase + fname;
         Thread t = new Thread(() -> {
             File outFile = null;
-            try (java.io.InputStream in = new java.net.URL(urlStr).openStream()) {
-                File dir = new File(mContext.getFilesDir(), "models");
-                if (!dir.exists()) dir.mkdirs();
-                outFile = new File(dir, fname);
-                try (java.io.FileOutputStream fos = new java.io.FileOutputStream(outFile)) {
-                    byte[] buf = new byte[8192];
-                    int len;
-                    while ((len = in.read(buf)) != -1) {
-                        if (cancelFlag.get()) {
-                            if (outFile.exists()) outFile.delete();
-                            callback.onComplete(false, null);
-                            return;
-                        }
-                        fos.write(buf, 0, len);
-                    }
+            java.net.HttpURLConnection conn = null;
+            try {
+                java.net.URL url = new java.net.URL(urlStr);
+                conn = (java.net.HttpURLConnection) url.openConnection();
+                conn.setConnectTimeout(15000); // 15 seconds
+                conn.setReadTimeout(30000);    // 30 seconds
+                
+                int responseCode = conn.getResponseCode();
+                if (responseCode != java.net.HttpURLConnection.HTTP_OK) {
+                    throw new IOException("Server returned HTTP " + responseCode);
                 }
-                callback.onComplete(true, outFile);
+
+                try (java.io.InputStream in = conn.getInputStream()) {
+                    File dir = new File(mContext.getFilesDir(), "models");
+                    if (!dir.exists()) dir.mkdirs();
+                    outFile = new File(dir, fname);
+                    try (java.io.FileOutputStream fos = new java.io.FileOutputStream(outFile)) {
+                        byte[] buf = new byte[8192];
+                        int len;
+                        while ((len = in.read(buf)) != -1) {
+                            if (cancelFlag.get()) {
+                                if (outFile.exists()) outFile.delete();
+                                callback.onComplete(false, null);
+                                return;
+                            }
+                            fos.write(buf, 0, len);
+                        }
+                    }
+                    callback.onComplete(true, outFile);
+                }
             } catch (Exception ex) {
+                Log.e(TAG, "Error downloading model: " + ex.getMessage());
                 if (outFile != null && outFile.exists()) outFile.delete();
                 callback.onComplete(false, null);
             } finally {
+                if (conn != null) conn.disconnect();
                 unregisterThread(Thread.currentThread());
             }
         });
