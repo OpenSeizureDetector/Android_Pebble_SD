@@ -42,11 +42,13 @@ public class SdAlgMl extends SdAlgBase {
         CircBuf inputBuffer;
 
         public void close() {
+            Log.i(TAG,"ModelInstance.close() - closing model");
             if (tfliteInterpreter != null) {
                 tfliteInterpreter.close();
                 tfliteInterpreter = null;
             }
             if (pytorchModule != null) {
+                Log.i(TAG,"ModelInstance.close() - destroying PyTorch module");
                 try {
                     pytorchModule.destroy();
                 } catch (Exception e) {
