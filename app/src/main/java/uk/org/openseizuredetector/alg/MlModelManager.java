@@ -3,6 +3,7 @@ package uk.org.openseizuredetector.alg;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.preference.PreferenceManager;
@@ -304,6 +305,15 @@ public class MlModelManager {
      * Checks if the device is compatible with the model based on its requirements.
      */
     public boolean isDeviceCompatible(JSONObject modelInfo) {
+        // Framework specific checks
+        String framework = modelInfo.optString("framework", "tflite");
+        if ("pytorch".equalsIgnoreCase(framework)) {
+            if (!is64Bit()) {
+                Log.w(TAG, "Device is incompatible with model: PyTorch requires 64-bit mode.");
+                return false;
+            }
+        }
+
         JSONArray requiredFeatures = modelInfo.optJSONArray("min_cpu_features");
         if (requiredFeatures == null || requiredFeatures.length() == 0) {
             return true; // Assume compatible if no specific features are required
@@ -317,6 +327,22 @@ public class MlModelManager {
             }
         }
         return true;
+    }
+
+    /**
+     * Detects if the device is running in 64-bit mode.
+     */
+    public boolean is64Bit() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            return android.os.Process.is64Bit();
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            // Check supported ABIs for any 64-bit architecture
+            for (String abi : Build.SUPPORTED_64_BIT_ABIS) {
+                if (abi != null && !abi.isEmpty()) return true;
+            }
+        }
+        return false;
     }
 
     private Set<String> mDetectedCpuFeatures = null;
