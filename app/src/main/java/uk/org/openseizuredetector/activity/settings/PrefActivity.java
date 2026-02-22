@@ -38,6 +38,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.preference.EditTextPreference;
+import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
@@ -57,6 +59,7 @@ import android.view.ViewGroup;
 
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.preference.PreferenceScreen;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -457,6 +460,70 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.data_source_prefs, rootKey);
             updateBleButtonVisibility();
+
+            // Ensure the DataSource preference shows the current selection as its summary
+            try {
+                ListPreference dsPref = findPreference("DataSource");
+                if (dsPref != null) {
+                    dsPref.setSummaryProvider(preference -> {
+                        CharSequence entry = dsPref.getEntry();
+                        if (entry != null) return entry;
+                        // fallback to stored value
+                        return PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataSource", "Phone");
+                    });
+                }
+            } catch (Exception ignored) {}
+
+            // Add network datasource settings under a dedicated category within Data Source
+            PreferenceCategory netCategory = new PreferenceCategory(getPreferenceManager().getContext());
+            netCategory.setTitle(R.string.network_datasource_title);
+            getPreferenceScreen().addPreference(netCategory);
+
+            // Inflate network datasource preferences into a temporary PreferenceScreen
+            PreferenceScreen temp = getPreferenceManager().createPreferenceScreen(getContext());
+            getPreferenceManager().inflateFromResource(getContext(), R.xml.network_datasource_prefs, temp);
+
+            // Move each preference from the temporary screen into the category, removing parent first
+            while (temp.getPreferenceCount() > 0) {
+                Preference p = temp.getPreference(0);
+                temp.removePreference(p);
+                netCategory.addPreference(p);
+            }
+
+            // Ensure EditTextPreference summaries show the current value immediately and update automatically
+            try {
+                EditTextPreference serverIpPref = findPreference("ServerIP");
+                if (serverIpPref != null) {
+                    serverIpPref.setSummaryProvider(preference -> {
+                        String val = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("ServerIP", "192.168.1.175");
+                        return val;
+                    });
+                }
+
+                EditTextPreference updatePeriodPref = findPreference("DataUpdatePeriod");
+                if (updatePeriodPref != null) {
+                    updatePeriodPref.setSummaryProvider(preference -> {
+                        String val = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataUpdatePeriod", "2000");
+                        return val + " ms";
+                    });
+                }
+
+                EditTextPreference connectTimeoutPref = findPreference("ConnectTimeoutPeriod");
+                if (connectTimeoutPref != null) {
+                    connectTimeoutPref.setSummaryProvider(preference -> {
+                        String val = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("ConnectTimeoutPeriod", "5000");
+                        return val + " ms";
+                    });
+                }
+
+                EditTextPreference readTimeoutPref = findPreference("ReadTimeoutPeriod");
+                if (readTimeoutPref != null) {
+                    readTimeoutPref.setSummaryProvider(preference -> {
+                        String val = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("ReadTimeoutPeriod", "5000");
+                        return val + " ms";
+                    });
+                }
+            } catch (Exception ignored) {}
         }
 
         @Override

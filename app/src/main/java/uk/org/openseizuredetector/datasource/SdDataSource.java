@@ -86,6 +86,11 @@ public abstract class SdDataSource {
     private double mFidgetThreshold;
     private long mLastFidgetTimeMillis = 0;
 
+    // Lifecycle running flag - subclasses and callbacks should check this to avoid doing work after stop()
+    protected volatile boolean mRunning = false;
+
+    public boolean isRunning() { return mRunning; }
+    protected void setRunning(boolean running) { mRunning = running; }
 
     public SdDataSource(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
         Log.v(TAG, "SdDataSource() Constructor");
@@ -104,6 +109,7 @@ public abstract class SdDataSource {
         Log.v(TAG, "start()");
         mUtil.writeToSysLogFile("SdDataSource.start()");
         updatePrefs();
+        setRunning(true);
 
         // Start timer to check status of watch regularly.
         mDataStatusTimeMillis = Calendar.getInstance().getTimeInMillis();
@@ -163,6 +169,8 @@ public abstract class SdDataSource {
                 mFaultCheckTimer.purge();
                 mFaultCheckTimer = null;
             }
+            // Mark as stopped so background callbacks know not to process further
+            setRunning(false);
         } catch (Exception e) {
             Log.v(TAG, "Error in stop() - " + e.toString());
         }
@@ -415,7 +423,10 @@ public abstract class SdDataSource {
     public class SdDataBroadcastReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            updateFromJSON(intent.getStringExtra("data"));
+            // Default no-op receiver. Concrete datasources may register receivers and
+            // override behaviour if needed. Keeping this to avoid parsing errors
+            // and to provide a safe default.
+            Log.v(TAG, "SdDataBroadcastReceiver.onReceive() - received: " + intent);
         }
     }
 }

@@ -31,6 +31,7 @@ import android.util.Log;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -174,65 +175,101 @@ public class SdData implements Parcelable {
 
     /*
      * Intialise this SdData object from a JSON String
-     *
+     * Strict: throw JSONException on missing/invalid fields.
      */
-    public boolean fromJSON(String jsonStr) {
+    public void fromJSON(String jsonStr) throws JSONException {
         Log.v(TAG, "fromJSON() - parsing jsonString - " + jsonStr);
-        try {
-            JSONObject jo = new JSONObject(jsonStr);
-            Log.v(TAG, "fromJSON(): jo = " + jo.toString());
-            Log.v(TAG, "fromJSON(): dataTimeStr=" + jo.optString("dataTimeStr"));
-            //Calendar cal = Calendar.getInstance();
-            //SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddTHHmmss", Locale.UK);
-            //cal.setTime(sdf.parse(jo.optString("dataTimeStr")));
-            //dataTime = cal.getTime();
-            // FIXME - this doesn't work!!!
-            long tnow = System.currentTimeMillis();
-            if (dataTimeMillis != 0) {
-                timeDiff = (tnow - dataTimeMillis) / 1000f;
-            } else {
-                timeDiff = 0f;
-            }
-            dataTimeMillis = tnow;
-            Log.v(TAG, "fromJSON(): dataTimeMillis = " + dataTimeMillis);
-            maxVal = jo.optInt("maxVal");
-            maxFreq = jo.optInt("maxFreq");
-            specPower = jo.optInt("specPower");
-            roiPower = jo.optInt("roiPower");
-            batteryPc = jo.optInt("batteryPc");
-            watchConnected = jo.optBoolean("watchConnected");
-            watchAppRunning = jo.optBoolean("watchAppRunning");
-            alarmState = jo.optInt("alarmState");
-            alarmPhrase = jo.optString("alarmPhrase");
-            alarmThresh = jo.optInt("alarmThresh");
-            alarmRatioThresh = jo.optInt("alarmRatioThresh");
-            mHRAlarmActive = jo.optBoolean("hrAlarmActive");
-            mHRAlarmStanding = jo.optBoolean("hrAlarmStanding");
-            mHRThreshMin = jo.optDouble("hrThreshMin");
-            mHRThreshMax = jo.optDouble("hrThreshMax");
-            mHR = jo.optDouble("hr");
-            if (mHR >= 0.0) {
-                mHRAlarmActive = true;
-            }
-            JSONArray specArr = jo.optJSONArray("simpleSpec");
-            for (int i = 0; i < specArr.length(); i++) {
-                simpleSpec[i] = specArr.optInt(i);
-            }
+        JSONObject jo = new JSONObject(jsonStr);
 
-            try {
-                mO2Sat = jo.optDouble("o2Sat");
-            } catch (Exception e) {
-                Log.w(TAG, "Error parsing o2Sat value");
-                mO2Sat = -1;
-            }
-            haveData = true;
-            Log.v(TAG, "fromJSON(): sdData = " + this.toString());
-            return true;
-        } catch (Exception e) {
-            Log.v(TAG, "fromJSON() - error parsing result" + e.toString());
-            haveData = false;
-            return false;
+        // Required fields - use get* so JSONException thrown if missing or wrong type
+        dataTimeMillis = System.currentTimeMillis();
+
+        maxVal = jo.getInt("maxVal");
+        maxFreq = jo.getInt("maxFreq");
+        specPower = jo.getInt("specPower");
+        roiPower = jo.getInt("roiPower");
+        batteryPc = jo.getLong("batteryPc");
+        phoneBatteryPc = jo.getInt("phoneBatteryPc");
+        watchConnected = jo.getBoolean("watchConnected");
+        watchAppRunning = jo.getBoolean("watchAppRunning");
+        haveSettings = jo.getBoolean("haveSettings");
+
+        alarmState = jo.getLong("alarmState");
+        alarmPhrase = jo.getString("alarmPhrase");
+        alarmCause = jo.getString("alarmCause");
+
+        mSdMode = jo.getLong("sdMode");
+        mSampleFreq = jo.getLong("sampleFreq");
+        analysisPeriod = jo.getLong("analysisPeriod");
+        alarmFreqMin = jo.getLong("alarmFreqMin");
+        alarmFreqMax = jo.getLong("alarmFreqMax");
+        alarmThresh = jo.getLong("alarmThresh");
+        alarmRatioThresh = jo.getLong("alarmRatioThresh");
+
+        mHRAlarmActive = jo.getBoolean("hrAlarmActive");
+        mHRAlarmStanding = jo.getBoolean("hrAlarmStanding");
+        mHRThreshMin = jo.getDouble("hrThreshMin");
+        mHRThreshMax = jo.getDouble("hrThreshMax");
+        mHR = jo.getDouble("hr");
+        mAdaptiveHrAverage = jo.getDouble("adaptiveHrAv");
+        mAverageHrAverage = jo.getDouble("averageHrAv");
+
+        mO2SatAlarmActive = jo.getBoolean("o2SatAlarmActive");
+        mO2SatAlarmStanding = jo.getBoolean("o2SatAlarmStanding");
+        mO2SatThreshMin = jo.getDouble("o2SatThreshMin");
+        mO2Sat = jo.getDouble("o2Sat");
+
+        mCnnAlarmActive = jo.getBoolean("cnnAlarmActive");
+        mPseizure = jo.getDouble("pSeizure");
+
+        // Algorithm flags
+        mOsdAlarmActive = jo.getBoolean("OsdAlarmActive");
+        mFlapAlarmActive = jo.getBoolean("FlapAlarmActive");
+        mCnnAlarmActive = jo.getBoolean("CnnAlarmActive");
+
+        // per-algorithm states
+        osdAlgState = jo.getInt("osdAlgState");
+        flapAlgState = jo.getInt("flapAlgState");
+        fallAlgState = jo.getInt("fallAlgState");
+        hrAlgState = jo.getInt("hrAlgState");
+        cnnAlgState = jo.getInt("cnnAlgState");
+
+        // ML arrays: mlNumModels and arrays must be present and consistent
+        mlNumModels = jo.getInt("mlNumModels");
+        if (mlNumModels < 0 || mlNumModels > mlModelNames.length) {
+            throw new JSONException("Invalid mlNumModels: " + mlNumModels);
         }
+        JSONArray namesArr = jo.getJSONArray("mlModelNames");
+        JSONArray probsArr = jo.getJSONArray("mlModelProbs");
+        JSONArray statesArr = jo.getJSONArray("mlModelStates");
+        JSONArray activeArr = jo.getJSONArray("mlModelActive");
+        if (namesArr.length() < mlNumModels || probsArr.length() < mlNumModels || statesArr.length() < mlNumModels || activeArr.length() < mlNumModels) {
+            throw new JSONException("ML arrays shorter than mlNumModels");
+        }
+        for (int i = 0; i < mlNumModels; i++) {
+            mlModelNames[i] = namesArr.getString(i);
+            mlModelProbs[i] = probsArr.getDouble(i);
+            mlModelStates[i] = statesArr.getInt(i);
+            mlModelActive[i] = activeArr.getBoolean(i);
+        }
+
+        // simpleSpec
+        JSONArray specArr = jo.getJSONArray("simpleSpec");
+        for (int i = 0; i < specArr.length() && i < simpleSpec.length; i++) {
+            simpleSpec[i] = specArr.getInt(i);
+        }
+
+        // rawData and rawData3D if present (optional)
+        if (jo.has("rawData")) {
+            JSONArray rawArr = jo.getJSONArray("rawData");
+            for (int i = 0; i < rawArr.length() && i < rawData.length; i++) rawData[i] = rawArr.getDouble(i);
+        }
+        if (jo.has("rawData3D")) {
+            JSONArray raw3DArr = jo.getJSONArray("rawData3D");
+            for (int i = 0; i < raw3DArr.length() && i < rawData3D.length; i++) rawData3D[i] = raw3DArr.getDouble(i);
+        }
+
+        haveData = true;
     }
 
     @Override
@@ -264,7 +301,8 @@ public class SdData implements Parcelable {
             jsonObj.put("maxFreq", maxFreq);
             jsonObj.put("specPower", specPower);
             jsonObj.put("roiPower", roiPower);
-            jsonObj.put("roiRatio", 10 * roiPower / specPower);
+            if (specPower != 0) jsonObj.put("roiRatio", 10 * roiPower / specPower);
+            else jsonObj.put("roiRatio", 0);
             jsonObj.put("alarmState", alarmState);
             jsonObj.put("alarmPhrase", alarmPhrase);
             jsonObj.put("alarmCause", alarmCause);
@@ -366,6 +404,11 @@ public class SdData implements Parcelable {
         return (retval);
     }
 
+    private double safeDouble(double v) {
+        if (Double.isNaN(v) || Double.isInfinite(v)) return 0.0;
+        return v;
+    }
+
     public String toDataString(boolean includeRawData) {
         String retval;
         retval = "SdData.toDataString() Output";
@@ -406,37 +449,51 @@ public class SdData implements Parcelable {
             jsonObj.put("adaptiveHrAlarmStanding", mAdaptiveHrAlarmStanding);
             jsonObj.put("averageHrAlarmStanding", mAverageHrAlarmStanding);
             jsonObj.put("hrAlarmStanding", mHRAlarmStanding);
-            jsonObj.put("hrThreshMin", mHRThreshMin);
-            jsonObj.put("hrThreshMax", mHRThreshMax);
-            jsonObj.put("hr", mHR);
-            jsonObj.put("adaptiveHrAv", mAdaptiveHrAverage);
-            jsonObj.put("averageHrAv", mAverageHrAverage);
+            jsonObj.put("hrThreshMin", safeDouble(mHRThreshMin));
+            jsonObj.put("hrThreshMax", safeDouble(mHRThreshMax));
+            jsonObj.put("hr", safeDouble(mHR));
+            jsonObj.put("adaptiveHrAv", safeDouble(mAdaptiveHrAverage));
+            jsonObj.put("averageHrAv", safeDouble(mAverageHrAverage));
             jsonObj.put("o2SatAlarmActive", mO2SatAlarmActive);
             jsonObj.put("o2SatAlarmStanding", mO2SatAlarmStanding);
-            jsonObj.put("o2SatThreshMin", mO2SatThreshMin);
-            jsonObj.put("o2Sat", mO2Sat);
+            jsonObj.put("o2SatThreshMin", safeDouble(mO2SatThreshMin));
+            jsonObj.put("o2Sat", safeDouble(mO2Sat));
             jsonObj.put("cnnAlarmActive", mCnnAlarmActive);
-            jsonObj.put("pSeizure", mPseizure);
+            jsonObj.put("pSeizure", safeDouble(mPseizure));
 
-            JSONArray arr = new JSONArray();
-            for (int i = 0; i < simpleSpec.length; i++) {
-                arr.put(simpleSpec[i]);
+            // simpleSpec (spectral summary)
+            JSONArray specArr = new JSONArray();
+            for (int i = 0; i < simpleSpec.length; i++) specArr.put(simpleSpec[i]);
+            jsonObj.put("simpleSpec", specArr);
+
+             // Algorithm flags
+             jsonObj.put("OsdAlarmActive", mOsdAlarmActive);
+             jsonObj.put("FlapAlarmActive", mFlapAlarmActive);
+             jsonObj.put("CnnAlarmActive", mCnnAlarmActive);
+
+            // per-algorithm states
+            jsonObj.put("osdAlgState", osdAlgState);
+            jsonObj.put("flapAlgState", flapAlgState);
+            jsonObj.put("fallAlgState", fallAlgState);
+            jsonObj.put("hrAlgState", hrAlgState);
+            jsonObj.put("cnnAlgState", cnnAlgState);
+
+            // ML arrays
+            jsonObj.put("mlNumModels", mlNumModels);
+            JSONArray names = new JSONArray();
+            JSONArray probs = new JSONArray();
+            JSONArray states = new JSONArray();
+            JSONArray active = new JSONArray();
+            for (int i = 0; i < mlNumModels; i++) {
+                names.put(i, mlModelNames != null && i < mlModelNames.length ? mlModelNames[i] : "");
+                probs.put(i, safeDouble(mlModelProbs != null && i < mlModelProbs.length ? mlModelProbs[i] : 0.0));
+                states.put(i, mlModelStates != null && i < mlModelStates.length ? mlModelStates[i] : 0);
+                active.put(i, mlModelActive != null && i < mlModelActive.length ? mlModelActive[i] : false);
             }
-            jsonObj.put("simpleSpec", arr);
-            if (includeRawData) {
-                JSONArray rawArr = new JSONArray();
-                for (int i = 0; i < rawData.length; i++) {
-                    rawArr.put(rawData[i]);
-                }
-                jsonObj.put("rawData", rawArr);
-
-                JSONArray raw3DArr = new JSONArray();
-                for (int i = 0; i < rawData3D.length; i++) {
-                    raw3DArr.put(rawData3D[i]);
-                }
-                jsonObj.put("rawData3D", raw3DArr);
-
-            }
+            jsonObj.put("mlModelNames", names);
+            jsonObj.put("mlModelProbs", probs);
+            jsonObj.put("mlModelStates", states);
+            jsonObj.put("mlModelActive", active);
 
             retval = jsonObj.toString();
         } catch (Exception ex) {

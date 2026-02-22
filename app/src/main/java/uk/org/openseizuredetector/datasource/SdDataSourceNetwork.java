@@ -6,8 +6,12 @@ import uk.org.openseizuredetector.utils.BackgroundTaskExecutor;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
-import androidx.preference.PreferenceManager;
+import android.os.Looper;
 import android.util.Log;
+
+import androidx.preference.PreferenceManager;
+
+import org.json.JSONException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,13 +27,15 @@ import java.util.TimerTask;
  * Created by graham on 22/11/15.
  */
 public class SdDataSourceNetwork extends SdDataSource {
-    private String TAG = "SdDataSourceNetwork";
+    private final static String TAG = "SdDataSourceNetwork";
     private Timer mDataUpdateTimer;
     private int mDataUpdatePeriod = 2000;
     private int mConnnectTimeoutPeriod = 5000;
     private int mReadTimeoutPeriod = 5000;
     private String mServerIP = "unknown";
 
+    // Test hook: if set, use this base URL (including protocol and trailing slash if desired)
+    private String mServerBaseUrl = null;
 
     public SdDataSourceNetwork(Context context, Handler handler, SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
@@ -42,6 +48,8 @@ public class SdDataSourceNetwork extends SdDataSource {
         Log.v(TAG, "start(): calling updatePrefs()");
         mUtil.writeToSysLogFile("SdDataSourceNetwork().start()");
         updatePrefs();
+        // Mark as running so background callbacks know it's active
+        setRunning(true);
 
         // Start timer to retrieve seizure detector data regularly.
         if (mDataUpdateTimer == null) {
@@ -70,6 +78,8 @@ public class SdDataSourceNetwork extends SdDataSource {
             mDataUpdateTimer.purge();
             mDataUpdateTimer = null;
         }
+        // Mark as stopped so background tasks won't post results
+        setRunning(false);
 
     }
 
@@ -103,7 +113,7 @@ public class SdDataSourceNetwork extends SdDataSource {
     }
 
     /**
-     * Retrive the current Seizure Detector Data from the server.
+     * Retrieve the current Seizure Detector Data from the server.
      * Uses BackgroundTaskExecutor to download the data in the background.
      */
     public void downloadSdData() {
@@ -114,25 +124,34 @@ public class SdDataSourceNetwork extends SdDataSource {
                 // Background work
                 SdData sdData = new SdData();
                 try {
-                    String url = "http://" + mServerIP + ":8080/data";
+                    String url = makeDataUrl();
                     String result = downloadUrl(url);
                     if (result.startsWith("Unable to retrieve web page")) {
-                        Log.v(TAG, "doInBackground() - Unable to retrieve data");
+                        Log.e(TAG, "downloadSdData() - Unable to retrieve data");
                         sdData.serverOK = false;
                         sdData.watchConnected = false;
                         sdData.watchAppRunning = false;
                         sdData.alarmState = AlarmState.NETFAULT;
                         sdData.alarmPhrase = "Warning - No Connection to Server";
-                        Log.v(TAG, "No Connection to Server - sdData = " + sdData.toString());
+                        Log.e(TAG, "downloadSdData() - No Connection to Server - sdData = " + sdData.toString());
                     } else {
                         Log.v(TAG, "result = " + result);
-                        sdData.fromJSON(result);
-                        // Populate mSdData using the received data.
-                        sdData.serverOK = true;
-                        if (sdData.batteryPc > 0) {
-                            sdData.haveSettings = true;
+                        try {
+                            sdData.fromJSON(result);
+                            // Populate mSdData using the received data.
+                            sdData.serverOK = true;
+                            if (sdData.batteryPc > 0) {
+                                sdData.haveSettings = true;
+                            }
+                            Log.v(TAG, "sdData = " + sdData.toString());
+                        } catch (JSONException je) {
+                            Log.e(TAG, "downloadSdData() - JSON parsing error in downloadSdData: " + je.toString());
+                            sdData.serverOK = false;
+                            sdData.watchConnected = false;
+                            sdData.watchAppRunning = false;
+                            sdData.alarmState = AlarmState.NETFAULT;
+                            sdData.alarmPhrase = "Warning - Invalid data from server";
                         }
-                        Log.v(TAG, "sdData = " + sdData.toString());
                     }
                     return sdData;
                 } catch (IOException e) {
@@ -141,7 +160,7 @@ public class SdDataSourceNetwork extends SdDataSource {
                     sdData.watchAppRunning = false;
                     sdData.alarmState = AlarmState.NETFAULT;
                     sdData.alarmPhrase = "Warning - No Connection to Server";
-                    Log.v(TAG, "IOException - " + e.toString());
+                    Log.e(TAG, "downloadSdData() - IOException - " + e.toString());
                     return sdData;
                 }
             },
@@ -149,22 +168,63 @@ public class SdDataSourceNetwork extends SdDataSource {
                 @Override
                 public void onSuccess(SdData sdData) {
                     Log.v(TAG, "onSuccess() - sdData = " + sdData.toString());
-                    mSdDataReceiver.onSdDataReceived(sdData);
+                    // We seem to call onSuccess even if we have errors downloading etc. because the network call does return,
+                    // so we check for fault here to decide which callback to call.
+                    if (!isRunning()) {
+                        Log.i(TAG, "onSuccess() - datasource stopped, ignoring result");
+                        return;
+                    }
+                    if (sdData.alarmState != AlarmState.NETFAULT) {
+                        mSdDataReceiver.onSdDataReceived(sdData);
+                    } else {
+                        Log.e(TAG, "onSuccess() - sdData.alarmState = " + sdData.alarmState + " initiating fault.");
+                        mSdDataReceiver.onSdDataFault(sdData);
+                    }
                 }
 
                 @Override
                 public void onError(Exception e) {
-                    Log.e(TAG, "Error downloading data", e);
+                    Log.e(TAG, "onError() - Error downloading data", e);
+                    if (!isRunning()) {
+                        Log.i(TAG, "onError() - datasource stopped, ignoring error");
+                        return;
+                    }
                     SdData errorData = new SdData();
                     errorData.serverOK = false;
                     errorData.watchConnected = false;
                     errorData.watchAppRunning = false;
                     errorData.alarmState = AlarmState.NETFAULT;
                     errorData.alarmPhrase = "Warning - Error downloading data";
-                    mSdDataReceiver.onSdDataReceived(errorData);
+                    //mSdDataReceiver.onSdDataReceived(errorData);
+                    mSdDataReceiver.onSdDataFault(errorData);
                 }
             }
         );
+    }
+
+    /**
+     * Synchronous version of downloadSdData() for use in unit tests.
+     * Performs the same network call and parsing but returns SdData directly.
+     */
+    public SdData downloadSdDataSync() throws Exception {
+        SdData sdData = new SdData();
+        String url = makeDataUrl();
+        String result = downloadUrl(url);
+        System.out.println("DEBUG: downloadSdDataSync() result='" + result + "'");
+        if (result.startsWith("Unable to retrieve web page")) {
+            sdData.serverOK = false;
+            sdData.watchConnected = false;
+            sdData.watchAppRunning = false;
+            sdData.alarmState = AlarmState.NETFAULT;
+            sdData.alarmPhrase = "Warning - No Connection to Server";
+            return sdData;
+        } else {
+            // Let fromJSON propagate JSONException if the data is malformed (strict mode)
+            sdData.fromJSON(result);
+            sdData.serverOK = true;
+            if (sdData.batteryPc > 0) sdData.haveSettings = true;
+            return sdData;
+        }
     }
 
     /**
@@ -176,7 +236,7 @@ public class SdDataSourceNetwork extends SdDataSource {
 
         BackgroundTaskExecutor.executeAndForget(() -> {
             try {
-                String url = "http://" + mServerIP + ":8080/acceptalarm";
+                String url = makeAcceptAlarmUrl();
                 String result = downloadUrl(url);
                 if (result.startsWith("Unable to retrieve web page")) {
                     Log.v(TAG, "Error accepting alarm");
@@ -234,5 +294,30 @@ public class SdDataSourceNetwork extends SdDataSource {
         return new String(buffer);
     }
 
+    // Setter for tests to override server URL (uses MockWebServer URL)
+    public void setServerBaseUrl(String baseUrl) {
+        if (baseUrl == null) {
+            this.mServerBaseUrl = null;
+        } else {
+            this.mServerBaseUrl = baseUrl;
+        }
+    }
+
+    private String makeDataUrl() {
+        if (mServerBaseUrl != null && mServerBaseUrl.length() > 0) {
+            // Ensure ends with /data or append
+            if (mServerBaseUrl.endsWith("/")) return mServerBaseUrl + "data";
+            else return mServerBaseUrl + "/data";
+        }
+        return "http://" + mServerIP + ":8080/data";
+    }
+
+    private String makeAcceptAlarmUrl() {
+        if (mServerBaseUrl != null && mServerBaseUrl.length() > 0) {
+            if (mServerBaseUrl.endsWith("/")) return mServerBaseUrl + "acceptalarm";
+            else return mServerBaseUrl + "/acceptalarm";
+        }
+        return "http://" + mServerIP + ":8080/acceptalarm";
+    }
 
 }

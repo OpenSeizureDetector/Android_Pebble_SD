@@ -813,15 +813,19 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Process data through SeizureDetector to run all seizure detection algorithm.
         if (mSeizureDetector != null) {
-            if (sdData.alarmState == AlarmState.MANUAL) {
-                Log.i(TAG, "onSdDataReceived() called with AlarmState == MANUAL - not processing data, just going straight to alarm");
+            if (mSdDataSourceName.equals("Network")) {
+                Log.i(TAG, "onSdDataReceived() called with mSdDataSourceName == Network - not processing data, just going straight to alarm");
             } else {
-                int alarmState = mSeizureDetector.processData(sdData);
-                sdData.alarmState = alarmState;
-                Log.v(TAG, "onSdDataReceived() - SeizureDetector returned alarmState=" + alarmState);
-                mUtil.writeToSysLogFile("SeizureDetector: alarmState=" + alarmState);
+                if (sdData.alarmState == AlarmState.MANUAL) {
+                    Log.i(TAG, "onSdDataReceived() called with AlarmState == MANUAL - not processing data, just going straight to alarm");
+                } else {
+                    int alarmState = mSeizureDetector.processData(sdData);
+                    sdData.alarmState = alarmState;
+                    Log.v(TAG, "onSdDataReceived() - SeizureDetector returned alarmState=" + alarmState);
+                    mUtil.writeToSysLogFile("SeizureDetector: alarmState=" + alarmState);
+                }
             }
-        } else {
+        } else{
             if (mIsDestroying) {
                 Log.e(TAG, "onSdDataReceived() - received data after shutting down seizuredetector - ignoring");
             } else {
