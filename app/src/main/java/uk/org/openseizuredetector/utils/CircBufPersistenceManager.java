@@ -60,7 +60,7 @@ public class CircBufPersistenceManager {
             double[] values = circBuf.getVals();
             int numVals = circBuf.getNumVals();
 
-            Log.d(TAG, "serializeCircBuf: Serializing buffer with " + numVals + " values, capacity=" + circBuf.getBufferLength());
+            //Log.v(TAG, "serializeCircBuf: Serializing buffer with " + numVals + " values, capacity=" + circBuf.getBufferLength());
 
             JSONObject json = new JSONObject();
 
@@ -76,7 +76,7 @@ public class CircBufPersistenceManager {
             json.put("totalCapacity", circBuf.getBufferLength());
 
             String result = json.toString();
-            Log.d(TAG, "serializeCircBuf: Serialization complete, JSON length=" + result.length());
+            //Log.v(TAG, "serializeCircBuf: Serialization complete, JSON length=" + result.length());
             return result;
 
         } catch (JSONException e) {
@@ -111,7 +111,7 @@ public class CircBufPersistenceManager {
                 circBuf.add(valuesArray.getDouble(i));
             }
 
-            Log.d(TAG, "deserializeCircBuf: deserialized " + valuesArray.length() + " values into buffer of size " + bufferSize);
+            //Log.d(TAG, "deserializeCircBuf: deserialized " + valuesArray.length() + " values into buffer of size " + bufferSize);
             return circBuf;
 
         } catch (JSONException e) {

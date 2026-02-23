@@ -22,21 +22,13 @@
 
 */
 package uk.org.openseizuredetector.datasource;
-import uk.org.openseizuredetector.R;
 
-import uk.org.openseizuredetector.datasource.SdDataSource;
-import uk.org.openseizuredetector.datasource.SdDataSourcePhone;
 import android.content.Context;
-import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Binder;
 import android.os.Handler;
-import android.os.IBinder;
-import android.os.PowerManager;
-import androidx.preference.PreferenceManager;
 import android.util.Log;
 
 import static java.lang.Math.sqrt;
@@ -60,14 +52,10 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
     private boolean mUseNextSample = true;
 
 
-    private PowerManager.WakeLock mWakeLock;
-
-
     public SdDataSourcePhone(Context context, Handler handler,
                              SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
         mName = "Phone";
-        // REMOVED redundant setDefaultValues() - now centralized in PrefActivity.initialiseDefaultValues()
     }
 
 
@@ -80,6 +68,7 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
         mUtil.writeToSysLogFile("SdDataSourcePhone.start()");
         mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        // SENSOR_DELAY_GAME should give us 20 us delay, which is 50 Hz, so more frequent than we really want (OSD works at 25 Hz)
         mSensorManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_GAME);
         super.start();
     }
@@ -122,18 +111,21 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     mStartTs = event.timestamp;
                 }
             } else if (mMode == 1) {
-                // The phone gives us 50 Hz sample frequency so we do a crude factor of 2 downsampling.
+                // The phone gives us 50 Hz sample frequency so we do a crude factor of 2 downsampling to get 25 Hz.
                 if (mUseNextSample) {
                     mUseNextSample = false;
                     // mMode=1 is normal operation - collect NSAMP accelerometer data samples, then analyse them by calling doAnalysis().
                     float x = event.values[0];
                     float y = event.values[1];
                     float z = event.values[2];
-                    //Log.v(TAG,"Accelerometer Data Received: x="+x+", y="+y+", z="+z);
-                    mSdData.rawData[mSdData.mNsamp] = sqrt(x * x + y * y + z * z);
-                    mSdData.rawData3D[3 * mSdData.mNsamp] = x;
-                    mSdData.rawData3D[3 * mSdData.mNsamp + 1] = y;
-                    mSdData.rawData3D[3 * mSdData.mNsamp + 2] = z;
+                    
+                    // Convert m/s^2 to mg (milli-g)
+                    double scale = 1000.0 / 9.81;
+                    mSdData.rawData[mSdData.mNsamp] = scale * sqrt(x * x + y * y + z * z);
+                    mSdData.rawData3D[3 * mSdData.mNsamp] = scale * x;
+                    mSdData.rawData3D[3 * mSdData.mNsamp + 1] = scale * y;
+                    mSdData.rawData3D[3 * mSdData.mNsamp + 2] = scale * z;
+                    
                     mSdData.mNsamp++;
                     if (mSdData.mNsamp == mSdData.rawData.length) {
                         // Calculate the sample frequency for this sample, but do not change mSampleFreq, which is used for
@@ -143,16 +135,6 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                         double dT = 1e-9 * (event.timestamp - mStartTs);
                         int sampleFreq = (int) (mSdData.mNsamp / dT);
                         Log.v(TAG, "onSensorChanged(): Collected " + mSdData.mNsamp + " data points in " + dT + " sec (=" + sampleFreq + " Hz) - analysing...");
-                        // DownSample from the 50Hz received frequency to 25Hz and convert to mg.
-                        // FIXME - we should really do this properly rather than assume we are really receiving data at 50Hz.
-                        for (int i = 0; i < mSdData.mNsamp; i++) {
-                            mSdData.rawData[i / 2] = 1000. * mSdData.rawData[i] / 9.81;
-                            mSdData.rawData3D[i / 2] = 1000. * mSdData.rawData3D[i] / 9.81;
-                            mSdData.rawData3D[i / 2 + 1] = 1000. * mSdData.rawData3D[i + 1] / 9.81;
-                            mSdData.rawData3D[i / 2 + 2] = 1000. * mSdData.rawData3D[i + 2] / 9.81;
-                            //Log.v(TAG,"i="+i+", rawData="+mSdData.rawData[i]+","+mSdData.rawData[i/2]);
-                        }
-                        mSdData.mNsamp /= 2;
 
                         // Set HR and O2Sat values to fault value (-1) to avoid alarms if the user enables HR or O2Sat alarms.
                         mSdData.mHR = -1;
