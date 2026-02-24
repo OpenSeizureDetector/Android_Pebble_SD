@@ -121,14 +121,17 @@ mSamplePeriod = 5;   // hard-coded, never read from preferences or sdData
 With `mSamplePeriod = 10` (as reported by some watches) in master and the alarm
 thresholds of `WarnTime = 5` s, `AlarmTime = 10` s:
 
-| | Cycles to WARNING | Wall-clock time | Cycles to ALARM | Wall-clock time |
-|---|---|---|---|---|
-| **Master** (`period = 10 s`) | 1 | 10 s | 2 | 20 s |
-| **Beta** (`period = 5 s`, hard-coded) | 2 | 20 s* | 3 | 30 s* |
+Assuming the physical watch data arrives every 10 s (as reported by some watches):
 
-*Wall-clock times for beta assume the physical data still arrives every 10 s.
-Beta counts each packet as only 5 s, so it takes longer in both cycles and
-wall-clock time to escalate.
+| | Cycles to WARNING | Wall-clock time (data every 10 s) | Cycles to ALARM | Wall-clock time (data every 10 s) |
+|---|---|---|---|---|
+| **Master** (`period = 10 s` from watch) | 1 | 10 s | 2 | 20 s |
+| **Beta** (`period = 5 s`, hard-coded) | 2 | 20 s | 3 | 30 s |
+
+Because beta treats every data packet as representing only 5 s regardless of the
+actual watch interval, it under-counts elapsed alarm time when data arrives less
+frequently than every 5 s, causing it to take longer (in wall-clock time) to
+escalate to WARNING or ALARM.
 
 In this scenario the **master is more sensitive** (reaches ALARM faster) because
 it correctly accounts for the actual sample period from the watch, while the beta
@@ -155,9 +158,15 @@ String alarmTimeStr = mSP.getString("AlarmTime", "15");  // code default is 15, 
 ### Consequence
 
 If XML preferences have not been loaded, beta requires `mAlarmTime > 15` before
-reaching ALARM, while master uses `> 10`. With `SamplePeriod = 5` s, beta would
-need **4 consecutive 5-second alarm detections** (20 s) instead of the intended
-3 (15 s). This makes beta **less** sensitive in this edge case, not more.
+reaching ALARM, while master uses `> 10`. With `SamplePeriod = 5` s:
+
+- **Beta** (AlarmTime code default = 15): ALARM after `mAlarmTime > 15`, i.e.,
+  after mAlarmTime = 20 → **4 consecutive 5-second alarm detections (20 s total)**
+- **Master** (AlarmTime from XML = 10): ALARM after `mAlarmCount > 10`, i.e.,
+  after mAlarmCount = 15 → **3 consecutive 5-second alarm detections (15 s total)**
+
+This makes beta **less** sensitive in this edge case (needs 4 detections vs
+master's 3), not more.
 
 ### Proposed fix
 
