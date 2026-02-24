@@ -258,6 +258,7 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                 tv.setText(mConnection.mSdServer.mSdData.watchFwVersion);
                 tv.setTextColor(okTextColour);
                 tv = (TextView) mRootView.findViewById(R.id.watch_sdname_tv);
+
                 tv.setText(mConnection.mSdServer.mSdData.watchSdName);
                 tv.setTextColor(okTextColour);
                 tv = (TextView) mRootView.findViewById(R.id.watch_sdver_tv);
@@ -285,13 +286,29 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                 tv = (TextView) mRootView.findViewById(R.id.watch_signal_tv);
                 tv.setText(String.format("%.0f dB", mConnection.mSdServer.mSdData.watchSignalStrength));
                 tv.setTextColor(okTextColour);
-
-                updateBatteryGraph();
-                updateSignalGraph();
             }
         } catch (Exception e) {
             Log.e(TAG, "UpdateUi: Exception - " + e.getMessage());
         }
+    }
+
+    @Override
+    protected void updateUiFast() {
+        updateUi();
+    }
+
+    @Override
+    protected void updateUiOnNewData() {
+        // System tab uses throttled graph updates to reduce flicker.
+    }
+
+    @Override
+    protected void updateUiThrottled() {
+        if (!mConnection.mBound) {
+            return;
+        }
+        updateBatteryGraph();
+        updateSignalGraph();
     }
 
     private void updateBatteryGraph() {

@@ -125,6 +125,16 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         }
     }
 
+    @Override
+    protected void updateUiOnNewData() {
+        updateUi();
+    }
+
+    @Override
+    protected void updateUiFast() {
+        // HR graph updates are tied to new data to avoid flicker.
+    }
+
     private void displayHistoryChart(double[] historyData, int length) {
         try {
             if (mLineChart == null || historyData == null || length == 0) {

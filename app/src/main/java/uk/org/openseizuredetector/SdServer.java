@@ -838,6 +838,18 @@ public class SdServer extends Service implements SdDataReceiver {
         // Apply mute check (from either watch button or phone UI button)
         muteCheck(sdData);
 
+        boolean hasFault = (sdData.alarmState == AlarmState.FAULT
+                || sdData.alarmState == AlarmState.NETFAULT
+                || sdData.mHRFaultStanding
+                || sdData.mHrFrozenFaultStanding);
+        if (hasFault) {
+            // Force fault state to override any alarm/warning state handling.
+            sdData.alarmState = AlarmState.FAULT;
+            sdData.alarmPhrase = "FAULT";
+            sdData.alarmStanding = false;
+            sdData.fallAlarmStanding = false;
+        }
+
         if (sdData.alarmState == AlarmState.OK) {
             if ((!mLatchAlarms) ||
                     (mLatchAlarms &&
@@ -1045,7 +1057,7 @@ public class SdServer extends Service implements SdDataReceiver {
         }
 
         // Fault
-        if ((sdData.alarmState) == AlarmState.FAULT || (sdData.alarmState == AlarmState.NETFAULT) || (sdData.mHRFaultStanding) || (sdData.mHrFrozenFaultStanding)) {
+        if (hasFault) {
             sdData.alarmPhrase = "FAULT";
             sdData.alarmStanding = false;
             sdData.fallAlarmStanding = false;
@@ -1093,7 +1105,13 @@ public class SdServer extends Service implements SdDataReceiver {
         mSdData.alarmState = AlarmState.FAULT;  // set fault alarm state.
         mSdData.alarmPhrase = "FAULT";
         mSdData.alarmStanding = false;
+        mSdData.fallAlarmStanding = false;
+        stopLatchTimer();
+        if (mLm != null) {
+            mLm.updateSdData(mSdData);
+        }
         if (webServer != null) webServer.setSdData(mSdData);
+
         // We only take action to warn the user and re-start the data source to attempt to fix it
         // ourselves if we have been in a fault condition for a while - signified by the mFaultTimerCompleted
         // flag.

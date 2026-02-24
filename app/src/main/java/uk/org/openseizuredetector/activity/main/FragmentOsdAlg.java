@@ -210,4 +210,14 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             mChart.getLegendRenderer().setVisible(false);
         }
     }
+
+    @Override
+    protected void updateUiOnNewData() {
+        updateUi();
+    }
+
+    @Override
+    protected void updateUiFast() {
+        // OSD graph updates are tied to new data to avoid flicker.
+    }
 }

@@ -217,6 +217,16 @@ public class FragmentCommon extends FragmentOsdBaseClass {
 
     }
 
+    @Override
+    protected void updateUiFast() {
+        updateUi();
+    }
+
+    @Override
+    protected void updateUiOnNewData() {
+        // FragmentCommon uses only fast updates to avoid flicker.
+    }
+
     private void updateAlgorithmStatusDisplay() {
         ViewGroup algorithmsContainer = mRootView.findViewById(R.id.algorithms_status_container);
         if (algorithmsContainer == null || !mConnection.mBound) {

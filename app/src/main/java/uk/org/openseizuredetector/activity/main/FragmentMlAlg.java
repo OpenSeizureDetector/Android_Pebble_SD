@@ -66,6 +66,16 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         }
     }
 
+    @Override
+    protected void updateUiOnNewData() {
+        updateUi();
+    }
+
+    @Override
+    protected void updateUiFast() {
+        // ML graph updates are tied to new data to avoid flicker.
+    }
+
     private void updateIndividualModelDisplay(SdData sdData) {
         GridLayout grid = mRootView.findViewById(R.id.individual_models_grid);
         if (grid == null) return;

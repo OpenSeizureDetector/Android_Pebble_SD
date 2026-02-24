@@ -35,6 +35,12 @@ public class FragmentOsdBaseClass extends Fragment {
     protected View mRootView;
     private ScrollView mCachedScrollView;
     private long mLastDataTime = 0;
+    private long mLastAlarmState = Long.MIN_VALUE;
+    private boolean mLastAlarmStanding = false;
+    private boolean mLastFallAlarmStanding = false;
+    private long mLastThrottledUpdateMillis = 0;
+    private boolean mLastBoundState = false;
+    private static final long THROTTLED_UPDATE_MS = 30000;
 
     // Use transparent for OK state by default to allow theme background to show through
     protected int okColour = Color.TRANSPARENT;
@@ -145,36 +151,55 @@ public class FragmentOsdBaseClass extends Fragment {
             public void run() {
                 if (mContext != null && mRootView != null) {
                     try {
-                        // Check if new data has arrived by comparing dataTime
-                        long currentDataTime = 0;
-                        if (mConnection.mBound && mConnection.mSdServer != null &&
-                            mConnection.mSdServer.mSdData != null) {
-                            currentDataTime = mConnection.mSdServer.mSdData.dataTimeMillis;
-                        }
+                        boolean isBound = mConnection.mBound && mConnection.mSdServer != null
+                                && mConnection.mSdServer.mSdData != null;
 
-                        // Only update UI if data has changed (new data arrived)
-                        if (currentDataTime != mLastDataTime) {
+                        // Always do lightweight updates (time, alarm state, buttons).
+                        updateUiFast();
+
+                        if (isBound) {
+                            long currentDataTime = mConnection.mSdServer.mSdData.dataTimeMillis;
+                            long currentAlarmState = mConnection.mSdServer.mSdData.alarmState;
+                            boolean currentAlarmStanding = mConnection.mSdServer.mSdData.alarmStanding;
+                            boolean currentFallAlarmStanding = mConnection.mSdServer.mSdData.fallAlarmStanding;
+
+                            boolean hasNewData = (currentDataTime != mLastDataTime);
+                            boolean alarmChanged = (currentAlarmState != mLastAlarmState)
+                                    || (currentAlarmStanding != mLastAlarmStanding)
+                                    || (currentFallAlarmStanding != mLastFallAlarmStanding);
+
+                            if (hasNewData || alarmChanged || !mLastBoundState) {
+                                // Use cached ScrollView to avoid repeated searches
+                                if (mCachedScrollView == null) {
+                                    mCachedScrollView = findScrollView(mRootView);
+                                }
+
+                                // Save scroll position before UI update
+                                final int scrollY = mCachedScrollView != null ? mCachedScrollView.getScrollY() : 0;
+
+                                updateUiOnNewData();
+
+                                // Always restore scroll position after UI update to prevent reset
+                                if (mCachedScrollView != null && scrollY > 0) {
+                                    mCachedScrollView.post(() -> mCachedScrollView.scrollTo(0, scrollY));
+                                }
+                            }
+
+                            long now = System.currentTimeMillis();
+                            if (now - mLastThrottledUpdateMillis >= THROTTLED_UPDATE_MS) {
+                                mLastThrottledUpdateMillis = now;
+                                updateUiThrottled();
+                            }
+
                             mLastDataTime = currentDataTime;
-
-                            // Use cached ScrollView to avoid repeated searches
-                            if (mCachedScrollView == null) {
-                                mCachedScrollView = findScrollView(mRootView);
-                            }
-
-                            // Save scroll position before UI update
-                            final int scrollY = mCachedScrollView != null ? mCachedScrollView.getScrollY() : 0;
-
-                            // Perform UI update
-                            updateUi();
-
-                            // Always restore scroll position after UI update to prevent reset
-                            if (mCachedScrollView != null && scrollY > 0) {
-                                mCachedScrollView.post(() -> mCachedScrollView.scrollTo(0, scrollY));
-                            }
+                            mLastAlarmState = currentAlarmState;
+                            mLastAlarmStanding = currentAlarmStanding;
+                            mLastFallAlarmStanding = currentFallAlarmStanding;
                         }
-                        // If data hasn't changed, skip UI update entirely - no flicker, no wasted work
+
+                        mLastBoundState = isBound;
                     } catch (Exception e) {
-                        Log.e(TAG,"upateUiOnUiThread() - exception updating UI - "+e.getMessage());
+                        Log.e(TAG, "updateUiOnUiThread() - exception updating UI - " + e.getMessage());
                     }
                 }
             }
@@ -218,6 +243,19 @@ public class FragmentOsdBaseClass extends Fragment {
                 tv.setText("****NOT BOUND TO SERVER***");
             }
         }
+    }
+
+    protected void updateUiFast() {
+        // Override in subclasses for 1-second lightweight updates.
+    }
+
+    protected void updateUiOnNewData() {
+        // Default to legacy behavior for fragments that only implement updateUi().
+        updateUi();
+    }
+
+    protected void updateUiThrottled() {
+        // Override in subclasses for low-frequency heavy updates (e.g., graphs).
     }
 
 }
