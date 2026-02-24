@@ -438,29 +438,12 @@ public class LogManager {
                 //Log.d(TAG, "writeDatapointToLocalDb(): Starting to serialize history buffers");
 
                 // Serialize history CircBuf objects to JSON
-                String watchBattHist = uk.org.openseizuredetector.utils.CircBufPersistenceManager
-                        .serializeCircBuf(sdDataHistory.watchBattBuff);
-                //Log.d(TAG, "writeDatapointToLocalDb(): watchBattHist serialized, length=" + (watchBattHist != null ? watchBattHist.length() : 0));
-
-                String phoneBattHist = uk.org.openseizuredetector.utils.CircBufPersistenceManager
-                        .serializeCircBuf(sdDataHistory.phoneBattBuff);
-                //Log.d(TAG, "writeDatapointToLocalDb(): phoneBattHist serialized, length=" + (phoneBattHist != null ? phoneBattHist.length() : 0));
-
-                String signalStrengthHist = uk.org.openseizuredetector.utils.CircBufPersistenceManager
-                        .serializeCircBuf(sdDataHistory.watchSignalStrengthBuff);
-                //Log.d(TAG, "writeDatapointToLocalDb(): signalStrengthHist serialized, length=" + (signalStrengthHist != null ? signalStrengthHist.length() : 0));
-
-                String pseudSeizureHist = uk.org.openseizuredetector.utils.CircBufPersistenceManager
-                        .serializeCircBuf(sdDataHistory.mPseizureHistBuf);
-                //Log.d(TAG, "writeDatapointToLocalDb(): pseudSeizureHist serialized, length=" + (pseudSeizureHist != null ? pseudSeizureHist.length() : 0));
-
-                String accelMagStdDevHist = uk.org.openseizuredetector.utils.CircBufPersistenceManager
-                        .serializeCircBuf(sdDataHistory.mAccelMagStdDevHistBuf);
-                //Log.d(TAG, "writeDatapointToLocalDb(): accelMagStdDevHist serialized, length=" + (accelMagStdDevHist != null ? accelMagStdDevHist.length() : 0));
-
-                String hrHist = uk.org.openseizuredetector.utils.CircBufPersistenceManager
-                        .serializeCircBuf(sdDataHistory.mHrHistBuf);
-                //Log.d(TAG, "writeDatapointToLocalDb(): hrHist serialized, length=" + (hrHist != null ? hrHist.length() : 0));
+                String watchBattHist = "";
+                String phoneBattHist = "";
+                String signalStrengthHist = "";
+                String pseudSeizureHist = "";
+                String accelMagStdDevHist = "";
+                String hrHist = "";
 
                 // Build INSERT statement with history columns
                 String SQLStr = "INSERT INTO " + mDpTableName
@@ -471,12 +454,12 @@ public class LogManager {
                         + sdData.alarmState + ","
                         + DatabaseUtils.sqlEscapeString(sdData.toDatapointJSON()) + ","
                         + "0,"  // uploaded = 0 (not uploaded)
-                        + DatabaseUtils.sqlEscapeString(watchBattHist != null ? watchBattHist : "") + ","
-                        + DatabaseUtils.sqlEscapeString(phoneBattHist != null ? phoneBattHist : "") + ","
-                        + DatabaseUtils.sqlEscapeString(signalStrengthHist != null ? signalStrengthHist : "") + ","
-                        + DatabaseUtils.sqlEscapeString(pseudSeizureHist != null ? pseudSeizureHist : "") + ","
-                        + DatabaseUtils.sqlEscapeString(accelMagStdDevHist != null ? accelMagStdDevHist : "") + ","
-                        + DatabaseUtils.sqlEscapeString(hrHist != null ? hrHist : "")
+                        + DatabaseUtils.sqlEscapeString(watchBattHist) + ","
+                        + DatabaseUtils.sqlEscapeString(phoneBattHist) + ","
+                        + DatabaseUtils.sqlEscapeString(signalStrengthHist) + ","
+                        + DatabaseUtils.sqlEscapeString(pseudSeizureHist) + ","
+                        + DatabaseUtils.sqlEscapeString(accelMagStdDevHist) + ","
+                        + DatabaseUtils.sqlEscapeString(hrHist)
                         + ")";
 
                 mOsdDb.execSQL(SQLStr);
