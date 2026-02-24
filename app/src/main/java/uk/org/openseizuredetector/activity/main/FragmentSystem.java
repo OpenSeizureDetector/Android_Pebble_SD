@@ -93,13 +93,14 @@ public class FragmentSystem extends FragmentOsdBaseClass {
         mBattLineChart.getViewport().setScalable(true);
         mBattLineChart.getViewport().setScrollable(true);
         mBattLineChart.getGridLabelRenderer().setNumVerticalLabels(6);
-        mBattLineChart.getGridLabelRenderer().setNumHorizontalLabels(7);
+        mBattLineChart.getGridLabelRenderer().setNumHorizontalLabels(4);
+        mBattLineChart.getGridLabelRenderer().setHumanRounding(false);
 
         // Use okTextColour from base class which is resolved from theme
         mBattLineChart.getGridLabelRenderer().setHorizontalLabelsColor(okTextColour);
         mBattLineChart.getGridLabelRenderer().setVerticalLabelsColor(okTextColour);
         mBattLineChart.getGridLabelRenderer().setGridColor(Color.GRAY);
-        mBattLineChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (hours)");
+        mBattLineChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (hours ago)");
         mBattLineChart.getGridLabelRenderer().setHorizontalAxisTitleColor(okTextColour);
 
         mBattLineChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {
@@ -107,8 +108,13 @@ public class FragmentSystem extends FragmentOsdBaseClass {
             public String formatLabel(double value, boolean isValueX) {
                 if (isValueX) {
                     // Convert seconds to hours ago (24 hour buffer = 86400 seconds)
-                    double hoursAgo = (86400.0 - value) / 3600.0;
-                    return String.format("%.0f", hoursAgo);
+                    double secondsAgo = 86400.0 - value;
+                    double stepSeconds = 28800.0; // 8 hours
+                    double snapped = Math.round(secondsAgo / stepSeconds) * stepSeconds;
+                    if (Math.abs(secondsAgo - snapped) < 10.0 && snapped >= 0 && snapped <= 86400.0) {
+                        return String.format("%.0f", snapped / 3600.0);
+                    }
+                    return "";
                 } else {
                     return super.formatLabel(value, isValueX);
                 }
@@ -129,12 +135,13 @@ public class FragmentSystem extends FragmentOsdBaseClass {
         mSignalLineChart.getViewport().setScrollable(true);
         mSignalLineChart.getGridLabelRenderer().setNumVerticalLabels(6);
         mSignalLineChart.getGridLabelRenderer().setNumHorizontalLabels(6);
+        mSignalLineChart.getGridLabelRenderer().setHumanRounding(false);
 
         // Use okTextColour from base class which is resolved from theme
         mSignalLineChart.getGridLabelRenderer().setHorizontalLabelsColor(okTextColour);
         mSignalLineChart.getGridLabelRenderer().setVerticalLabelsColor(okTextColour);
         mSignalLineChart.getGridLabelRenderer().setGridColor(Color.GRAY);
-        mSignalLineChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (minutes)");
+        mSignalLineChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (minutes ago)");
         mSignalLineChart.getGridLabelRenderer().setHorizontalAxisTitleColor(okTextColour);
 
         mSignalLineChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {
@@ -142,8 +149,13 @@ public class FragmentSystem extends FragmentOsdBaseClass {
             public String formatLabel(double value, boolean isValueX) {
                 if (isValueX) {
                     // Convert seconds to minutes ago (10 minute buffer = 600 seconds)
-                    double minutesAgo = (600.0 - value) / 60.0;
-                    return String.format("%.0f", minutesAgo);
+                    double secondsAgo = 600.0 - value;
+                    double stepSeconds = 120.0; // 2 minutes
+                    double snapped = Math.round(secondsAgo / stepSeconds) * stepSeconds;
+                    if (Math.abs(secondsAgo - snapped) < 1.0 && snapped >= 0 && snapped <= 600.0) {
+                        return String.format("%.0f", snapped / 60.0);
+                    }
+                    return "";
                 } else {
                     return super.formatLabel(value, isValueX);
                 }

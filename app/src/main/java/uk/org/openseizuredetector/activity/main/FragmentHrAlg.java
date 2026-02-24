@@ -68,19 +68,26 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
 
         mLineChart.getGridLabelRenderer().setNumVerticalLabels(6);
         mLineChart.getGridLabelRenderer().setNumHorizontalLabels(6);
+        mLineChart.getGridLabelRenderer().setHumanRounding(false);
 
         // Use okTextColour from base class which is resolved from theme
         mLineChart.getGridLabelRenderer().setHorizontalLabelsColor(okTextColour);
         mLineChart.getGridLabelRenderer().setVerticalLabelsColor(okTextColour);
         mLineChart.getGridLabelRenderer().setGridColor(Color.GRAY);
-        mLineChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (minutes)");
+        mLineChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (minutes ago)");
         mLineChart.getGridLabelRenderer().setHorizontalAxisTitleColor(okTextColour);
 
         mLineChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {
             @Override
             public String formatLabel(double value, boolean isValueX) {
                 if (isValueX) {
-                    return String.format("%.0f", value / 60.0);
+                    double secondsAgo = 600.0 - value;
+                    double stepSeconds = 120.0; // 2 minutes
+                    double snapped = Math.round(secondsAgo / stepSeconds) * stepSeconds;
+                    if (Math.abs(secondsAgo - snapped) < 1.0 && snapped >= 0 && snapped <= 600.0) {
+                        return String.format("%.0f", snapped / 60.0);
+                    }
+                    return "";
                 } else {
                     return super.formatLabel(value, isValueX);
                 }
