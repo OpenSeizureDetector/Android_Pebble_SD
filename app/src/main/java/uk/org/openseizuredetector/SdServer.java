@@ -1275,7 +1275,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 startSmsTimer();
             } else {
                 Log.i(TAG, "sendSMSAlarm() - Cancel Audible Active - not sending SMS");
-                mUtil.showToast(getString(R.string.cancel_audible_not_sending_sms));
+                //mUtil.showToast(getString(R.string.cancel_audible_not_sending_sms));
             }
         } else {
             Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
