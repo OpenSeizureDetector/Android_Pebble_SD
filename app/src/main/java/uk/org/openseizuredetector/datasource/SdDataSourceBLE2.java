@@ -488,8 +488,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
             } else if (charUuidStr.equals(CHAR_OSD_ACC_DATA)
                     || charUuidStr.equals(CHAR_INFINITIME_ACC_DATA)) {
-                //Log.v(TAG,"Received OSD ACC DATA"+characteristic.getValue());
-                byte[] rawDataBytes = characteristic.getValue();
+                byte[] rawDataBytes = value;
                 short[] newAccVals = parseDataToAccVals(rawDataBytes);
                 Log.v(TAG, "onCharacteristicUpdate(): CHAR_OSD_ACC_DATA: numSamples = " + rawDataBytes.length + " nRawData=" + nRawData);
                 for (int i = 0; i < newAccVals.length; i++) {
@@ -558,51 +557,51 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 }
             } else if (charUuidStr.equals(CHAR_BATT_DATA)
                     || charUuidStr.equals(CHAR_OSD_BATT_DATA)) {
-                byte batteryPc = characteristic.getValue()[0];
+                byte batteryPc = value[0];
                 mSdData.batteryPc = batteryPc;
                 Log.v(TAG, "onCharacteristicUpdate(): CHAR_BATT_DATA: " + String.format("%d", batteryPc));
                 mSdData.haveSettings = true;
             } else if (charUuidStr.equals(CHAR_OSD_WATCH_ID) || charUuidStr.equals(CHAR_DEV_FW_NAME)) {
-                byte[] rawDataBytes = characteristic.getValue();
+                byte[] rawDataBytes = value;
                 String watchId = new String(rawDataBytes, StandardCharsets.UTF_8);
                 Log.i(TAG, "Received Watch ID: " + watchId);
                 mSdData.watchSdName = watchId;
             } else if (charUuidStr.equals(CHAR_OSD_ACC_FMT)) {
-                mAccFmt = characteristic.getValue()[0];
+                mAccFmt = value[0];
                 Log.i(TAG, "onCharacteristicUpdate(): Received Acceleration format code: " + mAccFmt);
             } else if (charUuidStr.equals(CHAR_DEV_MANUF)) {
-                byte[] rawDataBytes = characteristic.getValue();
+                byte[] rawDataBytes = value;
                 String watchManuf = new String(rawDataBytes, StandardCharsets.UTF_8);
                 Log.i(TAG, "onCharacteristicUpdate(): Received Manufacturer: " + watchManuf);
                 mSdData.watchManuf = watchManuf;
             } else if (charUuidStr.equals(CHAR_DEV_MODEL_NO)) {
-                byte[] rawDataBytes = characteristic.getValue();
+                byte[] rawDataBytes = value;
                 String watchModelNo = new String(rawDataBytes, StandardCharsets.UTF_8);
                 Log.i(TAG, "onCharacteristicUpdate(): Received Watch Model No.: " + watchModelNo);
                 mSdData.watchPartNo = watchModelNo;
             } else if (charUuidStr.equals(CHAR_DEV_SER_NO)) {
-                byte[] rawDataBytes = characteristic.getValue();
+                byte[] rawDataBytes = value;
                 String watchSerNo = new String(rawDataBytes, StandardCharsets.UTF_8);
                 Log.i(TAG, "onCharacteristicUpdate(): Received Watch Serial No.: " + watchSerNo);
                 //mSdData.watchSerNo = watchSerNo;
                 // We do not use this serial number because it is zero for PineTime - we set the MAC address at start-up instead.
             } else if (charUuidStr.equals(CHAR_DEV_HW_VER)) {
-                byte[] rawDataBytes = characteristic.getValue();
+                byte[] rawDataBytes = value;
                 String watchHwVer = new String(rawDataBytes, StandardCharsets.UTF_8);
                 Log.i(TAG, "onCharacteristicUpdate(): Received Hardware Version: " + watchHwVer);
                 mSdData.watchFwVersion = watchHwVer;
             } else if (charUuidStr.equals(CHAR_DEV_FW_NAME)) {
-                byte[] rawDataBytes = characteristic.getValue();
+                byte[] rawDataBytes = value;
                 String watchFwName = new String(rawDataBytes, StandardCharsets.UTF_8);
                 Log.i(TAG, "onCharacteristicUpdate(): Received Firmware Name: " + watchFwName);
                 mSdData.watchSdName = watchFwName;
             } else if (charUuidStr.equals(CHAR_OSD_WATCH_FW)  || charUuidStr.equals(CHAR_DEV_FW_VER)) {
-                byte[] rawDataBytes = characteristic.getValue();
+                byte[] rawDataBytes = value;
                 String watchFwVer = new String(rawDataBytes, StandardCharsets.UTF_8);
                 Log.i(TAG, "onCharacteristicUpdate(): Received Watch Firmware Version: " + watchFwVer);
                 mSdData.watchSdVersion = watchFwVer;
             } else {
-                byte[] rawDataBytes = characteristic.getValue();
+                byte[] rawDataBytes = value;
                 String strVal = new String(rawDataBytes, StandardCharsets.UTF_8);
                 Log.d(TAG, "onCharacteristicUpdate(): Unrecognised Characteristic Updated " +
                         charUuidStr+" : "+strVal);
