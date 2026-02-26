@@ -10,6 +10,8 @@ import android.os.Looper;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
@@ -66,23 +68,11 @@ public class OnboardingActivity extends AppCompatActivity {
         }
 
         // Configure system bar appearance - ensure icons are visible
-        android.os.Build.VERSION_CODES VERSION_CODES = null;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            // Set transparent system bars so our background shows through
-            getWindow().setNavigationBarColor(getColor(android.R.color.transparent));
-            getWindow().setStatusBarColor(getColor(android.R.color.transparent));
-
-            // Configure icon colors based on theme
-            View decorView = getWindow().getDecorView();
-            int flags = decorView.getSystemUiVisibility();
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-                boolean isLightMode = isLightTheme();
-                if (isLightMode) {
-                    flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-                } else {
-                    flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-                }
-                decorView.setSystemUiVisibility(flags);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (controller != null) {
+                controller.setAppearanceLightStatusBars(isLightTheme());
+                controller.setAppearanceLightNavigationBars(isLightTheme());
             }
         }
 

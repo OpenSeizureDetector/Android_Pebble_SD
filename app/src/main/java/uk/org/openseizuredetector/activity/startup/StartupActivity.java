@@ -898,7 +898,7 @@ public class StartupActivity extends AppCompatActivity {
         );
         // This makes the links display as links, but they do not respond to clicks for some reason...
         LinkifyCompat.addLinks(s,
-                Linkify.WEB_URLS | Linkify.EMAIL_ADDRESSES | Linkify.PHONE_NUMBERS | Linkify.MAP_ADDRESSES);
+                Linkify.WEB_URLS | Linkify.EMAIL_ADDRESSES | Linkify.PHONE_NUMBERS);
         alertDialogBuilder
                 .setTitle(R.string.battery_usage_optimisation_dialog_title)
                 .setMessage(s)

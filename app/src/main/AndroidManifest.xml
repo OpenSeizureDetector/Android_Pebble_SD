@@ -55,7 +55,7 @@
         <activity
             android:name=".activity.onboarding.OnboardingActivity"
             android:exported="false"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AppTheme.TransparentSystemBars" />
         <activity
             android:name=".activity.main.MainActivity2"
             android:exported="false"
