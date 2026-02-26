@@ -40,6 +40,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
@@ -429,8 +430,16 @@ public class SdDataSourceBLE extends SdDataSource {
             }
 
             // To get here both gatCharacteristic and mBluetoothGatt must be non-null
-            gattCharacteristic.setValue(valBytes);
-            boolean retVal = mBluetoothGatt.writeCharacteristic(gattCharacteristic);
+            boolean retVal;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                int status = mBluetoothGatt.writeCharacteristic(
+                        gattCharacteristic,
+                        valBytes,
+                        gattCharacteristic.getWriteType());
+                retVal = status == BluetoothGatt.GATT_SUCCESS;
+            } else {
+                retVal = writeCharacteristicLegacy(gattCharacteristic, valBytes);
+            }
             if (retVal) {
                 Log.d(TAG, "executeWriteCharacteristic - write initiated successfully");
             } else {
@@ -442,6 +451,12 @@ public class SdDataSourceBLE extends SdDataSource {
                     }
                 }, 100);
             }
+        }
+
+        @SuppressWarnings("deprecation")
+        private boolean writeCharacteristicLegacy(BluetoothGattCharacteristic characteristic, byte[] value) {
+            characteristic.setValue(value);
+            return mBluetoothGatt.writeCharacteristic(characteristic);
         }
 
 
@@ -463,25 +478,26 @@ public class SdDataSourceBLE extends SdDataSource {
 
         }
 
-        public void onDataReceived(BluetoothGattCharacteristic characteristic) {
+        public void onDataReceived(BluetoothGattCharacteristic characteristic, byte[] value) {
             /*
              * onDataReceived - called whenever a BLE characteristic notifies us that its data has changed.
              * If the data is acceleration data, we add it to a buffer - it is analysed once the buffer is full.
              * Heart rate data is written directly to sdData to be used in future analysis.
              */
             Log.v(TAG, "onDataReceived: Characteristic=" + characteristic.getUuid().toString());
+            if (value == null || value.length == 0) {
+                Log.w(TAG, "onDataReceived() - empty characteristic value for " + characteristic.getUuid());
+                return;
+            }
             if (characteristic.getUuid().toString().equals(CHAR_HEART_RATE_MEASUREMENT)) {
-                int flag = characteristic.getProperties();
-                //Log.d(TAG,"onDataReceived() - flag = "+flag);
-                int format = -1;
-                if ((flag & 0x01) != 0) {
-                    format = BluetoothGattCharacteristic.FORMAT_UINT16;
-                    //Log.d(TAG, "onDataReceived(): Heart rate format UINT16.");
-                } else {
-                    format = BluetoothGattCharacteristic.FORMAT_UINT8;
-                    //Log.d(TAG, "onDataReceived(): Heart rate format UINT8.");
+                int flags = value[0] & 0xFF;
+                boolean isUInt16 = (flags & 0x01) != 0;
+                int heartRate = -1;
+                if (isUInt16 && value.length >= 3) {
+                    heartRate = (value[1] & 0xFF) | ((value[2] & 0xFF) << 8);
+                } else if (!isUInt16 && value.length >= 2) {
+                    heartRate = value[1] & 0xFF;
                 }
-                final int heartRate = characteristic.getIntValue(format, 1);  // heart rate is second byte
                 // We normally use -1 for fault indication, but the BLE standard is for one byte for heart
                 // rate services, so we can't send -1, so treat either 0 or 255 as fault.
                 if (heartRate == 255 || heartRate == 0) {
@@ -492,8 +508,7 @@ public class SdDataSourceBLE extends SdDataSource {
                 Log.d(TAG, String.format("onDataReceived(): CHAR_HEART_RATE_MEASUREMENT: %d", heartRate));
             } else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_DATA)
                     || characteristic.getUuid().toString().equals(CHAR_INFINITIME_ACC_DATA)) {
-                //Log.v(TAG,"Received OSD ACC DATA"+characteristic.getValue());
-                byte[] rawDataBytes = characteristic.getValue();
+                byte[] rawDataBytes = value;
                 short[] newAccVals = parseDataToAccVals(rawDataBytes);
                 Log.v(TAG, "onDataReceived(): CHAR_OSD_ACC_DATA: numSamples = " + rawDataBytes.length + " nRawData=" + nRawData);
                 //Log.v(TAG, "onDataReceived() - rawDataBytes="+ Arrays.toString(rawDataBytes));
@@ -559,27 +574,27 @@ public class SdDataSourceBLE extends SdDataSource {
                     }
                 }
             } else if (characteristic.getUuid().toString().equals(CHAR_OSD_BATT_DATA)) {
-                byte batteryPc = characteristic.getValue()[0];
+                byte batteryPc = value[0];
                 mSdData.batteryPc = batteryPc;
                 Log.v(TAG, "onDataReceived(): CHAR_OSD_BATT_DATA: " + String.format("%d", batteryPc));
                 mSdData.haveSettings = true;
             } else if (characteristic.getUuid().toString().equals(CHAR_BATT_DATA)) {
-                byte batteryPc = characteristic.getValue()[0];
+                byte batteryPc = value[0];
                 mSdData.batteryPc = batteryPc;
                 Log.v(TAG, "onDataReceived(): CHAR_BATT_DATA: " + String.format("%d", batteryPc));
                 mSdData.haveSettings = true;
             } else if (characteristic.getUuid().toString().equals(CHAR_OSD_WATCH_ID)) {
-                byte[] rawDataBytes = characteristic.getValue();
+                byte[] rawDataBytes = value;
                 String watchId = new String(rawDataBytes, StandardCharsets.UTF_8);
                 Log.v(TAG, "Received Watch ID: " + watchId);
                 mSdData.watchSdName = watchId;
             } else if (characteristic.getUuid().toString().equals(CHAR_OSD_WATCH_FW)) {
-                byte[] rawDataBytes = characteristic.getValue();
+                byte[] rawDataBytes = value;
                 String watchFwVer = new String(rawDataBytes, StandardCharsets.UTF_8);
                 Log.v(TAG, "Received Watch Firmware Version: " + watchFwVer);
                 mSdData.watchSdVersion = watchFwVer;
             } else if (characteristic.getUuid().toString().equals(CHAR_OSD_ACC_FMT)) {
-                mAccFmt = characteristic.getValue()[0];
+                mAccFmt = value[0];
                 Log.v(TAG, "Received Acceleration format code: " + mAccFmt);
             } else {
                 Log.v(TAG, "Unrecognised Characteristic Updated " +
@@ -617,18 +632,38 @@ public class SdDataSourceBLE extends SdDataSource {
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic characteristic,
+                                         byte[] value,
                                          int status) {
             Log.v(TAG, "onCharacteristicRead");
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                onDataReceived(characteristic);
+                onDataReceived(characteristic, value);
             }
         }
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
+                                            BluetoothGattCharacteristic characteristic,
+                                            byte[] value) {
+            onDataReceived(characteristic, value);
+        }
+
+        @Override
+        @SuppressWarnings("deprecation")
+        public void onCharacteristicRead(BluetoothGatt gatt,
+                                         BluetoothGattCharacteristic characteristic,
+                                         int status) {
+            Log.v(TAG, "onCharacteristicRead");
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                onDataReceived(characteristic, characteristic.getValue());
+            }
+        }
+
+        @Override
+        @SuppressWarnings("deprecation")
+        public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
             //Log.v(TAG,"onCharacteristicChanged(): Characteristic "+characteristic.getUuid()+" changed");
-            onDataReceived(characteristic);
+            onDataReceived(characteristic, characteristic.getValue());
         }
 
         @Override
@@ -673,8 +708,11 @@ public class SdDataSourceBLE extends SdDataSource {
             // BangleJS widget did not work without it so do it for everything.
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
                     UUID.fromString(GattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
-            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-            mBluetoothGatt.writeDescriptor(descriptor);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                mBluetoothGatt.writeDescriptor(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            } else {
+                writeDescriptorLegacy(descriptor, BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            }
         } else {
             Log.v(TAG, "setCharacteristicNotification - De-registering notifications");
             mBluetoothGatt.setCharacteristicNotification(characteristic, false);
@@ -683,11 +721,20 @@ public class SdDataSourceBLE extends SdDataSource {
             // BangleJS widget did not work without it so do it for everything.
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
                     UUID.fromString(GattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
-            descriptor.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-            mBluetoothGatt.writeDescriptor(descriptor);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                mBluetoothGatt.writeDescriptor(descriptor, BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+            } else {
+                writeDescriptorLegacy(descriptor, BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+            }
         }
 
         waitForDescriptorWrite = true;
+    }
+
+    @SuppressWarnings("deprecation")
+    private void writeDescriptorLegacy(BluetoothGattDescriptor descriptor, byte[] value) {
+        descriptor.setValue(value);
+        mBluetoothGatt.writeDescriptor(descriptor);
     }
 
     /**
@@ -722,3 +769,4 @@ public class SdDataSourceBLE extends SdDataSource {
 
  */
 }
+
