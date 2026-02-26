@@ -44,9 +44,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
 import androidx.preference.PreferenceManager;
-import android.text.Html;
 import android.text.SpannableString;
 import android.text.util.Linkify;
+import androidx.activity.OnBackPressedCallback;
+import androidx.core.text.HtmlCompat;
+import androidx.core.text.util.LinkifyCompat;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -277,6 +279,12 @@ public class StartupActivity extends AppCompatActivity {
         // Connect to the background service
         mConnection = new SdServiceConnection(getApplicationContext());
 
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                handleBackPressed();
+            }
+        });
     }
 
     @Override
@@ -392,12 +400,11 @@ public class StartupActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        Log.i(TAG, "onBackPressed() - user pressed back button");
-        if (mUtil != null) {
-            mUtil.writeToSysLogFile("StartupActivity.onBackPressed() - shutting down");
-        }
+    private void handleBackPressed() {
+         Log.i(TAG, "onBackPressed() - user pressed back button");
+         if (mUtil != null) {
+             mUtil.writeToSysLogFile("StartupActivity.onBackPressed() - shutting down");
+         }
 
         // Set shutdown flag to prevent any restart attempts
         mIsShuttingDown = true;
@@ -452,9 +459,9 @@ public class StartupActivity extends AppCompatActivity {
         } else {
             // Server not running, just exit
             Log.i(TAG, "onBackPressed() - server not running, exiting immediately");
-            super.onBackPressed();
+            finish();
         }
-    }
+     }
 
 
     /*
@@ -793,7 +800,7 @@ public class StartupActivity extends AppCompatActivity {
                     getString(R.string.FirstRunDlgMsg));
             alertDialogBuilder
                     .setTitle(getString(R.string.FirstRunDlgTitle))
-                    .setMessage(Html.fromHtml(s))
+                    .setMessage(HtmlCompat.fromHtml(s, HtmlCompat.FROM_HTML_MODE_LEGACY))
                     .setCancelable(false)
                     .setNeutralButton(getString(R.string.closeBtnTxt), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
@@ -840,7 +847,7 @@ public class StartupActivity extends AppCompatActivity {
 
             alertDialogBuilder
                     .setTitle(getString(R.string.UpdateDialogTitleTxt))
-                    .setMessage(Html.fromHtml(s))
+                    .setMessage(HtmlCompat.fromHtml(s, HtmlCompat.FROM_HTML_MODE_LEGACY))
                     .setCancelable(false)
                     .setNeutralButton(getString(R.string.closeBtnTxt), new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
@@ -890,7 +897,8 @@ public class StartupActivity extends AppCompatActivity {
                 getString(R.string.battery_usage_optimisation_dialog_text)
         );
         // This makes the links display as links, but they do not respond to clicks for some reason...
-        Linkify.addLinks(s, Linkify.ALL);
+        LinkifyCompat.addLinks(s,
+                Linkify.WEB_URLS | Linkify.EMAIL_ADDRESSES | Linkify.PHONE_NUMBERS | Linkify.MAP_ADDRESSES);
         alertDialogBuilder
                 .setTitle(R.string.battery_usage_optimisation_dialog_title)
                 .setMessage(s)
