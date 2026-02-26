@@ -104,6 +104,17 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private Menu mMenu;
     private boolean mUpdateSysLog = true;
 
+    private String normalizeIso8601Offset(String value) {
+        /**
+         * normalizeIso8601Offset() - Convert "...+00:00" to "...+0000" for SimpleDateFormat with Z pattern.
+         */
+        if (value == null) {
+            return null;
+        }
+        // Convert "...+00:00" to "...+0000" for SimpleDateFormat with Z pattern.
+        return value.replaceFirst("([+-]\\d\\d):(\\d\\d)$", "$1$2");
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.v(TAG, "onCreate()");
@@ -375,11 +386,11 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
                     // Sort the remote events list by date, descending (newest first)
                     Log.v(TAG, "getRemoteEvents() - Sorting mRemoteEventsList by date");
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.getDefault()); // Adjust format if needed
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault());
                     Collections.sort(mRemoteEventsList, (event1, event2) -> {
                         try {
-                            String dt1Str = event1.get("dataTime");
-                            String dt2Str = event2.get("dataTime");
+                            String dt1Str = normalizeIso8601Offset(event1.get("dataTime"));
+                            String dt2Str = normalizeIso8601Offset(event2.get("dataTime"));
                             if (
                                     dt1Str == null
                                             || dt2Str == null
@@ -436,7 +447,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         // Helper to parse date strings to long timestamps.
         // Adjust the SimpleDateFormat pattern to match your "dataTime" format.
         // If "dataTime" is already a timestamp (long), you can use it directly.
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.getDefault()); // Example format
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault()); // Example format
 
         ArrayList<HashMap<String, String>> currentGroup = null;
         long lastEventTimeInGroup = 0;
@@ -450,7 +461,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
             long currentEventTime;
             try {
-                Date eventDate = sdf.parse(dataTimeString);
+                Date eventDate = sdf.parse(normalizeIso8601Offset(dataTimeString));
                 if (eventDate == null) {
                     Log.w(TAG, "Could not parse dataTime: " + dataTimeString + " for event: " + event.get("id"));
                     continue;
@@ -562,7 +573,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
             if (mGroupEventsCb.isChecked() && mGroupedRemoteEventsList != null) {
                 // Show group summary with start time and duration
                 ArrayList<HashMap<String, String>> displayList = new ArrayList<>();
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.getDefault());
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault());
 
                 for (ArrayList<HashMap<String, String>> group : mGroupedRemoteEventsList) {
                     HashMap<String, String> groupSummary = new HashMap<>(group.get(0)); // Start with first event data
@@ -578,7 +589,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         endTimeStr = group.get(0).get("dataTime");
                         if (endTimeStr != null && !endTimeStr.equals("null")) {
                             try {
-                                Date endDate = sdf.parse(endTimeStr);
+                                Date endDate = sdf.parse(normalizeIso8601Offset(endTimeStr));
                                 endTimeMillis = endDate.getTime();
                             } catch (ParseException pe) {
                                 Log.w(TAG, "Failed to parse end time: " + endTimeStr);
@@ -589,7 +600,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         startTimeStr = group.get(group.size() - 1).get("dataTime");
                         if (startTimeStr != null && !startTimeStr.equals("null")) {
                             try {
-                                Date startDate = sdf.parse(startTimeStr);
+                                Date startDate = sdf.parse(normalizeIso8601Offset(startTimeStr));
                                 startTimeMillis = startDate.getTime();
                             } catch (ParseException pe) {
                                 Log.w(TAG, "Failed to parse start time: " + startTimeStr);
@@ -757,140 +768,139 @@ public class LogManagerControlActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         Log.i(TAG, "onOptionsItemSelected() :  " + item.getItemId() + " selected");
-        switch (item.getItemId()) {
-            case R.id.action_authenticate_api:
-                Log.i(TAG, "action_autheticate_api");
-                try {
-                    Intent i = new Intent(
-                            getApplicationContext(),
-                            AuthenticateActivity.class);
-                    this.startActivity(i);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting export activity " + ex.toString());
-                }
-                return true;
-            case R.id.pruneDatabaseMenuItem:
-                Log.i(TAG, "action_pruneDatabase");
-                onPruneBtn.onClick(null);
-                return true;
-            case R.id.action_report_seizure:
-                Log.i(TAG, "action_report_seizure");
-                try {
-                    Intent intent = new Intent(
-                            getApplicationContext(),
-                            ReportSeizureActivity.class);
-                    this.startActivity(intent);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting Report Seizure activity " + ex.toString());
-                }
-                return true;
-            case R.id.action_settings:
-                Log.i(TAG, "action_settings");
-                try {
-                    Intent prefsIntent = new Intent(
-                            getApplicationContext(),
-                            PrefActivity.class);
-                    this.startActivity(prefsIntent);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting settings activity " + ex.toString());
-                }
-                return true;
-            case R.id.start_stop_nda:
-                Log.i(TAG, "start/stop NDA");
-                if (mConnection.mSdServer.mLogNDA) {
-                    new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
-                            .setTitle(R.string.stop_nda_logging_dialog_title)
-                            .setMessage(R.string.stop_nda_logging_dialog_meassage)
-                            .setIcon(android.R.drawable.ic_dialog_alert)
-                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int whichButton) {
-                                    mLm.disableNDATimer();
-                                    MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
-                                    startStopNDAMenuItem.setTitle(R.string.start_nda_menu_title);
-                                    mUtil.stopServer();
-                                    // Wait 0.5 second to give the server chance to shutdown, then re-start it
-                                    // CRITICAL: 100ms was too short and caused duplicate SdDataSource instances
-                                    // Increased to 500ms to allow proper cleanup before restart
-                                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-                                        public void run() {
-                                            mUtil.startServer();
-                                        }
-                                    }, 500);
-                                }
-                            })
-                            .setNegativeButton(android.R.string.no, null)
-                            .show();
-                } else {
-                    new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
-                            .setTitle(R.string.start_nda_logging_dialog_title)
-                            .setMessage(R.string.start_nda_logging_dialog_meassage)
-                            .setIcon(android.R.drawable.ic_dialog_alert)
-                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int whichButton) {
-                                    mLm.enableNDATimer();
-                                    MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
-                                    startStopNDAMenuItem.setTitle(R.string.stop_nda_menu_title);
-                                    mUtil.stopServer();
-                                    // Wait 0.1 second to give the server chance to shutdown, then re-start it
-                                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-                                        public void run() {
-                                            mUtil.startServer();
-                                        }
-                                    }, 100);
-                                }
-                            })
-                            .setNegativeButton(android.R.string.no, null)
-                            .show();
-
-                }
-                return true;
-            case R.id.action_mark_unknown:
-                Log.i(TAG, "action_mark_unknown");
+        int itemId = item.getItemId();
+        if (itemId == R.id.action_authenticate_api) {
+            Log.i(TAG, "action_autheticate_api");
+            try {
+                Intent i = new Intent(
+                        getApplicationContext(),
+                        AuthenticateActivity.class);
+                this.startActivity(i);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting export activity " + ex.toString());
+            }
+            return true;
+        } else if (itemId == R.id.pruneDatabaseMenuItem) {
+            Log.i(TAG, "action_pruneDatabase");
+            onPruneBtn.onClick(null);
+            return true;
+        } else if (itemId == R.id.action_report_seizure) {
+            Log.i(TAG, "action_report_seizure");
+            try {
+                Intent intent = new Intent(
+                        getApplicationContext(),
+                        ReportSeizureActivity.class);
+                this.startActivity(intent);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting Report Seizure activity " + ex.toString());
+            }
+            return true;
+        } else if (itemId == R.id.action_settings) {
+            Log.i(TAG, "action_settings");
+            try {
+                Intent prefsIntent = new Intent(
+                        getApplicationContext(),
+                        PrefActivity.class);
+                this.startActivity(prefsIntent);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting settings activity " + ex.toString());
+            }
+            return true;
+        } else if (itemId == R.id.start_stop_nda) {
+            Log.i(TAG, "start/stop NDA");
+            if (mConnection.mSdServer.mLogNDA) {
                 new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
-                        .setTitle(R.string.mark_unverified_events_unknown_dialog_title)
-                        .setMessage(R.string.mark_unverified_events_unknown_dialog_message)
+                        .setTitle(R.string.stop_nda_logging_dialog_title)
+                        .setMessage(R.string.stop_nda_logging_dialog_meassage)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
-                                mLm.mWac.markUnverifiedEventsAsUnknown();
+                                mLm.disableNDATimer();
+                                MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
+                                startStopNDAMenuItem.setTitle(R.string.start_nda_menu_title);
+                                mUtil.stopServer();
+                                // Wait 0.5 second to give the server chance to shutdown, then re-start it
+                                // CRITICAL: 100ms was too short and caused duplicate SdDataSource instances
+                                // Increased to 500ms to allow proper cleanup before restart
+                                new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                                    public void run() {
+                                        mUtil.startServer();
+                                    }
+                                }, 500);
                             }
                         })
                         .setNegativeButton(android.R.string.no, null)
                         .show();
-                return true;
-            case R.id.action_mark_false_alarm:
-                Log.i(TAG, "action_mark_false_alarm");
+            } else {
                 new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
-                        .setTitle(R.string.mark_unverified_events_false_alarm_dialog_title)
-                        .setMessage(R.string.mark_unverified_events_false_alarm_dialog_message)
+                        .setTitle(R.string.start_nda_logging_dialog_title)
+                        .setMessage(R.string.start_nda_logging_dialog_meassage)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
-                                mLm.mWac.markUnverifiedEventsAsFalseAlarm();
+                                mLm.enableNDATimer();
+                                MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
+                                startStopNDAMenuItem.setTitle(R.string.stop_nda_menu_title);
+                                mUtil.stopServer();
+                                // Wait 0.1 second to give the server chance to shutdown, then re-start it
+                                new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                                    public void run() {
+                                        mUtil.startServer();
+                                    }
+                                }, 100);
                             }
                         })
                         .setNegativeButton(android.R.string.no, null)
                         .show();
-                return true;
-            case R.id.export_data_menuitem:
-                Log.i(TAG, "export data menu item");
-                try {
-                    Intent i = new Intent(
-                            getApplicationContext(),
-                            ExportDataActivity.class);
-                    this.startActivity(i);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting export data activity " + ex.toString());
-                }
-                return true;
-            case R.id.action_about_datasharing:
-                Log.i(TAG, "action_about_datasharing");
-                showDataSharingDialog();
-                return true;
 
-            default:
-                return super.onOptionsItemSelected(item);
+            }
+            return true;
+        } else if (itemId == R.id.action_mark_unknown) {
+            Log.i(TAG, "action_mark_unknown");
+            new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
+                    .setTitle(R.string.mark_unverified_events_unknown_dialog_title)
+                    .setMessage(R.string.mark_unverified_events_unknown_dialog_message)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            mLm.mWac.markUnverifiedEventsAsUnknown();
+                        }
+                    })
+                    .setNegativeButton(android.R.string.no, null)
+                    .show();
+            return true;
+        } else if (itemId == R.id.action_mark_false_alarm) {
+            Log.i(TAG, "action_mark_false_alarm");
+            new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
+                    .setTitle(R.string.mark_unverified_events_false_alarm_dialog_title)
+                    .setMessage(R.string.mark_unverified_events_false_alarm_dialog_message)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            mLm.mWac.markUnverifiedEventsAsFalseAlarm();
+                        }
+                    })
+                    .setNegativeButton(android.R.string.no, null)
+                    .show();
+            return true;
+        } else if (itemId == R.id.export_data_menuitem) {
+            Log.i(TAG, "export data menu item");
+            try {
+                Intent i = new Intent(
+                        getApplicationContext(),
+                        ExportDataActivity.class);
+                this.startActivity(i);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting export data activity " + ex.toString());
+            }
+            return true;
+        } else if (itemId == R.id.action_about_datasharing) {
+            Log.i(TAG, "action_about_datasharing");
+            showDataSharingDialog();
+            return true;
         }
+
+        return super.onOptionsItemSelected(item);
     }
 
 
@@ -1134,16 +1144,10 @@ public class LogManagerControlActivity extends AppCompatActivity {
             View v = super.getView(position, convertView, parent);
             Map<String, ?> dataItem = (Map<String, ?>) getItem(position);
             Log.v(TAG, "getView() " + dataItem.toString());
-            switch (dataItem.get("type").toString()) {
-                case "null":
-                case "":
-                    v.setBackgroundColor(ContextCompat.getColor(LogManagerControlActivity.this, R.color.remote_event_unvalidated_bg));
-                    break;
-                case "Seizure":
-                    v.setBackgroundColor(ContextCompat.getColor(LogManagerControlActivity.this, R.color.remote_event_seizure_bg));
-                    break;
-                default:
-                    v.setBackgroundColor(Color.TRANSPARENT);
+            if (dataItem.get("type").toString().equals("Seizure")) {
+                v.setBackgroundColor(ContextCompat.getColor(LogManagerControlActivity.this, R.color.remote_event_seizure_bg));
+            } else {
+                v.setBackgroundColor(Color.TRANSPARENT);
             }
 
             // Convert date format to something more readable.

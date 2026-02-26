@@ -1,3 +1,5 @@
+import com.android.build.api.artifact.SingleArtifact
+
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 android {
@@ -50,23 +52,25 @@ android {
     }
 }
 
-// Automatically create 16KB-aligned APK after build
-// This works around AGP not automatically aligning PyTorch native libraries
-android.applicationVariants.all { variant ->
-    variant.outputs.all { output ->
-        variant.assembleProvider.get().doLast {
-            def apkFile = output.outputFile
-            if (apkFile.name.endsWith('.apk')) {
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        def capName = variant.name.capitalize()
+        def alignTask = tasks.register("align${capName}Apk") {
+            dependsOn(variant.artifacts.get(SingleArtifact.APK.INSTANCE))
+            doLast {
+                def apkFile = variant.artifacts.get(SingleArtifact.APK.INSTANCE).get().asFile
+                if (!apkFile.name.endsWith('.apk')) {
+                    return
+                }
+
                 def alignedApk = new File(apkFile.parentFile,
                     apkFile.name.replace('.apk', '-16kb-aligned.apk'))
 
-                // Find zipalign in Android SDK
                 def sdkDir = android.sdkDirectory
                 def buildToolsDir = new File(sdkDir, "build-tools/${android.buildToolsVersion}")
                 def zipalign = new File(buildToolsDir, "zipalign")
 
                 if (!zipalign.exists()) {
-                    // Try finding any build-tools version
                     def buildToolsParent = new File(sdkDir, "build-tools")
                     if (buildToolsParent.exists()) {
                         def versions = buildToolsParent.listFiles()?.sort()?.reverse()
@@ -85,7 +89,6 @@ android.applicationVariants.all { variant ->
                             ignoreExitValue = true
                         }
 
-                        // Verify alignment
                         def verifyResult = exec {
                             commandLine zipalign.absolutePath, '-c', '-p', '16384',
                                 alignedApk.absolutePath
@@ -108,11 +111,16 @@ android.applicationVariants.all { variant ->
                 }
             }
         }
+        tasks.matching { it.name == "assemble${capName}" }.configureEach { finalizedBy(alignTask) }
     }
 }
 
+configurations.all {
+    exclude group: 'com.android.support', module: 'support-compat'
+    exclude group: 'com.android.support', module: 'support-media-compat'
+}
+
 dependencies {
-    implementation 'androidx.multidex:multidex:2.0.1'
     //implementation files('libs/mpandroidchartlibrary-2-0-7.jar')
     //implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     // V2.1.3 of MPAndroidChart is the most recent version that compiles without modifying

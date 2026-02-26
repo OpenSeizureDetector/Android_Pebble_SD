@@ -339,168 +339,157 @@ public class MainActivity2 extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         Log.i(TAG, "onOptionsItemSelected() :  " + item.getItemId() + " selected");
-        switch (item.getItemId()) {
-            /*case R.id.action_launch_pebble_app:
-                Log.i(TAG, "action_launch_pebble_app");
-                mConnection.mSdServer.mSdDataSource.startPebbleApp();
-                return true;
-                */
-            case R.id.action_install_watch_app:
-                Log.i(TAG, "action_install_watch_app");
-                mConnection.mSdServer.mSdDataSource.installWatchApp();
-                return true;
+        int itemId = item.getItemId();
+        if (itemId == R.id.action_install_watch_app) {
+            Log.i(TAG, "action_install_watch_app");
+            mConnection.mSdServer.mSdDataSource.installWatchApp();
+            return true;
+        } else if (itemId == R.id.action_update_pinetime_firmware) {
+            Log.i(TAG, "action_update_pinetime_firmware");
+            launchPineTimeUpdater();
+            return true;
+        } else if (itemId == R.id.action_accept_alarm) {
+            Log.i(TAG, "action_accept_alarm");
+            if (mConnection.mBound) {
+                mConnection.mSdServer.acceptAlarm();
+            }
+            return true;
+        } else if (itemId == R.id.action_exit) {
+            // Respond to the start/stop server menu item.
+            Log.i(TAG, "action_exit: Stopping Server");
 
-            case R.id.action_update_pinetime_firmware:
-                Log.i(TAG, "action_update_pinetime_firmware");
-                launchPineTimeUpdater();
-                return true;
+            // Set flag to indicate user explicitly stopped the service
+            SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
+            prefs.edit().putBoolean("user_stopped_service", true).apply();
+            Log.i(TAG, "action_exit: Set user_stopped_service flag");
 
-            case R.id.action_accept_alarm:
-                Log.i(TAG, "action_accept_alarm");
-                if (mConnection.mBound) {
-                    mConnection.mSdServer.acceptAlarm();
+            mUtil.unbindFromServer(getApplicationContext(), mConnection);
+            stopServer();
+            // We exit this activity as a crude way of forcing the fragments to disconnect from the server
+            // so that the server exits properly - otherwise we end up with multiple threads running.
+            // FIXME - tell the threads to unbind from the serer before calling stopServer as an alternative.
+            finish();
+            return true;
+        } else if (itemId == R.id.action_start_stop) {
+            // FIXME: We need to unbind the fragments from the service, or else unbindFromServer does not work!
+            // Disabled this menu option until I work out how to fix it!
+            Log.i(TAG, "action_start_stop: restarting server");
+            mUtil.unbindFromServer(this, mConnection );
+            mUtil.showToast("Stopping Background Service....");
+            mUtil.stopServer();
+            // Wait 1 second to give the server chance to shutdown, then re-start it
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    mUtil.showToast("NOT Re-Starting Background Service...");
+                    //mUtil.startServer();
                 }
-                return true;
-            case R.id.action_exit:
-                // Respond to the start/stop server menu item.
-                Log.i(TAG, "action_exit: Stopping Server");
-
-                // Set flag to indicate user explicitly stopped the service
-                SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
-                prefs.edit().putBoolean("user_stopped_service", true).apply();
-                Log.i(TAG, "action_exit: Set user_stopped_service flag");
-
-                mUtil.unbindFromServer(getApplicationContext(), mConnection);
-                stopServer();
-                // We exit this activity as a crude way of forcing the fragments to disconnect from the server
-                // so that the server exits properly - otherwise we end up with multiple threads running.
-                // FIXME - tell the threads to unbind from the serer before calling stopServer as an alternative.
-                finish();
-                return true;
-            case R.id.action_start_stop:
-                // FIXME: We need to unbind the fragments from the service, or else unbindFromServer does not work!
-                // Disabled this menu option until I work out how to fix it!
-                Log.i(TAG, "action_start_stop: restarting server");
-                mUtil.unbindFromServer(this, mConnection );
-                mUtil.showToast("Stopping Background Service....");
-                mUtil.stopServer();
-                // Wait 1 second to give the server chance to shutdown, then re-start it
-                mHandler.postDelayed(new Runnable() {
-                    public void run() {
-                        mUtil.showToast("NOT Re-Starting Background Service...");
-                        //mUtil.startServer();
-                    }
-                }, 1000);
-                return true;
-            case R.id.action_test_alarm_beep:
-                Log.i(TAG, "action_test_alarm_beep");
-                if (mConnection.mBound) {
-                    mConnection.mSdServer.alarmBeep();
-                }
-                return true;
-            case R.id.action_test_warning_beep:
-                Log.i(TAG, "action_test_warning_beep");
-                if (mConnection.mBound) {
-                    mConnection.mSdServer.warningBeep();
-                }
-                return true;
-            case R.id.action_test_sms_alarm:
-                Log.i(TAG, "action_test_sms_alarm");
-                if (mConnection.mBound) {
-                    mConnection.mSdServer.sendSMSAlarm();
-                }
-                return true;
-            case R.id.action_send_false_alarm_sms:
-                Log.i(TAG, "action_send_false_alarm_sms");
-                if (mConnection.mBound) {
-                    mConnection.mSdServer.sendFalseAlarmSMS();
-                }
-                return true;
-
-            case R.id.action_authenticate_api:
-                Log.i(TAG, "action_autheticate_api");
-                try {
-                    Intent i = new Intent(
-                            MainActivity2.this,
-                            AuthenticateActivity.class);
-                    this.startActivity(i);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting export activity " + ex.toString());
-                }
-                return true;
-            case R.id.action_about_datasharing:
-                Log.i(TAG, "action_about_datasharing");
-                showDataSharingDialog();
-                return true;
-            case R.id.action_logmanager:
-                Log.i(TAG, "action_logmanager");
-                try {
-                    Intent intent = new Intent(
-                            MainActivity2.this,
-                            LogManagerControlActivity.class);
-                    this.startActivity(intent);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting log manager activity " + ex.toString());
-                }
-                return true;
-            case R.id.action_report_seizure:
-                Log.i(TAG, "action_report_seizure");
-                try {
-                    Intent intent = new Intent(
-                            MainActivity2.this,
-                            ReportSeizureActivity.class);
-                    this.startActivity(intent);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting Report Seizure activity " + ex.toString());
-                }
-                return true;
-            case R.id.action_settings:
-                Log.i(TAG, "action_settings");
-                try {
-                    Intent prefsIntent = new Intent(
-                            MainActivity2.this,
-                            PrefActivity.class);
-                    this.startActivity(prefsIntent);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting settings activity " + ex.toString());
-                }
-                return true;
-            case R.id.action_instructions:
-                Log.i(TAG, "action_instructions");
-                try {
-                    String url = "https://www.openseizuredetector.org.uk/?page_id=1894";
-                    Intent i = new Intent(Intent.ACTION_VIEW);
-                    i.setData(Uri.parse(url));
-                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(i);
-                } catch (Exception ex) {
-                    Log.v(TAG, "exception displaying instructions " + ex.toString());
-                    mUtil.showToast("ERROR Displaying Instructions");
-                }
-                return true;
-
-            case R.id.action_troubleshooting:
-                Log.i(TAG, "action_troubleshooting");
-                try {
-                    String url = "https://www.openseizuredetector.org.uk/?page_id=2235";
-                    Intent i = new Intent(Intent.ACTION_VIEW);
-                    i.setData(Uri.parse(url));
-                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(i);
-                } catch (Exception ex) {
-                    Log.v(TAG, "exception displaying troubleshooting " + ex.toString());
-                    mUtil.showToast("ERROR Displaying Troubleshooting Tips");
-                }
-                return true;
-
-            case R.id.action_about:
-                Log.i(TAG, "action_about");
-                showAbout();
-                return true;
-
-            default:
-                return super.onOptionsItemSelected(item);
+            }, 1000);
+            return true;
+        } else if (itemId == R.id.action_test_alarm_beep) {
+            Log.i(TAG, "action_test_alarm_beep");
+            if (mConnection.mBound) {
+                mConnection.mSdServer.alarmBeep();
+            }
+            return true;
+        } else if (itemId == R.id.action_test_warning_beep) {
+            Log.i(TAG, "action_test_warning_beep");
+            if (mConnection.mBound) {
+                mConnection.mSdServer.warningBeep();
+            }
+            return true;
+        } else if (itemId == R.id.action_test_sms_alarm) {
+            Log.i(TAG, "action_test_sms_alarm");
+            if (mConnection.mBound) {
+                mConnection.mSdServer.sendSMSAlarm();
+            }
+            return true;
+        } else if (itemId == R.id.action_send_false_alarm_sms) {
+            Log.i(TAG, "action_send_false_alarm_sms");
+            if (mConnection.mBound) {
+                mConnection.mSdServer.sendFalseAlarmSMS();
+            }
+            return true;
+        } else if (itemId == R.id.action_authenticate_api) {
+            Log.i(TAG, "action_autheticate_api");
+            try {
+                Intent i = new Intent(
+                        MainActivity2.this,
+                        AuthenticateActivity.class);
+                this.startActivity(i);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting export activity " + ex.toString());
+            }
+            return true;
+        } else if (itemId == R.id.action_about_datasharing) {
+            Log.i(TAG, "action_about_datasharing");
+            showDataSharingDialog();
+            return true;
+        } else if (itemId == R.id.action_logmanager) {
+            Log.i(TAG, "action_logmanager");
+            try {
+                Intent intent = new Intent(
+                        MainActivity2.this,
+                        LogManagerControlActivity.class);
+                this.startActivity(intent);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting log manager activity " + ex.toString());
+            }
+            return true;
+        } else if (itemId == R.id.action_report_seizure) {
+            Log.i(TAG, "action_report_seizure");
+            try {
+                Intent intent = new Intent(
+                        MainActivity2.this,
+                        ReportSeizureActivity.class);
+                this.startActivity(intent);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting Report Seizure activity " + ex.toString());
+            }
+            return true;
+        } else if (itemId == R.id.action_settings) {
+            Log.i(TAG, "action_settings");
+            try {
+                Intent prefsIntent = new Intent(
+                        MainActivity2.this,
+                        PrefActivity.class);
+                this.startActivity(prefsIntent);
+            } catch (Exception ex) {
+                Log.i(TAG, "exception starting settings activity " + ex.toString());
+            }
+            return true;
+        } else if (itemId == R.id.action_instructions) {
+            Log.i(TAG, "action_instructions");
+            try {
+                String url = "https://www.openseizuredetector.org.uk/?page_id=1894";
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse(url));
+                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+            } catch (Exception ex) {
+                Log.v(TAG, "exception displaying instructions " + ex.toString());
+                mUtil.showToast("ERROR Displaying Instructions");
+            }
+            return true;
+        } else if (itemId == R.id.action_troubleshooting) {
+            Log.i(TAG, "action_troubleshooting");
+            try {
+                String url = "https://www.openseizuredetector.org.uk/?page_id=2235";
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse(url));
+                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+            } catch (Exception ex) {
+                Log.v(TAG, "exception displaying troubleshooting " + ex.toString());
+                mUtil.showToast("ERROR Displaying Troubleshooting Tips");
+            }
+            return true;
+        } else if (itemId == R.id.action_about) {
+            Log.i(TAG, "action_about");
+            showAbout();
+            return true;
         }
+
+        return super.onOptionsItemSelected(item);
     }
 
 
