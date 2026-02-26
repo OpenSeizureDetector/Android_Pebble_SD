@@ -192,6 +192,28 @@ public class PersistentFileLogger {
         return logFiles != null ? logFiles : new File[0];
     }
 
+    public File getLogDir() {
+        return mLogDir;
+    }
+
+    public File getDataLogDir() {
+        File dir = mContext.getExternalFilesDir(null);
+        if (dir == null) {
+            dir = mContext.getFilesDir();
+        }
+        return dir;
+    }
+
+    public File[] getDataLogFiles() {
+        File dir = getDataLogDir();
+        File[] files = dir.listFiles();
+        return files != null ? files : new File[0];
+    }
+
+    public File getDataLogFile(String fileName) {
+        return new File(getDataLogDir(), fileName);
+    }
+
     /**
      * Get the current log file path
      */

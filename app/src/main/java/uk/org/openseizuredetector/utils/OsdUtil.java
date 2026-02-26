@@ -27,7 +27,6 @@ import uk.org.openseizuredetector.R;
 
 import uk.org.openseizuredetector.activity.logging.LogManager;
 import uk.org.openseizuredetector.client.SdServiceConnection;
-import uk.org.openseizuredetector.utils.OsdUtil;
 import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -45,7 +44,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
 import android.os.Handler;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
@@ -59,7 +57,6 @@ import androidx.core.content.ContextCompat;
 import org.apache.http.conn.util.InetAddressUtils;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.text.NumberFormat;
@@ -67,7 +64,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -83,19 +79,12 @@ public class OsdUtil {
     public final static String PRIVACY_POLICY_URL = "https://www.openseizuredetector.org.uk/?page_id=1415";
     public final static String DATA_SHARING_URL = "https://www.openseizuredetector.org.uk/?page_id=1818";
 
-    private final String SYSLOG = "SysLog";
-    private final String ALARMLOG = "AlarmLog";
-    private final String DATALOG = "DataLog";
-
     /**
      * Based on http://stackoverflow.com/questions/7440473/android-how-to-check-if-the-intent-service-is-still-running-or-has-stopped-running
      */
     private static Context mContext;
     private Handler mHandler;
     private static String TAG = "OsdUtil";
-    private boolean mLogAlarms = true;
-    private boolean mLogSystem = true;
-    private boolean mLogData = true;
     private boolean mPermissionsRequested = false;
     private boolean mSMSPermissionsRequested = false;
     private static final String mSysLogTableName = "SysLog";
@@ -136,7 +125,6 @@ public class OsdUtil {
     public OsdUtil(Context context, Handler handler) {
         mContext = context;
         mHandler = handler;
-        updatePrefs();
 
         // Initialize file logger (thread-safe singleton)
         if (mFileLogger == null) {
@@ -178,29 +166,6 @@ public class OsdUtil {
                 break;
         }
     }
-
-    /**
-     * updatePrefs() - update basic settings from the SharedPreferences
-     * - defined in res/xml/prefs.xml
-     */
-    public void updatePrefs() {
-        Log.v(TAG, "updatePrefs()");
-        SharedPreferences SP = PreferenceManager
-                .getDefaultSharedPreferences(mContext);
-        try {
-            mLogAlarms = SP.getBoolean("LogAlarms", true);
-            Log.v(TAG, "updatePrefs() - mLogAlarms = " + mLogAlarms);
-            mLogData = SP.getBoolean("LogData", true);
-            Log.v(TAG, "OsdUtil.updatePrefs() - mLogData = " + mLogData);
-            mLogSystem = SP.getBoolean("LogSystem", true);
-            Log.v(TAG, "updatePrefs() - mLogSystem = " + mLogSystem);
-
-        } catch (Exception ex) {
-            Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
-            showToast(mContext.getString(R.string.ParsePreferenceWarning));
-        }
-    }
-
 
     /**
      * used to make sure timers etc. run on UI thread
@@ -495,100 +460,6 @@ public class OsdUtil {
             Log.e(TAG, "Error writing exception log: " + e.getMessage(), e);
         }
     }
-
-
-    /**
-     * Write a message to the alarm log file, provided mLogAlarms is true.
-     *
-     * @param msgStr
-     */
-    public void writeToAlarmLogFile(String msgStr) {
-        if (mLogAlarms)
-            writeToLogFile(ALARMLOG, msgStr);
-        else
-            Log.v(TAG, "writeToAlarmLogFile - mLogAlarms False so not writing");
-    }
-
-    /**
-     * Write a message to the data log file, provided mLogData is true.
-     *
-     * @param msgStr
-     */
-    public void writeToDataLogFile(String msgStr) {
-        if (mLogData)
-            writeToLogFile(DATALOG, msgStr);
-        else
-            Log.v(TAG, "writeToDataLogFile - mLogData False so not writing");
-    }
-
-
-    /**
-     * Write data to SD card - writes to data log file unless alarm=true,
-     * in which case writes to alarm log file.
-     */
-    public void writeToLogFile(String fname, String msgStr) {
-        //Log.v(TAG, "writeToLogFile(" + fname + "," + msgStr + ")");
-        //showToast("Logging " + msgStr);
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        String dateStr = dateFormat.format(Calendar.getInstance().getTime());
-
-        fname = fname + "_" + dateStr + ".txt";
-        // Open output directory on SD Card.
-        if (ContextCompat.checkSelfPermission(mContext,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            Log.e(TAG, "ERROR: We do not have permission to write to external storage");
-        } else {
-            if (isExternalStorageWritable()) {
-                try {
-                    FileWriter of = new FileWriter(getDataStorageDir() + "/" + fname, true);
-                    if (msgStr != null) {
-                        long tnow = System.currentTimeMillis();
-                        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-                        String dateTimeStr = dateTimeFormat.format(new Date(tnow));
-                        //Log.v(TAG, "writing msgStr");
-                        of.append(dateTimeStr + ", "
-                                + tnow + ", "
-                                + msgStr + "<br/>\n");
-                    }
-                    of.close();
-                } catch (Exception ex) {
-                    Log.e(TAG, "writeToLogFile - error " + ex.toString());
-                    for (int i = 0; i < (ex.getStackTrace().length); i++) {
-                        Log.e(TAG, "writeToLogFile - error " + ex.getStackTrace()[i]);
-                    }
-                    showToast(mContext.getString(R.string.ErrorWritingLogFileWarning) + ex.toString());
-                }
-            } else {
-                Log.e(TAG, "ERROR - Can not Write to External Folder");
-            }
-        }
-    }
-
-    public File[] getDataFilesList() {
-        File[] files = getDataStorageDir().listFiles();
-        Log.d("Files", "Size: " + files.length);
-        for (int i = 0; i < files.length; i++) {
-            Log.d("Files", "FileName:" + files[i].getName());
-        }
-        return (files);
-    }
-
-    /* Checks if external storage is available for read and write */
-    public boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            return true;
-        }
-        return false;
-    }
-
-    public File getDataStorageDir() {
-        // Get the directory for the user's public directory.
-        File file = mContext.getExternalFilesDir(null);
-        return file;
-    }
-
 
     public String getPreferredPebbleAppPackageName() {
         // returns the package name of the preferred Android Pebble App.
@@ -1011,5 +882,9 @@ public class OsdUtil {
             return mFileLogger.getCurrentLogPath();
         }
         return null;
+    }
+
+    public PersistentFileLogger getFileLogger() {
+        return mFileLogger;
     }
 }

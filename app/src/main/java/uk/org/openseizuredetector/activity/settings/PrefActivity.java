@@ -28,6 +28,7 @@ import uk.org.openseizuredetector.R;
 
 import uk.org.openseizuredetector.alg.MlModelManager;
 import uk.org.openseizuredetector.utils.OsdUtil;
+import uk.org.openseizuredetector.utils.SettingsUtil;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -106,30 +107,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
      * @param readAgain Whether to force-read the defaults even if they have been read before.
      */
     public static void initialiseDefaultValues(Context context, boolean readAgain) {
-        Log.i(TAG, "initialiseDefaultValues(force=" + readAgain + ")");
-        
-        int[] prefResources = {
-                R.xml.general_prefs,
-                R.xml.data_source_prefs,
-                R.xml.alarm_prefs,
-                R.xml.logging_prefs,
-                R.xml.sd_prefs_main,
-                R.xml.sd_prefs_voting,
-                R.xml.sd_prefs_osd,
-                R.xml.sd_prefs_flap,
-                R.xml.sd_prefs_ml,
-                R.xml.sd_prefs_hr,
-                R.xml.sd_prefs_o2,
-                R.xml.sd_prefs_fall,
-                R.xml.sd_prefs_fidget,
-                R.xml.pebble_datasource_prefs,
-                R.xml.network_datasource_prefs,
-                R.xml.network_passive_datasource_prefs
-        };
-
-        for (int resId : prefResources) {
-            PreferenceManager.setDefaultValues(context, resId, readAgain);
-        }
+        SettingsUtil.initialiseDefaultValues(context, readAgain);
     }
 
     @Override

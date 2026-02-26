@@ -4,6 +4,8 @@ import uk.org.openseizuredetector.SdServer;
 import uk.org.openseizuredetector.data.SdData;
 import uk.org.openseizuredetector.datasource.SdDataSource;
 import uk.org.openseizuredetector.utils.OsdUtil;
+import uk.org.openseizuredetector.utils.PersistentFileLogger;
+import uk.org.openseizuredetector.utils.SettingsUtil;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.os.Handler;
@@ -19,7 +21,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import fi.iki.elonen.NanoHTTPD;
@@ -197,6 +201,44 @@ public class SdWebServer extends NanoHTTPD {
                 answer = "{'msg' : 'Alarm Accepted'}";
                 break;
 
+            case "/config":
+                switch (method) {
+                    case GET:
+                        try {
+                            JSONObject prefsJson = SettingsUtil.getPreferencesAsJson(mContext);
+                            answer = prefsJson.toString();
+                        } catch (Exception ex) {
+                            Log.v(TAG, "Error Creating Config Object - " + ex.toString());
+                            return new Response(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT,
+                                    "Error Creating Config Object: " + ex.getMessage());
+                        }
+                        break;
+                    case POST:
+                        String configPayload = null;
+                        if (parameters != null && parameters.get("dataObj") != null) {
+                            configPayload = parameters.get("dataObj").toString();
+                        } else if (files != null) {
+                            configPayload = files.get("postData");
+                        }
+                        SettingsUtil.UpdateResult updateResult = SettingsUtil.applyPreferencesFromJson(mContext, configPayload);
+                        if (updateResult.errorMessage != null) {
+                            return new Response(Response.Status.BAD_REQUEST, MIME_PLAINTEXT,
+                                    updateResult.errorMessage);
+                        }
+                        answer = updateResult.toJson().toString();
+                        if (updateResult.hasChanges()) {
+                            // Restart server after response is prepared.
+                            mHandler.post(() -> {
+                                mUtil.stopServer();
+                                mHandler.postDelayed(() -> mUtil.startServer(), 1500);
+                            });
+                        }
+                        break;
+                    default:
+                        Log.v(TAG, "WebServer.serve() - Unrecognised method - " + method);
+                }
+                break;
+
             default:
                 if (uri.startsWith("/index.html") ||
                         uri.startsWith("/logfiles.html") ||
@@ -252,12 +294,26 @@ public class SdWebServer extends NanoHTTPD {
 
                 try {
                     JSONObject jsonObj = new JSONObject();
-                    File[] fileList = mUtil.getDataFilesList();
-                    Log.v(TAG, "serveLogFile(): fileList=" + fileList.toString() + ", length=" + fileList.length);
+                    Set<String> fileNames = new LinkedHashSet<>();
+                    PersistentFileLogger logger = mUtil.getFileLogger();
+                    if (logger != null) {
+                        File[] dataFiles = logger.getDataLogFiles();
+                        for (File file : dataFiles) {
+                            if (file != null) {
+                                fileNames.add(file.getName());
+                            }
+                        }
+                        File[] persistentFiles = logger.getLogFiles();
+                        for (File file : persistentFiles) {
+                            if (file != null) {
+                                fileNames.add(file.getName());
+                            }
+                        }
+                    }
+
                     JSONArray arr = new JSONArray();
-                    for (int i = 0; i < fileList.length; i++) {
-                        Log.v(TAG, "serveLogFile(): file[" + i + "]=" + fileList[i]);
-                        arr.put(fileList[i].getName());
+                    for (String name : fileNames) {
+                        arr.put(name);
                     }
                     jsonObj.put("logFileList", arr);
                     res = new NanoHTTPD.Response(NanoHTTPD.Response.Status.OK,
@@ -271,7 +327,23 @@ public class SdWebServer extends NanoHTTPD {
 
             uripart = uriParts.nextToken();  // This will just be /logs
             uripart = uriParts.nextToken();  // this is the requested file.
-            String fname = mUtil.getDataStorageDir().toString() + "/" + uripart;
+            if (uripart.contains("/") || uripart.contains("..")) {
+                return new NanoHTTPD.Response("serveLogFile(): Invalid file name " + uri);
+            }
+
+            PersistentFileLogger logger = mUtil.getFileLogger();
+            if (logger == null) {
+                return new NanoHTTPD.Response("serveLogFile(): Logger unavailable " + uri);
+            }
+
+            File dataFile = logger.getDataLogFile(uripart);
+            File persistentFile = new File(logger.getLogDir(), uripart);
+            File targetFile = dataFile.exists() ? dataFile : persistentFile;
+            if (!targetFile.exists()) {
+                return new NanoHTTPD.Response("serveLogFile(): Error Opening file " + uri);
+            }
+
+            String fname = targetFile.getAbsolutePath();
             Log.v(TAG, "serveLogFile - uri=" + uri + ", fname=" + fname);
             ip = new FileInputStream(fname);
             String mimeStr = "text/html";
