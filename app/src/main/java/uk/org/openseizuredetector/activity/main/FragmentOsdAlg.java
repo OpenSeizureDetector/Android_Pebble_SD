@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import androidx.appcompat.content.res.AppCompatResources;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.LineGraphSeries;
@@ -75,11 +76,11 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             pb = ((ProgressBar) mRootView.findViewById(R.id.powerProgressBar));
             pb.setMax(100);
             pb.setProgress((int) powerPc);
-            pbDrawable = mContext.getDrawable(R.drawable.progress_bar_blue);
+            pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_blue);
             if (powerPc > 75)
-                pbDrawable = mContext.getDrawable(R.drawable.progress_bar_yellow);
+                pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_yellow);
             if (powerPc > 100)
-                pbDrawable = mContext.getDrawable(R.drawable.progress_bar_red);
+                pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_red);
             pb.setProgressDrawable(pbDrawable);
 
             ((TextView) mRootView.findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
@@ -88,11 +89,11 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             pb = ((ProgressBar) mRootView.findViewById(R.id.spectrumProgressBar));
             pb.setMax(100);
             pb.setProgress((int) specPc);
-            pbDrawable = mContext.getDrawable(R.drawable.progress_bar_blue);
+            pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_blue);
             if (specPc > 75)
-                pbDrawable = mContext.getDrawable(R.drawable.progress_bar_yellow);
+                pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_yellow);
             if (specPc > 100)
-                pbDrawable = mContext.getDrawable(R.drawable.progress_bar_red);
+                pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_red);
             pb.setProgressDrawable(pbDrawable);
 
             long pSeizurePc;
@@ -103,11 +104,11 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             pb = ((ProgressBar) mRootView.findViewById(R.id.pSeizureProgressBarM2));
             pb.setMax(100);
             pb.setProgress((int) pSeizurePc);
-            pbDrawable = mContext.getDrawable(R.drawable.progress_bar_blue);
+            pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_blue);
             if (pSeizurePc > 30)
-                pbDrawable = mContext.getDrawable(R.drawable.progress_bar_yellow);
+                pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_yellow);
             if (pSeizurePc > 50)
-                pbDrawable = mContext.getDrawable(R.drawable.progress_bar_red);
+                pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_red);
             pb.setProgressDrawable(pbDrawable);
 
             ////////////////////////////////////////////////////////////

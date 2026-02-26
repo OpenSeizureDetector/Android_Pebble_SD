@@ -36,6 +36,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -55,6 +56,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -500,8 +502,8 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getString(R.string.AppPermissionsOk));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_background));
                 tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_text));
-                pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
-                pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
+                pb.setIndeterminateDrawable(getCheckboxDrawable());
+                pb.setProgressDrawable(getCheckboxDrawable());
 
                 if (mSdDataSourceName.equals("BLE") || mSdDataSourceName.equals("BLE2")) {
                     if (!mUtil.areBtPermissionsOk()) {
@@ -565,8 +567,8 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getText(R.string.DiallerNotInstalledWarning));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_error_background));
                 tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_error_text));
-                pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
-                pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
+                pb.setIndeterminateDrawable(getCheckboxDrawable());
+                pb.setProgressDrawable(getCheckboxDrawable());
                 allOk = false;
             }
 
@@ -580,8 +582,8 @@ public class StartupActivity extends AppCompatActivity {
                     tv.setText("Requesting Permissions");
                     tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                     tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
-                    pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
-                    pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
+                    pb.setIndeterminateDrawable(getCheckboxDrawable());
+                    pb.setProgressDrawable(getCheckboxDrawable());
 
                     // Request activity recognition permission (also covers health monitoring)
                     ActivityCompat.requestPermissions(StartupActivity.this,
@@ -611,8 +613,8 @@ public class StartupActivity extends AppCompatActivity {
                     tv.setText("Starting Server");
                     tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                     tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
-                    pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
-                    pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
+                    pb.setIndeterminateDrawable(getCheckboxDrawable());
+                    pb.setProgressDrawable(getCheckboxDrawable());
                     mMode = MODE_START_SERVER;
                 } else {
                     // Don't bind or continue if shutting down
@@ -624,8 +626,8 @@ public class StartupActivity extends AppCompatActivity {
                     tv.setText(getString(R.string.ServerRunningOK));
                     tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_background));
                     tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_text));
-                    pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
-                    pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
+                    pb.setIndeterminateDrawable(getCheckboxDrawable());
+                    pb.setProgressDrawable(getCheckboxDrawable());
                     if (mBindInProgress) {
                         Log.i(TAG,"Waiting to bind to server");
                     } else {
@@ -646,8 +648,8 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getString(R.string.BoundToServiceOk));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_background));
                 tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_text));
-                pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
-                pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
+                pb.setIndeterminateDrawable(getCheckboxDrawable());
+                pb.setProgressDrawable(getCheckboxDrawable());
             } else {
                 tv.setText(getString(R.string.BindingToService));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
@@ -663,8 +665,8 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getString(R.string.WatchConnectedOk));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_background));
                 tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_text));
-                pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
-                pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
+                pb.setIndeterminateDrawable(getCheckboxDrawable());
+                pb.setProgressDrawable(getCheckboxDrawable());
             } else {
                 tv.setText(getString(R.string.WatchNotConnected));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
@@ -681,8 +683,8 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getString(R.string.SeizureDetectorDataReceived));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_background));
                 tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_text));
-                pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
-                pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
+                pb.setIndeterminateDrawable(getCheckboxDrawable());
+                pb.setProgressDrawable(getCheckboxDrawable());
             } else {
                 tv.setText(getString(R.string.WaitingForSeizureDetectorData));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
@@ -699,8 +701,8 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getString(R.string.SeizureDetectorSettingsReceived));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_background));
                 tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_text));
-                pb.setIndeterminateDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
-                pb.setProgressDrawable(getResources().getDrawable(android.R.drawable.checkbox_on_background));
+                pb.setIndeterminateDrawable(getCheckboxDrawable());
+                pb.setProgressDrawable(getCheckboxDrawable());
             } else {
                 tv.setText(getString(R.string.WaitingForSeizureDetectorSettings));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
@@ -1225,6 +1227,10 @@ public class StartupActivity extends AppCompatActivity {
         });
 
         dialog.show();
+    }
+
+    private Drawable getCheckboxDrawable() {
+         return AppCompatResources.getDrawable(this, android.R.drawable.checkbox_on_background);
     }
 
 
