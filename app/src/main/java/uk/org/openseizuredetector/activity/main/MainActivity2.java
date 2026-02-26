@@ -41,7 +41,6 @@ import uk.org.openseizuredetector.client.SdServiceConnection;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.MenuCompat;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
@@ -63,7 +62,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import androidx.activity.OnBackPressedCallback;
 import androidx.preference.PreferenceManager;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
+
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -127,27 +130,24 @@ public class MainActivity2 extends AppCompatActivity {
         // Configure system bar appearance - ensure icons are visible
         // The system will show light icons on dark background and dark icons on light background
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            // Get the window and set it to draw edge-to-edge
-            getWindow().setNavigationBarColor(getColor(android.R.color.transparent));
-            getWindow().setStatusBarColor(getColor(android.R.color.transparent));
-
-            // Let system determine icon colors based on the background
-            // In light mode: dark icons; in dark mode: light icons
-            View decorView = getWindow().getDecorView();
-            int flags = decorView.getSystemUiVisibility();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                // Check if in light mode (light background requires dark icons)
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (controller != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 boolean isLightMode = isLightTheme();
-                if (isLightMode) {
-                    // Light mode: use dark icons for status bar
-                    flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-                } else {
-                    // Dark mode: use light icons (default)
-                    flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-                }
-                decorView.setSystemUiVisibility(flags);
+                controller.setAppearanceLightStatusBars(isLightMode);
+                controller.setAppearanceLightNavigationBars(isLightMode);
             }
         }
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (mUtil != null) {
+                    mUtil.writeToSysLogFile("MainActivity2.onBackPressed() - closing activity", "LIFECYCLE");
+                }
+                finish();
+            }
+        });
     }
 
     /**
@@ -326,15 +326,6 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
 
-    @Override
-    public void onBackPressed() {
-        // Close MainActivity2 - users can navigate tabs with swipe or tab clicks
-        // The back button always exits the activity
-        if (mUtil != null) {
-            mUtil.writeToSysLogFile("MainActivity2.onBackPressed() - closing activity", "LIFECYCLE");
-        }
-        super.onBackPressed();
-    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

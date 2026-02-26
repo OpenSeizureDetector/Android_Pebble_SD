@@ -27,6 +27,13 @@
         <item name="alertDialogTheme">@style/ThemeOverlay.Material3.MaterialAlertDialog</item>
     </style>
 
+    <!-- Transparent system bars for edge-to-edge activities. -->
+    <style name="AppTheme.TransparentSystemBars" parent="AppTheme">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
+
     <!-- Branded ActionBar Style -->
     <style name="AppTheme.ActionBar" parent="Widget.Material3.ActionBar.Solid">
         <item name="android:background">@color/colorPrimary</item>
