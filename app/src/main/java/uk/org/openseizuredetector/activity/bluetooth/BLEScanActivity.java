@@ -23,26 +23,22 @@ import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.ListActivity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
-import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.preference.PreferenceManager;
-import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -59,7 +55,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.view.MenuItemCompat;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 
 import java.util.ArrayList;
 
@@ -80,9 +77,8 @@ public class BLEScanActivity extends AppCompatActivity {
 
     private boolean mPermissionsRequested = false;
     private final String TAG = "BLEScanActivity";
+    private ActivityResultLauncher<Intent> mEnableBtLauncher;
 
-
-    private static final int REQUEST_ENABLE_BT = 1;
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10000;
 
@@ -169,13 +165,22 @@ public class BLEScanActivity extends AppCompatActivity {
             Log.i(TAG, "Returning to onboarding with selected device");
             finish();
         });
+
+        mEnableBtLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_CANCELED) {
+                        Log.i(TAG, "onActivityResult - Bluetooth not enabled");
+                        finish();
+                    }
+                });
     }
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.ble_scan_menu, menu);
         if (!mScanning) {
             menu.findItem(R.id.menu_stop).setVisible(false);
             menu.findItem(R.id.menu_scan).setVisible(true);
-            MenuItemCompat.setActionView(menu.findItem(R.id.menu_refresh), null);
+            menu.findItem(R.id.menu_refresh).setActionView(null);
         } else {
             menu.findItem(R.id.menu_stop).setVisible(true);
             menu.findItem(R.id.menu_scan).setVisible(false);
@@ -205,17 +210,6 @@ public class BLEScanActivity extends AppCompatActivity {
     public void onCancelButtonClick(View v) {
         Log.i(TAG, "Cancel button clicked - exiting without selecting device");
         finish();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // User chose not to enable Bluetooth.
-        if (requestCode == REQUEST_ENABLE_BT && resultCode == Activity.RESULT_CANCELED) {
-            Log.i(TAG, "onActivityResult - Bluetooth not enabled");
-            finish();
-            return;
-        }
-        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
@@ -251,7 +245,7 @@ public class BLEScanActivity extends AppCompatActivity {
         // Ensures Bluetooth is enabled on the device
         if (!mBluetoothAdapter.isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            mEnableBtLauncher.launch(enableBtIntent);
         }
 
         // Clear devices
@@ -524,12 +518,12 @@ public class BLEScanActivity extends AppCompatActivity {
             // Check if this is a PineTime/InfiniTime device
             if (deviceName != null && (deviceName.contains("PineTime") || deviceName.contains("InfiniTime"))) {
                 // PineTime device - use dark color for emphasis on light blue card background
-                viewHolder.deviceName.setTextColor(getResources().getColor(android.R.color.black));
-                viewHolder.deviceAddress.setTextColor(getResources().getColor(android.R.color.black));
+                viewHolder.deviceName.setTextColor(ContextCompat.getColor(BLEScanActivity.this, android.R.color.black));
+                viewHolder.deviceAddress.setTextColor(ContextCompat.getColor(BLEScanActivity.this, android.R.color.black));
             } else {
                 // Other device - faint color (material design gray)
-                viewHolder.deviceName.setTextColor(getResources().getColor(android.R.color.darker_gray));
-                viewHolder.deviceAddress.setTextColor(getResources().getColor(android.R.color.darker_gray));
+                viewHolder.deviceName.setTextColor(ContextCompat.getColor(BLEScanActivity.this, android.R.color.darker_gray));
+                viewHolder.deviceAddress.setTextColor(ContextCompat.getColor(BLEScanActivity.this, android.R.color.darker_gray));
             }
 
             return view;

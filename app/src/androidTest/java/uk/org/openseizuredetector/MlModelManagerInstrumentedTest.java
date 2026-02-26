@@ -19,42 +19,30 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-
 import androidx.preference.PreferenceManager;
 import uk.org.openseizuredetector.alg.MlModelManager;
 
 @RunWith(AndroidJUnit4.class)
 public class MlModelManagerInstrumentedTest {
     private Context context;
-    private MockWebServer server;
 
     @Before
     public void setUp() throws Exception {
         context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        server = new MockWebServer();
-        server.start();
     }
 
     @After
     public void tearDown() throws Exception {
-        server.shutdown();
+        // No-op
     }
 
     @Test
-    public void testBundledFallbackLoadsOnDevice() throws Exception {
-        android.content.SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-        sp.edit().remove("CnnModelFile").commit();
+    public void testNoInstalledModelsReturnsEmptyList() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        sp.edit().remove(MlModelManager.PREF_INSTALLED_MODELS).commit();
 
         MlModelManager mm = new MlModelManager(context);
-        CountDownLatch latch = new CountDownLatch(1);
-        final MlModelManager.ModelLoadResult[] result = new MlModelManager.ModelLoadResult[1];
-        mm.loadModel(sp, loadResult -> { result[0] = loadResult; latch.countDown(); });
-
-        assertTrue("Callback not invoked", latch.await(5, TimeUnit.SECONDS));
-        assertNotNull("Bundled model should load on device", result[0]);
-        assertNotNull("Model buffer should not be null", result[0].tfliteBuffer);
+        assertTrue("No installed models should return empty list", mm.loadAllActiveModels().isEmpty());
     }
 
     @Test
@@ -67,35 +55,31 @@ public class MlModelManagerInstrumentedTest {
         fos.write(new byte[256]);
         fos.close();
 
-        android.content.SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-        sp.edit().putString("CnnModelFile", fakeModel.getAbsolutePath()).commit();
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        JSONArray installed = new JSONArray();
+        org.json.JSONObject model = new org.json.JSONObject();
+        model.put("name", "Fake Device Model");
+        model.put("fname", fakeModel.getName());
+        model.put("framework", "tflite");
+        model.put("localPath", fakeModel.getAbsolutePath());
+        model.put("input_format_val", 1);
+        model.put("input_size", 125);
+        model.put("alarm_threshold", 2.0);
+        installed.put(model);
+        sp.edit().putString(MlModelManager.PREF_INSTALLED_MODELS, installed.toString()).commit();
 
         MlModelManager mm = new MlModelManager(context);
-        CountDownLatch latch = new CountDownLatch(1);
-        final MlModelManager.ModelLoadResult[] result = new MlModelManager.ModelLoadResult[1];
-        mm.loadModel(sp, loadResult -> { result[0] = loadResult; latch.countDown(); });
-
-        assertTrue("Callback not invoked", latch.await(5, TimeUnit.SECONDS));
-        assertNotNull("Downloaded model should load on device", result[0]);
-        assertNotNull("Model buffer should not be null", result[0].tfliteBuffer);
+        java.util.List<MlModelManager.ModelLoadResult> results = mm.loadAllActiveModels();
+        assertFalse("Downloaded model should load on device", results.isEmpty());
+        MlModelManager.ModelLoadResult loaded = results.get(0);
+        assertNotNull("Loaded model file should not be null", loaded.file);
+        assertTrue("Loaded model file should exist", loaded.file.exists());
     }
 
     @Test
     public void testInvalidFilenameDownloadFailsOnDevice() throws Exception {
-        // Serve index JSON first
-        String indexBody = "[ {\"name\": \"Bad Model\", \"fname\": \"bad_device.tflite\", \"input_format\": 1 } ]";
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(indexBody));
-        String baseUrl = server.url("/static/ml_models/").toString();
+        String baseUrl = "http://127.0.0.1:1/";
         MlModelManager mm = new MlModelManager(context, baseUrl, "index.json");
-
-        CountDownLatch latchIndex = new CountDownLatch(1);
-        final JSONArray[] result = new JSONArray[1];
-        mm.getMlModelIndex(arr -> { result[0] = arr; latchIndex.countDown(); });
-        assertTrue(latchIndex.await(5, TimeUnit.SECONDS));
-        assertNotNull(result[0]);
-
-        // Then 404 on download
-        server.enqueue(new MockResponse().setResponseCode(404));
         CountDownLatch latchDownload = new CountDownLatch(1);
         mm.downloadModel("bad_device.tflite", new AtomicBoolean(false), (ok, file) -> {
             assertFalse(ok);
@@ -105,4 +89,3 @@ public class MlModelManagerInstrumentedTest {
         assertTrue(latchDownload.await(5, TimeUnit.SECONDS));
     }
 }
-
