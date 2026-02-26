@@ -813,7 +813,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         .setTitle(R.string.stop_nda_logging_dialog_title)
                         .setMessage(R.string.stop_nda_logging_dialog_meassage)
                         .setIcon(android.R.drawable.ic_dialog_alert)
-                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        .setPositiveButton(R.string.yes_button_title, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
                                 mLm.disableNDATimer();
                                 MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
@@ -829,14 +829,14 @@ public class LogManagerControlActivity extends AppCompatActivity {
                                 }, 500);
                             }
                         })
-                        .setNegativeButton(android.R.string.no, null)
+                        .setNegativeButton(R.string.no_button_title, null)
                         .show();
             } else {
                 new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
                         .setTitle(R.string.start_nda_logging_dialog_title)
                         .setMessage(R.string.start_nda_logging_dialog_meassage)
                         .setIcon(android.R.drawable.ic_dialog_alert)
-                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                        .setPositiveButton(R.string.yes_button_title, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
                                 mLm.enableNDATimer();
                                 MenuItem startStopNDAMenuItem = mMenu.findItem(R.id.start_stop_nda);
@@ -850,7 +850,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                                 }, 100);
                             }
                         })
-                        .setNegativeButton(android.R.string.no, null)
+                        .setNegativeButton(R.string.no_button_title, null)
                         .show();
 
             }
@@ -861,12 +861,12 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     .setTitle(R.string.mark_unverified_events_unknown_dialog_title)
                     .setMessage(R.string.mark_unverified_events_unknown_dialog_message)
                     .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    .setPositiveButton(R.string.yes_button_title, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int whichButton) {
                             mLm.mWac.markUnverifiedEventsAsUnknown();
                         }
                     })
-                    .setNegativeButton(android.R.string.no, null)
+                    .setNegativeButton(R.string.no_button_title, null)
                     .show();
             return true;
         } else if (itemId == R.id.action_mark_false_alarm) {
@@ -875,12 +875,12 @@ public class LogManagerControlActivity extends AppCompatActivity {
                     .setTitle(R.string.mark_unverified_events_false_alarm_dialog_title)
                     .setMessage(R.string.mark_unverified_events_false_alarm_dialog_message)
                     .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    .setPositiveButton(R.string.yes_button_title, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int whichButton) {
                             mLm.mWac.markUnverifiedEventsAsFalseAlarm();
                         }
                     })
-                    .setNegativeButton(android.R.string.no, null)
+                    .setNegativeButton(R.string.no_button_title, null)
                     .show();
             return true;
         } else if (itemId == R.id.export_data_menuitem) {
