@@ -12,5 +12,11 @@
         style="@android:style/Widget.ProgressBar.Small"
         android:indeterminate="true" />
 
-</LinearLayout>
+    <TextView
+        android:id="@+id/progress_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:textAppearance="?attr/textAppearanceBodyMedium" />
 
+</LinearLayout>
