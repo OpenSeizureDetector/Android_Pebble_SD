@@ -1024,8 +1024,19 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         startActivity(i);
                     } else {
                         Log.v(TAG,"onItemClickListener() - Editing Single event at Position=" + position);
-                        HashMap<String, String> eventObj = (HashMap<String, String>) adapter.getItemAtPosition(position);
-                        String eventId = eventObj.get("id");
+                        Object item = adapter.getItemAtPosition(position);
+                        if (!(item instanceof Map)) {
+                            Log.w(TAG, "onItemClickListener() - unexpected item type: " + item);
+                            return;
+                        }
+                        @SuppressWarnings("unchecked")
+                        Map<String, ?> eventObj = (Map<String, ?>) item;
+                        Object eventIdObj = eventObj.get("id");
+                        String eventId = eventIdObj != null ? eventIdObj.toString() : null;
+                        if (eventId == null) {
+                            Log.w(TAG, "onItemClickListener() - missing event id");
+                            return;
+                        }
                         Intent i = new Intent(getApplicationContext(), EditEventActivity.class);
                         i.putExtra("eventId", eventId);
                         startActivity(i);
@@ -1053,8 +1064,19 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         startActivity(i);
                     } else {
                         Log.v(TAG,"onItemClickListener() - Editing Single event at Position=" + position);
-                        HashMap<String, String> eventObj = (HashMap<String, String>) adapter.getItemAtPosition(position);
-                        String eventId = eventObj.get("id");
+                        Object item = adapter.getItemAtPosition(position);
+                        if (!(item instanceof Map)) {
+                            Log.w(TAG, "onItemClickListener() - unexpected item type: " + item);
+                            return;
+                        }
+                        @SuppressWarnings("unchecked")
+                        Map<String, ?> eventObj = (Map<String, ?>) item;
+                        Object eventIdObj = eventObj.get("id");
+                        String eventId = eventIdObj != null ? eventIdObj.toString() : null;
+                        if (eventId == null) {
+                            Log.w(TAG, "onItemClickListener() - missing event id");
+                            return;
+                        }
                         Intent i = new Intent(getApplicationContext(), EditEventActivity.class);
                         i.putExtra("eventId", eventId);
                         startActivity(i);
@@ -1142,7 +1164,13 @@ public class LogManagerControlActivity extends AppCompatActivity {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             View v = super.getView(position, convertView, parent);
-            Map<String, ?> dataItem = (Map<String, ?>) getItem(position);
+            Object item = getItem(position);
+            if (!(item instanceof Map)) {
+                Log.w(TAG, "getView() - unexpected item type: " + item);
+                return v;
+            }
+            @SuppressWarnings("unchecked")
+            Map<String, ?> dataItem = (Map<String, ?>) item;
             Log.v(TAG, "getView() " + dataItem.toString());
             if (dataItem.get("type").toString().equals("Seizure")) {
                 v.setBackgroundColor(ContextCompat.getColor(LogManagerControlActivity.this, R.color.remote_event_seizure_bg));
