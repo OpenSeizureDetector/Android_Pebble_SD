@@ -925,7 +925,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
-                mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
+                //mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
                 Log.v(TAG, "mSMSAlarm is false - not sending");
             }
             Log.v(TAG, "calling startLatchTimer()");
@@ -1008,7 +1008,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
-                mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
+                //mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
                 Log.v(TAG, "mSMSAlarm is false - not sending");
             }
         }
@@ -1051,7 +1051,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
-                mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
+                //mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
                 Log.v(TAG, "mSMSAlarm is false - not sending");
             }
         }
@@ -1333,11 +1333,11 @@ public class SdServer extends Service implements SdDataReceiver {
 
             } else {
                 Log.i(TAG, "sendFalseAlarmSMS() - Cancel Audible Active - not sending SMS");
-                mUtil.showToast(getString(R.string.cancel_audible_not_sending_sms));
+                //mUtil.showToast(getString(R.string.cancel_audible_not_sending_sms));
             }
         } else {
             Log.i(TAG, "sendFalseAlarmSMS() - SMS Alarms Disabled - not doing anything!");
-            mUtil.showToast(getString(R.string.sms_alarms_disabled));
+            //mUtil.showToast(getString(R.string.sms_alarms_disabled));
         }
     }
 
@@ -1916,7 +1916,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     }
                 } else {
                     Log.i(TAG, "sendSMSAlarm() - SMS Alarms Disabled - not doing anything!");
-                    mUtil.showToast(getString(R.string.sms_alarms_disabled));
+                    //mUtil.showToast(getString(R.string.sms_alarms_disabled));
                 }
 
             }
