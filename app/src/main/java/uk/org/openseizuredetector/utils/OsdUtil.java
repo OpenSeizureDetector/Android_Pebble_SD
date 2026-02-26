@@ -24,11 +24,9 @@
 */
 package uk.org.openseizuredetector.utils;
 import uk.org.openseizuredetector.R;
-
-import uk.org.openseizuredetector.activity.logging.LogManager;
 import uk.org.openseizuredetector.client.SdServiceConnection;
+
 import android.Manifest;
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
@@ -49,9 +47,7 @@ import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import org.apache.http.conn.util.InetAddressUtils;
