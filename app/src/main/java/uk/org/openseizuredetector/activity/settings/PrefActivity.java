@@ -29,8 +29,7 @@ import uk.org.openseizuredetector.R;
 import uk.org.openseizuredetector.alg.MlModelManager;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import uk.org.openseizuredetector.utils.SettingsUtil;
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -72,6 +71,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import uk.org.openseizuredetector.activity.bluetooth.BLEScanActivity;
 import uk.org.openseizuredetector.activity.startup.StartupActivity;
+import com.google.android.material.color.MaterialColors;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class PrefActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener {
     private static final String TAG = "PreferenceActivity";
@@ -661,9 +662,9 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     }
 
     public static class MlAlgPrefsFragment extends PreferenceFragmentCompat {
-        private MlModelManager mMm;
-        private OsdUtil mOsdUtil;
-        private ProgressDialog mProgressDialog;
+         private MlModelManager mMm;
+         private OsdUtil mOsdUtil;
+         private AlertDialog mProgressDialog;
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -706,6 +707,27 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             }
         }
 
+        private void showProgressDialog(String title, String message) {
+            if (getContext() == null) return;
+            View content = LayoutInflater.from(getContext()).inflate(R.layout.dialog_progress, null);
+            TextView messageView = content.findViewById(R.id.progress_message);
+            if (messageView != null) {
+                messageView.setText(message);
+            }
+            mProgressDialog = new MaterialAlertDialogBuilder(getContext())
+                .setTitle(title)
+                .setView(content)
+                .setCancelable(false)
+                .show();
+        }
+
+        private void dismissProgressDialog() {
+            if (mProgressDialog != null) {
+                mProgressDialog.dismiss();
+                mProgressDialog = null;
+            }
+        }
+
         private void showAvailableModelsDialog() {
             if (!mOsdUtil.isNetworkConnected()) {
                 new AlertDialog.Builder(getContext())
@@ -716,9 +738,9 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 return;
             }
 
-            mProgressDialog = ProgressDialog.show(getContext(), "Checking Server", "Fetching available models...", true);
+            showProgressDialog("Checking Server", "Fetching available models...");
             mMm.getMlModelIndex(arr -> {
-                if (mProgressDialog != null) mProgressDialog.dismiss();
+                dismissProgressDialog();
                 if (arr == null) {
                     new AlertDialog.Builder(getContext())
                         .setTitle("Connection Error")
@@ -753,7 +775,9 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                                 ((TextView)v.findViewById(android.R.id.text1)).setTextColor(0xFFFF0000);
                             } else {
                                 // Reset to default color if compatible
-                                ((TextView)v.findViewById(android.R.id.text1)).setTextColor(ViewCompat.MEASURED_STATE_MASK); // or use a theme color
+                                ((TextView)v.findViewById(android.R.id.text1)).setTextColor(
+                                    MaterialColors.getColor(v, com.google.android.material.R.attr.colorOnSurface)
+                                );
                             }
                             return v;
                         }
@@ -777,9 +801,9 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
         private void downloadModel(JSONObject modelInfo) {
             String modelName = modelInfo.optString("name", "Model");
-            mProgressDialog = ProgressDialog.show(getContext(), "Downloading", modelName, true);
+            showProgressDialog("Downloading", modelName);
             mMm.downloadAndInstallModel(modelInfo, (success, file) -> {
-                if (mProgressDialog != null) mProgressDialog.dismiss();
+                dismissProgressDialog();
                 getActivity().runOnUiThread(() -> {
                     if (success) {
                         refreshInstalledModelsList();
