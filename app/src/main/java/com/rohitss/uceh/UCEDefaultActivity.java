@@ -226,7 +226,7 @@ public final class UCEDefaultActivity extends AppCompatActivity {
         String errorLog = getAllErrorDetailsFromIntent(UCEDefaultActivity.this, getIntent());
         Intent share = new Intent(Intent.ACTION_SEND);
         share.setType("text/plain");
-        share.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        share.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         share.putExtra(Intent.EXTRA_SUBJECT, "Application Crash Error Log");
         share.putExtra(Intent.EXTRA_TEXT, errorLog);
         startActivity(Intent.createChooser(share, "Share Error Log"));
@@ -265,7 +265,7 @@ public final class UCEDefaultActivity extends AppCompatActivity {
             errorReport.append(Build.PRODUCT);
             errorReport.append(LINE_SEPARATOR);
             errorReport.append("SDK: ");
-            errorReport.append(Build.VERSION.SDK);
+            errorReport.append(Build.VERSION.SDK_INT);
             errorReport.append(LINE_SEPARATOR);
             errorReport.append("Release: ");
             errorReport.append(Build.VERSION.RELEASE);
