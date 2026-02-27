@@ -18,6 +18,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import android.os.Bundle;
@@ -57,6 +59,18 @@ public class AuthenticateActivity extends AppCompatActivity {
         Log.d(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_authenticate);
+
+        // Configure system bar appearance to be edge-to-edge and handle insets
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (controller != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                boolean isLightMode = isLightTheme();
+                controller.setAppearanceLightStatusBars(isLightMode);
+                controller.setAppearanceLightNavigationBars(isLightMode);
+            }
+        }
+
 
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
@@ -119,6 +133,15 @@ public class AuthenticateActivity extends AppCompatActivity {
         );
 
     }
+
+    /**
+     * Check if the current theme is light mode
+     */
+    private boolean isLightTheme() {
+        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
+    }
+
 
     @Override
     protected void onStart() {

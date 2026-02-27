@@ -38,6 +38,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -71,14 +73,17 @@ public final class UCEDefaultActivity extends AppCompatActivity {
         Log.i(TAG,"onCreate()");
         setContentView(R.layout.default_error_activity);
 
-        // Handle system window insets for proper spacing with system bars
-        View rootView = findViewById(R.id.error_activity_root);
-        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
-            int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
-            int bottomInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
-            v.setPadding(v.getPaddingLeft(), topInset, v.getPaddingRight(), bottomInset);
-            return WindowInsetsCompat.CONSUMED;
-        });
+        // Configure system bar appearance to be edge-to-edge and handle insets
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (controller != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                boolean isLightMode = isLightTheme();
+                controller.setAppearanceLightStatusBars(isLightMode);
+                controller.setAppearanceLightNavigationBars(isLightMode);
+            }
+        }
+
 
         // ...existing code...
         findViewById(R.id.button_close_app).setOnClickListener(new View.OnClickListener() {
@@ -140,6 +145,15 @@ public final class UCEDefaultActivity extends AppCompatActivity {
             }
         });
     }
+
+    /**
+     * Check if the current theme is light mode
+     */
+    private boolean isLightTheme() {
+        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
+    }
+
 
     public String getApplicationName(Context context) {
         ApplicationInfo applicationInfo = context.getApplicationInfo();

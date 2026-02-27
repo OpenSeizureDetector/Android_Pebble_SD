@@ -6,12 +6,15 @@ import uk.org.openseizuredetector.client.SdServiceConnection;
 import uk.org.openseizuredetector.comms.WebApiConnection;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.Context;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import android.util.Log;
@@ -67,20 +70,18 @@ public class EditEventActivity extends AppCompatActivity {
         Log.v(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_event);
-        // Handle system window insets for all API levels
-        View rootView = findViewById(R.id.root_layout_edit_event);
-        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
-            // Get the system bar insets
-            int top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
-            int bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
 
-            // Apply padding to your main content view
-            LinearLayout content = findViewById(R.id.edit_event_content_layout);
-            content.setPadding(0, top, 0, bottom);
+        // Configure system bar appearance to be edge-to-edge and handle insets
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (controller != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                boolean isLightMode = isLightTheme();
+                controller.setAppearanceLightStatusBars(isLightMode);
+                controller.setAppearanceLightNavigationBars(isLightMode);
+            }
+        }
 
-            // Return the insets so they keep propagating
-            return WindowInsetsCompat.CONSUMED;
-        });
 
 
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
@@ -118,6 +119,15 @@ public class EditEventActivity extends AppCompatActivity {
 
 
     }
+
+    /**
+     * Check if the current theme is light mode
+     */
+    private boolean isLightTheme() {
+        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
+    }
+
 
     @Override
     protected void onStart() {

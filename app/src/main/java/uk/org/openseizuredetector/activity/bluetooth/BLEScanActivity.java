@@ -21,7 +21,6 @@ import uk.org.openseizuredetector.R;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import static androidx.core.content.PermissionChecker.PERMISSION_GRANTED;
 
-import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -35,6 +34,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -55,6 +55,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
@@ -95,6 +97,18 @@ public class BLEScanActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         Log.i(TAG,"onCreate()");
         setContentView(R.layout.ble_scan_activity);
+
+        // Configure system bar appearance to be edge-to-edge and handle insets
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (controller != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                boolean isLightMode = isLightTheme();
+                controller.setAppearanceLightStatusBars(isLightMode);
+                controller.setAppearanceLightNavigationBars(isLightMode);
+            }
+        }
+
 
         // Set ActionBar title using getSupportActionBar for AppCompatActivity
         if (getSupportActionBar() != null) {
@@ -175,6 +189,15 @@ public class BLEScanActivity extends AppCompatActivity {
                     }
                 });
     }
+
+    /**
+     * Check if the current theme is light mode
+     */
+    private boolean isLightTheme() {
+        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
+    }
+
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.ble_scan_menu, menu);
         if (!mScanning) {

@@ -9,6 +9,7 @@ import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -16,6 +17,8 @@ import android.os.Looper;
 import androidx.preference.PreferenceManager;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import android.util.Log;
 import android.view.View;
@@ -47,19 +50,17 @@ public class RemoteDbActivity extends AppCompatActivity {
         mContext = this;
         setContentView(R.layout.activity_remote_db);
 
-        // Fix ActionBar overlap by adding top padding to content
-        if (getSupportActionBar() != null) {
-            View contentView = findViewById(android.R.id.content);
-            if (contentView != null) {
-                // Get ActionBar height
-                android.util.TypedValue tv = new android.util.TypedValue();
-                if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
-                    int actionBarHeight = android.util.TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
-                    // Add padding to account for ActionBar
-                    contentView.setPadding(0, actionBarHeight, 0, 0);
-                }
+        // Configure system bar appearance to be edge-to-edge and handle insets
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (controller != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                boolean isLightMode = isLightTheme();
+                controller.setAppearanceLightStatusBars(isLightMode);
+                controller.setAppearanceLightNavigationBars(isLightMode);
             }
         }
+
 
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
         mConnection = new SdServiceConnection(getApplicationContext());
@@ -88,6 +89,15 @@ public class RemoteDbActivity extends AppCompatActivity {
         webSettings.setJavaScriptEnabled(true);
 
     }
+
+    /**
+     * Check if the current theme is light mode
+     */
+    private boolean isLightTheme() {
+        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
+    }
+
 
     private void waitForConnection() {
         // We want the UI to update as soon as it is displayed, but it takes a finite time for

@@ -20,8 +20,11 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.DocumentsContract;
@@ -95,20 +98,18 @@ public class ExportDataActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dbquery);
-        // Handle system window insets for all API levels
-        View rootView = findViewById(R.id.root_layout_export_data);
-        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
-            // Get the system bar insets
-            int top = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top;
-            int bottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
 
-            // Apply padding to your main content view
-            LinearLayout content = findViewById(R.id.export_data_content_layout);
-            content.setPadding(0, top, 0, bottom);
+        // Configure system bar appearance to be edge-to-edge and handle insets
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (controller != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                boolean isLightMode = isLightTheme();
+                controller.setAppearanceLightStatusBars(isLightMode);
+                controller.setAppearanceLightNavigationBars(isLightMode);
+            }
+        }
 
-            // Return the insets so they keep propagating
-            return WindowInsetsCompat.CONSUMED;
-        });
 
 
         mHandler = new Handler(Looper.getMainLooper());
@@ -156,6 +157,15 @@ public class ExportDataActivity extends AppCompatActivity
                     }
                 });
     }
+
+    /**
+     * Check if the current theme is light mode
+     */
+    private boolean isLightTheme() {
+        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
+    }
+
 
     @Override
     public void onStart() {

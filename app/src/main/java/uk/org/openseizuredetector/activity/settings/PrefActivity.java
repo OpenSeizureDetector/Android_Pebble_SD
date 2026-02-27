@@ -34,6 +34,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -58,6 +59,8 @@ import android.widget.Toast;
 import android.view.ViewGroup;
 
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.PreferenceScreen;
 
@@ -126,36 +129,17 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
         setContentView(R.layout.activity_pref);
 
-        final int actionBarHeight;
-        android.util.TypedValue tv = new android.util.TypedValue();
-        if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
-            actionBarHeight = android.util.TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
-        } else {
-            actionBarHeight = 0;
+        // Configure system bar appearance to be edge-to-edge and handle insets
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (controller != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                boolean isLightMode = isLightTheme();
+                controller.setAppearanceLightStatusBars(isLightMode);
+                controller.setAppearanceLightNavigationBars(isLightMode);
+            }
         }
 
-        View rootView = findViewById(android.R.id.content);
-        ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
-            int topInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).top + actionBarHeight;
-            int bottomInset = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
-
-            View fragmentContainer = findViewById(R.id.pref_fragment_container);
-            if (fragmentContainer != null) {
-                fragmentContainer.setPadding(fragmentContainer.getPaddingLeft(),
-                        topInset,
-                        fragmentContainer.getPaddingRight(),
-                        bottomInset);
-            }
-
-            ListView headerList = findViewById(R.id.pref_header_list);
-            if (headerList != null) {
-                headerList.setPadding(headerList.getPaddingLeft(),
-                        topInset,
-                        headerList.getPaddingRight(),
-                        0);
-            }
-            return insets;
-        });
 
         loadHeadersFromXml();
 
@@ -190,6 +174,15 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             }
         });
     }
+
+    /**
+     * Check if the current theme is light mode
+     */
+    private boolean isLightTheme() {
+        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
+    }
+
 
     private void loadHeadersFromXml() {
         try {

@@ -10,7 +10,9 @@ import android.os.Looper;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
+import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
@@ -67,13 +69,19 @@ public class OnboardingActivity extends AppCompatActivity {
             getSupportActionBar().show();
         }
 
-        // Configure system bar appearance - ensure icons are visible
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-            if (controller != null) {
-                controller.setAppearanceLightStatusBars(isLightTheme());
-                controller.setAppearanceLightNavigationBars(isLightTheme());
-            }
+        // Apply padding for system bars
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.onboarding_root), (v, windowInsets) -> {
+            androidx.core.graphics.Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(insets.left, insets.top, insets.right, insets.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });
+
+        // Configure system bar appearance to be edge-to-edge and handle insets
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        if (controller != null) {
+            controller.setAppearanceLightStatusBars(isLightTheme());
+            controller.setAppearanceLightNavigationBars(isLightTheme());
         }
 
         mViewPager = findViewById(R.id.onboarding_viewpager);
@@ -156,6 +164,15 @@ public class OnboardingActivity extends AppCompatActivity {
         updateNavigationButtons(FRAG_WELCOME);
 
     }
+
+    /**
+     * Check if the current theme is light mode
+     */
+    private boolean isLightTheme() {
+        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
+    }
+
 
     @Override
     protected void onResume() {
@@ -280,12 +297,6 @@ public class OnboardingActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Check if the current theme is light mode
-     */
-    private boolean isLightTheme() {
-        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
-        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
-    }
+
 
 }

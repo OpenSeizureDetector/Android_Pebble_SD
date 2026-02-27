@@ -27,6 +27,8 @@ import androidx.core.view.MenuCompat;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.content.ContextCompat;
 
@@ -82,7 +84,7 @@ import uk.org.openseizuredetector.activity.export.ExportDataActivity;
 import uk.org.openseizuredetector.activity.remote.RemoteDbActivity;
 import uk.org.openseizuredetector.activity.settings.PrefActivity;
 public class LogManagerControlActivity extends AppCompatActivity {
-    private String TAG = "LogManagerControlActivity";
+    private final String TAG = "LogManagerControlActivity";
     private static final long GROUPING_WINDOW_MINUTES = 3;
     private static final long GROUPING_WINDOW_MS = GROUPING_WINDOW_MINUTES * 60 * 1000;
     private LogManager mLm;
@@ -97,8 +99,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private SdServiceConnection mConnection;
     private OsdUtil mUtil;
     final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
-    private Integer mUiTimerPeriodFast = 2000;  // 2 seconds - we use fast updating while UI is blank and we are waiting for first data
-    private Integer mUiTimerPeriodSlow = 60000; // 60 seconds - once data has been received and UI populated we only update once per minute.
+    private final Integer mUiTimerPeriodFast = 2000;  // 2 seconds - we use fast updating while UI is blank and we are waiting for first data
     private String mUserId = null;
     private CheckBox mGroupEventsCb;
     private Menu mMenu;
@@ -132,9 +133,23 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_log_manager_control);
 
+        // Configure system bar appearance to be edge-to-edge and handle insets
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (controller != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                boolean isLightMode = isLightTheme();
+                controller.setAppearanceLightStatusBars(isLightMode);
+                controller.setAppearanceLightNavigationBars(isLightMode);
+            }
+        }
+
+
         /* Force display of overflow menu - from stackoverflow
          * "how to force use of..."
+         * REMOVED: Reflective access to sHasPermanentMenuKey causes build errors on newer SDKs
          */
+        /*
         try {
             Log.v(TAG, "trying menubar fiddle...");
             ViewConfiguration config = ViewConfiguration.get(this);
@@ -150,6 +165,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.v(TAG, "menubar fiddle exception: " + e.toString());
         }
+        */
 
         Button authBtn =
                 (Button) findViewById(R.id.auth_button);
@@ -227,6 +243,14 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
         lv = (ListView) findViewById(R.id.remoteEventsLv);
         lv.setOnItemClickListener(onRemoteEventListClick);
+    }
+
+    /**
+     * Check if the current theme is light mode
+     */
+    private boolean isLightTheme() {
+        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
     }
 
     /**
