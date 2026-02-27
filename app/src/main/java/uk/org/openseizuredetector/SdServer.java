@@ -1502,10 +1502,7 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.i(TAG, "startWebServer(): server already running???");
         }
 
-        mNetworkBroadcastReceiver = new NetworkBroadcastReceiver();
-        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-        //filter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
-        getApplicationContext().registerReceiver(mNetworkBroadcastReceiver, filter);
+
     }
 
     /**
@@ -1530,9 +1527,6 @@ public class SdServer extends Service implements SdDataReceiver {
             }
             //webServer = null;
         }
-        mUtil.writeToSysLogFile("unregisterig network broadcast receiver");
-        Log.v(TAG, "unregistering network broadcast receiver");
-        getApplicationContext().unregisterReceiver(mNetworkBroadcastReceiver);
     }
 
     private class NetworkBroadcastReceiver extends BroadcastReceiver {
@@ -2413,7 +2407,7 @@ public class SdServer extends Service implements SdDataReceiver {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 dialog.getWindow().setType(android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
             } else {
-                dialog.getWindow().setType(android.view.WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
+                dialog.getWindow().setType(android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY);
             }
             dialog.show();
 
