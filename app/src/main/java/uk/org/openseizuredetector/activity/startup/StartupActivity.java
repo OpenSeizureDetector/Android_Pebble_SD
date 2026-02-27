@@ -729,26 +729,32 @@ public class StartupActivity extends AppCompatActivity {
                 }
 
                 if (!mDialogDisplayed && !mBatteryOptDialogDisplayed && !mMlIncompatibilityDialogDisplayed) {
-                    if (!mStartedMainActivity) {
-                        Log.i(TAG, "serverStatusRunnable() - starting main activity...");
-                        mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - all checks ok - starting main activity.");
-                        try {
-                            Intent intent;
-                            intent = new Intent(
-                                    getApplicationContext(),
-                                    MainActivity2.class);
-                            startActivity(intent);
-                            mStartedMainActivity = true;
-                            finish();
-                            return;
-                        } catch (Exception ex) {
-                            mStartedMainActivity = false;
-                            Log.e(TAG, "exception starting main activity " + ex.toString());
-                            mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - exception starting main activity " + ex.toString());
+                    // Also check if the activity is currently resumed. We can't start a new
+                    // activity if a dialog is showing, as we are not in a resumed state.
+                    if (getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+                        if (!mStartedMainActivity) {
+                            Log.i(TAG, "serverStatusRunnable() - starting main activity...");
+                            mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - all checks ok - starting main activity.");
+                            try {
+                                Intent intent;
+                                intent = new Intent(
+                                        getApplicationContext(),
+                                        MainActivity2.class);
+                                startActivity(intent);
+                                mStartedMainActivity = true;
+                                finish();
+                                return;
+                            } catch (Exception ex) {
+                                mStartedMainActivity = false;
+                                Log.e(TAG, "exception starting main activity " + ex.toString());
+                                mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - exception starting main activity " + ex.toString());
+                            }
+                        } else {
+                            Log.v(TAG, "allOk, but already started MainActivity so not doing anything");
+                            mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - allOk, but already started MainActivity so not doing anything");
                         }
                     } else {
-                        Log.v(TAG, "allOk, but already started MainActivity so not doing anything");
-                        mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - allOk, but already started MainActivity so not doing anything");
+                        Log.v(TAG, "allOk, but activity not in resumed state, so not starting MainActivity");
                     }
                 } else {
                     Log.v(TAG, "allok, but dialog displayted so not starting MainActivity");
