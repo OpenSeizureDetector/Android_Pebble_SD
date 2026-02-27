@@ -45,7 +45,6 @@ import android.location.Location;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
@@ -254,51 +253,49 @@ public class SdServer extends Service implements SdDataReceiver {
         mWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 "OSD:WakeLock");
 
-        // Initialise Notification channel for API level 26 and over
-        // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
+        // Initialise Notification channel for SDK 26+
         mNM = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationBuilder = new NotificationCompat.Builder(this, mNotChId);
-        if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel channel = new NotificationChannel(mNotChId,
-                    mNotChName,
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setDescription(mNotChDesc);
-            mNM.createNotificationChannel(channel);
-        }
+
+        NotificationChannel channel = new NotificationChannel(mNotChId,
+                mNotChName,
+                NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setDescription(mNotChDesc);
+        mNM.createNotificationChannel(channel);
+
+        // Separate channel for events
+        NotificationChannel eventChannel = new NotificationChannel(mEventNotChId,
+                mEventNotChName,
+                NotificationManager.IMPORTANCE_DEFAULT);
+        eventChannel.setDescription(mEventNotChDesc);
+        mNM.createNotificationChannel(eventChannel);
 
         // Display a notification icon in the status bar of the phone to
         // show the service is running.
-        if (Build.VERSION.SDK_INT >= 26) {
-            Log.v(TAG, "showing Notification and calling startForeground (Android 8 and higher)");
-            mUtil.writeToSysLogFile("SdServer.onCreate() - showing Notification and calling startForeground (Android 8 and higher)");
-            showNotification(0);
+        Log.v(TAG, "showing Notification and calling startForeground");
+        mUtil.writeToSysLogFile("SdServer.onCreate() - showing Notification and calling startForeground");
+        showNotification(0);
 
-            // Check for required permissions before starting foreground service (Android 12+)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                // Android 12+ requires either ACTIVITY_RECOGNITION or BODY_SENSORS
-                boolean hasActivityRecognition = checkSelfPermission(android.Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
-                boolean hasBodySensors = checkSelfPermission(android.Manifest.permission.BODY_SENSORS) == PackageManager.PERMISSION_GRANTED;
+        // Check for required permissions before starting foreground service (Android 12+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Android 12+ requires either ACTIVITY_RECOGNITION or BODY_SENSORS
+            boolean hasActivityRecognition = checkSelfPermission(android.Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
+            boolean hasBodySensors = checkSelfPermission(android.Manifest.permission.BODY_SENSORS) == PackageManager.PERMISSION_GRANTED;
 
-                if (hasActivityRecognition || hasBodySensors) {
-                    startForeground(NOTIFICATION_ID, mNotification);
-                    Log.v(TAG, "Started foreground service with health type");
-                } else {
-                    // Permissions not granted - should not reach here as StartupActivity should have exited
-                    // But if we do get here, throw exception to alert
-                    Log.e(TAG, "FATAL: Health foreground service permissions not granted!");
-                    mUtil.writeToSysLogFile("FATAL: SdServer.onCreate() - Health permissions not granted");
-                    throw new SecurityException("Health foreground service permissions not granted - app should have exited in StartupActivity");
-                }
-            } else {
-                // Android 8-11: just start foreground
+            if (hasActivityRecognition || hasBodySensors) {
                 startForeground(NOTIFICATION_ID, mNotification);
+                Log.v(TAG, "Started foreground service with health type");
+            } else {
+                // Permissions not granted - should not reach here as StartupActivity should have exited
+                // But if we do get here, throw exception to alert
+                Log.e(TAG, "FATAL: Health foreground service permissions not granted!");
+                mUtil.writeToSysLogFile("FATAL: SdServer.onCreate() - Health permissions not granted");
+                throw new SecurityException("Health foreground service permissions not granted - app should have exited in StartupActivity");
             }
         } else {
-            Log.v(TAG, "showing Notification");
-            mUtil.writeToSysLogFile("SdServer.onCreate() - showing Notification");
-            showNotification(0);
+            // Android 8-11: just start foreground
+            startForeground(NOTIFICATION_ID, mNotification);
         }
-
 
     }
 
@@ -634,7 +631,7 @@ public class SdServer extends Service implements SdDataReceiver {
             mToneGenerator.release();
             mToneGenerator = null;
 
-            this.stopForeground(true);
+            this.stopForeground(STOP_FOREGROUND_REMOVE);
             // Cancel the notification.
             Log.d(TAG, "onDestroy(): cancelling notification");
             mUtil.writeToSysLogFile("SdServer.onDestroy - cancelling notification");
@@ -762,9 +759,11 @@ public class SdServer extends Service implements SdDataReceiver {
         mUtil.writeToSysLogFile("SdServer.showMainActivity()");
 
         ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        // getRunningTasks is deprecated but still works for detecting our own app's state
+        @SuppressWarnings("deprecation")
         List<ActivityManager.RunningTaskInfo> runningTaskInfo = manager.getRunningTasks(1);
 
-        if (runningTaskInfo.size() > 0) {
+        if (runningTaskInfo != null && runningTaskInfo.size() > 0) {
             ComponentName componentInfo = runningTaskInfo.get(0).topActivity;
 
             if (componentInfo.getPackageName().equals("uk.org.openseizuredetector")) {
@@ -1321,9 +1320,14 @@ public class SdServer extends Service implements SdDataReceiver {
                     Log.i(TAG, "sendFalseAlarmsSMS() - Sending to " + mSMSNumbers[i]);
                     //sendSMS(new String(mSMSNumbers[i]), mSMSFalseAlarmMsgStr + " - " + dateStr + " " + shortUuidStr);
                     try {
-                        SmsManager sm = SmsManager.getDefault();
-                        sm.sendTextMessage(mSMSNumbers[i], null, mSMSFalseAlarmMsgStr + " - " + dateStr + " " + shortUuidStr,
-                                null, null);
+                        SmsManager sm = this.getSystemService(SmsManager.class);
+                        if (sm != null) {
+                            sm.sendTextMessage(mSMSNumbers[i], null, mSMSFalseAlarmMsgStr + " - " + dateStr + " " + shortUuidStr,
+                                    null, null);
+                        } else {
+                            Log.e(TAG, "sendFalseAlarmsSMS - SmsManager is null");
+                            mUtil.showToast(getString(R.string.failed_to_send_sms));
+                        }
                     } catch (Exception e) {
                         Log.e(TAG, "sendFalseAlarmsSMS - Failed to send SMS Message");
                         mUtil.showToast(getString(R.string.failed_to_send_sms));
@@ -1541,18 +1545,21 @@ public class SdServer extends Service implements SdDataReceiver {
             ConnectivityManager cm =
                     (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
-            NetworkInfo activeNetwork = null;
-            try {
-                activeNetwork = cm.getActiveNetworkInfo();
-            } catch (Exception e) {
-                Log.e(TAG, "NetworkBroadcastReceiver - failed to retrieve active network info");
-                mUtil.writeToSysLogFile("NetworkBroadcastReceiver - failed to retrieve active network info");
-                Log.e(TAG, e.toString());
+            boolean isConnected = false;
+            boolean isWiFi = false;
+
+            if (cm != null) {
+                android.net.Network activeNetwork = cm.getActiveNetwork();
+                if (activeNetwork != null) {
+                    android.net.NetworkCapabilities capabilities = cm.getNetworkCapabilities(activeNetwork);
+                    if (capabilities != null) {
+                        isConnected = capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET);
+                        isWiFi = capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI);
+                    }
+                }
             }
-            boolean isConnected = activeNetwork != null &&
-                    activeNetwork.isConnectedOrConnecting();
+
             if (isConnected) {
-                boolean isWiFi = activeNetwork.getType() == ConnectivityManager.TYPE_WIFI;
                 if (!isWiFi) {
                     Log.v(TAG, "NetworkBroadcastReceiver - no Wifi Connection");
                     mUtil.writeToSysLogFile("Network State Changed - no Wifi Connection");
@@ -1830,7 +1837,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     cal.get(Calendar.YEAR));
             String shortUuidStr = mUuidStr.substring(mUuidStr.length() - 6);
 
-            // SmsManager sm = SmsManager.getDefault();
+            // SmsManager sm = this.getSystemService(SmsManager.class);
             for (int i = 0; i < mSMSNumbers.length; i++) {
                 Log.i(TAG, "SmsTimer.onFinish() - Sending to " + mSMSNumbers[i]);
                 sendSMS(new String(mSMSNumbers[i]), mSMSMsgStr + " - " + dateStr + " " + shortUuidStr);
@@ -1852,9 +1859,14 @@ public class SdServer extends Service implements SdDataReceiver {
         private void sendSMS(String phoneNo, String msgStr) {
             Log.i(TAG, "sendSMS() - Sending to " + phoneNo);
             try {
-                SmsManager sm = SmsManager.getDefault();
-                sm.sendTextMessage(phoneNo, null, msgStr,
-                        null, null);
+                SmsManager sm = getSystemService(SmsManager.class);
+                if (sm != null) {
+                    sm.sendTextMessage(phoneNo, null, msgStr,
+                            null, null);
+                } else {
+                    Log.e(TAG, "sendSMS - SmsManager is null");
+                    mUtil.showToast(getString(R.string.failed_to_send_sms));
+                }
             } catch (Exception e) {
                 Log.e(TAG, "sendSMS - Failed to send SMS Message");
                 mUtil.writeToSysLogFile("sendSMS - Failed to send SMS Message");
