@@ -32,6 +32,7 @@ import androidx.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.TaskCompletionSource;
 import com.google.android.gms.tasks.Tasks;
 import com.google.android.gms.wearable.MessageClient;
 import com.google.android.gms.wearable.MessageEvent;
@@ -44,6 +45,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 
 /**
@@ -73,6 +76,7 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
 
     private MessageClient mMessageClient;
     private boolean mIsStarted = false;
+    private final Executor mExecutor = Executors.newSingleThreadExecutor();
 
     public SdDataSourceAw(Context context, Handler handler,
                           SdDataReceiver sdDataReceiver) {
@@ -336,8 +340,10 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
             return;
         }
 
-        // Get list of connected nodes (watches)
-        Task<Integer> sendTask = Tasks.call(() -> {
+        TaskCompletionSource<Integer> taskCompletionSource = new TaskCompletionSource<>();
+        Task<Integer> sendTask = taskCompletionSource.getTask();
+
+        mExecutor.execute(() -> {
             com.google.android.gms.wearable.NodeClient nodeClient =
                     Wearable.getNodeClient(mContext);
 
@@ -349,10 +355,11 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
                     Tasks.await(sendMessageTask);
                     Log.d(TAG, "Message sent to " + node.getDisplayName() + ": " + path);
                 }
+                taskCompletionSource.setResult(0);
             } catch (ExecutionException | InterruptedException e) {
                 Log.e(TAG, "Error sending message: " + e.toString());
+                taskCompletionSource.setException(e);
             }
-            return 0;
         });
     }
 
