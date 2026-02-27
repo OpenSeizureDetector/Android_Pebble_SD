@@ -26,10 +26,8 @@ public final class SdServerCompat {
     }
 
     public static int getSystemAlertWindowType(int sdkInt) {
-        if (sdkInt >= Build.VERSION_CODES.O) {
-            return WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
-        }
-        return WindowManager.LayoutParams.TYPE_SYSTEM_ALERT;
+        // minSdkVersion is 26, so we always use TYPE_APPLICATION_OVERLAY
+        return WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
     }
 
     public static int getStopForegroundFlags() {
@@ -38,15 +36,9 @@ public final class SdServerCompat {
 
     // We are suppressing a warning about using SMSManager - I don't think there is an alternative for older versions
     // of android so need to keep it.
-    @SuppressWarnings("deprecation")
     public static SmsManager getSmsManager(Context context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            return context.getSystemService(SmsManager.class);
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            int subId = SubscriptionManager.getDefaultSmsSubscriptionId();
-            return SmsManager.getSmsManagerForSubscriptionId(subId);
-        }
-        return SmsManager.getDefault();
+        // On API 23+ (Marshmallow) we can use getSystemService
+        return context.getSystemService(SmsManager.class);
     }
 
     public static boolean isConnected(boolean hasInternet) {
