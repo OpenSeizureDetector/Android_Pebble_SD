@@ -63,6 +63,8 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -169,6 +171,17 @@ public class StartupActivity extends AppCompatActivity {
 
         setContentView(R.layout.startup_activity);
 
+
+        // Configure system bar appearance to be edge-to-edge and handle insets
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (controller != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                boolean isLightMode = isLightTheme();
+                controller.setAppearanceLightStatusBars(isLightMode);
+                controller.setAppearanceLightNavigationBars(isLightMode);
+            }
+        }
 
         // Centralised preference initialisation from XML files
         PrefActivity.initialiseDefaultValues(this, false);
@@ -286,6 +299,15 @@ public class StartupActivity extends AppCompatActivity {
             }
         });
     }
+
+    /**
+     * Check if the current theme is light mode
+     */
+    private boolean isLightTheme() {
+        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
+    }
+
 
     @Override
     protected void onStart() {
