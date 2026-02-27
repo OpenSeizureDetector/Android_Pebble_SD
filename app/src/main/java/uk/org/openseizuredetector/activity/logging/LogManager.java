@@ -30,11 +30,9 @@ import uk.org.openseizuredetector.comms.WebApiConnection_osdapi;
 import uk.org.openseizuredetector.data.SdData;
 import uk.org.openseizuredetector.utils.BackgroundTaskExecutor;
 import uk.org.openseizuredetector.utils.OsdUtil;
-import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
@@ -42,11 +40,14 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.ConnectivityManager;
+import android.net.Network;
 import android.net.Uri;
+import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
+import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
@@ -135,7 +136,7 @@ public class LogManager {
     private boolean mAutoPruneDb;
     private AutoPruneTimer mAutoPruneTimer;
     private SdData mSdSettingsData;
-    private NetworkChangeReceiver mNetworkChangeReceiver;
+    private ConnectivityManager.NetworkCallback mNetworkCallback;
 
     public interface CursorCallback {
         void accept(Cursor retVal);
@@ -165,8 +166,7 @@ public class LogManager {
     }
 
 
-    public LogManager(Context context,
-                      boolean logRemote, boolean logRemoteMobile, String authToken,
+    public LogManager(Context context, Boolean logRemote, boolean logRemoteMobile, String authToken,
                       long eventDuration, long remoteLogPeriod,
                       boolean logNDA,
                       boolean autoPruneDb, long dataRetentionPeriod,
@@ -203,14 +203,20 @@ public class LogManager {
 
         mWac.setStoredToken(mAuthToken);
 
-        // Register the network change receiver to listen for connectivity changes
-        mNetworkChangeReceiver = new NetworkChangeReceiver();
-        IntentFilter intentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-        try {
-            mContext.registerReceiver(mNetworkChangeReceiver, intentFilter, Context.RECEIVER_NOT_EXPORTED);
-            Log.i(TAG, "NetworkChangeReceiver registered successfully");
-        } catch (Exception e) {
-            Log.e(TAG, "Error registering NetworkChangeReceiver: " + e.getMessage());
+        // Register the network change callback to listen for connectivity changes.
+        // Since minSdk is 26 (Android 8.0), registerDefaultNetworkCallback is always available (added in API 24).
+        ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (cm != null) {
+            mNetworkCallback = new ConnectivityManager.NetworkCallback() {
+                @Override
+                public void onAvailable(@NonNull Network network) {
+                    super.onAvailable(network);
+                    Log.i(TAG, "NetworkCallback.onAvailable() - Network connectivity available");
+                    triggerUploadIfAppropriate();
+                }
+            };
+            cm.registerDefaultNetworkCallback(mNetworkCallback);
+            Log.i(TAG, "DefaultNetworkCallback registered successfully");
         }
 
         if (mLogRemote) {
@@ -760,14 +766,14 @@ public class LogManager {
         whereArgs[whereArgsStatus.length] = endDateStr;
         executeSelectQuery(mEventsTableName, columns, whereClause, whereArgs,
                 null, null, "dataTime DESC", (Cursor cursor) -> {
-            Long recordId = new Long(-1);
+            long recordId = -1;
             try {
                 if (cursor != null) {
                     Log.v(TAG, "getNextEventToUpload - returned " + cursor.getCount() + " records");
                     cursor.moveToFirst();
                     if (cursor.getCount() == 0) {
                         Log.v(TAG, "getNextEventToUpload() - no events to Upload - exiting");
-                        recordId = new Long(-1);
+                        recordId = -1;
                     } else {
                         recordId = cursor.getLong(0);
                         Log.d(TAG, "getNextEventToUpload(): id=" + recordId);
@@ -799,14 +805,14 @@ public class LogManager {
         executeSelectQuery(mDpTableName, columns, null, null,
                 null, null, orderByStr, (Cursor cursor) -> {
             Log.v(TAG, "getEventsNearestDatapointToDate - returned " + cursor);
-            Long recordId = new Long(-1);
+            long recordId = -1;
             try {
                 if (cursor != null) {
                     Log.v(TAG, "getNearestDatapointToDate - returned " + cursor.getCount() + " records");
                     cursor.moveToFirst();
                     if (cursor.getCount() == 0) {
                         Log.v(TAG, "getNearestDatapointToDate() - no events to Upload - exiting");
-                        recordId = new Long(-1);
+                        recordId = -1;
                     } else {
                         String recordStr = cursor.getString(3);
                         recordId = cursor.getLong(0);
@@ -1482,15 +1488,16 @@ public class LogManager {
         Log.i(TAG, "stop() - initiating shutdown");
         mShutdownRequested = true;
 
-        // Unregister the network change receiver
-        if (mNetworkChangeReceiver != null) {
-            try {
-                mContext.unregisterReceiver(mNetworkChangeReceiver);
-                Log.i(TAG, "stop() - NetworkChangeReceiver unregistered successfully");
-            } catch (IllegalArgumentException e) {
-                Log.w(TAG, "stop() - NetworkChangeReceiver was not registered: " + e.getMessage());
-            } catch (Exception e) {
-                Log.e(TAG, "stop() - Error unregistering NetworkChangeReceiver: " + e.getMessage());
+        // Unregister the network change callback
+        if (mNetworkCallback != null) {
+            ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm != null) {
+                try {
+                    cm.unregisterNetworkCallback(mNetworkCallback);
+                    Log.i(TAG, "stop() - NetworkCallback unregistered successfully");
+                } catch (Exception e) {
+                    Log.e(TAG, "stop() - Error unregistering NetworkCallback: " + e.getMessage());
+                }
             }
         }
 
@@ -1525,6 +1532,10 @@ public class LogManager {
      * Start the timer that will upload data to the remote server after a given period.
      */
     private void startRemoteLogTimer() {
+        startRemoteLogTimer(mRemoteLogPeriod);
+    }
+
+    private void startRemoteLogTimer(long delaySeconds) {
         if (mRemoteLogTimer != null) {
             Log.i(TAG, "startRemoteLogTimer -timer already running - cancelling it");
             mRemoteLogTimer.cancel();
@@ -1532,7 +1543,7 @@ public class LogManager {
         }
         Log.i(TAG, "startRemoteLogTimer() - starting RemoteLogTimer");
         mRemoteLogTimer =
-                new RemoteLogTimer(mRemoteLogPeriod * 1000, 1000);
+                new RemoteLogTimer(delaySeconds * 1000, 1000);
         mRemoteLogTimer.start();
     }
 
@@ -1892,56 +1903,23 @@ public class LogManager {
 
 
     /**
-     * BroadcastReceiver to listen for network connectivity changes.
-     * When the network becomes available (and it's WiFi or mobile data is allowed),
-     * it triggers an immediate upload attempt.
+     * Helper to trigger upload. Extracted from NetworkChangeReceiver to be reused by NetworkCallback.
      */
-    private class NetworkChangeReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent == null || intent.getAction() == null) {
-                return;
-            }
-
-            if (!intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
-                return;
-            }
-
-            Log.i(TAG, "NetworkChangeReceiver.onReceive() - Network connectivity changed");
-
-            if (mShutdownRequested) {
-                Log.d(TAG, "NetworkChangeReceiver - Shutdown requested, not attempting upload");
-                return;
-            }
-
-            // Check if we have network connectivity
-            if (!mUtil.isNetworkConnected()) {
-                Log.d(TAG, "NetworkChangeReceiver - No network connection");
-                return;
-            }
-
-            // Check if we can upload (based on mLogRemoteMobile setting)
-            if (!mLogRemoteMobile) {
-                if (mUtil.isMobileDataActive()) {
-                    Log.v(TAG, "NetworkChangeReceiver - Using mobile data but mLogRemoteMobile is false, not uploading");
-                    return;
-                }
-            }
-
-            // If we reach here, we have a valid network connection (WiFi or mobile data is allowed)
-            Log.i(TAG, "NetworkChangeReceiver - Network is now available");
-
-            // If upload flag is stuck as true from a previous failed attempt, reset it to allow retry
-            if (mUploadInProgress) {
-                Log.w(TAG, "NetworkChangeReceiver - Upload flag was stuck as true, likely from a failed network attempt. Resetting it to allow retry.");
-                mUploadInProgress = false;
-            }
-
-            Log.i(TAG, "NetworkChangeReceiver - Attempting to upload stored data");
-
-            // Attempt to upload immediately
-            writeToRemoteServer();
+    private void triggerUploadIfAppropriate() {
+        if (mShutdownRequested) {
+            Log.d(TAG, "triggerUploadIfAppropriate - Shutdown requested, not attempting upload");
+            return;
         }
+
+        // Check if we have network connectivity
+        if (!mUtil.isNetworkConnected()) {
+            Log.d(TAG, "triggerUploadIfAppropriate - No network connection");
+            return;
+        }
+
+        Log.i(TAG, "triggerUploadIfAppropriate - Triggering immediate upload attempt");
+        // We trigger the timer to run immediately (0 delay)
+        startRemoteLogTimer(0);
     }
 
 
