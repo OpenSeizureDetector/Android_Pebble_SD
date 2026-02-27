@@ -36,8 +36,13 @@ public final class SdServerCompat {
         return Service.STOP_FOREGROUND_REMOVE;
     }
 
+    // We are suppressing a warning about using SMSManager - I don't think there is an alternative for older versions
+    // of android so need to keep it.
+    @SuppressWarnings("deprecation")
     public static SmsManager getSmsManager(Context context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            return context.getSystemService(SmsManager.class);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             int subId = SubscriptionManager.getDefaultSmsSubscriptionId();
             return SmsManager.getSmsManagerForSubscriptionId(subId);
         }
