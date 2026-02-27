@@ -173,7 +173,6 @@ This separation lets wearable implementations stay lightweight (simple streaming
 - `SdServiceConnection`: Wraps service binding / connection callbacks, exposes convenience methods (`watchConnected()`, `hasSdData()`, `hasSdSettings()`).
 - `BootBroadcastReceiver`: Auto-start on device boot when preference enabled.
 - `GattAttributes`: BLE UUID constants and attribute names.
-- `OsdUncaughtExceptionHandler`: Crash reporting path (uses UCE Handler library).
 - `SdWebServer`: Lightweight embedded HTTP server (for local status / data access).
 
 ### Data Sharing Module
