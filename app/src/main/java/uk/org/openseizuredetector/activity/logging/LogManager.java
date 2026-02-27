@@ -1536,12 +1536,16 @@ public class LogManager {
     }
 
     private void startRemoteLogTimer(long delaySeconds) {
+        if (delaySeconds <= 0) {
+            Log.w(TAG, "startRemoteLogTimer - delaySeconds <= 0 (" + delaySeconds + "). Using default of 60s to prevent loop.");
+            delaySeconds = 60;
+        }
         if (mRemoteLogTimer != null) {
             Log.i(TAG, "startRemoteLogTimer -timer already running - cancelling it");
             mRemoteLogTimer.cancel();
             mRemoteLogTimer = null;
         }
-        Log.i(TAG, "startRemoteLogTimer() - starting RemoteLogTimer");
+        Log.i(TAG, "startRemoteLogTimer() - starting RemoteLogTimer with period " + delaySeconds + "s");
         mRemoteLogTimer =
                 new RemoteLogTimer(delaySeconds * 1000, 1000);
         mRemoteLogTimer.start();
@@ -1814,7 +1818,9 @@ public class LogManager {
             writeToRemoteServer();
             // Restart this timer.
             if (!mShutdownRequested) {
-                start();
+                // We restart by calling startRemoteLogTimer() which handles validation and new instance creation
+                // instead of restarting the potentially invalid current timer instance
+                startRemoteLogTimer();
             }
         }
 
@@ -1918,8 +1924,11 @@ public class LogManager {
         }
 
         Log.i(TAG, "triggerUploadIfAppropriate - Triggering immediate upload attempt");
-        // We trigger the timer to run immediately (0 delay)
-        startRemoteLogTimer(0);
+        // We trigger the upload immediately, then restart the timer with the normal period
+        // Just calling startRemoteLogTimer(0) causes a stack overflow because the timer
+        // restarts itself with 0 delay in onFinish().
+        writeToRemoteServer();
+        startRemoteLogTimer();
     }
 
 
