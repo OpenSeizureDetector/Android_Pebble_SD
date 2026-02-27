@@ -39,7 +39,6 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
@@ -49,8 +48,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
-
-import org.apache.http.conn.util.InetAddressUtils;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -63,6 +60,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 
@@ -86,8 +84,8 @@ public class OsdUtil {
     private static final String mSysLogTableName = "SysLog";
     //private LogManager mLm;
     static private SQLiteDatabase mSysLogDb = null;   // SQLite Database for data and log entries.
-    private final static Long mMinPruneInterval = new Long(5 * 60 * 1000); // minimum time between syslog pruning is 5 minutes
-    private static Long mLastPruneMillis = new Long(0);   // Record of the last time we pruned the syslog db.
+    private final static Long mMinPruneInterval = 5 * 60 * 1000L; // minimum time between syslog pruning is 5 minutes
+    private static Long mLastPruneMillis = 0L;   // Record of the last time we pruned the syslog db.
 
     // File-based persistent logger (replaces database logging for diagnostics)
     private static PersistentFileLogger mFileLogger = null;
@@ -157,6 +155,7 @@ public class OsdUtil {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
                 } else {
+                    // MODE_NIGHT_AUTO_BATTERY was added in API 21 and recommended for pre-Q
                     AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY);
                 }
                 break;
@@ -175,15 +174,22 @@ public class OsdUtil {
         int nServers = 0;
         /* Log.v(TAG,"isServerRunning()...."); */
         ActivityManager manager =
-                (ActivityManager) mContext.getSystemService(mContext.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service :
-                manager.getRunningServices(Integer.MAX_VALUE)) {
-            //Log.v(TAG,"Service: "+service.service.getClassName());
-            if ("uk.org.openseizuredetector.SdServer"
-                    .equals(service.service.getClassName())) {
-                nServers = nServers + 1;
+                (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+
+        // getRunningServices is deprecated since Android 8.0 (API 26) for background tasks,
+        // but remains supported for retrieving the app's own services.
+        // Since our minSdk is now 26, we can use it consistently for our own service check.
+        @SuppressWarnings("deprecation")
+        List<ActivityManager.RunningServiceInfo> services = manager.getRunningServices(Integer.MAX_VALUE);
+        if (services != null) {
+            for (ActivityManager.RunningServiceInfo service : services) {
+                if ("uk.org.openseizuredetector.SdServer"
+                        .equals(service.service.getClassName())) {
+                    nServers = nServers + 1;
+                }
             }
         }
+
         if (nServers != 0) {
             //Log.v(TAG, "isServerRunning() - " + nServers + " instances are running");
             return true;
@@ -201,13 +207,8 @@ public class OsdUtil {
         Intent sdServerIntent;
         sdServerIntent = new Intent(mContext, SdServer.class);
         sdServerIntent.setData(Uri.parse("Start"));
-        if (Build.VERSION.SDK_INT >= 26) {
-            Log.i(TAG, "Starting Foreground Service (Android 8 and above)");
-            mContext.startForegroundService(sdServerIntent);
-        } else {
-            Log.i(TAG, "Starting Normal Service (Pre-Android 8)");
-            mContext.startService(sdServerIntent);
-        }
+        Log.i(TAG, "Starting Foreground Service (Android 8 and above)");
+        mContext.startForegroundService(sdServerIntent);
     }
 
     /**
@@ -296,13 +297,12 @@ public class OsdUtil {
                     //Log.v(TAG,"ip2--:" + inetAddress.getHostAddress());
 
                     // for getting IPV4 format
-                    if (!inetAddress.isLoopbackAddress()
-                            && InetAddressUtils.isIPv4Address(
-                            inetAddress.getHostAddress())) {
-
-                        String ip = inetAddress.getHostAddress().toString();
-                        //Log.v(TAG,"ip---::" + ip);
-                        return ip;
+                    if (!inetAddress.isLoopbackAddress()) {
+                        String ip = inetAddress.getHostAddress();
+                        // Check for IPv4 manually or use a more modern method if available
+                        if (ip != null && ip.matches("^(\\d{1,3}\\.){3}\\d{1,3}$")) {
+                            return ip;
+                        }
                     }
                 }
             }
@@ -315,24 +315,24 @@ public class OsdUtil {
     public boolean isMobileDataActive() {
         // return true if we are using mobile data, otherwise return false
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        if (activeNetwork == null) return false;
-        if (activeNetwork.getType() == ConnectivityManager.TYPE_MOBILE) {
-            return true;
-        } else {
-            return false;
-        }
+        if (cm == null) return false;
+
+        android.net.Network network = cm.getActiveNetwork();
+        android.net.NetworkCapabilities capabilities = cm.getNetworkCapabilities(network);
+        return capabilities != null && capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR);
     }
 
     public boolean isNetworkConnected() {
         // return true if we have a network connection, otherwise false.
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        if (activeNetwork != null) {
-            return (activeNetwork.isConnected());
-        } else {
-            return (false);
-        }
+        if (cm == null) return false;
+
+        android.net.Network network = cm.getActiveNetwork();
+        android.net.NetworkCapabilities capabilities = cm.getNetworkCapabilities(network);
+        return capabilities != null && (
+                capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) ||
+                capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        );
     }
 
     /**
@@ -850,12 +850,8 @@ public class OsdUtil {
          */
         double retVal;
         try {
-            Locale currentLocale;
-            if (android.os.Build.VERSION.SDK_INT < 24) {
-                currentLocale = mContext.getResources().getConfiguration().locale;
-            } else {
-                currentLocale = mContext.getResources().getConfiguration().getLocales().get(0);
-            }
+            // Since minSdk is 26, we can use the modern getLocales() API (added in API 24)
+            Locale currentLocale = mContext.getResources().getConfiguration().getLocales().get(0);
             NumberFormat nf = NumberFormat.getInstance(currentLocale);
             retVal = nf.parse(userInput).doubleValue();
         } catch (ParseException e) {
