@@ -16,6 +16,8 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -85,6 +87,9 @@ public class ExportDataActivity extends AppCompatActivity
     boolean mConnected;
     LogManager mLm;
 
+    private ActivityResultLauncher<Intent> mCreateFileLauncher;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -136,7 +141,20 @@ public class ExportDataActivity extends AppCompatActivity
         mConnection = new SdServiceConnection(getApplicationContext());
         mConnected = false;
 
-
+        mCreateFileLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        Intent resultData = result.getData();
+                        if (resultData != null) {
+                            Uri uri = resultData.getData();
+                            Log.v(TAG, "onActivityResult() - exporting to file " + uri.toString());
+                            mLm.exportToCsvFile(mEndDate, mDuration, uri, (boolean b) -> {
+                                Log.v(TAG, "onActivityResult callback");
+                                hideProgressBar();
+                            });
+                        }
+                    }
+                });
     }
 
     @Override
@@ -270,33 +288,9 @@ public class ExportDataActivity extends AppCompatActivity
 
         //intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, pickerInitialUri);
         Log.v(TAG, "openFile() - showing open dialog");
-        startActivityForResult(intent, FILE_REQUEST_CODE);
+        mCreateFileLauncher.launch(intent);
 
     }
 
-    // Called when the file picker created in openFile() is closed.
-    @Override
-    public void onActivityResult(int requestCode, int resultCode,
-                                 Intent resultData) {
-        Log.v(TAG, "onActivityResult - requestCode=" + requestCode);
-        if (requestCode == FILE_REQUEST_CODE
-                && resultCode == Activity.RESULT_OK) {
-            // The result data contains a URI for the document or directory that
-            // the user selected.
-            Uri uri = null;
-            if (resultData != null) {
-                uri = resultData.getData();
-                // Perform operations on the document using its URI.
-                //mUtil.showToast("URI="+uri.toString());
-                Log.v(TAG, "onActivityResult() - exporting to file " + uri.toString());
-                mLm.exportToCsvFile(mEndDate, mDuration, uri, (boolean b) -> {
-                    Log.v(TAG, "onActivityResult callback");
-                    hideProgressBar();
-                });
-
-            }
-        }
-        super.onActivityResult(requestCode, resultCode, resultData);
-    }
 
 }
