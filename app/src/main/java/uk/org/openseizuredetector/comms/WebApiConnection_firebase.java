@@ -8,8 +8,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -43,8 +41,6 @@ public class WebApiConnection_firebase extends WebApiConnection {
     private OsdUtil mUtil;
     FirebaseFirestore mDb;
 
-    RequestQueue mQueue;
-
 
     public WebApiConnection_firebase(Context context) {
         super(context);
@@ -68,7 +64,6 @@ public class WebApiConnection_firebase extends WebApiConnection {
 
     public void close() {
         Log.i(TAG, "stop()");
-        mQueue.stop();
     }
 
     public boolean isLoggedIn() {
@@ -235,7 +230,8 @@ public class WebApiConnection_firebase extends WebApiConnection {
                                 Log.d(TAG, "getEvents() - returned " + task.getResult().size());
                                 for (QueryDocumentSnapshot document : task.getResult()) {
                                     Log.d(TAG, "getEvents() - " + document.getId() + " => " + document.getData());
-                                    JSONObject eventObj = new JSONObject(document.getData());
+                                    Map<String, Object> data = document.getData();
+                                    JSONObject eventObj = (data != null) ? new JSONObject(data) : new JSONObject();
                                     // Add the event id into the event data because firebase does not include it as part of the document.
                                     eventObj.put("id", document.getId());
                                     eventArray.put(eventObj);
@@ -384,9 +380,14 @@ public class WebApiConnection_firebase extends WebApiConnection {
                                 JSONObject retObj = new JSONObject();
                                 for (QueryDocumentSnapshot document : task.getResult()) {
                                     Log.d(TAG, "getEventTypes.onComplete(): " + document.getId() + " => " + document.getData());
-                                    Log.v(TAG, "getEventTypes.onComplete() - subtypes=" + document.getData().get("subTypes"));
-                                    JSONArray subTypesArray = listToJSONArray((List) document.getData().get("subTypes"));
-                                    retObj.put(document.getData().get("type").toString(), subTypesArray);
+                                    Object subTypesObj = document.getData().get("subTypes");
+                                    Log.v(TAG, "getEventTypes.onComplete() - subtypes=" + subTypesObj);
+                                    JSONArray subTypesArray = (subTypesObj instanceof List) ?
+                                            listToJSONArray((List<?>) subTypesObj) : new JSONArray();
+                                    Object typeObj = document.getData().get("type");
+                                    if (typeObj != null) {
+                                        retObj.put(typeObj.toString(), subTypesArray);
+                                    }
                                 }
                                 Log.d(TAG, "getEventTypes.onComplete() - retObj=" + retObj.toString());
                                 callback.accept(retObj);
@@ -404,7 +405,7 @@ public class WebApiConnection_firebase extends WebApiConnection {
 
     }
 
-    private JSONArray listToJSONArray(List<Object> list) {
+    private JSONArray listToJSONArray(List<?> list) {
         JSONArray arr = new JSONArray();
         for (Object obj : list) {
             arr.put(obj);
