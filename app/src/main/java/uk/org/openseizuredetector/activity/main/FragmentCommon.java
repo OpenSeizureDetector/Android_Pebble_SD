@@ -174,11 +174,11 @@ public class FragmentCommon extends FragmentOsdBaseClass {
 
             // Show/hide Accept Alarm button based on preferences
             if (latchAlarmsEnabled || fallActive) {
-                Log.d(TAG, "latchAlarmsEnabled: " + latchAlarmsEnabled + ", fallActive: " + fallActive+ " - enabling acceptAlarm button");
+                //Log.d(TAG, "latchAlarmsEnabled: " + latchAlarmsEnabled + ", fallActive: " + fallActive+ " - enabling acceptAlarm button");
                 acceptAlarmButton.setEnabled(true);
                 acceptAlarmButton.setVisibility(View.VISIBLE);
             } else {
-                Log.d(TAG,"latchAlarmsEnabled: " + latchAlarmsEnabled + ", fallActive: " + fallActive+ " - disabling acceptAlarm button");
+                //Log.d(TAG,"latchAlarmsEnabled: " + latchAlarmsEnabled + ", fallActive: " + fallActive+ " - disabling acceptAlarm button");
                 acceptAlarmButton.setVisibility(View.GONE);
             }
 
