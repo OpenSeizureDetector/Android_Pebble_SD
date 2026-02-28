@@ -27,6 +27,7 @@ package uk.org.openseizuredetector.activity.settings;
 import uk.org.openseizuredetector.R;
 
 import uk.org.openseizuredetector.alg.MlModelManager;
+import uk.org.openseizuredetector.alg.MlAutoConfigurator;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import uk.org.openseizuredetector.utils.SettingsUtil;
 import androidx.appcompat.app.AlertDialog;
@@ -551,16 +552,15 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
     public static class AlgorithmSelectionPrefsFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
         private PreferenceCategory mSettingsCategory;
+        private boolean mBasicMode;
+        private boolean mMlAutoSetupRunning;
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.sd_prefs_main, rootKey);
             
-            mSettingsCategory = new PreferenceCategory(getPreferenceManager().getContext());
-            mSettingsCategory.setTitle("Algorithm Settings");
-            getPreferenceScreen().addPreference(mSettingsCategory);
-            
-            updateDynamicSettings();
+            mBasicMode = PreferenceManager.getDefaultSharedPreferences(getContext()).getBoolean("pref_basic_mode", true);
+            refreshSettingsCategory();
             syncAlgorithmToggles();
         }
 
@@ -579,28 +579,39 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            if ("pref_basic_mode".equals(key)) {
+                mBasicMode = sharedPreferences.getBoolean(key, true);
+                refreshSettingsCategory();
+                syncAlgorithmToggles();
+                return;
+            }
+
             if (key.equals("CnnAlarmActive") && sharedPreferences.getBoolean(key, false)) {
-                // Compatibility check when enabling ML
-                MlModelManager mm = new MlModelManager(getContext());
-                JSONArray installed = mm.getInstalledModels();
-                if (installed.length() > 0) {
-                    boolean anyCompatible = false;
-                    for (int i = 0; i < installed.length(); i++) {
-                        if (mm.isDeviceCompatible(installed.optJSONObject(i))) {
-                            anyCompatible = true;
-                            break;
+                if (mBasicMode) {
+                    startBasicModeMlSetup();
+                } else {
+                    MlModelManager mm = new MlModelManager(getContext());
+                    JSONArray installed = mm.getInstalledModels();
+                    if (installed.length() > 0) {
+                        boolean anyCompatible = false;
+                        for (int i = 0; i < installed.length(); i++) {
+                            if (mm.isDeviceCompatible(installed.optJSONObject(i))) {
+                                anyCompatible = true;
+                                break;
+                            }
                         }
-                    }
-                    if (!anyCompatible) {
-                        new AlertDialog.Builder(getContext())
-                            .setTitle("CPU Incompatibility")
-                            .setMessage("None of your installed ML models are compatible with this device's CPU. " +
-                                       "You may need to download a 'generic' version of the model if available.")
-                            .setPositiveButton("OK", null)
-                            .show();
+                        if (!anyCompatible) {
+                            new AlertDialog.Builder(getContext())
+                                .setTitle("CPU Incompatibility")
+                                .setMessage("None of your installed ML models are compatible with this device's CPU. " +
+                                           "You may need to download a 'generic' version of the model if available.")
+                                .setPositiveButton("OK", null)
+                                .show();
+                        }
                     }
                 }
             }
+
             if (key.endsWith("Active") || key.equals("FidgetDetectorEnabled")) {
                 updateDynamicSettings();
                 syncAlgorithmToggles();
@@ -664,6 +675,47 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             pref.setSummary(summary);
             pref.setFragment(fragmentClass);
             mSettingsCategory.addPreference(pref);
+        }
+
+        private void refreshSettingsCategory() {
+            PreferenceScreen screen = getPreferenceScreen();
+            if (screen == null) return;
+
+            if (mBasicMode) {
+                if (mSettingsCategory != null) {
+                    screen.removePreference(mSettingsCategory);
+                    mSettingsCategory = null;
+                }
+            } else {
+                if (mSettingsCategory == null) {
+                    mSettingsCategory = new PreferenceCategory(getPreferenceManager().getContext());
+                    mSettingsCategory.setTitle("Algorithm Settings");
+                    screen.addPreference(mSettingsCategory);
+                }
+                updateDynamicSettings();
+            }
+        }
+
+        private void startBasicModeMlSetup() {
+            if (mMlAutoSetupRunning || getContext() == null) {
+                return;
+            }
+            mMlAutoSetupRunning = true;
+
+            MlAutoConfigurator.Options options = new MlAutoConfigurator.Options();
+            options.showSuccessDialog = false;
+            options.onFlowComplete = () -> {
+                mMlAutoSetupRunning = false;
+                syncAlgorithmToggles();
+            };
+            options.onMlDisabled = () -> {
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
+                sp.edit().putBoolean("CnnAlarmActive", false).apply();
+                updateTwoStatePreference("CnnAlarmActive", false);
+                mMlAutoSetupRunning = false;
+            };
+
+            MlAutoConfigurator.configure(this, options);
         }
     }
 

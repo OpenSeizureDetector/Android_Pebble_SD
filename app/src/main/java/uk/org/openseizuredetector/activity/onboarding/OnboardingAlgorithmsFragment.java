@@ -9,26 +9,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
-import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
-import uk.org.openseizuredetector.alg.MlModelManager;
-import uk.org.openseizuredetector.utils.OsdUtil;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.io.File;
+import uk.org.openseizuredetector.alg.MlAutoConfigurator;
 
 /**
  * Algorithm selection page - choose which seizure detection algorithms to use.
@@ -46,11 +35,9 @@ public class OnboardingAlgorithmsFragment extends Fragment {
     private CheckBox mCheckHrAlg;
     private CheckBox mCheckOsdAlg;
     private CheckBox mCheckFlapAlg;
-    private FrameLayout mConfigMessageContainer;
 
     private SharedPreferences mPrefs;
     private MaterialButton mNextButton;
-    private OsdUtil mOsdUtil;
 
     // Track which algorithms need configuration
     private boolean[] mSelectedAlgorithms = new boolean[4]; // ML, HR, OSD, Flap
@@ -67,15 +54,13 @@ public class OnboardingAlgorithmsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_onboarding_algorithms, container, false);
 
         mPrefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
-        mOsdUtil = new OsdUtil(requireContext(), new android.os.Handler(android.os.Looper.getMainLooper()));
 
         // Get checkbox references (reordered: ML, HR, OSD, Flap)
         mCheckMlAlg = view.findViewById(R.id.check_ml_alg);
         mCheckHrAlg = view.findViewById(R.id.check_hr_alg);
         mCheckOsdAlg = view.findViewById(R.id.check_osd_alg);
         mCheckFlapAlg = view.findViewById(R.id.check_flap_alg);
-        mConfigMessageContainer = view.findViewById(R.id.config_message_container);
-        
+
         // Get next button from parent activity
         mNextButton = requireActivity().findViewById(R.id.btn_next);
 
@@ -206,157 +191,20 @@ public class OnboardingAlgorithmsFragment extends Fragment {
      */
     private void showMlAlgorithmConfiguration() {
         Log.i(TAG, "Configuring ML Algorithm");
-
-        if (!mOsdUtil.isNetworkConnected()) {
-            handleMlNetworkError("No network connectivity. Please connect to the internet to download the ML model index.");
-            return;
-        }
-
-        // Show progress while fetching model index
-        MaterialAlertDialogBuilder progressBuilder = new MaterialAlertDialogBuilder(requireContext())
-            .setTitle("ML Algorithm Configuration")
-            .setMessage("Fetching available models...")
-            .setCancelable(false);
-        AlertDialog progressDialog = progressBuilder.show();
-
-        // Fetch available ML models from server
-        MlModelManager mm = new MlModelManager(requireContext());
-        mm.getMlModelIndex(modelArray -> {
-            if (getActivity() == null || getActivity().isDestroyed()) return;
-            
-            getActivity().runOnUiThread(() -> {
-                progressDialog.dismiss();
-
-                if (modelArray == null) {
-                    handleMlNetworkError("Failed to connect to the model server. Please check your internet connection.");
-                    return;
-                }
-
-                // Check for compatible models
-                List<JSONObject> compatibleModels = new ArrayList<>();
-                JSONObject recommendedModel = null;
-
-                try {
-                    for (int i = 0; i < modelArray.length(); i++) {
-                        JSONObject modelObj = modelArray.getJSONObject(i);
-                        if (mm.isDeviceCompatible(modelObj)) {
-                            compatibleModels.add(modelObj);
-                            if (modelObj.optBoolean("recommended", false)) {
-                                recommendedModel = modelObj;
-                            }
-                        }
-                    }
-                } catch (JSONException e) {
-                    Log.e(TAG, "Error parsing model list: " + e.getMessage());
-                }
-
-                if (compatibleModels.isEmpty()) {
-                    showMlIncompatibilityDialog("Your device is not compatible with the available ML models. This is usually due to missing CPU features (e.g. dotprod). The ML algorithm will be disabled.");
-                } else {
-                    // Use recommended if compatible, otherwise pick the first compatible one
-                    JSONObject modelToDownload = (recommendedModel != null) ? recommendedModel : compatibleModels.get(0);
-                    String modelName = modelToDownload.optString("name", "Unknown Model");
-                    
-                    // Save recommended model preference
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
-                    prefs.edit().putString("CnnModelName", modelName).apply();
-                    
-                    showDownloadProgressDialog(mm, modelToDownload, modelName);
-                }
-            });
-        });
-    }
-
-    private void handleMlNetworkError(String message) {
-        MlModelManager mm = new MlModelManager(requireContext());
-        JSONArray installedModels = mm.getInstalledModels();
-
-        if (installedModels.length() == 0) {
-            // No models installed, must disable ML algorithm
+        MlAutoConfigurator.Options options = new MlAutoConfigurator.Options();
+        options.onMlDisabled = () -> {
             mPrefs.edit().putBoolean("CnnAlarmActive", false).apply();
-            if (mCheckMlAlg != null) mCheckMlAlg.setChecked(false);
-
-            new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("ML Algorithm Disabled")
-                .setMessage(message + "\n\nAs no models are currently installed, the ML algorithm has been disabled. You can enable it and download models later in the Settings menu.")
-                .setPositiveButton("OK", (d, w) -> {
-                    if (mNextButton != null) {
-                        mNextButton.performClick();
-                    }
-                })
-                .setCancelable(false)
-                .show();
-        } else {
-            // Models are already installed, allow proceeding with a warning
-            new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Connection Error")
-                .setMessage(message + "\n\nThe app will use your existing installed models.")
-                .setPositiveButton("OK", (d, w) -> {
-                    if (mNextButton != null) {
-                        mNextButton.performClick();
-                    }
-                })
-                .setCancelable(false)
-                .show();
-        }
-    }
-
-    private void showMlIncompatibilityDialog(String message) {
-        // Disable ML algorithm in preferences
-        mPrefs.edit().putBoolean("CnnAlarmActive", false).apply();
-        if (mCheckMlAlg != null) mCheckMlAlg.setChecked(false);
-
-        new MaterialAlertDialogBuilder(requireContext())
-            .setTitle("ML Algorithm Disabled")
-            .setMessage(message)
-            .setPositiveButton("OK", (d, w) -> {
-                // Skip to next algorithm or next page
-                if (mNextButton != null) {
-                    mNextButton.performClick();
-                }
-            })
-            .setCancelable(false)
-            .show();
-    }
-
-    /**
-     * Download the selected ML model with progress feedback
-     */
-    private void showDownloadProgressDialog(MlModelManager mm, JSONObject modelInfo, String modelName) {
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Downloading ML Model")
-            .setMessage("Downloading " + modelName + "...\nPlease wait...")
-            .setCancelable(false);
-
-        AlertDialog downloadDialog = builder.show();
-
-        // Start model download
-        mm.downloadAndInstallModel(modelInfo, (success, file) -> {
-            if (getActivity() != null && !getActivity().isDestroyed()) {
-                getActivity().runOnUiThread(() -> {
-                    downloadDialog.dismiss();
-
-                    if (success) {
-                        Log.i(TAG, "ML Model downloaded successfully: " + modelName);
-                        new MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("ML Algorithm Configuration")
-                            .setMessage("ML Algorithm model has been configured and downloaded:\n" +
-                                       modelName + "\n\n" +
-                                       "You can select a different model in the Settings menu when the app starts.")
-                            .setPositiveButton("OK", (d, w) -> {
-                                if (mNextButton != null) {
-                                    mNextButton.performClick();
-                                }
-                            })
-                            .setCancelable(false)
-                            .show();
-                    } else {
-                        Log.e(TAG, "Failed to download ML model: " + modelName);
-                        handleMlNetworkError("Failed to download " + modelName + ".");
-                    }
-                });
+            if (mCheckMlAlg != null) {
+                mCheckMlAlg.setChecked(false);
             }
-        });
+        };
+        options.onFlowComplete = () -> {
+            if (mNextButton != null) {
+                mNextButton.performClick();
+            }
+        };
+        options.showSuccessDialog = true;
+        MlAutoConfigurator.configure(this, options);
     }
 
     /**
