@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="@string/fall_detect_title">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="FallActive"
+            android:summary="@string/fall_detect_active_summary"
+            android:title="@string/fall_detect_active_title" />
         <EditTextPreference
             android:defaultValue="1500"
             android:key="FallThreshMin"

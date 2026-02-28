@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="Flap Alarm Settings">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="FlapAlarmActive"
+            android:title="@string/flap_alarm_title" />
+
         <Preference
             android:key="flap_description"
             android:summary="The Flap Alarm is an experimental feature to detect large-scale arm movements (shaking/flapping) that may occur during a seizure."

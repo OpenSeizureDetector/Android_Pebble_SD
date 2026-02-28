@@ -63,6 +63,7 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.PreferenceScreen;
+import androidx.preference.TwoStatePreference;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -560,12 +561,14 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             getPreferenceScreen().addPreference(mSettingsCategory);
             
             updateDynamicSettings();
+            syncAlgorithmToggles();
         }
 
         @Override
         public void onResume() {
             super.onResume();
             PreferenceManager.getDefaultSharedPreferences(getContext()).registerOnSharedPreferenceChangeListener(this);
+            syncAlgorithmToggles();
         }
 
         @Override
@@ -600,6 +603,27 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             }
             if (key.endsWith("Active") || key.equals("FidgetDetectorEnabled")) {
                 updateDynamicSettings();
+                syncAlgorithmToggles();
+            }
+        }
+
+        private void syncAlgorithmToggles() {
+            if (getContext() == null) {
+                return;
+            }
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
+            updateTwoStatePreference("OsdAlarmActive", sp.getBoolean("OsdAlarmActive", true));
+            updateTwoStatePreference("FlapAlarmActive", sp.getBoolean("FlapAlarmActive", false));
+            updateTwoStatePreference("CnnAlarmActive", sp.getBoolean("CnnAlarmActive", false));
+            updateTwoStatePreference("HRAlarmActive", sp.getBoolean("HRAlarmActive", false));
+            updateTwoStatePreference("O2SatAlarmActive", sp.getBoolean("O2SatAlarmActive", false));
+            updateTwoStatePreference("FallActive", sp.getBoolean("FallActive", false));
+        }
+
+        private void updateTwoStatePreference(String key, boolean value) {
+            Preference pref = findPreference(key);
+            if (pref instanceof TwoStatePreference) {
+                ((TwoStatePreference) pref).setChecked(value);
             }
         }
 

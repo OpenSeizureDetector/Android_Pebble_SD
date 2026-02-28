@@ -8,6 +8,12 @@
 
         <CheckBoxPreference
             android:defaultValue="false"
+            android:key="HRAlarmActive"
+            android:summary="@string/HRAlarmEnabledSummary"
+            android:title="@string/HRAlarmEnabledTitle" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
             android:key="HRAdaptiveAlarmActive"
             android:title="Enable Adaptive Threshold"
             android:summary="Adjusts heart rate alarm thresholds based on recent average heart rate." />

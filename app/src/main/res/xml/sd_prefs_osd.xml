@@ -4,6 +4,12 @@
         android:title="OSD Algorithm"
         android:summary="@string/OsdAlarmEnabledSummary">
 
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="OsdAlarmActive"
+            android:summary="@string/OsdAlarmEnabledSummary"
+            android:title="@string/OsdAlarmEnabledTitle" />
+
         <Preference
             android:key="osd_description"
             android:summary="@string/OsdAlarmEnabledSummary"

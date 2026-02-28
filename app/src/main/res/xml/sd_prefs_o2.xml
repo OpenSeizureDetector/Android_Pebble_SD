@@ -3,6 +3,11 @@
     <PreferenceCategory android:title="@string/O2SatSettingsTitle">
         <CheckBoxPreference
             android:defaultValue="false"
+            android:key="O2SatAlarmActive"
+            android:summary="@string/O2Sat_enabled_summary"
+            android:title="@string/O2Sat_enabled_title" />
+        <CheckBoxPreference
+            android:defaultValue="false"
             android:key="O2SatNullAsAlarm"
             android:summary="@string/O2SatNullAlarmSummary"
             android:title="@string/O2SatNullAlarmTitle" />
