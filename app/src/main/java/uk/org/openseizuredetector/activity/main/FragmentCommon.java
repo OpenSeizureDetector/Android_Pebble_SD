@@ -1,8 +1,8 @@
 package uk.org.openseizuredetector.activity.main;
 import uk.org.openseizuredetector.R;
 
+import android.content.Context;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,9 +17,13 @@ import java.util.Date;
 import java.util.Locale;
 
 import uk.org.openseizuredetector.data.AlarmState;
+import androidx.preference.PreferenceManager;
 
 public class FragmentCommon extends FragmentOsdBaseClass {
     String TAG = "FragmentCommon";
+
+    // Store mode state for dynamic UI generation (e.g. algorithm badges)
+    private boolean mIsBasicMode = true;
 
     public FragmentCommon() {
         // Required empty public constructor
@@ -37,8 +41,11 @@ public class FragmentCommon extends FragmentOsdBaseClass {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_common, container, false);
+        // Choose layout based on the current mode so advanced stays compact.
+        boolean basicMode = getBasicModePreference();
+        mIsBasicMode = basicMode;
+        int layoutRes = basicMode ? R.layout.fragment_common : R.layout.fragment_common_advanced;
+        return inflater.inflate(layoutRes, container, false);
     }
 
     @Override
@@ -103,8 +110,12 @@ public class FragmentCommon extends FragmentOsdBaseClass {
             tdiff = (tnow - mConnection.mSdServer.mSdData.dataTimeMillis) / 1000.;
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
             String timeStr = timeFormat.format(new Date(mConnection.mSdServer.mSdData.dataTimeMillis));
-            tv.setText("Time =" + timeStr
-                    + "  (" + String.format(Locale.getDefault(), "%.1f s, %.0f s",mConnection.mSdServer.mSdData.timeDiff, tdiff) + ")");
+            if (mIsBasicMode) {
+                tv.setText("Time =" + timeStr);
+            } else {
+                tv.setText("Time =" + timeStr
+                        + "  (" + String.format(Locale.getDefault(), "%.1f s, %.0f s", mConnection.mSdServer.mSdData.timeDiff, tdiff) + ")");
+            }
             tv.setBackgroundColor(okColour);
             tv.setTextColor(okTextColour);
 
@@ -287,9 +298,15 @@ public class FragmentCommon extends FragmentOsdBaseClass {
         // Create a compact badge with the algorithm name and color-coded background
         TextView badge = new TextView(mContext);
         badge.setText(algorithmName);
-        badge.setTextSize(11);
+
+        // Scale badge size for Basic Mode
+        if (mIsBasicMode) {
+            badge.setPadding(24, 8, 24, 8);
+        } else {
+            badge.setPadding(12, 4, 12, 4);
+        }
+
         badge.setTypeface(null, android.graphics.Typeface.BOLD);
-        badge.setPadding(12, 4, 12, 4);
         badge.setGravity(android.view.Gravity.CENTER);
 
         // Set background color based on state
@@ -323,9 +340,45 @@ public class FragmentCommon extends FragmentOsdBaseClass {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMargins(2, 0, 2, 0);
+
+        if (mIsBasicMode) {
+            params.setMargins(8, 0, 8, 0);
+            badge.setTextSize(18);
+        } else {
+            params.setMargins(2, 0, 2, 0);
+            badge.setTextSize(11);
+        }
         badge.setLayoutParams(params);
 
         container.addView(badge);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateLayoutMode();
+    }
+
+    private void updateLayoutMode() {
+        if (mContext == null || mRootView == null) return;
+
+        boolean basicMode = getBasicModePreference();
+
+        // Update class member so dynamic UI generation knows the mode
+        if (mIsBasicMode == basicMode) {
+            return;
+        }
+        mIsBasicMode = basicMode;
+
+        // Refresh algorithm badges immediately in case the mode changed in settings
+        updateAlgorithmStatusDisplay();
+    }
+
+    private boolean getBasicModePreference() {
+        Context ctx = mContext != null ? mContext : getContext();
+        if (ctx == null) {
+            return true;
+        }
+        return PreferenceManager.getDefaultSharedPreferences(ctx).getBoolean("pref_basic_mode", true);
     }
 }

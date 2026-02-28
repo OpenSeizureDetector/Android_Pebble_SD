@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.preference.PreferenceManager;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
@@ -45,6 +46,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         View rootView = inflater.inflate(R.layout.fragment_hr_alg, container, false);
         mLineChart = rootView.findViewById(R.id.lineChart);
         setupChart();
+        adjustChartHeightForMode(mLineChart);
         return rootView;
     }
 
@@ -195,5 +197,25 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         } catch (Exception e) {
             Log.e(TAG, "Error updating chart: " + e.getMessage(), e);
         }
+    }
+
+    private void adjustChartHeightForMode(GraphView chart) {
+        if (chart == null || isBasicMode()) {
+            return;
+        }
+        ViewGroup.LayoutParams params = chart.getLayoutParams();
+        if (params == null || params.height <= 0) {
+            return;
+        }
+        int shrinkPx = Math.round(20 * getResources().getDisplayMetrics().density);
+        params.height = Math.max(params.height - shrinkPx, Math.round(170 * getResources().getDisplayMetrics().density));
+        chart.setLayoutParams(params);
+    }
+
+    private boolean isBasicMode() {
+        if (mContext == null) {
+            return true;
+        }
+        return PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean("pref_basic_mode", true);
     }
 }

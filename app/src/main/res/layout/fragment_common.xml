@@ -1,121 +1,187 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
+    android:padding="8dp"
     tools:context=".activity.main.FragmentCommon">
 
-    <androidx.appcompat.widget.LinearLayoutCompat
-        android:layout_width="match_parent"
+    <!-- Top Status / Time Section -->
+    <!-- Constrained to top, kept compact -->
+    <TextView
+        android:id="@+id/data_time_tv"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="8dp">
+        android:text="---"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:textStyle="italic"
+        android:alpha="0.8"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/alarmStatusCard"
+        app:layout_constraintVertical_bias="0.0"
+        app:layout_constraintVertical_chainStyle="packed"
+        android:layout_marginBottom="8dp"/>
+
+    <!-- Main Alarm Status Card - The "Hero" Element -->
+    <!-- In Basic Mode (match_parent), this will center vertically due to constraints -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/alarmStatusCard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="8dp"
+        app:cardElevation="4dp"
+        app:cardCornerRadius="16dp"
+        app:layout_constraintTop_toBottomOf="@+id/data_time_tv"
+        app:layout_constraintBottom_toTopOf="@+id/algorithmsCard"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.9"
+        app:layout_constraintVertical_bias="0.4">
+
+        <LinearLayout
+            android:id="@+id/alarm_status_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/system_status_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SYSTEM STATUS"
+                android:textSize="12sp"
+                android:letterSpacing="0.1"
+                android:alpha="0.7"
+                android:textAllCaps="true"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/alarmTv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="---"
+                android:textSize="34sp"
+                android:textStyle="bold"
+                android:maxLines="2"
+                android:ellipsize="end"/>
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Algorithm Status - Secondary Info -->
+    <!-- Placed below the main card -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/algorithmsCard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
+        app:cardElevation="2dp"
+        app:cardCornerRadius="8dp"
+        app:cardBackgroundColor="?attr/colorSurface"
+        app:layout_constraintTop_toBottomOf="@+id/alarmStatusCard"
+        app:layout_constraintBottom_toTopOf="@+id/actions_barrier"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.9"
+        app:layout_constraintVertical_bias="0.0">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginBottom="4dp">
+            android:padding="12dp">
 
             <TextView
-                android:id="@+id/data_time_tv"
+                android:id="@+id/algorithms_title_tv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="---"
-                android:textSize="16sp" />
-        </LinearLayout>
-
-        <!-- Overall Alarm Status Card -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/alarmStatusCard"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
-            app:cardElevation="1dp"
-            app:cardCornerRadius="6dp">
-
-            <TextView
-                android:id="@+id/alarmTv"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:text="Active Algorithms"
+                android:textSize="16sp"
+                android:alpha="0.7"
                 android:gravity="center"
-                android:text="---"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:padding="8dp" />
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Algorithm Status Card -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/algorithmsCard"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
-            app:cardElevation="1dp"
-            app:cardCornerRadius="6dp">
+                android:layout_marginBottom="8dp"/>
 
             <LinearLayout
                 android:id="@+id/algorithms_status_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="4dp"
-                android:gravity="center" />
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Centered button row with consistent Material Design 3 styling -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:spacing="2dp">
-
-            <!-- Accept Alarm button - secondary action (tonal) -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/acceptAlarmButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:text="@string/AcceptAlarmBtnTxt"
-                android:textSize="11sp" />
-
-            <!-- Mute/Cancel Audible button - secondary action (tonal button with visible background) -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/cancelAudibleButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="2dp"
-                android:layout_marginEnd="4dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                style="@style/Widget.Material3.Button.TonalButton"
-                android:text="@string/CancelAudibleButtonTxt"
-                android:textSize="11sp" />
-
-            <!-- Raise Alarm button - primary action (prominent filled button) -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/manualAlarmButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="2dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                style="@style/Widget.Material3.Button"
-                android:text="@string/ManualAlarmBtnTxt"
-                android:textSize="11sp"
-                android:textStyle="bold" />
+                android:gravity="center"
+                android:minHeight="32dp"/>
         </LinearLayout>
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+    </com.google.android.material.card.MaterialCardView>
 
-</FrameLayout>
+    <!-- Barrier to ensure buttons don't overlap content if screen is tiny -->
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/actions_barrier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="top"
+        app:constraint_referenced_ids="buttonContainer"/>
+
+    <!-- Action Buttons Container -->
+    <!-- Pinned to bottom, but part of the chain logic indirectly -->
+    <LinearLayout
+        android:id="@+id/buttonContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingTop="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/algorithmsCard"
+        app:layout_constraintVertical_bias="1.0">
+
+        <!-- Accept Alarm -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/acceptAlarmButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:text="@string/AcceptAlarmBtnTxt"
+            android:textSize="14sp"
+            android:paddingVertical="12dp"/>
+
+        <!-- Mute / Cancel -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/cancelAudibleButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:text="@string/CancelAudibleButtonTxt"
+            android:textSize="14sp"
+            android:paddingVertical="12dp"/>
+
+        <!-- Manual Alarm -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/manualAlarmButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            style="@style/Widget.Material3.Button"
+            android:text="@string/ManualAlarmBtnTxt"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:paddingVertical="12dp"/>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

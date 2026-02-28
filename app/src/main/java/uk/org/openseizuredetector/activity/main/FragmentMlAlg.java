@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.GridLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import androidx.preference.PreferenceManager;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
@@ -37,6 +38,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         View rootView = inflater.inflate(R.layout.fragment_ml_alg, container, false);
         historyChart = rootView.findViewById(R.id.seizure_history_chart);
         setupChart();
+        adjustChartHeightForMode(historyChart);
         return rootView;
     }
 
@@ -338,5 +340,25 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         if (legendLayout != null) {
             legendLayout.removeAllViews();
         }
+    }
+
+    private void adjustChartHeightForMode(GraphView chart) {
+        if (chart == null || isBasicMode()) {
+            return;
+        }
+        ViewGroup.LayoutParams params = chart.getLayoutParams();
+        if (params == null || params.height <= 0) {
+            return;
+        }
+        int shrinkPx = Math.round(20 * getResources().getDisplayMetrics().density);
+        params.height = Math.max(params.height - shrinkPx, Math.round(180 * getResources().getDisplayMetrics().density));
+        chart.setLayoutParams(params);
+    }
+
+    private boolean isBasicMode() {
+        if (mContext == null) {
+            return true;
+        }
+        return PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean("pref_basic_mode", true);
     }
 }

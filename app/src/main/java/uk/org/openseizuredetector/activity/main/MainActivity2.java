@@ -72,6 +72,7 @@ import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup; // Ensure ViewGroup is imported if needed, though LinearLayout is used directly
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -104,6 +105,9 @@ public class MainActivity2 extends AppCompatActivity {
     private OsdUtil mUtil;
     private SdServiceConnection mConnection;
 
+    private SharedPreferences mSharedPrefs;
+    private SharedPreferences.OnSharedPreferenceChangeListener mModePreferenceListener;
+
     // Tab position persistence
     private static final String PREF_ACTIVE_TAB = "main_activity_active_tab";
     private static final int DEFAULT_TAB = 0;
@@ -126,6 +130,16 @@ public class MainActivity2 extends AppCompatActivity {
         mUtil.writeMemoryLog("MainActivity2.onCreate");
         mContext = this;
         mHandler = new Handler(Looper.getMainLooper());
+
+        mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        mModePreferenceListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                if ("pref_basic_mode".equals(key)) {
+                    recreateCommonFragment();
+                }
+            }
+        };
 
         // Configure system bar appearance - ensure icons are visible
         // The system will show light icons on dark background and dark icons on light background
@@ -231,6 +245,9 @@ public class MainActivity2 extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         Log.i(TAG, "onPause()");
+        if (mSharedPrefs != null && mModePreferenceListener != null) {
+            mSharedPrefs.unregisterOnSharedPreferenceChangeListener(mModePreferenceListener);
+        }
         if (mUtil != null) {
             mUtil.writeToSysLogFile("MainActivity2.onPause()", "LIFECYCLE");
         }
@@ -238,7 +255,7 @@ public class MainActivity2 extends AppCompatActivity {
         // Save the current tab position before detaching
         if (mFragmentPager != null) {
             int currentTab = mFragmentPager.getCurrentItem();
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences prefs = mSharedPrefs != null ? mSharedPrefs : PreferenceManager.getDefaultSharedPreferences(this);
             prefs.edit().putInt(PREF_ACTIVE_TAB, currentTab).apply();
             Log.d(TAG, "Saved active tab position: " + currentTab);
         }
@@ -257,6 +274,9 @@ public class MainActivity2 extends AppCompatActivity {
         if (mUtil != null) {
             mUtil.writeToSysLogFile("MainActivity2.onResume()", "LIFECYCLE");
             mUtil.writeMemoryLog("MainActivity2.onResume");
+        }
+        if (mSharedPrefs != null && mModePreferenceListener != null) {
+            mSharedPrefs.registerOnSharedPreferenceChangeListener(mModePreferenceListener);
         }
         // Instantiate a ViewPager2 and a PagerAdapter.
         mFragmentPager = findViewById(R.id.fragment_pager);
@@ -302,7 +322,32 @@ public class MainActivity2 extends AppCompatActivity {
 
         // Restore the previously active tab position
         // If no saved preference, choose tab based on enabled algorithms
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences prefs = mSharedPrefs != null ? mSharedPrefs : PreferenceManager.getDefaultSharedPreferences(this);
+
+        // Basic Mode Toggle Logic
+        boolean basicMode = prefs.getBoolean("pref_basic_mode", true);
+        View fragmentContainer = findViewById(R.id.fragment_common_container_view);
+
+        if (basicMode) {
+            if (mTabLayout != null) mTabLayout.setVisibility(View.GONE);
+            if (mFragmentPager != null) mFragmentPager.setVisibility(View.GONE);
+            if (fragmentContainer != null) {
+                LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) fragmentContainer.getLayoutParams();
+                params.height = LinearLayout.LayoutParams.MATCH_PARENT;
+                params.weight = 1.0f;
+                fragmentContainer.setLayoutParams(params);
+            }
+        } else {
+            if (mTabLayout != null) mTabLayout.setVisibility(View.VISIBLE);
+            if (mFragmentPager != null) mFragmentPager.setVisibility(View.VISIBLE);
+            if (fragmentContainer != null) {
+                LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) fragmentContainer.getLayoutParams();
+                params.height = LinearLayout.LayoutParams.WRAP_CONTENT;
+                params.weight = 0; // Reset weight
+                fragmentContainer.setLayoutParams(params);
+            }
+        }
+
         int savedTab = prefs.getInt(PREF_ACTIVE_TAB, -1); // -1 means not set
 
         if (savedTab == -1) {
@@ -315,10 +360,13 @@ public class MainActivity2 extends AppCompatActivity {
         mFragmentPager.setCurrentItem(savedTab, false); // false = no animation on restore
         Log.d(TAG, "Restored active tab position: " + savedTab);
 
-        getSupportFragmentManager().beginTransaction()
-                .setReorderingAllowed(true)
-                .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
-                .commit();
+        Fragment existingCommon = getSupportFragmentManager().findFragmentById(R.id.fragment_common_container_view);
+        if (existingCommon == null) {
+            getSupportFragmentManager().beginTransaction()
+                    .setReorderingAllowed(true)
+                    .add(R.id.fragment_common_container_view, FragmentCommon.class, null)
+                    .commit();
+        }
 
         // Force the screen to stay on when the app is running
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -762,6 +810,16 @@ public class MainActivity2 extends AppCompatActivity {
 
         builder.create();
         builder.show();
+    }
+
+    private void recreateCommonFragment() {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+        getSupportFragmentManager().beginTransaction()
+                .setReorderingAllowed(true)
+                .replace(R.id.fragment_common_container_view, FragmentCommon.class, null)
+                .commitNowAllowingStateLoss();
     }
 
     /**

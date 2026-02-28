@@ -1,17 +1,19 @@
 package uk.org.openseizuredetector.activity.main;
 import uk.org.openseizuredetector.R;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.appcompat.content.res.AppCompatResources;
+import android.view.ViewGroup.LayoutParams;
+import androidx.preference.PreferenceManager;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.LineGraphSeries;
@@ -35,6 +37,13 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_osdalg, container, false);
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        GraphView chart = view.findViewById(R.id.chart1);
+        adjustChartHeightForMode(chart);
     }
 
     @Override
@@ -221,4 +230,21 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
     protected void updateUiFast() {
         // OSD graph updates are tied to new data to avoid flicker.
     }
-}
+
+    private void adjustChartHeightForMode(GraphView chart) {
+        if (chart == null || isBasicMode()) {
+            return;
+        }
+        LayoutParams params = chart.getLayoutParams();
+        if (params == null || params.height <= 0) return;
+        int shrinkPx = Math.round(20 * getResources().getDisplayMetrics().density);
+        params.height = Math.max(params.height - shrinkPx, Math.round(150 * getResources().getDisplayMetrics().density));
+        chart.setLayoutParams(params);
+    }
+
+    private boolean isBasicMode() {
+        Context ctx = getContext();
+        if (ctx == null) return true;
+        return PreferenceManager.getDefaultSharedPreferences(ctx).getBoolean("pref_basic_mode", true);
+    }
+ }

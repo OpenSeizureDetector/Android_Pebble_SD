@@ -245,11 +245,21 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     private void updateHeaders() {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         String currentDatasource = sp.getString("DataSource", "Phone");
+        boolean basicMode = sp.getBoolean("pref_basic_mode", true);
 
         mHeaders.clear();
 
         for (HeaderItem h : mAllHeaders) {
             String fragmentName = h.fragmentClass;
+
+            if (basicMode) {
+                // In basic mode, hide advanced settings
+                if (
+                    fragmentName.contains("LoggingPrefsFragment") ||
+                    fragmentName.contains("PebbleDatasourcePrefsFragment")) {
+                    continue;
+                }
+            }
 
             if (fragmentName.contains("PebbleDatasourcePrefsFragment") && !"Pebble".equals(currentDatasource)) {
                 continue;
@@ -291,7 +301,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             OsdUtil.applyTheme(this);
         }
 
-        if (s.equals("DataSource")) {
+        if (s.equals("DataSource") || s.equals("pref_basic_mode")) {
             updateHeaders();
         }
 
