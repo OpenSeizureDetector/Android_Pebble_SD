@@ -107,6 +107,7 @@ public class MainActivity2 extends AppCompatActivity {
 
     private SharedPreferences mSharedPrefs;
     private SharedPreferences.OnSharedPreferenceChangeListener mModePreferenceListener;
+    private Boolean mCurrentBasicMode;
 
     // Tab position persistence
     private static final String PREF_ACTIVE_TAB = "main_activity_active_tab";
@@ -133,13 +134,13 @@ public class MainActivity2 extends AppCompatActivity {
 
         mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
         mModePreferenceListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
-            @Override
-            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                if ("pref_basic_mode".equals(key)) {
-                    recreateCommonFragment();
-                }
-            }
-        };
+             @Override
+             public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+                 if ("pref_basic_mode".equals(key)) {
+                     recreateCommonFragment();
+                 }
+             }
+         };
 
         // Configure system bar appearance - ensure icons are visible
         // The system will show light icons on dark background and dark icons on light background
@@ -326,6 +327,12 @@ public class MainActivity2 extends AppCompatActivity {
 
         // Basic Mode Toggle Logic
         boolean basicMode = prefs.getBoolean("pref_basic_mode", true);
+        if (mCurrentBasicMode == null) {
+            mCurrentBasicMode = basicMode;
+        } else if (mCurrentBasicMode != basicMode) {
+            mCurrentBasicMode = basicMode;
+            recreateCommonFragment();
+        }
         View fragmentContainer = findViewById(R.id.fragment_common_container_view);
 
         if (basicMode) {
@@ -343,7 +350,7 @@ public class MainActivity2 extends AppCompatActivity {
             if (fragmentContainer != null) {
                 LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) fragmentContainer.getLayoutParams();
                 params.height = LinearLayout.LayoutParams.WRAP_CONTENT;
-                params.weight = 0; // Reset weight
+                params.weight = 0;
                 fragmentContainer.setLayoutParams(params);
             }
         }

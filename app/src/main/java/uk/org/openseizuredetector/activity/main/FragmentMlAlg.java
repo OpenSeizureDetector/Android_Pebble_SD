@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.GridLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import androidx.preference.PreferenceManager;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
@@ -367,5 +368,12 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         int shrinkPx = Math.round(20 * getResources().getDisplayMetrics().density);
         params.height = Math.max(params.height - shrinkPx, Math.round(180 * getResources().getDisplayMetrics().density));
         chart.setLayoutParams(params);
+    }
+
+    private boolean isBasicMode() {
+        if (mContext == null) {
+            return true;
+        }
+        return PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean("pref_basic_mode", true);
     }
 }

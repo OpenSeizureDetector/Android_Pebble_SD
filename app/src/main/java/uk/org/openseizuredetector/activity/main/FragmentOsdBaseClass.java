@@ -10,7 +10,6 @@ import android.os.Bundle;
 
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.preference.PreferenceManager;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -31,7 +30,7 @@ public class FragmentOsdBaseClass extends Fragment {
     Context mContext;
     OsdUtil mUtil;
     SdServiceConnection mConnection;
-    private final Handler updateUiHandler = new Handler(Looper.getMainLooper());
+    final Handler updateUiHandler = new Handler(Looper.getMainLooper());
     Timer mUiTimer;
     protected View mRootView;
     private ScrollView mCachedScrollView;
@@ -41,9 +40,7 @@ public class FragmentOsdBaseClass extends Fragment {
     private boolean mLastFallAlarmStanding = false;
     private long mLastThrottledUpdateMillis = 0;
     private boolean mLastBoundState = false;
-    private long mLastBasicFastUpdateMillis = 0;
     private static final long THROTTLED_UPDATE_MS = 30000;
-    private static final long BASIC_MODE_FAST_UPDATE_MS = 5000;
 
     // Use transparent for OK state by default to allow theme background to show through
     protected int okColour = Color.TRANSPARENT;
@@ -117,7 +114,6 @@ public class FragmentOsdBaseClass extends Fragment {
         mRootView = view;
         // Find and cache the ScrollView on first use
         mCachedScrollView = findScrollView(mRootView);
-        updateTimerState();
     }
 
     @Override
@@ -127,16 +123,21 @@ public class FragmentOsdBaseClass extends Fragment {
         if (mUtil.isServerRunning()) {
             mUtil.bindToServer(mContext, mConnection);
         }
-        updateTimerState();
-        if (mRootView != null) {
-            mRootView.post(() -> updateTimerState());
-        }
+        mUiTimer = new Timer();
+        mUiTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                updateUiOnUiThread();
+            }
+        }, 0, 1000);
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        stopTimer();
+        if (mUiTimer != null) {
+            mUiTimer.cancel();
+        }
         // Clear cached ScrollView on pause
         mCachedScrollView = null;
         // Reset dataTime so UI updates when fragment is resumed
@@ -154,13 +155,7 @@ public class FragmentOsdBaseClass extends Fragment {
                                 && mConnection.mSdServer.mSdData != null;
 
                         // Always do lightweight updates (time, alarm state, buttons).
-                        long now = System.currentTimeMillis();
-                        if (!isBasicMode() || now - mLastBasicFastUpdateMillis >= BASIC_MODE_FAST_UPDATE_MS) {
-                            if (isBasicMode()) {
-                                mLastBasicFastUpdateMillis = now;
-                            }
-                            updateUiFast();
-                        }
+                        updateUiFast();
 
                         if (isBound) {
                             long currentDataTime = mConnection.mSdServer.mSdData.dataTimeMillis;
@@ -190,9 +185,9 @@ public class FragmentOsdBaseClass extends Fragment {
                                 }
                             }
 
-                            long nowMillis = System.currentTimeMillis();
-                            if (nowMillis - mLastThrottledUpdateMillis >= THROTTLED_UPDATE_MS) {
-                                mLastThrottledUpdateMillis = nowMillis;
+                            long now = System.currentTimeMillis();
+                            if (now - mLastThrottledUpdateMillis >= THROTTLED_UPDATE_MS) {
+                                mLastThrottledUpdateMillis = now;
                                 updateUiThrottled();
                             }
 
@@ -259,62 +254,10 @@ public class FragmentOsdBaseClass extends Fragment {
         updateUi();
     }
 
-    protected boolean isBasicMode() {
-        if (mContext == null) {
-            return true;
-        }
-        return PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean("pref_basic_mode", true);
-    }
-
     protected void updateUiThrottled() {
         // Override in subclasses for low-frequency heavy updates (e.g., graphs).
     }
 
-    private boolean shouldRunTimer() {
-        return isAdded() && isResumed() && isViewDisplayed();
-    }
-
-    private boolean isViewDisplayed() {
-        return mRootView != null && mRootView.isShown();
-    }
-
-    private void updateTimerState() {
-        if (shouldRunTimer()) {
-            startTimer();
-        } else {
-            stopTimer();
-        }
-    }
-
-    private void startTimer() {
-        if (mUiTimer != null) {
-            return;
-        }
-        mUiTimer = new Timer();
-        mUiTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                updateUiOnUiThread();
-            }
-        }, 0, 1000);
-    }
-
-    private void stopTimer() {
-        if (mUiTimer != null) {
-            mUiTimer.cancel();
-            mUiTimer = null;
-        }
-    }
-
-    @Override
-    public void onHiddenChanged(boolean hidden) {
-        super.onHiddenChanged(hidden);
-        updateTimerState();
-    }
-
-    @Override
-    public void setMenuVisibility(boolean menuVisible) {
-        super.setMenuVisibility(menuVisible);
-        updateTimerState();
-    }
 }
+
+
