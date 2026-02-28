@@ -10,7 +10,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.SwitchCompat;
-import androidx.preference.PreferenceManager;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
@@ -101,6 +100,9 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
 
     @Override
     protected void updateUi() {
+        if (isBasicMode()) {
+            return;
+        }
         tv = (TextView) mRootView.findViewById(R.id.fragment_hr_alg_tv1);
         tvHr = (TextView) mRootView.findViewById(R.id.current_hr_tv);
         tvAvgAHr = (TextView) mRootView.findViewById(R.id.adaptive_avg_hr_tv);
@@ -145,6 +147,9 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     }
 
     private void displayHistoryChart(double[] historyData, int length) {
+        if (isBasicMode()) {
+            return;
+        }
         try {
             if (mLineChart == null || historyData == null || length == 0) {
                 if (mLineChart != null) {
@@ -210,12 +215,5 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         int shrinkPx = Math.round(20 * getResources().getDisplayMetrics().density);
         params.height = Math.max(params.height - shrinkPx, Math.round(170 * getResources().getDisplayMetrics().density));
         chart.setLayoutParams(params);
-    }
-
-    private boolean isBasicMode() {
-        if (mContext == null) {
-            return true;
-        }
-        return PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean("pref_basic_mode", true);
     }
 }

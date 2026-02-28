@@ -25,6 +25,11 @@ public class FragmentCommon extends FragmentOsdBaseClass {
     // Store mode state for dynamic UI generation (e.g. algorithm badges)
     private boolean mIsBasicMode = true;
 
+    private String mLastAlarmText;
+    private int mLastAlarmCardColor = Color.TRANSPARENT;
+    private int mLastAlarmTextColor = Color.TRANSPARENT;
+    private final java.util.Map<String, Integer> mAlgorithmStateCache = new java.util.LinkedHashMap<>();
+
     public FragmentCommon() {
         // Required empty public constructor
     }
@@ -126,46 +131,44 @@ public class FragmentCommon extends FragmentOsdBaseClass {
 
             long currentState = mConnection.mSdServer.mSdData.alarmState;
 
-            if ((currentState == AlarmState.OK)
-                    && !mConnection.mSdServer.mSdData.alarmStanding
-                    && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
-                tv.setText(getString(R.string.okBtnTxt));
-                alarmCard.setCardBackgroundColor(okColour);
-                tv.setTextColor(okTextColour);
-            }
+            String alarmText = getString(R.string.okBtnTxt);
+            int alarmCardColor = okColour;
+            int alarmTextColor = okTextColour;
+
             if ((currentState == AlarmState.WARNING)
                     && !mConnection.mSdServer.mSdData.alarmStanding
                     && !mConnection.mSdServer.mSdData.fallAlarmStanding) {
-                tv.setText(R.string.Warning);
-                alarmCard.setCardBackgroundColor(warnColour);
-                tv.setTextColor(warnTextColour);
+                alarmText = getString(R.string.Warning);
+                alarmCardColor = warnColour;
+                alarmTextColor = warnTextColour;
             }
             if (currentState == AlarmState.MUTE) {
-                tv.setText(R.string.Mute);
-                alarmCard.setCardBackgroundColor(warnColour);
-                tv.setTextColor(warnTextColour);
+                alarmText = getString(R.string.Mute);
+                alarmCardColor = warnColour;
+                alarmTextColor = warnTextColour;
             }
             if (mConnection.mSdServer.mSdData.alarmStanding) {
-                tv.setText(getString(R.string.Alarm) + " : " + mConnection.mSdServer.mSdData.alarmCause);
-                alarmCard.setCardBackgroundColor(alarmColour);
-                tv.setTextColor(alarmTextColour);
+                alarmText = getString(R.string.Alarm) + " : " + mConnection.mSdServer.mSdData.alarmCause;
+                alarmCardColor = alarmColour;
+                alarmTextColor = alarmTextColour;
             }
             if (mConnection.mSdServer.mSdData.fallAlarmStanding) {
-                tv.setText(R.string.Fall);
-                alarmCard.setCardBackgroundColor(alarmColour);
-                tv.setTextColor(alarmTextColour);
+                alarmText = getString(R.string.Fall);
+                alarmCardColor = alarmColour;
+                alarmTextColor = alarmTextColour;
             }
             if (currentState == AlarmState.FAULT) {
-                tv.setText(R.string.Fault);
-                alarmCard.setCardBackgroundColor(warnColour);
-                tv.setTextColor(warnTextColour);
+                alarmText = getString(R.string.Fault);
+                alarmCardColor = warnColour;
+                alarmTextColor = warnTextColour;
             }
             if (currentState == AlarmState.NETFAULT) {
-                tv.setText(R.string.NetFault);
-                alarmCard.setCardBackgroundColor(warnColour);
-                tv.setTextColor(warnTextColour);
+                alarmText = getString(R.string.NetFault);
+                alarmCardColor = warnColour;
+                alarmTextColor = warnTextColour;
             }
 
+            applyAlarmDisplay(tv, alarmCard, alarmText, alarmCardColor, alarmTextColor);
 
             // Update algorithm status display with color-coded individual algorithm states
             updateAlgorithmStatusDisplay();
@@ -244,49 +247,17 @@ public class FragmentCommon extends FragmentOsdBaseClass {
             return;
         }
 
-        algorithmsContainer.removeAllViews();
-
         try {
             uk.org.openseizuredetector.data.SdData sdData = mConnection.mSdServer.mSdData;
-
-            // Display OSD algorithm status
-            if (sdData.mOsdAlarmActive) {
-                addAlgorithmStatusRow(algorithmsContainer, "OSD", sdData.osdAlgState);
+            java.util.Map<String, Integer> currentStates = collectAlgorithmStates(sdData);
+            if (currentStates.equals(mAlgorithmStateCache)) {
+                return;
             }
-
-            // Display FLAP algorithm status
-            if (sdData.mFlapAlarmActive) {
-                addAlgorithmStatusRow(algorithmsContainer, "FLAP", sdData.flapAlgState);
-            }
-
-            // Display FALL algorithm status
-            if (sdData.mFallActive) {
-                addAlgorithmStatusRow(algorithmsContainer, "FALL", sdData.fallAlgState);
-            }
-
-            // Display ML algorithm(s) status - now consistently using "ML" labeling
-            if (sdData.mCnnAlarmActive) {
-                for (int i = 0; i < sdData.mlNumModels && i < 5; i++) {
-                    if (sdData.mlModelActive[i]) {
-                        String modelLabel = sdData.mlModelNames[i];
-                        // If for some reason the name isn't set, fallback to MLx
-                        if (modelLabel == null || modelLabel.isEmpty() || modelLabel.equals("CNN")) {
-                            modelLabel = "ML" + (i + 1);
-                        }
-                        addAlgorithmStatusRow(algorithmsContainer, modelLabel, sdData.mlModelStates[i]);
-                    }
-                }
-            }
-
-            // Display HR algorithm status
-            if (sdData.mHRAlarmActive) {
-                addAlgorithmStatusRow(algorithmsContainer, "HR", sdData.hrAlgState);
-            }
-
-            // Display O2Sat algorithm status if active
-            if (sdData.mO2SatAlarmActive) {
-                // O2Sat doesn't have individual state tracking yet, show as active
-                addAlgorithmStatusRow(algorithmsContainer, "O2", 0);
+            algorithmsContainer.removeAllViews();
+            mAlgorithmStateCache.clear();
+            mAlgorithmStateCache.putAll(currentStates);
+            for (java.util.Map.Entry<String, Integer> entry : currentStates.entrySet()) {
+                addAlgorithmStatusRow(algorithmsContainer, entry.getKey(), entry.getValue());
             }
 
         } catch (Exception e) {
@@ -351,6 +322,53 @@ public class FragmentCommon extends FragmentOsdBaseClass {
         badge.setLayoutParams(params);
 
         container.addView(badge);
+    }
+
+    private java.util.Map<String, Integer> collectAlgorithmStates(uk.org.openseizuredetector.data.SdData sdData) {
+        java.util.Map<String, Integer> states = new java.util.LinkedHashMap<>();
+        if (sdData.mOsdAlarmActive) {
+            states.put("OSD", sdData.osdAlgState);
+        }
+        if (sdData.mFlapAlarmActive) {
+            states.put("FLAP", sdData.flapAlgState);
+        }
+        if (sdData.mFallActive) {
+            states.put("FALL", sdData.fallAlgState);
+        }
+        if (sdData.mCnnAlarmActive) {
+            for (int i = 0; i < sdData.mlNumModels && i < 5; i++) {
+                if (sdData.mlModelActive[i]) {
+                    String modelLabel = sdData.mlModelNames[i];
+                    if (modelLabel == null || modelLabel.isEmpty() || modelLabel.equals("CNN")) {
+                        modelLabel = "ML" + (i + 1);
+                    }
+                    states.put(modelLabel, sdData.mlModelStates[i]);
+                }
+            }
+        }
+        if (sdData.mHRAlarmActive) {
+            states.put("HR", sdData.hrAlgState);
+        }
+        if (sdData.mO2SatAlarmActive) {
+            states.put("O2", 0);
+        }
+        return states;
+    }
+
+    private void applyAlarmDisplay(TextView tv, com.google.android.material.card.MaterialCardView card,
+                                   String text, int cardColor, int textColor) {
+        if (tv != null && (mLastAlarmText == null || !mLastAlarmText.equals(text))) {
+            tv.setText(text);
+            mLastAlarmText = text;
+        }
+        if (card != null && cardColor != mLastAlarmCardColor) {
+            card.setCardBackgroundColor(cardColor);
+            mLastAlarmCardColor = cardColor;
+        }
+        if (tv != null && textColor != mLastAlarmTextColor) {
+            tv.setTextColor(textColor);
+            mLastAlarmTextColor = textColor;
+        }
     }
 
     @Override

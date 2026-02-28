@@ -13,7 +13,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.appcompat.content.res.AppCompatResources;
 import android.view.ViewGroup.LayoutParams;
-import androidx.preference.PreferenceManager;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.LineGraphSeries;
@@ -49,6 +48,9 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
     @Override
     protected void updateUi() {
         //Log.d(TAG,"updateUi()");
+        if (isBasicMode()) {
+            return;
+        }
         TextView tv;
 
         if (mConnection.mBound) {
@@ -228,6 +230,9 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
 
     @Override
     protected void updateUiFast() {
+        if (isBasicMode()) {
+            return;
+        }
         // OSD graph updates are tied to new data to avoid flicker.
     }
 
@@ -241,10 +246,4 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
         params.height = Math.max(params.height - shrinkPx, Math.round(150 * getResources().getDisplayMetrics().density));
         chart.setLayoutParams(params);
     }
-
-    private boolean isBasicMode() {
-        Context ctx = getContext();
-        if (ctx == null) return true;
-        return PreferenceManager.getDefaultSharedPreferences(ctx).getBoolean("pref_basic_mode", true);
-    }
- }
+}

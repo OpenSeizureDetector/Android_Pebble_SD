@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 import android.widget.GridLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import androidx.preference.PreferenceManager;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
@@ -44,6 +43,9 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
 
     @Override
     protected void updateUi() {
+        if (isBasicMode()) {
+            return;
+        }
         if (mRootView == null || !mConnection.mBound || mConnection.mSdServer == null) {
             return;
         }
@@ -79,6 +81,9 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
     }
 
     private void updateIndividualModelDisplay(SdData sdData) {
+        if (isBasicMode()) {
+            return;
+        }
         GridLayout grid = mRootView.findViewById(R.id.individual_models_grid);
         if (grid == null) return;
 
@@ -185,6 +190,9 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
     }
 
     private void displayHistoryChart(SdData sdData) {
+        if (isBasicMode()) {
+            return;
+        }
         try {
             if (historyChart == null) return;
             
@@ -265,6 +273,9 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
      * This replaces GraphView's built-in legend which has sizing issues
      */
     private void updateCustomLegend(SdData sdData) {
+        if (isBasicMode()) {
+            return;
+        }
         if (mRootView == null) return;
 
         android.widget.LinearLayout legendLayout = mRootView.findViewById(R.id.custom_legend_layout);
@@ -335,6 +346,9 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
      * Clears the custom legend display
      */
     private void clearCustomLegend() {
+        if (isBasicMode()) {
+            return;
+        }
         if (mRootView == null) return;
         android.widget.LinearLayout legendLayout = mRootView.findViewById(R.id.custom_legend_layout);
         if (legendLayout != null) {
@@ -353,12 +367,5 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         int shrinkPx = Math.round(20 * getResources().getDisplayMetrics().density);
         params.height = Math.max(params.height - shrinkPx, Math.round(180 * getResources().getDisplayMetrics().density));
         chart.setLayoutParams(params);
-    }
-
-    private boolean isBasicMode() {
-        if (mContext == null) {
-            return true;
-        }
-        return PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean("pref_basic_mode", true);
     }
 }
