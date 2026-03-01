@@ -174,7 +174,7 @@ public class BLEScanActivity extends AppCompatActivity {
                 toast.show();
             }
             SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences((this));
-            Log.i(TAG, "Check of saved values - Name=" + SP.getString("BLE_Device_Name", "NOT SET") + ", Addr=" + SP.getString("BLE_Device_Addr", "NOT SET"));
+            Log.i(TAG, "Check of saved values - Name=" + SP.getString("BLE_Device_Name", "SET_FROM_XML") + ", Addr=" + SP.getString("BLE_Device_Addr", "SET_FROM_XML"));
 
             Log.i(TAG, "Returning to onboarding with selected device");
             finish();
@@ -312,7 +312,7 @@ public class BLEScanActivity extends AppCompatActivity {
             toast.show();
         }
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences((this));
-        Log.v(TAG, "Check of saved values - Name=" + SP.getString("BLE_Device_Name", "NOT SET") + ", Addr=" + SP.getString("BLE_Device_Addr", "NOT SET"));
+        Log.v(TAG, "Check of saved values - Name=" + SP.getString("BLE_Device_Name", "SET_FROM_XML") + ", Addr=" + SP.getString("BLE_Device_Addr", "SET_FROM_XML"));
 
         Log.i(TAG, "Restarting start-up activity so change takes effect");
         Intent i;

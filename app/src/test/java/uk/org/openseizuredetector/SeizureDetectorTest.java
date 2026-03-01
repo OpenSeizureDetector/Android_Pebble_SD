@@ -41,8 +41,8 @@ public class SeizureDetectorTest {
         editor.putString("WarnTime", "5");
         editor.putString("AlarmTime", "15");
         editor.putString("DataUpdatePeriod", "5");
-        editor.putBoolean("OsdAlgActive", true);
-        editor.putBoolean("FlapAlgActive", false);
+        editor.putBoolean("OsdAlarmActive", true);
+        editor.putBoolean("FlapAlarmActive", false);
         editor.putBoolean("FallActive", false);
         editor.putBoolean("CnnAlgActive", false);
         editor.putBoolean("HRAlarmActive", false);
@@ -137,8 +137,8 @@ public class SeizureDetectorTest {
     public void testMultipleAlgorithms_OR_Logic() throws Exception {
         // Enable multiple algorithms
         SharedPreferences.Editor editor = mSP.edit();
-        editor.putBoolean("OsdAlgActive", true);
-        editor.putBoolean("FlapAlgActive", true);
+        editor.putBoolean("OsdAlarmActive", true);
+        editor.putBoolean("FlapAlarmActive", true);
         editor.apply();
 
         // Recreate detector with new settings
@@ -162,6 +162,8 @@ public class SeizureDetectorTest {
         mSeizureDetector.close();
     }
 }
+
+
 
 
 

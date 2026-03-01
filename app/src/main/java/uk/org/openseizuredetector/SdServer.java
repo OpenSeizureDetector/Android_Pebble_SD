@@ -26,6 +26,7 @@
 
 package uk.org.openseizuredetector;
 import uk.org.openseizuredetector.R;
+import uk.org.openseizuredetector.utils.PreferenceUtils;
 
 import android.app.ActivityManager;
 import android.app.Notification;
@@ -1118,7 +1119,6 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.e(TAG, "FAULT: Timer completed - emitting fault warning");
             mUtil.writeToSysLogFile("FAULT: Timer completed - calling faultWarningBeep()");
             faultWarningBeep();
-
             // Re-start the data source to attempt recovery
             // Only restart if:
             // 1. Not already in progress
@@ -1619,7 +1619,7 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.writeToSysLogFile("updatePrefs() - mLatchAlarms = " + mLatchAlarms);
             // Parse the LatchAlarmPeriod setting.
             try {
-                String latchAlarmPeriodStr = SP.getString("LatchAlarmTimerPeriod", "30");
+                String latchAlarmPeriodStr = SP.getString("LatchAlarmTimerPeriod", "SET_FROM_XML");
                 mLatchAlarmPeriod = Integer.parseInt(latchAlarmPeriodStr);
                 Log.v(TAG, "updatePrefs() - mLatchAlarmTimerPeriod = " + mLatchAlarmPeriod);
                 mUtil.writeToSysLogFile("updatePrefs() - mLatchAlarmTimerPeriod = " + mLatchAlarmPeriod);
@@ -1633,7 +1633,7 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.writeToSysLogFile("updatePrefs() - mAuidbleFaultWarning = " + mAudibleFaultWarning);
             // Parse the faultTimer period setting.
             try {
-                String faultTimerPeriodStr = SP.getString("FaultTimerPeriod", "30");
+                String faultTimerPeriodStr = SP.getString("FaultTimerPeriod", "SET_FROM_XML");
                 mFaultTimerPeriod = Integer.parseInt(faultTimerPeriodStr);
                 Log.v(TAG, "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
                 mUtil.writeToSysLogFile("updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
@@ -1653,24 +1653,23 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "updatePrefs() - mMp3Alarm = " + mMp3Alarm);
             mUtil.writeToSysLogFile("updatePrefs() - mMp3Alarm = " + mMp3Alarm);
 
-            mSMSAlarm = SP.getBoolean("SMSAlarm", false);
+            mSMSAlarm = PreferenceUtils.getBooleanFromXml(SP, "SMSAlarm");
             Log.v(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             mUtil.writeToSysLogFile("updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             mPhoneAlarm = SP.getBoolean("PhoneCallAlarm", false);
             Log.v(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             mUtil.writeToSysLogFile("updatePrefs() - mSMSAlarm = " + mSMSAlarm);
-            String SMSNumberStr = SP.getString("SMSNumbers", "");
+            String SMSNumberStr = SP.getString("SMSNumbers", "SET_FROM_XML");
             mSMSNumbers = SMSNumberStr.split(",");
             Log.v(TAG, "updatePrefs() - SMSNumberStr = " + SMSNumberStr);
             mUtil.writeToSysLogFile("updatePrefs() - SMSNumberStr = " + SMSNumberStr);
             Log.v(TAG, "updatePrefs() - mSMSNumbers = " + mSMSNumbers);
             mUtil.writeToSysLogFile("updatePrefs() - mSMSNumbers = " + mSMSNumbers);
-            mSMSMsgStr = SP.getString("SMSMsg", "Seizure Detected!!!");
+            mSMSMsgStr = SP.getString("SMSMsg", "SET_FROM_XML");
             Log.v(TAG, "updatePrefs() - SMSMsgStr = " + mSMSMsgStr);
-            mSMSFalseAlarmMsgStr = SP.getString("SMSFalseAlarmMsg", "False Alarm, Sorry!");
-            Log.v(TAG, "updatePrefs() - SMSFalseAlarmMsgStr = " + mSMSFalseAlarmMsgStr);
+            mSMSFalseAlarmMsgStr = SP.getString("SMSFalseAlarmMsg", "SET_FROM_XML");
 
-            String smsDelayPeriodStr = SP.getString("SMSDelayPeriod","10");
+            String smsDelayPeriodStr = SP.getString("SMSDelayPeriod", "SET_FROM_XML");
             mSmsTimerSecs = Integer.parseInt(smsDelayPeriodStr);
             Log.v(TAG,"updatePrefs() - mSmsTimerSecs = "+mSmsTimerSecs);
 
@@ -1685,9 +1684,9 @@ public class SdServer extends Service implements SdDataReceiver {
             mLogDataRemote = true;
             Log.v(TAG, "updatePrefs() - mLogDataRemote = " + mLogDataRemote);
             mUtil.writeToSysLogFile("updatePrefs() - mLogDataRemote = " + mLogDataRemote);
-            mLogDataRemoteMobile = SP.getBoolean("LogDataRemoteMobile", false);
+            mLogDataRemoteMobile = PreferenceUtils.getBooleanFromXml(SP, "LogDataRemoteMobile");
             Log.v(TAG, "updatePrefs() - mLogDataRemoteMobile = " + mLogDataRemoteMobile);
-            mLogNDA = SP.getBoolean("LogNDA", false);
+            mLogNDA = PreferenceUtils.getBooleanFromXml(SP, "LogNDA");
             Log.v(TAG, "updatePrefs() - mLogNDA = " + mLogNDA);
             mUtil.writeToSysLogFile("updatePrefs() - mLogDataRemoteMobile = " + mLogDataRemoteMobile);
             mAuthToken = SP.getString("webApiAuthToken", null);
@@ -1695,14 +1694,14 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.writeToSysLogFile("updatePrefs() - mAuthToken = " + mAuthToken);
 
             String prefVal;
-            prefVal = SP.getString("EventDurationSec", "300");
+            prefVal = SP.getString("EventDurationSec", "SET_FROM_XML");
             mEventDuration = Integer.parseInt(prefVal);
             Log.v(TAG, "mEventDuration=" + mEventDuration);
 
-            mAutoPruneDb = SP.getBoolean("AutoPruneDb", true);
+            mAutoPruneDb = PreferenceUtils.getBooleanFromXml(SP, "AutoPruneDb");
             Log.v(TAG, "mAutoPruneDb=" + mAutoPruneDb);
 
-            prefVal = SP.getString("DataRetentionPeriod", "28");
+            prefVal = SP.getString("DataRetentionPeriod", "SET_FROM_XML");
             mDataRetentionPeriod = Integer.parseInt(prefVal);
             Log.v(TAG, "mDataRetentionPeriod=" + mDataRetentionPeriod);
 
@@ -1717,12 +1716,12 @@ public class SdServer extends Service implements SdDataReceiver {
             //Log.v(TAG, "updatePrefs() - mOSDPasswd = " + mOSDPasswd);
             //mOSDWearerId = Integer.parseInt(SP.getString("OSDWearerId", "0"));
             //Log.v(TAG, "updatePrefs() - mOSDWearerId = " + mOSDWearerId);
-            mOSDUrl = SP.getString("OSDUrl", "http://openseizuredetector.org.uk/webApi");
+            mOSDUrl = SP.getString("OSDUrl", "SET_FROM_XML");
             Log.v(TAG, "updatePrefs() - mOSDUrl = " + mOSDUrl);
             mUtil.writeToSysLogFile("updatePrefs() - mOSDUrl = " + mOSDUrl);
 
             // ML Model Update Check Period
-            prefVal = SP.getString("MlModelUpdateCheckPeriod", "86400");
+            prefVal = SP.getString("MlModelUpdateCheckPeriod", "SET_FROM_XML");
             long newPeriod = Long.parseLong(prefVal);
             if (newPeriod != mModelUpdateCheckPeriod) {
                 mModelUpdateCheckPeriod = newPeriod;
@@ -1738,6 +1737,7 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!" + ex.toString());
             mUtil.writeToSysLogFile("SdServer.updatePrefs() - Error " + ex.toString());
             mUtil.showToast(getString(R.string.problem_parsing_preferences));
+            faultWarningBeep();
         }
     }
 

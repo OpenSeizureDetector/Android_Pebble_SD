@@ -11,6 +11,7 @@ import java.util.List;
 
 import uk.org.openseizuredetector.data.SdData;
 import uk.org.openseizuredetector.data.AlarmState;
+import uk.org.openseizuredetector.utils.PreferenceUtils;
 
 /**
  * SeizureDetector - Coordinates all seizure detection algorithms.
@@ -55,7 +56,7 @@ public class SeizureDetector {
         updatePrefs();
 
         // Initialize voting strategy
-        String votingStrategyStr = mSP.getString("VotingStrategy", "ANY");
+        String votingStrategyStr = mSP.getString("VotingStrategy", "SET_FROM_XML");
         VotingStrategy.Strategy strategy = VotingStrategy.fromString(votingStrategyStr);
         mVotingStrategy = new VotingStrategy(strategy);
 
@@ -96,18 +97,18 @@ public class SeizureDetector {
 
     private void updatePrefs() {
         try {
-            String warnTimeStr = mSP.getString("WarnTime", "5");
+            String warnTimeStr = mSP.getString("WarnTime", "SET_FROM_XML");
             mWarnTimeThreshold = Short.parseShort(warnTimeStr);
-            String alarmTimeStr = mSP.getString("AlarmTime", "15");
+            String alarmTimeStr = mSP.getString("AlarmTime", "SET_FROM_XML");
             mAlarmTimeThreshold = Short.parseShort(alarmTimeStr);
             mSamplePeriod = 5;
             Log.v(TAG,"updatePrefs() - WarnTime=" + mWarnTimeThreshold + " AlarmTime=" + mAlarmTimeThreshold + " SamplePeriod=" + mSamplePeriod + "");
 
-            mOsdAlarmActive = mSP.getBoolean("OsdAlarmActive", true);
-            mFlapAlarmActive = mSP.getBoolean("FlapAlarmActive", false);
-            mFallActive = mSP.getBoolean("FallActive", false);
-            mCnnAlarmActive = mSP.getBoolean("CnnAlarmActive", false);
-            mHRAlarmActive = mSP.getBoolean("HRAlarmActive", false);
+            mOsdAlarmActive = PreferenceUtils.getBooleanFromXml(mSP, "OsdAlarmActive");
+            mFlapAlarmActive = PreferenceUtils.getBooleanFromXml(mSP, "FlapAlarmActive");
+            mFallActive = PreferenceUtils.getBooleanFromXml(mSP, "FallActive");
+            mCnnAlarmActive = PreferenceUtils.getBooleanFromXml(mSP, "CnnAlarmActive");
+            mHRAlarmActive = PreferenceUtils.getBooleanFromXml(mSP, "HRAlarmActive");
             Log.v(TAG,"updatePrefs() - mOsdAlarmActive=" + mOsdAlarmActive + " mFlapAlarmActive=" + mFlapAlarmActive + " mFallActive=" + mFallActive + " mCnnAlarmActive=" + mCnnAlarmActive + " mHRAlarmActive=" + mHRAlarmActive + "");
         } catch (Exception ex) {
             Log.e(TAG, "updatePrefs() - Problem parsing preferences: " + ex.toString());

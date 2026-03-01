@@ -39,6 +39,7 @@ import uk.org.openseizuredetector.R;
 
 import uk.org.openseizuredetector.client.SdServiceConnection;
 import uk.org.openseizuredetector.utils.OsdUtil;
+import uk.org.openseizuredetector.utils.PreferenceUtils;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.MenuCompat;
@@ -191,7 +192,7 @@ public class MainActivity2 extends AppCompatActivity {
         mUtil.writeToSysLogFile("MainActivity.onStart()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
-        boolean audibleAlarm = SP.getBoolean("AudibleAlarm", true);
+        boolean audibleAlarm = PreferenceUtils.getBooleanFromXml(SP, "AudibleAlarm");
         Log.v(TAG, "onStart - audibleAlarm = " + audibleAlarm);
 
         // Set action bar title with version number
@@ -326,7 +327,7 @@ public class MainActivity2 extends AppCompatActivity {
         SharedPreferences prefs = mSharedPrefs != null ? mSharedPrefs : PreferenceManager.getDefaultSharedPreferences(this);
 
         // Basic Mode Toggle Logic
-        boolean basicMode = prefs.getBoolean("pref_basic_mode", true);
+        boolean basicMode = PreferenceUtils.getBooleanFromXml(prefs, "pref_basic_mode");
         if (mCurrentBasicMode == null) {
             mCurrentBasicMode = basicMode;
         } else if (mCurrentBasicMode != basicMode) {
@@ -838,21 +839,21 @@ public class MainActivity2 extends AppCompatActivity {
         // Check algorithms in priority order: ML, OSD, HR
 
         // Tab 1: ML Algorithm
-        boolean mlEnabled = prefs.getBoolean("CnnAlarmActive", false);
+        boolean mlEnabled = PreferenceUtils.getBooleanFromXml(prefs, "CnnAlarmActive");
         if (mlEnabled) {
             Log.d(TAG, "ML algorithm is enabled - selecting ML tab (position 1)");
             return 1;
         }
 
         // Tab 0: OSD Algorithm
-        boolean osdEnabled = prefs.getBoolean("OsdAlarmActive", false);
+        boolean osdEnabled = PreferenceUtils.getBooleanFromXml(prefs, "OsdAlarmActive");
         if (osdEnabled) {
             Log.d(TAG, "OSD algorithm is enabled - selecting OSD tab (position 0)");
             return 0;
         }
 
         // Tab 2: Heart Rate Algorithm
-        boolean hrEnabled = prefs.getBoolean("HRAlarmActive", false);
+        boolean hrEnabled = PreferenceUtils.getBooleanFromXml(prefs, "HRAlarmActive");
         if (hrEnabled) {
             Log.d(TAG, "HR algorithm is enabled - selecting HR tab (position 2)");
             return 2;

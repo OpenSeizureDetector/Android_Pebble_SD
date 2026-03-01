@@ -30,12 +30,12 @@ public class SdAlgFlap extends SdAlgBase {
 
     private void updatePrefs() {
         try {
-            String threshStr = mSP.getString("FlapAlarmThresh", "10");
+            String threshStr = mSP.getString("FlapAlarmThresh", "SET_FROM_XML");
             mFlapThresh = Short.parseShort(threshStr);
-            String ratioStr = mSP.getString("FlapAlarmRatioThresh", "55");
+            String ratioStr = mSP.getString("FlapAlarmRatioThresh", "SET_FROM_XML");
             mFlapRatioThresh = Short.parseShort(ratioStr);
-            mFlapFreqMin = readDoublePref("FlapAlarmFreqMin", "2.5");
-            mFlapFreqMax = readDoublePref("FlapAlarmFreqMax", "4.0");
+            mFlapFreqMin = readDoublePref("FlapAlarmFreqMin", "SET_FROM_XML");
+            mFlapFreqMax = readDoublePref("FlapAlarmFreqMax", "SET_FROM_XML");
             Log.v(TAG, "updatePrefs(): mFlapThresh=" + mFlapThresh +
                     ", mFlapRatioThresh=" + mFlapRatioThresh +
                     ", mFlapFreqMin=" + mFlapFreqMin +
@@ -140,4 +140,3 @@ public class SdAlgFlap extends SdAlgBase {
         return flapDetected ? 2 : 0;  // 2=ALARM, 0=OK
     }
 }
-

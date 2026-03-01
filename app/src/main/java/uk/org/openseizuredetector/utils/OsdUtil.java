@@ -139,8 +139,8 @@ public class OsdUtil {
      */
     public static void applyTheme(Context context) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-        String themePref = sp.getString("darkMode", "system");
-        
+        String themePref = sp.getString("darkMode", "SET_FROM_XML");
+
         Log.i(TAG, "applyTheme(): Setting theme to: " + themePref);
         
         switch (themePref) {

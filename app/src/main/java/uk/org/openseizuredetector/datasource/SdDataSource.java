@@ -26,6 +26,7 @@ import uk.org.openseizuredetector.R;
 
 import uk.org.openseizuredetector.data.SdData;
 import uk.org.openseizuredetector.utils.OsdUtil;
+import uk.org.openseizuredetector.utils.PreferenceUtils;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -394,23 +395,23 @@ public abstract class SdDataSource {
         mUtil.writeToSysLogFile("SDDataSource.updatePrefs()");
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(mContext);
         try {
-            mAppRestartTimeout = Integer.parseInt(SP.getString("AppRestartTimeout", "10"));
-            mFaultTimerPeriod = Integer.parseInt(SP.getString("FaultTimerPeriod", "30"));
-            mFidgetDetectorEnabled = SP.getBoolean("FidgetDetectorEnabled", false);
-            mFidgetPeriod = readDoublePref(SP, "FidgetDetectorPeriod", "20");
-            mFidgetThreshold = readDoublePref(SP, "FidgetDetectorThreshold", "0.6");
+            mAppRestartTimeout = Integer.parseInt(SP.getString("AppRestartTimeout", "SET_FROM_XML"));
+            mFaultTimerPeriod = Integer.parseInt(SP.getString("FaultTimerPeriod", "SET_FROM_XML"));
+            mFidgetDetectorEnabled = PreferenceUtils.getBooleanFromXml(SP, "FidgetDetectorEnabled");
+            mFidgetPeriod = readDoublePref(SP, "FidgetDetectorPeriod", "SET_FROM_XML");
+            mFidgetThreshold = readDoublePref(SP, "FidgetDetectorThreshold", "SET_FROM_XML");
             mBleDeviceAddr = SP.getString("BLE_Device_Addr", "SET_FROM_XML");
             mBleDeviceName = SP.getString("BLE_Device_Name", "SET_FROM_XML");
-            mDataUpdatePeriod = (short) Integer.parseInt(SP.getString("PebbleUpdatePeriod", "5"));
-            mMutePeriod = (short) Integer.parseInt(SP.getString("MutePeriod", "60"));
-            mManAlarmPeriod = (short) Integer.parseInt(SP.getString("ManAlarmPeriod", "5"));
-            
-            mSdData.mOsdAlarmActive = SP.getBoolean("OsdAlarmActive", true);
-            mSdData.mFlapAlarmActive = SP.getBoolean("FlapAlarmActive", false);
-            mSdData.mCnnAlarmActive = SP.getBoolean("CnnAlarmActive", false);
-            mSdData.mHRAlarmActive = SP.getBoolean("HRAlarmActive", false);
-            mSdData.mO2SatAlarmActive = SP.getBoolean("O2SatAlarmActive", false);
-            mSdData.mFallActive = SP.getBoolean("FallActive", false);
+            mDataUpdatePeriod = (short) Integer.parseInt(SP.getString("PebbleUpdatePeriod", "SET_FROM_XML"));
+            mMutePeriod = (short) Integer.parseInt(SP.getString("MutePeriod", "SET_FROM_XML"));
+            mManAlarmPeriod = (short) Integer.parseInt(SP.getString("ManAlarmPeriod", "SET_FROM_XML"));
+
+            mSdData.mOsdAlarmActive = PreferenceUtils.getBooleanFromXml(SP, "OsdAlarmActive");
+            mSdData.mFlapAlarmActive = PreferenceUtils.getBooleanFromXml(SP, "FlapAlarmActive");
+            mSdData.mCnnAlarmActive = PreferenceUtils.getBooleanFromXml(SP, "CnnAlarmActive");
+            mSdData.mHRAlarmActive = PreferenceUtils.getBooleanFromXml(SP, "HRAlarmActive");
+            mSdData.mO2SatAlarmActive = PreferenceUtils.getBooleanFromXml(SP, "O2SatAlarmActive");
+            mSdData.mFallActive = PreferenceUtils.getBooleanFromXml(SP, "FallActive");
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
         }

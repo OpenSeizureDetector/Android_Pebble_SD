@@ -10,6 +10,7 @@ import androidx.preference.PreferenceManager;
 import android.util.Log;
 
 import java.util.ArrayList;
+import uk.org.openseizuredetector.utils.PreferenceUtils;
 
 public class SdAlgHr extends SdAlgBase {
     private final static String TAG = "SdAlgHr";
@@ -118,27 +119,27 @@ public class SdAlgHr extends SdAlgBase {
          */
         Log.i(TAG, "updatePrefs()");
 
-        mSimpleHrAlarmActive = mSP.getBoolean("HRAlarmActive", false);
-        mSimpleHrAlarmThreshMin = readDoublePref("HRThreshMin", "20");
-        mSimpleHrAlarmThreshMax = readDoublePref("HRThreshMax", "150");
+        mSimpleHrAlarmActive = PreferenceUtils.getBooleanFromXml(mSP, "HRAlarmActive");
+        mSimpleHrAlarmThreshMin = readDoublePref("HRThreshMin", "SET_FROM_XML");
+        mSimpleHrAlarmThreshMax = readDoublePref("HRThreshMax", "SET_FROM_XML");
         Log.d(TAG, "updatePrefs(): mSimpleHrAlarmActive=" + mSimpleHrAlarmActive);
         Log.d(TAG, "updatePrefs(): mSimpleHrAlarmThreshMin=" + mSimpleHrAlarmThreshMin);
         Log.d(TAG, "updatePrefs(): mSimpleHrAlarmThreshMax=" + mSimpleHrAlarmThreshMax);
 
-        mAdaptiveHrAlarmActive = mSP.getBoolean("HRAdaptiveAlarmActive", false);
-        mAdaptiveHrAlarmWindowSecs = readDoublePref("HRAdaptiveAlarmWindowSecs", "30");
+        mAdaptiveHrAlarmActive = PreferenceUtils.getBooleanFromXml(mSP, "HRAdaptiveAlarmActive");
+        mAdaptiveHrAlarmWindowSecs = readDoublePref("HRAdaptiveAlarmWindowSecs", "SET_FROM_XML");
         mAdaptiveHrAlarmWindowDp = (int) Math.round(mAdaptiveHrAlarmWindowSecs / 5.0);
-        mAdaptiveHrAlarmThresh = readDoublePref("HRAdaptiveAlarmThresh", "20");
+        mAdaptiveHrAlarmThresh = readDoublePref("HRAdaptiveAlarmThresh", "SET_FROM_XML");
         Log.d(TAG, "updatePrefs(): mAdaptiveHrAlarmActive=" + mAdaptiveHrAlarmActive);
         Log.d(TAG, "updatePrefs(): mAdaptiveHrWindowSecs=" + mAdaptiveHrAlarmWindowSecs);
         Log.d(TAG, "updatePrefs(): mAdaptiveHrWindowDp=" + mAdaptiveHrAlarmWindowDp);
         Log.d(TAG, "updatePrefs(): mAdaptiveHrAlarmThresh=" + mAdaptiveHrAlarmThresh);
 
-        mAverageHrAlarmActive = mSP.getBoolean("HRAverageAlarmActive", false);
-        mAverageHrAlarmWindowSecs = readDoublePref("HRAverageAlarmWindowSecs", "120");
+        mAverageHrAlarmActive = PreferenceUtils.getBooleanFromXml(mSP, "HRAverageAlarmActive");
+        mAverageHrAlarmWindowSecs = readDoublePref("HRAverageAlarmWindowSecs", "SET_FROM_XML");
         mAverageHrAlarmWindowDp = (int) Math.round(mAverageHrAlarmWindowSecs / 5.0);
-        mAverageHrAlarmThreshMin = readDoublePref("HRAverageAlarmThreshMin", "40");
-        mAverageHrAlarmThreshMax = readDoublePref("HRAverageAlarmThreshMax", "120");
+        mAverageHrAlarmThreshMin = readDoublePref("HRAverageAlarmThreshMin", "SET_FROM_XML");
+        mAverageHrAlarmThreshMax = readDoublePref("HRAverageAlarmThreshMax", "SET_FROM_XML");
         Log.d(TAG, "updatePrefs(): mAverageHrAlarmActive=" + mAverageHrAlarmActive);
         Log.d(TAG, "updatePrefs(): mAverageHrAlarmWindowSecs=" + mAverageHrAlarmWindowSecs);
         Log.d(TAG, "updatePrefs(): mAverageHrAlarmWindowDp=" + mAverageHrAlarmWindowDp);

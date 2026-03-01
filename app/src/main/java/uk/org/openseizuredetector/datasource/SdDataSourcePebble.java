@@ -46,6 +46,7 @@ import java.nio.IntBuffer;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+import uk.org.openseizuredetector.utils.PreferenceUtils;
 
 
 /**
@@ -248,7 +249,7 @@ public class SdDataSourcePebble extends SdDataSource {
         try {
             // Parse the AppRestartTimeout period setting.
             try {
-                String appRestartTimeoutStr = SP.getString("AppRestartTimeout", "10");
+                String appRestartTimeoutStr = SP.getString("AppRestartTimeout", "SET_FROM_XML");
                 mAppRestartTimeout = Integer.parseInt(appRestartTimeoutStr);
                 Log.v(TAG, "updatePrefs() - mAppRestartTimeout = " + mAppRestartTimeout);
             } catch (Exception ex) {
@@ -259,7 +260,7 @@ public class SdDataSourcePebble extends SdDataSource {
 
             // Parse the FaultTimer period setting.
             try {
-                String faultTimerPeriodStr = SP.getString("FaultTimerPeriod", "30");
+                String faultTimerPeriodStr = SP.getString("FaultTimerPeriod", "SET_FROM_XML");
                 mFaultTimerPeriod = Integer.parseInt(faultTimerPeriodStr);
                 Log.v(TAG, "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
             } catch (Exception ex) {
@@ -327,7 +328,7 @@ public class SdDataSourcePebble extends SdDataSource {
             mAlarmRatioThresh = (short) Integer.parseInt(prefStr);
             Log.v(TAG, "updatePrefs() AlarmRatioThresh = " + mAlarmRatioThresh);
 
-            mFallActive = SP.getBoolean("FallActive", false);
+            mFallActive = PreferenceUtils.getBooleanFromXml(SP, "FallActive");
             Log.v(TAG, "updatePrefs() FallActive = " + mFallActive);
 
             prefStr = SP.getString("FallThreshMin", "SET_FROM_XML");

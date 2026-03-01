@@ -15,6 +15,7 @@ import org.robolectric.annotation.Config;
 
 import androidx.preference.PreferenceManager;
 import uk.org.openseizuredetector.alg.SdAlgHr;
+import uk.org.openseizuredetector.activity.settings.PrefActivity;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 33)
@@ -27,6 +28,7 @@ public class SdAlgHrTest {
     public void setUp() throws Exception {
         // Use Robolectric application context for local unit test
         mContext = RuntimeEnvironment.getApplication();
+        PrefActivity.initialiseDefaultValues(mContext, true);
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(mContext);
         mSdAlgHr = new SdAlgHr(mContext);
         assertNotNull(mSdAlgHr);

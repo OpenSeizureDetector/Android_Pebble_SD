@@ -34,13 +34,13 @@ public class SdAlgOsd extends SdAlgBase {
     private void updatePrefs() {
         Log.d(TAG, "updatePrefs()");
         try {
-            String threshStr = mSP.getString("AlarmThresh", "100");
+            String threshStr = mSP.getString("AlarmThresh", "SET_FROM_XML");
             mAlarmThresh = Short.parseShort(threshStr);
-            String ratioStr = mSP.getString("AlarmRatioThresh", "57");
+            String ratioStr = mSP.getString("AlarmRatioThresh", "SET_FROM_XML");
             mAlarmRatioThresh = Short.parseShort(ratioStr);
-            String freqMinStr = mSP.getString("AlarmFreqMin", "3");
+            String freqMinStr = mSP.getString("AlarmFreqMin", "SET_FROM_XML");
             mAlarmFreqMin = Short.parseShort(freqMinStr);
-            String freqMaxStr = mSP.getString("AlarmFreqMax", "8");
+            String freqMaxStr = mSP.getString("AlarmFreqMax", "SET_FROM_XML");
             mAlarmFreqMax = Short.parseShort(freqMaxStr);
             Log.v(TAG, "updatePrefs(): mAlarmThresh=" + mAlarmThresh +
                     ", mAlarmRatioThresh=" + mAlarmRatioThresh +

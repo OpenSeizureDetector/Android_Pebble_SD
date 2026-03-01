@@ -93,16 +93,16 @@ public class SdDataSourceNetwork extends SdDataSource {
         mUtil.writeToSysLogFile("SdDataSourceNetwork().updatePrefs()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(mContext);
-        mServerIP = SP.getString("ServerIP", "192.168.1.175");
+        mServerIP = SP.getString("ServerIP", "SET_FROM_XML");
         Log.v(TAG, "updatePrefs() - mServerIP = " + mServerIP);
         try {
-            String dataUpdatePeriodStr = SP.getString("DataUpdatePeriod", "2000");
+            String dataUpdatePeriodStr = SP.getString("DataUpdatePeriod", "SET_FROM_XML");
             mDataUpdatePeriod = Integer.parseInt(dataUpdatePeriodStr);
             Log.v(TAG, "updatePrefs() - mDataUpdatePeriod = " + mDataUpdatePeriod);
-            String connectTimeoutPeriodStr = SP.getString("ConnectTimeoutPeriod", "5000");
+            String connectTimeoutPeriodStr = SP.getString("ConnectTimeoutPeriod", "SET_FROM_XML");
             mConnnectTimeoutPeriod = Integer.parseInt(connectTimeoutPeriodStr);
             Log.v(TAG, "updatePrefs() - mConnectTimeoutPeriod = " + mConnnectTimeoutPeriod);
-            String readTimeoutPeriodStr = SP.getString("ReadTimeoutPeriod", "5000");
+            String readTimeoutPeriodStr = SP.getString("ReadTimeoutPeriod", "SET_FROM_XML");
             mReadTimeoutPeriod = Integer.parseInt(readTimeoutPeriodStr);
             Log.v(TAG, "updatePrefs() - mReadTimeoutPeriod = " + mReadTimeoutPeriod);
         } catch (Exception ex) {

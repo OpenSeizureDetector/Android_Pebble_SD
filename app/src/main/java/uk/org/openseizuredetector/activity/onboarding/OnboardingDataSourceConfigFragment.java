@@ -83,7 +83,7 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
         super.onResume();
 
         // Get the currently selected data source
-        String dataSource = mPrefs.getString("DataSource", "Phone");
+        String dataSource = mPrefs.getString("DataSource", "SET_FROM_XML");
 
         // Always update the displayed config to match the current datasource preference
         // This ensures we show the correct config even if user changed datasource and returned
@@ -233,8 +233,8 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
      * Update the TextView to show the currently selected BLE device
      */
     private void updateSelectedDeviceDisplay(TextView tvSelectedDevice) {
-        String deviceName = mPrefs.getString("BLE_Device_Name", null);
-        String deviceAddr = mPrefs.getString("BLE_Device_Addr", null);
+        String deviceName = mPrefs.getString("BLE_Device_Name", "SET_FROM_XML");
+        String deviceAddr = mPrefs.getString("BLE_Device_Addr", "SET_FROM_XML");
 
         if (deviceName != null && deviceAddr != null) {
             String displayText = "✓ " + deviceName + "\nMAC: " + deviceAddr;

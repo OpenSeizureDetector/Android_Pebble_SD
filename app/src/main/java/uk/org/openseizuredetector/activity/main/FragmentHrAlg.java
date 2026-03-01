@@ -1,6 +1,7 @@
 package uk.org.openseizuredetector.activity.main;
 import uk.org.openseizuredetector.R;
 
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -17,6 +18,8 @@ import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
 import java.util.Objects;
+
+import uk.org.openseizuredetector.utils.PreferenceUtils;
 
 
 public class FragmentHrAlg extends FragmentOsdBaseClass {
@@ -222,6 +225,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         if (mContext == null) {
             return true;
         }
-        return PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean("pref_basic_mode", true);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+        return PreferenceUtils.getBooleanFromXml(prefs, "pref_basic_mode");
     }
 }

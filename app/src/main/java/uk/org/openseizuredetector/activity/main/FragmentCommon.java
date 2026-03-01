@@ -2,6 +2,7 @@ package uk.org.openseizuredetector.activity.main;
 import uk.org.openseizuredetector.R;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -18,6 +19,7 @@ import java.util.Locale;
 
 import uk.org.openseizuredetector.data.AlarmState;
 import androidx.preference.PreferenceManager;
+import uk.org.openseizuredetector.utils.PreferenceUtils;
 
 public class FragmentCommon extends FragmentOsdBaseClass {
     String TAG = "FragmentCommon";
@@ -397,6 +399,7 @@ public class FragmentCommon extends FragmentOsdBaseClass {
         if (ctx == null) {
             return true;
         }
-        return PreferenceManager.getDefaultSharedPreferences(ctx).getBoolean("pref_basic_mode", true);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
+        return PreferenceUtils.getBooleanFromXml(prefs, "pref_basic_mode");
     }
 }

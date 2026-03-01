@@ -49,7 +49,7 @@ public class OnboardingDataSourceFragment extends Fragment {
         mRadioNetwork = view.findViewById(R.id.radio_network);
 
         // Load saved preference - default to "Phone" if not set
-        String currentDataSource = mPrefs.getString("DataSource", "Phone");
+        String currentDataSource = mPrefs.getString("DataSource", "SET_FROM_XML");
         Log.i(TAG, "onCreateView - Loaded DataSource from preferences: " + currentDataSource);
         selectDataSourceRadio(currentDataSource);
 
@@ -162,4 +162,3 @@ public class OnboardingDataSourceFragment extends Fragment {
         editor.apply();
     }
 }
-

@@ -30,6 +30,7 @@ import uk.org.openseizuredetector.alg.MlModelManager;
 import uk.org.openseizuredetector.alg.MlAutoConfigurator;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import uk.org.openseizuredetector.utils.SettingsUtil;
+import uk.org.openseizuredetector.utils.PreferenceUtils;
 import androidx.appcompat.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -246,8 +247,8 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
     private void updateHeaders() {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        String currentDatasource = sp.getString("DataSource", "Phone");
-        boolean basicMode = sp.getBoolean("pref_basic_mode", true);
+        String currentDatasource = sp.getString("DataSource", "SET_FROM_XML");
+        boolean basicMode = PreferenceUtils.getBooleanFromXml(sp, "pref_basic_mode");
 
         mHeaders.clear();
 
@@ -319,7 +320,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         }
 
         if (s.equals("SMSAlarm"))  {
-            if (sharedPreferences.getBoolean("SMSAlarm", false) == true) {
+            if (PreferenceUtils.getBooleanFromXml(sharedPreferences, "SMSAlarm")) {
                 mIsShuttingDown = true;
                 mUtil.showToast("Restarting OpenSeizureDetector");
                 Intent i = new Intent(this, StartupActivity.class);
@@ -449,7 +450,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             setPreferencesFromResource(R.xml.data_source_prefs, rootKey);
             updateBleButtonVisibility();
 
-            String selectedDataSource = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataSource", "Phone");
+            String selectedDataSource = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataSource", "SET_FROM_XML");
 
             // Ensure the DataSource preference shows the current selection as its summary
             try {
@@ -459,7 +460,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                         CharSequence entry = dsPref.getEntry();
                         if (entry != null) return entry;
                         // fallback to stored value
-                        return PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataSource", "Phone");
+                        return PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataSource", "SET_FROM_XML");
                     });
                 }
             } catch (Exception ignored) {}
@@ -488,7 +489,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 EditTextPreference serverIpPref = findPreference("ServerIP");
                 if (serverIpPref != null) {
                     serverIpPref.setSummaryProvider(preference -> {
-                        String val = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("ServerIP", "192.168.1.175");
+                        String val = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("ServerIP", "SET_FROM_XML");
                         return val;
                     });
                 }
@@ -496,7 +497,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 EditTextPreference updatePeriodPref = findPreference("DataUpdatePeriod");
                 if (updatePeriodPref != null) {
                     updatePeriodPref.setSummaryProvider(preference -> {
-                        String val = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataUpdatePeriod", "2000");
+                        String val = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataUpdatePeriod", "SET_FROM_XML");
                         return val + " ms";
                     });
                 }
@@ -504,7 +505,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 EditTextPreference connectTimeoutPref = findPreference("ConnectTimeoutPeriod");
                 if (connectTimeoutPref != null) {
                     connectTimeoutPref.setSummaryProvider(preference -> {
-                        String val = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("ConnectTimeoutPeriod", "5000");
+                        String val = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("ConnectTimeoutPeriod", "SET_FROM_XML");
                         return val + " ms";
                     });
                 }
@@ -512,7 +513,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 EditTextPreference readTimeoutPref = findPreference("ReadTimeoutPeriod");
                 if (readTimeoutPref != null) {
                     readTimeoutPref.setSummaryProvider(preference -> {
-                        String val = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("ReadTimeoutPeriod", "5000");
+                        String val = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("ReadTimeoutPeriod", "SET_FROM_XML");
                         return val + " ms";
                     });
                 }
@@ -539,7 +540,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         private void updateBleButtonVisibility() {
             Preference bleButton = findPreference("SelectBLEDevice");
             if (bleButton != null) {
-                String datasource = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataSource", "Phone");
+                String datasource = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataSource", "SET_FROM_XML");
                 bleButton.setVisible(datasource.equals("BLE") || datasource.equals("BLE2"));
             }
         }
@@ -568,7 +569,8 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.sd_prefs_main, rootKey);
             
-            mBasicMode = PreferenceManager.getDefaultSharedPreferences(getContext()).getBoolean("pref_basic_mode", true);
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+            mBasicMode = PreferenceUtils.getBooleanFromXml(prefs, "pref_basic_mode");
             refreshSettingsCategory();
             syncAlgorithmToggles();
         }
@@ -589,13 +591,13 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             if ("pref_basic_mode".equals(key)) {
-                mBasicMode = sharedPreferences.getBoolean(key, true);
+                mBasicMode = PreferenceUtils.getBooleanFromXml(sharedPreferences, key);
                 refreshSettingsCategory();
                 syncAlgorithmToggles();
                 return;
             }
 
-            if (key.equals("CnnAlarmActive") && sharedPreferences.getBoolean(key, false)) {
+            if (key.equals("CnnAlarmActive") && PreferenceUtils.getBooleanFromXml(sharedPreferences, key)) {
                 if (mBasicMode) {
                     startBasicModeMlSetup();
                 } else {
@@ -632,12 +634,12 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 return;
             }
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
-            updateTwoStatePreference("OsdAlarmActive", sp.getBoolean("OsdAlarmActive", true));
-            updateTwoStatePreference("FlapAlarmActive", sp.getBoolean("FlapAlarmActive", false));
-            updateTwoStatePreference("CnnAlarmActive", sp.getBoolean("CnnAlarmActive", false));
-            updateTwoStatePreference("HRAlarmActive", sp.getBoolean("HRAlarmActive", false));
-            updateTwoStatePreference("O2SatAlarmActive", sp.getBoolean("O2SatAlarmActive", false));
-            updateTwoStatePreference("FallActive", sp.getBoolean("FallActive", false));
+            updateTwoStatePreference("OsdAlarmActive", PreferenceUtils.getBooleanFromXml(sp, "OsdAlarmActive"));
+            updateTwoStatePreference("FlapAlarmActive", PreferenceUtils.getBooleanFromXml(sp, "FlapAlarmActive"));
+            updateTwoStatePreference("CnnAlarmActive", PreferenceUtils.getBooleanFromXml(sp, "CnnAlarmActive"));
+            updateTwoStatePreference("HRAlarmActive", PreferenceUtils.getBooleanFromXml(sp, "HRAlarmActive"));
+            updateTwoStatePreference("O2SatAlarmActive", PreferenceUtils.getBooleanFromXml(sp, "O2SatAlarmActive"));
+            updateTwoStatePreference("FallActive", PreferenceUtils.getBooleanFromXml(sp, "FallActive"));
         }
 
         private void updateTwoStatePreference(String key, boolean value) {
@@ -655,27 +657,27 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             
             addSettingLink("Algorithm Voting", "Configure how multiple algorithms work together", VotingPrefsFragment.class.getName());
 
-            if (sp.getBoolean("OsdAlarmActive", true)) {
-                addSettingLink("OSD Algorithm Settings", "Core vibration detection parameters", OsdAlgPrefsFragment.class.getName());
-            }
-            if (sp.getBoolean("FlapAlarmActive", true)) {
-                addSettingLink("Flap Alarm Settings", "Experimental arm flapping detection", FlapAlgPrefsFragment.class.getName());
-            }
-            if (sp.getBoolean("CnnAlarmActive", false)) {
-                addSettingLink("Machine Learning Settings", "Manage models and sensitivity", MlAlgPrefsFragment.class.getName());
-            }
-            if (sp.getBoolean("HRAlarmActive", false)) {
-                addSettingLink("Heart Rate Settings", "Threshold and adaptive alarms", HrAlgPrefsFragment.class.getName());
-            }
-            if (sp.getBoolean("O2SatAlarmActive", false)) {
-                addSettingLink("O2 Saturation Settings", "Oxygen saturation alarm levels", O2SatPrefsFragment.class.getName());
-            }
-            if (sp.getBoolean("FallActive", false)) {
-                addSettingLink("Fall Detection Settings", "Fall detection sensitivity", FallAlgPrefsFragment.class.getName());
-            }
-            if (sp.getBoolean("FidgetDetectorEnabled", false)) {
-                addSettingLink("Fidget Settings", "Configure fidget detector parameters", FidgetAlgPrefsFragment.class.getName());
-            }
+            if (PreferenceUtils.getBooleanFromXml(sp, "OsdAlarmActive")) {
+                 addSettingLink("OSD Algorithm Settings", "Core vibration detection parameters", OsdAlgPrefsFragment.class.getName());
+             }
+            if (PreferenceUtils.getBooleanFromXml(sp, "FlapAlarmActive")) {
+                 addSettingLink("Flap Alarm Settings", "Experimental arm flapping detection", FlapAlgPrefsFragment.class.getName());
+             }
+            if (PreferenceUtils.getBooleanFromXml(sp, "CnnAlarmActive")) {
+                 addSettingLink("Machine Learning Settings", "Manage models and sensitivity", MlAlgPrefsFragment.class.getName());
+             }
+            if (PreferenceUtils.getBooleanFromXml(sp, "HRAlarmActive")) {
+                 addSettingLink("Heart Rate Settings", "Threshold and adaptive alarms", HrAlgPrefsFragment.class.getName());
+             }
+            if (PreferenceUtils.getBooleanFromXml(sp, "O2SatAlarmActive")) {
+                 addSettingLink("O2 Saturation Settings", "Oxygen saturation alarm levels", O2SatPrefsFragment.class.getName());
+             }
+            if (PreferenceUtils.getBooleanFromXml(sp, "FallActive")) {
+                 addSettingLink("Fall Detection Settings", "Fall detection sensitivity", FallAlgPrefsFragment.class.getName());
+             }
+            if (PreferenceUtils.getBooleanFromXml(sp, "FidgetDetectorEnabled")) {
+                 addSettingLink("Fidget Settings", "Configure fidget detector parameters", FidgetAlgPrefsFragment.class.getName());
+             }
         }
 
         private void addSettingLink(String title, String summary, String fragmentClass) {

@@ -113,7 +113,7 @@ public class OnboardingActivity extends AppCompatActivity {
             // If on DataSourceConfig and Network Data Source is selected, skip to Complete
             if (currentPosition == FRAG_DATASOURCE_CONFIG) {
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-                String dataSource = prefs.getString("DataSource", "Phone");
+                String dataSource = prefs.getString("DataSource", "SET_FROM_XML");
                 if ("Network".equals(dataSource)) {
                     // Skip algorithm selection, go straight to complete
                     mViewPager.setCurrentItem(FRAG_COMPLETE);
@@ -134,7 +134,7 @@ public class OnboardingActivity extends AppCompatActivity {
             // If on Complete (position 4) and Network Data Source is selected, skip to DataSourceConfig
             if (currentPosition == FRAG_COMPLETE) {
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-                String dataSource = prefs.getString("DataSource", "Phone");
+                String dataSource = prefs.getString("DataSource", "SET_FROM_XML");
                 if ("Network".equals(dataSource)) {
                     // Skip algorithm selection, go straight to config
                     mViewPager.setCurrentItem(FRAG_DATASOURCE_CONFIG);

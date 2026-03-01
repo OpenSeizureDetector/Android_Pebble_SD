@@ -28,6 +28,7 @@ import uk.org.openseizuredetector.R;
 import uk.org.openseizuredetector.alg.MlModelManager;
 import uk.org.openseizuredetector.client.SdServiceConnection;
 import uk.org.openseizuredetector.utils.OsdUtil;
+import uk.org.openseizuredetector.utils.PreferenceUtils;
 import android.Manifest;
 import android.content.ComponentName;
 import android.content.Context;
@@ -156,7 +157,7 @@ public class StartupActivity extends AppCompatActivity {
 
         // Check if this is the first run - if so, launch onboarding wizard
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean firstRunComplete = prefs.getBoolean("first_run_complete", false);
+        boolean firstRunComplete = PreferenceUtils.getBooleanFromXml(prefs, "first_run_complete");
 
         //firstRunComplete = false;  // FIXME - forced to false for testing
 
@@ -221,7 +222,7 @@ public class StartupActivity extends AppCompatActivity {
         // Enable the "Install Watch App" button if we have the Pebble data source selected,
         // otherwise hide it.
         b = (Button) findViewById(R.id.installOsdAppButton);
-        String dataSourceName = (prefs.getString("DataSource", "Phone"));
+        String dataSourceName = (prefs.getString("DataSource", "SET_FROM_XML"));
         if (dataSourceName.equals("Pebble")) {
             b.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -324,9 +325,9 @@ public class StartupActivity extends AppCompatActivity {
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
 
-        mSdDataSourceName = SP.getString("DataSource", "Pebble");
-        mBleDeviceAddr = SP.getString("BLE_Device_Addr", "");
-        mBleDeviceName = SP.getString("BLE_Device_Name", "");
+        mSdDataSourceName = SP.getString("DataSource", "SET_FROM_XML");
+        mBleDeviceAddr = SP.getString("BLE_Device_Addr", "SET_FROM_XML");
+        mBleDeviceName = SP.getString("BLE_Device_Name", "SET_FROM_XML");
         tv = (TextView) findViewById(R.id.dataSourceTextView);
 
         if (mSdDataSourceName.equals("BLE")) {
@@ -353,7 +354,7 @@ public class StartupActivity extends AppCompatActivity {
             Log.i(TAG, "Power Management OK - we are ignoring Battery Optimizations");
             mBatteryOptDialogDisplayed = false;
         } else {
-            boolean preventBatteryOptWarning = SP.getBoolean("PreventBatteryOptWarning", false);
+            boolean preventBatteryOptWarning = PreferenceUtils.getBooleanFromXml(SP, "PreventBatteryOptWarning");
             if (preventBatteryOptWarning) {
                 Log.i(TAG, "PreventBatteryOptWarning is true, so not displaying battery optimisation dialog");
             } else {
@@ -509,7 +510,7 @@ public class StartupActivity extends AppCompatActivity {
             Log.v(TAG, "serverStatusRunnable()");
             SharedPreferences SP = PreferenceManager
                     .getDefaultSharedPreferences(getBaseContext());
-            smsAlarmsActive = SP.getBoolean("SMSAlarm", false);
+            smsAlarmsActive = PreferenceUtils.getBooleanFromXml(SP, "SMSAlarm");
             phoneAlarmsActive = SP.getBoolean("PhoneCallAlarm", false);
 
             // Check power management settings
@@ -817,7 +818,7 @@ public class StartupActivity extends AppCompatActivity {
         Log.i(TAG, "checkFirstRun()");
         versionName = this.getVersionName(this, StartupActivity.class);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        storedVersionName = (prefs.getString("AppVersionName", null));
+        storedVersionName = (prefs.getString("AppVersionName", "SET_FROM_XML"));
         Log.v(TAG, "storedVersionName=" + storedVersionName + ", versionName=" + versionName);
 
         // CHeck for new installation
@@ -947,7 +948,7 @@ public class StartupActivity extends AppCompatActivity {
         if (mMlIncompatibilityDialogDisplayed) return;
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        if (sp.getBoolean("CnnAlarmActive", false)) {
+        if (PreferenceUtils.getBooleanFromXml(sp, "CnnAlarmActive")) {
             MlModelManager mm = new MlModelManager(this);
             JSONArray installed = mm.getInstalledModels();
 

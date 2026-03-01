@@ -1,5 +1,6 @@
 package uk.org.openseizuredetector.activity.onboarding;
 import uk.org.openseizuredetector.R;
+import uk.org.openseizuredetector.utils.PreferenceUtils;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -49,14 +50,14 @@ public class OnboardingCompleteFragment extends Fragment {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
 
         // Get data source
-        String dataSource = prefs.getString("DataSource", "Phone");
+        String dataSource = prefs.getString("DataSource", "SET_FROM_XML");
         String dataSourceDisplay = getDataSourceDisplay(dataSource, prefs);
 
         Log.i(TAG, "DataSource: " + dataSource);
-        Log.i(TAG, "OsdAlarmActive: " + prefs.getBoolean("OsdAlarmActive", true));
-        Log.i(TAG, "FlapAlarmActive: " + prefs.getBoolean("FlapAlarmActive", true));
-        Log.i(TAG, "CnnAlarmActive: " + prefs.getBoolean("CnnAlarmActive", false));
-        Log.i(TAG, "HRAlarmActive: " + prefs.getBoolean("HRAlarmActive", false));
+        Log.i(TAG, "OsdAlarmActive: " + PreferenceUtils.getBooleanFromXml(prefs, "OsdAlarmActive"));
+        Log.i(TAG, "FlapAlarmActive: " + PreferenceUtils.getBooleanFromXml(prefs, "FlapAlarmActive"));
+        Log.i(TAG, "CnnAlarmActive: " + PreferenceUtils.getBooleanFromXml(prefs, "CnnAlarmActive"));
+        Log.i(TAG, "HRAlarmActive: " + PreferenceUtils.getBooleanFromXml(prefs, "HRAlarmActive"));
 
         // Get enabled algorithms
         List<String> enabledAlgorithms = getEnabledAlgorithms(prefs, dataSource);
@@ -78,8 +79,8 @@ public class OnboardingCompleteFragment extends Fragment {
     private String getDataSourceDisplay(String dataSource, SharedPreferences prefs) {
         switch (dataSource) {
             case "BLE2":
-                String deviceName = prefs.getString("BLE_Device_Name", null);
-                String deviceAddr = prefs.getString("BLE_Device_Addr", null);
+                String deviceName = prefs.getString("BLE_Device_Name", "SET_FROM_XML");
+                String deviceAddr = prefs.getString("BLE_Device_Addr", "SET_FROM_XML");
                 if (deviceName != null && deviceAddr != null) {
                     return "PineTime Watch (BLE)\n" + deviceName + "\n" + deviceAddr;
                 } else {
@@ -110,15 +111,15 @@ public class OnboardingCompleteFragment extends Fragment {
 
         // Check which algorithms are enabled
         // Use false as defaults to match what was set in onboarding
-        if (prefs.getBoolean("OsdAlarmActive", false)) {
+        if (PreferenceUtils.getBooleanFromXml(prefs, "OsdAlarmActive")) {
             algorithms.add("Original OpenSeizureDetector (OSD)");
         }
 
-        if (prefs.getBoolean("FlapAlarmActive", false)) {
+        if (PreferenceUtils.getBooleanFromXml(prefs, "FlapAlarmActive")) {
             algorithms.add("OSD with Flap Detection");
         }
 
-        if (prefs.getBoolean("CnnAlarmActive", false)) {
+        if (PreferenceUtils.getBooleanFromXml(prefs, "CnnAlarmActive")) {
             String modelName = prefs.getString("CnnModelName", null);
             if (modelName != null) {
                 algorithms.add("ML Algorithm (" + modelName + ")");
@@ -127,7 +128,7 @@ public class OnboardingCompleteFragment extends Fragment {
             }
         }
 
-        if (prefs.getBoolean("HRAlarmActive", false)) {
+        if (PreferenceUtils.getBooleanFromXml(prefs, "HRAlarmActive")) {
             algorithms.add("Heart Rate Alerts");
         }
 

@@ -1,5 +1,6 @@
 package uk.org.openseizuredetector.activity.onboarding;
 import uk.org.openseizuredetector.R;
+import uk.org.openseizuredetector.utils.PreferenceUtils;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -65,10 +66,10 @@ public class OnboardingAlgorithmsFragment extends Fragment {
         mNextButton = requireActivity().findViewById(R.id.btn_next);
 
         // Load saved preferences using correct preference keys from seizure_detector_prefs.xml
-        boolean osdAlgActive = mPrefs.getBoolean("OsdAlarmActive", true);
-        boolean flapAlgActive = mPrefs.getBoolean("FlapAlarmActive", true);
-        boolean mlAlgActive = mPrefs.getBoolean("CnnAlarmActive", false);
-        boolean hrAlgActive = mPrefs.getBoolean("HRAlarmActive", false);
+        boolean osdAlgActive = PreferenceUtils.getBooleanFromXml(mPrefs, "OsdAlarmActive");
+        boolean flapAlgActive = PreferenceUtils.getBooleanFromXml(mPrefs, "FlapAlarmActive");
+        boolean mlAlgActive = PreferenceUtils.getBooleanFromXml(mPrefs, "CnnAlarmActive");
+        boolean hrAlgActive = PreferenceUtils.getBooleanFromXml(mPrefs, "HRAlarmActive");
 
         // Set checkbox states based on loaded preferences
         mCheckMlAlg.setChecked(mlAlgActive);

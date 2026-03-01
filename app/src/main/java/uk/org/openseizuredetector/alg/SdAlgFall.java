@@ -24,11 +24,11 @@ public class SdAlgFall extends SdAlgBase {
 
     private void updatePrefs() {
         try {
-            String minStr = mSP.getString("FallThreshMin", "500");
+            String minStr = mSP.getString("FallThreshMin", "SET_FROM_XML");
             mFallThreshMin = Short.parseShort(minStr);
-            String maxStr = mSP.getString("FallThreshMax", "2000");
+            String maxStr = mSP.getString("FallThreshMax", "SET_FROM_XML");
             mFallThreshMax = Short.parseShort(maxStr);
-            String windowStr = mSP.getString("FallWindow", "500");
+            String windowStr = mSP.getString("FallWindow", "SET_FROM_XML");
             mFallWindow = Short.parseShort(windowStr);
             Log.v(TAG, "updatePrefs(): mFallThreshMin=" + mFallThreshMin +
                     ", mFallThreshMax=" + mFallThreshMax +

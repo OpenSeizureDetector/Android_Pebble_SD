@@ -18,6 +18,8 @@ import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
 import java.util.Locale;
+import android.content.SharedPreferences;
+import uk.org.openseizuredetector.utils.PreferenceUtils;
 
 public class FragmentMlAlg extends FragmentOsdBaseClass {
     String TAG = "FragmentMlAlg";
@@ -374,6 +376,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         if (mContext == null) {
             return true;
         }
-        return PreferenceManager.getDefaultSharedPreferences(mContext).getBoolean("pref_basic_mode", true);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+        return PreferenceUtils.getBooleanFromXml(prefs, "pref_basic_mode");
     }
 }
