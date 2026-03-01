@@ -7,20 +7,6 @@
             android:title="@string/accept_alarm" />
     </group>
 
-    <group android:id="@+id/grp2">
-        <!--<item
-            android:id="@+id/action_start_stop"
-            android:icon="@drawable/stop_server"
-            app:showAsAction="never|withText"
-            android:title="@string/restart_server"
-            android:enabled="false" />
-            -->
-        <item
-            android:id="@+id/action_exit"
-            android:icon="@drawable/stop_server"
-            app:showAsAction="never|withText"
-            android:title="@string/start_stop_server" />
-    </group>
     <group android:id="@+id/grp3">
         <item
             android:id="@+id/action_report_seizure"
@@ -37,16 +23,6 @@
             android:title="@string/data_log_manager" />
     </group>
     <group android:id="@+id/grp4">
-        <item
-            android:id="@+id/action_install_watch_app"
-            app:showAsAction="never|withText"
-            android:title="@string/install_watch_app" />
-
-        <item
-            android:id="@+id/action_update_pinetime_firmware"
-            app:showAsAction="never|withText"
-            android:title="@string/update_pinetime_firmware" />
-
         <item
             android:id="@+id/action_test_alarm_beep"
             android:icon="@drawable/stop_server"
@@ -108,6 +84,13 @@
             android:id="@+id/action_about"
             app:showAsAction="never|withText"
             android:title="@string/about" />
+    </group>
+    <group android:id="@+id/grp2">
+        <item
+            android:id="@+id/action_exit"
+            android:icon="@drawable/stop_server"
+            app:showAsAction="never|withText"
+            android:title="@string/start_stop_server" />
     </group>
 
 

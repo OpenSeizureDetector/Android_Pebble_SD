@@ -139,6 +139,8 @@ public class MainActivity2 extends AppCompatActivity {
              public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
                  if ("pref_basic_mode".equals(key)) {
                      recreateCommonFragment();
+                 } else if ("LatchAlarms".equals(key)) {
+                    invalidateOptionsMenu();
                  }
              }
          };
@@ -183,6 +185,17 @@ public class MainActivity2 extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.main_activity_actions, menu);
         MenuCompat.setGroupDividerEnabled(menu, true);
         return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem latchItem = menu.findItem(R.id.action_accept_alarm);
+        if (latchItem != null) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            boolean latchEnabled = PreferenceUtils.getBooleanFromXml(prefs, "LatchAlarms");
+            latchItem.setVisible(latchEnabled);
+        }
+        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
@@ -387,15 +400,7 @@ public class MainActivity2 extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         Log.i(TAG, "onOptionsItemSelected() :  " + item.getItemId() + " selected");
         int itemId = item.getItemId();
-        if (itemId == R.id.action_install_watch_app) {
-            Log.i(TAG, "action_install_watch_app");
-            mConnection.mSdServer.mSdDataSource.installWatchApp();
-            return true;
-        } else if (itemId == R.id.action_update_pinetime_firmware) {
-            Log.i(TAG, "action_update_pinetime_firmware");
-            launchPineTimeUpdater();
-            return true;
-        } else if (itemId == R.id.action_accept_alarm) {
+        if (itemId == R.id.action_accept_alarm) {
             Log.i(TAG, "action_accept_alarm");
             if (mConnection.mBound) {
                 mConnection.mSdServer.acceptAlarm();
@@ -416,21 +421,6 @@ public class MainActivity2 extends AppCompatActivity {
             // so that the server exits properly - otherwise we end up with multiple threads running.
             // FIXME - tell the threads to unbind from the serer before calling stopServer as an alternative.
             finish();
-            return true;
-        } else if (itemId == R.id.action_start_stop) {
-            // FIXME: We need to unbind the fragments from the service, or else unbindFromServer does not work!
-            // Disabled this menu option until I work out how to fix it!
-            Log.i(TAG, "action_start_stop: restarting server");
-            mUtil.unbindFromServer(this, mConnection );
-            mUtil.showToast("Stopping Background Service....");
-            mUtil.stopServer();
-            // Wait 1 second to give the server chance to shutdown, then re-start it
-            mHandler.postDelayed(new Runnable() {
-                public void run() {
-                    mUtil.showToast("NOT Re-Starting Background Service...");
-                    //mUtil.startServer();
-                }
-            }, 1000);
             return true;
         } else if (itemId == R.id.action_test_alarm_beep) {
             Log.i(TAG, "action_test_alarm_beep");

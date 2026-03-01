@@ -16,4 +16,14 @@
         android:summary="@string/select_ble_device_summary"
         android:widgetLayout="@layout/preference_widget_ble_button" />
 
+    <Preference
+        android:key="InstallWatchApp"
+        android:title="@string/install_watch_app"
+        android:widgetLayout="@layout/preference_widget_install_watch_button" />
+
+    <Preference
+        android:key="UpdatePineTimeFirmware"
+        android:title="@string/update_pinetime_firmware"
+        android:widgetLayout="@layout/preference_widget_update_pinetime_button" />
+
 </PreferenceScreen>

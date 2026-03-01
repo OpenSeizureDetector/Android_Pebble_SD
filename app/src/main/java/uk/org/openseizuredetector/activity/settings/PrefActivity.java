@@ -36,6 +36,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -433,7 +434,125 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             final Intent intent = new Intent(this.mContext, BLEScanActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             mContext.startActivity(intent);
+        } else if (view.getId() == R.id.installWatchAppButton) {
+            launchWatchInstallInstructions();
+        } else if (view.getId() == R.id.updatePineTimeFirmwareButton) {
+            launchPineTimeUpdater();
         }
+    }
+
+    private void launchWatchInstallInstructions() {
+        try {
+            String url = "http://www.openseizuredetector.org.uk/?page_id=1207";
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setData(Uri.parse(url));
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+        } catch (Exception ex) {
+            mUtil.showToast("Error Displaying Installation Instructions");
+        }
+    }
+
+    private void launchPineTimeUpdater() {
+        Log.i(TAG, "launchPineTimeUpdater()");
+        mUtil.writeToSysLogFile("PrefActivity.launchPineTimeUpdater()");
+
+        String pineTimePackageName = "uk.org.openseizuredetector.pinetime";
+
+        try {
+            boolean isInstalled = false;
+            try {
+                getPackageManager().getPackageInfo(pineTimePackageName, 0);
+                isInstalled = true;
+            } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+                isInstalled = false;
+            }
+
+            if (isInstalled) {
+                showPineTimeUpdaterWarningDialog(pineTimePackageName);
+            } else {
+                showPineTimeUpdaterInstallDialog();
+            }
+        } catch (Exception ex) {
+            Log.e(TAG, "Error launching PineTime Updater: " + ex.toString());
+            mUtil.showToast("Error: " + ex.getMessage());
+        }
+    }
+
+    private void showPineTimeUpdaterWarningDialog(final String pineTimePackageName) {
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+        builder.setTitle("Update PineTime Firmware");
+        builder.setMessage("To update your PineTime watch firmware:\n\n" +
+                "1. The OpenSeizureDetector monitoring service will be stopped\n" +
+                "2. Your PineTime watch will disconnect from this app\n" +
+                "3. The PineTime Firmware Updater will launch\n" +
+                "4. After the firmware update completes, you must manually restart the OpenSeizureDetector app to resume monitoring\n\n" +
+                "WARNING: Seizure detection will NOT be active during the firmware update.\n\n" +
+                "Do you want to continue?");
+        builder.setIcon(android.R.drawable.ic_dialog_alert);
+
+        builder.setPositiveButton("Continue", (dialog, which) -> {
+            Log.i(TAG, "User confirmed PineTime Updater launch - stopping service");
+            mUtil.stopServer();
+
+            mHandler.postDelayed(() -> {
+                try {
+                    Intent launchIntent = getPackageManager().getLaunchIntentForPackage(pineTimePackageName);
+                    if (launchIntent != null) {
+                        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(launchIntent);
+                        moveTaskToBack(true);
+                    } else {
+                        Log.e(TAG, "Failed to get launch intent for PineTime Updater");
+                        mUtil.showToast("Error: Cannot launch PineTime Updater");
+                        mUtil.startServer();
+                    }
+                } catch (Exception ex) {
+                    Log.e(TAG, "Error launching PineTime Updater: " + ex.toString());
+                    mUtil.showToast("Error: " + ex.getMessage());
+                    mUtil.startServer();
+                }
+            }, 500);
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        builder.setCancelable(true);
+        builder.create();
+        builder.show();
+    }
+
+    private void showPineTimeUpdaterInstallDialog() {
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+        builder.setTitle("PineTime Firmware Updater");
+        builder.setMessage("The PineTime Firmware Updater app is not installed.\n\n" +
+                "This companion app is required to update the firmware on your PineTime watch.\n\n" +
+                "Would you like to install it from the Google Play Store?");
+        builder.setIcon(android.R.drawable.ic_dialog_info);
+
+        builder.setPositiveButton("Install", (dialog, which) -> {
+            String pineTimePackageName = "uk.org.openseizuredetector.pinetime";
+            try {
+                Intent playStoreIntent = new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("market://details?id=" + pineTimePackageName));
+                playStoreIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(playStoreIntent);
+            } catch (android.content.ActivityNotFoundException e) {
+                try {
+                    Intent browserIntent = new Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://play.google.com/store/apps/details?id=" + pineTimePackageName));
+                    startActivity(browserIntent);
+                } catch (Exception ex) {
+                    Log.e(TAG, "Error opening Play Store: " + ex.toString());
+                    mUtil.showToast("Error opening Play Store");
+                }
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        builder.create();
+        builder.show();
     }
 
     /* Core Fragments */
@@ -449,6 +568,26 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.data_source_prefs, rootKey);
             updateBleButtonVisibility();
+
+            Preference installWatchPref = findPreference("InstallWatchApp");
+            if (installWatchPref != null) {
+                installWatchPref.setOnPreferenceClickListener(pref -> {
+                    if (getActivity() instanceof PrefActivity) {
+                        ((PrefActivity) getActivity()).launchWatchInstallInstructions();
+                    }
+                    return true;
+                });
+            }
+
+            Preference updateFirmwarePref = findPreference("UpdatePineTimeFirmware");
+            if (updateFirmwarePref != null) {
+                updateFirmwarePref.setOnPreferenceClickListener(pref -> {
+                    if (getActivity() instanceof PrefActivity) {
+                        ((PrefActivity) getActivity()).launchPineTimeUpdater();
+                    }
+                    return true;
+                });
+            }
 
             String selectedDataSource = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataSource", "SET_FROM_XML");
 
@@ -542,6 +681,15 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             if (bleButton != null) {
                 String datasource = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataSource", "SET_FROM_XML");
                 bleButton.setVisible(datasource.equals("BLE") || datasource.equals("BLE2"));
+            }
+            String datasource = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataSource", "SET_FROM_XML");
+            Preference installWatch = findPreference("InstallWatchApp");
+            if (installWatch != null) {
+                installWatch.setVisible("Garmin".equals(datasource) || "Pebble".equals(datasource));
+            }
+            Preference updateFirmware = findPreference("UpdatePineTimeFirmware");
+            if (updateFirmware != null) {
+                updateFirmware.setVisible("BLE2".equals(datasource));
             }
         }
     }
