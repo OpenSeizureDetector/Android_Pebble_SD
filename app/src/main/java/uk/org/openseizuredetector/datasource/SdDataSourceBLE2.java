@@ -127,7 +127,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
     BluetoothGattCharacteristic mHrChar;
     BluetoothGattCharacteristic mBattChar;
     private BluetoothCentralManager mBluetoothCentralManager;
-    private boolean mShutdown = false;
+    private volatile boolean mShutdown = false;
     private static final int DISCONNECT_TIMEOUT_MS = 5000; // 5 seconds timeout for disconnect
     private Handler mTimeoutHandler;
     private volatile boolean mDisconnected = false;
@@ -332,6 +332,9 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
         @Override // BluetoothPeripheralCallback
         public void onServicesDiscovered(@NotNull BluetoothPeripheral peripheral) {
+            if (mIsShuttingDown || mShutdown || !isRunning()) {
+                return;
+            }
             Log.i(TAG,"onServicesDiscovered()");
             mBlePeripheral = peripheral;
             // Request a higher MTU, iOS always asks for 185 - This is likely to have no effect, as Pinetime uses 23 bytes.
@@ -445,6 +448,9 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
         @Override
         public void onNotificationStateUpdate(@NotNull BluetoothPeripheral peripheral, @NotNull BluetoothGattCharacteristic characteristic, @NotNull GattStatus status) {
+            if (mIsShuttingDown || mShutdown || !isRunning()) {
+                return;
+            }
             if (status == GattStatus.SUCCESS) {
                 final boolean isNotifying = peripheral.isNotifying(characteristic);
                 Log.i(TAG, String.format("SUCCESS: Notify set to '%s' for %s", isNotifying, characteristic.getUuid()));
@@ -457,6 +463,9 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
         @Override
         public void onCharacteristicWrite(@NotNull BluetoothPeripheral peripheral, @NotNull byte[] value, @NotNull BluetoothGattCharacteristic characteristic, @NotNull GattStatus status) {
+            if (mIsShuttingDown || mShutdown || !isRunning()) {
+                return;
+            }
             if (status == GattStatus.SUCCESS) {
                 Log.d(TAG, String.format("SUCCESS: Writing <%s> to <%s>", asHexString(value), characteristic.getUuid()));
             } else {
