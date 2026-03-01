@@ -174,7 +174,7 @@ public class SdDataSourceNetwork extends SdDataSource {
                         Log.i(TAG, "onSuccess() - datasource stopped, ignoring result");
                         return;
                     }
-                    if (sdData.alarmState != AlarmState.NETFAULT) {
+                    if (sdData.alarmState != AlarmState.NETFAULT && sdData.alarmState != AlarmState.FAULT) {
                         mSdDataReceiver.onSdDataReceived(sdData);
                     } else {
                         Log.e(TAG, "onSuccess() - sdData.alarmState = " + sdData.alarmState + " initiating fault.");
