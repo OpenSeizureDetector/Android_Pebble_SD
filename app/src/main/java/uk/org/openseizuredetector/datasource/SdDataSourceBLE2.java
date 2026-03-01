@@ -466,7 +466,10 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
         @Override
         public void onCharacteristicUpdate(@NotNull BluetoothPeripheral peripheral, @NotNull byte[] value, @NotNull BluetoothGattCharacteristic characteristic, @NotNull GattStatus status) {
-            if (status != GattStatus.SUCCESS) return;
+            if (mIsShuttingDown || mShutdown || !isRunning()) {
+                return;
+            }
+             if (status != GattStatus.SUCCESS) return;
 
             UUID characteristicUUID = characteristic.getUuid();
             BluetoothBytesParser parser = new BluetoothBytesParser(value);
@@ -610,14 +613,20 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
         @Override
         public void onMtuChanged(@NotNull BluetoothPeripheral peripheral, int mtu, @NotNull GattStatus status) {
-            Log.i(TAG, String.format("onMtuChanged(): new MTU set: %d", mtu));
+            if (mIsShuttingDown || mShutdown || !isRunning()) {
+                return;
+            }
+             Log.i(TAG, String.format("onMtuChanged(): new MTU set: %d", mtu));
         }
 
         @Override
         public void onReadRemoteRssi(@NotNull BluetoothPeripheral peripheral, int rssi, @NotNull GattStatus status) {
-            Log.d(TAG, String.format("onReadRemogeRssi(): Rssi = %d", rssi));
-            mSdData.watchSignalStrength = rssi;
-        }
+            if (mIsShuttingDown || mShutdown || !isRunning()) {
+                return;
+            }
+             Log.d(TAG, String.format("onReadRemogeRssi(): Rssi = %d", rssi));
+             mSdData.watchSignalStrength = rssi;
+         }
 
     };
 
@@ -632,6 +641,15 @@ public class SdDataSourceBLE2 extends SdDataSource {
         // Cancel any pending reconnection attempts
         if (mReconnectionHandler != null) {
             mReconnectionHandler.removeCallbacksAndMessages(null);
+        }
+
+        // Stop any active scans to reduce callbacks during shutdown
+        if (mBluetoothCentralManager != null) {
+            try {
+                mBluetoothCentralManager.stopScan();
+            } catch (Exception e) {
+                Log.w(TAG, "bleDisconnect() - Error stopping scan: " + e.getMessage());
+            }
         }
 
         // Set timeout to force cleanup if disconnect hangs
