@@ -254,11 +254,14 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         for (HeaderItem h : mAllHeaders) {
             String fragmentName = h.fragmentClass;
 
+            Log.d(TAG, "updateHeaders(): fragment Name = " + fragmentName);
+
             if (basicMode) {
                 // In basic mode, hide advanced settings
                 if (
                     fragmentName.contains("LoggingPrefsFragment") ||
                     fragmentName.contains("PebbleDatasourcePrefsFragment")) {
+                    Log.d(TAG, "updateHeaders(): Skipping " + fragmentName + " in basic mode");
                     continue;
                 }
             }
@@ -267,6 +270,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 continue;
             }
             if (fragmentName.contains("NetworkDatasourcePrefsFragment") && !"Network".equals(currentDatasource)) {
+                Log.d(TAG, "updateHeaders(): Skipping NetworkDatasourcePrefsFragment");
                 continue;
             }
 
@@ -445,6 +449,8 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             setPreferencesFromResource(R.xml.data_source_prefs, rootKey);
             updateBleButtonVisibility();
 
+            String selectedDataSource = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataSource", "Phone");
+
             // Ensure the DataSource preference shows the current selection as its summary
             try {
                 ListPreference dsPref = findPreference("DataSource");
@@ -458,22 +464,25 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 }
             } catch (Exception ignored) {}
 
-            // Add network datasource settings under a dedicated category within Data Source
-            PreferenceCategory netCategory = new PreferenceCategory(getPreferenceManager().getContext());
-            netCategory.setTitle(R.string.network_datasource_title);
-            getPreferenceScreen().addPreference(netCategory);
+            // Show Network DataSource configuration options if Network Datasource is selected.
+            if (selectedDataSource.equalsIgnoreCase("Network")) {
+                Log.d(TAG, "onCreatePreferences(): showing network datasource preferences");
+                // Add network datasource settings under a dedicated category within Data Source
+                PreferenceCategory netCategory = new PreferenceCategory(getPreferenceManager().getContext());
+                netCategory.setTitle(R.string.network_datasource_title);
+                getPreferenceScreen().addPreference(netCategory);
 
-            // Inflate network datasource preferences into a temporary PreferenceScreen
-            PreferenceScreen temp = getPreferenceManager().createPreferenceScreen(getContext());
-            getPreferenceManager().inflateFromResource(getContext(), R.xml.network_datasource_prefs, temp);
+                // Inflate network datasource preferences into a temporary PreferenceScreen
+                PreferenceScreen temp = getPreferenceManager().createPreferenceScreen(getContext());
+                getPreferenceManager().inflateFromResource(getContext(), R.xml.network_datasource_prefs, temp);
 
-            // Move each preference from the temporary screen into the category, removing parent first
-            while (temp.getPreferenceCount() > 0) {
-                Preference p = temp.getPreference(0);
-                temp.removePreference(p);
-                netCategory.addPreference(p);
+                // Move each preference from the temporary screen into the category, removing parent first
+                while (temp.getPreferenceCount() > 0) {
+                    Preference p = temp.getPreference(0);
+                    temp.removePreference(p);
+                    netCategory.addPreference(p);
+                }
             }
-
             // Ensure EditTextPreference summaries show the current value immediately and update automatically
             try {
                 EditTextPreference serverIpPref = findPreference("ServerIP");
