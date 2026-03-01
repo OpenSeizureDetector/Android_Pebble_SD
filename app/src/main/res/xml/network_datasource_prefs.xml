@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <EditTextPreference
-        android:defaultValue="192.168.1.175"
+        android:defaultValue="192.168.0.3"
         android:key="ServerIP"
         android:summary="@string/server_ip_summary"
         android:title="@string/server_ip_title" />
     <EditTextPreference
-        android:defaultValue="2000"
+        android:defaultValue="5000"
         android:key="DataUpdatePeriod"
         android:numeric="integer"
         android:summary="@string/network_update_period_summary"

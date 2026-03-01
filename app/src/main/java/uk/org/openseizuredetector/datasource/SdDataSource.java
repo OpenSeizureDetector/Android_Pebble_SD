@@ -413,7 +413,9 @@ public abstract class SdDataSource {
             mSdData.mO2SatAlarmActive = PreferenceUtils.getBooleanFromXml(SP, "O2SatAlarmActive");
             mSdData.mFallActive = PreferenceUtils.getBooleanFromXml(SP, "FallActive");
         } catch (Exception ex) {
-            Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
+            Log.v(TAG, "updatePrefs() - Problem parsing preferences! " + ex.toString());
+            mUtil.writeToSysLogFile("SDDataSource.updatePrefs() exception:  " + ex.toString());
+            mUtil.showToast("SdDataSource: Problem parsing preferences! ");
         }
     }
 

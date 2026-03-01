@@ -47,8 +47,21 @@ public final class SettingsUtil {
 
     public static void initialiseDefaultValues(Context context, boolean readAgain) {
         Log.i(TAG, "initialiseDefaultValues(force=" + readAgain + ")");
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = prefs.edit();
+        boolean flagsChanged = false;
+
         for (int resId : getPreferenceResourceIds()) {
-            PreferenceManager.setDefaultValues(context, resId, readAgain);
+            String flagKey = "defaults_applied_" + resId;
+            if (readAgain || !prefs.getBoolean(flagKey, false)) {
+                PreferenceManager.setDefaultValues(context, resId, true);
+                editor.putBoolean(flagKey, true);
+                flagsChanged = true;
+            }
+        }
+
+        if (flagsChanged) {
+            editor.apply();
         }
     }
 

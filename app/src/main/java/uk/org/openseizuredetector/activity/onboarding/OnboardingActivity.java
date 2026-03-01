@@ -25,6 +25,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
+import uk.org.openseizuredetector.activity.settings.PrefActivity;
 import uk.org.openseizuredetector.activity.startup.StartupActivity;
 import uk.org.openseizuredetector.utils.OsdUtil;
 
@@ -56,6 +57,7 @@ public class OnboardingActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        PrefActivity.initialiseDefaultValues(this, false);
         setContentView(R.layout.activity_onboarding);
         
         Log.i(TAG, "onCreate()");
