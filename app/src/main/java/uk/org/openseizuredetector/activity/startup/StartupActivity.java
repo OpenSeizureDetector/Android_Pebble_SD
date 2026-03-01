@@ -324,10 +324,7 @@ public class StartupActivity extends AppCompatActivity {
         // Display the DataSource name
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
-
-        mSdDataSourceName = SP.getString("DataSource", "SET_FROM_XML");
-        mBleDeviceAddr = SP.getString("BLE_Device_Addr", "SET_FROM_XML");
-        mBleDeviceName = SP.getString("BLE_Device_Name", "SET_FROM_XML");
+        refreshDataSourcePrefs(SP);
         tv = (TextView) findViewById(R.id.dataSourceTextView);
 
         if (mSdDataSourceName.equals("BLE")) {
@@ -1328,4 +1325,26 @@ public class StartupActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh datasource prefs after returning from BLEScanActivity.
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        refreshDataSourcePrefs(sp);
+
+        TextView tv = (TextView) findViewById(R.id.dataSourceTextView);
+        if (tv != null) {
+            if (mSdDataSourceName.equals("BLE")) {
+                tv.setText(String.format("%s = %s (%s - %s)", getString(R.string.DataSource), mSdDataSourceName, mBleDeviceName, mBleDeviceAddr));
+            } else {
+                tv.setText(String.format("%s = %s", getString(R.string.DataSource), mSdDataSourceName));
+            }
+        }
+    }
+
+    private void refreshDataSourcePrefs(SharedPreferences sp) {
+        mSdDataSourceName = sp.getString("DataSource", "SET_FROM_XML");
+        mBleDeviceAddr = sp.getString("BLE_Device_Addr", "SET_FROM_XML");
+        mBleDeviceName = sp.getString("BLE_Device_Name", "SET_FROM_XML");
+    }
 }

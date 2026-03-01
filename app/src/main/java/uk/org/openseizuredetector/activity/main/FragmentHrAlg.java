@@ -1,7 +1,6 @@
 package uk.org.openseizuredetector.activity.main;
 import uk.org.openseizuredetector.R;
 
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -11,15 +10,13 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.SwitchCompat;
-import androidx.preference.PreferenceManager;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
+import java.util.Locale;
 import java.util.Objects;
-
-import uk.org.openseizuredetector.utils.PreferenceUtils;
 
 
 public class FragmentHrAlg extends FragmentOsdBaseClass {
@@ -219,13 +216,5 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         int shrinkPx = Math.round(20 * getResources().getDisplayMetrics().density);
         params.height = Math.max(params.height - shrinkPx, Math.round(170 * getResources().getDisplayMetrics().density));
         chart.setLayoutParams(params);
-    }
-
-    private boolean isBasicMode() {
-        if (mContext == null) {
-            return true;
-        }
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-        return PreferenceUtils.getBooleanFromXml(prefs, "pref_basic_mode");
     }
 }

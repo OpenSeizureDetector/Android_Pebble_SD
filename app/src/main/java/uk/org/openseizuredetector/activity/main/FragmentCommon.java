@@ -1,8 +1,6 @@
 package uk.org.openseizuredetector.activity.main;
 import uk.org.openseizuredetector.R;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -18,8 +16,6 @@ import java.util.Date;
 import java.util.Locale;
 
 import uk.org.openseizuredetector.data.AlarmState;
-import androidx.preference.PreferenceManager;
-import uk.org.openseizuredetector.utils.PreferenceUtils;
 
 public class FragmentCommon extends FragmentOsdBaseClass {
     String TAG = "FragmentCommon";
@@ -49,7 +45,7 @@ public class FragmentCommon extends FragmentOsdBaseClass {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Choose layout based on the current mode so advanced stays compact.
-        boolean basicMode = getBasicModePreference();
+        boolean basicMode = isBasicMode();
         mIsBasicMode = basicMode;
         int layoutRes = basicMode ? R.layout.fragment_common : R.layout.fragment_common_advanced;
         return inflater.inflate(layoutRes, container, false);
@@ -382,7 +378,7 @@ public class FragmentCommon extends FragmentOsdBaseClass {
     private void updateLayoutMode() {
         if (mContext == null || mRootView == null) return;
 
-        boolean basicMode = getBasicModePreference();
+        boolean basicMode = isBasicMode();
 
         // Update class member so dynamic UI generation knows the mode
         if (mIsBasicMode == basicMode) {
@@ -392,14 +388,5 @@ public class FragmentCommon extends FragmentOsdBaseClass {
 
         // Refresh algorithm badges immediately in case the mode changed in settings
         updateAlgorithmStatusDisplay();
-    }
-
-    private boolean getBasicModePreference() {
-        Context ctx = mContext != null ? mContext : getContext();
-        if (ctx == null) {
-            return true;
-        }
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
-        return PreferenceUtils.getBooleanFromXml(prefs, "pref_basic_mode");
     }
 }

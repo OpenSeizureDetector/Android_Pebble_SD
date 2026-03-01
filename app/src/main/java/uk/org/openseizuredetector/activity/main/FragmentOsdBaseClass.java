@@ -3,13 +3,16 @@ import uk.org.openseizuredetector.R;
 
 import uk.org.openseizuredetector.client.SdServiceConnection;
 import uk.org.openseizuredetector.utils.OsdUtil;
+import uk.org.openseizuredetector.utils.PreferenceUtils;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.os.Bundle;
 
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.preference.PreferenceManager;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -258,6 +261,12 @@ public class FragmentOsdBaseClass extends Fragment {
         // Override in subclasses for low-frequency heavy updates (e.g., graphs).
     }
 
-}
+    protected boolean isBasicMode() {
+        if (mContext == null) {
+            return true;
+        }
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+        return PreferenceUtils.getBooleanFromXml(prefs, "pref_basic_mode");
+    }
 
-
+ }
