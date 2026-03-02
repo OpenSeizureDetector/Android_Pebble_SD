@@ -2,11 +2,6 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <PreferenceCategory android:title="User Interface Settings">
         <EditTextPreference
-            android:defaultValue="5"
-            android:key="PebbleUpdatePeriod"
-            android:summary="@string/pebble_update_period_summary"
-            android:title="@string/pebble_update_period_title" />
-        <EditTextPreference
             android:defaultValue="300"
             android:key="MutePeriod"
             android:summary="@string/mute_period_summary"
@@ -24,6 +19,12 @@
             android:entryValues="@array/pebble_display_spectrum_values"
             android:defaultValue="0"
             android:dialogTitle="@string/display_spectrum_mode_title" />
+        <EditTextPreference
+            android:enabled="false"
+            android:defaultValue="5"
+            android:key="PebbleUpdatePeriod"
+            android:summary="@string/pebble_update_period_summary"
+            android:title="@string/pebble_update_period_title" />
 
     </PreferenceCategory>
 
@@ -42,7 +43,7 @@
             android:summary="@string/sample_freq_summary"
             android:entries="@array/pebble_sample_freq_list"
             android:entryValues="@array/pebble_sample_freq_list_values"
-            android:defaultValue="100"
+            android:defaultValue="25"
             android:dialogTitle="@string/sample_freq_title"
             android:enabled="true"
             />

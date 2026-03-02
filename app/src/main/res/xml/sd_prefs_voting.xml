@@ -9,5 +9,25 @@
             android:entryValues="@array/voting_strategies_values"
             android:defaultValue="ANY"
             android:dialogTitle="@string/voting_strategy_title" />
+
+
+        <EditTextPreference
+            android:defaultValue="5"
+            android:key="WarnTime"
+            android:summary="@string/WarnTimeSummary"
+            android:title="@string/WarnTimeTitle" />
+        <EditTextPreference
+            android:defaultValue="10"
+            android:key="AlarmTime"
+            android:summary="@string/AlarmTimeSummary"
+            android:title="@string/AlarmTimeTitle" />
+
+        <EditTextPreference
+            android:defaultValue="5"
+            android:enabled="false"
+            android:key="SamplePeriod"
+            android:summary="@string/sample_period_summary"
+            android:title="@string/sample_period_title" />
+
     </PreferenceCategory>
 </PreferenceScreen>

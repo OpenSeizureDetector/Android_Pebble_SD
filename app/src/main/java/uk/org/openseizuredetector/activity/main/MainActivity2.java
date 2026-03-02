@@ -189,11 +189,23 @@ public class MainActivity2 extends AppCompatActivity {
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean latchEnabled = PreferenceUtils.getBooleanFromXml(prefs, "LatchAlarms");
+        boolean smsEnabled = PreferenceUtils.getBooleanFromXml(prefs, "SMSAlarm");
         MenuItem latchItem = menu.findItem(R.id.action_accept_alarm);
+        MenuItem testSmsAlarm = menu.findItem(R.id.action_test_sms_alarm);
+        MenuItem sendFalseAlarmSms = menu.findItem(R.id.action_send_false_alarm_sms);
+
+        // Hide some menu items depending on the state of other settings to simplify the
+        //      menu where possible.
         if (latchItem != null) {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            boolean latchEnabled = PreferenceUtils.getBooleanFromXml(prefs, "LatchAlarms");
             latchItem.setVisible(latchEnabled);
+        }
+        if (testSmsAlarm != null ) {
+            testSmsAlarm.setVisible(smsEnabled);
+        }
+        if (sendFalseAlarmSms != null) {
+            sendFalseAlarmSms.setVisible(smsEnabled);
         }
         return super.onPrepareOptionsMenu(menu);
     }
