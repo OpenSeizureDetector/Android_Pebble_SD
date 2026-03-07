@@ -33,6 +33,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -40,6 +41,7 @@ import android.os.Handler;
 import android.os.Looper;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -47,6 +49,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.CheckedTextView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -59,6 +62,8 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+
+import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 
@@ -73,9 +78,16 @@ public class BLEScanActivity extends AppCompatActivity {
     private boolean mScanning;
     private Handler mHandler;
     private boolean bleAvailable = false;
+    private int mSelectedPosition = -1;
 
     private OsdUtil mUtil;
     private ListView mListView;
+    private MaterialButton mScanButtonFilled;
+    private MaterialButton mScanButtonOutlined;
+    private MaterialButton mSelectButtonFilled;
+    private MaterialButton mSelectButtonOutlined;
+    private TextView mBleScanStatusTv;
+
 
     private boolean mPermissionsRequested = false;
     private final String TAG = "BLEScanActivity";
@@ -117,6 +129,11 @@ public class BLEScanActivity extends AppCompatActivity {
 
         // Get reference to ListView from layout
         mListView = findViewById(R.id.list);
+        mScanButtonFilled = findViewById(R.id.scanButtonFilled);
+        mScanButtonOutlined = findViewById(R.id.scanButtonOutlined);
+        mSelectButtonFilled = findViewById(R.id.selectButtonFilled);
+        mSelectButtonOutlined = findViewById(R.id.selectButtonOutlined);
+        mBleScanStatusTv = findViewById(R.id.ble_scan_status_tv);
 
         mHandler = new Handler(Looper.getMainLooper());
         mUtil = new OsdUtil(this, mHandler);
@@ -145,6 +162,8 @@ public class BLEScanActivity extends AppCompatActivity {
         // Initialize the adapter once here
         mLeDeviceListAdapter = new LeDeviceListAdapter();
         mListView.setAdapter(mLeDeviceListAdapter);
+        mListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+
 
         // Set the empty view so it only displays when list is empty
         View emptyView = findViewById(R.id.empty);
@@ -152,32 +171,9 @@ public class BLEScanActivity extends AppCompatActivity {
 
         // Handle device selection
         mListView.setOnItemClickListener((parent, view, position, id) -> {
-            final BluetoothDevice device = mLeDeviceListAdapter.getDevice(position);
-            if (device == null) return;
-            Log.i(TAG, "Device selected - Device Addr=" + device.getAddress());
-            if (mScanning) {
-                stopScan();
-            }
-            Log.i(TAG, "Saving Device Details");
-            SharedPreferences.Editor SPE = PreferenceManager
-                    .getDefaultSharedPreferences(this).edit();
-            try {
-                SPE.putString("BLE_Device_Addr", device.getAddress());
-                SPE.putString("BLE_Device_Name", device.getName());
-                SPE.apply();
-                SPE.commit();
-
-                Log.i(TAG, "Saved Device Name=" + device.getName() + " and Address=" + device.getAddress());
-            } catch (SecurityException ex) {
-                Log.e(TAG, "Error Saving Device Name and Address!");
-                Toast toast = Toast.makeText(this, "Problem Saving Device Name and Address", Toast.LENGTH_SHORT);
-                toast.show();
-            }
-            SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences((this));
-            Log.i(TAG, "Check of saved values - Name=" + SP.getString("BLE_Device_Name", "SET_FROM_XML") + ", Addr=" + SP.getString("BLE_Device_Addr", "SET_FROM_XML"));
-
-            Log.i(TAG, "Returning to onboarding with selected device");
-            finish();
+            mSelectedPosition = position;
+            mLeDeviceListAdapter.notifyDataSetChanged();
+            updateButtonStyles();
         });
 
         mEnableBtLauncher = registerForActivityResult(
@@ -199,41 +195,87 @@ public class BLEScanActivity extends AppCompatActivity {
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.ble_scan_menu, menu);
-        if (!mScanning) {
-            menu.findItem(R.id.menu_stop).setVisible(false);
-            menu.findItem(R.id.menu_scan).setVisible(true);
-            menu.findItem(R.id.menu_refresh).setActionView(null);
-        } else {
-            menu.findItem(R.id.menu_stop).setVisible(true);
-            menu.findItem(R.id.menu_scan).setVisible(false);
-            menu.findItem(R.id.menu_refresh).setActionView(
-                    R.layout.actionbar_indeterminate_progress);
-        }
-        return true;
+        // Menu is no longer needed, buttons are on the layout
+        return false;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int itemId = item.getItemId();
-        if (itemId == R.id.menu_scan) {
-            mLeDeviceListAdapter.clear();
-            scanLeDevice(true);
-        } else if (itemId == R.id.menu_stop) {
-            scanLeDevice(false);
-        }
-        return true;
+        // Menu is no longer needed
+        return false;
     }
 
 
     public void onScanButtonClick(View v) {
+        mLeDeviceListAdapter.clear();
         scanLeDevice(true);
+        updateButtonStyles();
+    }
+
+    public void onSelectButtonClick(View v) {
+        if (mSelectedPosition == -1) {
+            Toast.makeText(this, "Please select a device", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final BluetoothDevice device = mLeDeviceListAdapter.getDevice(mSelectedPosition);
+        if (device == null) return;
+        Log.i(TAG, "Device selected - Device Addr=" + device.getAddress());
+        if (mScanning) {
+            stopScan();
+        }
+        Log.i(TAG, "Saving Device Details");
+        SharedPreferences.Editor SPE = PreferenceManager
+                .getDefaultSharedPreferences(this).edit();
+        try {
+            SPE.putString("BLE_Device_Addr", device.getAddress());
+            SPE.putString("BLE_Device_Name", device.getName());
+            SPE.apply();
+
+            Log.i(TAG, "Saved Device Name=" + device.getName() + " and Address=" + device.getAddress());
+        } catch (SecurityException ex) {
+            Log.e(TAG, "Error Saving Device Name and Address!");
+            Toast.makeText(this, "Problem Saving Device Name and Address", Toast.LENGTH_SHORT).show();
+        }
+        SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences((this));
+        Log.i(TAG, "Check of saved values - Name=" + SP.getString("BLE_Device_Name", "SET_FROM_XML") + ", Addr=" + SP.getString("BLE_Device_Addr", "SET_FROM_XML"));
+
+        Log.i(TAG, "Returning to previous screen with selected device");
+        finish();
     }
 
     public void onCancelButtonClick(View v) {
         Log.i(TAG, "Cancel button clicked - exiting without selecting device");
         finish();
     }
+
+    private void updateButtonStyles() {
+        if (mSelectedPosition != -1) {
+            // An item is selected, "Select" is primary
+            mSelectButtonFilled.setVisibility(View.VISIBLE);
+            mSelectButtonOutlined.setVisibility(View.GONE);
+            mSelectButtonFilled.setEnabled(true);
+
+            mScanButtonFilled.setVisibility(View.GONE);
+            mScanButtonOutlined.setVisibility(View.VISIBLE);
+        } else {
+            // No item selected
+            // Select button is disabled and outlined in both sub-cases
+            mSelectButtonFilled.setVisibility(View.GONE);
+            mSelectButtonOutlined.setVisibility(View.VISIBLE);
+            mSelectButtonOutlined.setEnabled(false);
+
+            if (mScanning) {
+                // Scanning, no primary action -> Scan is Outlined
+                mScanButtonFilled.setVisibility(View.GONE);
+                mScanButtonOutlined.setVisibility(View.VISIBLE);
+            } else {
+                // Not scanning, "Scan" is primary -> Scan is Filled
+                mScanButtonFilled.setVisibility(View.VISIBLE);
+                mScanButtonOutlined.setVisibility(View.GONE);
+            }
+        }
+    }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -286,8 +328,6 @@ public class BLEScanActivity extends AppCompatActivity {
             scanLeDevice(true);
         }
     }
-
-    // ...existing code...
 
     private void onListItemClick(int position) {
         final BluetoothDevice device = mLeDeviceListAdapter.getDevice(position);
@@ -417,6 +457,9 @@ public class BLEScanActivity extends AppCompatActivity {
 
         if (enable) {
             Log.i(TAG, "scanLeDevice - enabling scan");
+            mSelectedPosition = -1;
+            updateButtonStyles();
+            if (mBleScanStatusTv != null) mBleScanStatusTv.setText("Scanning...");
 
             // Stops scanning after a pre-defined scan period.
             mHandler.postDelayed(new Runnable() {
@@ -424,31 +467,37 @@ public class BLEScanActivity extends AppCompatActivity {
                 public void run() {
                     Log.i(TAG, "scanLeDevice - timeout reached, stopping scan");
                     stopScan();
-                    invalidateOptionsMenu();
-                    TextView tv = (TextView) (findViewById(R.id.ble_scan_status_tv));
-                    tv.setText("Scan complete");
-
-                    Button b = (Button) findViewById(R.id.startScanButton);
-                    b.setEnabled(true);
+                    updateButtonStyles();
+                    if (mBleScanStatusTv != null) mBleScanStatusTv.setText("Scan complete");
+                    TextView tv = (TextView) (findViewById(R.id.empty));
+                    if (mLeDeviceListAdapter.getCount() == 0) {
+                        tv.setText("No devices found.");
+                        tv.setVisibility(View.VISIBLE);
+                    } else {
+                        tv.setVisibility(View.GONE);
+                    }
                 }
             }, SCAN_PERIOD);
 
             startScan();
-            tv = (TextView) (findViewById(R.id.ble_scan_status_tv));
-            tv.setText("Scanning...");
+            tv = (TextView) (findViewById(R.id.empty));
+            tv.setText("Scanning for devices...");
+            tv.setVisibility(View.VISIBLE);
 
-            Button b = (Button) findViewById(R.id.startScanButton);
-            b.setEnabled(false);
 
         } else {
             Log.i(TAG, "scanLeDevice - disabling scan");
             stopScan();
-            tv = (TextView) (findViewById(R.id.ble_scan_status_tv));
-            tv.setText("Ready to scan");
-            Button b = (Button) findViewById(R.id.startScanButton);
-            b.setEnabled(true);
+            updateButtonStyles();
+            if (mBleScanStatusTv != null) mBleScanStatusTv.setText("Current Status: Not Scanning");
+            tv = (TextView) (findViewById(R.id.empty));
+            if (mLeDeviceListAdapter.getCount() == 0) {
+                tv.setText("No devices found.");
+                tv.setVisibility(View.VISIBLE);
+            } else {
+                tv.setVisibility(View.GONE);
+            }
         }
-        invalidateOptionsMenu();
     }
 
     // Adapter for holding devices found through scanning.
@@ -457,6 +506,7 @@ public class BLEScanActivity extends AppCompatActivity {
         private ArrayList<BluetoothDevice> mPineTimeDevices;
         private ArrayList<BluetoothDevice> mOtherDevices;
         private LayoutInflater mInflator;
+        private ColorStateList mDefaultTextColors;
 
         public LeDeviceListAdapter() {
             super();
@@ -476,15 +526,30 @@ public class BLEScanActivity extends AppCompatActivity {
 
                 // Check if device is PineTime or InfiniTime
                 String deviceName = device.getName();
-                if (deviceName != null && (deviceName.contains("PineTime") || deviceName.contains("InfiniTime"))) {
-                    mPineTimeDevices.add(device);
-                    // Insert PineTime devices at the beginning
-                    mLeDevices.add(mPineTimeDevices.size() - 1, device);
+                if (deviceName != null) {
+                    String lowerName = deviceName.toLowerCase();
+                    if (lowerName.contains("pinetime")
+                            || lowerName.contains("infinitime")
+                            || lowerName.contains("bangle")) {
+                        mPineTimeDevices.add(device);
+                        // Insert PineTime devices at the beginning
+                        mLeDevices.add(0, device); // Add to the very top directly for simplicity with the list structure
+                    } else {
+                        mOtherDevices.add(device);
+                        // Add other devices at the end
+                        mLeDevices.add(device);
+                    }
                 } else {
                     mOtherDevices.add(device);
                     // Add other devices at the end
                     mLeDevices.add(device);
                 }
+
+                // Re-sort the whole list to ensure PineTimes are always at the top
+                // This is a bit inefficient but guarantees order:
+                mLeDevices.clear();
+                mLeDevices.addAll(mPineTimeDevices);
+                mLeDevices.addAll(mOtherDevices);
             }
         }
 
@@ -496,6 +561,8 @@ public class BLEScanActivity extends AppCompatActivity {
             mLeDevices.clear();
             mPineTimeDevices.clear();
             mOtherDevices.clear();
+            mSelectedPosition = -1;
+            notifyDataSetChanged();
         }
 
         @Override
@@ -515,112 +582,81 @@ public class BLEScanActivity extends AppCompatActivity {
 
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
-            ViewHolder viewHolder;
-            Log.i(TAG, "scanner getView i=" + i);
-            // General ListView optimization code.
+            CheckedTextView checkedTextView;
             if (view == null) {
-                Log.i(TAG, "scanner getView - inflating new view for position " + i);
-                view = mInflator.inflate(R.layout.ble_list_item_device, null);
-                viewHolder = new ViewHolder();
-                viewHolder.deviceAddress = (TextView) view.findViewById(R.id.device_address);
-                viewHolder.deviceName = (TextView) view.findViewById(R.id.device_name);
-                view.setTag(viewHolder);
+                view = mInflator.inflate(R.layout.list_item_device, viewGroup, false);
+                checkedTextView = view.findViewById(android.R.id.text1);
+                view.setTag(checkedTextView);
+
+                // Save the default text colors from the inflated layout
+                if (mDefaultTextColors == null) {
+                    mDefaultTextColors = checkedTextView.getTextColors();
+                }
             } else {
-                viewHolder = (ViewHolder) view.getTag();
+                checkedTextView = (CheckedTextView) view.getTag();
             }
 
             BluetoothDevice device = mLeDevices.get(i);
-            final String deviceName = device.getName();
-            Log.i(TAG, "scanner getView - setting device name: " + deviceName);
-            if (deviceName != null && deviceName.length() > 0)
-                viewHolder.deviceName.setText(deviceName);
-            else
-                viewHolder.deviceName.setText(R.string.unknown_device);
-            viewHolder.deviceAddress.setText(device.getAddress());
-
-            // Check if this is a PineTime/InfiniTime device
-            if (deviceName != null && (deviceName.contains("PineTime") || deviceName.contains("InfiniTime"))) {
-                // PineTime device - use dark color for emphasis on light blue card background
-                viewHolder.deviceName.setTextColor(ContextCompat.getColor(BLEScanActivity.this, android.R.color.black));
-                viewHolder.deviceAddress.setTextColor(ContextCompat.getColor(BLEScanActivity.this, android.R.color.black));
-            } else {
-                // Other device - faint color (material design gray)
-                viewHolder.deviceName.setTextColor(ContextCompat.getColor(BLEScanActivity.this, android.R.color.darker_gray));
-                viewHolder.deviceAddress.setTextColor(ContextCompat.getColor(BLEScanActivity.this, android.R.color.darker_gray));
+            String deviceName;
+            String deviceAddress = device.getAddress();
+            try {
+                deviceName = device.getName();
+            } catch (SecurityException e) {
+                deviceName = "Unknown Device";
             }
+
+            if (deviceName == null || deviceName.isEmpty()) {
+                deviceName = "Unknown Device";
+            }
+
+            // Set text color for "Unknown Device" entries to grey, others to default
+            if ("Unknown Device".equals(deviceName)) {
+                checkedTextView.setTextColor(Color.GRAY);
+            } else {
+                // Restore default text color captured from the layout
+                if (mDefaultTextColors != null) {
+                    checkedTextView.setTextColor(mDefaultTextColors);
+                } else {
+                    // Fallback should not be needed if hydration works, but just in case:
+                    // If we failed to capture, default to BLACK which is safe for light themes
+                    // (and usually visible on dark themes too unless background is black)
+                    checkedTextView.setTextColor(Color.BLACK);
+                }
+            }
+
+            checkedTextView.setText(deviceName + "\n" + deviceAddress);
+            checkedTextView.setChecked(i == mSelectedPosition);
 
             return view;
         }
     }
 
     // Device scan callback.
-    private ScanCallback mLeScanCallback =
-            new ScanCallback() {
+    private ScanCallback mLeScanCallback = new ScanCallback() {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            super.onScanResult(callbackType, result);
+            runOnUiThread(new Runnable() {
                 @Override
-                public void onScanResult(int callbackType, ScanResult result) {
-                    try {
-                        String deviceName = result.getDevice().getName();
-                        Log.v(TAG, "ScanCallback - onScanResult: device=" + deviceName + ", addr=" + result.getDevice().getAddress());
-
-                        if (mLeDeviceListAdapter != null) {
-                            mLeDeviceListAdapter.addDevice(result.getDevice());
-                            mLeDeviceListAdapter.notifyDataSetChanged();
-                            Log.v(TAG, "ScanCallback - adapter notified, total devices: " + mLeDeviceListAdapter.getCount());
-                        } else {
-                            Log.e(TAG, "ScanCallback - mLeDeviceListAdapter is null!");
-                        }
-                    } catch (SecurityException e) {
-                        Log.e(TAG, "ScanCallback - security exception getting device name");
-                    }
+                public void run() {
+                    mLeDeviceListAdapter.addDevice(result.getDevice());
+                    mLeDeviceListAdapter.notifyDataSetChanged();
                 }
+            });
+        }
+    };
 
-                @Override
-                public void onBatchScanResults(java.util.List<ScanResult> results) {
-                    Log.i(TAG, "ScanCallback - onBatchScanResults: " + results.size() + " results");
-                    for (ScanResult result : results) {
-                        try {
-                            String deviceName = result.getDevice().getName();
-                            Log.v(TAG, "ScanCallback - batch result: device=" + deviceName + ", addr=" + result.getDevice().getAddress());
-
-                            if (mLeDeviceListAdapter != null) {
-                                mLeDeviceListAdapter.addDevice(result.getDevice());
-                            }
-                        } catch (SecurityException e) {
-                            Log.e(TAG, "ScanCallback - batch security exception");
-                        }
-                    }
-                    if (mLeDeviceListAdapter != null) {
-                        mLeDeviceListAdapter.notifyDataSetChanged();
-                        Log.v(TAG, "ScanCallback - batch adapter notified, total devices: " + mLeDeviceListAdapter.getCount());
-                    }
-                }
-
-                @Override
-                public void onScanFailed(int errorCode) {
-                    Log.e(TAG, "ScanCallback - onScanFailed: errorCode=" + errorCode);
-                    switch (errorCode) {
-                        case SCAN_FAILED_ALREADY_STARTED:
-                            Log.e(TAG, "Scan failed: SCAN_FAILED_ALREADY_STARTED");
-                            break;
-                        case SCAN_FAILED_APPLICATION_REGISTRATION_FAILED:
-                            Log.e(TAG, "Scan failed: SCAN_FAILED_APPLICATION_REGISTRATION_FAILED");
-                            break;
-                        case SCAN_FAILED_INTERNAL_ERROR:
-                            Log.e(TAG, "Scan failed: SCAN_FAILED_INTERNAL_ERROR");
-                            break;
-                        case SCAN_FAILED_FEATURE_UNSUPPORTED:
-                            Log.e(TAG, "Scan failed: SCAN_FAILED_FEATURE_UNSUPPORTED");
-                            break;
-                        default:
-                            Log.e(TAG, "Scan failed: UNKNOWN_ERROR");
-                    }
-                }
-            };
-
-    static class ViewHolder {
-        TextView deviceName;
-        TextView deviceAddress;
+    @Override
+    protected void onPause() {
+        super.onPause();
+        scanLeDevice(false);
+        mLeDeviceListAdapter.clear();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.i(TAG,"onDestroy()");
+    }
 
 }
