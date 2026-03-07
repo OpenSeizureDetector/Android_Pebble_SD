@@ -26,6 +26,9 @@ import uk.org.openseizuredetector.activity.bluetooth.BLEScanActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputLayout;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+
 /**
  * Data Source configuration page - configure the selected data source
  *
@@ -53,6 +56,42 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
 
     // Track current data source to avoid unnecessary updates
     private String mCurrentDataSource = null;
+
+    private ActivityResultLauncher<Intent> mPineTimeUpdaterLauncher;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // Register for the result of the PineTime Updater activity
+        mPineTimeUpdaterLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    Log.d(TAG, "onActivityResult - resultCode: " + result.getResultCode());
+                    if (result.getResultCode() == android.app.Activity.RESULT_OK) {
+                        Intent data = result.getData();
+                        if (data != null && data.hasExtra("mac_address")) {
+                            String macAddress = data.getStringExtra("mac_address");
+                            if (macAddress != null && !macAddress.isEmpty()) {
+                                Log.i(TAG, "Received MAC address from PineTime Updater: " + macAddress);
+
+                                // Save the MAC address to SharedPreferences
+                                SharedPreferences.Editor editor = mPrefs.edit();
+                                editor.putString("BLE_Device_Addr", macAddress);
+                                // The updater does not provide the device name, so we'll use a placeholder.
+                                // The name will be updated on the next connection.
+                                editor.putString("BLE_Device_Name", "PineTime");
+                                editor.apply();
+
+                                // Refresh the display to show the new device
+                                refreshPineTimeDisplay();
+
+                                Toast.makeText(requireContext(), "BLE device address updated: " + macAddress, Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    }
+                });
+    }
 
     @Nullable
     @Override
@@ -350,7 +389,9 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
                 Intent launchIntent = requireActivity().getPackageManager()
                         .getLaunchIntentForPackage(pineTimePackageName);
                 if (launchIntent != null) {
-                    startActivity(launchIntent);
+                    // Remove the NEW_TASK flag to ensure the result is returned correctly
+                    launchIntent.setFlags(launchIntent.getFlags() & ~Intent.FLAG_ACTIVITY_NEW_TASK);
+                    mPineTimeUpdaterLauncher.launch(launchIntent);
                 } else {
                     Toast.makeText(requireContext(), "Cannot launch PineTime Updater",
                             Toast.LENGTH_SHORT).show();

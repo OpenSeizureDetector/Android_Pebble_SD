@@ -1,5 +1,6 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.0.0N - Updated to accept a device MAC address returned by Android_PineTime_Updater to avoid the user having to select the device twice.
     V5.0.0A - Tidied up build settings (into gradle.properties)
             - Added MlModelManager to download ML models from web service.
             - Added support for pytorch models (executorch) (As well as TFLite)

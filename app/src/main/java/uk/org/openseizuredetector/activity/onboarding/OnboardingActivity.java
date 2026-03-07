@@ -177,12 +177,24 @@ public class OnboardingActivity extends AppCompatActivity {
 
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        // Save the current ViewPager position to SharedPreferences when the activity is paused.
+        // This ensures that when we return from an external activity (like PineTime Updater),
+        // we can restore the correct fragment in onResume.
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        prefs.edit().putInt(SAVED_VIEWPAGER_POSITION, mViewPager.getCurrentItem()).apply();
+        Log.d(TAG, "onPause - Saving ViewPager position: " + mViewPager.getCurrentItem());
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         // Restore ViewPager position when returning from other activities (e.g., BLEScanActivity)
         // This ensures we return to the same fragment we were on before leaving
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         int savedPosition = prefs.getInt(SAVED_VIEWPAGER_POSITION, FRAG_WELCOME);
+        Log.d(TAG, "onResume - Restoring ViewPager position: " + savedPosition);
         if (mViewPager.getCurrentItem() != savedPosition) {
             mViewPager.setCurrentItem(savedPosition, false);
         }
