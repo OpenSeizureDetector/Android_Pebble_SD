@@ -86,7 +86,7 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
                                 // Refresh the display to show the new device
                                 refreshPineTimeDisplay();
 
-                                Toast.makeText(requireContext(), "BLE device address updated: " + macAddress, Toast.LENGTH_LONG).show();
+                                Log.i(TAG, "BLE device address updated: " + macAddress);
                             }
                         }
                     }

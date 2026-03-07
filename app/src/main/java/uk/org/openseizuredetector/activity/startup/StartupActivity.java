@@ -105,9 +105,11 @@ public class StartupActivity extends AppCompatActivity {
     private boolean mSmsPermissionsRequested;
     private boolean mPermissionsRequested;
     private boolean mActivityPermissionsRequested = false;
+    private boolean mHealthPermissionsRequested = false;
     private boolean mBindInProgress = false;
     private boolean mIsShuttingDown = false;
     private boolean mServerStopRequested = false;
+    private Drawable mDefaultIndeterminateDrawable = null;
 
 
     public final String[] REQUIRED_PERMISSIONS = {
@@ -171,6 +173,13 @@ public class StartupActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.startup_activity);
+
+        // Capture default indeterminate drawable from a progress bar to allow us to restore it
+        // if we switch from 'tick' back to 'spinner'
+        ProgressBar pb = findViewById(R.id.progressBar1);
+        if (pb != null && pb.getIndeterminateDrawable() != null) {
+            mDefaultIndeterminateDrawable = pb.getIndeterminateDrawable().getConstantState().newDrawable();
+        }
 
 
         // Configure system bar appearance to be edge-to-edge and handle insets
@@ -388,6 +397,7 @@ public class StartupActivity extends AppCompatActivity {
         if (mUtil != null) {
             mUtil.writeToSysLogFile("StartupActivity.onStop() - unbinding from server");
             mUtil.unbindFromServer(getApplicationContext(), mConnection);
+            mBindInProgress = false;
         }
         if (mUiTimer != null) {
             mUiTimer.cancel();
@@ -584,6 +594,9 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getString(R.string.AppPermissionsWarning));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_error_background));
                 tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_error_text));
+                if (mDefaultIndeterminateDrawable != null) {
+                    pb.setIndeterminateDrawable(mDefaultIndeterminateDrawable.getConstantState().newDrawable());
+                }
                 pb.setIndeterminate(true);
                 allOk = false;
                 requestPermissions(StartupActivity.this);
@@ -594,7 +607,9 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getText(R.string.DiallerNotInstalledWarning));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_error_background));
                 tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_error_text));
-                pb.setIndeterminateDrawable(getCheckboxDrawable());
+                if (mDefaultIndeterminateDrawable != null) {
+                    pb.setIndeterminateDrawable(mDefaultIndeterminateDrawable.getConstantState().newDrawable());
+                }
                 pb.setProgressDrawable(getCheckboxDrawable());
                 allOk = false;
             }
@@ -604,18 +619,24 @@ public class StartupActivity extends AppCompatActivity {
                 pb = (ProgressBar) findViewById(R.id.progressBar1);
 
                 // Check health foreground service permissions on Android 12+
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !areHealthForegroundServicePermissionsOK()) {
+                // Only required if Data Source is Phone
+                if (mSdDataSourceName.equals("Phone") && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !areHealthForegroundServicePermissionsOK()) {
                     Log.i(TAG, "health foreground service permissions not granted - requesting");
                     tv.setText("Requesting Permissions");
                     tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                     tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
-                    pb.setIndeterminateDrawable(getCheckboxDrawable());
+                    if (mDefaultIndeterminateDrawable != null) {
+                        pb.setIndeterminateDrawable(mDefaultIndeterminateDrawable.getConstantState().newDrawable());
+                    }
                     pb.setProgressDrawable(getCheckboxDrawable());
 
                     // Request activity recognition permission (also covers health monitoring)
-                    ActivityCompat.requestPermissions(StartupActivity.this,
-                            new String[]{android.Manifest.permission.ACTIVITY_RECOGNITION},
-                            1);
+                    if (!mHealthPermissionsRequested) {
+                        mHealthPermissionsRequested = true;
+                        ActivityCompat.requestPermissions(StartupActivity.this,
+                                new String[]{android.Manifest.permission.ACTIVITY_RECOGNITION},
+                                1);
+                    }
                     allOk = false;
                     return;
                 }
@@ -640,7 +661,9 @@ public class StartupActivity extends AppCompatActivity {
                     tv.setText("Starting Server");
                     tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                     tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
-                    pb.setIndeterminateDrawable(getCheckboxDrawable());
+                    if (mDefaultIndeterminateDrawable != null) {
+                        pb.setIndeterminateDrawable(mDefaultIndeterminateDrawable.getConstantState().newDrawable());
+                    }
                     pb.setProgressDrawable(getCheckboxDrawable());
                     mMode = MODE_START_SERVER;
                 } else {
@@ -681,6 +704,9 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getString(R.string.BindingToService));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                 tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
+                if (mDefaultIndeterminateDrawable != null) {
+                    pb.setIndeterminateDrawable(mDefaultIndeterminateDrawable.getConstantState().newDrawable());
+                }
                 pb.setIndeterminate(true);
                 allOk = false;
             }
@@ -698,6 +724,9 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getString(R.string.WatchNotConnected));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                 tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
+                if (mDefaultIndeterminateDrawable != null) {
+                    pb.setIndeterminateDrawable(mDefaultIndeterminateDrawable.getConstantState().newDrawable());
+                }
                 pb.setIndeterminate(true);
                 allOk = false;
             }
@@ -716,6 +745,9 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getString(R.string.WaitingForSeizureDetectorData));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                 tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
+                if (mDefaultIndeterminateDrawable != null) {
+                    pb.setIndeterminateDrawable(mDefaultIndeterminateDrawable.getConstantState().newDrawable());
+                }
                 pb.setIndeterminate(true);
                 allOk = false;
             }
@@ -734,6 +766,9 @@ public class StartupActivity extends AppCompatActivity {
                 tv.setText(getString(R.string.WaitingForSeizureDetectorSettings));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                 tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
+                if (mDefaultIndeterminateDrawable != null) {
+                    pb.setIndeterminateDrawable(mDefaultIndeterminateDrawable.getConstantState().newDrawable());
+                }
                 pb.setIndeterminate(true);
                 allOk = false;
             }
