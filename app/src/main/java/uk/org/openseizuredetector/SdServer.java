@@ -42,6 +42,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.location.Location;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
@@ -111,14 +112,12 @@ public class SdServer extends Service implements SdDataReceiver {
 
     // Notification ID
     private final int NOTIFICATION_ID = 1;
-    private final int EVENT_NOTIFICATION_ID = 2;
-    private final int DATASHARE_NOTIFICATION_ID = 3;
     private String mNotChId = "OSD Notification Channel";
     private CharSequence mNotChName = "OSD Notification Channel";
     private String mNotChDesc = "OSD Notification Channel Description";
-    private String mEventNotChId = "OSD Event Notification Channel";
-    private CharSequence mEventNotChName = "OSD Event Notification Channel";
-    private String mEventNotChDesc = "OSD Event Notification Channel Description";
+
+    // Data Sharing Status Message to be displayed in the notification
+    private String mDataShareMsg = null;
 
     private NotificationManager mNM;
     private NotificationCompat.Builder mNotificationBuilder;
@@ -264,13 +263,6 @@ public class SdServer extends Service implements SdDataReceiver {
         channel.setDescription(mNotChDesc);
         mNM.createNotificationChannel(channel);
 
-        // Separate channel for events
-        NotificationChannel eventChannel = new NotificationChannel(mEventNotChId,
-                mEventNotChName,
-                NotificationManager.IMPORTANCE_DEFAULT);
-        eventChannel.setDescription(mEventNotChDesc);
-        mNM.createNotificationChannel(eventChannel);
-
         // Display a notification icon in the status bar of the phone to
         // show the service is running.
         Log.v(TAG, "showing Notification and calling startForeground");
@@ -279,19 +271,62 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Check for required permissions before starting foreground service (Android 12+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // Android 12+ requires either ACTIVITY_RECOGNITION or BODY_SENSORS
+            // Check preference to see if we need health permissions
+            SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            String dataSourceName = prefs.getString("DataSource", "SET_FROM_XML");
+            boolean isPhoneDataSource = "Phone".equals(dataSourceName);
+
+            // Android 12+ requires either ACTIVITY_RECOGNITION or BODY_SENSORS if we are using health features
             boolean hasActivityRecognition = checkSelfPermission(android.Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
             boolean hasBodySensors = checkSelfPermission(android.Manifest.permission.BODY_SENSORS) == PackageManager.PERMISSION_GRANTED;
 
-            if (hasActivityRecognition || hasBodySensors) {
-                startForeground(NOTIFICATION_ID, mNotification);
-                Log.v(TAG, "Started foreground service with health type");
+            if (isPhoneDataSource) {
+                if (hasActivityRecognition || hasBodySensors) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        // On Android 14+, explicitly start as HEALTH type
+                        startForeground(NOTIFICATION_ID, mNotification, ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH);
+                      } else {
+                        startForeground(NOTIFICATION_ID, mNotification);
+                      }
+                    Log.v(TAG, "Started foreground service with health type (Phone Datasource)");
+                } else {
+                    // Permissions not granted - should not reach here as StartupActivity should have exited
+                    // But if we do get here, throw exception to alert
+                    Log.e(TAG, "FATAL: Health foreground service permissions not granted for Phone Datasource!");
+                    mUtil.writeToSysLogFile("FATAL: SdServer.onCreate() - Health permissions not granted for Phone Datasource");
+                    throw new SecurityException("Health foreground service permissions not granted - app should have exited in StartupActivity");
+                }
             } else {
-                // Permissions not granted - should not reach here as StartupActivity should have exited
-                // But if we do get here, throw exception to alert
-                Log.e(TAG, "FATAL: Health foreground service permissions not granted!");
-                mUtil.writeToSysLogFile("FATAL: SdServer.onCreate() - Health permissions not granted");
-                throw new SecurityException("Health foreground service permissions not granted - app should have exited in StartupActivity");
+                // Not using Phone data source, so we don't strictly require health permissions unless we wanted to access health APIs anyway.
+                // We should start the foreground service with a type that does NOT require health permissions if possible,
+                // or just start it and hope the manifest allows it (we added location and connectedDevice to manifest).
+
+                // If we have location permission (which we usually do for SMS), use that.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    int foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE; // Fallback
+                    boolean useHealth = false;
+
+                    // If we have health permissions anyway, we can use HEALTH
+                    if (hasActivityRecognition || hasBodySensors) {
+                        foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH;
+                        useHealth = true;
+                      } else if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                                 checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION;
+                      } else if (checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+                        // Use ConnectedDevice for BLE
+                        foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
+                      }
+
+                    // If we have health permissions, include that type, otherwise just use the safe one
+                    // Actually, if we set multiple types in manifest, we can specify just one here.
+                    // But if we specify HEALTH here without permission, it crashes.
+
+                    Log.i(TAG, "Starting foreground service for Non-Phone Datasource (" + dataSourceName + "), type=" + foregroundServiceType);
+                    startForeground(NOTIFICATION_ID, mNotification, foregroundServiceType);
+                } else {
+                    startForeground(NOTIFICATION_ID, mNotification);
+                }
             }
         } else {
             // Android 8-11: just start foreground
@@ -637,8 +672,6 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.d(TAG, "onDestroy(): cancelling notification");
             mUtil.writeToSysLogFile("SdServer.onDestroy - cancelling notification");
             mNM.cancel(NOTIFICATION_ID);
-            mNM.cancel(EVENT_NOTIFICATION_ID);
-            mNM.cancel(DATASHARE_NOTIFICATION_ID);
 
 
             // stop this service.
@@ -676,10 +709,22 @@ public class SdServer extends Service implements SdDataReceiver {
         String titleStr;
         Uri soundUri = null;
 
-        if ((alarmLevel == mCurrentNotificationAlarmLevel) && (isNotificationShown(NOTIFICATION_ID))) {
-            Log.v(TAG, "showNotification - notification already shown at specified alarm level - not doing anything");
-            return;
-        }
+        // Force update of notification if the message has changed, even if alarm level is same
+        // But mCurrentNotificationAlarmLevel only tracks level.
+        // We might need to track the last message to avoid spamming notify() if nothing changed?
+        // showNotification is called frequently (every data packet?).
+        // Actually onSdDataReceived calls it.
+        // If content changes, we should update.
+        // For now, I'll rely on the existing check but relax it if content text usually changes?
+        // The existing check:
+        // if ((alarmLevel == mCurrentNotificationAlarmLevel) && (isNotificationShown(NOTIFICATION_ID))) { return; }
+        // This prevents updating if level hasn't changed.
+        // But if DataShareMsg changes, we DO want to update.
+        // So I should modify this check or move the text generation before it?
+        // Actually, onSdDataReceived calls showNotification repeatedly.
+        // If I change mDataShareMsg, I call showNotification from checkEvents.
+        // I need to ensure it actually updates.
+
         Log.v(TAG, "showNotification() - alarmLevel=" + alarmLevel);
 
         switch (alarmLevel) {
@@ -723,22 +768,34 @@ public class SdServer extends Service implements SdDataReceiver {
         PendingIntent contentIntent =
                 PendingIntent.getActivity(this,
                         0, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        String smsStr;
-        if (mSMSAlarm) {
-            smsStr = getString(R.string.sms_location_alarm_active);
-        } else {
-            smsStr = getString(R.string.sms_location_alarm_disabled);
-        }
+
+        StringBuilder contentSb = new StringBuilder();
+        // Status Message (Phone/SMS Alarm Active)
         if (mPhoneAlarm) {
-            smsStr = "Phone Call Alarm Active";
+            contentSb.append("Phone Call Alarm Active");
+        } else if (mSMSAlarm) {
+            contentSb.append(getString(R.string.sms_location_alarm_active));
         }
+
+        // Append Data Sharing Message on new line if available
+        if (mDataShareMsg != null && !mDataShareMsg.isEmpty()) {
+            if (contentSb.length() > 0) {
+                contentSb.append("\n");
+            }
+            contentSb.append(mDataShareMsg);
+        }
+
+        String contentStr = contentSb.toString();
+        if (contentStr.isEmpty()) contentStr = null;
+
         if (mNotificationBuilder != null) {
             mNotification = mNotificationBuilder.setContentIntent(contentIntent)
                     .setSmallIcon(iconId)
                     .setColor(0x00ffffff)
                     .setAutoCancel(false)
                     .setContentTitle(titleStr)
-                    .setContentText(smsStr)
+                    .setContentText(contentStr)
+                    .setStyle(new NotificationCompat.BigTextStyle().bigText(contentStr))
                     .setOnlyAlertOnce(true)
                     .build();
             if (mMp3Alarm) {
@@ -1336,11 +1393,11 @@ public class SdServer extends Service implements SdDataReceiver {
                 }
 
             } else {
-                Log.i(TAG, "sendFalseAlarmSMS() - Cancel Audible Active - not sending SMS");
+                Log.i(TAG, "sendFalseAlarmsSMS() - Cancel Audible Active - not sending SMS");
                 //mUtil.showToast(getString(R.string.cancel_audible_not_sending_sms));
             }
         } else {
-            Log.i(TAG, "sendFalseAlarmSMS() - SMS Alarms Disabled - not doing anything!");
+            Log.i(TAG, "sendFalseAlarmsSMS() - SMS Alarms Disabled - not doing anything!");
             //mUtil.showToast(getString(R.string.sms_alarms_disabled));
         }
     }
@@ -2117,15 +2174,16 @@ public class SdServer extends Service implements SdDataReceiver {
                     }
                     Log.v(TAG, "checkEvents() - haveUnvalidatedEvent = " +
                             haveUnvalidatedEvent);
+
                     if (haveUnvalidatedEvent) {
-                        Log.v(TAG, "checkEvents() - showing event notification and cancelling datashare notification.");
-                        showEventNotification();
-                        mNM.cancel(DATASHARE_NOTIFICATION_ID);
+                        mDataShareMsg = getString(R.string.please_confirm_seizure_events);
                     } else {
-                        Log.v(TAG, "checkEvents() - cancelling event and datashare notifications");
-                        mNM.cancel(EVENT_NOTIFICATION_ID);
-                        mNM.cancel(DATASHARE_NOTIFICATION_ID);
+                        mDataShareMsg = null;
                     }
+
+                    // Update the main notification
+                    showNotification(mCurrentNotificationAlarmLevel);
+
                 } catch (JSONException e) {
                     Log.e(TAG, "CheckEventsTimer.onFinish(): Error Parsing remoteEventsObj: " + e.getMessage());
                     //mUtil.showToast("Error Parsing remoteEventsObj - this should not happen!!!");
@@ -2135,8 +2193,10 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "CheckEventsTimer() - requested events");
         } else {
             Log.v(TAG, "CheckEventsTimer() - Not Logged In");
-            mNM.cancel(EVENT_NOTIFICATION_ID);
-            showDatashareNotification();
+            mDataShareMsg = getString(R.string.login_to_osdapi);
+
+            // Update the main notification
+            showNotification(mCurrentNotificationAlarmLevel);
         }
 
     }
@@ -2176,127 +2236,23 @@ public class SdServer extends Service implements SdDataReceiver {
     }
 
     /**
-     * Show a notification to tell the user that we have unvalidated events.
-     */
-    private void showEventNotification() {
-        Log.v(TAG, "showEventNotification()");
-        int iconId;
-        String titleStr;
-        Uri soundUri = null;
-
-        if (isNotificationShown(EVENT_NOTIFICATION_ID)) {
-            Log.v(TAG, "showEventNotification() - notification is already shown, so not doing anything");
-            return;
-        }
-
-        // Initialise Notification channel for API level 26 and over
-        // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
-        NotificationManager nM = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(getApplicationContext(), mEventNotChId);
-        if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel channel = new NotificationChannel(mEventNotChId,
-                    mEventNotChName,
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setDescription(mEventNotChDesc);
-            nM.createNotificationChannel(channel);
-        }
-
-        iconId = R.drawable.datasharing_query_24x24;
-        titleStr = getString(R.string.unvalidatedEventsTitle);
-
-        Intent i = new Intent(getApplicationContext(), LogManagerControlActivity.class);
-        i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        i.setAction("None");
-        PendingIntent contentIntent =
-                PendingIntent.getActivity(getApplicationContext(),
-                        0, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        String contentStr = getString(R.string.please_confirm_seizure_events);
-
-        Notification notification = notificationBuilder.setContentIntent(contentIntent)
-                .setSmallIcon(iconId)
-                .setColor(0x00ffffff)
-                .setAutoCancel(false)
-                .setContentTitle(titleStr)
-                .setContentText(contentStr)
-                .setOnlyAlertOnce(true)
-                .build();
-        nM.notify(EVENT_NOTIFICATION_ID, notification);
-    }
-
-
-    /**
-     * Show a notification asking the user to set-up data sharing.
-     */
-    private void showDatashareNotification() {
-        Log.v(TAG, "showDatashareNotification()");
-        int iconId;
-        String titleStr;
-        Uri soundUri = null;
-
-        if (isNotificationShown(DATASHARE_NOTIFICATION_ID)) {
-            Log.v(TAG, "showDataShareNotification() - notification is already shown, so not doing anything");
-            return;
-        }
-
-        // Initialise Notification channel for API level 26 and over
-        // from https://stackoverflow.com/questions/44443690/notificationcompat-with-api-26
-        NotificationManager nM = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(getApplicationContext(), mEventNotChId);
-        if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel channel = new NotificationChannel(mEventNotChId,
-                    mEventNotChName,
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setDescription(mEventNotChDesc);
-            nM.createNotificationChannel(channel);
-        }
-
-        iconId = R.drawable.datasharing_fault_24x24;
-        titleStr = getString(R.string.datasharing_notification_title);
-
-        Intent i;
-        i = new Intent(getApplicationContext(), MainActivity2.class);
-        i.putExtra("action", "showDataSharingDialog");
-        i.setAction("showDataSharingDialog");
-        i.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        PendingIntent contentIntent =
-                PendingIntent.getActivity(getApplicationContext(),
-                        0, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        Intent loginIntent = new Intent(getApplicationContext(), AuthenticateActivity.class);
-        loginIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        PendingIntent loginPendingIntent =
-                PendingIntent.getActivity(getApplicationContext(),
-                        0, loginIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
-        String contentStr = getString(R.string.datasharing_notification_text);
-        Notification notification = notificationBuilder
-                .setContentIntent(contentIntent)
-                .setSmallIcon(iconId)
-                .setColor(0x00ffffff)
-                .setAutoCancel(false)
-                .setContentTitle(titleStr)
-                .setContentText(contentStr)
-                .setOnlyAlertOnce(true)
-                .addAction(R.drawable.common_google_signin_btn_icon_dark, getString(R.string.login), loginPendingIntent)
-                .setPriority(0)
-                .build();
-        nM.notify(DATASHARE_NOTIFICATION_ID, notification);
-    }
-
-    /**
      * isNotificationShown - returns true if the specified notificationID is shown, otherwise returns false.
      *
      * @param notificationId - Notification ID to check
-     * @return true if the specified notification is displayed, otherwise false.
+     * @return boolean - true if notification is currently shown
      */
     private boolean isNotificationShown(int notificationId) {
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        StatusBarNotification[] notifications = mNotificationManager.getActiveNotifications();
-        for (StatusBarNotification notification : notifications) {
-            if (notification.getId() == notificationId) {
-                return (true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            StatusBarNotification[] activeNotifications = mNM.getActiveNotifications();
+            if (activeNotifications != null) {
+                for (StatusBarNotification notification : activeNotifications) {
+                    if (notification.getId() == notificationId) {
+                        return true;
+                    }
+                }
             }
         }
-        return (false);
+        return false;
     }
 
     /**

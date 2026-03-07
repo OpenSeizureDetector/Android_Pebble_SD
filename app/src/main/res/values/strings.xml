@@ -357,7 +357,7 @@
     <string name="unvalidatedEventsTitle">Un-Confirmed Seizure Events</string>
     <string name="register">Register\nNew User</string>
     <string name="reset_password">Reset\nPassword</string>
-    <string name="login_to_osdapi">Log in to Share Data</string>
+    <string name="login_to_osdapi">Data Sharing: Not Logged In</string>
     <string name="login">Log In</string>
     <string name="data_sharing_status">Data Sharing</string>
     <string name="not_logging_data">Not Logging Data</string>
@@ -741,4 +741,18 @@
     <string name="onboarding_garmin_config_important_note">• Make sure the Garmin watch app is running before continuing</string>
     <string name="onboarding_garmin_config_next_step">Next, we\'ll configure the seizure detection algorithm.</string>
     <string name="flap_alarm_title">Flap Alarm</string>
+
+    <string name="pinetime_device_name_placeholder" translatable="false">PineTime</string>
+    <string name="pinetime_updater_package" translatable="false">uk.org.openseizuredetector.pinetime</string>
+    <string name="pinetime_device_display_format">✓ %1$s\nMAC: %2$s</string>
+    <string name="validating_server">Validating server...</string>
+    <string name="enter_ip_address_prompt">Enter the IP address of the OpenSeizureDetector device</string>
+    <string name="invalid_ip_address_format">Invalid IP address format</string>
+    <string name="enter_valid_ip_address">Please enter a valid IP address (e.g., 192.168.1.100)</string>
+    <string name="cannot_launch_pinetime_updater">Cannot launch PineTime Updater</string>
+    <string name="pinetime_updater_not_installed_toast">PineTime Updater not installed. Install from Play Store.</string>
+    <string name="error_message_format">Error: %1$s</string>
+    <string name="server_validated_successfully">✓ Server validated successfully</string>
+    <string name="cannot_reach_server_error">✗ Cannot reach server. Please check:\n• IP address is correct\n• Server is running\n• Device is on the same WiFi network</string>
+    <string name="cannot_open_google_play">Cannot open Google Play Store</string>
 </resources>

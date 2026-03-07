@@ -80,7 +80,7 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
                                 editor.putString("BLE_Device_Addr", macAddress);
                                 // The updater does not provide the device name, so we'll use a placeholder.
                                 // The name will be updated on the next connection.
-                                editor.putString("BLE_Device_Name", "PineTime");
+                                editor.putString("BLE_Device_Name", getString(R.string.pinetime_device_name_placeholder));
                                 editor.apply();
 
                                 // Refresh the display to show the new device
@@ -179,7 +179,7 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
         // Install Updater button - open Google Play Store
         btnInstallUpdater.setOnClickListener(v -> {
             Log.i(TAG, "Install PineTime Updater button clicked");
-            launchGooglePlayStore("uk.org.openseizuredetector.pinetime");
+            launchGooglePlayStore(getString(R.string.pinetime_updater_package));
         });
 
         // Display currently selected device if available
@@ -213,7 +213,7 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
             return;
         }
 
-        String pineTimePackageName = "uk.org.openseizuredetector.pinetime";
+        String pineTimePackageName = getString(R.string.pinetime_updater_package);
 
         try {
             boolean isInstalled = false;
@@ -264,7 +264,7 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
             startActivity(intent);
         } catch (Exception ex) {
             Log.e(TAG, "Error launching Google Play Store: " + ex.toString());
-            Toast.makeText(requireContext(), "Cannot open Google Play Store", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.cannot_open_google_play), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -276,11 +276,11 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
         String deviceAddr = mPrefs.getString("BLE_Device_Addr", "SET_FROM_XML");
 
         if (deviceName != null && deviceAddr != null) {
-            String displayText = "✓ " + deviceName + "\nMAC: " + deviceAddr;
+            String displayText = getString(R.string.pinetime_device_display_format, deviceName, deviceAddr);
             tvSelectedDevice.setText(displayText);
             tvSelectedDevice.setTextColor(requireContext().getColor(android.R.color.holo_green_dark));
         } else {
-            tvSelectedDevice.setText("No device selected");
+            tvSelectedDevice.setText(getString(R.string.onboarding_pinetime_config_no_device_selected));
             tvSelectedDevice.setTextColor(requireContext().getColor(android.R.color.holo_orange_light));
         }
     }
@@ -300,7 +300,7 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
             ipInput.setText(savedIp);
             // Validate the saved IP on fragment load
             if (isValidIpAddress(savedIp)) {
-                validationText.setText("Validating server...");
+                validationText.setText(getString(R.string.validating_server));
                 validationText.setTextColor(requireContext().getColor(android.R.color.darker_gray));
                 validateServer(savedIp, validationText, retryButton);
             }
@@ -318,17 +318,17 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
 
                 if (ip.isEmpty()) {
                     ipInputLayout.setError(null);
-                    validationText.setText("Enter the IP address of the OpenSeizureDetector device");
+                    validationText.setText(getString(R.string.enter_ip_address_prompt));
                     validationText.setTextColor(requireContext().getColor(android.R.color.darker_gray));
                     disableNextButton();
                 } else if (isValidIpAddress(ip)) {
                     ipInputLayout.setError(null);
-                    validationText.setText("Validating server...");
+                    validationText.setText(getString(R.string.validating_server));
                     validationText.setTextColor(requireContext().getColor(android.R.color.darker_gray));
                     validateServer(ip, validationText, retryButton);
                 } else {
-                    ipInputLayout.setError("Invalid IP address format");
-                    validationText.setText("Please enter a valid IP address (e.g., 192.168.1.100)");
+                    ipInputLayout.setError(getString(R.string.invalid_ip_address_format));
+                    validationText.setText(getString(R.string.enter_valid_ip_address));
                     validationText.setTextColor(requireContext().getColor(android.R.color.holo_orange_light));
                     disableNextButton();
                 }
@@ -341,7 +341,7 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
         retryButton.setOnClickListener(v -> {
             String ip = ipInput.getText().toString().trim();
             if (isValidIpAddress(ip)) {
-                validationText.setText("Validating server...");
+                validationText.setText(getString(R.string.validating_server));
                 validationText.setTextColor(requireContext().getColor(android.R.color.darker_gray));
                 retryButton.setVisibility(View.GONE);
                 validateServer(ip, validationText, retryButton);
@@ -374,7 +374,7 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
      * Launch the PineTime Updater application
      */
     private void launchPineTimeUpdater() {
-        String pineTimePackageName = "uk.org.openseizuredetector.pinetime";
+        String pineTimePackageName = getString(R.string.pinetime_updater_package);
 
         try {
             boolean isInstalled = false;
@@ -393,17 +393,17 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
                     launchIntent.setFlags(launchIntent.getFlags() & ~Intent.FLAG_ACTIVITY_NEW_TASK);
                     mPineTimeUpdaterLauncher.launch(launchIntent);
                 } else {
-                    Toast.makeText(requireContext(), "Cannot launch PineTime Updater",
+                    Toast.makeText(requireContext(), getString(R.string.cannot_launch_pinetime_updater),
                             Toast.LENGTH_SHORT).show();
                 }
             } else {
                 Toast.makeText(requireContext(),
-                        "PineTime Updater not installed. Install from Play Store.",
+                        getString(R.string.pinetime_updater_not_installed_toast),
                         Toast.LENGTH_LONG).show();
             }
         } catch (Exception ex) {
             Log.e(TAG, "Error launching PineTime Updater: " + ex.toString());
-            Toast.makeText(requireContext(), "Error: " + ex.getMessage(),
+            Toast.makeText(requireContext(), getString(R.string.error_message_format, ex.getMessage()),
                     Toast.LENGTH_SHORT).show();
         }
     }
@@ -445,7 +445,7 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
      * Handle successful server validation
      */
     private void onServerValidationSuccess(String ip, TextView validationText, MaterialButton retryButton) {
-        validationText.setText("✓ Server validated successfully");
+        validationText.setText(getString(R.string.server_validated_successfully));
         validationText.setTextColor(requireContext().getColor(android.R.color.holo_green_dark));
 
         // Save preferences
@@ -464,7 +464,7 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
      * Handle server validation error
      */
     private void showValidationError(TextView validationText, MaterialButton retryButton) {
-        validationText.setText("✗ Cannot reach server. Please check:\n• IP address is correct\n• Server is running\n• Device is on the same WiFi network");
+        validationText.setText(getString(R.string.cannot_reach_server_error));
         validationText.setTextColor(requireContext().getColor(android.R.color.holo_orange_light));
         retryButton.setVisibility(View.VISIBLE);
         disableNextButton();
