@@ -1,6 +1,6 @@
 # OpenSeizureDetector Logging System Refactoring
 
-**Status**: Phase 3a Complete - Repository Injection into LogManager  
+**Status**: Phase 3b Complete - Remote API Orchestration Extraction  
 **Date**: 2026-03-08  
 **Total Build Time**: Incremental, verified at each stage
 
@@ -146,6 +146,62 @@ This document tracks the refactoring of `LogManager` and related logging infrast
 - **Zero behavior change**: All delegated methods simply call the repository equivalents
 - **Backward compatibility**: Static `getDatabase()` and `mOsdDb` field maintained for legacy code
 - **Clean cut**: Repository owns all database operation details; LogManager owns orchestration logic
+
+---
+
+## Phase 3b: Remote API Orchestration Extraction ✅
+
+**Goal**: Extract all remote API operations (event creation, datapoint upload, callbacks) into a dedicated `LogUploader` class, further reducing LogManager complexity and separating remote API concerns from logging orchestration.
+
+### Changes Made:
+
+1. **New File**: `data/logging/LogUploader.java` (494 lines)
+   - Encapsulates all WebApiConnection interactions
+   - Manages upload state and progress tracking
+   - Handles event and datapoint upload orchestration
+   - Provides callback handlers for network operations
+   
+   **Key Methods:**
+   - `writeToRemoteServer()` - Main entry point for upload attempt
+   - `onNetworkStateChanged()` - React to network connectivity changes
+   - `uploadSdData()` - Orchestrate event discovery and upload
+   - `createEventCallback()` - Handle remote event creation
+   - `uploadNextDatapoint()` - Upload queue management
+   - `datapointCallback()` - Handle datapoint upload completion
+   - `requestShutdown()` - Graceful shutdown with timeout
+   
+   **State Management:**
+   - `mUploadInProgress` - Upload in-progress flag
+   - `mCurrentEventRemoteId` - Current event being uploaded
+   - `mCurrentEventLocalId` - Local event reference
+   - `mDatapointsToUploadList` - Queue of datapoints to upload
+   - `mUploadLock` - Thread-safe synchronization
+   - `mShutdownRequested` - Shutdown flag for graceful termination
+
+2. **Updated File**: `data/logging/LogManager.java` (1,465 lines)
+   - Added `private LogRepository mRepository` field (already in 3a)
+   - Added `private LogUploader mUploader` field
+   - Removed upload-related fields:
+     - ❌ `mUploadInProgress`
+     - ❌ `mCurrentEventRemoteId`
+     - ❌ `mCurrentEventLocalId`
+     - ❌ `mCurrentDatapointId`
+     - ❌ `mDatapointsToUploadList`
+     - ❌ `mUploadLock`
+   - Removed old upload implementation methods (✅ 260+ lines)
+   - Replaced with thin delegation stubs
+   - Delegated methods:
+     - `uploadSdData()` → `mUploader.uploadSdData()`
+     - `finishUpload()` → `mUploader.finishUpload()`
+     - `createEventCallback()` → `mUploader.createEventCallback()`
+     - `uploadNextDatapoint()` → `mUploader.uploadNextDatapoint()`
+     - `datapointCallback()` → `mUploader.datapointCallback()`
+   - Updated `writeToRemoteServer()` to delegate to uploader
+   - Updated `onNetworkStateChanged()` to delegate to uploader
+   - Updated `stop()` method to call `mUploader.requestShutdown()`
+   - Constructor: Initialize LogUploader with dependencies
+
+**Verification**: `./gradlew :app:compileDebugJavaWithJavac :app:mergeDebugResources` ✅ BUILD SUCCESSFUL
 
 ---
 
@@ -295,10 +351,28 @@ Benefits:
 
 ---
 
+## Current File Sizes (After Phase 3b)
+
+| File | Lines | Status |
+|------|-------|--------|
+| `LogManager.java` | 1,465 | ✅ Refactored (was 1,740 after 3a) |
+| `LogUploader.java` | 494 | ✅ New (remote API orchestration) |
+| `LogRepository.java` | 630 | ✅ From Phase 2 (DB operations) |
+| `Log.java` | 107 | ✅ From Phase 1 (logging wrapper) |
+| **Total Logging Package** | **2,696** | **Down from 1,967 original monolith** |
+
+**Lines Removed from LogManager**:
+- Phase 3a: 249 lines (DB operations → LogRepository)
+- Phase 3b: 275 lines (Upload operations → LogUploader)
+- **Total Reduction**: 524 lines from original
+
+---
+
 ## References
 
 - Phase 1 Summary: Logging wrapper with conditional file persistence
 - Phase 2 Summary: Repository pattern for database encapsulation
 - Phase 3a Summary: Dependency injection and delegation pattern implementation
+- Phase 3b Summary: Remote API orchestration extraction into LogUploader
 - Related: `PersistentFileLogger.java`, `OsdUtil.writeToSysLogFile()`, `WebApiConnection.java`
 

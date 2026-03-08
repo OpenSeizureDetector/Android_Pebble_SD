@@ -106,6 +106,7 @@ public class LogManager {
     private String mAuthToken;
     static private SQLiteDatabase mOsdDb = null;   // SQLite Database for data and log entries.
     private LogRepository mRepository;  // Repository for all DB operations
+    private LogUploader mUploader;  // Uploader for remote API orchestration
     private RemoteLogTimer mRemoteLogTimer;
     private boolean mLogNDA;
     public NDATimer mNDATimer;
@@ -117,17 +118,11 @@ public class LogManager {
     public static WebApiConnection mWac;
     public static final boolean USE_FIREBASE_BACKEND = false;
 
-    private boolean mUploadInProgress;
     private volatile boolean mShutdownRequested = false;
-    private final Object mUploadLock = new Object();
     private final Handler mUiHandler = new Handler(android.os.Looper.getMainLooper());
-    private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
+    private long mEventDuration = 120;   // event duration in seconds
     public long mDataRetentionPeriod = 1; // Prunes the local db so it only retains data younger than this duration (in days)
     private long mRemoteLogPeriod = 10; // Period in seconds between uploads to the remote server.
-    private ArrayList<JSONObject> mDatapointsToUploadList;
-    private String mCurrentEventRemoteId;
-    private long mCurrentEventLocalId = -1;
-    private int mCurrentDatapointId;
     private long mAutoPrunePeriod = 3600;  // Prune the database every hour
     private boolean mAutoPruneDb;
     private AutoPruneTimer mAutoPruneTimer;
@@ -214,6 +209,10 @@ public class LogManager {
         }
 
         mWac.setStoredToken(mAuthToken);
+
+        // Initialize uploader for remote API orchestration
+        mUploader = new LogUploader(mContext, mUtil, mRepository, mWac, mEventDuration,
+                mLogRemote, mLogRemoteMobile, this::showToastSafe);
 
         // Register the network change callback to listen for connectivity changes.
         // Since minSdk is 26 (Android 8.0), registerDefaultNetworkCallback is always available (added in API 24).
@@ -907,9 +906,8 @@ public class LogManager {
 
     /**
      * Trigger an immediate upload attempt, typically called when network state changes
-     * or after successful authentication. This bypasses the normal timer cycle.
-     * Note: We don't call checkServerConnection() here to avoid unnecessary data usage -
-     * the actual upload attempt will verify connectivity if there's data to upload.
+     * or after successful authentication.
+     * Delegates to LogUploader.
      */
     public void triggerImmediateUpload() {
         Log.i(TAG, "triggerImmediateUpload() - triggered by network change or authentication");
@@ -921,339 +919,81 @@ public class LogManager {
             }
         }
 
-        // Attempt to upload immediately (if there's data, this will verify connectivity)
         writeToRemoteServer();
     }
 
+    /**
+     * Write data to remote server.
+     * Delegates to LogUploader.
+     */
     public void writeToRemoteServer() {
         Log.v(TAG, "writeToRemoteServer()");
-        if (!mLogRemote) {
-            Log.v(TAG, "writeToRemoteServer(): mLogRemote not set, not doing anything");
-            return;
+        if (mUploader != null) {
+            mUploader.writeToRemoteServer();
         }
-
-        if (!mLogRemoteMobile) {
-            // Check network state - are we using mobile data?
-            if (mUtil.isMobileDataActive()) {
-                Log.v(TAG, "writeToRemoteServer(): Using mobile data, so not doing anything");
-                return;
-            }
-        }
-
-        if (!mUtil.isNetworkConnected()) {
-            Log.v(TAG, "writeToRemoteServer(): No network connection - doing nothing");
-            return;
-        }
-
-        if (mUploadInProgress) {
-            Log.v(TAG, "writeToRemoteServer(): Upload already in progress, not starting another upload");
-            return;
-        }
-
-        Log.d(TAG, "writeToRemoteServer(): calling UploadSdData()");
-        uploadSdData();
     }
 
     /**
      * Handle network state changes.
-     * Called when network connectivity changes (WiFi to mobile data, connected to disconnected, etc.)
-     * This method attempts to restart logging/uploading when a suitable network becomes available.
+     * Delegates to LogUploader.
      */
     public void onNetworkStateChanged() {
-        Log.i(TAG, "onNetworkStateChanged() - Network state has changed, attempting to resume operations");
-
-        if (mShutdownRequested) {
-            Log.d(TAG, "onNetworkStateChanged() - Shutdown requested, not attempting any operations");
-            return;
-        }
-
-        // Check if we have network connectivity
-        if (!mUtil.isNetworkConnected()) {
-            Log.d(TAG, "onNetworkStateChanged() - No network connection available");
-            return;
-        }
-
-        // Check if we can upload (based on mLogRemoteMobile setting)
-        if (!mLogRemoteMobile) {
-            if (mUtil.isMobileDataActive()) {
-                Log.v(TAG, "onNetworkStateChanged() - Using mobile data but mLogRemoteMobile is false");
-                return;
-            }
-        }
-
-        // If we reach here, we have a valid network connection
-        Log.i(TAG, "onNetworkStateChanged() - Valid network connection available");
-
-        // If upload flag is stuck from a previous failure, reset it to allow retry
-        if (mUploadInProgress) {
-            Log.w(TAG, "onNetworkStateChanged() - Upload flag was stuck as true, resetting it to allow retry");
-            mUploadInProgress = false;
-        }
-
-        // Attempt to upload immediately
-        if (mLogRemote) {
-            Log.i(TAG, "onNetworkStateChanged() - Triggering immediate upload");
-            writeToRemoteServer();
+        Log.i(TAG, "onNetworkStateChanged() - Network state has changed");
+        if (mUploader != null) {
+            mUploader.onNetworkStateChanged();
         }
     }
 
 
     /**
-     * Upload a batch of seizure detector data records to the server..
-     * Uses the webApiConnection class to upload the data in the background.
-     * It searches the local database for the oldest event that has not been uploaded and uploads it.
-     * eventCallback is called when the event is created.
+     * Upload seizure detector data to remote server.
+     * Delegates to LogUploader.
      */
     public void uploadSdData() {
-        //int eventId = -1;
-        //Log.v(TAG, "uploadSdData()");
-        // First try uploading full alarms, and only if we do not have any of those, upload warnings.
-        //boolean warningsArr[] = {false, true};
-        // Upload everything - alarms and warnings - we can sort it out in post-processing the data!
-        boolean warningsArr[] = {true};
-        for (int n = 0; n < warningsArr.length; n++) {
-            boolean warningsVal = warningsArr[n];
-            Log.i(TAG, "uploadSdData(): warningsVal=" + warningsVal);
-            synchronized (mUploadLock) {
-                if (mUploadInProgress) {
-                    Log.d(TAG, "uploadSdData - upload already in progress - not doing anything");
-                    return;
-                }
-                mUploadInProgress = true;
-            }
-            getNextEventToUpload(warningsVal, (Long eventId) -> {
-                if (eventId != -1) {
-                    Log.i(TAG, "uploadSdData() - next Event to Upload eventId=" + eventId);
-                    String eventJsonStr = getLocalEventById(eventId);
-                    Log.v(TAG, "uploadSdData() - event to upload eventJsonStr=" + eventJsonStr);
-                    //int eventType;
-                    JSONObject eventObj;
-                    int eventAlarmStatus;
-                    String eventDateStr;
-                    Date eventDate;
-                    String eventType;
-                    String eventSubType;
-                    String eventDesc;
-                    String eventDataJSON;
-                    //String eventAlarmCause;
-                    try {
-                        JSONArray datapointJsonArr = new JSONArray(eventJsonStr);
-                        eventObj = datapointJsonArr.getJSONObject(0);  // We only look at the first (and hopefully only) item in the array.
-                        eventAlarmStatus = Integer.parseInt(eventObj.getString("status"));
-                        eventDateStr = eventObj.getString("dataTime");
-                        eventType = eventObj.getString("type");
-                        eventSubType = eventObj.getString("subType");
-                        //if (eventObj.has("alarmCause")) {
-                        //    eventAlarmCause = eventObj.getString("alarmCause");
-                        //} else {
-                        //    eventAlarmCause = "";
-                        //}
-
-                        // User requested to REMOVE fallback:
-                        // "The alarmCause has nothing to do with subType, so do not use that as a fall back - use null or an empty string for the default."
-
-                        // Fallback logic REMOVED.
-                        // if ((eventSubType == null || eventSubType.isEmpty()) && !eventAlarmCause.isEmpty()) {
-                        //    Log.i(TAG, "uploadSdData: Using alarmCause as subType for upload: " + eventAlarmCause);
-                        //    eventSubType = eventAlarmCause;
-                        // }
-
-                        if (eventObj.has("desc"))
-                            eventDesc = eventObj.getString("desc");
-                        else
-                            eventDesc = "";
-                        eventDataJSON = eventObj.getString("dataJSON");
-                        Log.d(TAG, "uploadSdData - data from local DB is:" + eventJsonStr + ", eventAlarmStatus="
-                                + eventAlarmStatus + ", eventDateStr=" + eventDateStr);
-                    } catch (JSONException e) {
-                        Log.e(TAG, "uploadSdData(): ERROR parsing event JSON Data" + eventJsonStr);
-                        e.printStackTrace();
-                        mUploadInProgress = false;
-                        return;
-                    } catch (NullPointerException e) {
-                        Log.e(TAG, "uploadSdData(): ERROR null pointer exception parsing event JSON Data: " + eventJsonStr);
-                        e.printStackTrace();
-                        mUploadInProgress = false;
-                        return;
-                    }
-                    try {
-                        eventDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(eventDateStr);
-                    } catch (ParseException e) {
-                        Log.e(TAG, "UploadSdData(): Error parsing date " + eventDateStr);
-                        mUploadInProgress = false;
-                        return;
-                    }
-
-                    Log.i(TAG, "uploadSdData - calling mWac.createEvent");
-                    mCurrentEventLocalId = eventId;
-                    mWac.createEvent(eventAlarmStatus, eventDate, eventType, eventSubType, eventDesc, eventDataJSON, this::createEventCallback);
-                } else {
-                    Log.v(TAG, "uploadSdData - no data to upload "); //(warnings="+warningsVal+")");
-                    synchronized (mUploadLock) {
-                        mUploadInProgress = false;
-                    }
-                }
-            });
+        Log.v(TAG, "uploadSdData() - delegating to LogUploader");
+        if (mUploader != null) {
+            mUploader.uploadSdData();
         }
     }
 
-
-    // Mark the relevant member variables to show we are not cuurrently doing an upload, so a new one can be
-    // started if necessary.
+    /**
+     * Mark upload as finished and reset state.
+     * Delegates to LogUploader.
+     */
     public void finishUpload() {
-        mCurrentEventRemoteId = null;
-        mCurrentEventLocalId = -1;
-        mCurrentDatapointId = -1;
-        mDatapointsToUploadList = null;
-        synchronized (mUploadLock) {
-            mUploadInProgress = false;
+        if (mUploader != null) {
+            mUploader.finishUpload();
         }
     }
 
-    // Called by WebApiConnection when a new event record is created.
-    // Once the event is created it queries the local database to find the datapoints associated with the event
-    // and uploads those as a batch of data points.
+    /**
+     * Callback from WebApiConnection when an event is created on remote server.
+     * Delegates to LogUploader.
+     */
     public void createEventCallback(String eventId) {
-        Log.v(TAG, "createEventCallback(): " + eventId);
-        if (mShutdownRequested) {
-            Log.v(TAG, "createEventCallback(): Shutdown requested, ignoring callback");
-            finishUpload();
-            return;
+        if (mUploader != null) {
+            mUploader.createEventCallback(eventId);
         }
-        Log.v(TAG, "createEventCallback(): Retrieving remote event details");
-        mWac.getEvent(eventId, new WebApiConnection.JSONObjectCallback() {
-            @Override
-            public void accept(JSONObject eventObj) {
-                if (mShutdownRequested) {
-                    Log.v(TAG, "createEventCallback.accept(): Shutdown requested, ignoring callback");
-                    finishUpload();
-                    return;
-                }
-                if (eventObj == null) {
-                    Log.e(TAG, "createEventCallback() - eventObj is null - failed to create event (network error?)");
-                    //showToastSafe(mContext.getString(R.string.error_creating_remote_event_msg));
-                    Log.i(TAG, "createEventCallback() - Resetting upload flag to allow retry on next network connection");
-                    finishUpload();
-                } else {
-                    Log.v(TAG, "createEventCallback() - eventObj=" + eventObj.toString());
-                    Date eventDate;
-                    String eventDateStr = "";
-                    try {
-                        String dateStr = eventObj.getString("dataTime");
-                        eventDate = mUtil.string2date(dateStr);
-                    } catch (JSONException | NullPointerException e) {
-                        Log.e(TAG, "createEventCallback() - Error parsing JSONObject: " + eventObj.toString());
-                        finishUpload();
-                        return;
-                    }
-                    if (eventDate != null) {
-                        Log.v(TAG, "createEventCallback() EventId=" + eventId + ", eventDateStr=" + eventDateStr + ", eventDate=" + eventDate);
-                        mUploadInProgress = true;
-                        long eventDateMillis = eventDate.getTime();
-                        long startDateMillis = eventDateMillis - 1000 * mEventDuration / 2;
-                        long endDateMillis = eventDateMillis + 1000 * mEventDuration / 2;
-                        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-                        getDatapointsByDate(
-                                dateFormat.format(new Date(startDateMillis)),
-                                dateFormat.format(new Date(endDateMillis)),
-                                (String datapointsJsonStr) -> {
-                                    if (mShutdownRequested) {
-                                        Log.v(TAG, "createEventCallback.getDatapointsByDate(): Shutdown requested, ignoring callback");
-                                        finishUpload();
-                                        return;
-                                    }
-                                    //Log.v(TAG, "createEventCallback() - datapointsJsonStr=" + datapointsJsonStr);
-                                    JSONArray dataObj;
-                                    mDatapointsToUploadList = new ArrayList<JSONObject>();
-
-                                    try {
-                                        //DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-                                        dataObj = new JSONArray(datapointsJsonStr);
-                                        Log.v(TAG, "createEventCallback() - datapointsObj length=" + dataObj.length());
-                                        for (int i = 0; i < dataObj.length(); i++) {
-                                            mDatapointsToUploadList.add(dataObj.getJSONObject(i));
-                                        }
-                                    } catch (JSONException |
-                                             NullPointerException e) {
-                                        Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string " + datapointsJsonStr);
-                                        dataObj = null;
-                                        finishUpload();
-                                    }
-                                    // This starts the process of uploading the datapoints, one at a time.
-                                    mCurrentEventRemoteId = eventId;
-                                    int listLen = 0;
-                                    if (mDatapointsToUploadList != null)
-                                        listLen = mDatapointsToUploadList.size();
-                                    Log.v(TAG, "createEventCallback() - starting datapoints upload with eventId " + mCurrentEventRemoteId +
-                                            " Uploading " + listLen + " datapoints");
-                                    uploadNextDatapoint();
-
-                                });
-                    } else {
-                        Log.e(TAG, "createEventCallback() - Error - event date is null - not doing anything");
-                        showToastSafe(mContext.getString(R.string.error_uploading_event_msg));
-                        finishUpload();
-                    }
-                }
-            }
-        });
     }
 
-    // takes the next datapoint of the list mDatapointsToUploadList and uploads it to the remote server.
-    // datapointCallback is called when the upload is complete.
+    /**
+     * Upload the next datapoint in the queue.
+     * Delegates to LogUploader.
+     */
     public void uploadNextDatapoint() {
-        //Log.v(TAG, "uploadNextDatapoint()");
-        if (mShutdownRequested) {
-            Log.v(TAG, "uploadNextDatapoint(): Shutdown requested, aborting upload");
-            finishUpload();
-            return;
-        }
-        if (mDatapointsToUploadList != null) {
-            if (mDatapointsToUploadList.size() > 0) {
-                mUploadInProgress = true;
-                try {
-                    mCurrentDatapointId = mDatapointsToUploadList.get(0).getInt("id");
-                } catch (JSONException | NullPointerException e) {
-                    Log.e(TAG, "uploadNextDatapoint(): Error reading currentDatapointID from mDatapointsToUploadList[0]" + e.getMessage());
-                    Log.e(TAG, "uploadNextDatapoint(): Removing mDatapointsToUploadList[0] and trying the next datapoint");
-                    mDatapointsToUploadList.remove(0);
-                    uploadNextDatapoint();
-                    return;
-                }
-
-                Log.v(TAG, "uploadNextDatapoint() - " + mDatapointsToUploadList.size() + " datapoints to upload.  Uploading datapoint ID:" + mCurrentDatapointId);
-                mWac.createDatapoint(mDatapointsToUploadList.get(0), mCurrentEventRemoteId, this::datapointCallback);
-
-            } else {
-                Log.i(TAG, "uploadNextDatapoint() - All datapoints uploaded!");
-                setEventToUploaded(mCurrentEventLocalId, mCurrentEventRemoteId);
-                finishUpload();
-            }
-        } else {
-            Log.w(TAG, "uploadNextDatapoint - mDatapointsToUploadList is null - I don't thin this should have happened!");
+        if (mUploader != null) {
+            mUploader.uploadNextDatapoint();
         }
     }
 
-    // Called by WebApiConnection when a new datapoint is created.   It assumes that we have just created
-    // a datapoint based on mDatapointsToUploadList(0) so removes that from the list and calls UploadDatapoint()
-    // to upload the next one.
+    /**
+     * Callback from WebApiConnection when a datapoint is uploaded.
+     * Delegates to LogUploader.
+     */
     public void datapointCallback(String datapointStr) {
-        Log.v(TAG, "datapointCallback() dataPointId=" + mCurrentDatapointId + " remote datapointID=" + datapointStr + ", mCurrentEventId=" + mCurrentEventRemoteId);
-        if (mShutdownRequested) {
-            Log.v(TAG, "datapointCallback(): Shutdown requested, aborting upload");
-            finishUpload();
-            return;
+        if (mUploader != null) {
+            mUploader.datapointCallback(datapointStr);
         }
-        if (mDatapointsToUploadList != null) {
-            if (mDatapointsToUploadList.size() > 0) {
-                mDatapointsToUploadList.remove(0);
-            }
-        } else {
-            Log.w(TAG, "datapointCallback - mDatapointsToUploadList is null - I don't thin this should have happened!");
-        }
-        setDatapointToUploaded(mCurrentDatapointId, mCurrentEventRemoteId);
-        uploadNextDatapoint();
     }
 
 
@@ -1278,6 +1018,11 @@ public class LogManager {
         Log.i(TAG, "stop() - initiating shutdown");
         mShutdownRequested = true;
 
+        // Shutdown uploader first (handles any ongoing uploads)
+        if (mUploader != null) {
+            mUploader.requestShutdown();
+        }
+
         // Unregister the network change callback
         if (mNetworkCallback != null) {
             ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -1294,26 +1039,6 @@ public class LogManager {
         stopRemoteLogTimer();
         stopAutoPruneTimer();
         stopNDATimer();
-
-        // Wait for ongoing upload to complete or timeout
-        if (mUploadInProgress) {
-            Log.i(TAG, "stop() - waiting for upload to complete");
-            int waitCount = 0;
-            while (mUploadInProgress && waitCount < 50) { // 5 second max wait
-                try {
-                    Thread.sleep(100);
-                    waitCount++;
-                } catch (InterruptedException e) {
-                    Log.w(TAG, "stop() - interrupted while waiting for upload");
-                    break;
-                }
-            }
-
-            if (mUploadInProgress) {
-                Log.w(TAG, "stop() - forcing upload termination after timeout");
-                finishUpload();
-            }
-        }
 
         Log.i(TAG, "stop() - shutdown complete");
     }
