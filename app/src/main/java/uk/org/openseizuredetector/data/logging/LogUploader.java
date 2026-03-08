@@ -193,7 +193,7 @@ public class LogUploader {
 
         synchronized (mUploadLock) {
             if (mUploadInProgress) {
-                Log.d(TAG, "uploadSdData - upload already in progress");
+                Log.d(TAG, "uploadSdData - upload already in progress, skipping to prevent duplicates");
                 return;
             }
             mUploadInProgress = true;
@@ -207,6 +207,14 @@ public class LogUploader {
             }
 
             if (eventId != -1) {
+                // Additional safety check: if we're already uploading this event, skip it
+                synchronized (mUploadLock) {
+                    if (mCurrentEventLocalId == eventId) {
+                        Log.w(TAG, "uploadSdData() - Event " + eventId + " is already being uploaded, skipping");
+                        mUploadInProgress = false;
+                        return;
+                    }
+                }
                 Log.i(TAG, "uploadSdData() - Found event to upload: id=" + eventId);
                 handleEventUpload(eventId);
             } else {
@@ -272,6 +280,15 @@ public class LogUploader {
             Log.v(TAG, "createEventCallback(): Shutdown requested");
             finishUpload();
             return;
+        }
+
+        // Mark event as uploaded IMMEDIATELY to prevent duplicate uploads
+        // (Fix for race condition where timer fires before datapoints finish)
+        if (eventId != null && !eventId.isEmpty() && mCurrentEventLocalId != -1) {
+            Log.i(TAG, "createEventCallback(): Marking event " + mCurrentEventLocalId +
+                    " as uploaded with remote ID: " + eventId);
+            mRepository.setEventToUploaded(mCurrentEventLocalId, eventId);
+            mCurrentEventRemoteId = eventId;
         }
 
         Log.v(TAG, "createEventCallback(): Retrieving remote event details");
@@ -379,7 +396,8 @@ public class LogUploader {
 
         if (mDatapointsToUploadList == null || mDatapointsToUploadList.size() == 0) {
             Log.i(TAG, "uploadNextDatapoint() - All datapoints uploaded!");
-            mRepository.setEventToUploaded(mCurrentEventLocalId, mCurrentEventRemoteId);
+            // Note: Event was already marked as uploaded in createEventCallback()
+            // to prevent duplicate uploads during the datapoint upload phase
             finishUpload();
             return;
         }

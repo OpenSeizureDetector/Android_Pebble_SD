@@ -107,6 +107,7 @@ public class LogManager {
     static private SQLiteDatabase mOsdDb = null;   // SQLite Database for data and log entries.
     private LogRepository mRepository;  // Repository for all DB operations
     private LogUploader mUploader;  // Uploader for remote API orchestration
+    private LocalEventQuerier mQuerier;  // Querier for local database queries
     private RemoteLogTimer mRemoteLogTimer;
     private boolean mLogNDA;
     public NDATimer mNDATimer;
@@ -213,6 +214,9 @@ public class LogManager {
         // Initialize uploader for remote API orchestration
         mUploader = new LogUploader(mContext, mUtil, mRepository, mWac, mEventDuration,
                 mLogRemote, mLogRemoteMobile, this::showToastSafe);
+
+        // Initialize querier for local database queries
+        mQuerier = new LocalEventQuerier(mContext, mUtil, mRepository);
 
         // Register the network change callback to listen for connectivity changes.
         // Since minSdk is 26 (Android 8.0), registerDefaultNetworkCallback is always available (added in API 24).
@@ -503,72 +507,57 @@ public class LogManager {
     }
 
     /**
-     * exportToCsvFile - export datapoints data to a csv file on the android device.
-     *
-     * @param endDate  end date of period to export (Date type)
-     * @param duration duration in hours of period to export (double)
-     * @param uri      uri of file to save.
-     * @param callback function to be called on completion of the task (returns true on success, false on error)
+     * Export datapoints to a CSV file.
+     * Delegates to LocalEventQuerier.
      */
     public void exportToCsvFile(Date endDate, double duration, Uri uri, BooleanCallback callback) {
-        Log.v(TAG, "exportToCsvFile(): uri=" + uri.toString());
-        executeExportData(endDate, duration, uri, (boolean retVal) -> {
-            Log.v(TAG, "exportToCsvFile - returned " + retVal);
-            callback.accept(retVal);
-        });
+        if (mQuerier != null) {
+            mQuerier.exportToCsvFile(endDate, duration, uri, callback);
+        }
     }
 
+    /**
+     * Get a list of events from the local database.
+     * Delegates to LocalEventQuerier.
+     */
+    public boolean getEventsList(boolean includeWarnings, ArrayListCallback callback) {
+        if (mQuerier != null) {
+            return mQuerier.getEventsList(includeWarnings, callback);
+        }
+        return false;
+    }
 
     /**
-     * Return an array list of objects representing the events in the database by calling the specified callback function.
-     *
-     * @param includeWarnings - whether to include warnings in the list of events, or just alarm conditions.
-     * @return True on successful start or false if call fails.
+     * Get count of events in the local database.
+     * Delegates to LocalEventQuerier.
      */
-    public boolean getEventsList(boolean includeWarnings, ArrayListCallback
-            callback) {
-        Log.v(TAG, "getEventsList - includeWarnings=" + includeWarnings);
-        ArrayList<HashMap<String, String>> eventsList = new ArrayList<>();
+    public boolean getLocalEventsCount(boolean includeWarnings, WebApiConnection.LongCallback callback) {
+        if (mQuerier != null) {
+            return mQuerier.getLocalEventsCount(includeWarnings, callback);
+        }
+        return false;
+    }
 
-        String[] whereArgs = getEventWhereArgs(includeWarnings);
-        String whereClause = getEventWhereClause(includeWarnings);
-        //sqlStr = "SELECT * from " + mDbTableName + " where Status in (" + statusListStr + ") order by dataTime desc;";
-        String[] columns = {"*"};
-        executeSelectQuery(mEventsTableName, columns, whereClause, whereArgs,
-                null, null, "dataTime DESC", (Cursor cursor) -> {
-            Log.v(TAG, "getEventsList - returned " + cursor);
-            // use outer eventsList declared above
-            try {
-                if (cursor != null) {
-                    Log.v(TAG, "getEventsList - returned " + cursor.getCount() + " records");
-                    while (!cursor.isAfterLast()) {
-                        HashMap<String, String> event = new HashMap<>();
-                        //event.put("id", cursor.getString(cursor.getColumnIndex("id")));
-                        event.put("dataTime", cursor.getString(cursor.getColumnIndex("dataTime")));
-                        int status = cursor.getInt(cursor.getColumnIndex("status"));
-                        String statusStr = mUtil.alarmStatusToString(status);
-                        event.put("status", statusStr);
-                        event.put("uploaded", cursor.getString(cursor.getColumnIndex("uploaded")));
-                        // Add type and subType
-                        event.put("type", cursor.getString(cursor.getColumnIndex("type")));
-                        event.put("subType", cursor.getString(cursor.getColumnIndex("subType")));
-                        // Add alarmCause if column exists
-                        if (cursor.getColumnIndex("alarmCause") != -1) {
-                            event.put("alarmCause", cursor.getString(cursor.getColumnIndex("alarmCause")));
-                        }
-                        //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
-                        eventsList.add(event);
-                        cursor.moveToNext();
-                    }
-                }
-                callback.accept(eventsList);
-            } finally {
-                if (cursor != null) {
-                    try { cursor.close(); } catch (Exception e) { Log.w(TAG, "getEventsList: error closing cursor: " + e.toString()); }
-                }
-            }
-        });
-        return (true);
+    /**
+     * Get count of datapoints in the local database.
+     * Delegates to LocalEventQuerier.
+     */
+    public boolean getLocalDatapointsCount(WebApiConnection.LongCallback callback) {
+        if (mQuerier != null) {
+            return mQuerier.getLocalDatapointsCount(callback);
+        }
+        return false;
+    }
+
+    /**
+     * Find the datapoint nearest to a given date/time.
+     * Delegates to LocalEventQuerier.
+     */
+    public boolean getNearestDatapointToDate(String dateStr, WebApiConnection.LongCallback callback) {
+        if (mQuerier != null) {
+            return mQuerier.getNearestDatapointToDate(dateStr, callback);
+        }
+        return false;
     }
 
 
@@ -598,307 +587,9 @@ public class LogManager {
     }
 
 
-    /**
-     * Return the ID of the datapoint that is closest to date/time string dateStr
-     * Based on https://stackoverflow.com/questions/45749046/sql-get-nearest-date-record
-     *
-     * @return True on successful start or false if call fails.
-     */
-    public boolean getNearestDatapointToDate(String
-                                                     dateStr, WebApiConnection.LongCallback callback) {
-        Log.v(TAG, "getNextEventToDate - dateStr=" + dateStr);
-        String[] columns = {"*", "(julianday(dataTime)-julianday(datetime('" + dateStr + "'))) as ddiff"};
-        //SQLStr = "SELECT *, (julianday(dataTime)-julianday(datetime('" + dateStr + "'))) as ddiff from " + mDbTableName + " order by ABS(ddiff) asc;";
-        String orderByStr = "ABS(ddiff) asc";
-        executeSelectQuery(mDpTableName, columns, null, null,
-                null, null, orderByStr, (Cursor cursor) -> {
-            Log.v(TAG, "getEventsNearestDatapointToDate - returned " + cursor);
-            long recordId = -1;
-            try {
-                if (cursor != null) {
-                    Log.v(TAG, "getNearestDatapointToDate - returned " + cursor.getCount() + " records");
-                    cursor.moveToFirst();
-                    if (cursor.getCount() == 0) {
-                        Log.v(TAG, "getNearestDatapointToDate() - no events to Upload - exiting");
-                        recordId = -1;
-                    } else {
-                        String recordStr = cursor.getString(3);
-                        recordId = cursor.getLong(0);
-                        Log.d(TAG, "getNearestDatapointToDate(): id=" + recordId + ", recordStr=" + recordStr);
-                    }
-                }
-                callback.accept(recordId);
-            } finally {
-                if (cursor != null) {
-                    try { cursor.close(); } catch (Exception e) { Log.w(TAG, "getNearestDatapointToDate: error closing cursor: " + e.toString()); }
-                }
-            }
-        });
-        return (true);
-    }
 
 
-    /**
-     * Return the number of events stored in the local database (via a callback).
-     *
-     * @param includeWarnings - whether to include warnings in the list of events, or just alarm conditions.
-     * @return True on successful start or false if call fails.
-     */
-    public boolean getLocalEventsCount(boolean includeWarnings, WebApiConnection.
-            LongCallback callback) {
-        //Log.v(TAG, "getLocalEventsCount- includeWarnings=" + includeWarnings);
-        String[] whereArgs = getEventWhereArgs(includeWarnings);
-        String whereClause = getEventWhereClause(includeWarnings);
-        String[] columns = {"*"};
-        executeSelectQuery(mEventsTableName, columns, whereClause, whereArgs,
-                null, null, null, (Cursor cursor) -> {
-            Long eventCount = Long.valueOf(0);
-            try {
-                if (cursor != null) {
-                    eventCount = Long.valueOf(cursor.getCount());
-                    Log.v(TAG, "getLocalEventsCount - returned " + eventCount + " records");
-                }
-                callback.accept(eventCount);
-            } finally {
-                if (cursor != null) {
-                    try { cursor.close(); } catch (Exception e) { Log.w(TAG, "getLocalEventsCount: error closing cursor: " + e.toString()); }
-                }
-            }
-        });
-        return (true);
-    }
-
-    /**
-     * Return the number of datapoints stored in the local database (via a callback).
-     *
-     * @return True on successful start or false if call fails.
-     */
-    public boolean getLocalDatapointsCount(WebApiConnection.LongCallback callback) {
-        //Log.v(TAG, "getLocalDatapointsCount");
-        String[] whereArgs = null;
-        String whereClause = null;
-        String[] columns = {"*"};
-        executeSelectQuery(mDpTableName, columns, whereClause, whereArgs,
-                null, null, null, (Cursor cursor) -> {
-            Long eventCount = Long.valueOf(0);
-            try {
-                if (cursor != null) {
-                    eventCount = Long.valueOf(cursor.getCount());
-                    Log.v(TAG, "getLocalDatapointsCount - returned " + eventCount + " records");
-                }
-                callback.accept(eventCount);
-            } finally {
-                if (cursor != null) {
-                    try { cursor.close(); } catch (Exception e) { Log.w(TAG, "getLocalDatapointsCount: error closing cursor: " + e.toString()); }
-                }
-            }
-        });
-        return (true);
-    }
-
-
-    /**
-     * Executes the sqlite query (=SELECT statement) using BackgroundTaskExecutor
-     */
-    static private void executeSelectQuery(String table, String[] columns, String selection,
-                                          String[] selectionArgs, String groupBy, String having,
-                                          String orderBy, CursorCallback callback) {
-        BackgroundTaskExecutor.execute(
-            () -> {
-                Log.v(TAG, "SelectQuery: table=" + table + ", columns=" + Arrays.toString(columns)
-                        + ", selection=" + selection + ", selectionArgs=" + Arrays.toString(selectionArgs)
-                        + ", groupBy=" + groupBy + ", having=" + having + ", orderBy=" + orderBy);
-
-                try {
-                    Cursor resultSet = mOsdDb.query(table, columns, selection,
-                            selectionArgs, groupBy, having, orderBy);
-                    resultSet.moveToFirst();
-                    return resultSet;
-                } catch (SQLException e) {
-                    Log.e(TAG, "SelectQuery: Error selecting Data: " + e.toString());
-                    return null;
-                } catch (IllegalArgumentException e) {
-                    Log.e(TAG, "SelectQuery: Illegal Argument Exception: " + e.toString());
-                    return null;
-                } catch (NullPointerException e) {
-                    Log.e(TAG, "SelectQuery: Null Pointer Exception: " + e.toString());
-                    return null;
-                }
-            },
-            new BackgroundTaskExecutor.Callback<Cursor>() {
-                @Override
-                public void onSuccess(Cursor result) {
-                    callback.accept(result);
-                }
-
-                @Override
-                public void onError(Exception e) {
-                    Log.e(TAG, "SelectQuery error", e);
-                    callback.accept(null);
-                }
-            }
-        );
-    }
-
-    //query(String table, String[] columns, String selection, String[] selectionArgs,
-    // String groupBy, String having, String orderBy)
-
-    /**
-     * Exports the contents of the local datapoints table between given dates
-     * to a .csv file using BackgroundTaskExecutor
-     */
-    static private void executeExportData(Date endDate, double duration, Uri uri, BooleanCallback callback) {
-        Log.i(TAG, "executeExportData()");
-
-        BackgroundTaskExecutor.execute(
-            () -> {
-                Log.v(TAG, "ExportData.doInBackground()");
-                long endDateMillis = endDate.getTime();
-                long durationMillis = (long) (duration * 3600. * 1000);
-                long startDateMillis = endDateMillis - durationMillis;
-                Log.v(TAG, "exportData() - endDateMillis=" + endDateMillis + ", startDateMillis=" + startDateMillis + ", durationMillis=" + durationMillis);
-                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                String sDateStr = dateFormat.format(new Date(startDateMillis));
-                String eDateStr = dateFormat.format(new Date(endDateMillis));
-                Log.v(TAG, "ExportData - sDateStr=" + sDateStr + " eDateStr=" + eDateStr);
-                String[] columns = {"*"};
-                String whereClause = "DataTime>? AND DataTime<?";
-                String[] whereArgs = {sDateStr, eDateStr};
-
-                try {
-                    Cursor cursor = mOsdDb.query(mDpTableName, columns, whereClause,
-                            whereArgs, null, null, "dataTime DESC");
-                    cursor.moveToFirst();
-
-                    Log.v(TAG, "ExportData - returned " + cursor);
-                    if (cursor != null) {
-                        Log.d(TAG, "ExportData - query complete - writing to file....");
-                        try {
-                            ParcelFileDescriptor pfd = mContext.getContentResolver().
-                                    openFileDescriptor(uri, "w");
-                            FileOutputStream fileOutputStream =
-                                    new FileOutputStream(pfd.getFileDescriptor());
-                            fileOutputStream.write(("# dataTime, alarmState, hr, o2sat, accel*125\n").getBytes());
-                            int nRec = writeDatapointsToFile(cursor, fileOutputStream);
-                            // Let the document provider know you're done by closing the stream.
-                            fileOutputStream.close();
-                            pfd.close();
-                            Log.d(TAG, "ExportData - file written ok");
-                            return true;
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                            // Show toast on UI thread
-                            BackgroundTaskExecutor.runOnMainThread(() ->
-                                mUtil.showToast(mContext.getString(R.string.error_exporting_data))
-                            );
-                            Log.e(TAG, "ExportData - FileNotFoundException: " + e.toString());
-                            return false;
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            // Show toast on UI thread
-                            BackgroundTaskExecutor.runOnMainThread(() ->
-                                mUtil.showToast(mContext.getString(R.string.error_exporting_data))
-                            );
-                            Log.e(TAG, "ExportData - IOException: " + e.toString());
-                            return false;
-                        }
-
-                    } else {
-                        Log.w(TAG, "ExportData - returned null result");
-                        return false;
-                    }
-                } catch (SQLException e) {
-                    Log.e(TAG, "ExportData: Error selecting Data: " + e.toString());
-                    return false;
-                } catch (IllegalArgumentException e) {
-                    Log.e(TAG, "ExportData: Illegal Argument Exception: " + e.toString());
-                    return false;
-                } catch (NullPointerException e) {
-                    Log.e(TAG, "ExportData: Null Pointer Exception: " + e.toString());
-                    return false;
-                }
-            },
-            new BackgroundTaskExecutor.Callback<Boolean>() {
-                @Override
-                public void onSuccess(Boolean result) {
-                    Log.i(TAG, "ExportData.onSuccess() - result: " + result);
-                    callback.accept(result);
-                }
-
-                @Override
-                public void onError(Exception e) {
-                    Log.e(TAG, "ExportData error", e);
-                    callback.accept(false);
-                }
-            }
-        );
-    }
-
-    private static int writeDatapointsToFile(Cursor c, FileOutputStream fileOutputStream) {
-            Log.v(TAG, "writeDatapointsToFile()");
-            int nRec = 0;
-            JSONArray dataObj;
-            String dataJsonStr;
-            JSONObject dataJsonObj;
-            JSONArray rawDataArr;
-            Log.d(TAG, "writeDatapointsToFile()" + c.getColumnNames());
-            //for (int i=0;i<c.getColumnCount();i++) {
-            //    Log.d(TAG,"  Column"+i+" = "+c.getColumnName(i));
-            //}
-            try {
-                Log.d(TAG, "writeDatapointsToFile() - writing query result to csv file....");
-                while (c.moveToNext()) {
-                    nRec += 1;
-                    //Log.d(TAG,"writeDatapointsToFile - row="+c.getString(0)+", "+c.getString(1));
-                    dataJsonStr = c.getString(3);   // dataJSON is index 3
-                    //Log.v(TAG, "exportToFile() - i=" + i + "dataJsonStr=" + dataJsonStr);
-                    dataJsonObj = new JSONObject(dataJsonStr);
-                    rawDataArr = dataJsonObj.getJSONArray("rawData");
-                    try {
-                        //fileOutputStream.write(dataJsonObj.getString("dataTime").getBytes(StandardCharsets.UTF_8));
-                        fileOutputStream.write(c.getString(1).getBytes(StandardCharsets.UTF_8));  // We use the database record date rather than datajson date because it is formatted yyyy-mm-dd
-                        fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
-                        fileOutputStream.write(dataJsonObj.getString("alarmState").getBytes(StandardCharsets.UTF_8));
-                        fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
-                        fileOutputStream.write(dataJsonObj.getString("hr").getBytes(StandardCharsets.UTF_8));
-                        fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
-                        fileOutputStream.write(dataJsonObj.getString("o2Sat").getBytes(StandardCharsets.UTF_8));
-                        for (int j = 0; j < 125; j++) {  // FIXME Hard Coded array length, but rawDataArr.length() is 125*3 so we don't want to use that.
-                            fileOutputStream.write(", ".getBytes(StandardCharsets.UTF_8));
-                            fileOutputStream.write(rawDataArr.getString(j).getBytes(StandardCharsets.UTF_8));
-                        }
-                        fileOutputStream.write("\n".getBytes(StandardCharsets.UTF_8));
-                    } catch (IOException e) {
-                        Log.e(TAG, "exportToFile() - ERROR Writing File: " + e.toString());
-                        // Show toast on UI thread
-                        new Handler(android.os.Looper.getMainLooper()).post(() ->
-                            mUtil.showToast("ERROR WRITING FILE")
-                        );
-                        return (-1);
-                    }
-
-                }
-                Log.d(TAG, "writeDatapointsToFile() - data written to file ok");
-                // Show toast on UI thread
-                final int finalNRec = nRec;
-                new Handler(android.os.Looper.getMainLooper()).post(() ->
-                    mUtil.showToast(mContext.getString(R.string.data_exported_ok) + " " + finalNRec)
-                );
-                return nRec;
-
-            } catch (JSONException | NullPointerException e) {
-                Log.v(TAG, "createEventCallback(): Error Creating JSON Object from string ");
-                dataObj = null;
-                // Show toast on UI thread
-                new Handler(android.os.Looper.getMainLooper()).post(() ->
-                    mUtil.showToast(mContext.getString(R.string.error_exporting_data))
-                );
-                Log.e(TAG, "exportToFile() - JSONException: " + e.toString());
-                return (-1);
-            }
-        }
-
-
+    // ... existing code ...
 
     /***************************************************************************************
      * Remote Database Part
@@ -1414,28 +1105,6 @@ public class LogManager {
 
     }
 
-
-    /**
-     * Helper method: build WHERE clause for event status filter
-     */
-    private String getEventWhereClause(boolean includeWarnings) {
-        if (includeWarnings) {
-            return "Status in (?, ?, ?, ?, ?)";
-        } else {
-            return "Status in (?, ?, ?, ?)";
-        }
-    }
-
-    /**
-     * Helper method: build WHERE clause arguments for event status filter
-     */
-    private String[] getEventWhereArgs(boolean includeWarnings) {
-        if (includeWarnings) {
-            return new String[]{"1", "2", "3", "5", "6"};
-        } else {
-            return new String[]{"2", "3", "5", "6"};
-        }
-    }
 
     /**
      * Helper to trigger upload. Extracted from NetworkChangeReceiver to be reused by NetworkCallback.
