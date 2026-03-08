@@ -643,6 +643,8 @@
     <string name="syslog_exported">Log file exported to Downloads folder</string>
     <string name="syslog_export_failed">Failed to export log file</string>
     <string name="syslog_select_file_title">Select Log File</string>
+    <string name="syslog_level_title">System Log File Level</string>
+    <string name="syslog_level_summary">Choose the minimum logcat level mirrored to persistent system log files.</string>
 
     <!-- Onboarding Welcome Fragment -->
     <string name="onboarding_welcome_title">Welcome to OpenSeizureDetector</string>

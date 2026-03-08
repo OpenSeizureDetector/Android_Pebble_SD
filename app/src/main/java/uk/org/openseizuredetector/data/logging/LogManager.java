@@ -46,7 +46,6 @@ import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
-import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -189,6 +188,7 @@ public class LogManager {
         Log.v(TAG, "mRemoteLogPeriod=" + mRemoteLogPeriod);
 
         mUtil = new OsdUtil(mContext, handler);
+        Log.init(mContext, mUtil);
         openDb();
         Log.i(TAG, "Starting Remote Database Interface");
         if (USE_FIREBASE_BACKEND) {
@@ -1708,7 +1708,7 @@ public class LogManager {
 
 
     public static class OsdDbHelper extends SQLiteOpenHelper {
-        // If you change the database schema, you must increment the database version.
+               // If you change the database schema, you must increment the database version.
         public static final int DATABASE_VERSION = 4;
         public static final String DATABASE_NAME = "OsdData.db";
         private static final String TAG = "LogManager.OsdDbHelper";
