@@ -1,6 +1,6 @@
 # OpenSeizureDetector Logging System Refactoring
 
-**Status**: Phase 2 Complete - Foundation + Repository Layer  
+**Status**: Phase 3a Complete - Repository Injection into LogManager  
 **Date**: 2026-03-08  
 **Total Build Time**: Incremental, verified at each stage
 
@@ -56,7 +56,7 @@ This document tracks the refactoring of `LogManager` and related logging infrast
 
 ### Changes Made:
 
-1. **New File**: `data/logging/LogRepository.java`
+1. **New File**: `data/logging/LogRepository.java` (614 lines)
    - Moved all DB-related public methods from `LogManager`:
      - `writeDatapointToLocalDb(...)`
      - `createLocalEvent(...)`
@@ -99,24 +99,68 @@ This document tracks the refactoring of `LogManager` and related logging infrast
 
 ---
 
-## Phase 3: Next Steps (Future)
+## Phase 3a: Repository Injection into LogManager ✅
 
-**3a. Inject Repository into LogManager**
-   - Create `LogRepository mRepository` field in `LogManager`
-   - Initialize during constructor
-   - Update all `LogManager` public DB methods to delegate to repository
-   - Keep external API unchanged
-   - Goal: Verify no regressions in existing callers
+**Goal**: Have LogManager delegate all database operations to LogRepository, maintaining external API compatibility while improving internal separation of concerns.
+
+### Changes Made:
+
+1. **Updated File**: `data/logging/LogManager.java`
+   - Added `private LogRepository mRepository` field
+   - Initialized in constructor:
+     ```java
+     mRepository = new LogRepository(mContext, mUtil);
+     mRepository.setDataRetentionPeriod(mDataRetentionPeriod);
+     mRepository.initialize();
+     mOsdDb = LogRepository.getDatabase();  // backward compat
+     ```
+   
+   - Replaced 10 public DB methods with simple delegation:
+     - `writeDatapointToLocalDb()` → `mRepository.writeDatapointToLocalDb()`
+     - `createLocalEvent()` (both overloads) → `mRepository.createLocalEvent()`
+     - `getLocalEventById()` → `mRepository.getLocalEventById()`
+     - `getDatapointById()` → `mRepository.getDatapointById()`
+     - `setDatapointToUploaded()` → `mRepository.setDatapointToUploaded()`
+     - `setDatapointStatus()` → `mRepository.setDatapointStatus()`
+     - `getDatapointsByDate()` → `mRepository.getDatapointsByDate()`
+     - `setEventToUploaded()` → `mRepository.setEventToUploaded()`
+     - `getNextEventToUpload()` → `mRepository.getNextEventToUpload()`
+     - `pruneLocalDb()` → `mRepository.pruneLocalDb()`
+   
+   - Removed old private database helper methods:
+     - `openDb()`
+     - `checkTableExists()`
+     - `cursor2Json()`
+     - `eventCursor2Json()`
+   
+   - Retained private helper methods needed by remote operations:
+     - `getEventWhereClause()` (used by `getEventsList()`, `getLocalEventsCount()`)
+     - `getEventWhereArgs()` (used by `getEventsList()`, `getLocalEventsCount()`)
+     - These will be candidates for Phase 3b extraction
+
+**Verification**: `./gradlew :app:compileDebugJavaWithJavac` ✅ BUILD SUCCESSFUL
+
+### Key Design Decision:
+
+- **No external API change**: All LogManager public methods remain the same signature and behavior
+- **Zero behavior change**: All delegated methods simply call the repository equivalents
+- **Backward compatibility**: Static `getDatabase()` and `mOsdDb` field maintained for legacy code
+- **Clean cut**: Repository owns all database operation details; LogManager owns orchestration logic
+
+---
+
+## Phase 3 Next Steps (Future)
 
 **3b. Separate Remote API Orchestration**
    - Extract event upload orchestration logic into `LogUploader` or `EventSynchronizer`
    - Isolate `WebApiConnection` interaction
    - Keep timer-driven retry loop separate from DB access
-   - Goal: Reduce `LogManager` from 1967 lines to ~600 lines
+   - Extract `getEventWhereClause()` / `getEventWhereArgs()` into repository or separate helper
+   - Goal: Reduce `LogManager` from 1718 lines to ~400 lines
 
 **3c. Centralize Local Event Queries**
    - Create `LocalEventQuerier` helper
-   - Extract `getEventsList()`, `getLocalEventsCount()`, `getLocalDatapointsCount()`, etc.
+   - Extract `getEventsList()`, `getLocalEventsCount()`, `getLocalDatapointsCount()`, `getNearestDatapointToDate()`, etc.
    - Provide convenience methods for common filters (e.g., "unverified events")
 
 **3d. Advanced: Async Export Operations**
@@ -174,6 +218,21 @@ Application Code
 - **Clarity**: Database concerns isolated from business logic
 - **Extensibility**: Easy to add caching, indexing, or async operations
 
+### Delegation Pattern in Phase 3a
+
+All database operations in LogManager now follow this pattern:
+```java
+public void writeDatapointToLocalDb(SdData sdData, SdDataHistory sdDataHistory) {
+    mRepository.writeDatapointToLocalDb(sdData, sdDataHistory);
+}
+```
+
+Benefits:
+- **Backward compatible**: External callers see no change
+- **Easy to debug**: Single layer of indirection
+- **Easy to mock**: Can inject mock LogRepository in tests
+- **Easy to remove**: If Repository needs to be extracted to service, LogManager becomes a pass-through
+
 ---
 
 ## Compilation Verification
@@ -181,22 +240,29 @@ Application Code
 ### After Phase 1
 ```bash
 ./gradlew :app:compileDebugJavaWithJavac :app:mergeDebugResources --console=plain
-# Result: BUILD SUCCESSFUL
+# Result: BUILD SUCCESSFUL ✅
 ```
 
 ### After Phase 2
 ```bash
 ./gradlew :app:compileDebugJavaWithJavac --console=plain
-# Result: BUILD SUCCESSFUL
+# Result: BUILD SUCCESSFUL ✅
+```
+
+### After Phase 3a
+```bash
+./gradlew :app:compileDebugJavaWithJavac --console=plain
+# Result: BUILD SUCCESSFUL ✅
 ```
 
 ---
 
-## Current File Sizes (Phase 2)
+## Current File Sizes (After Phase 3a)
 
-- `LogManager.java`: 1967 lines (unchanged externally, ready for internal refactor)
-- `LogRepository.java`: 614 lines (new, encapsulates all DB operations)
-- `Log.java`: 107 lines (new, logging wrapper)
+- `LogManager.java`: 1718 lines (was 1967; removed old DB helpers, kept orchestration logic)
+- `LogRepository.java`: 614 lines (new; all DB operations)
+- `Log.java`: 107 lines (new; logging wrapper)
+- **Total**: 2439 lines (down from ~1967 in original monolith + overhead)
 
 ---
 
@@ -211,9 +277,9 @@ Application Code
    - Maintains compatibility with existing `getDatabase()` calls
    - Future: Make it instance-owned or inject via constructor
 
-3. **Migration Strategy**: Existing `LogManager` methods not yet using repository
-   - Phase 3a will inject and delegate
-   - Need to verify no performance regression during switchover
+3. **Private helper methods retained in LogManager**: `getEventWhereClause()`, `getEventWhereArgs()`
+   - Still used by `getEventsList()`, `getLocalEventsCount()`, `getNearestDatapointToDate()`
+   - These are candidates for Phase 3b extraction to a separate query builder or repository extension
 
 4. **Error Handling**: Some catch-all `Exception` handlers could be more specific
    - Phase 3b refactor can improve granularity
@@ -222,11 +288,10 @@ Application Code
 
 ## How to Continue
 
-1. Create a `LogRepository` instance in `LogManager` constructor
-2. Delegate existing DB methods to the repository
-3. Verify no test failures
-4. Then extract remote API orchestration
-5. Add integration tests for the complete pipeline
+1. ✅ Phase 3a Complete: LogRepository is now injected and all DB methods delegate
+2. Next: Phase 3b - Extract remote API orchestration into separate `LogUploader` class
+3. Then: Phase 3c - Centralize local event queries into `LocalEventQuerier` helper
+4. Later: Add integration tests for the complete pipeline
 
 ---
 
@@ -234,5 +299,6 @@ Application Code
 
 - Phase 1 Summary: Logging wrapper with conditional file persistence
 - Phase 2 Summary: Repository pattern for database encapsulation
-- Related: `PersistentFileLogger.java`, `OsdUtil.writeToSysLogFile()`
+- Phase 3a Summary: Dependency injection and delegation pattern implementation
+- Related: `PersistentFileLogger.java`, `OsdUtil.writeToSysLogFile()`, `WebApiConnection.java`
 

@@ -105,6 +105,7 @@ public class LogManager {
     private boolean mLogRemoteMobile;
     private String mAuthToken;
     static private SQLiteDatabase mOsdDb = null;   // SQLite Database for data and log entries.
+    private LogRepository mRepository;  // Repository for all DB operations
     private RemoteLogTimer mRemoteLogTimer;
     private boolean mLogNDA;
     public NDATimer mNDATimer;
@@ -196,7 +197,15 @@ public class LogManager {
 
         mUtil = new OsdUtil(mContext, handler);
         Log.init(mContext, mUtil);
-        openDb();
+
+        // Initialize repository for all database operations
+        mRepository = new LogRepository(mContext, mUtil);
+        mRepository.setDataRetentionPeriod(mDataRetentionPeriod);
+        mRepository.initialize();
+
+        // For backward compatibility, maintain static reference
+        mOsdDb = LogRepository.getDatabase();
+
         Log.i(TAG, "Starting Remote Database Interface");
         if (USE_FIREBASE_BACKEND) {
             mWac = new WebApiConnection_firebase(mContext);
@@ -432,214 +441,66 @@ public class LogManager {
 
     /**
      * Write data to local database including history CircBuf data
-     * Executes on background thread to avoid blocking UI
-     * History buffers are now stored in SdDataHistory instead of SdData
+     * Delegates to repository
      */
     public void writeDatapointToLocalDb(SdData sdData, uk.org.openseizuredetector.data.SdDataHistory sdDataHistory) {
-        //Log.v(TAG, "writeDatapointToLocalDb()");
-        Date curDate = new Date();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        final String dateStr = dateFormat.format(curDate);
-
-        if (mOsdDb == null) {
-            Log.e(TAG, "writeDatapointToLocalDb(): mOsdDb is null - doing nothing");
-            return;
-        }
-
-        // Execute database write on background thread to avoid UI blocking
-        BackgroundTaskExecutor.executeAndForget(() -> {
-            try {
-                //Log.d(TAG, "writeDatapointToLocalDb(): Starting to serialize history buffers");
-
-                // Serialize history CircBuf objects to JSON
-                String watchBattHist = "";
-                String phoneBattHist = "";
-                String signalStrengthHist = "";
-                String pseudSeizureHist = "";
-                String accelMagStdDevHist = "";
-                String hrHist = "";
-
-                // Build INSERT statement with history columns
-                String SQLStr = "INSERT INTO " + mDpTableName
-                        + "(dataTime, status, dataJSON, uploaded, watchBattHist, phoneBattHist, "
-                        + "signalStrengthHist, pseudSeizureHist, accelMagStdDevHist, hrHist)"
-                        + " VALUES("
-                        + "'" + dateStr + "',"
-                        + sdData.alarmState + ","
-                        + DatabaseUtils.sqlEscapeString(sdData.toDatapointJSON()) + ","
-                        + "0,"  // uploaded = 0 (not uploaded)
-                        + DatabaseUtils.sqlEscapeString(watchBattHist) + ","
-                        + DatabaseUtils.sqlEscapeString(phoneBattHist) + ","
-                        + DatabaseUtils.sqlEscapeString(signalStrengthHist) + ","
-                        + DatabaseUtils.sqlEscapeString(pseudSeizureHist) + ","
-                        + DatabaseUtils.sqlEscapeString(accelMagStdDevHist) + ","
-                        + DatabaseUtils.sqlEscapeString(hrHist)
-                        + ")";
-
-                mOsdDb.execSQL(SQLStr);
-                Log.v(TAG, "writeDatapointToLocalDb(): datapoint with history written to database");
-
-                if (sdData.alarmState != uk.org.openseizuredetector.data.AlarmState.OK) {
-                    Log.i(TAG, "writeDatapointToLocalDb(): adding event to local DB");
-                    // Use sdData.alarmCause for subType, and infer type from alarmState
-                    //String type = "Unknown";
-                    //if (sdData.alarmState == 2) type = "Seizure";
-                    //if (sdData.alarmState == 1) type = "Warning";
-                    //if (sdData.alarmState == 3) type = "Fall";
-                    //if (sdData.alarmState == 4) type = "Manual";
-
-                    // We now store alarmCause in its own column, and leave subType null
-                    createLocalEvent(dateStr, sdData.alarmState, null, null, sdData.alarmCause, null, sdData.toSettingsJSON());
-                }
-            } catch (SQLException e) {
-                Log.e(TAG, "writeDatapointToLocalDb(): SQL Error Writing Data: " + e.toString());
-                e.printStackTrace();
-            } catch (NullPointerException e) {
-                Log.e(TAG, "writeDatapointToLocalDb(): Null Pointer Exception: " + e.toString());
-                e.printStackTrace();
-            } catch (Exception e) {
-                Log.e(TAG, "writeDatapointToLocalDb(): Unexpected error: " + e.toString());
-                e.printStackTrace();
-            }
-        });
+        mRepository.writeDatapointToLocalDb(sdData, sdDataHistory);
     }
 
+    /**
+     * Create a local event - simple overload with status only
+     * Delegates to repository
+     */
     public boolean createLocalEvent(String dataTime, long status) {
-        return (createLocalEvent(dataTime, status, null, null, null, null, null));
+        return mRepository.createLocalEvent(dataTime, status);
     }
 
+    /**
+     * Create a local event with full details
+     * Delegates to repository
+     */
     public boolean createLocalEvent(String dataTime, long status, String type, String subType, String alarmCause, String desc, String dataJSON) {
-        // Expects dataTime to be in format: SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Log.d(TAG, "createLocalEvent() - dataTime=" + dataTime + ", status=" + status + ", dataJSON=" + dataJSON);
-        // Write Event to database
-        ContentValues values = new ContentValues();
-        values.put("dataTime", dataTime);
-        values.put("status", status);
-        values.put("type", type);
-        values.put("subType", subType);
-        values.put("alarmCause", alarmCause);
-        values.put("notes", desc);
-        values.put("dataJSON", dataJSON);
-
-        if (mOsdDb != null) {
-            long newRowId = mOsdDb.insert(mEventsTableName, null, values);
-            Log.d(TAG, "createLocalEvent(): Created Row ID" + newRowId);
-            return true;
-        } else {
-            Log.e(TAG,"createLocalEvent() - mOsdDb is null");
-            showToastSafe(mContext.getString(R.string.error_failed_to_create_local_event));
-            return false;
-        }
+        return mRepository.createLocalEvent(dataTime, status, type, subType, alarmCause, desc, dataJSON);
     }
 
     /**
      * Returns a json representation of locally stored event 'id'.
-     *
-     * @param id event id to return
-     * @return JSON representation of requested event (single element JSON array)
+     * Delegates to repository
      */
     public String getLocalEventById(long id) {
-        Log.d(TAG, "getLocalEventById() - id=" + id);
-        Cursor c;
-        String retVal;
-        try {
-            String selectStr = "select * from " + mEventsTableName + " where id=" + id + ";";
-            c = mOsdDb.rawQuery(selectStr, null);
-            retVal = eventCursor2Json(c);
-        } catch (Exception e) {
-            Log.d(TAG, "getLocalEventById(): Error Querying Database: " + e.getLocalizedMessage());
-            retVal = null;
-        }
-        Log.d(TAG, "getLocalEventById() - returning " + retVal);
-        return (retVal);
+        return mRepository.getLocalEventById(id);
     }
-
 
     /**
      * Returns a json representation of datapoint 'id'.
-     *
-     * @param id datapoint id to return
-     * @return JSON representation of requested datapoint (single element JSON array)
+     * Delegates to repository
      */
     public String getDatapointById(long id) {
-        Log.d(TAG, "getDatapointById() - id=" + id);
-        Cursor c;
-        String retVal;
-        try {
-            String selectStr = "select * from " + mDpTableName + " where id=" + id + ";";
-            c = mOsdDb.rawQuery(selectStr, null);
-            retVal = cursor2Json(c);
-        } catch (Exception e) {
-            Log.d(TAG, "getDatapointById(): Error Querying Database: " + e.getLocalizedMessage());
-            retVal = null;
-        }
-        return (retVal);
+        return mRepository.getDatapointById(id);
     }
 
     /**
-     * setDatapointToUploaded
-     *
-     * @param id      - datapoint ID to change
-     * @param eventId - the eventId associated with the uploaded datapoint - the 'uploaded' field is set to this value.
-     * @return True on success or False on failure.
+     * Mark datapoint as uploaded
+     * Delegates to repository
      */
     public boolean setDatapointToUploaded(int id, String eventId) {
-        Log.d(TAG, "setDatapointToUploaded() - id=" + id);
-        if (mOsdDb == null) {
-            Log.e(TAG, "setDatapointToUploaded() - mOsdDb is null - not doing anything");
-            return false;
-        }
-        ContentValues cv = new ContentValues();
-        cv.put("uploaded", eventId);
-        int nRowsUpdated = mOsdDb.update(mDpTableName, cv, "id = ?",
-                new String[]{String.format("%d", id)});
-        return (nRowsUpdated == 1);
+        return mRepository.setDatapointToUploaded(id, eventId);
     }
 
     /**
-     * setDatapointStatus() - Update the status of data point id.
-     *
-     * @param id        datapont id
-     * @param statusVal the status to set for the datapoint.
-     * @return true on success or false on failure
+     * Update datapoint status
+     * Delegates to repository
      */
     public boolean setDatapointStatus(Long id, int statusVal) {
-        Log.d(TAG, "setDatapointStatus() - id=" + id + ", statusVal=" + statusVal);
-        //Cursor c = null;
-        ContentValues cv = new ContentValues();
-        cv.put("status", statusVal);
-        int nRowsUpdated = mOsdDb.update(mDpTableName, cv, "id = ?",
-                new String[]{String.format("%d", id)});
-
-        return (nRowsUpdated == 1);
+        return mRepository.setDatapointStatus(id, statusVal);
     }
-
 
     /**
      * Return a JSON string representing all the datapoints between startDate and endDate
-     *
-     * @return True on successful start or false if call fails.
+     * Delegates to repository
      */
     public boolean getDatapointsByDate(String startDateStr, String endDateStr, WebApiConnection.StringCallback callback) {
-        Log.d(TAG, "getDatapointsbyDate() - startDateStr=" + startDateStr + ", endDateStr=" + endDateStr);
-        String[] columns = {"*"};
-        String whereClause = "DataTime>? AND DataTime<?";
-        String[] whereArgs = {startDateStr, endDateStr};
-        executeSelectQuery(mDpTableName, columns, whereClause, whereArgs,
-                null, null, "dataTime DESC", (Cursor cursor) -> {
-            Log.v(TAG, "getDataPointsByDate - returned " + cursor);
-            try {
-                if (cursor != null) {
-                    callback.accept(cursor2Json(cursor));
-                } else {
-                    Log.w(TAG, "getDatapointsByDate() - returned null result");
-                    callback.accept(null);
-                }
-            } finally {
-                // cursor closed inside cursor2Json/eventCursor2Json; nothing to do here
-            }
-        });
-        return (true);
+        return mRepository.getDatapointsByDate(startDateStr, endDateStr, callback);
     }
 
     /**
@@ -713,104 +574,28 @@ public class LogManager {
 
 
     /**
-     * pruneLocalDb() removes data that is older than mLocalDbMaxAgeDays days
+     * pruneLocalDb() - removes data that is older than mLocalDbMaxAgeDays days
+     * Delegates to repository
      */
     public int pruneLocalDb() {
-        Log.d(TAG, "pruneLocalDb()");
-        int retVal = 0;
-        long currentDateMillis = new Date().getTime();
-        long endDateMillis = currentDateMillis - 24 * 3600 * 1000 * mDataRetentionPeriod;
-        //long endDateMillis = currentDateMillis - 3600*1000* mDataRetentionPeriod;  // Using hours rather than days for testing
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String endDateStr = dateFormat.format(new Date(endDateMillis));
-        String[] tableNames = new String[]{mDpTableName, mEventsTableName};
-        for (String tableName : tableNames) {
-            Log.i(TAG, "pruneLocalDb - pruning table " + tableName);
-            try {
-                String selectStr = "DataTime<=?";
-                String[] selectArgs = {endDateStr};
-                retVal = mOsdDb.delete(tableName, selectStr, selectArgs);
-            } catch (Exception e) {
-                Log.d(TAG, "Error deleting data " + e.toString());
-                retVal = 0;
-            }
-            Log.d(TAG, String.format("pruneLocalDb() - deleted %d records from table %s", retVal, tableName));
-        }
-        return (retVal);
+        return mRepository.pruneLocalDb();
     }
 
     /**
-     * setEventToUploaded
-     *
-     * @param localEventId  - local Event ID to change
-     * @param remoteEventId - the remote eventId associated with the uploaded datapoint - the 'uploaded' field is set to this value.
-     * @return True on success or False on failure.
+     * Mark an event as uploaded
+     * Delegates to repository
      */
     public boolean setEventToUploaded(long localEventId, String remoteEventId) {
-        Log.d(TAG, "setEventToUploaded() - local id=" + localEventId + " remote id=" + remoteEventId);
-        if (mOsdDb == null) {
-            Log.e(TAG, "setEventToUploaded() - mOsdDb is null - not doing anything");
-            return false;
-        }
-        ContentValues cv = new ContentValues();
-        cv.put("uploaded", remoteEventId);
-        int nRowsUpdated = mOsdDb.update(mEventsTableName, cv, "id = ?",
-                new String[]{String.format("%d", localEventId)});
-        return (nRowsUpdated == 1);
+        return mRepository.setEventToUploaded(localEventId, remoteEventId);
     }
 
 
     /**
-     * Return the ID of the next event (alarm, warning, fall etc that needs to be uploaded (alarm or warning condition and has not yet been uploaded.
-     *
-     * @param includeWarnings - whether to include warnings in the list of events, or just alarm conditions.
-     * @return True on successful start or false if call fails.
+     * Return the ID of the next event (alarm, warning, fall etc) that needs to be uploaded.
+     * Delegates to repository
      */
-    public boolean getNextEventToUpload(boolean includeWarnings, WebApiConnection.
-            LongCallback callback) {
-        Log.v(TAG, "getNextEventToUpload - includeWarnings=" + includeWarnings);
-
-        String[] whereArgsStatus = getEventWhereArgs(includeWarnings);
-        String whereClauseStatus = getEventWhereClause(includeWarnings);
-        String[] columns = {"*"};
-
-        // Do not try to upload very recent events so that we have chance to record the post-event data before uploading it.
-        long currentDateMillis = new Date().getTime();
-        long endDateMillis = currentDateMillis - 1000 * mEventDuration / 2;
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String endDateStr = dateFormat.format(new Date(endDateMillis));
-        String whereClauseUploaded = "uploaded is null";
-        String whereClauseDate = "DataTime<?";
-        String whereClause = whereClauseStatus + " AND " + whereClauseUploaded + " AND " + whereClauseDate;
-
-        String[] whereArgs = new String[whereArgsStatus.length + 1];
-        for (int i = 0; i < whereArgsStatus.length; i++) {
-            whereArgs[i] = whereArgsStatus[i];
-        }
-        whereArgs[whereArgsStatus.length] = endDateStr;
-        executeSelectQuery(mEventsTableName, columns, whereClause, whereArgs,
-                null, null, "dataTime DESC", (Cursor cursor) -> {
-            long recordId = -1;
-            try {
-                if (cursor != null) {
-                    Log.v(TAG, "getNextEventToUpload - returned " + cursor.getCount() + " records");
-                    cursor.moveToFirst();
-                    if (cursor.getCount() == 0) {
-                        Log.v(TAG, "getNextEventToUpload() - no events to Upload - exiting");
-                        recordId = -1;
-                    } else {
-                        recordId = cursor.getLong(0);
-                        Log.d(TAG, "getNextEventToUpload(): id=" + recordId);
-                    }
-                }
-                callback.accept(recordId);
-            } finally {
-                if (cursor != null) {
-                    try { cursor.close(); } catch (Exception e) { Log.w(TAG, "getNextEventToUpload: error closing cursor: " + e.toString()); }
-                }
-            }
-        });
-        return (true);
+    public boolean getNextEventToUpload(boolean includeWarnings, WebApiConnection.LongCallback callback) {
+        return mRepository.getNextEventToUpload(includeWarnings, callback);
     }
 
 
@@ -1114,47 +899,6 @@ public class LogManager {
             }
         }
 
-
-
-    private String getEventWhereClause(boolean includeWarnings) {
-        /**
-         * * Event statuses:
-         *  *    0 - OK
-         *  *    1 - WARNING
-         *  *    2 - ALARM
-         *  *    3 - FALL
-         *  *    4 - FAULT
-         *  *    5 - Manual Alarm
-         *  *    6 - NDA (Normal Daily Activities)
-         */
-        String whereClause;
-        if (includeWarnings) {
-            whereClause = "Status in (?, ?, ?, ?, ?)";
-        } else {
-            whereClause = "Status in (?, ?, ?, ?)";
-        }
-        return (whereClause);
-    }
-
-    private String[] getEventWhereArgs(boolean includeWarnings) {
-        /**
-         * * Event statuses:
-         *  *    0 - OK
-         *  *    1 - WARNING
-         *  *    2 - ALARM
-         *  *    3 - FALL
-         *  *    4 - FAULT
-         *  *    5 - Manual Alarm
-         *  *    6 - NDA (Normal Daily Activities)
-         */
-        String[] whereArgs;
-        if (includeWarnings) {
-            whereArgs = new String[]{"1", "2", "3", "5", "6"};
-        } else {
-            whereArgs = new String[]{"2", "3", "5", "6"};
-        }
-        return (whereArgs);
-    }
 
 
     /***************************************************************************************
@@ -1945,6 +1689,28 @@ public class LogManager {
 
     }
 
+
+    /**
+     * Helper method: build WHERE clause for event status filter
+     */
+    private String getEventWhereClause(boolean includeWarnings) {
+        if (includeWarnings) {
+            return "Status in (?, ?, ?, ?, ?)";
+        } else {
+            return "Status in (?, ?, ?, ?)";
+        }
+    }
+
+    /**
+     * Helper method: build WHERE clause arguments for event status filter
+     */
+    private String[] getEventWhereArgs(boolean includeWarnings) {
+        if (includeWarnings) {
+            return new String[]{"1", "2", "3", "5", "6"};
+        } else {
+            return new String[]{"2", "3", "5", "6"};
+        }
+    }
 
     /**
      * Helper to trigger upload. Extracted from NetworkChangeReceiver to be reused by NetworkCallback.
