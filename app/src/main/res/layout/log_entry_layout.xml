@@ -33,6 +33,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="?attr/colorOnSurface"
+        android:text="reason"
+        android:id="@+id/event_subType"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="?attr/colorOnSurface"
+        android:text=" : "/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="?attr/colorOnSurface"
         android:text="uploaded"
         android:id="@+id/event_uploaded"
          />
@@ -45,4 +56,3 @@
         android:id="@+id/event_dataJSON" />
 -->
 </LinearLayout>
-

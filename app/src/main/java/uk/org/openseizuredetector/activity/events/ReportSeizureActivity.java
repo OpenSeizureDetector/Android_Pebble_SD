@@ -6,6 +6,7 @@ import uk.org.openseizuredetector.R;
 import uk.org.openseizuredetector.activity.logging.LogManager;
 import uk.org.openseizuredetector.client.SdServiceConnection;
 import uk.org.openseizuredetector.comms.WebApiConnection;
+import uk.org.openseizuredetector.data.AlarmState;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
@@ -302,7 +303,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
         TextView tv = (TextView) findViewById(R.id.eventNotesTv);
         notesStr = tv.getText().toString();
 
-        mLm.createLocalEvent(dateStr, 5, seizureTypeStr, seizureSubTypeStr, notesStr,
+        mLm.createLocalEvent(dateStr, AlarmState.MANUAL, seizureTypeStr, seizureSubTypeStr, "Manual", notesStr,
                 mConnection.mSdServer.mSdData.toSettingsJSON());
         mUtil.showToast("Seizure Event Created");
         finish();

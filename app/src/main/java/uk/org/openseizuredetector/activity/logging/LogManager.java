@@ -23,7 +23,6 @@
 package uk.org.openseizuredetector.activity.logging;
 import uk.org.openseizuredetector.R;
 
-import uk.org.openseizuredetector.activity.logging.LogManager;
 import uk.org.openseizuredetector.comms.WebApiConnection;
 import uk.org.openseizuredetector.comms.WebApiConnection_firebase;
 import uk.org.openseizuredetector.comms.WebApiConnection_osdapi;
@@ -32,7 +31,6 @@ import uk.org.openseizuredetector.utils.BackgroundTaskExecutor;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
@@ -42,7 +40,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.Uri;
-import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
@@ -50,8 +47,6 @@ import android.os.ParcelFileDescriptor;
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
-import android.view.View;
-import android.widget.ProgressBar;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -124,6 +119,7 @@ public class LogManager {
 
     private boolean mUploadInProgress;
     private volatile boolean mShutdownRequested = false;
+    private final Object mUploadLock = new Object();
     private final Handler mUiHandler = new Handler(android.os.Looper.getMainLooper());
     private long mEventDuration = 120;   // event duration in seconds - uploads datapoints that cover this time range centred on the event time.
     public long mDataRetentionPeriod = 1; // Prunes the local db so it only retains data younger than this duration (in days)
@@ -321,6 +317,11 @@ public class LogManager {
                     event.put("type", val == null ? "" : val);
                     val = c.getString(c.getColumnIndex("subType"));
                     event.put("subType", val == null ? "" : val);
+                    // Add alarmCause to JSON if present (it should be since v4)
+                    if (c.getColumnIndex("alarmCause") != -1) {
+                        val = c.getString(c.getColumnIndex("alarmCause"));
+                        event.put("alarmCause", val == null ? "" : val);
+                    }
                     val = c.getString(c.getColumnIndex("notes"));
                     event.put("desc", val == null ? "" : val);
                     val = c.getString(c.getColumnIndex("dataJSON"));
@@ -471,9 +472,17 @@ public class LogManager {
                 mOsdDb.execSQL(SQLStr);
                 Log.v(TAG, "writeDatapointToLocalDb(): datapoint with history written to database");
 
-                if (sdData.alarmState != 0) {
+                if (sdData.alarmState != uk.org.openseizuredetector.data.AlarmState.OK) {
                     Log.i(TAG, "writeDatapointToLocalDb(): adding event to local DB");
-                    createLocalEvent(dateStr, sdData.alarmState, null, null, null, sdData.toSettingsJSON());
+                    // Use sdData.alarmCause for subType, and infer type from alarmState
+                    //String type = "Unknown";
+                    //if (sdData.alarmState == 2) type = "Seizure";
+                    //if (sdData.alarmState == 1) type = "Warning";
+                    //if (sdData.alarmState == 3) type = "Fall";
+                    //if (sdData.alarmState == 4) type = "Manual";
+
+                    // We now store alarmCause in its own column, and leave subType null
+                    createLocalEvent(dateStr, sdData.alarmState, null, null, sdData.alarmCause, null, sdData.toSettingsJSON());
                 }
             } catch (SQLException e) {
                 Log.e(TAG, "writeDatapointToLocalDb(): SQL Error Writing Data: " + e.toString());
@@ -489,10 +498,10 @@ public class LogManager {
     }
 
     public boolean createLocalEvent(String dataTime, long status) {
-        return (createLocalEvent(dataTime, status, null, null, null, null));
+        return (createLocalEvent(dataTime, status, null, null, null, null, null));
     }
 
-    public boolean createLocalEvent(String dataTime, long status, String type, String subType, String desc, String dataJSON) {
+    public boolean createLocalEvent(String dataTime, long status, String type, String subType, String alarmCause, String desc, String dataJSON) {
         // Expects dataTime to be in format: SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Log.d(TAG, "createLocalEvent() - dataTime=" + dataTime + ", status=" + status + ", dataJSON=" + dataJSON);
         // Write Event to database
@@ -501,6 +510,7 @@ public class LogManager {
         values.put("status", status);
         values.put("type", type);
         values.put("subType", subType);
+        values.put("alarmCause", alarmCause);
         values.put("notes", desc);
         values.put("dataJSON", dataJSON);
 
@@ -672,6 +682,13 @@ public class LogManager {
                         String statusStr = mUtil.alarmStatusToString(status);
                         event.put("status", statusStr);
                         event.put("uploaded", cursor.getString(cursor.getColumnIndex("uploaded")));
+                        // Add type and subType
+                        event.put("type", cursor.getString(cursor.getColumnIndex("type")));
+                        event.put("subType", cursor.getString(cursor.getColumnIndex("subType")));
+                        // Add alarmCause if column exists
+                        if (cursor.getColumnIndex("alarmCause") != -1) {
+                            event.put("alarmCause", cursor.getString(cursor.getColumnIndex("alarmCause")));
+                        }
                         //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
                         eventsList.add(event);
                         cursor.moveToNext();
@@ -1246,11 +1263,13 @@ public class LogManager {
         for (int n = 0; n < warningsArr.length; n++) {
             boolean warningsVal = warningsArr[n];
             Log.i(TAG, "uploadSdData(): warningsVal=" + warningsVal);
-            if (mUploadInProgress) {
-                Log.d(TAG, "uploadSdData - upload already in progress - not doing anything");
-                return;
+            synchronized (mUploadLock) {
+                if (mUploadInProgress) {
+                    Log.d(TAG, "uploadSdData - upload already in progress - not doing anything");
+                    return;
+                }
+                mUploadInProgress = true;
             }
-            mUploadInProgress = true;
             getNextEventToUpload(warningsVal, (Long eventId) -> {
                 if (eventId != -1) {
                     Log.i(TAG, "uploadSdData() - next Event to Upload eventId=" + eventId);
@@ -1265,6 +1284,7 @@ public class LogManager {
                     String eventSubType;
                     String eventDesc;
                     String eventDataJSON;
+                    //String eventAlarmCause;
                     try {
                         JSONArray datapointJsonArr = new JSONArray(eventJsonStr);
                         eventObj = datapointJsonArr.getJSONObject(0);  // We only look at the first (and hopefully only) item in the array.
@@ -1272,6 +1292,21 @@ public class LogManager {
                         eventDateStr = eventObj.getString("dataTime");
                         eventType = eventObj.getString("type");
                         eventSubType = eventObj.getString("subType");
+                        //if (eventObj.has("alarmCause")) {
+                        //    eventAlarmCause = eventObj.getString("alarmCause");
+                        //} else {
+                        //    eventAlarmCause = "";
+                        //}
+
+                        // User requested to REMOVE fallback:
+                        // "The alarmCause has nothing to do with subType, so do not use that as a fall back - use null or an empty string for the default."
+
+                        // Fallback logic REMOVED.
+                        // if ((eventSubType == null || eventSubType.isEmpty()) && !eventAlarmCause.isEmpty()) {
+                        //    Log.i(TAG, "uploadSdData: Using alarmCause as subType for upload: " + eventAlarmCause);
+                        //    eventSubType = eventAlarmCause;
+                        // }
+
                         if (eventObj.has("desc"))
                             eventDesc = eventObj.getString("desc");
                         else
@@ -1303,7 +1338,9 @@ public class LogManager {
                     mWac.createEvent(eventAlarmStatus, eventDate, eventType, eventSubType, eventDesc, eventDataJSON, this::createEventCallback);
                 } else {
                     Log.v(TAG, "uploadSdData - no data to upload "); //(warnings="+warningsVal+")");
-                    mUploadInProgress = false;
+                    synchronized (mUploadLock) {
+                        mUploadInProgress = false;
+                    }
                 }
             });
         }
@@ -1317,7 +1354,9 @@ public class LogManager {
         mCurrentEventLocalId = -1;
         mCurrentDatapointId = -1;
         mDatapointsToUploadList = null;
-        mUploadInProgress = false;
+        synchronized (mUploadLock) {
+            mUploadInProgress = false;
+        }
     }
 
     // Called by WebApiConnection when a new event record is created.
@@ -1658,7 +1697,8 @@ public class LogManager {
         Date curDate = new Date();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String dateStr = dateFormat.format(curDate);
-        createLocalEvent(dateStr, 6, "nda", null, null,
+        // Pass "nda" as alarmCause, null as subType
+        createLocalEvent(dateStr, 6, "nda", null, "nda", null,
                 mSdSettingsData.toSettingsJSON());
     }
 
@@ -1669,7 +1709,7 @@ public class LogManager {
 
     public static class OsdDbHelper extends SQLiteOpenHelper {
         // If you change the database schema, you must increment the database version.
-        public static final int DATABASE_VERSION = 3;
+        public static final int DATABASE_VERSION = 4;
         public static final String DATABASE_NAME = "OsdData.db";
         private static final String TAG = "LogManager.OsdDbHelper";
 
@@ -1703,6 +1743,7 @@ public class LogManager {
                     + "status INT,"
                     + "type TEXT,"
                     + "subType TEXT,"
+                    + "alarmCause TEXT," // Add alarmCause column
                     + "notes TEXT,"    // avoiding using 'desc' as that is an sql name.
                     + "dataJSON TEXT,"
                     + "uploaded TEXT"  // stores the id of the event in the remote dabase if uploaded, otherwise empty
@@ -1716,76 +1757,66 @@ public class LogManager {
             // to add new columns if upgrading from v1 to v2, or discard and start over for other scenarios
             Log.i(TAG, "onUpgrade() - CALLED: oldVersion=" + oldVersion + ", newVersion=" + newVersion);
 
-            if (oldVersion == 1 && newVersion == 2) {
-                // Add new history columns to existing datapoints table
-                Log.i(TAG, "onUpgrade() - Detected v1->v2 migration, adding history columns to " + mDpTableName);
+            if (oldVersion < 4 && newVersion == 4) {
+                // If upgrading from any version < 4 to 4, we need to handle history columns AND alarmCause
+
+                // First, ensure all v3 columns exist (history columns in datapoints)
+                // This logic handles v1->4, v2->4 and v3->4
+                boolean v3ColumnsExist = false;
                 try {
-                    Log.d(TAG, "onUpgrade() - Adding watchBattHist column");
-                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN watchBattHist TEXT;");
-                    Log.d(TAG, "onUpgrade() - Adding phoneBattHist column");
-                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN phoneBattHist TEXT;");
-                    Log.d(TAG, "onUpgrade() - Adding signalStrengthHist column");
-                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN signalStrengthHist TEXT;");
-                    Log.d(TAG, "onUpgrade() - Adding pseudSeizureHist column");
-                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN pseudSeizureHist TEXT;");
-                    Log.d(TAG, "onUpgrade() - Adding accelMagStdDevHist column");
-                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN accelMagStdDevHist TEXT;");
-                    Log.i(TAG, "✅ onUpgrade() - History columns added successfully - MIGRATION COMPLETE");
-                } catch (SQLException e) {
-                    Log.e(TAG, "❌ onUpgrade() - Error adding columns: " + e.getMessage());
-                    e.printStackTrace();
-                    // If adding columns fails, fall back to recreating the table
-                    Log.w(TAG, "onUpgrade() - Falling back to table recreation");
-                    db.execSQL("DROP TABLE IF EXISTS " + mDpTableName + ";");
-                    onCreate(db);
+                    Cursor c = db.rawQuery("PRAGMA table_info(" + mDpTableName + ")", null);
+                    int nameIdx = c.getColumnIndex("name");
+                    if (nameIdx != -1) {
+                        while (c.moveToNext()) {
+                            if (c.getString(nameIdx).equals("hrHist")) {
+                                v3ColumnsExist = true;
+                                break;
+                            }
+                        }
+                    }
+                    c.close();
+                } catch (Exception e) {
+                    Log.w(TAG, "onUpgrade: Error checking for v3 columns", e);
                 }
-            } else if (oldVersion == 1 && newVersion == 3) {
-                // Direct v1->v3 migration (for users skipping v2)
-                // Add all history columns in one go
-                Log.i(TAG, "onUpgrade() - Detected v1->v3 migration, adding all history columns to " + mDpTableName);
+
+                if (!v3ColumnsExist) {
+                    // Assuming if hrHist is missing, we need to add all history columns (simplified approach)
+                    // This covers v1->4 and v2->4 scenarios roughly
+                    try {
+                        Log.i(TAG, "onUpgrade() - Adding missing history columns for v4 upgrade");
+                        // We use try-catch for each column to be safe if some exist
+                        String[] cols = {"watchBattHist", "phoneBattHist", "signalStrengthHist",
+                                         "pseudSeizureHist", "accelMagStdDevHist", "hrHist"};
+                        for (String col : cols) {
+                            try {
+                                db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN " + col + " TEXT;");
+                            } catch (SQLException e) {
+                                // Ignore error if column exists
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "onUpgrade() - Error adding history columns: " + e.getMessage());
+                    }
+                }
+
+                // Now add the new v4 column: alarmCause to events table
                 try {
-                    Log.d(TAG, "onUpgrade() - Adding watchBattHist column");
-                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN watchBattHist TEXT;");
-                    Log.d(TAG, "onUpgrade() - Adding phoneBattHist column");
-                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN phoneBattHist TEXT;");
-                    Log.d(TAG, "onUpgrade() - Adding signalStrengthHist column");
-                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN signalStrengthHist TEXT;");
-                    Log.d(TAG, "onUpgrade() - Adding pseudSeizureHist column");
-                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN pseudSeizureHist TEXT;");
-                    Log.d(TAG, "onUpgrade() - Adding accelMagStdDevHist column");
-                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN accelMagStdDevHist TEXT;");
-                    Log.d(TAG, "onUpgrade() - Adding hrHist column");
-                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN hrHist TEXT;");
-                    Log.i(TAG, "✅ onUpgrade() - All history columns added successfully - MIGRATION COMPLETE");
+                    Log.i(TAG, "onUpgrade() - Adding alarmCause column to " + mEventsTableName);
+                    db.execSQL("ALTER TABLE " + mEventsTableName + " ADD COLUMN alarmCause TEXT;");
+                    Log.i(TAG, "✅ onUpgrade() - alarmCause column added successfully");
                 } catch (SQLException e) {
-                    Log.e(TAG, "❌ onUpgrade() - Error adding columns: " + e.getMessage());
+                    Log.e(TAG, "❌ onUpgrade() - Error adding alarmCause column: " + e.getMessage());
                     e.printStackTrace();
-                    // If adding columns fails, fall back to recreating the table
-                    Log.w(TAG, "onUpgrade() - Falling back to table recreation");
-                    db.execSQL("DROP TABLE IF EXISTS " + mDpTableName + ";");
-                    onCreate(db);
                 }
-            } else if (oldVersion == 2 && newVersion == 3) {
-                // Add hrHist column for heart rate history persistence
-                Log.i(TAG, "onUpgrade() - Detected v2->v3 migration, adding hrHist column to " + mDpTableName);
-                try {
-                    Log.d(TAG, "onUpgrade() - Adding hrHist column");
-                    db.execSQL("ALTER TABLE " + mDpTableName + " ADD COLUMN hrHist TEXT;");
-                    Log.i(TAG, "✅ onUpgrade() - hrHist column added successfully - MIGRATION COMPLETE");
-                } catch (SQLException e) {
-                    Log.e(TAG, "❌ onUpgrade() - Error adding hrHist column: " + e.getMessage());
-                    e.printStackTrace();
-                    // If adding column fails, fall back to recreating the table
-                    Log.w(TAG, "onUpgrade() - Falling back to table recreation");
-                    db.execSQL("DROP TABLE IF EXISTS " + mDpTableName + ";");
-                    onCreate(db);
-                }
-            } else {
-                // For any other version change, discard and start over
-                Log.w(TAG, "onUpgrade() - Unsupported version change (v" + oldVersion + "->v" + newVersion + "), recreating tables");
-                db.execSQL("DROP TABLE IF EXISTS " + mDpTableName + ";");
-                onCreate(db);
+
+                Log.i(TAG, "✅ onUpgrade() - Upgrade to v4 complete");
+                return;
             }
+
+            // ... strict fallback for other cases ...
+            Log.w(TAG, "onUpgrade() - Unsupported version change (v" + oldVersion + "->v" + newVersion + "), recreating tables");
+            db.execSQL("DROP TABLE IF EXISTS " + mDpTableName + ";");
+            onCreate(db);
         }
 
         public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {

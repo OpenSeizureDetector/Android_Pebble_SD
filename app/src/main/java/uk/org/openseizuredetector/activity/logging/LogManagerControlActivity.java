@@ -410,21 +410,24 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
                     // Sort the remote events list by date, descending (newest first)
                     Log.v(TAG, "getRemoteEvents() - Sorting mRemoteEventsList by date");
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault());
+                    //SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault());
                     Collections.sort(mRemoteEventsList, (event1, event2) -> {
                         try {
-                            String dt1Str = normalizeIso8601Offset(event1.get("dataTime"));
-                            String dt2Str = normalizeIso8601Offset(event2.get("dataTime"));
-                            if (
-                                    dt1Str == null
-                                            || dt2Str == null
-                                            || dt1Str.equals("null")
-                                            || dt2Str.equals("null"))
-                                return 0;
-                            Date date1 = sdf.parse(dt1Str);
-                            Date date2 = sdf.parse(dt2Str);
+                            //String dt1Str = normalizeIso8601Offset(event1.get("dataTime"));
+                            //String dt2Str = normalizeIso8601Offset(event2.get("dataTime"));
+                            //if (
+                            //        dt1Str == null
+                            //                || dt2Str == null
+                            //                || dt1Str.equals("null")
+                            //                || dt2Str.equals("null"))
+                            //    return 0;
+                            //Date date1 = sdf.parse(dt1Str);
+                            //Date date2 = sdf.parse(dt2Str);
+                            Date date1 = mUtil.string2date(event1.get("dataTime"));
+                            Date date2 = mUtil.string2date(event2.get("dataTime"));
+                            if (date1 == null || date2 == null) return 0;
                             return date2.compareTo(date1); // Descending
-                        } catch (ParseException e) {
+                        } catch (Exception e) {
                             Log.e(TAG, "Error parsing date for sorting: " + e.getMessage());
                             return 0;
                         }
@@ -471,7 +474,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         // Helper to parse date strings to long timestamps.
         // Adjust the SimpleDateFormat pattern to match your "dataTime" format.
         // If "dataTime" is already a timestamp (long), you can use it directly.
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault()); // Example format
+        //SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault()); // Example format
 
         ArrayList<HashMap<String, String>> currentGroup = null;
         long lastEventTimeInGroup = 0;
@@ -485,13 +488,14 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
             long currentEventTime;
             try {
-                Date eventDate = sdf.parse(normalizeIso8601Offset(dataTimeString));
+                //Date eventDate = sdf.parse(normalizeIso8601Offset(dataTimeString));
+                Date eventDate = mUtil.string2date(dataTimeString);
                 if (eventDate == null) {
                     Log.w(TAG, "Could not parse dataTime: " + dataTimeString + " for event: " + event.get("id"));
                     continue;
                 }
                 currentEventTime = eventDate.getTime();
-            } catch (ParseException e) {
+            } catch (Exception e) {
                 Log.e(TAG, "Error parsing date string: " + dataTimeString + " - " + e.getMessage());
                 continue; // Skip if date can't be parsed
             }
@@ -569,9 +573,10 @@ public class LogManagerControlActivity extends AppCompatActivity {
         // Local Database ListView
         if (mEventsList != null) {
             ListView lv = (ListView) findViewById(R.id.eventLogListView);
+            // Use alarmCause conceptually for the subType/cause column in the UI
             ListAdapter adapter = new SimpleAdapter(LogManagerControlActivity.this, mEventsList, R.layout.log_entry_layout,
-                    new String[]{"dataTime", "status", "uploaded"},
-                    new int[]{R.id.event_date, R.id.event_alarmState, R.id.event_uploaded});
+                    new String[]{"dataTime", "status", "alarmCause", "uploaded"},
+                    new int[]{R.id.event_date, R.id.event_alarmState, R.id.event_subType, R.id.event_uploaded});
             lv.setAdapter(adapter);
             //Log.v(TAG,"eventsList="+mEventsList);
         } else {

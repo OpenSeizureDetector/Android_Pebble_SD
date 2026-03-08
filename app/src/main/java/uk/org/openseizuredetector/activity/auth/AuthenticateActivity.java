@@ -222,6 +222,11 @@ public class AuthenticateActivity extends AppCompatActivity {
                 osdApiLoginLl.setVisibility(View.GONE);
             }
             mWac.getUserProfile((JSONObject profileObj) -> {
+                if (profileObj == null) {
+                    Log.w(TAG, "getUserProfile returned null - probably remote server error or not yet ready");
+                    // Suppress toast message as it is likely a transient error or just confusing if login succeeded.
+                    return;
+                }
                 try {
                     String userId = profileObj.getString("id");
                     String userName = profileObj.getString("username");

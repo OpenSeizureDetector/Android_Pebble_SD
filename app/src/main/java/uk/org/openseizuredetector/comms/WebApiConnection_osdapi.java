@@ -565,9 +565,9 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         if (error != null) {
-                            Log.e(TAG, "Create Event Error: " + error.toString() + ", message:" + error.getMessage());
+                            Log.e(TAG, "getUserProfile Error: " + error.toString() + ", message:" + error.getMessage());
                         } else {
-                            Log.e(TAG, "Create Event Error: returned null response");
+                            Log.e(TAG, "getUserProfile Error: returned null response");
                         }
                         mServerConnectionOk = false;
                         callback.accept(null);

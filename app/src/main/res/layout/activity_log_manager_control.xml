@@ -110,7 +110,6 @@
                     android:checked="true"
                     android:textColor="?attr/colorOnSurface"
                     android:text="@string/group_remote_events"
-                    android:buttonTint="?attr/colorOnSurface"
                     android:textSize="12sp" />
 
                 <CheckBox
@@ -120,7 +119,6 @@
                     android:layout_weight="1"
                     android:textColor="?attr/colorOnSurface"
                     android:text="@string/include_warnings"
-                    android:buttonTint="?attr/colorOnSurface"
                     android:textSize="12sp" />
 
                 <CheckBox
@@ -130,7 +128,6 @@
                     android:layout_weight="1"
                     android:textColor="?attr/colorOnSurface"
                     android:text="@string/include_nda"
-                    android:buttonTint="?attr/colorOnSurface"
                     android:textSize="12sp" />
             </LinearLayout>
 
