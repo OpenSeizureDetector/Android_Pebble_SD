@@ -146,6 +146,13 @@ public class LogManager {
     }
 
     /**
+     * Getter for mContext (used by LogRepository).
+     */
+    public static Context getContext() {
+        return mContext;
+    }
+
+    /**
      * Show a toast message safely on the UI thread, but only if not shutting down
      */
     private void showToastSafe(final String message) {
