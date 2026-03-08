@@ -49,7 +49,7 @@ public abstract class WebApiConnection {
     protected Context mContext;
     protected OsdUtil mUtil;
     private String TAG = "WebApiConnection";
-    private String mAuthToken;
+    private volatile String mAuthToken;
 
 
     public interface JSONObjectCallback {

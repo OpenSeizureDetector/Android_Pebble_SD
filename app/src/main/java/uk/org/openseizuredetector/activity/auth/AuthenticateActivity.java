@@ -221,10 +221,29 @@ public class AuthenticateActivity extends AppCompatActivity {
             if (!LogManager.USE_FIREBASE_BACKEND) {
                 osdApiLoginLl.setVisibility(View.GONE);
             }
+
+            // Set Loading text while we fetch the profile
+            TextView tvUser = (TextView) findViewById(R.id.userIdTv);
+            if (tvUser != null) tvUser.setText(getString(R.string.waitingForData));
+            TextView tvName = (TextView) findViewById(R.id.usernameTv);
+            if (tvName != null) tvName.setText("...");
+
             mWac.getUserProfile((JSONObject profileObj) -> {
                 if (profileObj == null) {
                     Log.w(TAG, "getUserProfile returned null - probably remote server error or not yet ready");
-                    // Suppress toast message as it is likely a transient error or just confusing if login succeeded.
+                    // Failed to get profile - show error state in UI
+                    TextView tvErr = (TextView) findViewById(R.id.userIdTv);
+                    if (tvErr != null) tvErr.setText(getString(R.string.error_connecting_to_server));
+
+                    // Retry after 1.5 seconds to handle race conditions where token might not be ready on server or network
+                    // This handles the case where login succeeds but the first profile fetch fails.
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        // Check if activity is still valid/running?
+                        if (!isFinishing() && mWac != null && mWac.isLoggedIn()) {
+                            Log.v(TAG, "Retrying user profile fetch...");
+                            updateUi();
+                        }
+                    }, 1500);
                     return;
                 }
                 try {

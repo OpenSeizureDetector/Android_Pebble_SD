@@ -156,7 +156,12 @@ public class FragmentCommon extends FragmentOsdBaseClass {
                 alarmTextColor = alarmTextColour;
             }
             if (currentState == AlarmState.FAULT) {
-                alarmText = getString(R.string.Fault);
+                String errorDetails = mConnection.mSdServer.mSdData.alarmCause;
+                if (errorDetails != null && !errorDetails.isEmpty()) {
+                     alarmText = getString(R.string.Fault) + " : " + errorDetails;
+                } else {
+                     alarmText = getString(R.string.Fault);
+                }
                 alarmCardColor = warnColour;
                 alarmTextColor = warnTextColour;
             }

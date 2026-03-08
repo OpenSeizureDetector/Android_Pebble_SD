@@ -295,6 +295,17 @@ public class LogManagerControlActivity extends AppCompatActivity {
         Log.v(TAG, "onResume()");
         super.onResume();
         //startUiTimer();
+
+        // Force refresh of User ID when activity is resumed.
+        // This ensures the UI updates after returning from AuthenticateActivity
+        // regardless of whether we were stopped or just paused.
+        mUserId = null;
+
+        // Trigger an immediate UI update if we are already connected.
+        // If not connected yet (fresh start), the waitForConnection logic in onStart will handle it.
+        if (mConnection != null && mConnection.mBound) {
+            updateUi();
+        }
     }
 
     private void waitForConnection() {

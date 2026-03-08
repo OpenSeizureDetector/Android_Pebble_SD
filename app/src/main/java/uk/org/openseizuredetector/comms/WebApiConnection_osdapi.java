@@ -344,6 +344,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                 return params;
             }
         };
+        req.setShouldCache(false);
         mQueue.add(req);
         return (true);
     }
@@ -582,6 +583,7 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                 return params;
             }
         };
+        req.setShouldCache(false);
         mQueue.add(req);
         return (true);
     }
