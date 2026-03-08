@@ -3,7 +3,7 @@ import uk.org.openseizuredetector.R;
 
 //import androidx.appcompat.app.AppCompatActivity;
 
-import uk.org.openseizuredetector.activity.logging.LogManager;
+import uk.org.openseizuredetector.data.logging.LogManager;
 import uk.org.openseizuredetector.client.SdServiceConnection;
 import uk.org.openseizuredetector.comms.WebApiConnection;
 import uk.org.openseizuredetector.data.AlarmState;

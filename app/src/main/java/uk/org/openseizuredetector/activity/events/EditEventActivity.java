@@ -1,7 +1,7 @@
 package uk.org.openseizuredetector.activity.events;
 import uk.org.openseizuredetector.R;
 
-import uk.org.openseizuredetector.activity.logging.LogManager;
+import uk.org.openseizuredetector.data.logging.LogManager;
 import uk.org.openseizuredetector.client.SdServiceConnection;
 import uk.org.openseizuredetector.comms.WebApiConnection;
 import uk.org.openseizuredetector.utils.OsdUtil;

@@ -120,7 +120,7 @@ public class CircBufHistoryLoader {
         }
 
         try {
-            SQLiteDatabase database = uk.org.openseizuredetector.activity.logging.LogManager.getDatabase();
+            SQLiteDatabase database = uk.org.openseizuredetector.data.logging.LogManager.getDatabase();
 
             if (database == null) {
                 Log.e(TAG, "loadHistoryFromDatabase(SdDataHistory): LogManager.getDatabase() returned null");

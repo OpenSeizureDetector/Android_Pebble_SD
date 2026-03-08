@@ -79,7 +79,7 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.Timer;
 
-import uk.org.openseizuredetector.activity.logging.LogManager;
+import uk.org.openseizuredetector.data.logging.LogManager;
 import uk.org.openseizuredetector.alg.MlModelManager;
 import uk.org.openseizuredetector.alg.SeizureDetector;
 import uk.org.openseizuredetector.data.AlarmState;

@@ -20,7 +20,7 @@
   along with Android_SD.  If not, see <http://www.gnu.org/licenses/>.
 
 */
-package uk.org.openseizuredetector.activity.logging;
+package uk.org.openseizuredetector.data.logging;
 import uk.org.openseizuredetector.R;
 
 import uk.org.openseizuredetector.comms.WebApiConnection;

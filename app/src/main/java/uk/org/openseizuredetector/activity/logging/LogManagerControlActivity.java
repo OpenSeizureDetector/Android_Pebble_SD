@@ -83,6 +83,7 @@ import uk.org.openseizuredetector.activity.events.ReportSeizureActivity;
 import uk.org.openseizuredetector.activity.export.ExportDataActivity;
 import uk.org.openseizuredetector.activity.remote.RemoteDbActivity;
 import uk.org.openseizuredetector.activity.settings.PrefActivity;
+import uk.org.openseizuredetector.data.logging.LogManager;
 public class LogManagerControlActivity extends AppCompatActivity {
     private final String TAG = "LogManagerControlActivity";
     private static final long GROUPING_WINDOW_MINUTES = 3;

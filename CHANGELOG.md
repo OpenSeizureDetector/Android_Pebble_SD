@@ -1,5 +1,6 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.0.0P - Tidied up data sharing screen, and addressed issues with multiple events being uploaded (#225)
     V5.0.0N - Updated to accept a device MAC address returned by Android_PineTime_Updater to avoid the user having to select the device twice.
             - Tidied up BLEScanActivity to make it look more like PineTimeUpdater
     V5.0.0A - Tidied up build settings (into gradle.properties)
