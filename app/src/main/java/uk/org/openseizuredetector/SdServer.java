@@ -902,7 +902,7 @@ public class SdServer extends Service implements SdDataReceiver {
             if (sdData.mHRFaultStanding) faultReason += "HR Fault. ";
             if (sdData.mHrFrozenFaultStanding) faultReason += "HR Frozen. ";
 
-            sdData.alarmCause = faultReason.trim();
+            sdData.faultCause = faultReason.trim();
         }
 
         if (sdData.alarmState == AlarmState.OK) {
@@ -1159,9 +1159,9 @@ public class SdServer extends Service implements SdDataReceiver {
         mSdData = sdData;
         mSdData.alarmState = AlarmState.FAULT;  // set fault alarm state.
 
-        // Ensure alarmCause has something useful if not already set by datasource
-        if (mSdData.alarmCause == null || mSdData.alarmCause.isEmpty()) {
-             mSdData.alarmCause = "Data Source Fault";
+        // Ensure faultCause has something useful if not already set by datasource
+        if (mSdData.faultCause == null || mSdData.faultCause.isEmpty()) {
+             mSdData.faultCause = "Data Source Fault";
         }
 
         mSdData.alarmPhrase = "FAULT";

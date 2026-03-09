@@ -87,6 +87,16 @@ public abstract class SdDataSource {
     private double mFidgetThreshold;
     private long mLastFidgetTimeMillis = 0;
 
+    // Data frequency checking
+    private static final int EXPECTED_DATA_PERIOD_SEC = 5;
+    private static final int DATA_PERIOD_TOLERANCE_SEC = 1;
+    private static final int MIN_ACCEPTABLE_PERIOD_SEC = EXPECTED_DATA_PERIOD_SEC - DATA_PERIOD_TOLERANCE_SEC;
+    private static final int MAX_ACCEPTABLE_PERIOD_SEC = EXPECTED_DATA_PERIOD_SEC + DATA_PERIOD_TOLERANCE_SEC;
+    private boolean mDataFrequencyCheckEnabled = true;
+    private int mBadTimingCount = 0;
+    private long mTimingFaultStartMillis = 0;
+    private boolean mTimingFaultActive = false;
+
     // Lifecycle running flag - subclasses and callbacks should check this to avoid doing work after stop()
     protected volatile boolean mRunning = false;
 
@@ -111,6 +121,11 @@ public abstract class SdDataSource {
         Log.i(TAG, "SdDataSource.start()");
         updatePrefs();
         setRunning(true);
+
+        // Reset timing fault tracking
+        mBadTimingCount = 0;
+        mTimingFaultStartMillis = 0;
+        mTimingFaultActive = false;
 
         // Start timer to check status of watch regularly.
         mDataStatusTimeMillis = Calendar.getInstance().getTimeInMillis();
@@ -289,11 +304,63 @@ public abstract class SdDataSource {
         try {
             mDataStatusTimeMillis = System.currentTimeMillis();
             long tnow = System.currentTimeMillis();
+
             if (mSdData.dataTimeMillis != 0) {
                 mSdData.timeDiff = (tnow - mSdData.dataTimeMillis) / 1000f;
+
+                // Check if data timing is within acceptable range (if enabled)
+                if (mDataFrequencyCheckEnabled &&
+                    (mSdData.timeDiff < MIN_ACCEPTABLE_PERIOD_SEC ||
+                     mSdData.timeDiff > MAX_ACCEPTABLE_PERIOD_SEC)) {
+
+                    // Bad timing detected
+                    if (!mTimingFaultActive) {
+                        // First occurrence - start tracking
+                        mTimingFaultStartMillis = tnow;
+                        mTimingFaultActive = true;
+                        Log.w(TAG, "Data timing issue detected: timeDiff=" + mSdData.timeDiff +
+                                  "s (expected " + EXPECTED_DATA_PERIOD_SEC + "±" +
+                                  DATA_PERIOD_TOLERANCE_SEC + "s)");
+                    }
+
+                    mBadTimingCount++;
+
+                    // Check if fault has persisted for fault timer period
+                    long faultDurationMillis = tnow - mTimingFaultStartMillis;
+                    if (faultDurationMillis >= (mFaultTimerPeriod * 1000)) {
+                        // Timing fault has persisted - trigger fault condition
+                        Log.e(TAG, "Data timing fault persisted for " + (faultDurationMillis/1000) +
+                                  "s. Bad timing count: " + mBadTimingCount);
+
+                        // Determine if data is too fast or too slow and use appropriate message
+                        String faultMessage;
+                        if (mSdData.timeDiff < MIN_ACCEPTABLE_PERIOD_SEC) {
+                            faultMessage = mContext.getString(R.string.data_frequency_fault_too_fast,
+                                                             mSdData.timeDiff);
+                        } else {
+                            faultMessage = mContext.getString(R.string.data_frequency_fault_too_slow,
+                                                             mSdData.timeDiff);
+                        }
+
+                        mSdData.faultCause = faultMessage;
+
+                        mSdDataReceiver.onSdDataFault(mSdData);
+                        return; // Don't process bad data
+                    }
+                } else {
+                    // Good timing - reset fault tracking
+                    if (mTimingFaultActive) {
+                        Log.i(TAG, "Data timing returned to normal after " + mBadTimingCount +
+                                  " bad readings");
+                    }
+                    mTimingFaultActive = false;
+                    mBadTimingCount = 0;
+                    mTimingFaultStartMillis = 0;
+                }
             } else {
                 mSdData.timeDiff = 0f;
             }
+
             mSdData.dataTimeMillis = tnow;
             mSdData.haveData = true;
             mWatchAppRunningCheck = true;
@@ -396,6 +463,7 @@ public abstract class SdDataSource {
         try {
             mAppRestartTimeout = Integer.parseInt(SP.getString("AppRestartTimeout", "SET_FROM_XML"));
             mFaultTimerPeriod = Integer.parseInt(SP.getString("FaultTimerPeriod", "SET_FROM_XML"));
+            mDataFrequencyCheckEnabled = PreferenceUtils.getBooleanFromXml(SP, "DataFrequencyCheck");
             mFidgetDetectorEnabled = PreferenceUtils.getBooleanFromXml(SP, "FidgetDetectorEnabled");
             mFidgetPeriod = readDoublePref(SP, "FidgetDetectorPeriod", "SET_FROM_XML");
             mFidgetThreshold = readDoublePref(SP, "FidgetDetectorThreshold", "SET_FROM_XML");

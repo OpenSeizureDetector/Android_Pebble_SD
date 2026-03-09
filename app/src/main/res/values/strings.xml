@@ -222,6 +222,10 @@
     <string name="enable_audible_fault_title">Enable Audible System FaultWarnings</string>
     <string name="fault_timer_period_title">Fault Timer Duration (sec)</string>
     <string name="fault_timer_period_summary">Duration that fault alarms are muted before initiating.</string>
+    <string name="enable_data_frequency_check_title">Enable Data Sample Frequency Checks</string>
+    <string name="enable_data_frequency_check_summary">Check that data arrives at the expected frequency (5±1 seconds) and raise a fault if not.</string>
+    <string name="data_frequency_fault_too_fast">Data arriving too quickly: %.1fs (expected 5±1s)</string>
+    <string name="data_frequency_fault_too_slow">Data arriving too slowly: %.1fs (expected 5±1s)</string>
     <string name="use_mp3_alarm_summary">Play an MP3 file to create the alarm beeps rather than using the default tone generator.</string>
     <string name="use_mp3_alarm_title">Use MP3 Alarm Sound</string>
     <string name="enable_sms_alarm_summary">Issue a SMS (Text Message) alarm if the seizure detector enters an alarm condition. NOTE: THE MESSAGE WILL INCLUDE THE USER\'s LOCATION. Disable this option if sharing your location is a concern.</string>

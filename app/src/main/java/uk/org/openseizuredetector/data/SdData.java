@@ -117,6 +117,7 @@ public class SdData implements Parcelable {
     public float timeDiff = 0f;
     public long alarmState;
     public String alarmCause = "";
+    public String faultCause = "";  // Specific reason for FAULT state
     public boolean alarmStanding = false;
     public boolean fallAlarmStanding = false;
     public long maxVal;
@@ -197,6 +198,7 @@ public class SdData implements Parcelable {
         alarmState = jo.getLong("alarmState");
         alarmPhrase = jo.getString("alarmPhrase");
         alarmCause = jo.getString("alarmCause");
+        faultCause = jo.optString("faultCause", "");  // Optional field for backwards compatibility
 
         mSdMode = jo.getLong("sdMode");
         mSampleFreq = jo.getLong("sampleFreq");
@@ -306,6 +308,7 @@ public class SdData implements Parcelable {
             jsonObj.put("alarmState", alarmState);
             jsonObj.put("alarmPhrase", alarmPhrase);
             jsonObj.put("alarmCause", alarmCause);
+            jsonObj.put("faultCause", faultCause);
             jsonObj.put("hr", mHR);
             jsonObj.put("adaptiveHrAv", mAdaptiveHrAverage);
             jsonObj.put("averageHrAv", mAverageHrAverage);
@@ -360,6 +363,7 @@ public class SdData implements Parcelable {
             jsonObj.put("alarmState", alarmState);
             jsonObj.put("alarmPhrase", alarmPhrase);
             jsonObj.put("alarmCause", alarmCause);
+            jsonObj.put("faultCause", faultCause);
             jsonObj.put("sdMode", mSdMode);
             jsonObj.put("sampleFreq", mSampleFreq);
             jsonObj.put("analysisPeriod", analysisPeriod);
@@ -437,6 +441,7 @@ public class SdData implements Parcelable {
             jsonObj.put("alarmState", alarmState);
             jsonObj.put("alarmPhrase", alarmPhrase);
             jsonObj.put("alarmCause", alarmCause);
+            jsonObj.put("faultCause", faultCause);
             jsonObj.put("sdMode", mSdMode);
             jsonObj.put("sampleFreq", mSampleFreq);
             jsonObj.put("analysisPeriod", analysisPeriod);

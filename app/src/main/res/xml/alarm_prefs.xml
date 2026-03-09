@@ -23,6 +23,11 @@
             android:numeric="integer"
             android:defaultValue="30" />
         <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="DataFrequencyCheck"
+            android:summary="@string/enable_data_frequency_check_summary"
+            android:title="@string/enable_data_frequency_check_title" />
+        <CheckBoxPreference
             android:defaultValue="false"
             android:key="UseMp3Alarm"
             android:summary="@string/use_mp3_alarm_summary"
