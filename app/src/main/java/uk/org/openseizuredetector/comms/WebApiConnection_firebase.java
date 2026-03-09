@@ -3,7 +3,7 @@ package uk.org.openseizuredetector.comms;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.Context;
 import android.os.Handler;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -187,7 +187,7 @@ public class WebApiConnection_firebase extends WebApiConnection {
                         callback.accept(null);
                     }
                 } else {
-                    Log.d(TAG, "get failed with ", task.getException());
+                    Log.d(TAG, "get failed with " + task.getException());
                     callback.accept(null);
                 }
             }
@@ -244,7 +244,7 @@ public class WebApiConnection_firebase extends WebApiConnection {
                             }
 
                         } else {
-                            Log.d(TAG, "Error getting documents: ", task.getException());
+                            Log.d(TAG, "Error getting documents: " + task.getException());
                             callback.accept(null);
                         }
                     }
@@ -396,7 +396,7 @@ public class WebApiConnection_firebase extends WebApiConnection {
                                 callback.accept(null);
                             }
                         } else {
-                            Log.d(TAG, "Error getting documents: ", task.getException());
+                            Log.e(TAG, "Error getting documents: " + task.getException());
                             callback.accept(null);
                         }
                     }

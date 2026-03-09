@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import android.widget.Toast;
 
 import androidx.preference.PreferenceManager;

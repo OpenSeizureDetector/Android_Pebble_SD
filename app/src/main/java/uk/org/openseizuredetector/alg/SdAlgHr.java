@@ -7,7 +7,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import androidx.preference.PreferenceManager;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 import java.util.ArrayList;
 import uk.org.openseizuredetector.utils.PreferenceUtils;

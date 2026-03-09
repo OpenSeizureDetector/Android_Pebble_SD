@@ -30,7 +30,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import androidx.preference.PreferenceManager;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import android.widget.Toast;
 
 import uk.org.openseizuredetector.activity.startup.StartupActivity;

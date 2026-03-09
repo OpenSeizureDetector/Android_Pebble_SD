@@ -51,16 +51,17 @@ public class PersistentFileLogger {
     private File mLogDir;
 
     public PersistentFileLogger(Context context) {
-        mContext = context;
+        // Always use application context to prevent memory leaks when held statically
+        mContext = context.getApplicationContext();
         mDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         mTimestampFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US);
         mCurrentLogDate = "";
 
         // Get external files directory (survives app uninstall on some devices)
-        mLogDir = context.getExternalFilesDir("logs");
+        mLogDir = mContext.getExternalFilesDir("logs");
         if (mLogDir == null) {
             // Fallback to internal files directory
-            mLogDir = new File(context.getFilesDir(), "logs");
+            mLogDir = new File(mContext.getFilesDir(), "logs");
         }
 
         if (!mLogDir.exists()) {

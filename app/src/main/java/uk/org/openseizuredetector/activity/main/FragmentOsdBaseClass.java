@@ -16,7 +16,7 @@ import androidx.preference.PreferenceManager;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;

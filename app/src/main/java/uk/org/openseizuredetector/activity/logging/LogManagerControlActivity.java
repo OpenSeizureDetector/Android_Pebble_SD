@@ -32,7 +32,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.content.ContextCompat;
 
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -1244,7 +1244,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
 
     private void showDataSharingDialog() {
-        mUtil.writeToSysLogFile("MainActivity.showDataSharingDialog()");
+        Log.i(TAG, "MainActivity.showDataSharingDialog()");
         View aboutView = getLayoutInflater().inflate(R.layout.data_sharing_dialog_layout, null, false);
         AlertDialog.Builder builder = new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
         builder.setIcon(R.drawable.datasharing_fault_24x24);

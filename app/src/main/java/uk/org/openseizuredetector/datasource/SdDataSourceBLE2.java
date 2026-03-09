@@ -40,7 +40,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 import com.welie.blessed.BluetoothBytesParser;
 import com.welie.blessed.BluetoothCentralManager;
@@ -162,7 +162,6 @@ public class SdDataSourceBLE2 extends SdDataSource {
     public void start() {
         super.start();
         Log.i(TAG, "start() - mBleDeviceAddr="+mBleDeviceAddr);
-        mUtil.writeToSysLogFile("SdDataSourceBLE2.start() - mBleDeviceAddr=" + mBleDeviceAddr, "LIFECYCLE");
         mUtil.writeMemoryLog("SdDataSourceBLE2.start");
 
         if (mBleDeviceAddr == "" || mBleDeviceAddr == null) {
@@ -224,8 +223,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
             // CRITICAL: Null-safety check - manager can be destroyed during extended disconnections
             if (mBluetoothCentralManager == null) {
-                Log.w(TAG, "onDiscoveredPeripheral() - BluetoothCentralManager is null, ignoring scan result");
-                mUtil.writeToSysLogFile("BLE2.onDiscoveredPeripheral: Manager null, cannot process discovery", "ERROR");
+                Log.e(TAG, "onDiscoveredPeripheral() - BluetoothCentralManager is null, ignoring scan result");
                 return;
             }
 
@@ -316,7 +314,6 @@ public class SdDataSourceBLE2 extends SdDataSource {
                     }
                 } else {
                     Log.w(TAG, "onDisconnectedPeripheral() - BluetoothCentralManager is null or shutting down");
-                    mUtil.writeToSysLogFile("BLE2.onDisconnectedPeripheral: Manager null, scheduling reconnection", "WARNING");
                     scheduleReconnection();
                 }
             }
@@ -778,7 +775,6 @@ public class SdDataSourceBLE2 extends SdDataSource {
      */
     public void stop() {
         Log.i(TAG, "stop() - Beginning shutdown sequence");
-        mUtil.writeToSysLogFile("SdDataSourceBLE2.stop() - beginning shutdown", "LIFECYCLE");
         mUtil.writeMemoryLog("SdDataSourceBLE2.stop");
         super.stop();
 
@@ -861,7 +857,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
         if (mConnectionState != newState) {
             Log.i(TAG, "setConnectionState() - Transition: " + mConnectionState + " -> " + newState);
             mConnectionState = newState;
-            mUtil.writeToSysLogFile("BLE2 State: " + newState.name(), "STATE");
+            Log.i(TAG, "BLE2 State: " + newState.name());
         }
     }
 

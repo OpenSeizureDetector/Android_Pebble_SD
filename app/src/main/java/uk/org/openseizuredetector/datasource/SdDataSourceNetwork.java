@@ -7,7 +7,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 import androidx.preference.PreferenceManager;
 
@@ -44,9 +44,8 @@ public class SdDataSourceNetwork extends SdDataSource {
 
     @Override
     public void start() {
+        Log.i(TAG, "start()");
         // Update preferences.
-        Log.v(TAG, "start(): calling updatePrefs()");
-        mUtil.writeToSysLogFile("SdDataSourceNetwork().start()");
         updatePrefs();
         // Mark as running so background callbacks know it's active
         setRunning(true);
@@ -70,7 +69,7 @@ public class SdDataSourceNetwork extends SdDataSource {
 
     @Override
     public void stop() {
-        mUtil.writeToSysLogFile("SdDataSourceNetwork().stop()");
+        Log.i(TAG, "stop()");
         // Stop the data update timer
         if (mDataUpdateTimer != null) {
             Log.v(TAG, "stop(): cancelling status timer");
@@ -89,8 +88,7 @@ public class SdDataSourceNetwork extends SdDataSource {
      * - defined in res/xml/prefs.xml
      */
     public void updatePrefs() {
-        Log.v(TAG, "updatePrefs()");
-        mUtil.writeToSysLogFile("SdDataSourceNetwork().updatePrefs()");
+        Log.i(TAG, "updatePrefs()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(mContext);
         mServerIP = SP.getString("ServerIP", "SET_FROM_XML");
@@ -106,8 +104,7 @@ public class SdDataSourceNetwork extends SdDataSource {
             mReadTimeoutPeriod = Integer.parseInt(readTimeoutPeriodStr);
             Log.v(TAG, "updatePrefs() - mReadTimeoutPeriod = " + mReadTimeoutPeriod);
         } catch (Exception ex) {
-            Log.v(TAG, "updatePrefs() - Problem parsing preferences!");
-            mUtil.writeToSysLogFile("SdDataSourceNetwork().updatePrefs() - " + ex.toString());
+            Log.e(TAG, "updatePrefs() - " + ex.toString());
             showToast("Problem Parsing Preferences - Something won't work");
         }
     }

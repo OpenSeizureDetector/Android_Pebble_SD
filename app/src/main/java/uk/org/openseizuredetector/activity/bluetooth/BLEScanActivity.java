@@ -40,7 +40,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.preference.PreferenceManager;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;

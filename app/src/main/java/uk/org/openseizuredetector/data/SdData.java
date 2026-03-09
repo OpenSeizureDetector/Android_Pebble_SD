@@ -27,7 +27,7 @@ package uk.org.openseizuredetector.data;
 import uk.org.openseizuredetector.utils.CircBuf;
 import android.os.Parcelable;
 import android.os.Parcel;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 import org.json.JSONObject;
 import org.json.JSONArray;

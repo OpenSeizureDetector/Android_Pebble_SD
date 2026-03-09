@@ -48,7 +48,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
@@ -126,7 +126,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         mContext = getApplicationContext();
 
         mUtil = new OsdUtil(mContext, mHandler);
-        mUtil.writeToSysLogFile("PrefActivity.onCreate()", "LIFECYCLE");
+        Log.i(TAG, "PrefActivity.onCreate()");
         mUtil.writeMemoryLog("PrefActivity.onCreate");
 
         OsdUtil.applyTheme(this);
@@ -297,7 +297,6 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     @Override
     public void onStart() {
         super.onStart();
-        mUtil.writeToSysLogFile("PrefActvity.onStart()");
         Log.i(TAG, "onStart()");
     }
 
@@ -366,7 +365,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     @Override
     public void onResume() {
         super.onResume();
-        mUtil.writeToSysLogFile("PrefActvity.onResume()");
+        Log.i(TAG, "onResume()");
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(this);
         SP.registerOnSharedPreferenceChangeListener(this);
     }
@@ -416,7 +415,6 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                             mUtil.startServer();
                         } catch (Exception e) {
                             Log.e(TAG, "Error restarting server after preference change: " + e.getMessage());
-                            mUtil.writeToSysLogFile("Error restarting server after preference change: " + e.getMessage());
                             mUtil.showToast("Error restarting server. Please restart the app.");
                         }
                     }
@@ -455,7 +453,6 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
     private void launchPineTimeUpdater() {
         Log.i(TAG, "launchPineTimeUpdater()");
-        mUtil.writeToSysLogFile("PrefActivity.launchPineTimeUpdater()");
 
         String pineTimePackageName = "uk.org.openseizuredetector.pinetime";
 
@@ -1152,7 +1149,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     protected void onDestroy() {
         super.onDestroy();
         if (mUtil != null) {
-            mUtil.writeToSysLogFile("PrefActivity.onDestroy()", "LIFECYCLE");
+            Log.i(TAG, "onDestroy()");
             mUtil.writeMemoryLog("PrefActivity.onDestroy");
         }
     }

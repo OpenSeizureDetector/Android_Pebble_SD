@@ -34,7 +34,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.preference.PreferenceManager;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import android.widget.Toast;
 
 import com.getpebble.android.kit.PebbleKit;
@@ -159,7 +159,6 @@ public class SdDataSourcePebble extends SdDataSource {
      */
     public void start() {
         Log.v(TAG, "start()");
-        mUtil.writeToSysLogFile("SdDataSourcePebble.start()");
         updatePrefs();
         startPebbleServer();
         // Start timer to check status of pebble regularly.
@@ -168,7 +167,6 @@ public class SdDataSourcePebble extends SdDataSource {
         // as we get app data.
         if (mStatusTimer == null) {
             Log.v(TAG, "start(): starting status timer with period " + mDataUpdatePeriod * 1000 + " ms");
-            mUtil.writeToSysLogFile("SdDataSourcePebble.start() - starting status timer");
             mStatusTimer = new Timer();
             mStatusTimer.schedule(new TimerTask() {
                 @Override
@@ -177,8 +175,7 @@ public class SdDataSourcePebble extends SdDataSource {
                 }
             }, 0, mDataUpdatePeriod * 1000);
         } else {
-            Log.v(TAG, "start(): status timer already running.");
-            mUtil.writeToSysLogFile("SdDataSourcePebble.start() - status timer already running??");
+            Log.w(TAG, "start() - status timer already running??");
         }
         // make sure we get some data when we first start.
         getPebbleData();
@@ -186,18 +183,15 @@ public class SdDataSourcePebble extends SdDataSource {
         getPebbleSdSettings();
         if (mSettingsTimer == null) {
             Log.v(TAG, "start(): starting settings timer");
-            mUtil.writeToSysLogFile("SdDataSourcePebble.start() - starting settings timer with period " + 1000 * mSettingsPeriod);
             mSettingsTimer = new Timer();
             mSettingsTimer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    //mUtil.writeToSysLogFile("SdDataSourcePebble.mSettingsTimer timed out.");
                     getPebbleSdSettings();
                 }
             }, 0, 1000 * mSettingsPeriod);  // ask for settings less frequently than we get data
         } else {
-            Log.v(TAG, "start(): settings timer already running.");
-            mUtil.writeToSysLogFile("SdDataSourcePebble.start() - settings timer already running??");
+            Log.w(TAG, "start() - settings timer already running??");
         }
     }
 
@@ -205,33 +199,28 @@ public class SdDataSourcePebble extends SdDataSource {
      * Stop the datasource from updating
      */
     public void stop() {
-        Log.v(TAG, "stop()");
-        mUtil.writeToSysLogFile("SdDataSourcePebble.stop()");
+        Log.i(TAG, "stop()");
         try {
             // Stop the status timer
             if (mStatusTimer != null) {
-                Log.v(TAG, "stop(): cancelling status timer");
-                mUtil.writeToSysLogFile("SdDataSourcePebble.stop() - cancelling status timer");
+                Log.i(TAG, "SdDataSourcePebble.stop() - cancelling status timer");
                 mStatusTimer.cancel();
                 mStatusTimer.purge();
                 mStatusTimer = null;
             }
             // Stop the settings timer
             if (mSettingsTimer != null) {
-                Log.v(TAG, "stop(): cancelling settings timer");
-                mUtil.writeToSysLogFile("SdDataSourcePebble.stop() - cancelling settings timer");
+                Log.i(TAG, "SdDataSourcePebble.stop() - cancelling settings timer");
                 mSettingsTimer.cancel();
                 mSettingsTimer.purge();
                 mSettingsTimer = null;
             }
             // Stop pebble message handler.
-            Log.v(TAG, "stop(): stopping pebble server");
-            mUtil.writeToSysLogFile("SdDataSourcePebble.stop() - stopping pebble server");
+            Log.i(TAG, "SdDataSourcePebble.stop() - stopping pebble server");
             stopPebbleServer();
 
         } catch (Exception e) {
-            Log.v(TAG, "Error in stop() - " + e.toString());
-            mUtil.writeToSysLogFile("SdDataSourcePebble.stop() - error - " + e.toString());
+            Log.e(TAG, "stop() - error - " + e.toString());
         }
     }
 
@@ -344,8 +333,7 @@ public class SdDataSourcePebble extends SdDataSource {
             Log.v(TAG, "updatePrefs() FallWindow = " + mFallWindow);
 
         } catch (Exception ex) {
-            Log.v(TAG, "updatePrefs() - Problem parsing preferences! - prefStr=" + prefStr);
-            mUtil.writeToSysLogFile("SdDataSourcePebble.updatePrefs() - ERROR " + ex.toString());
+            Log.e(TAG, "updatePrefs() - ERROR " + ex.toString());
             Toast toast = Toast.makeText(mContext, "Problem Parsing Preferences - Something won't work - Please go back to Settings and correct it!", Toast.LENGTH_SHORT);
             toast.show();
         }
@@ -357,8 +345,7 @@ public class SdDataSourcePebble extends SdDataSource {
      * A PebbleDataReceiver
      */
     private void startPebbleServer() {
-        Log.v(TAG, "StartPebbleServer()");
-        mUtil.writeToSysLogFile("SdDataSourcePebble.startPebbleServer()");
+        Log.e(TAG, "StartPebbleServer()");
         final Handler handler = new Handler(Looper.getMainLooper());
         msgDataHandler = new PebbleKit.PebbleDataReceiver(SD_UUID) {
             @Override
@@ -425,8 +412,7 @@ public class SdDataSourcePebble extends SdDataSource {
                         mUtil.showToast("*** Error interpreting settings sent from watch - Please check you have "
                                 + "the latest version of the watch app installed by using the OpenSeizureDetector "
                                 + "menu to install the Watch App");
-                        mUtil.writeToSysLogFile("Error interpreting settings received from watch - wrong version "
-                                + "of watch app installed?");
+                        Log.e(TAG, "Error interpreting settings received from watch - wrong version of watch app installed?");
                     }
                 }
                 if (data.getUnsignedIntegerAsLong(KEY_DATA_TYPE)
@@ -480,13 +466,12 @@ public class SdDataSourcePebble extends SdDataSource {
     public void stopPebbleServer() {
         Log.v(TAG, "stopServer(): Stopping Pebble Server");
         Log.v(TAG, "stopServer(): msgDataHandler = " + msgDataHandler.toString());
-        mUtil.writeToSysLogFile("SdDataSourcePebble.stopServer()");
+        Log.i(TAG, "stopServer()");
         try {
             mContext.unregisterReceiver(msgDataHandler);
             stopWatchApp();
         } catch (Exception e) {
-            Log.v(TAG, "stopServer() - error " + e.toString());
-            mUtil.writeToSysLogFile("SdDataSourcePebble.stopServer() - error " + e.toString());
+            Log.e(TAG, "SdDataSourcePebble.stopServer() - error " + e.toString());
         }
     }
 
@@ -494,8 +479,7 @@ public class SdDataSourcePebble extends SdDataSource {
      * Attempt to start the pebble_sd watch app on the pebble watch.
      */
     public void startWatchApp() {
-        Log.v(TAG, "startWatchApp() - closing app first");
-        mUtil.writeToSysLogFile("SdDataSourcePebble.startWatchApp() - closing app first");
+        Log.i(TAG, "startWatchApp() - closing app first");
         // first close the watch app if it is running.
         PebbleKit.closeAppOnPebble(mContext, SD_UUID);
         Log.v(TAG, "startWatchApp() - starting watch app after 5 seconds delay...");
@@ -504,8 +488,7 @@ public class SdDataSourcePebble extends SdDataSource {
         appStartTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                Log.v(TAG, "startWatchApp() - starting watch app...");
-                mUtil.writeToSysLogFile("SdDataSourcePebble.startWatchApp() - starting watch app");
+                Log.i(TAG, "startWatchApp() - starting watch app");
                 PebbleKit.startAppOnPebble(mContext, SD_UUID);
             }
         }, 5000);
@@ -515,8 +498,7 @@ public class SdDataSourcePebble extends SdDataSource {
      * stop the pebble_sd watch app on the pebble watch.
      */
     public void stopWatchApp() {
-        Log.v(TAG, "stopWatchApp()");
-        mUtil.writeToSysLogFile("SdDataSourcePebble.stopWatchApp()");
+        Log.i(TAG, "stopWatchApp()");
         PebbleKit.closeAppOnPebble(mContext, SD_UUID);
     }
 
@@ -651,8 +633,7 @@ public class SdDataSourcePebble extends SdDataSource {
      * Will be received as a message by the receiveData handler
      */
     public void getPebbleData() {
-        Log.v(TAG, "getData() - requesting data from pebble");
-        mUtil.writeToSysLogFile("SdDataSourcePebble.getData() - requesting data from pebble");
+        Log.i(TAG, "getData() - requesting data from pebble");
         PebbleDictionary data = new PebbleDictionary();
         data.addUint8(KEY_DATA_TYPE, (byte) 1);
         PebbleKit.sendDataToPebble(
@@ -691,8 +672,7 @@ public class SdDataSourcePebble extends SdDataSource {
             //getWatchSdSettings();
             // Only make audible warning beep if we have not received data for more than mFaultTimerPeriod seconds.
             if (tdiff > (mDataUpdatePeriod + mFaultTimerPeriod) * 1000) {
-                Log.v(TAG, "getStatus() - Pebble App Not Running - Attempting to Re-Start");
-                mUtil.writeToSysLogFile("SdDataSourcePebble.getStatus() - Pebble App not Running - Attempting to Re-Start");
+                Log.w(TAG, "SdDataSourcePebble.getStatus() - Pebble App not Running - Attempting to Re-Start");
                 startWatchApp();
                 mPebbleStatusTimeMillis = System.currentTimeMillis();
                 mSdDataReceiver.onSdDataFault(mSdData);
@@ -740,7 +720,7 @@ public class SdDataSourcePebble extends SdDataSource {
      */
     @Override
     public void startPebbleApp() {
-        mUtil.writeToSysLogFile("SdDataSourcePebble.startPebbleApp()");
+        Log.i(TAG, "SdDataSourcePebble.startPebbleApp()");
         // first try to launch the original pebble app
         Intent pebbleAppIntent;
         PackageManager pm = mContext.getPackageManager();
@@ -750,18 +730,18 @@ public class SdDataSourcePebble extends SdDataSource {
         } catch (Exception ex1) {
             // and if original pebble app fails, try Pebble Time app...
             Log.v(TAG, "exception starting original pebble App - trying pebble time..." + ex1.toString());
-            mUtil.writeToSysLogFile("SdDataSourcePebble.startPebbleApp() - Error starting original pebble app - trying Pebble Time App instead");
+            Log.e(TAG, "SdDataSourcePebble.startPebbleApp() - Error starting original pebble app - trying Pebble Time App instead");
             try {
                 pebbleAppIntent = pm.getLaunchIntentForPackage("com.getpebble.android.basalt");
                 mContext.startActivity(pebbleAppIntent);
             } catch (Exception ex2) {
                 // and if that fails, open play store so the user can install it:
                 Log.v(TAG, "exception starting Pebble Time App." + ex2.toString());
-                mUtil.writeToSysLogFile("SdDataSourcePebble.startPebbleApp() - Error starting Pebble Time App - Is it installed?");
+                Log.e(TAG, "SdDataSourcePebble.startPebbleApp() - Error starting Pebble Time App - Is it installed?");
                 this.showToast("Error Launching Pebble or Pebble Time App - Please make sure it is installed...");
                 final String appPackageName = "com.getpebble.android.basalt";
                 try {
-                    mUtil.writeToSysLogFile("SdDataSourcePebble.startPebbleApp() - Opening Play Store to install Pebble App");
+                    Log.i(TAG, "SdDataSourcePebble.startPebbleApp() - Opening Play Store to install Pebble App");
                     // try using play store app.
                     mContext.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName)));
                 } catch (android.content.ActivityNotFoundException anfe) {

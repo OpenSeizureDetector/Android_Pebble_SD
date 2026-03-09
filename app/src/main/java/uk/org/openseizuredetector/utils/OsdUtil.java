@@ -33,17 +33,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
-import android.database.DatabaseUtils;
-import android.database.SQLException;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import androidx.preference.PreferenceManager;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatDelegate;
@@ -55,14 +50,10 @@ import java.net.NetworkInterface;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.function.Consumer;
 
 import uk.org.openseizuredetector.SdServer;
 /**
@@ -76,18 +67,17 @@ public class OsdUtil {
     /**
      * Based on http://stackoverflow.com/questions/7440473/android-how-to-check-if-the-intent-service-is-still-running-or-has-stopped-running
      */
+    // Always store application context to prevent memory leaks (safe for static field)
+    @SuppressWarnings("StaticFieldLeak") // Safe: Always stores application context, not activity context
     private static Context mContext;
     private Handler mHandler;
     private static String TAG = "OsdUtil";
     private boolean mPermissionsRequested = false;
     private boolean mSMSPermissionsRequested = false;
-    private static final String mSysLogTableName = "SysLog";
-    //private LogManager mLm;
-    static private SQLiteDatabase mSysLogDb = null;   // SQLite Database for data and log entries.
-    private final static Long mMinPruneInterval = 5 * 60 * 1000L; // minimum time between syslog pruning is 5 minutes
-    private static Long mLastPruneMillis = 0L;   // Record of the last time we pruned the syslog db.
 
-    // File-based persistent logger (replaces database logging for diagnostics)
+    // File-based persistent logger (static is safe because it stores application context only)
+    // PersistentFileLogger internally calls context.getApplicationContext() to avoid leaks
+    @SuppressWarnings("StaticFieldLeak") // Safe: PersistentFileLogger uses application context internally
     private static PersistentFileLogger mFileLogger = null;
 
     private static int mNbound = 0;
@@ -117,18 +107,16 @@ public class OsdUtil {
 
 
     public OsdUtil(Context context, Handler handler) {
-        mContext = context;
+        // Always use application context to prevent memory leaks with static fields
+        mContext = context.getApplicationContext();
         mHandler = handler;
 
         // Initialize file logger (thread-safe singleton)
         if (mFileLogger == null) {
-            mFileLogger = new PersistentFileLogger(context);
+            mFileLogger = new PersistentFileLogger(mContext);
             Log.i(TAG, "PersistentFileLogger initialized: " + mFileLogger.getCurrentLogPath());
         }
 
-        //Log.i(TAG,"Creating Log Manager instance");
-        //mLm = new LogManager(mContext,false,false,null,0,0,false,0);
-        openDb();
         writeToSysLogFile("OsdUtil() - initialised");
 
     }
@@ -203,7 +191,7 @@ public class OsdUtil {
     public void startServer() {
         // Start the server
         Log.d(TAG, "OsdUtil.startServer()");
-        writeToSysLogFile("startServer() - starting server");
+        Log.i(TAG, "startServer() - starting server");
         Intent sdServerIntent;
         sdServerIntent = new Intent(mContext, SdServer.class);
         sdServerIntent.setData(Uri.parse("Start"));
@@ -216,7 +204,7 @@ public class OsdUtil {
      */
     public void stopServer() {
         Log.i(TAG, "OsdUtil.stopServer() - stopping Server... - mNbound=" + mNbound);
-        writeToSysLogFile("stopserver() - stopping server");
+        Log.i(TAG, "stopserver() - stopping server");
 
         // then send an Intent to stop the service.
         Intent sdServerIntent;
@@ -231,7 +219,7 @@ public class OsdUtil {
      */
     public void bindToServer(Context activity, SdServiceConnection sdServiceConnection) {
         Log.i(TAG, "OsdUtil.bindToServer() - binding to SdServer");
-        writeToSysLogFile("bindToServer() - binding to SdServer");
+        Log.i(TAG, "bindToServer() - binding to SdServer");
         Intent intent = new Intent(sdServiceConnection.mContext, SdServer.class);
         activity.bindService(intent, sdServiceConnection, Context.BIND_AUTO_CREATE);
         mNbound = mNbound + 1;
@@ -245,7 +233,7 @@ public class OsdUtil {
         // unbind this activity from the service if it is bound.
         if (sdServiceConnection.mBound) {
             Log.i(TAG, "unbindFromServer() - unbinding");
-            writeToSysLogFile("unbindFromServer() - unbinding");
+            Log.i(TAG, "unbindFromServer() - unbinding");
             try {
                 activity.unbindService(sdServiceConnection);
                 sdServiceConnection.mBound = false;
@@ -253,12 +241,12 @@ public class OsdUtil {
                 Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
             } catch (Exception ex) {
                 Log.e(TAG, "unbindFromServer() - error unbinding service - " + ex.toString());
-                writeToSysLogFile("unbindFromServer() - error unbinding service - " + ex.toString());
+                Log.e(TAG, "unbindFromServer() - error unbinding service - " + ex.toString());
                 Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
             }
         } else {
             Log.i(TAG, "unbindFromServer() - not bound to server - ignoring");
-            writeToSysLogFile("unbindFromServer() - not bound to server - ignoring");
+            Log.i(TAG, "unbindFromServer() - not bound to server - ignoring");
             Log.i(TAG, "OsdUtil.unBindFromServer() - mNbound = " + mNbound);
         }
     }
@@ -571,224 +559,6 @@ public class OsdUtil {
         return (retVal);
     }
 
-    private static boolean openDb() {
-        Log.d(TAG, "openDb");
-        try {
-            if (mSysLogDb == null) {
-                Log.i(TAG, "openDb: mSysLogDb is null - initialising");
-                mSysLogDb = new OsdSysLogHelper(mContext).getWritableDatabase();
-            } else {
-                Log.i(TAG, "openDb: mSysLogDb has been initialised already so not doing anything");
-            }
-            if (!checkTableExists(mSysLogDb, mSysLogTableName)) {
-                Log.e(TAG, "ERROR - Table " + mSysLogTableName + " does not exist");
-                return false;
-            } else {
-                Log.d(TAG, "table " + mSysLogTableName + " exists ok");
-            }
-        } catch (SQLException e) {
-            Log.e(TAG, "Failed to open Database: " + e.toString());
-            return false;
-        }
-        return true;
-    }
-
-    private static boolean checkTableExists(SQLiteDatabase osdDb, String osdTableName) {
-        Cursor c = null;
-        boolean tableExists = false;
-        Log.d(TAG, "checkTableExists()");
-        try {
-            c = osdDb.query(osdTableName, null,
-                    null, null, null, null, null);
-            tableExists = true;
-            c.close();
-        } catch (Exception e) {
-            Log.d(TAG, osdTableName + " doesn't exist :(((");
-        }
-        return tableExists;
-    }
-
-    /**
-     * Write syslog string to local database
-     * FIXME - I am sure we should not be using raw SQL Srings to do this!
-     */
-    public void writeLogEntryToLocalDb(String logText, String statusVal) {
-        Log.v(TAG, "writeLogEntryToLocalDb()");
-        Date curDate = new Date();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-        String dateStr = dateFormat.format(curDate);
-        String SQLStr = "SQLStr";
-
-        try {
-            SQLStr = "INSERT INTO " + mSysLogTableName
-                    + "(dataTime, logLevel, dataJSON, uploaded)"
-                    + " VALUES("
-                    + "'" + dateStr + "',"
-                    + DatabaseUtils.sqlEscapeString(statusVal) + ","
-                    + DatabaseUtils.sqlEscapeString(logText) + ","
-                    + 0
-                    + ")";
-            mSysLogDb.execSQL(SQLStr);
-            Log.v(TAG, "syslog entry written to database: " + logText);
-            pruneSysLogDb();
-
-        } catch (SQLException e) {
-            Log.e(TAG, "writeLogEngryToLocalDb(): Error Writing Data: " + e.toString());
-            Log.e(TAG, "SQLStr was " + SQLStr);
-        }
-
-    }
-
-    /**
-     * Return an array list of objects representing the syslog entries in the database by calling the specified callback function.
-     *
-     * @return True on successful start or false if call fails.
-     */
-    public boolean getSysLogList(Consumer<ArrayList<HashMap<String, String>>> callback) {
-        Log.v(TAG, "getSysLogList");
-        ArrayList<HashMap<String, String>> eventsList = new ArrayList<>();
-
-        String whereClause = "";
-        String[] whereArgs = {};
-        String[] columns = {"*"};
-        executeSelectQuery(mSysLogTableName, columns, null, null,
-                null, null, "dataTime DESC", (Cursor cursor) -> {
-            Log.v(TAG, "getSysLogList - returned " + cursor);
-            try {
-                if (cursor != null) {
-                    Log.v(TAG, "getSysLogList - returned " + cursor.getCount() + " records");
-                    while (!cursor.isAfterLast()) {
-                        HashMap<String, String> event = new HashMap<>();
-                        //event.put("id", cursor.getString(cursor.getColumnIndex("id")));
-                        event.put("dataTime", cursor.getString(cursor.getColumnIndex("dataTime")));
-                        String loglevel = cursor.getString(cursor.getColumnIndex("logLevel"));
-                        event.put("loglevel", loglevel);
-                        event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
-                        //event.put("dataJSON", cursor.getString(cursor.getColumnIndex("dataJSON")));
-                        eventsList.add(event);
-                        cursor.moveToNext();
-                    }
-                }
-                callback.accept(eventsList);
-            } finally {
-                if (cursor != null) {
-                    try { cursor.close(); } catch (Exception e) { Log.w(TAG, "getSysLogList: error closing cursor: " + e.toString()); }
-                }
-            }
-        });
-        return (true);
-    }
-
-    /**
-     * Executes the sqlite query (=SELECT statement) using BackgroundTaskExecutor
-     */
-    static private void executeSelectQuery(String table, String[] columns, String selection,
-                                          String[] selectionArgs, String groupBy, String having,
-                                          String orderBy, Consumer<Cursor> callback) {
-        BackgroundTaskExecutor.execute(
-            () -> {
-                Log.v(TAG, "SelectQuery: table=" + table + ", columns=" + Arrays.toString(columns)
-                        + ", selection=" + selection + ", selectionArgs=" + Arrays.toString(selectionArgs)
-                        + ", groupBy=" + groupBy + ", having=" + having + ", orderBy=" + orderBy);
-
-                try {
-                    Cursor resultSet = mSysLogDb.query(table, columns, selection,
-                            selectionArgs, groupBy, having, orderBy);
-                    resultSet.moveToFirst();
-                    return resultSet;
-                } catch (SQLException e) {
-                    Log.e(TAG, "SelectQuery: Error selecting Data: " + e.toString());
-                    return null;
-                } catch (IllegalArgumentException e) {
-                    Log.e(TAG, "SelectQuery: Illegal Argument Exception: " + e.toString());
-                    return null;
-                }
-            },
-            new BackgroundTaskExecutor.Callback<Cursor>() {
-                @Override
-                public void onSuccess(Cursor result) {
-                    callback.accept(result);
-                }
-
-                @Override
-                public void onError(Exception e) {
-                    Log.e(TAG, "SelectQuery error", e);
-                    callback.accept(null);
-                }
-            }
-        );
-    }
-
-
-    /**
-     * pruneSysLogDb() removes data that is older than 7 days
-     */
-    public int pruneSysLogDb() {
-        //Log.v(TAG, "pruneSysLogDb()");
-        int retVal;
-        long currentDateMillis = new Date().getTime();
-        if (currentDateMillis > mLastPruneMillis + mMinPruneInterval) {
-            mLastPruneMillis = currentDateMillis;
-            // FIXME - change this to something sensible like 7 days after testing
-            long endDateMillis = currentDateMillis - 5 * 60 * 1000;
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String endDateStr = dateFormat.format(new Date(endDateMillis));
-            Log.v(TAG, "pruneSysLogDb - endDateStr=" + endDateStr);
-            try {
-                String selectStr = "DataTime<=?";
-                String[] selectArgs = {endDateStr};
-                retVal = mSysLogDb.delete(mSysLogTableName, selectStr, selectArgs);
-            } catch (Exception e) {
-                Log.e(TAG, "Error deleting log entries" + e.toString());
-                retVal = 0;
-            }
-            if (retVal > 0) {
-                Log.v(TAG, String.format("pruneSysLogDb() - deleted %d records", retVal));
-            }
-            return (retVal);
-        } else {
-            return (0);
-        }
-    }
-
-
-    public static class OsdSysLogHelper extends SQLiteOpenHelper {
-        // If you change the database schema, you must increment the database version.
-        public static final int DATABASE_VERSION = 1;
-        public static final String DATABASE_NAME = "OsdSysLog.db";
-        private static final String TAG = "LogManager.OsdSysLogHelper";
-
-        public OsdSysLogHelper(Context context) {
-            super(context, DATABASE_NAME, null, DATABASE_VERSION);
-            Log.d(TAG, "OsdSysLogHelper constructor");
-        }
-
-        public void onCreate(SQLiteDatabase db) {
-            Log.i(TAG, "onCreate - TableName=" + mSysLogTableName);
-            String SQLStr = "CREATE TABLE IF NOT EXISTS " + mSysLogTableName + "("
-                    + "id INTEGER PRIMARY KEY,"
-                    + "dataTime DATETIME,"
-                    + "logLevel TEXT,"
-                    + "dataJSON TEXT,"
-                    + "uploaded INT"
-                    + ");";
-            db.execSQL(SQLStr);
-        }
-
-        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            // This database is only a cache for online data, so its upgrade policy is
-            // to simply to discard the data and start over
-            Log.i(TAG, "onUpgrade()");
-            db.execSQL("Drop table if exists " + mSysLogTableName + ";");
-            onCreate(db);
-        }
-
-        public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            Log.i(TAG, "onDowngrade()");
-            onUpgrade(db, oldVersion, newVersion);
-        }
-    }
 
 
     public String[] getRequiredBtPermissions() {

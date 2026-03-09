@@ -50,7 +50,7 @@ import android.text.util.Linkify;
 import androidx.activity.OnBackPressedCallback;
 import androidx.core.text.HtmlCompat;
 import androidx.core.text.util.LinkifyCompat;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -152,10 +152,8 @@ public class StartupActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.i(TAG, "onCreate()");
         mUtil = new OsdUtil(this, mHandler);
-        mUtil.writeToSysLogFile("StartupActivity.onCreate()", "LIFECYCLE");
-        mUtil.writeMemoryLog("StartupActivity.onCreate");
+        Log.i(TAG, "onCreate()");
 
         // Check if this is the first run - if so, launch onboarding wizard
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -165,7 +163,6 @@ public class StartupActivity extends AppCompatActivity {
 
         if (!firstRunComplete) {
             Log.i(TAG, "First run detected - launching onboarding wizard");
-            mUtil.writeToSysLogFile("StartupActivity.onCreate - Launching onboarding", "LIFECYCLE");
             Intent onboardingIntent = new Intent(this, OnboardingActivity.class);
             startActivity(onboardingIntent);
             finish();
@@ -198,10 +195,10 @@ public class StartupActivity extends AppCompatActivity {
 
         mHandler = new Handler(Looper.getMainLooper());
         mUtil = new OsdUtil(getApplicationContext(), mHandler);
-        mUtil.writeToSysLogFile("");
-        mUtil.writeToSysLogFile("*******************************");
-        mUtil.writeToSysLogFile("* StartUpActivity Started     *");
-        mUtil.writeToSysLogFile("*******************************");
+        Log.i(TAG, "");
+        Log.i(TAG, "*******************************");
+        Log.i(TAG, "* StartUpActivity Started     *");
+        Log.i(TAG, "*******************************");
 
         // Force the screen to stay on when the app is running
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -215,14 +212,14 @@ public class StartupActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Log.v(TAG, "settings button clicked");
                 try {
-                    mUtil.writeToSysLogFile("Starting Settings Activity");
+                    Log.i(TAG, "Starting Settings Activity");
                     Intent intent = new Intent(
                             StartupActivity.this,
                             PrefActivity.class);
                     startActivity(intent);
                 } catch (Exception ex) {
                     Log.v(TAG, "exception starting settings activity " + ex.toString());
-                    mUtil.writeToSysLogFile("ERROR Starting Settings Activity");
+                    Log.e(TAG, "ERROR Starting Settings Activity");
                 }
 
             }
@@ -238,7 +235,7 @@ public class StartupActivity extends AppCompatActivity {
                 public void onClick(View view) {
                     Log.v(TAG, "install Osd Watch App button clicked");
                     if (mConnection.mSdServer.mSdDataSource != null) {
-                        mUtil.writeToSysLogFile("Installing Watch App");
+                        Log.i(TAG, "Installing Watch App");
                         mConnection.mSdServer.mSdDataSource.installWatchApp();
                     } else {
                         mUtil.showToast("Error installing watch app - Datasource has not started - please see installation instructions on web site");
@@ -323,7 +320,6 @@ public class StartupActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         Log.i(TAG, "onStart()");
-        mUtil.writeToSysLogFile("StartupActivity.onStart()");
         TextView tv;
 
         String versionName = mUtil.getAppVersionName();
@@ -347,7 +343,6 @@ public class StartupActivity extends AppCompatActivity {
         // The service will reload preferences when needed
         if (mUtil.isServerRunning()) {
             Log.i(TAG, "onStart() - server already running - will continue with existing service");
-            mUtil.writeToSysLogFile("StartupActivity.onStart() - server already running");
             mMode = MODE_START_SERVER; // Continue to connection checks
         } else {
             mMode = MODE_START_SERVER;
@@ -395,7 +390,6 @@ public class StartupActivity extends AppCompatActivity {
         super.onStop();
         Log.i(TAG, "onStop() - unbinding from server");
         if (mUtil != null) {
-            mUtil.writeToSysLogFile("StartupActivity.onStop() - unbinding from server");
             mUtil.unbindFromServer(getApplicationContext(), mConnection);
             mBindInProgress = false;
         }
@@ -409,7 +403,6 @@ public class StartupActivity extends AppCompatActivity {
         super.onDestroy();
         Log.i(TAG, "onDestroy()");
         if (mUtil != null) {
-            mUtil.writeToSysLogFile("StartupActivity.onDestroy()", "LIFECYCLE");
             mUtil.writeMemoryLog("StartupActivity.onDestroy");
         }
 
@@ -425,16 +418,10 @@ public class StartupActivity extends AppCompatActivity {
         }
 
         Log.i(TAG, "onDestroy() - cleanup complete");
-        if (mUtil != null) {
-            mUtil.writeToSysLogFile("StartupActivity.onDestroy - cleanup complete", "LIFECYCLE");
-        }
     }
 
     private void handleBackPressed() {
          Log.i(TAG, "onBackPressed() - user pressed back button");
-         if (mUtil != null) {
-             mUtil.writeToSysLogFile("StartupActivity.onBackPressed() - shutting down");
-         }
 
         // Set shutdown flag to prevent any restart attempts
         mIsShuttingDown = true;
@@ -453,7 +440,6 @@ public class StartupActivity extends AppCompatActivity {
         // If server is running, stop it with timeout protection
         if (mUtil != null && mUtil.isServerRunning()) {
             Log.i(TAG, "onBackPressed() - stopping server before exit");
-            mUtil.writeToSysLogFile("StartupActivity.onBackPressed() - stopping server");
 
             mServerStopRequested = true;
 
@@ -478,9 +464,6 @@ public class StartupActivity extends AppCompatActivity {
                 mHandler.postDelayed(() -> {
                     if (!isFinishing()) {
                         Log.w(TAG, "onBackPressed() - server stop timeout, forcing exit");
-                        if (mUtil != null) {
-                            mUtil.writeToSysLogFile("StartupActivity.onBackPressed() - timeout, forcing exit");
-                        }
                         finish();
                     }
                 }, 7000); // 7 seconds - slightly longer than BLE disconnect timeout
@@ -648,8 +631,7 @@ public class StartupActivity extends AppCompatActivity {
                         return;
                     }
 
-                    mUtil.writeToSysLogFile("StartupActivity.onStart() - starting server  - isServerRunning=" + mUtil.isServerRunning());
-                    Log.i(TAG, "onStart() - starting server -isServerRunning=" + mUtil.isServerRunning());
+                    Log.i(TAG, "StartupActivity.onStart() - starting server  - isServerRunning=" + mUtil.isServerRunning());
 
                     // Clear the user_stopped_service flag since we're starting the service
                     SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(getBaseContext());
@@ -681,10 +663,7 @@ public class StartupActivity extends AppCompatActivity {
                     if (mBindInProgress) {
                         Log.i(TAG,"Waiting to bind to server");
                     } else {
-                        Log.i(TAG, "ServerStatusRunnable() - not starting server - allOk=" + allOk + ", isServerRunning()=" + mUtil.isServerRunning());
-                        // Bind to the service.
-                        Log.i(TAG, "ServerStatusRunnable() - binding to server");
-                        mUtil.writeToSysLogFile("StartupActivity.onStart() - binding to server");
+                        Log.i(TAG, "StartupActivity.onStart() - binding to server");
                         mUtil.bindToServer(getApplicationContext(), mConnection);
                         mBindInProgress = true;
                     }
@@ -789,7 +768,6 @@ public class StartupActivity extends AppCompatActivity {
                     if (getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
                         if (!mStartedMainActivity) {
                             Log.i(TAG, "serverStatusRunnable() - starting main activity...");
-                            mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - all checks ok - starting main activity.");
                             try {
                                 Intent intent;
                                 intent = new Intent(
@@ -802,11 +780,9 @@ public class StartupActivity extends AppCompatActivity {
                             } catch (Exception ex) {
                                 mStartedMainActivity = false;
                                 Log.e(TAG, "exception starting main activity " + ex.toString());
-                                mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - exception starting main activity " + ex.toString());
                             }
                         } else {
                             Log.v(TAG, "allOk, but already started MainActivity so not doing anything");
-                            mUtil.writeToSysLogFile("StartupActivity.serverStatusRunnable - allOk, but already started MainActivity so not doing anything");
                         }
                     } else {
                         Log.v(TAG, "allOk, but activity not in resumed state, so not starting MainActivity");

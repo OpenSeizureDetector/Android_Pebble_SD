@@ -2,7 +2,7 @@ package uk.org.openseizuredetector.utils;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

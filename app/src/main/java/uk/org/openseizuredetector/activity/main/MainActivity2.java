@@ -68,7 +68,7 @@ import androidx.preference.PreferenceManager;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -128,7 +128,7 @@ public class MainActivity2 extends AppCompatActivity {
 
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
         mConnection = new SdServiceConnection(getApplicationContext());
-        mUtil.writeToSysLogFile("MainActivity2.onCreate()", "LIFECYCLE");
+        // Note: Log.i automatically writes to syslog file based on configured level
         mUtil.writeMemoryLog("MainActivity2.onCreate");
         mContext = this;
         mHandler = new Handler(Looper.getMainLooper());
@@ -161,7 +161,7 @@ public class MainActivity2 extends AppCompatActivity {
             @Override
             public void handleOnBackPressed() {
                 if (mUtil != null) {
-                    mUtil.writeToSysLogFile("MainActivity2.onBackPressed() - closing activity", "LIFECYCLE");
+                    Log.i(TAG, "MainActivity2.onBackPressed() - closing activity");
                 }
                 finish();
             }
@@ -214,7 +214,7 @@ public class MainActivity2 extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         Log.i(TAG, "onStart()");
-        mUtil.writeToSysLogFile("MainActivity.onStart()");
+        Log.i(TAG, "MainActivity.onStart()");
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
         boolean audibleAlarm = PreferenceUtils.getBooleanFromXml(SP, "AudibleAlarm");
@@ -228,7 +228,7 @@ public class MainActivity2 extends AppCompatActivity {
 
         if (mUtil.isServerRunning()) {
             Log.i(TAG, "MainActivity2.onStart() - Server Running - Binding to Server");
-            mUtil.writeToSysLogFile("MainActivity2.onStart - Binding to Server");
+            Log.i(TAG, "MainActivity2.onStart - Binding to Server");
             mUtil.bindToServer(getApplicationContext(), mConnection);
         } else {
             // Check if user explicitly stopped the service via "Exit"
@@ -238,13 +238,13 @@ public class MainActivity2 extends AppCompatActivity {
 
             if (userStopped) {
                 Log.i(TAG, "MainActivity2.onStart() - User stopped service via Exit, not auto-starting");
-                mUtil.writeToSysLogFile("MainActivity2.onStart - User stopped service, not auto-starting");
+                Log.i(TAG, "MainActivity2.onStart - User stopped service, not auto-starting");
                 // Show message and close activity
                 mUtil.showToast("Service was stopped. Please restart from launcher.");
                 finish();
             } else {
                 Log.i(TAG, "MainActivity2.onStart() - Server Not Running - Starting Server");
-                mUtil.writeToSysLogFile("MainActivity2.onStart - Server Not Running - Starting Server");
+                Log.i(TAG, "MainActivity2.onStart - Server Not Running - Starting Server");
                 mUtil.startServer();
                 // Give server a moment to start before binding
                 mHandler.postDelayed(new Runnable() {
@@ -263,7 +263,7 @@ public class MainActivity2 extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
         Log.i(TAG, "onStop() - unbinding from server");
-        mUtil.writeToSysLogFile("MainActivity.onStop()");
+        Log.i(TAG, "MainActivity.onStop()");
         mUtil.unbindFromServer(getApplicationContext(), mConnection);
     }
 
@@ -276,7 +276,7 @@ public class MainActivity2 extends AppCompatActivity {
             mSharedPrefs.unregisterOnSharedPreferenceChangeListener(mModePreferenceListener);
         }
         if (mUtil != null) {
-            mUtil.writeToSysLogFile("MainActivity2.onPause()", "LIFECYCLE");
+            Log.i(TAG, "MainActivity2.onPause()");
         }
 
         // Save the current tab position before detaching
@@ -299,7 +299,7 @@ public class MainActivity2 extends AppCompatActivity {
         super.onResume();
         Log.i(TAG, "onResume()");
         if (mUtil != null) {
-            mUtil.writeToSysLogFile("MainActivity2.onResume()", "LIFECYCLE");
+            Log.i(TAG, "MainActivity2.onResume()");
             mUtil.writeMemoryLog("MainActivity2.onResume");
         }
         if (mSharedPrefs != null && mModePreferenceListener != null) {
@@ -585,7 +585,7 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
     private void startServer() {
-        mUtil.writeToSysLogFile("MainActivity.startServer()");
+        Log.i(TAG, "MainActivity.startServer()");
         Log.i(TAG, "startServer(): starting Server...");
 
         // Clear the user_stopped_service flag since we're starting the service
@@ -596,14 +596,14 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
     private void stopServer() {
-        mUtil.writeToSysLogFile("MainActivity.stopServer()");
+        Log.i(TAG, "MainActivity.stopServer()");
         Log.i(TAG, "stopServer(): stopping Server...");
         mUtil.stopServer();
     }
 
 
     private void showAbout() {
-        mUtil.writeToSysLogFile("MainActivity.showAbout()");
+        Log.i(TAG, "MainActivity.showAbout()");
         View aboutView = getLayoutInflater().inflate(R.layout.about_layout, null, false);
         String versionName = mUtil.getAppVersionName();
         Log.i(TAG, "showAbout() - version name = " + versionName);
@@ -641,7 +641,7 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
     private void showDataSharingDialog() {
-        mUtil.writeToSysLogFile("MainActivity.showDataSharingDialog()");
+        Log.i(TAG, "MainActivity.showDataSharingDialog()");
         View aboutView = getLayoutInflater().inflate(R.layout.data_sharing_dialog_layout, null, false);
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setIcon(R.drawable.datasharing_fault_24x24);
@@ -672,7 +672,7 @@ public class MainActivity2 extends AppCompatActivity {
      */
     private void launchPineTimeUpdater() {
         Log.i(TAG, "launchPineTimeUpdater()");
-        mUtil.writeToSysLogFile("MainActivity2.launchPineTimeUpdater()");
+        Log.i(TAG, "MainActivity2.launchPineTimeUpdater()");
 
         // Package name of the PineTime Updater app
         String pineTimePackageName = "uk.org.openseizuredetector.pinetime";
@@ -728,7 +728,7 @@ public class MainActivity2 extends AppCompatActivity {
                     mUtil.unbindFromServer(getApplicationContext(), mConnection);
                 }
                 mUtil.stopServer();
-                mUtil.writeToSysLogFile("MainActivity2: Stopped SdServer for PineTime firmware update");
+                Log.i(TAG, "MainActivity2: Stopped SdServer for PineTime firmware update");
 
                 // Wait a moment for service to stop, then launch the updater
                 mHandler.postDelayed(new Runnable() {

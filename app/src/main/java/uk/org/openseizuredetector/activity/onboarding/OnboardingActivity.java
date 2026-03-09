@@ -15,7 +15,7 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.preference.PreferenceManager;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -62,7 +62,7 @@ public class OnboardingActivity extends AppCompatActivity {
         
         Log.i(TAG, "onCreate()");
         mUtil = new OsdUtil(this, mHandler);
-        mUtil.writeToSysLogFile("OnboardingActivity.onCreate()", "LIFECYCLE");
+        Log.i(TAG, "OnboardingActivity.onCreate()");
         mUtil.writeMemoryLog("OnboardingActivity.onCreate");
 
         // Show action bar with title
@@ -306,7 +306,7 @@ public class OnboardingActivity extends AppCompatActivity {
         super.onDestroy();
         Log.i(TAG, "onDestroy()");
         if (mUtil != null) {
-            mUtil.writeToSysLogFile("OnboardingActivity.onDestroy()", "LIFECYCLE");
+            Log.i(TAG, "OnboardingActivity.onDestroy()");
             mUtil.writeMemoryLog("OnboardingActivity.onDestroy");
         }
     }

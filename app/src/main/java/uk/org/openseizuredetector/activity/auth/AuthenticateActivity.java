@@ -23,7 +23,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import android.os.Bundle;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -327,7 +327,7 @@ public class AuthenticateActivity extends AppCompatActivity {
                                 } else {
                                     Log.e(TAG, "onOk: Authentication failure for " + uname + ", " + passwd);
                                     mUtil.showToast("ERROR: Authentication Failed - Please Try Again");
-                                    mUtil.writeToSysLogFile("AuthActivity - Authorisation failed for " + uname + ", " + passwd);
+                                    Log.i(TAG, "AuthActivity - Authorisation failed for " + uname + ", " + passwd);
                                 }
                             }
                         });

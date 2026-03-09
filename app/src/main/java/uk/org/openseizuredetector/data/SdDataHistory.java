@@ -21,7 +21,7 @@
 */
 package uk.org.openseizuredetector.data;
 
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import uk.org.openseizuredetector.utils.CircBuf;
 
 /**

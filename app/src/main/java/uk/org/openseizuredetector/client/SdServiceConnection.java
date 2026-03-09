@@ -29,7 +29,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 
 /**

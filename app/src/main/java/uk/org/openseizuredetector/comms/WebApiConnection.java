@@ -4,7 +4,7 @@ import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 import androidx.annotation.NonNull;
 

@@ -37,7 +37,7 @@ import android.os.BatteryManager;
 import android.os.Handler;
 import android.os.Looper;
 import androidx.preference.PreferenceManager;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import android.widget.Toast;
 
 import org.json.JSONArray;
@@ -108,7 +108,7 @@ public abstract class SdDataSource {
 
     public void start() {
         Log.v(TAG, "start()");
-        mUtil.writeToSysLogFile("SdDataSource.start()");
+        Log.i(TAG, "SdDataSource.start()");
         updatePrefs();
         setRunning(true);
 
@@ -152,8 +152,7 @@ public abstract class SdDataSource {
     }
 
     public void stop() {
-        Log.v(TAG, "stop()");
-        mUtil.writeToSysLogFile("SDDataSource.stop()");
+        Log.i(TAG, "stop()");
         try {
             if (mStatusTimer != null) {
                 mStatusTimer.cancel();
@@ -392,7 +391,7 @@ public abstract class SdDataSource {
     }
 
     public void updatePrefs() {
-        mUtil.writeToSysLogFile("SDDataSource.updatePrefs()");
+        Log.i(TAG, "SDDataSource.updatePrefs()");
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(mContext);
         try {
             mAppRestartTimeout = Integer.parseInt(SP.getString("AppRestartTimeout", "SET_FROM_XML"));
@@ -413,8 +412,7 @@ public abstract class SdDataSource {
             mSdData.mO2SatAlarmActive = PreferenceUtils.getBooleanFromXml(SP, "O2SatAlarmActive");
             mSdData.mFallActive = PreferenceUtils.getBooleanFromXml(SP, "FallActive");
         } catch (Exception ex) {
-            Log.v(TAG, "updatePrefs() - Problem parsing preferences! " + ex.toString());
-            mUtil.writeToSysLogFile("SDDataSource.updatePrefs() exception:  " + ex.toString());
+            Log.e(TAG, "updatePrefs() exception:  " + ex.toString());
             mUtil.showToast("SdDataSource: Problem parsing preferences! ");
         }
     }

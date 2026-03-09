@@ -3,7 +3,7 @@ package uk.org.openseizuredetector;
 import android.app.Application;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 import com.rohitss.uceh.UCEHandler;
 
@@ -21,12 +21,12 @@ public class OsdApplication extends Application {
             // Initialize logging as the very first thing in application lifecycle
             Handler mainHandler = new Handler(Looper.getMainLooper());
             sUtils = new OsdUtil(this, mainHandler);
-            
+
             // Apply the user's selected theme (Light/Dark/System)
             Log.d(TAG, "Applying theme");
             OsdUtil.applyTheme(this);
-            
-            sUtils.writeToSysLogFile("OsdApplication.onCreate() - Application starting", "LIFECYCLE");
+
+            Log.i(TAG, "OsdApplication.onCreate() - Application starting");
             sUtils.writeMemoryLog("OsdApplication.onCreate - Application startup");
 
             // Install UCEHandler once for the whole app
@@ -35,7 +35,6 @@ public class OsdApplication extends Application {
                     .build();
 
             Log.i(TAG, "Application initialized successfully");
-            sUtils.writeToSysLogFile("OsdApplication.onCreate() - UCEHandler initialized, application ready", "LIFECYCLE");
         } catch (Throwable t) {
             Log.e(TAG, "Failed to initialise application", t);
         }
@@ -53,7 +52,7 @@ public class OsdApplication extends Application {
         super.onTerminate();
         Log.i(TAG, "onTerminate() - Application terminating");
         if (sUtils != null) {
-            sUtils.writeToSysLogFile("OsdApplication.onTerminate() - Application shutting down", "LIFECYCLE");
+            Log.i(TAG, "OsdApplication.onTerminate() - Application shutting down");
             sUtils.writeMemoryLog("OsdApplication.onTerminate - Final memory status");
         }
     }

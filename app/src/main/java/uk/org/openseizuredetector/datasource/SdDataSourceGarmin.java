@@ -30,7 +30,7 @@ import uk.org.openseizuredetector.webserver.SdWebServer;
 import android.content.Context;
 import android.os.Handler;
 import androidx.preference.PreferenceManager;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 
 /**
@@ -56,7 +56,6 @@ public class SdDataSourceGarmin extends SdDataSource {
      */
     public void start() {
         Log.i(TAG, "start()");
-        mUtil.writeToSysLogFile("SdDataSourceGarmin.start()");
         super.start();
     }
 
@@ -65,7 +64,6 @@ public class SdDataSourceGarmin extends SdDataSource {
      */
     public void stop() {
         Log.i(TAG, "stop()");
-        mUtil.writeToSysLogFile("SdDataSourceGarmin.stop()");
         super.stop();
     }
 }

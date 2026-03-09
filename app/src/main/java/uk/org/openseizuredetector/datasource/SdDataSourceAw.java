@@ -29,7 +29,7 @@ import uk.org.openseizuredetector.datasource.SdDataSourceAw;
 import android.content.Context;
 import android.os.Handler;
 import androidx.preference.PreferenceManager;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
@@ -92,8 +92,7 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
      */
     @Override
     public void start() {
-        Log.v(TAG, "start()");
-        mUtil.writeToSysLogFile("SdDataSourceAw.start()");
+        Log.i(TAG, "start()");
         super.start();
 
         // Register message listener
@@ -108,7 +107,6 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
         sendMessageToWatch(PATH_SEND_SETTINGS, "start".getBytes(StandardCharsets.UTF_8));
 
         Log.v(TAG, "start(): Android Wear message listener registered");
-        mUtil.writeToSysLogFile("SdDataSourceAw.start() - message listener registered");
     }
 
     /**
@@ -117,18 +115,16 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
     @Override
     public void stop() {
         Log.v(TAG, "stop()");
-        mUtil.writeToSysLogFile("SdDataSourceAw.stop()");
 
         try {
             if (mMessageClient != null && mIsStarted) {
                 mMessageClient.removeListener(this);
                 mIsStarted = false;
                 Log.v(TAG, "stop(): message listener removed");
-                mUtil.writeToSysLogFile("SdDataSourceAw.stop() - message listener removed");
+                Log.i(TAG, "SdDataSourceAw.stop() - message listener removed");
             }
         } catch (Exception e) {
             Log.v(TAG, "Error in stop() - " + e.toString());
-            mUtil.writeToSysLogFile("SdDataSourceAw.stop() - error - " + e.toString());
         }
 
         super.stop();
@@ -162,7 +158,6 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
             }
         } catch (Exception e) {
             Log.e(TAG, "Error processing message: " + e.toString());
-            mUtil.writeToSysLogFile("SdDataSourceAw.onMessageReceived() - error: " + e.toString());
         }
     }
 
@@ -381,7 +376,7 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
             mSdData.watchAppRunning = false;
 
             if (tdiff > 60000) {  // 60 seconds - trigger fault
-                mUtil.writeToSysLogFile("SdDataSourceAw.getStatus() - Watch app not responding");
+                Log.w(TAG, "SdDataSourceAw.getStatus() - Watch app not responding");
                 mSdDataReceiver.onSdDataFault(mSdData);
             }
         } else {

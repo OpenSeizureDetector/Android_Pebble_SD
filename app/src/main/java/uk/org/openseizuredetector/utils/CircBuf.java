@@ -1,6 +1,6 @@
 package uk.org.openseizuredetector.utils;
 
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 import java.util.ArrayList;
 

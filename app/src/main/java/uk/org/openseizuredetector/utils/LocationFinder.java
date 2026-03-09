@@ -12,7 +12,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -68,7 +68,6 @@ public class LocationFinder implements LocationListener {
                     0, 0, this, Looper.getMainLooper());
         } catch (SecurityException e) {
             Log.e(TAG, "LocationFinder - Failed to get Location - Security Exception");
-            mUtil.writeToSysLogFile("LocationFinder - Failed to get Location - Security Exception");
             Log.e(TAG, e.toString());
             mUtil.showToast("Failed to get Location for SMS Message - Permissions Denied?");
 
@@ -114,4 +113,3 @@ public class LocationFinder implements LocationListener {
     }
 
 }
-

@@ -2,7 +2,7 @@ package uk.org.openseizuredetector.comms;
 
 import android.content.Context;
 import android.os.Handler;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;

@@ -29,7 +29,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Handler;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 import static java.lang.Math.sqrt;
 
@@ -65,7 +65,7 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
      */
     public void start() {
         Log.i(TAG, "start()");
-        mUtil.writeToSysLogFile("SdDataSourcePhone.start()");
+        Log.i(TAG, "SdDataSourcePhone.start()");
         mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         // SENSOR_DELAY_GAME should give us 20 us delay, which is 50 Hz, so more frequent than we really want (OSD works at 25 Hz)
@@ -78,7 +78,7 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
      */
     public void stop() {
         Log.i(TAG, "stop()");
-        mUtil.writeToSysLogFile("SdDataSourcePhone.stop()");
+        Log.i(TAG, "SdDataSourcePhone.stop()");
         mSensorManager.unregisterListener(this);
 
         super.stop();

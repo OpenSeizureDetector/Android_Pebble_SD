@@ -1,7 +1,7 @@
 package uk.org.openseizuredetector.utils;
 
 import android.content.SharedPreferences;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 /**
  * Utility helpers for accessing SharedPreferences entries that are defined in XML.

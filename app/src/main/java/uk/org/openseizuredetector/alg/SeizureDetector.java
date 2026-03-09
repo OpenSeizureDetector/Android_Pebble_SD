@@ -2,7 +2,7 @@ package uk.org.openseizuredetector.alg;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 import androidx.preference.PreferenceManager;
 

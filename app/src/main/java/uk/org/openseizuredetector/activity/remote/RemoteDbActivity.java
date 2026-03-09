@@ -20,7 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;

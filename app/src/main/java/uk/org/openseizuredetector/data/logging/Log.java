@@ -18,6 +18,9 @@ public final class Log {
     private static volatile Context sContext;
     private static volatile OsdUtil sUtil;
 
+    // Thread-local recursion guard to prevent infinite loops when Log calls OsdUtil which calls Log
+    private static final ThreadLocal<Boolean> sInWriteToFile = ThreadLocal.withInitial(() -> false);
+
     private Log() {
     }
 
@@ -35,6 +38,12 @@ public final class Log {
     public static int d(String tag, String msg) {
         int ret = android.util.Log.d(tag, msg);
         writeToFileIfEnabled("DEBUG", tag, msg, null);
+        return ret;
+    }
+
+    public static int d(String tag, String msg, Throwable tr) {
+        int ret = android.util.Log.d(tag, msg, tr);
+        writeToFileIfEnabled("DEBUG", tag, msg, tr);
         return ret;
     }
 
@@ -69,6 +78,11 @@ public final class Log {
     }
 
     private static void writeToFileIfEnabled(String level, String tag, String msg, Throwable tr) {
+        // Prevent recursion if OsdUtil.writeToSysLogFile internally calls Log
+        if (sInWriteToFile.get()) {
+            return;
+        }
+
         OsdUtil util = sUtil;
         Context context = sContext;
         if (util == null || context == null) {
@@ -79,11 +93,16 @@ public final class Log {
             return;
         }
 
-        String text = tag + ": " + msg;
-        if (tr != null) {
-            text = text + "\n" + android.util.Log.getStackTraceString(tr);
+        try {
+            sInWriteToFile.set(true);
+            String text = tag + ": " + msg;
+            if (tr != null) {
+                text = text + "\n" + android.util.Log.getStackTraceString(tr);
+            }
+            util.writeToSysLogFile(text, level);
+        } finally {
+            sInWriteToFile.set(false);
         }
-        util.writeToSysLogFile(text, level);
     }
 
     private static boolean shouldWriteLevel(String level, Context context) {
@@ -112,4 +131,3 @@ public final class Log {
         }
     }
 }
-

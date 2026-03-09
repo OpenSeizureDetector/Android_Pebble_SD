@@ -28,7 +28,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.DocumentsContract;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;

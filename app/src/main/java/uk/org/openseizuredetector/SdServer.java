@@ -59,7 +59,7 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.service.notification.StatusBarNotification;
 import android.telephony.SmsManager;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 import java.util.Calendar;
 
@@ -246,7 +246,7 @@ public class SdServer extends Service implements SdDataReceiver {
         mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
 
         mUtil = new OsdUtil(getApplicationContext(), mHandler);
-        mUtil.writeToSysLogFile("SdServer.onCreate()");
+        Log.i(TAG, "SdServer.onCreate()");
 
         // Create a wake lock, but don't use it until the service is started.
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
@@ -266,7 +266,7 @@ public class SdServer extends Service implements SdDataReceiver {
         // Display a notification icon in the status bar of the phone to
         // show the service is running.
         Log.v(TAG, "showing Notification and calling startForeground");
-        mUtil.writeToSysLogFile("SdServer.onCreate() - showing Notification and calling startForeground");
+        Log.i(TAG, "SdServer.onCreate() - showing Notification and calling startForeground");
         showNotification(0);
 
         // Check for required permissions before starting foreground service (Android 12+)
@@ -293,7 +293,6 @@ public class SdServer extends Service implements SdDataReceiver {
                     // Permissions not granted - should not reach here as StartupActivity should have exited
                     // But if we do get here, throw exception to alert
                     Log.e(TAG, "FATAL: Health foreground service permissions not granted for Phone Datasource!");
-                    mUtil.writeToSysLogFile("FATAL: SdServer.onCreate() - Health permissions not granted for Phone Datasource");
                     throw new SecurityException("Health foreground service permissions not granted - app should have exited in StartupActivity");
                 }
             } else {
@@ -342,7 +341,7 @@ public class SdServer extends Service implements SdDataReceiver {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "onStartCommand() - SdServer service starting");
-        mUtil.writeToSysLogFile("SdServer.onStartCommand()", "LIFECYCLE");
+        Log.i(TAG, "SdServer.onStartCommand()");
 
         // Track service start time for watchdog
         mServiceStartMillis = System.currentTimeMillis();
@@ -358,12 +357,12 @@ public class SdServer extends Service implements SdDataReceiver {
         if (mSdDataSource != null) {
             try {
                 Log.i(TAG, "onStartCommand() - Stopping existing SdDataSource instance to prevent duplicates");
-                mUtil.writeToSysLogFile("onStartCommand() - Stopping existing SdDataSource instance");
+                Log.i(TAG, "onStartCommand() - Stopping existing SdDataSource instance");
                 mSdDataSource.stop();
                 mSdDataSource = null;
             } catch (Exception e) {
                 Log.e(TAG, "Error stopping existing SdDataSource: " + e.getMessage());
-                mUtil.writeToSysLogFile("ERROR: Failed to stop SdDataSource: " + e.getMessage());
+                Log.i(TAG, "ERROR: Failed to stop SdDataSource: " + e.getMessage());
             }
         }
 
@@ -373,46 +372,37 @@ public class SdServer extends Service implements SdDataReceiver {
         switch (mSdDataSourceName) {
             case "Pebble":
                 Log.i(TAG, "Selecting Pebble DataSource");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePebble");
                 mSdDataSource = new SdDataSourcePebble(this.getApplicationContext(), mHandler, this);
                 break;
             case "AndroidWear":
                 Log.i(TAG, "Selecting Android Wear DataSource");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceAw");
                 mSdDataSource = new SdDataSourceAw(this.getApplicationContext(), mHandler, this);
                 break;
             case "Network":
                 Log.i(TAG, "Selecting Network DataSource");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceNetwork");
                 mSdDataSource = new SdDataSourceNetwork(this.getApplicationContext(), mHandler, this);
                 Log.i(TAG, "Disabling remote logging when using network data source");
                 mLogDataRemote = false;
                 break;
             case "Garmin":
                 Log.i(TAG, "Selecting Garmin DataSource");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceGarmin");
                 mSdDataSource = new SdDataSourceGarmin(this.getApplicationContext(), mHandler, this);
                 break;
             case "BLE":
                 Log.i(TAG, "Selecting BLE DataSource");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceBLE");
                 mSdDataSource = new SdDataSourceBLE(this.getApplicationContext(), mHandler, this);
                 break;
             case "BLE2":
                 Log.i(TAG, "Selecting BLE2 DataSource");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourceBLE2");
                 mSdDataSource = new SdDataSourceBLE2(this.getApplicationContext(), mHandler, this);
                 break;
             case "Phone":
                 Log.i(TAG, "Selecting Phone Sensor DataSource");
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePhone");
                 mSdDataSource = new SdDataSourcePhone(this.getApplicationContext(), mHandler, this);
                 break;
             default:
                 Log.e(TAG, "Datasource " + mSdDataSourceName + " not recognised - Defaulting to Phone");
-                //mUtil.writeToSysLogFile("SdServer.onStartCommand() - Datasource " + mSdDataSourceName + " not recognised - exiting");
                 mUtil.showToast(getString(R.string.DatasourceTitle) + " " + mSdDataSourceName + getString(R.string.DefaultingToPhoneMsg));
-                mUtil.writeToSysLogFile("SdServer.onStartCommand() - creating SdDataSourcePhone");
                 mSdDataSource = new SdDataSourcePhone(this.getApplicationContext(), mHandler, this);
         }
 
@@ -427,7 +417,7 @@ public class SdServer extends Service implements SdDataReceiver {
         // Initialize SeizureDetector for coordinating all seizure detection algorithms
         mSeizureDetector = new SeizureDetector(getApplicationContext());
         Log.i(TAG, "onStartCommand() - SeizureDetector initialized");
-        mUtil.writeToSysLogFile("SdServer.onStartCommand() - SeizureDetector initialized");
+        Log.i(TAG, "SdServer.onStartCommand() - SeizureDetector initialized");
 
 
 
@@ -447,7 +437,7 @@ public class SdServer extends Service implements SdDataReceiver {
                         Log.d(TAG, "onHistoryLoaded() callback invoked with success=" + success);
                         if (success) {
                             Log.i(TAG, "CircBuf history loaded successfully into SdDataHistory");
-                            mUtil.writeToSysLogFile("SdServer - CircBuf history restored from database");
+                            Log.i(TAG, "SdServer - CircBuf history restored from database");
                         } else {
                             Log.i(TAG, "No history data found in database (first run or empty DB)");
                         }
@@ -466,7 +456,7 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "Creating LocationFinder");
             mLocationFinder = new LocationFinder(getApplicationContext());
         }
-        mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting SdDataSource");
+        Log.i(TAG, "SdServer.onStartCommand() - starting SdDataSource");
         mSdDataSource.start();
 
 
@@ -479,7 +469,7 @@ public class SdServer extends Service implements SdDataReceiver {
         /*
         if (dataLogTimer == null) {
             Log.v(TAG, "onStartCommand(): starting dataLog timer");
-            mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting dataLog timer");
+            Log.i(TAG, "SdServer.onStartCommand() - starting dataLog timer");
             dataLogTimer = new Timer();
             dataLogTimer.schedule(new TimerTask() {
                 @Override
@@ -491,7 +481,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         } else {
             Log.v(TAG, "onStartCommand(): dataLog timer already running.");
-            mUtil.writeToSysLogFile("SdServer.onStartCommand() - dataLog timer already running???");
+            Log.i(TAG, "SdServer.onStartCommand() - dataLog timer already running???");
         }
         */
 
@@ -510,17 +500,17 @@ public class SdServer extends Service implements SdDataReceiver {
         }
 
         // Start the web server
-        mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting web server");
+        Log.i(TAG, "SdServer.onStartCommand() - starting web server");
         startWebServer();
 
         // Apply the wake-lock to prevent CPU sleeping (very battery intensive!)
         if (mWakeLock != null) {
             mWakeLock.acquire();
             Log.v(TAG, "Applied Wake Lock to prevent device sleeping");
-            mUtil.writeToSysLogFile("SdServer.onStartCommand() - applying wake lock");
+            Log.i(TAG, "SdServer.onStartCommand() - applying wake lock");
         } else {
             Log.d(TAG, "mmm...mWakeLock is null, so not aquiring lock.  This shouldn't happen!");
-            mUtil.writeToSysLogFile("SdServer.onStartCommand() - mWakeLock is not null - this shouldn't happen???");
+            Log.i(TAG, "SdServer.onStartCommand() - mWakeLock is not null - this shouldn't happen???");
         }
 
         checkEvents();
@@ -528,7 +518,7 @@ public class SdServer extends Service implements SdDataReceiver {
         // Start watchdog thread to detect silent failures
         if (mWatchdogThread == null || !mWatchdogThread.isAlive()) {
             Log.i(TAG, "onStartCommand(): Starting watchdog thread");
-            mUtil.writeToSysLogFile("SdServer.onStartCommand() - starting watchdog thread");
+            Log.i(TAG, "SdServer.onStartCommand() - starting watchdog thread");
             mWatchdogThread = new WatchdogThread();
             mWatchdogThread.start();
             mLastWatchdogHeartbeatMillis = System.currentTimeMillis();
@@ -542,11 +532,11 @@ public class SdServer extends Service implements SdDataReceiver {
 
     @Override
     public void onDestroy() {
-        mUtil.writeToSysLogFile("SdServer.onDestroy()", "LIFECYCLE");
+        Log.i(TAG, "SdServer.onDestroy()");
         mUtil.writeMemoryLog("SdServer.onDestroy");
 
         Log.i(TAG, "onDestroy(): SdServer Service stopping");
-        mUtil.writeToSysLogFile("SdServer.onDestroy() - releasing wakelock");
+        Log.i(TAG, "SdServer.onDestroy() - releasing wakelock");
 
         // Set flag to prevent notifications and other actions during shutdown
         mIsDestroying = true;
@@ -559,17 +549,17 @@ public class SdServer extends Service implements SdDataReceiver {
                 Log.d(TAG, "Released Wake Lock to allow device to sleep.");
             } catch (Exception e) {
                 Log.e(TAG, "Error Releasing Wakelock - " + e.toString());
-                mUtil.writeToSysLogFile("SdServer.onDestroy() - Error releasing wakelock.");
+                Log.i(TAG, "SdServer.onDestroy() - Error releasing wakelock.");
                 mUtil.showToast(getString(R.string.ErrorReleasingWakelockMsg));
             }
         } else {
             Log.d(TAG, "mmm...mWakeLock is null, so not releasing lock.  This shouldn't happen!");
-            mUtil.writeToSysLogFile("SdServer.onDestroy() - mWakeLock is null so not releasing lock - this Shouldn't happen???");
+            Log.i(TAG, "SdServer.onDestroy() - mWakeLock is null so not releasing lock - this Shouldn't happen???");
         }
 
         if (mSdDataSource != null) {
             Log.d(TAG, "stopping mSdDataSource");
-            mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping mSdDataSource");
+            Log.i(TAG, "SdServer.onDestroy() - stopping mSdDataSource");
 
             // Stop datasource in a separate thread with timeout to prevent blocking
             final Thread stopThread = new Thread(() -> {
@@ -588,7 +578,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 stopThread.join(6000); // Wait max 6 seconds for stop to complete
                 if (stopThread.isAlive()) {
                     Log.w(TAG, "onDestroy(): datasource stop timed out, continuing with shutdown");
-                    mUtil.writeToSysLogFile("SdServer.onDestroy() - datasource stop timed out");
+                    Log.i(TAG, "SdServer.onDestroy() - datasource stop timed out");
                     stopThread.interrupt();
                 }
             } catch (InterruptedException e) {
@@ -596,7 +586,7 @@ public class SdServer extends Service implements SdDataReceiver {
             }
         } else {
             Log.e(TAG, "ERROR - mSdDataSource is null - why????");
-            mUtil.writeToSysLogFile("SdServer.onDestroy() - mSdDataSource is null - why???");
+            Log.i(TAG, "SdServer.onDestroy() - mSdDataSource is null - why???");
         }
 
         // Close the SeizureDetector
@@ -617,7 +607,7 @@ public class SdServer extends Service implements SdDataReceiver {
         // Stop the watchdog thread
         if (mWatchdogThread != null) {
             Log.d(TAG, "onDestroy(): stopping watchdog thread");
-            mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping watchdog thread");
+            Log.i(TAG, "SdServer.onDestroy() - stopping watchdog thread");
             mWatchdogThread.shutdown();
             try {
                 mWatchdogThread.join(2000); // Wait max 2 seconds
@@ -660,28 +650,28 @@ public class SdServer extends Service implements SdDataReceiver {
         try {
             // Stop web server
             Log.d(TAG, "onDestroy(): stopping web server");
-            mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping Web Server");
+            Log.i(TAG, "SdServer.onDestroy() - stopping Web Server");
             stopWebServer();
 
-            mUtil.writeToSysLogFile("SdServer.onDestroy() - releasing mToneGenerator");
+            Log.i(TAG, "SdServer.onDestroy() - releasing mToneGenerator");
             mToneGenerator.release();
             mToneGenerator = null;
 
             this.stopForeground(STOP_FOREGROUND_REMOVE);
             // Cancel the notification.
             Log.d(TAG, "onDestroy(): cancelling notification");
-            mUtil.writeToSysLogFile("SdServer.onDestroy - cancelling notification");
+            Log.i(TAG, "SdServer.onDestroy - cancelling notification");
             mNM.cancel(NOTIFICATION_ID);
 
 
             // stop this service.
             Log.d(TAG, "onDestroy(): calling stopSelf()");
-            mUtil.writeToSysLogFile("SdServer.onDestroy() - stopping self");
+            Log.i(TAG, "SdServer.onDestroy() - stopping self");
             stopSelf();
 
         } catch (Exception e) {
             Log.e(TAG, "Error in onDestroy() - " + e.toString());
-            mUtil.writeToSysLogFile("SdServer.onDestroy() -error " + e.toString());
+            Log.i(TAG, "SdServer.onDestroy() -error " + e.toString());
         }
 
         if (mLm != null) {
@@ -814,7 +804,7 @@ public class SdServer extends Service implements SdDataReceiver {
     // Show the main activity on the user's screen.
     private void showMainActivity() {
         Log.i(TAG, "showMainActivity()");
-        mUtil.writeToSysLogFile("SdServer.showMainActivity()");
+        Log.i(TAG, "SdServer.showMainActivity()");
 
         ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
         // getRunningTasks is deprecated but still works for detecting our own app's state
@@ -826,7 +816,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
             if (componentInfo.getPackageName().equals("uk.org.openseizuredetector")) {
                 Log.i(TAG, "showMainActivity(): OpenSeizureDetector Activity is already shown on top - not doing anything");
-                mUtil.writeToSysLogFile("SdServer.showMainActivity - Activity is already shown on top, not doing anything");
+                Log.i(TAG, "SdServer.showMainActivity - Activity is already shown on top, not doing anything");
             } else {
                 Log.i(TAG, "showMainActivity(): Showing Main Activity");
                 Intent i;
@@ -864,7 +854,7 @@ public class SdServer extends Service implements SdDataReceiver {
         Log.v(TAG, "onSdDataReceived(), sdData.fallAlarmStanding=" + sdData.fallAlarmStanding);
 
         // Enhanced logging for diagnostics
-        mUtil.writeToSysLogFile("DATA_RX: alarmState=" + sdData.alarmState +
+        Log.i(TAG, "DATA_RX: alarmState=" + sdData.alarmState +
                 ", HR=" + sdData.mHR +
                 ", thread=" + Thread.currentThread().getName());
 
@@ -879,7 +869,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     int alarmState = mSeizureDetector.processData(sdData);
                     sdData.alarmState = alarmState;
                     Log.v(TAG, "onSdDataReceived() - SeizureDetector returned alarmState=" + alarmState);
-                    mUtil.writeToSysLogFile("SeizureDetector: alarmState=" + alarmState);
+                    Log.i(TAG, "SeizureDetector: alarmState=" + alarmState);
                 }
             }
         } else{
@@ -887,7 +877,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 Log.e(TAG, "onSdDataReceived() - received data after shutting down seizuredetector - ignoring");
             } else {
                 Log.e(TAG, "onSdDataReceived() - mSeizureDetector is null!");
-                mUtil.writeToSysLogFile("ERROR: SeizureDetector is null in onSdDataReceived()");
+                Log.i(TAG, "ERROR: SeizureDetector is null in onSdDataReceived()");
                 mUtil.showToast("ERROR- Seizure Detector Not Initialised - this should not happen!");
             }
         }
@@ -1162,7 +1152,7 @@ public class SdServer extends Service implements SdDataReceiver {
             return;
         }
         Log.e(TAG, "*** onSdDataFault() CALLED - FAULT DETECTED ***");
-        mUtil.writeToSysLogFile("FAULT_DETECTED: onSdDataFault called, alarmState=" + sdData.alarmState +
+        Log.i(TAG, "FAULT_DETECTED: onSdDataFault called, alarmState=" + sdData.alarmState +
                                 ", thread=" + Thread.currentThread().getName());
 
         Log.v(TAG, "onSdDataFault()");
@@ -1188,7 +1178,7 @@ public class SdServer extends Service implements SdDataReceiver {
         // flag.
         if (mFaultTimerCompleted) {
             Log.e(TAG, "FAULT: Timer completed - emitting fault warning");
-            mUtil.writeToSysLogFile("FAULT: Timer completed - calling faultWarningBeep()");
+            Log.i(TAG, "FAULT: Timer completed - calling faultWarningBeep()");
             faultWarningBeep();
             // Re-start the data source to attempt recovery
             // Only restart if:
@@ -1197,7 +1187,7 @@ public class SdServer extends Service implements SdDataReceiver {
             long timeSinceLastRestart = System.currentTimeMillis() - mLastDatasourceRestartMillis;
             if (!mDataSourceRestartInProgress && timeSinceLastRestart > 60000) {
                 Log.w(TAG, "FAULT: Attempting to restart data source to recover from fault");
-                mUtil.writeToSysLogFile("FAULT: Restarting datasource to recover");
+                Log.i(TAG, "FAULT: Restarting datasource to recover");
                 mDataSourceRestartInProgress = true;
                 mLastDatasourceRestartMillis = System.currentTimeMillis();
 
@@ -1205,27 +1195,27 @@ public class SdServer extends Service implements SdDataReceiver {
                     public void run() {
                         try {
                             Log.w(TAG, "FAULT: Stopping data source for restart");
-                            mUtil.writeToSysLogFile("FAULT: Stopping datasource");
+                            Log.i(TAG, "FAULT: Stopping datasource");
                             if (mSdDataSource != null) {
                                 mSdDataSource.stop();
                             }
                         } catch (Exception e) {
                             Log.e(TAG, "FAULT: Error stopping datasource: " + e.getMessage());
-                            mUtil.writeToSysLogFile("FAULT: Error stopping datasource: " + e.getMessage());
+                            Log.i(TAG, "FAULT: Error stopping datasource: " + e.getMessage());
                         }
 
                         mHandler.postDelayed(new Runnable() {
                             public void run() {
                                 try {
                                     Log.w(TAG, "FAULT: Restarting data source");
-                                    mUtil.writeToSysLogFile("FAULT: Restarting datasource");
+                                    Log.i(TAG, "FAULT: Restarting datasource");
                                     if (mSdDataSource != null) {
                                         mSdDataSource.start();
                                         mLastDataReceivedMillis = System.currentTimeMillis(); // Reset watchdog timer
                                     }
                                 } catch (Exception e) {
                                     Log.e(TAG, "FAULT: Error restarting datasource: " + e.getMessage());
-                                    mUtil.writeToSysLogFile("FAULT: Error restarting datasource: " + e.getMessage());
+                                    Log.i(TAG, "FAULT: Error restarting datasource: " + e.getMessage());
                                 } finally {
                                     mDataSourceRestartInProgress = false;
                                 }
@@ -1236,16 +1226,16 @@ public class SdServer extends Service implements SdDataReceiver {
             } else {
                 if (mDataSourceRestartInProgress) {
                     Log.w(TAG, "FAULT: Datasource restart already in progress, skipping");
-                    mUtil.writeToSysLogFile("FAULT: Datasource restart already in progress");
+                    Log.i(TAG, "FAULT: Datasource restart already in progress");
                 } else {
                     Log.w(TAG, "FAULT: Last restart was " + (timeSinceLastRestart/1000) + "s ago, skipping to prevent restart loop");
-                    mUtil.writeToSysLogFile("FAULT: Skipping restart (too soon - " + (timeSinceLastRestart/1000) + "s)");
+                    Log.i(TAG, "FAULT: Skipping restart (too soon - " + (timeSinceLastRestart/1000) + "s)");
                 }
             }
         } else {
             startFaultTimer();
             Log.v(TAG, "onSdDataFault() - starting Fault Timer");
-            mUtil.writeToSysLogFile("onSdDataFault() - starting Fault Timer");
+            Log.i(TAG, "onSdDataFault() - starting Fault Timer");
         }
 
         showNotification(-1);
@@ -1263,7 +1253,7 @@ public class SdServer extends Service implements SdDataReceiver {
         } else {
             mUtil.showToast(getString(R.string.PleaseForceStopOSDorRebootMsg));
             Log.v(TAG, "beep() - Warming mToneGenerator is null - not beeping!!!");
-            mUtil.writeToSysLogFile("SdServer.beep() - mToneGenerator is null???");
+            Log.i(TAG, "SdServer.beep() - mToneGenerator is null???");
         }
     }
 
@@ -1281,7 +1271,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     beep(10);
                 }
                 Log.v(TAG, "faultWarningBeep()");
-                mUtil.writeToSysLogFile("SdServer.faultWarningBeep() - beeping");
+                Log.i(TAG, "SdServer.faultWarningBeep() - beeping");
             } else {
                 Log.v(TAG, "faultWarningBeep() - silent...");
             }
@@ -1304,7 +1294,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     beep(3000);
                 }
                 Log.v(TAG, "alarmBeep()");
-                mUtil.writeToSysLogFile("SdServer.alarmBeep() - beeping");
+                Log.i(TAG, "SdServer.alarmBeep() - beeping");
             } else {
                 Log.v(TAG, "alarmBeep() - silent...");
             }
@@ -1325,7 +1315,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     beep(100);
                 }
                 Log.v(TAG, "warningBeep()");
-                mUtil.writeToSysLogFile("SdServer.warningBeep() - beeping");
+                Log.i(TAG, "SdServer.warningBeep() - beeping");
             } else {
                 Log.v(TAG, "warningBeep() - silent...");
             }
@@ -1375,7 +1365,7 @@ public class SdServer extends Service implements SdDataReceiver {
         if (mSMSAlarm) {
             if (!mCancelAudible) {
                 Log.i(TAG, "sendFalseAlarmsSMS() - Sending to " + mSMSNumbers.length + " Numbers");
-                mUtil.writeToSysLogFile("SdServer.sendFalseAlarmsSMS()");
+                Log.i(TAG, "SdServer.sendFalseAlarmsSMS()");
                 Calendar cal = Calendar.getInstance();
                 String dateStr = String.format("%02d:%02d:%02d %02d/%02d/%04d",
                         cal.get(Calendar.HOUR_OF_DAY),
@@ -1560,7 +1550,7 @@ public class SdServer extends Service implements SdDataReceiver {
      */
     protected void startWebServer() {
         Log.i(TAG, "startWebServer()");
-        mUtil.writeToSysLogFile("SdServer.Start Web Server.");
+        Log.i(TAG, "SdServer.Start Web Server.");
         if (webServer == null) {
             webServer = new SdWebServer(getApplicationContext(), mSdData, this);
             try {
@@ -1585,14 +1575,14 @@ public class SdServer extends Service implements SdDataReceiver {
         if (webServer != null) {
             webServer.stop();
             if (webServer == null) {
-                mUtil.writeToSysLogFile("stopWebServer() - server null - server died ok");
+                Log.i(TAG, "stopWebServer() - server null - server died ok");
                 Log.v(TAG, "stopWebServer() - server null - server died ok");
             } else {
                 if (webServer.isAlive()) {
                     Log.w(TAG, "stopWebServer() - server still alive???");
-                    mUtil.writeToSysLogFile("stopWebServer() - server still alive???");
+                    Log.i(TAG, "stopWebServer() - server still alive???");
                 } else {
-                    mUtil.writeToSysLogFile("stopWebServer() - server died ok");
+                    Log.i(TAG, "stopWebServer() - server died ok");
                     Log.v(TAG, "stopWebServer() - server died ok");
                 }
             }
@@ -1604,7 +1594,7 @@ public class SdServer extends Service implements SdDataReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.v(TAG, "NetworkBroadCastReceiver.onReceive");
-            mUtil.writeToSysLogFile("NetworkBroadcastReceiver.onReceive(): Network State Changed" + intent.getAction());
+            Log.i(TAG, "NetworkBroadcastReceiver.onReceive(): Network State Changed" + intent.getAction());
             //mUtil.showToast("Network State Changed" + intent.getAction());
 
             ConnectivityManager cm =
@@ -1627,28 +1617,28 @@ public class SdServer extends Service implements SdDataReceiver {
             if (isConnected) {
                 if (!isWiFi) {
                     Log.v(TAG, "NetworkBroadcastReceiver - no Wifi Connection");
-                    mUtil.writeToSysLogFile("Network State Changed - no Wifi Connection");
+                    Log.i(TAG, "Network State Changed - no Wifi Connection");
                     //mUtil.showToast(getString(R.string.no_wifi_connection));
                     // If mobile data logging is enabled, trigger upload
                     if (mLogDataRemoteMobile && mLm != null) {
                         Log.i(TAG, "NetworkBroadcastReceiver - Mobile data connected and remote mobile logging enabled - triggering upload");
-                        mUtil.writeToSysLogFile("NetworkBroadcastReceiver - triggering upload on mobile data");
+                        Log.i(TAG, "NetworkBroadcastReceiver - triggering upload on mobile data");
                         mLm.triggerImmediateUpload();
                     }
                 } else {
                     Log.v(TAG, "NetworkBroadcastReceiver - Wifi Connected");
-                    mUtil.writeToSysLogFile("Network State Changed - Wifi Connected");
+                    Log.i(TAG, "Network State Changed - Wifi Connected");
                     //mUtil.showToast("Network State Changed - Wifi Connected");
                     // Trigger immediate upload when WiFi becomes available
                     if (mLm != null) {
                         Log.i(TAG, "NetworkBroadcastReceiver - WiFi connected - triggering upload");
-                        mUtil.writeToSysLogFile("NetworkBroadcastReceiver - triggering upload on WiFi connection");
+                        Log.i(TAG, "NetworkBroadcastReceiver - triggering upload on WiFi connection");
                         mLm.triggerImmediateUpload();
                     }
                 }
             } else {
                 Log.v(TAG, "NetworkBroadcastReceiver - No Active Network");
-                mUtil.writeToSysLogFile("Network State Changed - No Active Network");
+                Log.i(TAG, "Network State Changed - No Active Network");
                 //mUtil.showToast(getString(R.string.no_active_network));
             }
         }
@@ -1677,65 +1667,65 @@ public class SdServer extends Service implements SdDataReceiver {
      */
     public void updatePrefs() {
         Log.i(TAG, "updatePrefs()");
-        mUtil.writeToSysLogFile("SdServer.updatePrefs()");
+        Log.i(TAG, "SdServer.updatePrefs()");
 
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
         try {
             mSdDataSourceName = SP.getString("DataSource", "SET_FROM_XML");
             Log.v(TAG, "updatePrefs() - DataSource = " + mSdDataSourceName);
-            mUtil.writeToSysLogFile("updatePrefs() - DataSource = " + mSdDataSourceName);
+            Log.i(TAG, "updatePrefs() - DataSource = " + mSdDataSourceName);
             mLatchAlarms = SP.getBoolean("LatchAlarms", false);
             Log.v(TAG, "updatePrefs() - mLatchAlarms = " + mLatchAlarms);
-            mUtil.writeToSysLogFile("updatePrefs() - mLatchAlarms = " + mLatchAlarms);
+            Log.i(TAG, "updatePrefs() - mLatchAlarms = " + mLatchAlarms);
             // Parse the LatchAlarmPeriod setting.
             try {
                 String latchAlarmPeriodStr = SP.getString("LatchAlarmTimerPeriod", "SET_FROM_XML");
                 mLatchAlarmPeriod = Integer.parseInt(latchAlarmPeriodStr);
                 Log.v(TAG, "updatePrefs() - mLatchAlarmTimerPeriod = " + mLatchAlarmPeriod);
-                mUtil.writeToSysLogFile("updatePrefs() - mLatchAlarmTimerPeriod = " + mLatchAlarmPeriod);
+                Log.i(TAG, "updatePrefs() - mLatchAlarmTimerPeriod = " + mLatchAlarmPeriod);
             } catch (Exception ex) {
                 Log.v(TAG, "updatePrefs() - Problem with LatchAlarmTimerPeriod preference!");
-                mUtil.writeToSysLogFile("updatePrefs() - Problem with LatchAlarmTimerPeriod preference!");
+                Log.i(TAG, "updatePrefs() - Problem with LatchAlarmTimerPeriod preference!");
                 mUtil.showToast(getString(R.string.problem_parsing_preferences));
             }
             mAudibleFaultWarning = SP.getBoolean("AudibleFaultWarning", true);
             Log.v(TAG, "updatePrefs() - mAuidbleFaultWarning = " + mAudibleFaultWarning);
-            mUtil.writeToSysLogFile("updatePrefs() - mAuidbleFaultWarning = " + mAudibleFaultWarning);
+            Log.i(TAG, "updatePrefs() - mAuidbleFaultWarning = " + mAudibleFaultWarning);
             // Parse the faultTimer period setting.
             try {
                 String faultTimerPeriodStr = SP.getString("FaultTimerPeriod", "SET_FROM_XML");
                 mFaultTimerPeriod = Integer.parseInt(faultTimerPeriodStr);
                 Log.v(TAG, "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
-                mUtil.writeToSysLogFile("updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
+                Log.i(TAG, "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
             } catch (Exception ex) {
                 Log.v(TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!");
-                mUtil.writeToSysLogFile("updatePrefs() - Problem with FaultTimerPeriod preference!");
+                Log.i(TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!");
                 mUtil.showToast(getString(R.string.problem_parsing_preferences));
             }
 
             mAudibleAlarm = SP.getBoolean("AudibleAlarm", true);
             Log.v(TAG, "updatePrefs() - mAudibleAlarm = " + mAudibleAlarm);
-            mUtil.writeToSysLogFile("updatePrefs() - mAudibleAlarm = " + mAudibleAlarm);
+            Log.i(TAG, "updatePrefs() - mAudibleAlarm = " + mAudibleAlarm);
             mAudibleWarning = SP.getBoolean("AudibleWarning", true);
             Log.v(TAG, "updatePrefs() - mAudibleWarning = " + mAudibleWarning);
-            mUtil.writeToSysLogFile("updatePrefs() - mAudibleWarning = " + mAudibleWarning);
+            Log.i(TAG, "updatePrefs() - mAudibleWarning = " + mAudibleWarning);
             mMp3Alarm = SP.getBoolean("UseMp3Alarm", false);
             Log.v(TAG, "updatePrefs() - mMp3Alarm = " + mMp3Alarm);
-            mUtil.writeToSysLogFile("updatePrefs() - mMp3Alarm = " + mMp3Alarm);
+            Log.i(TAG, "updatePrefs() - mMp3Alarm = " + mMp3Alarm);
 
             mSMSAlarm = PreferenceUtils.getBooleanFromXml(SP, "SMSAlarm");
             Log.v(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
-            mUtil.writeToSysLogFile("updatePrefs() - mSMSAlarm = " + mSMSAlarm);
+            Log.i(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             mPhoneAlarm = SP.getBoolean("PhoneCallAlarm", false);
             Log.v(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
-            mUtil.writeToSysLogFile("updatePrefs() - mSMSAlarm = " + mSMSAlarm);
+            Log.i(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             String SMSNumberStr = SP.getString("SMSNumbers", "SET_FROM_XML");
             mSMSNumbers = SMSNumberStr.split(",");
             Log.v(TAG, "updatePrefs() - SMSNumberStr = " + SMSNumberStr);
-            mUtil.writeToSysLogFile("updatePrefs() - SMSNumberStr = " + SMSNumberStr);
+            Log.i(TAG, "updatePrefs() - SMSNumberStr = " + SMSNumberStr);
             Log.v(TAG, "updatePrefs() - mSMSNumbers = " + mSMSNumbers);
-            mUtil.writeToSysLogFile("updatePrefs() - mSMSNumbers = " + mSMSNumbers);
+            Log.i(TAG, "updatePrefs() - mSMSNumbers = " + mSMSNumbers);
             mSMSMsgStr = SP.getString("SMSMsg", "SET_FROM_XML");
             Log.v(TAG, "updatePrefs() - SMSMsgStr = " + mSMSMsgStr);
             mSMSFalseAlarmMsgStr = SP.getString("SMSFalseAlarmMsg", "SET_FROM_XML");
@@ -1746,23 +1736,23 @@ public class SdServer extends Service implements SdDataReceiver {
 
             mLogAlarms = SP.getBoolean("LogAlarms", true);
             Log.v(TAG, "updatePrefs() - mLogAlarms = " + mLogAlarms);
-            mUtil.writeToSysLogFile("updatePrefs() - mLogAlarms = " + mLogAlarms);
+            Log.i(TAG, "updatePrefs() - mLogAlarms = " + mLogAlarms);
             //mLogData = SP.getBoolean("LogData", true);
             mLogData = true;
             Log.v(TAG, "SdServer.updatePrefs() - mLogData = " + mLogData);
-            mUtil.writeToSysLogFile("updatePrefs() - mLogData = " + mLogData);
+            Log.i(TAG, "updatePrefs() - mLogData = " + mLogData);
             //mLogDataRemote = SP.getBoolean("LogDataRemote", false);
             mLogDataRemote = true;
             Log.v(TAG, "updatePrefs() - mLogDataRemote = " + mLogDataRemote);
-            mUtil.writeToSysLogFile("updatePrefs() - mLogDataRemote = " + mLogDataRemote);
+            Log.i(TAG, "updatePrefs() - mLogDataRemote = " + mLogDataRemote);
             mLogDataRemoteMobile = PreferenceUtils.getBooleanFromXml(SP, "LogDataRemoteMobile");
             Log.v(TAG, "updatePrefs() - mLogDataRemoteMobile = " + mLogDataRemoteMobile);
             mLogNDA = PreferenceUtils.getBooleanFromXml(SP, "LogNDA");
             Log.v(TAG, "updatePrefs() - mLogNDA = " + mLogNDA);
-            mUtil.writeToSysLogFile("updatePrefs() - mLogDataRemoteMobile = " + mLogDataRemoteMobile);
+            Log.i(TAG, "updatePrefs() - mLogDataRemoteMobile = " + mLogDataRemoteMobile);
             mAuthToken = SP.getString("webApiAuthToken", null);
             Log.v(TAG, "updatePrefs() - mAuthToken = " + mAuthToken);
-            mUtil.writeToSysLogFile("updatePrefs() - mAuthToken = " + mAuthToken);
+            Log.i(TAG, "updatePrefs() - mAuthToken = " + mAuthToken);
 
             String prefVal;
             prefVal = SP.getString("EventDurationSec", "SET_FROM_XML");
@@ -1789,7 +1779,7 @@ public class SdServer extends Service implements SdDataReceiver {
             //Log.v(TAG, "updatePrefs() - mOSDWearerId = " + mOSDWearerId);
             mOSDUrl = SP.getString("OSDUrl", "SET_FROM_XML");
             Log.v(TAG, "updatePrefs() - mOSDUrl = " + mOSDUrl);
-            mUtil.writeToSysLogFile("updatePrefs() - mOSDUrl = " + mOSDUrl);
+            Log.i(TAG, "updatePrefs() - mOSDUrl = " + mOSDUrl);
 
             // ML Model Update Check Period
             prefVal = SP.getString("MlModelUpdateCheckPeriod", "SET_FROM_XML");
@@ -1806,7 +1796,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         } catch (Exception ex) {
             Log.v(TAG, "updatePrefs() - Problem parsing preferences!" + ex.toString());
-            mUtil.writeToSysLogFile("SdServer.updatePrefs() - Error " + ex.toString());
+            Log.i(TAG, "SdServer.updatePrefs() - Error " + ex.toString());
             mUtil.showToast(getString(R.string.problem_parsing_preferences));
             faultWarningBeep();
         }
@@ -1891,7 +1881,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 mUtil.showToast(getString(R.string.mLocationFinder_is_null_msg));
             }
             Log.i(TAG, "SmsTimer.onFinish() - Sending to " + mSMSNumbers.length + " Numbers");
-            mUtil.writeToSysLogFile("SdServer.SmsTimer.onFinish()");
+            Log.i(TAG, "SdServer.SmsTimer.onFinish()");
             Calendar cal = Calendar.getInstance();
             String dateStr = String.format("%02d:%02d:%02d %02d/%02d/%04d",
                     cal.get(Calendar.HOUR_OF_DAY),
@@ -1934,7 +1924,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 }
             } catch (Exception e) {
                 Log.e(TAG, "sendSMS - Failed to send SMS Message");
-                mUtil.writeToSysLogFile("sendSMS - Failed to send SMS Message");
+                Log.i(TAG, "sendSMS - Failed to send SMS Message");
                 Log.e(TAG, e.toString());
                 mUtil.showToast(getString(R.string.failed_to_send_sms));
             }
@@ -1966,7 +1956,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 Log.i(TAG, "onSdLocationReceived() - found location" + ll.toString());
                 if (mSMSAlarm) {
                     Log.i(TAG, "onSdLocationReceived() - Sending SMS to " + mSMSNumbers.length + " Numbers");
-                    mUtil.writeToSysLogFile("SdServer.sendSMSAlarm()");
+                    Log.i(TAG, "SdServer.sendSMSAlarm()");
                     Calendar cal = Calendar.getInstance();
                     String dateStr = String.format("%02d:%02d:%02d %02d/%02d/%04d",
                             cal.get(Calendar.HOUR_OF_DAY),
@@ -2059,10 +2049,10 @@ public class SdServer extends Service implements SdDataReceiver {
     public void startFaultTimer() {
         if (mFaultTimer != null) {
             Log.v(TAG, "startFaultTimer(): fault timer already running - not doing anything.");
-            mUtil.writeToSysLogFile("startFaultTimer() - fault timer already running");
+            Log.i(TAG, "startFaultTimer() - fault timer already running");
         } else {
             Log.v(TAG, "startFaultTimer(): starting fault timer.");
-            mUtil.writeToSysLogFile("startFaultTimer() - starting fault timer");
+            Log.i(TAG, "startFaultTimer() - starting fault timer");
             runOnUiThread(new Runnable() {
                 public void run() {
                     mFaultTimerCompleted = false;
@@ -2078,13 +2068,13 @@ public class SdServer extends Service implements SdDataReceiver {
     public void stopFaultTimer() {
         if (mFaultTimer != null) {
             //Log.v(TAG, "stopFaultTimer(): fault timer already running - cancelling it.");
-            mUtil.writeToSysLogFile("stopFaultTimer() - stopping fault timer");
+            Log.i(TAG, "stopFaultTimer() - stopping fault timer");
             mFaultTimer.cancel();
             mFaultTimer = null;
             mFaultTimerCompleted = false;
         } else {
             //Log.v(TAG, "stopFaultTimer(): fault timer not running - not doing anything.");
-            //mUtil.writeToSysLogFile("stopFaultTimer() - fault timer not running");
+            //Log.i(TAG, "stopFaultTimer() - fault timer not running");
         }
     }
 
@@ -2105,7 +2095,7 @@ public class SdServer extends Service implements SdDataReceiver {
             try {
                 mFaultTimerCompleted = true;
                 Log.v(TAG, "mFaultTimer - removing mFaultTimerRunning flag");
-                mUtil.writeToSysLogFile("FaultTimer.onFinish()", "TIMER");
+                Log.d(TAG, "FaultTimer.onFinish()");
             } catch (Exception e) {
                 Log.e(TAG, "Error in FaultTimer.onFinish()", e);
                 mUtil.writeExceptionLog("FaultTimer", "onFinish", e);
@@ -2137,10 +2127,10 @@ public class SdServer extends Service implements SdDataReceiver {
     public void startEventsTimer() {
         if (mEventsTimer != null) {
             Log.v(TAG, "startEventsTimer(): timer already running - not doing anything.");
-            mUtil.writeToSysLogFile("startEventsTimer() - timer already running");
+            Log.i(TAG, "startEventsTimer() - timer already running");
         } else {
             Log.v(TAG, "startEventsTimer(): starting timer.");
-            mUtil.writeToSysLogFile("startEventsTimer() - starting timer");
+            Log.i(TAG, "startEventsTimer() - starting timer");
             runOnUiThread(new Runnable() {
                 public void run() {
                     mEventsTimer =
@@ -2156,7 +2146,7 @@ public class SdServer extends Service implements SdDataReceiver {
     public void stopEventsTimer() {
         if (mEventsTimer != null) {
             Log.v(TAG, "stopEventsTimer(): timer already running - cancelling it.");
-            mUtil.writeToSysLogFile("stopEventsTimer() - stopping timer, setting mIsRunning to false");
+            Log.i(TAG, "stopEventsTimer() - stopping timer, setting mIsRunning to false");
             mEventsTimer.mIsRunning = false;
             mEventsTimer.cancel();
             //mEventsTimer = null;
@@ -2230,7 +2220,7 @@ public class SdServer extends Service implements SdDataReceiver {
         public void onFinish() {
             try {
                 Log.v(TAG, "CheckEventsTimer.onFinish()");
-                mUtil.writeToSysLogFile("CheckEventsTimer.onFinish()", "TIMER");
+                Log.d(TAG, "CheckEventsTimer.onFinish()");
                 checkEvents();
                 if (mIsRunning) {
                     // Restart this timer.
@@ -2279,7 +2269,7 @@ public class SdServer extends Service implements SdDataReceiver {
         }
         if (mModelUpdateCheckPeriod > 0) {
             Log.v(TAG, "startModelUpdateTimer(): starting timer.");
-            mUtil.writeToSysLogFile("startModelUpdateTimer() - starting timer");
+            Log.i(TAG, "startModelUpdateTimer() - starting timer");
             runOnUiThread(new Runnable() {
                 public void run() {
                     mModelUpdateTimer =
@@ -2295,7 +2285,7 @@ public class SdServer extends Service implements SdDataReceiver {
     public void stopModelUpdateTimer() {
         if (mModelUpdateTimer != null) {
             Log.v(TAG, "stopModelUpdateTimer(): timer already running - cancelling it.");
-            mUtil.writeToSysLogFile("stopModelUpdateTimer() - stopping timer, setting mIsRunning to false");
+            Log.i(TAG, "stopModelUpdateTimer() - stopping timer, setting mIsRunning to false");
             mModelUpdateTimer.mIsRunning = false;
             mModelUpdateTimer.cancel();
             mModelUpdateTimer = null;
@@ -2469,7 +2459,7 @@ public class SdServer extends Service implements SdDataReceiver {
         @Override
         public void run() {
             Log.i(TAG, "WatchdogThread: Starting watchdog");
-            mUtil.writeToSysLogFile("WATCHDOG: Thread started", "LIFECYCLE");
+            Log.i(TAG, "WATCHDOG: Thread started");
 
             while (mRunning && !mIsDestroying) {
                 try {
@@ -2495,8 +2485,7 @@ public class SdServer extends Service implements SdDataReceiver {
                             (mFaultTimer != null ? "running" : "stopped")
                         );
 
-                        mUtil.writeToSysLogFile("WATCHDOG_HB: " + heartbeatMsg, "WATCHDOG");
-                        Log.i(TAG, "WATCHDOG_HB: " + heartbeatMsg);
+                        Log.v(TAG, "WATCHDOG_HB: " + heartbeatMsg);
 
                         // Log memory status alongside heartbeat for trend analysis
                         mUtil.writeMemoryLog("Watchdog heartbeat");
@@ -2507,10 +2496,10 @@ public class SdServer extends Service implements SdDataReceiver {
                     // Check for data timeout (2 minutes with no data)
                     if (lastDataMillis > 0 && timeSinceLastData > 120000 && timeSinceLastFault > 120000) {
                         Log.e(TAG, "WATCHDOG: NO DATA FOR " + (timeSinceLastData/1000) + " SECONDS - FORCING FAULT");
-                        mUtil.writeToSysLogFile(String.format(
+                        Log.v(TAG, String.format(
                             "WATCHDOG_FAULT: No data for %d seconds - forcing fault state",
                             timeSinceLastData/1000
-                        ), "WATCHDOG");
+                        ));
 
                         // Force fault on main thread
                         mHandler.post(new Runnable() {
@@ -2534,7 +2523,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 } catch (InterruptedException e) {
                     if (mRunning) {
                         Log.w(TAG, "WatchdogThread: Interrupted");
-                        mUtil.writeToSysLogFile("WATCHDOG: Thread interrupted", "LIFECYCLE");
+                        Log.i(TAG, "WATCHDOG: Thread interrupted");
                     }
                     break;
                 } catch (Exception e) {
@@ -2544,7 +2533,7 @@ public class SdServer extends Service implements SdDataReceiver {
             }
 
             Log.i(TAG, "WatchdogThread: Exiting");
-            mUtil.writeToSysLogFile("WATCHDOG: Thread exiting", "LIFECYCLE");
+            Log.i(TAG, "WATCHDOG: Thread exiting");
         }
     }
 }

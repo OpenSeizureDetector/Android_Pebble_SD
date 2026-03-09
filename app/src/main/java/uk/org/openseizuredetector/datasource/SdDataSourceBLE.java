@@ -43,7 +43,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import androidx.preference.PreferenceManager;
-import android.util.Log;
+import uk.org.openseizuredetector.data.logging.Log;
 
 import androidx.core.app.ActivityCompat;
 
@@ -143,7 +143,6 @@ public class SdDataSourceBLE extends SdDataSource {
     public void start() {
         super.start();
         Log.i(TAG, "start() - mBleDeviceAddr="+mBleDeviceAddr);
-        mUtil.writeToSysLogFile("SdDataSourceBLE.start() - mBleDeviceAddr=" + mBleDeviceAddr);
 
         if (mBleDeviceAddr == "" || mBleDeviceAddr == null) {
             final Intent intent = new Intent(this.mContext, BLEScanActivity.class);
@@ -236,7 +235,6 @@ public class SdDataSourceBLE extends SdDataSource {
      */
     public void stop() {
         Log.i(TAG, "stop()");
-        mUtil.writeToSysLogFile("SDDataSourceBLE.stop()");
 
         bleDisconnect();
         CurrentTimeService.stopServer();
