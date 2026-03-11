@@ -131,6 +131,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
     private static final int DISCONNECT_TIMEOUT_MS = 5000; // 5 seconds timeout for disconnect
     private Handler mTimeoutHandler;
     private volatile boolean mDisconnected = false;
+    private volatile boolean mServicesDiscovered = false;
 
     // Connection state machine
     private enum ConnectionState {
@@ -190,6 +191,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
         // Reset shutdown flag - we're starting fresh
         mIsShuttingDown = false;
         mShutdown = false;
+        mServicesDiscovered = false;
 
         // Only create new manager if we don't already have one
         if (mBluetoothCentralManager == null) {
@@ -285,6 +287,8 @@ public class SdDataSourceBLE2 extends SdDataSource {
         public void onDisconnectedPeripheral(BluetoothPeripheral peripheral, HciStatus status) {
             Log.i(TAG,"BluetoothCentralManagerCallback.onDisconnectedPeripheral() - status=" + status);
 
+            mServicesDiscovered = false;
+
             if (mShutdown) {
                 Log.i(TAG,"onDisconnectedPeripheral() - mShutdown is set, completing disconnect");
                 setConnectionState(ConnectionState.CLEANUP);
@@ -337,6 +341,14 @@ public class SdDataSourceBLE2 extends SdDataSource {
             if (mIsShuttingDown || mShutdown || !isRunning()) {
                 return;
             }
+            // Check if we have already discovered services for this connection to prevent double subscription
+            // which causes double rate data updates.
+            if (mServicesDiscovered) {
+                Log.w(TAG, "onServicesDiscovered() - Services already discovered for this connection - ignoring");
+                return;
+            }
+            mServicesDiscovered = true;
+
             Log.i(TAG,"onServicesDiscovered()");
             mBlePeripheral = peripheral;
             // Request a higher MTU, iOS always asks for 185 - This is likely to have no effect, as Pinetime uses 23 bytes.
@@ -730,6 +742,8 @@ public class SdDataSourceBLE2 extends SdDataSource {
         Log.i(TAG, "forceCleanup() - Forcing cleanup of BLE resources");
         setConnectionState(ConnectionState.CLEANUP);
 
+        mServicesDiscovered = false;
+        
         try {
             // Cancel any pending timeout
             if (mTimeoutHandler != null) {
