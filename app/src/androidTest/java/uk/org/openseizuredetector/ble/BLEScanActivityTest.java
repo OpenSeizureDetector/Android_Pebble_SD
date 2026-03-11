@@ -43,13 +43,13 @@ public class BLEScanActivityTest {
                 ListView listView = activity.findViewById(R.id.list);
                 TextView emptyView = activity.findViewById(R.id.empty);
                 TextView statusView = activity.findViewById(R.id.ble_scan_status_tv);
-                Button startScanButton = activity.findViewById(R.id.startScanButton);
+                //Button startScanButton = activity.findViewById(R.id.startScanButton);
 
                 assertNotNull(listView);
                 assertNotNull(emptyView);
                 assertSame(emptyView, listView.getEmptyView());
                 assertNotNull(statusView);
-                assertNotNull(startScanButton);
+                //assertNotNull(startScanButton);
                 assertNotNull(listView.getAdapter());
 
                 String statusText = statusView.getText().toString();

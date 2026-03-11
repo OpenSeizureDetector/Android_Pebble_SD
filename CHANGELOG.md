@@ -1,5 +1,6 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.0.0Q - Fixed? Issue that caused SdDataSourceBLE2 to sometimes reconnect incorrectly resulting in incorrect data arrival frequency.
     V5.0.0P - Tidied up data sharing screen, and addressed issues with multiple events being uploaded (#225)
             - Major re-factor of logging system to improve future maintainability - no functional change.
     V5.0.0N - Updated to accept a device MAC address returned by Android_PineTime_Updater to avoid the user having to select the device twice.

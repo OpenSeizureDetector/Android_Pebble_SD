@@ -345,6 +345,7 @@ public abstract class SdDataSource {
                         mSdData.faultCause = faultMessage;
 
                         mSdDataReceiver.onSdDataFault(mSdData);
+                        mSdData.dataTimeMillis = tnow;
                         return; // Don't process bad data
                     }
                 } else {

@@ -300,7 +300,12 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 setConnectionState(ConnectionState.IDLE);
                 mUtil.showToast("WATCH CONNECTION LOST");
                 Log.i(TAG, "onDisconnectedPeripheral() - attempting to re-connect with backoff");
-                bleDisconnect();
+
+                // We do not call bleDisconnect() here because that initiates a shutdown sequence
+                // including a timeout that will force close the manager, which we do not want
+                // when trying to reconnect.
+                // bleDisconnect();
+
                 mShutdown = false;
                 mDisconnected = false;
 
@@ -533,7 +538,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
                         }
 
                     } else {
-                        Log.i(TAG, "onCharacteristicUpdate(): RawData Buffer Full - processing data");
+                        Log.d(TAG, "onCharacteristicUpdate(): RawData Buffer Full - processing data");
                         mSdData.watchAppRunning = true;
                         for (i = 0; i < rawData.length; i++) {
                             mSdData.rawData[i] = rawData[i];
@@ -555,7 +560,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
                         nRawData = 0;
                         // Notify the device of the resulting alarm state
                         if (mStatusChar != null) {
-                            Log.i(TAG, "onDataReceived() - Sending analysis result");
+                            Log.d(TAG, "onDataReceived() - Sending analysis result");
                             byte[] statusVal = new byte[1];
                             statusVal[0] = (byte) mSdData.alarmState;
                             peripheral.writeCharacteristic(mStatusChar, statusVal, WriteType.WITH_RESPONSE);

@@ -3,15 +3,13 @@
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
         "\n
-        \nV5.0.0 - Support downloadable machine learning models.  First-Use setup wizard.  UI Improvements.  Significant modernisation of underlying code.
+        \nV5.0.0 - Support downloadable machine learning models.
+        \n         First-Use setup wizard.
+        \n         UI Improvements.
+        \n         Significant modernisation of underlying code.
         \nV4.3.1 - Fixed user interface issues on Android-15 and Android-16
         \nV4.3.0  - Added support for Android 15 (API 35) and above.
         \n        - Simplified data sharing editor by grouping events for editing.
-        \nV4.2.12 - Added buttons and menu items for 'Help' and 'Troubleshooting' to point users to the web page instructions.
-        \nV4.2   - Added support for PineTime and BangleJS Watches using Bluetooth data source.
-        \n       - Added support for Version 2 of the Garmin watch app, which reduces battery drain
-        \n       - Added new, swipeable user interface to simplify the main screen.
-        \n       - various bug fixes and stability improvements
           "</string>
     <string name="UpgradeMsg">
         Please enable the new &lt;b>Data Sharing&lt;/b> feature to help improve OpenSeizureDetector!&lt;br/>
@@ -368,7 +366,7 @@
     <string name="not_sharing_logged_data">Not Sharing Logged Data</string>
     <string name="not_logged_in">Not Logged In</string>
     <string name="data_sharing_setup_ok">Data Sharing Setup OK</string>
-    <string name="please_confirm_seizure_events">Please Check your Shared Seizure Events</string>
+    <string name="please_confirm_seizure_events">Please Check your Data Sharing Events</string>
     <string name="data_sharing_log_in">Data Sharing Log-In</string>
     <string name="not_updating_mobile">Not Updating using Mobile Internet</string>
     <string name="not_updating_no_network">No Network Connection</string>
