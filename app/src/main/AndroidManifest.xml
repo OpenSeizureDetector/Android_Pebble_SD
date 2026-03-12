@@ -13,6 +13,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -92,7 +93,7 @@
 
         <service
             android:name=".SdServer"
-            android:foregroundServiceType="health|location|connectedDevice"
+            android:foregroundServiceType="health|location|connectedDevice|dataSync"
             android:exported="false" />
 
         <activity android:name=".activity.logging.LogManagerControlActivity" />

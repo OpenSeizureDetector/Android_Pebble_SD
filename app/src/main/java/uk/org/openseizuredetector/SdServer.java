@@ -64,6 +64,7 @@ import uk.org.openseizuredetector.data.logging.Log;
 import java.util.Calendar;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.preference.PreferenceManager;
 
@@ -271,67 +272,86 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Check for required permissions before starting foreground service (Android 12+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // Check preference to see if we need health permissions
             SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
             String dataSourceName = prefs.getString("DataSource", "SET_FROM_XML");
-            boolean isPhoneDataSource = "Phone".equals(dataSourceName);
 
-            // Android 12+ requires either ACTIVITY_RECOGNITION or BODY_SENSORS if we are using health features
-            boolean hasActivityRecognition = checkSelfPermission(android.Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
-            boolean hasBodySensors = checkSelfPermission(android.Manifest.permission.BODY_SENSORS) == PackageManager.PERMISSION_GRANTED;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                int foregroundServiceType = resolveForegroundServiceTypeForDataSource(dataSourceName);
+                boolean requiresHealthPermissions = foregroundServiceType == ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH;
+                boolean hasActivityRecognition = checkSelfPermission(android.Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED;
+                boolean hasBodySensors = checkSelfPermission(android.Manifest.permission.BODY_SENSORS) == PackageManager.PERMISSION_GRANTED;
+                boolean hasBluetoothConnect = checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED;
+                boolean hasFineLocation = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+                boolean hasCoarseLocation = checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
 
-            if (isPhoneDataSource) {
-                if (hasActivityRecognition || hasBodySensors) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        // On Android 14+, explicitly start as HEALTH type
-                        startForeground(NOTIFICATION_ID, mNotification, ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH);
-                      } else {
-                        startForeground(NOTIFICATION_ID, mNotification);
-                      }
-                    Log.v(TAG, "Started foreground service with health type (Phone Datasource)");
-                } else {
-                    // Permissions not granted - should not reach here as StartupActivity should have exited
-                    // But if we do get here, throw exception to alert
+                Log.i(TAG, "FGS resolve: sdk=" + Build.VERSION.SDK_INT
+                        + ", datasource=" + dataSourceName
+                        + ", type=" + foregroundServiceTypeToLabel(foregroundServiceType)
+                        + "(" + foregroundServiceType + ")"
+                        + ", activityRec=" + hasActivityRecognition
+                        + ", bodySensors=" + hasBodySensors
+                        + ", btConnect=" + hasBluetoothConnect
+                        + ", fineLocation=" + hasFineLocation
+                        + ", coarseLocation=" + hasCoarseLocation);
+
+                if (requiresHealthPermissions && !(hasActivityRecognition || hasBodySensors)) {
                     Log.e(TAG, "FATAL: Health foreground service permissions not granted for Phone Datasource!");
                     throw new SecurityException("Health foreground service permissions not granted - app should have exited in StartupActivity");
                 }
-            } else {
-                // Not using Phone data source, so we don't strictly require health permissions unless we wanted to access health APIs anyway.
-                // We should start the foreground service with a type that does NOT require health permissions if possible,
-                // or just start it and hope the manifest allows it (we added location and connectedDevice to manifest).
 
-                // If we have location permission (which we usually do for SMS), use that.
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    int foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE; // Fallback
-                    boolean useHealth = false;
-
-                    // If we have health permissions anyway, we can use HEALTH
-                    if (hasActivityRecognition || hasBodySensors) {
-                        foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH;
-                        useHealth = true;
-                      } else if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-                                 checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                        foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION;
-                      } else if (checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-                        // Use ConnectedDevice for BLE
-                        foregroundServiceType = ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
-                      }
-
-                    // If we have health permissions, include that type, otherwise just use the safe one
-                    // Actually, if we set multiple types in manifest, we can specify just one here.
-                    // But if we specify HEALTH here without permission, it crashes.
-
-                    Log.i(TAG, "Starting foreground service for Non-Phone Datasource (" + dataSourceName + "), type=" + foregroundServiceType);
+                Log.i(TAG, "Starting foreground service for Datasource (" + dataSourceName + "), type="
+                        + foregroundServiceTypeToLabel(foregroundServiceType) + "(" + foregroundServiceType + ")");
+                try {
                     startForeground(NOTIFICATION_ID, mNotification, foregroundServiceType);
-                } else {
+                } catch (IllegalArgumentException e) {
+                    // Defensive fallback for vendor-specific behavior.
+                    Log.e(TAG, "Invalid foreground service type " + foregroundServiceType + ". Falling back to manifest default.", e);
                     startForeground(NOTIFICATION_ID, mNotification);
                 }
+            } else {
+                startForeground(NOTIFICATION_ID, mNotification);
             }
         } else {
             // Android 8-11: just start foreground
             startForeground(NOTIFICATION_ID, mNotification);
         }
 
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private int resolveForegroundServiceTypeForDataSource(String dataSourceName) {
+        if ("Phone".equals(dataSourceName)) {
+            return ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH;
+        }
+        if ("BLE".equals(dataSourceName)
+                || "BLE2".equals(dataSourceName)
+                || "Pebble".equals(dataSourceName)
+                || "AndroidWear".equals(dataSourceName)) {
+            return ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
+        }
+        if ("Network".equals(dataSourceName) || "Garmin".equals(dataSourceName)) {
+            return ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC;
+        }
+
+        // Unknown source: pick a conservative non-health type to avoid extra runtime permission coupling.
+        return ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private String foregroundServiceTypeToLabel(int foregroundServiceType) {
+        if (foregroundServiceType == ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH) {
+            return "health";
+        }
+        if (foregroundServiceType == ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE) {
+            return "connectedDevice";
+        }
+        if (foregroundServiceType == ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION) {
+            return "location";
+        }
+        if (foregroundServiceType == ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC) {
+            return "dataSync";
+        }
+        return "unknown";
     }
 
     /**

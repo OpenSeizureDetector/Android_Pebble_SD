@@ -1,5 +1,7 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.0.0S - Fixed permissions issue with Android 14 network data source - we should be more robust now about which permissions we request for which data source.
+    V5.0.0R - Fixed another issue that caused BLE2 to sometimes subscribe to acceleration updates twice, resulting in incorrect data.
     V5.0.0Q - Fixed? Issue that caused SdDataSourceBLE2 to sometimes reconnect incorrectly resulting in incorrect data arrival frequency.
     V5.0.0P - Tidied up data sharing screen, and addressed issues with multiple events being uploaded (#225)
             - Major re-factor of logging system to improve future maintainability - no functional change.
