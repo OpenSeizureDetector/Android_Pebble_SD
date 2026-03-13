@@ -2,7 +2,10 @@ package uk.org.openseizuredetector.activity.main;
 import uk.org.openseizuredetector.R;
 
 import uk.org.openseizuredetector.data.SdData;
+import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
+import android.graphics.Paint;
 import android.os.Bundle;
 import uk.org.openseizuredetector.data.logging.Log;
 import android.view.LayoutInflater;
@@ -18,6 +21,9 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 
 import java.util.Locale;
 
+import androidx.preference.PreferenceManager;
+import uk.org.openseizuredetector.alg.MlModelManager;
+
 public class FragmentMlAlg extends FragmentOsdBaseClass {
     String TAG = "FragmentMlAlg";
     private GraphView historyChart;
@@ -26,6 +32,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
     private final int[] SERIES_COLORS = {
         Color.BLUE, Color.RED, Color.GREEN, Color.MAGENTA, Color.CYAN, Color.parseColor("#FF8C00") // Orange
     };
+    private static final int STDDEV_COLOR = Color.rgb(180, 180, 180);
 
     public FragmentMlAlg() {
         // Required empty public constructor
@@ -195,9 +202,25 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         }
         try {
             if (historyChart == null) return;
-            
+
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+            double probThresholdPct = getPercentPreference(
+                    prefs,
+                    MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_PCT,
+                    MlModelManager.DEFAULT_ML_SEIZURE_PROB_THRESHOLD_PCT);
+            double stdThresholdPct = getPercentPreference(
+                    prefs,
+                    MlModelManager.PREF_ML_ACCEL_STD_THRESHOLD_PCT,
+                    MlModelManager.DEFAULT_ML_ACCEL_STD_THRESHOLD_PCT);
+
             // Clear existing series to redraw with updated history
             historyChart.removeAllSeries();
+
+            int probThresholdColor = getPrimaryProbabilityColor(sdData);
+
+            // Draw threshold overlays first so measured traces remain visually dominant.
+            historyChart.addSeries(createThresholdSeries(probThresholdPct, probThresholdColor, "Prob Thresh"));
+            historyChart.addSeries(createThresholdSeries(stdThresholdPct, STDDEV_COLOR, "Std Thresh"));
 
             // 1. Draw Acceleration StdDev as a faint background line
             double[] accelStdDevData = mConnection.mSdServer.mSdDataHistory.mAccelMagStdDevHistBuf.getVals();
@@ -214,7 +237,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
                     DataPoint[] validAccelDataPoints = new DataPoint[validAccelPoints];
                     System.arraycopy(accelDataPoints, 0, validAccelDataPoints, 0, validAccelPoints);
                     LineGraphSeries<DataPoint> accelSeries = new LineGraphSeries<>(validAccelDataPoints);
-                    accelSeries.setColor(Color.argb(100, 180, 180, 180)); // Very faint gray
+                    accelSeries.setColor(Color.argb(100, Color.red(STDDEV_COLOR), Color.green(STDDEV_COLOR), Color.blue(STDDEV_COLOR))); // Very faint gray
                     accelSeries.setThickness(2);
                     accelSeries.setTitle("Std");
                     historyChart.addSeries(accelSeries);
@@ -284,27 +307,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         legendLayout.removeAllViews();
 
         // Add acceleration StdDev indicator first
-        android.widget.LinearLayout stdDevItem = new android.widget.LinearLayout(mContext);
-        stdDevItem.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-        stdDevItem.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        stdDevItem.setPadding(12, 4, 12, 4);
-
-        // Create faint gray square for StdDev
-        android.widget.FrameLayout stdDevSquare = new android.widget.FrameLayout(mContext);
-        android.widget.LinearLayout.LayoutParams squareParams = new android.widget.LinearLayout.LayoutParams(24, 24);
-        squareParams.rightMargin = 8;
-        stdDevSquare.setLayoutParams(squareParams);
-        stdDevSquare.setBackgroundColor(Color.argb(100, 180, 180, 180)); // Very faint gray
-        stdDevItem.addView(stdDevSquare);
-
-        // Create text view for StdDev label
-        TextView stdDevTv = new TextView(mContext);
-        stdDevTv.setText("Std");
-        stdDevTv.setTextSize(12);
-        stdDevTv.setTextColor(okTextColour);
-        stdDevItem.addView(stdDevTv);
-
-        legendLayout.addView(stdDevItem);
+        addLegendItem(legendLayout, Color.argb(100, Color.red(STDDEV_COLOR), Color.green(STDDEV_COLOR), Color.blue(STDDEV_COLOR)), "Std", false);
 
         // Add colored square + model name for each active model
         int maxModels = Math.min(5, sdData.mlNumModels);
@@ -313,33 +316,89 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
                 continue;
             }
 
-            // Create container for legend item (colored square + text)
-            android.widget.LinearLayout legendItem = new android.widget.LinearLayout(mContext);
-            legendItem.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-            legendItem.setGravity(android.view.Gravity.CENTER_VERTICAL);
-            legendItem.setPadding(12, 4, 12, 4);
-
-            // Create colored square (20x20dp)
-            android.widget.FrameLayout colorSquare = new android.widget.FrameLayout(mContext);
-            android.widget.LinearLayout.LayoutParams colorSquareParams = new android.widget.LinearLayout.LayoutParams(24, 24);
-            colorSquareParams.rightMargin = 8;
-            colorSquare.setLayoutParams(colorSquareParams);
-            colorSquare.setBackgroundColor(SERIES_COLORS[i % SERIES_COLORS.length]);
-            legendItem.addView(colorSquare);
-
-            // Create text view with model name
-            TextView modelNameTv = new TextView(mContext);
             String modelName = (sdData.mlModelNames != null && i < sdData.mlModelNames.length &&
                     sdData.mlModelNames[i] != null && !sdData.mlModelNames[i].isEmpty())
                     ? sdData.mlModelNames[i]
                     : ("ML" + (i + 1));
-            modelNameTv.setText(modelName);
-            modelNameTv.setTextSize(12);
-            modelNameTv.setTextColor(okTextColour);
-            legendItem.addView(modelNameTv);
-
-            legendLayout.addView(legendItem);
+            addLegendItem(legendLayout, SERIES_COLORS[i % SERIES_COLORS.length], modelName, false);
         }
+
+        // Threshold entries are listed after primary parameters/series.
+        addLegendItem(legendLayout, getPrimaryProbabilityColor(sdData), "Prob Thresh", true);
+        addLegendItem(legendLayout, STDDEV_COLOR, "Std Thresh", true);
+    }
+
+    private int getPrimaryProbabilityColor(SdData sdData) {
+        int maxModels = Math.min(5, sdData.mlNumModels);
+        for (int i = 0; i < maxModels; i++) {
+            if (sdData.mlModelActive != null && i < sdData.mlModelActive.length && sdData.mlModelActive[i]) {
+                return SERIES_COLORS[i % SERIES_COLORS.length];
+            }
+        }
+        return SERIES_COLORS[0];
+    }
+
+    private LineGraphSeries<DataPoint> createThresholdSeries(double yValue, int baseColor, String title) {
+        LineGraphSeries<DataPoint> thresholdSeries = new LineGraphSeries<>(new DataPoint[] {
+                new DataPoint(0, yValue),
+                new DataPoint(600, yValue)
+        });
+        thresholdSeries.setTitle(title);
+        thresholdSeries.setColor(Color.argb(96, Color.red(baseColor), Color.green(baseColor), Color.blue(baseColor)));
+
+        Paint dashedPaint = new Paint();
+        dashedPaint.setStyle(Paint.Style.STROKE);
+        dashedPaint.setStrokeWidth(3f);
+        dashedPaint.setColor(Color.argb(96, Color.red(baseColor), Color.green(baseColor), Color.blue(baseColor)));
+        dashedPaint.setPathEffect(new DashPathEffect(new float[]{14f, 10f}, 0f));
+        thresholdSeries.setCustomPaint(dashedPaint);
+        return thresholdSeries;
+    }
+
+    private double getPercentPreference(SharedPreferences prefs, String key, String fallback) {
+        String raw = prefs.getString(key, fallback);
+        try {
+            double parsed = Double.parseDouble(raw);
+            if (parsed < 0.0) return 0.0;
+            if (parsed > 100.0) return 100.0;
+            return parsed;
+        } catch (Exception ex) {
+            Log.w(TAG, "Invalid threshold preference for " + key + "='" + raw + "', using " + fallback);
+            try {
+                return Double.parseDouble(fallback);
+            } catch (Exception ignored) {
+                return 0.0;
+            }
+        }
+    }
+
+    private void addLegendItem(android.widget.LinearLayout legendLayout, int color, String label, boolean dashed) {
+        android.widget.LinearLayout legendItem = new android.widget.LinearLayout(mContext);
+        legendItem.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        legendItem.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        legendItem.setPadding(12, 4, 12, 4);
+
+        android.view.View indicator = new android.view.View(mContext);
+        android.widget.LinearLayout.LayoutParams indicatorParams = new android.widget.LinearLayout.LayoutParams(24, 24);
+        indicatorParams.rightMargin = 8;
+        indicator.setLayoutParams(indicatorParams);
+        if (dashed) {
+            android.graphics.drawable.GradientDrawable dashedBox = new android.graphics.drawable.GradientDrawable();
+            dashedBox.setColor(Color.TRANSPARENT);
+            dashedBox.setStroke(3, color, 8f, 4f);
+            indicator.setBackground(dashedBox);
+        } else {
+            indicator.setBackgroundColor(color);
+        }
+        legendItem.addView(indicator);
+
+        TextView textView = new TextView(mContext);
+        textView.setText(label);
+        textView.setTextSize(12);
+        textView.setTextColor(okTextColour);
+        legendItem.addView(textView);
+
+        legendLayout.addView(legendItem);
     }
 
     /**
