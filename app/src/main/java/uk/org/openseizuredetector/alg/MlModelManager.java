@@ -282,11 +282,7 @@ public class MlModelManager {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
         SharedPreferences.Editor editor = prefs.edit();
 
-        Double recommendedSdPct = readRecommendedPercent(modelInfo,
-                "accel_std_threshold_pct",
-                "accel_std_threshold",
-                "sd_threshold",
-                "alarm_threshold");
+        Double recommendedSdPct = readRecommendedPercent(modelInfo, "accel_std_threshold_pct");
         boolean userSetSd = prefs.getBoolean(PREF_ML_ACCEL_STD_THRESHOLD_USER_SET, false);
         if (recommendedSdPct != null) {
             if (!userSetSd) {
@@ -296,17 +292,11 @@ public class MlModelManager {
             } else {
                 Log.i(TAG, "Skipping recommended accel std threshold; user preference is set");
             }
+        } else {
+            Log.i(TAG, "No accel_std_threshold_pct provided in model metadata");
         }
 
-        Double recommendedProbPct = readRecommendedPercent(modelInfo,
-                "seizure_probability_threshold_pct",
-                "seizure_probability_threshold",
-                "probability_threshold_pct",
-                "probability_threshold",
-                "alarm_probability_threshold");
-        if (recommendedProbPct != null && recommendedProbPct <= 1.0) {
-            recommendedProbPct = recommendedProbPct * 100.0;
-        }
+        Double recommendedProbPct = readRecommendedPercent(modelInfo, "seizure_probability_threshold_pct");
 
         boolean userSetProb = prefs.getBoolean(PREF_ML_SEIZURE_PROB_THRESHOLD_USER_SET, false);
         if (recommendedProbPct != null) {
@@ -317,23 +307,22 @@ public class MlModelManager {
             } else {
                 Log.i(TAG, "Skipping recommended seizure probability threshold; user preference is set");
             }
+        } else {
+            Log.i(TAG, "No seizure_probability_threshold_pct provided in model metadata");
         }
 
         editor.apply();
     }
 
-    private static Double readRecommendedPercent(JSONObject modelInfo, String... keys) {
-        for (String key : keys) {
-            if (!modelInfo.has(key)) {
-                continue;
-            }
-            double value = modelInfo.optDouble(key, Double.NaN);
-            if (Double.isNaN(value) || Double.isInfinite(value)) {
-                continue;
-            }
-            return clampToPercentRange(value);
+    private static Double readRecommendedPercent(JSONObject modelInfo, String key) {
+        if (!modelInfo.has(key)) {
+            return null;
         }
-        return null;
+        double value = modelInfo.optDouble(key, Double.NaN);
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            return null;
+        }
+        return clampToPercentRange(value);
     }
 
     private static double clampToPercentRange(double value) {

@@ -197,6 +197,45 @@ public class MlModelManagerTest {
         assertEquals("70", sp.getString(MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_PCT, null));
     }
 
+    @Test
+    public void testApplyRecommendedThresholdsFromModel_ignoresLegacyAliasKeys() throws Exception {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        sp.edit()
+                .putBoolean(MlModelManager.PREF_ML_ACCEL_STD_THRESHOLD_USER_SET, false)
+                .putBoolean(MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_USER_SET, false)
+                .remove(MlModelManager.PREF_ML_ACCEL_STD_THRESHOLD_PCT)
+                .remove(MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_PCT)
+                .commit();
+
+        JSONObject model = new JSONObject();
+        model.put("sd_threshold", 11);
+        model.put("probability_threshold", 80);
+
+        MlModelManager mm = new MlModelManager(context);
+        mm.applyRecommendedThresholdsFromModel(model);
+
+        assertNull(sp.getString(MlModelManager.PREF_ML_ACCEL_STD_THRESHOLD_PCT, null));
+        assertNull(sp.getString(MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_PCT, null));
+    }
+
+    @Test
+    public void testApplyRecommendedThresholdsFromModel_probabilityPctNotScaled() throws Exception {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        sp.edit()
+                .putBoolean(MlModelManager.PREF_ML_ACCEL_STD_THRESHOLD_USER_SET, false)
+                .putBoolean(MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_USER_SET, false)
+                .remove(MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_PCT)
+                .commit();
+
+        JSONObject model = new JSONObject();
+        model.put("seizure_probability_threshold_pct", 0.65);
+
+        MlModelManager mm = new MlModelManager(context);
+        mm.applyRecommendedThresholdsFromModel(model);
+
+        assertEquals("0.65", sp.getString(MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_PCT, null));
+    }
+
     @org.junit.Ignore("Covered by instrumentation tests; use androidTest instead")
     @Test
     public void testDownloadModel_invalidFilenameInIndex() throws Exception {
