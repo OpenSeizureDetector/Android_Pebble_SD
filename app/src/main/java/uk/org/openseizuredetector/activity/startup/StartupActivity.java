@@ -319,22 +319,27 @@ public class StartupActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        Log.i(TAG, "onStart()");
+
+        // Retrieve the DataSource name
+        SharedPreferences SP = PreferenceManager
+                .getDefaultSharedPreferences(getBaseContext());
+        refreshDataSourcePrefs(SP);
+
+        Log.i(TAG, "onStart() - mSdDataSourceName = " + mSdDataSourceName);
+
         TextView tv;
 
         String versionName = mUtil.getAppVersionName();
         tv = (TextView) findViewById(R.id.appNameTv);
         tv.setText("OpenSeizureDetector V" + versionName);
 
-        // Display the DataSource name
-        SharedPreferences SP = PreferenceManager
-                .getDefaultSharedPreferences(getBaseContext());
-        refreshDataSourcePrefs(SP);
         tv = (TextView) findViewById(R.id.dataSourceTextView);
 
-        if (mSdDataSourceName.equals("BLE")) {
-            tv.setText(String.format("%s = %s (%s - %s)", getString(R.string.DataSource), mSdDataSourceName, mBleDeviceName, mBleDeviceAddr));
+        if (mSdDataSourceName.equals("BLE") || (mSdDataSourceName.equals("BLE2"))) {
+            Log.d(TAG,"onStart(): mSdDataSourceName = " + mSdDataSourceName+ " - displaying BLE details");
+            tv.setText(String.format("%s = %s\n(%s - %s)", getString(R.string.DataSource), mSdDataSourceName, mBleDeviceName, mBleDeviceAddr));
         } else {
+            Log.d(TAG, "onStart() - mSdDataSourceName = " + mSdDataSourceName+ " - Not displaying BLE details");
             tv.setText(String.format("%s = %s", getString(R.string.DataSource), mSdDataSourceName));
         }
 
@@ -352,14 +357,14 @@ public class StartupActivity extends AppCompatActivity {
         // Check power management settings
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
-            Log.i(TAG, "Power Management OK - we are ignoring Battery Optimizations");
+            Log.i(TAG, "onStart(): Power Management OK - we are ignoring Battery Optimizations");
             mBatteryOptDialogDisplayed = false;
         } else {
             boolean preventBatteryOptWarning = PreferenceUtils.getBooleanFromXml(SP, "PreventBatteryOptWarning");
             if (preventBatteryOptWarning) {
-                Log.i(TAG, "PreventBatteryOptWarning is true, so not displaying battery optimisation dialog");
+                Log.i(TAG, "onStart(): PreventBatteryOptWarning is true, so not displaying battery optimisation dialog");
             } else {
-                Log.e(TAG, "Power Management Problem - not ignoring Battery Optimisations");
+                Log.e(TAG, "onStart(): Power Management Problem - not ignoring Battery Optimisations");
                 //mUtil.showToast("WARNING - Phone is Optimising OpenSeizureDetector Battery Usage - this is likely to prevent it working correctly when running on battery!");
                 if (!mBatteryOptDialogDisplayed) showBatteryOptimisationWarningDialog();
             }
@@ -506,7 +511,7 @@ public class StartupActivity extends AppCompatActivity {
             // Check power management settings
             PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
             if (powerManager.isIgnoringBatteryOptimizations(getPackageName())) {
-                Log.i(TAG, "Power Management OK - we are ignoring Battery Optimizations");
+                Log.i(TAG, "serverStatusRunnable(): Power Management OK - we are ignoring Battery Optimizations");
                 if (mBatteryOptDialogDisplayed) {
                     mBatteryOptDialog.cancel();
                     mBatteryOptDialogDisplayed = false;
@@ -517,8 +522,8 @@ public class StartupActivity extends AppCompatActivity {
             tv = (TextView) findViewById(R.id.textItem1);
             pb = (ProgressBar) findViewById(R.id.progressBar1);
             if (arePermissionsOK()) {
-                Log.i(TAG,"arePermissionsOK=true");
-                Log.i(TAG,"mSdDataSourceName = "+ mSdDataSourceName);
+                Log.i(TAG,"serverStatusRunnable(): arePermissionsOK=true");
+                Log.i(TAG,"serverStatusRunnable(): mSdDataSourceName = "+ mSdDataSourceName);
                 tv.setText(getString(R.string.AppPermissionsOk));
                 tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_background));
                 tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_ok_text));
@@ -527,14 +532,14 @@ public class StartupActivity extends AppCompatActivity {
 
                 if (mSdDataSourceName.equals("BLE") || mSdDataSourceName.equals("BLE2")) {
                     if (!mUtil.areBtPermissionsOk()) {
-                        Log.i(TAG, "Bluetooth permissions NOT OK");
+                        Log.i(TAG, "serverStatusRunnable(): Bluetooth permissions NOT OK");
                         tv.setText(getString(R.string.BTPermissionWarning));
                         tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                         tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
                         requestBTPermissions();
                         allOk = false;
                     } else if (mBleDeviceAddr.equals("")) {
-                        Log.i(TAG, "BLE data source selected, but no device address specified - showing dialog");
+                        Log.i(TAG, "serverStatusRunnable(): BLE data source selected, but no device address specified - showing dialog");
                         // Only show the dialog once - check flag to prevent multiple re-creations
                         if (!mBleDeviceConfigDialogDisplayed) {
                             mBleDeviceConfigDialogDisplayed = true;
@@ -544,7 +549,7 @@ public class StartupActivity extends AppCompatActivity {
                     }
                 } else if (mSdDataSourceName.equals("Phone") && !mUtil.areActivityPermissionsOk()) {
                     // Activity permissions (ACTIVITY_RECOGNITION) only needed for Phone datasource
-                    Log.i(TAG, "Activity permissions NOT OK for Phone datasource");
+                    Log.i(TAG, "serverStatusRunnable(): Activity permissions NOT OK for Phone datasource");
                     tv.setText(getString(R.string.ActivityPermissionWarning));
                     tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                     tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
@@ -552,21 +557,21 @@ public class StartupActivity extends AppCompatActivity {
                     allOk = false;
 
                 } else if (smsAlarmsActive && !areSMSPermissions1OK()) {
-                    Log.i(TAG, "SMS permissions NOT OK");
+                    Log.i(TAG, "serverStatusRunnable(): SMS permissions NOT OK");
                     tv.setText(getString(R.string.SmsPermissionWarning));
                     tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                     tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
                     requestSMSPermissions();
                     allOk = false;
                 } else if (smsAlarmsActive && !areLocationPermissions1OK()) {
-                    Log.i(TAG, "Location permissions NOT OK");
+                    Log.i(TAG, "serverStatusRunnable(): Location permissions NOT OK");
                     tv.setText(getString(R.string.SmsPermissionWarning));
                     tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                     tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
                     requestLocationPermissions1();
                     allOk = false;
                 } else if (smsAlarmsActive && !areLocationPermissions2OK()) {
-                    Log.i(TAG, "Location permissions2 NOT OK");
+                    Log.i(TAG, "serverStatusRunnable(): Location permissions2 NOT OK");
                     tv.setText(getString(R.string.SmsPermissionWarning));
                     tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                     tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
@@ -604,7 +609,7 @@ public class StartupActivity extends AppCompatActivity {
                 // Check health foreground service permissions on Android 12+
                 // Only required if Data Source is Phone
                 if (mSdDataSourceName.equals("Phone") && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !areHealthForegroundServicePermissionsOK()) {
-                    Log.i(TAG, "health foreground service permissions not granted - requesting");
+                    Log.i(TAG, "serverStatusRunnable(): health foreground service permissions not granted - requesting");
                     tv.setText("Requesting Permissions");
                     tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                     tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
@@ -631,7 +636,7 @@ public class StartupActivity extends AppCompatActivity {
                         return;
                     }
 
-                    Log.i(TAG, "StartupActivity.onStart() - starting server  - isServerRunning=" + mUtil.isServerRunning());
+                    Log.i(TAG, "serverStatusRunnable():  - starting server  - isServerRunning=" + mUtil.isServerRunning());
 
                     // Clear the user_stopped_service flag since we're starting the service
                     SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(getBaseContext());
@@ -661,9 +666,9 @@ public class StartupActivity extends AppCompatActivity {
                     pb.setIndeterminateDrawable(getCheckboxDrawable());
                     pb.setProgressDrawable(getCheckboxDrawable());
                     if (mBindInProgress) {
-                        Log.i(TAG,"Waiting to bind to server");
+                        Log.i(TAG,"serverStatusRunnable(): Waiting to bind to server");
                     } else {
-                        Log.i(TAG, "StartupActivity.onStart() - binding to server");
+                        Log.i(TAG, "serverStatusRunnable():  - binding to server");
                         mUtil.bindToServer(getApplicationContext(), mConnection);
                         mBindInProgress = true;
                     }
@@ -1345,8 +1350,8 @@ public class StartupActivity extends AppCompatActivity {
 
         TextView tv = (TextView) findViewById(R.id.dataSourceTextView);
         if (tv != null) {
-            if (mSdDataSourceName.equals("BLE")) {
-                tv.setText(String.format("%s = %s (%s - %s)", getString(R.string.DataSource), mSdDataSourceName, mBleDeviceName, mBleDeviceAddr));
+            if (mSdDataSourceName.equals("BLE") || mSdDataSourceName.equals("BLE2")) {
+                tv.setText(String.format("%s = %s\n(%s - %s)", getString(R.string.DataSource), mSdDataSourceName, mBleDeviceName, mBleDeviceAddr));
             } else {
                 tv.setText(String.format("%s = %s", getString(R.string.DataSource), mSdDataSourceName));
             }
