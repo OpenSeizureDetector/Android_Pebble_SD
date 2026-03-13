@@ -27,6 +27,11 @@ import uk.org.openseizuredetector.data.AlarmState;
 
 public class FragmentSystem extends FragmentOsdBaseClass {
     String TAG = "FragmentSystem";
+    private static final int HISTORY_LINE_COLOR = Color.BLUE;
+    private static final int HISTORY_LINE_THICKNESS = 4;
+    private static final double SAMPLE_PERIOD_SECONDS = 5.0;
+    private static final double BATTERY_X_MAX_SECONDS = 86400.0;
+    private static final double SIGNAL_X_MAX_SECONDS = 600.0;
 
     private GraphView mBattLineChart;
     private GraphView mSignalLineChart;
@@ -307,11 +312,22 @@ public class FragmentSystem extends FragmentOsdBaseClass {
     @Override
     protected void updateUiFast() {
         updateUi();
+        if (mConnection.mBound) {
+            // Keep checking for async-restored history so charts populate promptly on startup.
+            updateBatteryGraph();
+            updateSignalGraph();
+        }
     }
 
     @Override
     protected void updateUiOnNewData() {
-        // System tab uses throttled graph updates to reduce flicker.
+        // Keep regular text/status updates immediate and refresh graphs once on new/bound data
+        // so persisted history is visible without waiting for the throttled timer.
+        updateUi();
+        if (mConnection.mBound) {
+            updateBatteryGraph();
+            updateSignalGraph();
+        }
     }
 
     @Override
@@ -332,7 +348,7 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                 int validPoints = 0;
                 for (int i = 0; i < watchBattArr.length; i++) {
                     if (watchBattArr[i] >= 0.0) {
-                        dataPoints[validPoints] = new DataPoint(i * 5.0, watchBattArr[i]);
+                        dataPoints[validPoints] = new DataPoint(0, watchBattArr[i]);
                         validPoints++;
                     }
                 }
@@ -341,14 +357,17 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                     return;
                 }
                 DataPoint[] validDataPoints = new DataPoint[validPoints];
-                System.arraycopy(dataPoints, 0, validDataPoints, 0, validPoints);
+                double xStart = Math.max(0.0, BATTERY_X_MAX_SECONDS - ((validPoints - 1) * SAMPLE_PERIOD_SECONDS));
+                for (int i = 0; i < validPoints; i++) {
+                    validDataPoints[i] = new DataPoint(xStart + (i * SAMPLE_PERIOD_SECONDS), dataPoints[i].getY());
+                }
                 LineGraphSeries<DataPoint> series = new LineGraphSeries<>(validDataPoints);
-                series.setColor(Color.RED);
-                series.setThickness(2);
+                series.setColor(HISTORY_LINE_COLOR);
+                series.setThickness(HISTORY_LINE_THICKNESS);
                 mBattLineChart.removeAllSeries();
                 mBattLineChart.addSeries(series);
 
-                float xSpan = (watchBattArr.length * 5.0f) / 3600.0f;
+                float xSpan = (float) ((validPoints * SAMPLE_PERIOD_SECONDS) / 3600.0f);
                 mBattLineChart.setTitle(getString(R.string.watch_batt_hist) + " " + String.format("%.1f", xSpan) + " hours");
                 mBattLineChart.setTitleTextSize(24f);
                 mBattLineChart.setTitleColor(okTextColour);
@@ -367,7 +386,7 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                 int validPoints = 0;
                 for (int i = 0; i < signalArr.length; i++) {
                     if (signalArr[i] >= -100.0) {
-                        dataPoints[validPoints] = new DataPoint(i * 5.0, signalArr[i]);
+                        dataPoints[validPoints] = new DataPoint(0, signalArr[i]);
                         validPoints++;
                     }
                 }
@@ -376,14 +395,17 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                     return;
                 }
                 DataPoint[] validDataPoints = new DataPoint[validPoints];
-                System.arraycopy(dataPoints, 0, validDataPoints, 0, validPoints);
+                double xStart = Math.max(0.0, SIGNAL_X_MAX_SECONDS - ((validPoints - 1) * SAMPLE_PERIOD_SECONDS));
+                for (int i = 0; i < validPoints; i++) {
+                    validDataPoints[i] = new DataPoint(xStart + (i * SAMPLE_PERIOD_SECONDS), dataPoints[i].getY());
+                }
                 LineGraphSeries<DataPoint> series = new LineGraphSeries<>(validDataPoints);
-                series.setColor(Color.GREEN);
-                series.setThickness(2);
+                series.setColor(HISTORY_LINE_COLOR);
+                series.setThickness(HISTORY_LINE_THICKNESS);
                 mSignalLineChart.removeAllSeries();
                 mSignalLineChart.addSeries(series);
 
-                float xSpan = (signalArr.length * 5.0f) / 60.0f;
+                float xSpan = (float) ((validPoints * SAMPLE_PERIOD_SECONDS) / 60.0f);
                 mSignalLineChart.setTitle("Signal Strength History " + String.format("%.1f", xSpan) + " minutes");
                 mSignalLineChart.setTitleTextSize(24f);
                 mSignalLineChart.setTitleColor(okTextColour);

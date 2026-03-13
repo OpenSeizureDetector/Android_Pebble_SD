@@ -42,6 +42,7 @@ import java.util.Date;
 import uk.org.openseizuredetector.R;
 import uk.org.openseizuredetector.comms.WebApiConnection;
 import uk.org.openseizuredetector.data.SdData;
+import uk.org.openseizuredetector.utils.CircBufPersistenceManager;
 import uk.org.openseizuredetector.utils.BackgroundTaskExecutor;
 import uk.org.openseizuredetector.utils.OsdUtil;
 
@@ -58,6 +59,8 @@ public class LogRepository {
     private OsdUtil mUtil;
     private static SQLiteDatabase mOsdDb = null;
     private long mDataRetentionPeriod = 1;  // days
+    private static final long HISTORY_SNAPSHOT_INTERVAL_MS = 15 * 60 * 1000L; // 15 minutes
+    private long mLastHistorySnapshotMs = 0L;
 
     public interface CursorCallback {
         void accept(Cursor retVal);
@@ -112,23 +115,28 @@ public class LogRepository {
 
         BackgroundTaskExecutor.executeAndForget(() -> {
             try {
-                String SQLStr = "INSERT INTO " + DP_TABLE_NAME
-                        + "(dataTime, status, dataJSON, uploaded, watchBattHist, phoneBattHist, "
-                        + "signalStrengthHist, pseudSeizureHist, accelMagStdDevHist, hrHist)"
-                        + " VALUES("
-                        + "'" + dateStr + "',"
-                        + sdData.alarmState + ","
-                        + DatabaseUtils.sqlEscapeString(sdData.toDatapointJSON()) + ","
-                        + "0,"
-                        + DatabaseUtils.sqlEscapeString("") + ","
-                        + DatabaseUtils.sqlEscapeString("") + ","
-                        + DatabaseUtils.sqlEscapeString("") + ","
-                        + DatabaseUtils.sqlEscapeString("") + ","
-                        + DatabaseUtils.sqlEscapeString("") + ","
-                        + DatabaseUtils.sqlEscapeString("")
-                        + ")";
+                boolean includeHistorySnapshot = shouldWriteHistorySnapshot();
 
-                mOsdDb.execSQL(SQLStr);
+                ContentValues values = new ContentValues();
+                values.put("dataTime", dateStr);
+                values.put("status", sdData.alarmState);
+                values.put("dataJSON", sdData.toDatapointJSON());
+                values.put("uploaded", "0");
+
+                if (includeHistorySnapshot && sdDataHistory != null) {
+                    putHistoryJson(values, "watchBattHist", CircBufPersistenceManager.serializeCircBuf(sdDataHistory.watchBattBuff));
+                    putHistoryJson(values, "phoneBattHist", CircBufPersistenceManager.serializeCircBuf(sdDataHistory.phoneBattBuff));
+                    putHistoryJson(values, "signalStrengthHist", CircBufPersistenceManager.serializeCircBuf(sdDataHistory.watchSignalStrengthBuff));
+                    putHistoryJson(values, "pseudSeizureHist", CircBufPersistenceManager.serializeCircBuf(sdDataHistory.mPseizureHistBuf));
+                    putHistoryJson(values, "accelMagStdDevHist", CircBufPersistenceManager.serializeCircBuf(sdDataHistory.mAccelMagStdDevHistBuf));
+                    putHistoryJson(values, "hrHist", CircBufPersistenceManager.serializeCircBuf(sdDataHistory.mHrHistBuf));
+                    Log.v(TAG, "writeDatapointToLocalDb(): wrote history snapshot row");
+                }
+
+                long rowId = mOsdDb.insert(DP_TABLE_NAME, null, values);
+                if (rowId < 0) {
+                    throw new SQLException("insert returned -1");
+                }
                 Log.v(TAG, "writeDatapointToLocalDb(): datapoint written to database");
 
                 if (sdData.alarmState != uk.org.openseizuredetector.data.AlarmState.OK) {
@@ -141,6 +149,23 @@ public class LogRepository {
                 Log.e(TAG, "writeDatapointToLocalDb(): Unexpected error: " + e.toString());
             }
         });
+    }
+
+    private synchronized boolean shouldWriteHistorySnapshot() {
+        long now = System.currentTimeMillis();
+        if (mLastHistorySnapshotMs == 0L || (now - mLastHistorySnapshotMs) >= HISTORY_SNAPSHOT_INTERVAL_MS) {
+            mLastHistorySnapshotMs = now;
+            return true;
+        }
+        return false;
+    }
+
+    private void putHistoryJson(ContentValues values, String columnName, String historyJson) {
+        if (historyJson == null || historyJson.isEmpty()) {
+            values.putNull(columnName);
+        } else {
+            values.put(columnName, historyJson);
+        }
     }
 
     /**
