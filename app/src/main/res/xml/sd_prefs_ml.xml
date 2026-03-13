@@ -8,23 +8,20 @@
             android:summary="@string/CnnAlarmEnabledSummary"
             android:title="@string/CnnAlarmEnabledTitle" />
 
-        <Preference
-            android:key="ml_description"
-            android:summary="@string/CnnAlarmEnabledSummary"
-            android:selectable="false" />
 
-        <!-- Placeholder for the dynamic list of installed models -->
-        <PreferenceCategory
-            android:key="installed_models_category"
-            android:title="Installed Models">
-            <!-- Items added programmatically -->
-        </PreferenceCategory>
+        <EditTextPreference
+            android:key="MlAccelStdThresholdPct"
+            android:title="@string/ml_sd_threshold_title"
+            android:summary="@string/ml_sd_threshold_summary"
+            android:defaultValue="5"
+            app:useSimpleSummaryProvider="true" />
 
-        <Preference
-            android:key="add_ml_model"
-            android:title="Add ML Model"
-            android:summary="Download and install a new seizure detection model"
-            app:iconSpaceReserved="false" />
+        <EditTextPreference
+            android:key="MlSeizureProbabilityThresholdPct"
+            android:title="@string/ml_prob_threshold_title"
+            android:summary="@string/ml_prob_threshold_summary"
+            android:defaultValue="50"
+            app:useSimpleSummaryProvider="true" />
 
         <ListPreference
             android:key="MlModelUpdateCheckPeriod"
@@ -34,5 +31,21 @@
             android:entryValues="@array/ml_model_update_periods_values"
             android:defaultValue="86400"
             android:dialogTitle="@string/ml_model_update_check_title" />
+
+
+        <Preference
+            android:key="add_ml_model"
+            android:title="Add ML Model"
+            android:summary="Download and install a new seizure detection model"
+            app:iconSpaceReserved="false" />
+
+        <!-- Placeholder for the dynamic list of installed models -->
+        <PreferenceCategory
+            android:key="installed_models_category"
+            android:title="Installed Models">
+            <!-- Items added programmatically -->
+        </PreferenceCategory>
+
+
     </PreferenceCategory>
 </PreferenceScreen>

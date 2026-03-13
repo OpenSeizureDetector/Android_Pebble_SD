@@ -906,7 +906,16 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             setPreferencesFromResource(R.xml.sd_prefs_ml, rootKey);
             mMm = new MlModelManager(getContext());
             mOsdUtil = new OsdUtil(getContext(), new Handler(Looper.getMainLooper()));
-            
+
+            configureThresholdPreference(
+                    MlModelManager.PREF_ML_ACCEL_STD_THRESHOLD_PCT,
+                    MlModelManager.DEFAULT_ML_ACCEL_STD_THRESHOLD_PCT,
+                    MlModelManager.PREF_ML_ACCEL_STD_THRESHOLD_USER_SET);
+            configureThresholdPreference(
+                    MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_PCT,
+                    MlModelManager.DEFAULT_ML_SEIZURE_PROB_THRESHOLD_PCT,
+                    MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_USER_SET);
+
             Preference addPref = findPreference("add_ml_model");
             if (addPref != null) {
                 addPref.setOnPreferenceClickListener(pref -> {
@@ -916,6 +925,44 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             }
             
             refreshInstalledModelsList();
+        }
+
+        private void configureThresholdPreference(String key, String defaultValue, String userSetFlagKey) {
+            EditTextPreference pref = findPreference(key);
+            if (pref == null) {
+                return;
+            }
+            pref.setOnPreferenceChangeListener((p, newValue) -> {
+                if (getContext() == null) {
+                    return false;
+                }
+                String original = newValue == null ? "" : String.valueOf(newValue).trim();
+                String sanitized = sanitizePercent(original, defaultValue);
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
+                sp.edit().putBoolean(userSetFlagKey, true).apply();
+                if (!sanitized.equals(original)) {
+                    pref.setText(sanitized);
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        private String sanitizePercent(Object value, String fallback) {
+            String raw = value == null ? fallback : String.valueOf(value).trim();
+            try {
+                double parsed = Double.parseDouble(raw);
+                if (parsed < 0.0) parsed = 0.0;
+                if (parsed > 100.0) parsed = 100.0;
+                if (Math.abs(parsed - Math.rint(parsed)) < 0.0001) {
+                    return Integer.toString((int) Math.rint(parsed));
+                }
+                return String.format(java.util.Locale.US, "%.2f", parsed)
+                        .replaceAll("0+$", "")
+                        .replaceAll("\\.$", "");
+            } catch (Exception ignored) {
+                return fallback;
+            }
         }
 
         private void refreshInstalledModelsList() {

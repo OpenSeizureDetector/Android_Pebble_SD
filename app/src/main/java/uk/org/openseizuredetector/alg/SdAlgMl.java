@@ -1,6 +1,7 @@
 package uk.org.openseizuredetector.alg;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import uk.org.openseizuredetector.data.logging.Log;
 import android.widget.Toast;
 
@@ -16,6 +17,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import androidx.preference.PreferenceManager;
 import uk.org.openseizuredetector.data.SdData;
 import uk.org.openseizuredetector.utils.CircBuf;
 import uk.org.openseizuredetector.data.AlarmState;
@@ -27,6 +29,8 @@ import uk.org.openseizuredetector.data.AlarmState;
 public class SdAlgMl extends SdAlgBase {
     private final static String TAG = "SdAlgMl";
     private MlModelManager mMm;
+    private double mAccelStdThresholdPct = 5.0;
+    private float mSeizureProbThreshold = 0.5f;
 
     private static class ModelInstance {
         String label; // Short label like ML1, ML2
@@ -36,7 +40,6 @@ public class SdAlgMl extends SdAlgBase {
         Module pytorchModule;
         int inputFormat;
         int inputSize;
-        double sdThresh;
         float weight = 1.0f;
         boolean isEnabled = true;
         CircBuf inputBuffer;
@@ -97,7 +100,6 @@ public class SdAlgMl extends SdAlgBase {
                 model.framework = res.framework;
                 model.inputFormat = res.inputFormat;
                 model.inputSize = res.inputSize;
-                model.sdThresh = res.alarmThreshold;
 
                 if ("tflite".equalsIgnoreCase(res.framework)) {
                     if (res.tfliteBuffer != null) {
@@ -138,6 +140,7 @@ public class SdAlgMl extends SdAlgBase {
      */
     public List<AlgorithmResult> evaluateAllModels(SdData sdData) {
         List<AlgorithmResult> results = new ArrayList<>();
+        reloadThresholdPreferences();
 
         for (ModelInstance model : mModels) {
             if (!model.isEnabled) continue;
@@ -146,8 +149,7 @@ public class SdAlgMl extends SdAlgBase {
                 float pSeizure = evaluateModel(model, sdData);
                 Log.v(TAG, "evaluateAllModels(): Model " + model.label + " pSeizure=" + pSeizure);
 
-                // Use 0.5 as a standard probability threshold for alarm
-                int alarmState = (pSeizure > 0.5) ? AlarmState.ALARM : AlarmState.OK;
+                int alarmState = (pSeizure > mSeizureProbThreshold) ? AlarmState.ALARM : AlarmState.OK;
 
                 results.add(new AlgorithmResult(
                         model.label, // Use short label for voting results
@@ -214,7 +216,7 @@ public class SdAlgMl extends SdAlgBase {
 
         // Check movement threshold (Movement Standard Deviation)
         double stdDev = calcRawDataStd(sdData);
-        if (stdDev < model.sdThresh) {
+        if (stdDev < mAccelStdThresholdPct) {
             return 0.0f;
         }
 
@@ -289,6 +291,41 @@ public class SdAlgMl extends SdAlgBase {
         double standardDeviation = 0.0;
         for (int j = 0; j < length; j++) standardDeviation += Math.pow(sdData.rawData[j] - mean, 2);
         return 100.0 * Math.sqrt(standardDeviation / length) / mean;
+    }
+
+    private void reloadThresholdPreferences() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+        double accelStdPct = getPercentPreference(
+                prefs,
+                MlModelManager.PREF_ML_ACCEL_STD_THRESHOLD_PCT,
+                MlModelManager.DEFAULT_ML_ACCEL_STD_THRESHOLD_PCT);
+        double seizureProbPct = getPercentPreference(
+                prefs,
+                MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_PCT,
+                MlModelManager.DEFAULT_ML_SEIZURE_PROB_THRESHOLD_PCT);
+
+        mAccelStdThresholdPct = accelStdPct;
+        mSeizureProbThreshold = (float) (seizureProbPct / 100.0);
+
+        Log.v(TAG, "ML thresholds resolved from prefs: accelStd=" + mAccelStdThresholdPct
+                + "%, seizureProb=" + seizureProbPct + "%");
+    }
+
+    private double getPercentPreference(SharedPreferences prefs, String key, String fallback) {
+        String raw = prefs.getString(key, fallback);
+        try {
+            double parsed = Double.parseDouble(raw);
+            if (parsed < 0.0) return 0.0;
+            if (parsed > 100.0) return 100.0;
+            return parsed;
+        } catch (Exception ex) {
+            Log.w(TAG, "Invalid threshold preference for " + key + "='" + raw + "', using " + fallback);
+            try {
+                return Double.parseDouble(fallback);
+            } catch (Exception ignored) {
+                return 0.0;
+            }
+        }
     }
 
     @Override

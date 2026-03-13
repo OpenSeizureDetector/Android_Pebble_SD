@@ -38,6 +38,12 @@ public class MlModelManager {
     protected OsdUtil mUtil;
     private final static String TAG = "MlModelManager";
     public static final String PREF_INSTALLED_MODELS = "InstalledMlModels";
+    public static final String PREF_ML_ACCEL_STD_THRESHOLD_PCT = "MlAccelStdThresholdPct";
+    public static final String PREF_ML_SEIZURE_PROB_THRESHOLD_PCT = "MlSeizureProbabilityThresholdPct";
+    public static final String PREF_ML_ACCEL_STD_THRESHOLD_USER_SET = "MlAccelStdThresholdUserSet";
+    public static final String PREF_ML_SEIZURE_PROB_THRESHOLD_USER_SET = "MlSeizureProbabilityThresholdUserSet";
+    public static final String DEFAULT_ML_ACCEL_STD_THRESHOLD_PCT = "5";
+    public static final String DEFAULT_ML_SEIZURE_PROB_THRESHOLD_PCT = "50";
 
     // Maximum number of ML models that can be managed simultaneously
     public static final int MAX_MODELS = 10;
@@ -179,6 +185,7 @@ public class MlModelManager {
                     JSONObject installedModel = new JSONObject(modelInfo.toString());
                     installedModel.put("localPath", file.getAbsolutePath());
                     registerInstalledModel(installedModel);
+                    applyRecommendedThresholdsFromModel(installedModel);
                     callback.onComplete(true, file);
                 } catch (JSONException e) {
                     callback.onComplete(false, null);
@@ -265,6 +272,86 @@ public class MlModelManager {
         } catch (JSONException e) {
             Log.e(TAG, "Error registering model: " + e.getMessage());
         }
+    }
+
+    public void applyRecommendedThresholdsFromModel(JSONObject modelInfo) {
+        if (modelInfo == null) {
+            return;
+        }
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        Double recommendedSdPct = readRecommendedPercent(modelInfo,
+                "accel_std_threshold_pct",
+                "accel_std_threshold",
+                "sd_threshold",
+                "alarm_threshold");
+        boolean userSetSd = prefs.getBoolean(PREF_ML_ACCEL_STD_THRESHOLD_USER_SET, false);
+        if (recommendedSdPct != null) {
+            if (!userSetSd) {
+                String value = toPreferencePercentString(recommendedSdPct);
+                editor.putString(PREF_ML_ACCEL_STD_THRESHOLD_PCT, value);
+                Log.i(TAG, "Applied recommended accel std threshold from model: " + value + "%");
+            } else {
+                Log.i(TAG, "Skipping recommended accel std threshold; user preference is set");
+            }
+        }
+
+        Double recommendedProbPct = readRecommendedPercent(modelInfo,
+                "seizure_probability_threshold_pct",
+                "seizure_probability_threshold",
+                "probability_threshold_pct",
+                "probability_threshold",
+                "alarm_probability_threshold");
+        if (recommendedProbPct != null && recommendedProbPct <= 1.0) {
+            recommendedProbPct = recommendedProbPct * 100.0;
+        }
+
+        boolean userSetProb = prefs.getBoolean(PREF_ML_SEIZURE_PROB_THRESHOLD_USER_SET, false);
+        if (recommendedProbPct != null) {
+            if (!userSetProb) {
+                String value = toPreferencePercentString(recommendedProbPct);
+                editor.putString(PREF_ML_SEIZURE_PROB_THRESHOLD_PCT, value);
+                Log.i(TAG, "Applied recommended seizure probability threshold from model: " + value + "%");
+            } else {
+                Log.i(TAG, "Skipping recommended seizure probability threshold; user preference is set");
+            }
+        }
+
+        editor.apply();
+    }
+
+    private static Double readRecommendedPercent(JSONObject modelInfo, String... keys) {
+        for (String key : keys) {
+            if (!modelInfo.has(key)) {
+                continue;
+            }
+            double value = modelInfo.optDouble(key, Double.NaN);
+            if (Double.isNaN(value) || Double.isInfinite(value)) {
+                continue;
+            }
+            return clampToPercentRange(value);
+        }
+        return null;
+    }
+
+    private static double clampToPercentRange(double value) {
+        if (value < 0.0) {
+            return 0.0;
+        }
+        if (value > 100.0) {
+            return 100.0;
+        }
+        return value;
+    }
+
+    private static String toPreferencePercentString(double value) {
+        double clamped = clampToPercentRange(value);
+        if (Math.abs(clamped - Math.rint(clamped)) < 0.0001) {
+            return Integer.toString((int) Math.rint(clamped));
+        }
+        return String.format(java.util.Locale.US, "%.2f", clamped).replaceAll("0+$", "").replaceAll("\\.$", "");
     }
 
     public void deleteModel(String fname) {

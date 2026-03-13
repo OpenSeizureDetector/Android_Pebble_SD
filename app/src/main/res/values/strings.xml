@@ -517,6 +517,8 @@
     <string name="ml_sd_settings_title">Machine Learning Seizure Detector Settings</string>
     <string name="ml_sd_threshold_summary">Movement Threshold (% standard deviation) to activate the Machine Learning Algorithm</string>
     <string name="ml_sd_threshold_title">Movement Threshold (%std)</string>
+    <string name="ml_prob_threshold_title" translatable="false">Seizure Probability Threshold (%)</string>
+    <string name="ml_prob_threshold_summary" translatable="false">Minimum seizure probability (%) required for the ML algorithm to trigger an alarm</string>
     <string name="ml_sd_modelid_title">AI Model ID</string>
     <string name="ml_sd_modelid_summary">ID number of machine learning (AI) model to be used - users should not edit this, but use the model Manager page instead.</string>
     <string name="ml_model_select_title">Select ML Model</string>

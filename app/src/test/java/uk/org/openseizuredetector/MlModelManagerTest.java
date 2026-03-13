@@ -39,6 +39,8 @@ public class MlModelManagerTest {
         context = RuntimeEnvironment.getApplication();
         server = new MockWebServer();
         server.start();
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        sp.edit().clear().commit();
     }
 
     @After
@@ -153,6 +155,46 @@ public class MlModelManagerTest {
 
         assertNotNull("Result list should not be null", results);
         assertTrue("Model should be loaded from installed list", results.size() > 0);
+    }
+
+    @Test
+    public void testApplyRecommendedThresholdsFromModel_appliesWhenUserNotSet() throws Exception {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        sp.edit()
+                .putBoolean(MlModelManager.PREF_ML_ACCEL_STD_THRESHOLD_USER_SET, false)
+                .putBoolean(MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_USER_SET, false)
+                .commit();
+
+        JSONObject model = new JSONObject();
+        model.put("accel_std_threshold_pct", 7.5);
+        model.put("seizure_probability_threshold_pct", 65);
+
+        MlModelManager mm = new MlModelManager(context);
+        mm.applyRecommendedThresholdsFromModel(model);
+
+        assertEquals("7.5", sp.getString(MlModelManager.PREF_ML_ACCEL_STD_THRESHOLD_PCT, null));
+        assertEquals("65", sp.getString(MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_PCT, null));
+    }
+
+    @Test
+    public void testApplyRecommendedThresholdsFromModel_skipsWhenUserSet() throws Exception {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        sp.edit()
+                .putString(MlModelManager.PREF_ML_ACCEL_STD_THRESHOLD_PCT, "9")
+                .putString(MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_PCT, "70")
+                .putBoolean(MlModelManager.PREF_ML_ACCEL_STD_THRESHOLD_USER_SET, true)
+                .putBoolean(MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_USER_SET, true)
+                .commit();
+
+        JSONObject model = new JSONObject();
+        model.put("accel_std_threshold_pct", 3);
+        model.put("seizure_probability_threshold_pct", 40);
+
+        MlModelManager mm = new MlModelManager(context);
+        mm.applyRecommendedThresholdsFromModel(model);
+
+        assertEquals("9", sp.getString(MlModelManager.PREF_ML_ACCEL_STD_THRESHOLD_PCT, null));
+        assertEquals("70", sp.getString(MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_PCT, null));
     }
 
     @org.junit.Ignore("Covered by instrumentation tests; use androidTest instead")

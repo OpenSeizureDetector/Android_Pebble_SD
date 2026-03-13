@@ -2401,14 +2401,11 @@ public class SdServer extends Service implements SdDataReceiver {
      */
     private void downloadModelUpdate(JSONObject modelInfo) {
         try {
-            String fname = modelInfo.optString("fname");
             String inputFmtStr = modelInfo.optString("input_format", "1d_mag");
             int inputSize = modelInfo.optInt("input_size", 125);
             String framework = modelInfo.optString("framework", "tflite");
 
-            java.util.concurrent.atomic.AtomicBoolean cancelFlag = new java.util.concurrent.atomic.AtomicBoolean(false);
-
-            mMlModelManager.downloadModel(fname, cancelFlag, (ok, file) -> {
+            mMlModelManager.downloadAndInstallModel(modelInfo, (ok, file) -> {
                 if (!ok || file == null) {
                     Log.e(TAG, "downloadModelUpdate(): Failed to download model");
                     mUtil.showToast(getString(R.string.ml_model_download_failed));

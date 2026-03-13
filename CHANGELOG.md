@@ -1,5 +1,6 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.0.0T - Added Acceleration Standard Deviation Threshold user perference to adjust low-movement sensitivity of SdAlgMl
     V5.0.0S - Fixed permissions issue with Android 14 network data source - we should be more robust now about which permissions we request for which data source.
     V5.0.0R - Fixed another issue that caused BLE2 to sometimes subscribe to acceleration updates twice, resulting in incorrect data.
     V5.0.0Q - Fixed? Issue that caused SdDataSourceBLE2 to sometimes reconnect incorrectly resulting in incorrect data arrival frequency.
