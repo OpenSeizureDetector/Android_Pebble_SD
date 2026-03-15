@@ -24,6 +24,7 @@ package uk.org.openseizuredetector.utils;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import uk.org.openseizuredetector.data.logging.Log;
+import uk.org.openseizuredetector.data.logging.LogRepository;
 
 import uk.org.openseizuredetector.data.SdData;
 import uk.org.openseizuredetector.data.SdDataHistory;
@@ -120,10 +121,10 @@ public class CircBufHistoryLoader {
         }
 
         try {
-            SQLiteDatabase database = uk.org.openseizuredetector.data.logging.LogManager.getDatabase();
+            SQLiteDatabase database = LogRepository.getDatabase();
 
             if (database == null) {
-                Log.e(TAG, "loadHistoryFromDatabase(SdDataHistory): LogManager.getDatabase() returned null");
+                Log.e(TAG, "loadHistoryFromDatabase(SdDataHistory): LogRepository.getDatabase() returned null");
                 if (callback != null) {
                     callback.onHistoryLoaded(false);
                 }

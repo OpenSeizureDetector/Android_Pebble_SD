@@ -54,9 +54,11 @@ public class LogRepository {
     private static final String TAG = "LogRepository";
     private static final String DP_TABLE_NAME = "datapoints";
     private static final String EVENTS_TABLE_NAME = "events";
+    private static final Object DB_LOCK = new Object();
 
     private Context mContext;
     private OsdUtil mUtil;
+    private static Context mAppContext;
     private static SQLiteDatabase mOsdDb = null;
     private long mDataRetentionPeriod = 1;  // days
     private static final long HISTORY_SNAPSHOT_INTERVAL_MS = 15 * 60 * 1000L; // 15 minutes
@@ -75,7 +77,8 @@ public class LogRepository {
     }
 
     public LogRepository(Context context, OsdUtil util) {
-        mContext = context;
+        mContext = context.getApplicationContext();
+        mAppContext = mContext;
         mUtil = util;
     }
 
@@ -97,7 +100,26 @@ public class LogRepository {
      * Returns the SQLiteDatabase instance (for compatibility with existing code).
      */
     public static SQLiteDatabase getDatabase() {
+        openDb();
         return mOsdDb;
+    }
+
+    /**
+     * Close and clear the shared DB handle so a subsequent open can recreate it safely.
+     */
+    public static void closeDatabase() {
+        synchronized (DB_LOCK) {
+            if (mOsdDb != null) {
+                try {
+                    if (mOsdDb.isOpen()) {
+                        mOsdDb.close();
+                    }
+                } catch (Exception e) {
+                    Log.w(TAG, "closeDatabase(): error closing DB: " + e.toString());
+                }
+            }
+            mOsdDb = null;
+        }
     }
 
     /**
@@ -108,13 +130,13 @@ public class LogRepository {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         final String dateStr = dateFormat.format(curDate);
 
-        if (mOsdDb == null) {
-            Log.e(TAG, "writeDatapointToLocalDb(): mOsdDb is null - doing nothing");
-            return;
-        }
-
         BackgroundTaskExecutor.executeAndForget(() -> {
             try {
+                SQLiteDatabase db = getDatabase();
+                if (db == null) {
+                    Log.e(TAG, "writeDatapointToLocalDb(): DB unavailable");
+                    return;
+                }
                 boolean includeHistorySnapshot = shouldWriteHistorySnapshot();
 
                 ContentValues values = new ContentValues();
@@ -133,7 +155,7 @@ public class LogRepository {
                     Log.v(TAG, "writeDatapointToLocalDb(): wrote history snapshot row");
                 }
 
-                long rowId = mOsdDb.insert(DP_TABLE_NAME, null, values);
+                long rowId = db.insert(DP_TABLE_NAME, null, values);
                 if (rowId < 0) {
                     throw new SQLException("insert returned -1");
                 }
@@ -189,8 +211,9 @@ public class LogRepository {
         values.put("notes", desc);
         values.put("dataJSON", dataJSON);
 
-        if (mOsdDb != null) {
-            long newRowId = mOsdDb.insert(EVENTS_TABLE_NAME, null, values);
+        SQLiteDatabase db = getDatabase();
+        if (db != null) {
+            long newRowId = db.insert(EVENTS_TABLE_NAME, null, values);
             Log.d(TAG, "createLocalEvent(): Created Row ID " + newRowId);
             return true;
         } else {
@@ -207,8 +230,13 @@ public class LogRepository {
         Cursor c;
         String retVal;
         try {
+            SQLiteDatabase db = getDatabase();
+            if (db == null) {
+                Log.e(TAG, "getLocalEventById(): DB unavailable");
+                return null;
+            }
             String selectStr = "select * from " + EVENTS_TABLE_NAME + " where id=" + id + ";";
-            c = mOsdDb.rawQuery(selectStr, null);
+            c = db.rawQuery(selectStr, null);
             retVal = eventCursor2Json(c);
         } catch (Exception e) {
             Log.d(TAG, "getLocalEventById(): Error Querying Database: " + e.getLocalizedMessage());
@@ -225,8 +253,13 @@ public class LogRepository {
         Cursor c;
         String retVal;
         try {
+            SQLiteDatabase db = getDatabase();
+            if (db == null) {
+                Log.e(TAG, "getDatapointById(): DB unavailable");
+                return null;
+            }
             String selectStr = "select * from " + DP_TABLE_NAME + " where id=" + id + ";";
-            c = mOsdDb.rawQuery(selectStr, null);
+            c = db.rawQuery(selectStr, null);
             retVal = cursor2Json(c);
         } catch (Exception e) {
             Log.d(TAG, "getDatapointById(): Error Querying Database: " + e.getLocalizedMessage());
@@ -240,13 +273,14 @@ public class LogRepository {
      */
     public boolean setDatapointToUploaded(int id, String eventId) {
         Log.d(TAG, "setDatapointToUploaded() - id=" + id);
-        if (mOsdDb == null) {
+        SQLiteDatabase db = getDatabase();
+        if (db == null) {
             Log.e(TAG, "setDatapointToUploaded() - mOsdDb is null");
             return false;
         }
         ContentValues cv = new ContentValues();
         cv.put("uploaded", eventId);
-        int nRowsUpdated = mOsdDb.update(DP_TABLE_NAME, cv, "id = ?",
+        int nRowsUpdated = db.update(DP_TABLE_NAME, cv, "id = ?",
                 new String[]{String.format("%d", id)});
         return nRowsUpdated == 1;
     }
@@ -256,9 +290,14 @@ public class LogRepository {
      */
     public boolean setDatapointStatus(Long id, int statusVal) {
         Log.d(TAG, "setDatapointStatus() - id=" + id + ", statusVal=" + statusVal);
+        SQLiteDatabase db = getDatabase();
+        if (db == null) {
+            Log.e(TAG, "setDatapointStatus() - DB unavailable");
+            return false;
+        }
         ContentValues cv = new ContentValues();
         cv.put("status", statusVal);
-        int nRowsUpdated = mOsdDb.update(DP_TABLE_NAME, cv, "id = ?",
+        int nRowsUpdated = db.update(DP_TABLE_NAME, cv, "id = ?",
                 new String[]{String.format("%d", id)});
         return nRowsUpdated == 1;
     }
@@ -291,13 +330,14 @@ public class LogRepository {
      */
     public boolean setEventToUploaded(long localEventId, String remoteEventId) {
         Log.d(TAG, "setEventToUploaded() - local id=" + localEventId + " remote id=" + remoteEventId);
-        if (mOsdDb == null) {
+        SQLiteDatabase db = getDatabase();
+        if (db == null) {
             Log.e(TAG, "setEventToUploaded() - mOsdDb is null");
             return false;
         }
         ContentValues cv = new ContentValues();
         cv.put("uploaded", remoteEventId);
-        int nRowsUpdated = mOsdDb.update(EVENTS_TABLE_NAME, cv, "id = ?",
+        int nRowsUpdated = db.update(EVENTS_TABLE_NAME, cv, "id = ?",
                 new String[]{String.format("%d", localEventId)});
         return nRowsUpdated == 1;
     }
@@ -352,6 +392,11 @@ public class LogRepository {
      */
     public int pruneLocalDb() {
         Log.d(TAG, "pruneLocalDb()");
+        SQLiteDatabase db = getDatabase();
+        if (db == null) {
+            Log.e(TAG, "pruneLocalDb(): DB unavailable");
+            return 0;
+        }
         int retVal = 0;
         long currentDateMillis = new Date().getTime();
         long endDateMillis = currentDateMillis - 24 * 3600 * 1000 * mDataRetentionPeriod;
@@ -363,7 +408,7 @@ public class LogRepository {
             try {
                 String selectStr = "DataTime<=?";
                 String[] selectArgs = {endDateStr};
-                retVal = mOsdDb.delete(tableName, selectStr, selectArgs);
+                retVal = db.delete(tableName, selectStr, selectArgs);
             } catch (Exception e) {
                 Log.d(TAG, "Error deleting data " + e.toString());
                 retVal = 0;
@@ -377,25 +422,42 @@ public class LogRepository {
 
     private static void openDb() {
         Log.d(TAG, "openDb");
-        try {
-            if (mOsdDb == null) {
-                Log.i(TAG, "openDb: mOsdDb is null - initialising");
-                OsdDbHelper helper = new OsdDbHelper(LogManager.getContext());
-                mOsdDb = helper.getWritableDatabase();
-                Log.i(TAG, "openDb: Database opened successfully");
-            } else {
-                Log.i(TAG, "openDb: mOsdDb has been initialised already");
-            }
-            String[] tableNames = new String[]{DP_TABLE_NAME, EVENTS_TABLE_NAME};
-            for (String tableName : tableNames) {
-                if (!checkTableExists(mOsdDb, tableName)) {
-                    Log.e(TAG, "ERROR - Table " + tableName + " does not exist");
+        synchronized (DB_LOCK) {
+            try {
+                if (mOsdDb == null || !isDatabaseOpen(mOsdDb)) {
+                    Log.i(TAG, "openDb: opening database");
+                    Context ctx = mAppContext != null ? mAppContext : LogManager.getContext();
+                    if (ctx == null) {
+                        Log.e(TAG, "openDb: no context available to open database");
+                        mOsdDb = null;
+                        return;
+                    }
+                    OsdDbHelper helper = new OsdDbHelper(ctx);
+                    mOsdDb = helper.getWritableDatabase();
+                    Log.i(TAG, "openDb: Database opened successfully");
                 } else {
-                    Log.d(TAG, "table " + tableName + " exists ok");
+                    Log.i(TAG, "openDb: mOsdDb already open");
                 }
+                String[] tableNames = new String[]{DP_TABLE_NAME, EVENTS_TABLE_NAME};
+                for (String tableName : tableNames) {
+                    if (!checkTableExists(mOsdDb, tableName)) {
+                        Log.e(TAG, "ERROR - Table " + tableName + " does not exist");
+                    } else {
+                        Log.d(TAG, "table " + tableName + " exists ok");
+                    }
+                }
+            } catch (SQLException e) {
+                Log.e(TAG, "Failed to open Database: " + e.toString());
+                mOsdDb = null;
             }
-        } catch (SQLException e) {
-            Log.e(TAG, "Failed to open Database: " + e.toString());
+        }
+    }
+
+    private static boolean isDatabaseOpen(SQLiteDatabase db) {
+        try {
+            return db != null && db.isOpen();
+        } catch (Exception e) {
+            return false;
         }
     }
 
@@ -502,7 +564,12 @@ public class LogRepository {
                 Log.v(TAG, "SelectQuery: table=" + table + ", columns=" + Arrays.toString(columns)
                         + ", selection=" + selection);
                 try {
-                    Cursor resultSet = mOsdDb.query(table, columns, selection,
+                    SQLiteDatabase db = getDatabase();
+                    if (db == null) {
+                        Log.e(TAG, "SelectQuery: DB unavailable");
+                        return null;
+                    }
+                    Cursor resultSet = db.query(table, columns, selection,
                             selectionArgs, groupBy, having, orderBy);
                     resultSet.moveToFirst();
                     return resultSet;

@@ -438,7 +438,9 @@ public class LogManager {
      * @return The SQLiteDatabase instance, or null if not initialized
      */
     public static SQLiteDatabase getDatabase() {
-        return mOsdDb;
+        SQLiteDatabase db = LogRepository.getDatabase();
+        mOsdDb = db;
+        return db;
     }
 
 
@@ -696,7 +698,7 @@ public class LogManager {
      * unless it was the last instance.
      */
     public static void close() {
-        mOsdDb.close();
+        LogRepository.closeDatabase();
         mOsdDb = null;
         if (mWac != null) {
             Log.i(TAG, "Stopping Remote Database Interface");

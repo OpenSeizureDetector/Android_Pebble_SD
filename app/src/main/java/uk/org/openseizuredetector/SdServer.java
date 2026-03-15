@@ -442,6 +442,12 @@ public class SdServer extends Service implements SdDataReceiver {
 
 
         // Create our log manager.
+        if (mLm != null) {
+            Log.i(TAG, "onStartCommand() - Stopping existing LogManager instance before re-creating");
+            mLm.stop();
+            LogManager.close();
+            mLm = null;
+        }
         mLm = new LogManager(this, mLogDataRemote, mLogDataRemoteMobile, mAuthToken, mEventDuration,
                 mRemoteLogPeriod, mLogNDA, mAutoPruneDb, mDataRetentionPeriod, mSdData);
 
@@ -697,7 +703,8 @@ public class SdServer extends Service implements SdDataReceiver {
         if (mLm != null) {
             Log.d(TAG, "Closing Down Log Manager");
             mLm.stop();
-            mLm.close();
+            LogManager.close();
+            mLm = null;
         }
 
         super.onDestroy();
