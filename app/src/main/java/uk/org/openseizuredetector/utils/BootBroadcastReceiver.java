@@ -24,36 +24,72 @@
 */
 package uk.org.openseizuredetector.utils;
 
-import uk.org.openseizuredetector.utils.BootBroadcastReceiver;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+
 import androidx.preference.PreferenceManager;
+
 import uk.org.openseizuredetector.data.logging.Log;
-import android.widget.Toast;
-
 import uk.org.openseizuredetector.activity.startup.StartupActivity;
-/**
- * Broadcast Receiver responds to the BOOT_COMPLETED broadcast and if the 'AutoStart' preference is true,
- * will start the OpenSeizureDetector SDServer service.
- * Created by graham on 14/12/16.
- */
 
+/**
+ * Broadcast Receiver responds to the BOOT_COMPLETED broadcast and, if the 'AutoStart'
+ * preference is true, starts the OpenSeizureDetector SDServer service.
+ *
+ * Also handles ACTION_LOCKED_BOOT_COMPLETED (Android 7+) so the receiver fires even
+ * when Direct Boot is active, giving us a log entry as early as possible.
+ */
 public class BootBroadcastReceiver extends BroadcastReceiver {
-    private String TAG = "BroadcastReceiver";
+    private static final String TAG = "BootBroadcastReceiver";
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.v(TAG, "onReceive()");
-        SharedPreferences SP = PreferenceManager
-                .getDefaultSharedPreferences(context);
-        boolean autoStart = PreferenceUtils.getBooleanFromXml(SP, "AutoStart");
-        Log.v(TAG, "onReceive() - autoStart = " + autoStart);
-        if (autoStart && Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
-            Intent startUpIntent = new Intent(context, StartupActivity.class);
-            startUpIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(startUpIntent);
+        final String action = intent != null ? intent.getAction() : "null";
+
+        // Initialise OsdUtil so Log.i/w/e are wired to the persistent file.
+        // OsdApplication.onCreate() will already have run (Android starts the app process
+        // first), but Log.init() may not have been called yet if LogManager hasn't been
+        // created. Creating OsdUtil here is cheap because it is idempotent (the singleton
+        // PersistentFileLogger is reused, and Log.init() is called inside the constructor).
+        try {
+            new OsdUtil(context, new Handler(Looper.getMainLooper()));
+        } catch (Exception e) {
+            android.util.Log.e(TAG, "onReceive(): failed to initialise OsdUtil - " + e.getMessage());
+        }
+
+        Log.i(TAG, "onReceive(): action=" + action
+                + ", pid=" + android.os.Process.myPid()
+                + ", androidSdk=" + Build.VERSION.SDK_INT);
+
+        if (!Intent.ACTION_BOOT_COMPLETED.equals(action)
+                && !"android.intent.action.LOCKED_BOOT_COMPLETED".equals(action)) {
+            Log.w(TAG, "onReceive(): unexpected action '" + action + "' - ignoring");
+            return;
+        }
+
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
+        boolean autoStart = PreferenceUtils.getBooleanFromXml(sp, "AutoStart");
+
+        Log.i(TAG, "onReceive(): DEVICE BOOT DETECTED - autoStart=" + autoStart);
+
+        if (autoStart) {
+            Log.i(TAG, "onReceive(): AutoStart is enabled - launching StartupActivity");
+            try {
+                Intent startUpIntent = new Intent(context, StartupActivity.class);
+                startUpIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(startUpIntent);
+                Log.i(TAG, "onReceive(): StartupActivity launched successfully");
+            } catch (Exception e) {
+                Log.e(TAG, "onReceive(): failed to launch StartupActivity - " + e.getMessage());
+            }
+        } else {
+            Log.i(TAG, "onReceive(): AutoStart is DISABLED - OSD will NOT restart automatically after this boot");
         }
     }
 }
+

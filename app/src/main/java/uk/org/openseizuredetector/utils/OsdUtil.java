@@ -117,6 +117,10 @@ public class OsdUtil {
             Log.i(TAG, "PersistentFileLogger initialized: " + mFileLogger.getCurrentLogPath());
         }
 
+        // Wire up the Log class so Log.i/w/e routes to the persistent file as early as possible.
+        // This must happen before LogManager is created (e.g. so BootBroadcastReceiver log calls work).
+        Log.init(mContext, this);
+
         writeToSysLogFile("OsdUtil() - initialised");
 
     }
@@ -205,6 +209,10 @@ public class OsdUtil {
     public void stopServer() {
         Log.i(TAG, "OsdUtil.stopServer() - stopping Server... - mNbound=" + mNbound);
         Log.i(TAG, "stopserver() - stopping server");
+
+        // Mark this as a planned (user-requested) shutdown BEFORE stopping the service.
+        // This prevents START_STICKY from treating the subsequent restart as a crash.
+        uk.org.openseizuredetector.SdServer.setPlannedShutdown(mContext);
 
         // then send an Intent to stop the service.
         Intent sdServerIntent;

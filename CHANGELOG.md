@@ -1,5 +1,8 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.0.0U - Fixed issue with trying to access closed instance of sqlite database.   
+              Added logging for reason for last shutdown given we see occasional silent crashes.
+              Improved automatic re-starting attempts if the system kills the SdServer service.
     V5.0.0T - Added Acceleration Standard Deviation Threshold user perference to adjust low-movement sensitivity of SdAlgMl
     V5.0.0S - Fixed permissions issue with Android 14 network data source - we should be more robust now about which permissions we request for which data source.
     V5.0.0R - Fixed another issue that caused BLE2 to sometimes subscribe to acceleration updates twice, resulting in incorrect data.

@@ -111,6 +111,14 @@ import uk.org.openseizuredetector.activity.main.MainActivity2;
 public class SdServer extends Service implements SdDataReceiver {
     private String mUuidStr = "0f675b21-5a36-4fe7-9761-fd0c691651f3";  // UUID to Identify OSD.
 
+    // SharedPreferences key for tracking shutdown reason across process restarts
+    private static final String PREF_SHUTDOWN_REASON = "SdServer_ShutdownReason";
+    private static final String PREF_SHUTDOWN_TIME   = "SdServer_ShutdownTime";
+    private static final String PREF_LAST_PID        = "SdServer_LastPid";
+    /** Shutdown reason values stored in SharedPreferences */
+    private static final String SHUTDOWN_REASON_PLANNED  = "planned";
+    private static final String SHUTDOWN_REASON_RUNNING  = "running";   // set at startup, means crash if found on next start
+
     // Notification ID
     private final int NOTIFICATION_ID = 1;
     private String mNotChId = "OSD Notification Channel";
@@ -367,6 +375,32 @@ public class SdServer extends Service implements SdDataReceiver {
         mServiceStartMillis = System.currentTimeMillis();
         mHasReceivedData = false;
 
+        // ---- Shutdown-reason diagnostics ----
+        SharedPreferences diagPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String prevReason   = diagPrefs.getString(PREF_SHUTDOWN_REASON, "unknown");
+        String prevShutTime = diagPrefs.getString(PREF_SHUTDOWN_TIME,   "unknown");
+        int    prevPid      = diagPrefs.getInt(PREF_LAST_PID, -1);
+        int    thisPid      = android.os.Process.myPid();
+        Log.i(TAG, "onStartCommand(): PID=" + thisPid + " (prev PID=" + prevPid + ")"
+                + ", prevShutdownReason=" + prevReason
+                + ", prevShutdownTime=" + prevShutTime);
+        if (SHUTDOWN_REASON_RUNNING.equals(prevReason)) {
+            Log.w(TAG, "onStartCommand(): PREVIOUS SESSION DID NOT SHUT DOWN CLEANLY"
+                    + " (last running at " + prevShutTime + ", PID=" + prevPid + ")"
+                    + " - likely a silent crash or OS kill");
+        } else if (SHUTDOWN_REASON_PLANNED.equals(prevReason)) {
+            Log.i(TAG, "onStartCommand(): previous session shut down cleanly (user/planned stop)");
+        }
+        // Mark ourselves as running so a crash leaves "running" in prefs
+        diagPrefs.edit()
+                .putString(PREF_SHUTDOWN_REASON, SHUTDOWN_REASON_RUNNING)
+                .putString(PREF_SHUTDOWN_TIME,   new java.text.SimpleDateFormat(
+                        "yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault())
+                        .format(new java.util.Date()))
+                .putInt(PREF_LAST_PID, thisPid)
+                .apply();
+        // ---- End shutdown-reason diagnostics ----
+
         // Update preferences.
         Log.v(TAG, "onStartCommand() - calling updatePrefs()");
         updatePrefs();
@@ -550,10 +584,14 @@ public class SdServer extends Service implements SdDataReceiver {
             mLastWatchdogHeartbeatMillis = System.currentTimeMillis();
         }
 
-        // Return START_NOT_STICKY so service doesn't auto-restart after user exits
-        // User must explicitly start the app/service
-        // This prevents confusing behavior where service restarts after "Exit"
-        return START_NOT_STICKY;
+        // Return START_STICKY so the OS will restart the service if it is killed unexpectedly.
+        // A planned stop (user pressing "Exit") must call setPlannedShutdown() BEFORE stopping
+        // the service, which writes SHUTDOWN_REASON_PLANNED to SharedPreferences.  When the
+        // service then restarts via START_STICKY the onStartCommand() diagnostics above will
+        // see the "planned" reason and will NOT treat it as a crash.  The calling code (e.g.
+        // OsdUtil.stopServer) should use the static helper stopServicePlanned() so the flag
+        // is written atomically before stopService() is called.
+        return START_STICKY;
     }
 
     @Override
@@ -563,6 +601,21 @@ public class SdServer extends Service implements SdDataReceiver {
 
         Log.i(TAG, "onDestroy(): SdServer Service stopping");
         Log.i(TAG, "SdServer.onDestroy() - releasing wakelock");
+
+        // Mark this as a planned (clean) shutdown so that if START_STICKY restarts the service,
+        // onStartCommand() will not treat it as a crash.
+        try {
+            SharedPreferences diagPrefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            Log.i(TAG, "onDestroy(): recording planned shutdown in SharedPreferences");
+            diagPrefs.edit()
+                    .putString(PREF_SHUTDOWN_REASON, SHUTDOWN_REASON_PLANNED)
+                    .putString(PREF_SHUTDOWN_TIME,
+                            new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss",
+                                    java.util.Locale.getDefault()).format(new java.util.Date()))
+                    .apply();
+        } catch (Exception e) {
+            Log.w(TAG, "onDestroy(): could not write shutdown reason: " + e.getMessage());
+        }
 
         // Set flag to prevent notifications and other actions during shutdown
         mIsDestroying = true;
@@ -711,6 +764,38 @@ public class SdServer extends Service implements SdDataReceiver {
 
     }
 
+    /**
+     * Called when the user removes the task from the recent-apps list (swipes it away).
+     * We treat this as a planned shutdown so START_STICKY does not restart unnecessarily.
+     */
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        Log.i(TAG, "onTaskRemoved(): user removed task - marking as planned shutdown");
+        setPlannedShutdown(getApplicationContext());
+        super.onTaskRemoved(rootIntent);
+    }
+
+    /**
+     * Call this BEFORE stopping the service via a user-initiated "Exit" so that
+     * the START_STICKY restart (if it happens) is not treated as a crash.
+     * This is a static helper so it can be called from OsdUtil / activities without
+     * a reference to the running SdServer instance.
+     */
+    public static void setPlannedShutdown(Context context) {
+        try {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(
+                    context.getApplicationContext());
+            Log.i(TAG, "setPlannedShutdown(): writing planned shutdown flag");
+            prefs.edit()
+                    .putString(PREF_SHUTDOWN_REASON, SHUTDOWN_REASON_PLANNED)
+                    .putString(PREF_SHUTDOWN_TIME,
+                            new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss",
+                                    java.util.Locale.getDefault()).format(new java.util.Date()))
+                    .apply();
+        } catch (Exception e) {
+            Log.w(TAG, "setPlannedShutdown(): error - " + e.getMessage());
+        }
+    }
 
     /**
      * Show a notification while this service is running.

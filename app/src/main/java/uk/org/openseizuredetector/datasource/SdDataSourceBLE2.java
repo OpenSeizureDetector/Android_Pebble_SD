@@ -303,7 +303,12 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 Log.i(TAG,"onDisconnectedPeripheral() - unexpected disconnect");
                 setConnectionState(ConnectionState.IDLE);
                 mUtil.showToast("WATCH CONNECTION LOST");
-                Log.i(TAG, "onDisconnectedPeripheral() - attempting to re-connect with backoff");
+                int nextAttempt = mReconnectionAttempt + 1;
+                int nextDelay = (mReconnectionAttempt < BACKOFF_DELAYS_MS.length)
+                        ? BACKOFF_DELAYS_MS[mReconnectionAttempt]
+                        : BACKOFF_DELAYS_MS[BACKOFF_DELAYS_MS.length - 1];
+                Log.i(TAG, "onDisconnectedPeripheral() - attempting to re-connect with backoff"
+                        + " (attempt=" + nextAttempt + ", nextDelay=" + nextDelay + "ms)");
 
                 // We do not call bleDisconnect() here because that initiates a shutdown sequence
                 // including a timeout that will force close the manager, which we do not want
@@ -902,14 +907,15 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
         mReconnectionAttempt++;
 
-        Log.i(TAG, "scheduleReconnection() - Scheduling reconnection attempt " + mReconnectionAttempt
-                + " in " + delayMs + "ms");
+        Log.i(TAG, "scheduleReconnection() - Scheduling reconnection attempt #" + mReconnectionAttempt
+                + " in " + delayMs + "ms (total attempts so far: " + mReconnectionAttempt + ")");
         mUtil.showToast("Reconnecting to watch in " + (delayMs / 1000) + " seconds...");
 
         // Schedule the reconnection
         mReconnectionHandler.postDelayed(() -> {
             if (!mIsShuttingDown && !mShutdown) {
-                Log.i(TAG, "scheduleReconnection() - Executing reconnection attempt " + mReconnectionAttempt);
+                Log.i(TAG, "scheduleReconnection() - Executing reconnection attempt #" + mReconnectionAttempt
+                        + " (backoffDelay was " + delayMs + "ms)");
                 setConnectionState(ConnectionState.SCANNING);
                 bleConnect();
             } else {
