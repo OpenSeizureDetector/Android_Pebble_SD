@@ -57,6 +57,28 @@
                         android:textAppearance="?android:attr/textAppearanceSmall" />
                 </LinearLayout>
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <ImageButton
+                        android:id="@+id/systemLogsButton"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@android:drawable/ic_menu_agenda"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:layout_marginEnd="8dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/view_system_logs"
+                        android:textAppearance="?android:attr/textAppearanceSmall" />
+                </LinearLayout>
+
                 <TextView
                     android:id="@+id/serverStatusTv"
                     android:layout_width="match_parent"

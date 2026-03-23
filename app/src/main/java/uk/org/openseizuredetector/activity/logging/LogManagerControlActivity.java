@@ -86,6 +86,10 @@ import uk.org.openseizuredetector.activity.settings.PrefActivity;
 import uk.org.openseizuredetector.data.logging.LogManager;
 public class LogManagerControlActivity extends AppCompatActivity {
     private final String TAG = "LogManagerControlActivity";
+    public static final String EXTRA_INITIAL_TAB = "initialTab";
+    public static final int TAB_SHARED_DATA = 0;
+    public static final int TAB_LOCAL_DATA = 1;
+    public static final int TAB_SYSTEM_LOGS = 2;
     private static final long GROUPING_WINDOW_MINUTES = 3;
     private static final long GROUPING_WINDOW_MS = GROUPING_WINDOW_MINUTES * 60 * 1000;
     private LogManager mLm;
@@ -244,6 +248,15 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
         lv = (ListView) findViewById(R.id.remoteEventsLv);
         lv.setOnItemClickListener(onRemoteEventListClick);
+
+        // Check if we should open on a specific tab (e.g. TAB_SYSTEM_LOGS)
+        int initialTab = getIntent().getIntExtra(EXTRA_INITIAL_TAB, TAB_SHARED_DATA);
+        if (initialTab != TAB_SHARED_DATA) {
+            TabLayout.Tab tab = tabLayout.getTabAt(initialTab);
+            if (tab != null) {
+                tab.select();
+            }
+        }
     }
 
     /**

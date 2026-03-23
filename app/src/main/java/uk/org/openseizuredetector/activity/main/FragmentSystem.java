@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
 
+import uk.org.openseizuredetector.activity.logging.LogManagerControlActivity;
 import uk.org.openseizuredetector.activity.settings.PrefActivity;
 import uk.org.openseizuredetector.data.AlarmState;
 
@@ -77,6 +78,24 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                     Log.i(TAG, "exception starting settings activity " + ex.toString());
                 }
 
+            }
+        });
+
+        // Handle View System Logs Button
+        ImageButton systemLogsButton = (ImageButton) mRootView.findViewById(R.id.systemLogsButton);
+        systemLogsButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Log.i(TAG, "systemLogsButton.onClick()");
+                try {
+                    Intent logsIntent = new Intent(
+                            mContext,
+                            LogManagerControlActivity.class);
+                    logsIntent.putExtra(LogManagerControlActivity.EXTRA_INITIAL_TAB,
+                            LogManagerControlActivity.TAB_SYSTEM_LOGS);
+                    mContext.startActivity(logsIntent);
+                } catch (Exception ex) {
+                    Log.i(TAG, "exception starting log manager activity " + ex.toString());
+                }
             }
         });
     }
