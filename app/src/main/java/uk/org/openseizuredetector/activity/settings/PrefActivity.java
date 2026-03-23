@@ -564,6 +564,16 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.data_source_prefs, rootKey);
+
+            // Apply the normal-mode datasource list when developer mode is disabled
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+            boolean developerMode = PreferenceUtils.getBooleanFromXml(prefs, "pref_developer_mode");
+            ListPreference dsListPref = findPreference("DataSource");
+            if (dsListPref != null && !developerMode) {
+                dsListPref.setEntries(R.array.datasource_list_normal);
+                dsListPref.setEntryValues(R.array.datasource_list_normal_values);
+            }
+
             updateBleButtonVisibility();
 
             Preference installWatchPref = findPreference("InstallWatchApp");

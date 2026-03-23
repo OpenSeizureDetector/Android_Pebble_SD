@@ -768,4 +768,10 @@
     <string name="fgs_start_failed_notification_title">OSD Monitoring Not Started</string>
     <string name="fgs_start_failed_notification_text">OpenSeizureDetector could not start its background monitoring service. This can happen if Android has reached its daily limit for this type of background service. Please restart the app. If the problem persists, reboot your phone.</string>
     <string name="view_system_logs">View System Logs</string>
+    <string name="basic_mode_summary">Simplify the interface by hiding advanced settings and tabs</string>
+    <string name="basic_mode">Basic Mode</string>
+    <string name="developer_mode_summary">Show additional options for developers</string>
+    <string name="developer_mode">Developer Mode</string>
+    <string name="app_theme">App Theme</string>
+    <string name="app_theme_summary">Choose between light, dark, or system default theme</string>
 </resources>

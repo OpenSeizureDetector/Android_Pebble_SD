@@ -4,13 +4,20 @@
     <CheckBoxPreference
         android:defaultValue="true"
         android:key="pref_basic_mode"
-        android:summary="Simplify the interface by hiding advanced settings and tabs"
-        android:title="Basic Mode" />
+        android:summary="@string/basic_mode_summary"
+        android:title="@string/basic_mode" />
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="pref_developer_mode"
+        android:summary="@string/developer_mode_summary"
+        android:title="@string/developer_mode" />
+
 
     <ListPreference
         android:key="darkMode"
-        android:title="App Theme"
-        android:summary="Choose between light, dark, or system default theme"
+        android:title="@string/app_theme"
+        android:summary="@string/app_theme_summary"
         android:entries="@array/dark_mode_entries"
         android:entryValues="@array/dark_mode_values"
         android:defaultValue="system"

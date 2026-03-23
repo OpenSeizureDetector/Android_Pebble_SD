@@ -5,6 +5,9 @@ import uk.org.openseizuredetector.R;
 
 import uk.org.openseizuredetector.client.SdServiceConnection;
 import uk.org.openseizuredetector.utils.OsdUtil;
+import uk.org.openseizuredetector.utils.PreferenceUtils;
+import android.content.SharedPreferences;
+import androidx.preference.PreferenceManager;
 import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
@@ -283,6 +286,17 @@ public class LogManagerControlActivity extends AppCompatActivity {
         MenuCompat.setGroupDividerEnabled(menu, true);
         this.mMenu = menu;
         return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean developerMode = PreferenceUtils.getBooleanFromXml(sp, "pref_developer_mode");
+        MenuItem ndaItem = menu.findItem(R.id.start_stop_nda);
+        if (ndaItem != null) {
+            ndaItem.setVisible(developerMode);
+        }
+        return super.onPrepareOptionsMenu(menu);
     }
 
 
