@@ -244,7 +244,7 @@
     <string name="ble_mac_addr_summary">MAC Address of BLE Data Source Device</string>
     <string name="ble_mac_addr_title">Device Address</string>
     <string name="ble_device_name_summary">Name of BLE Data Source Device</string>
-    <string name="ble_device_name_title">Device Address</string>
+    <string name="ble_device_name_title">Device Name</string>
     <string name="user_interface_settings_title">User Interface Settings</string>
     <string name="pebble_update_period_summary">Time period at which data is sent to the phone (does not affect analysis frequency - see Sample Period setting for that)</string>
     <string name="mute_period_summary">Time that alarms are muted following a long press of the UP button</string>

@@ -40,8 +40,7 @@ public final class SettingsUtil {
                 R.xml.sd_prefs_fall,
                 R.xml.sd_prefs_fidget,
                 R.xml.pebble_datasource_prefs,
-                R.xml.network_datasource_prefs,
-                R.xml.network_passive_datasource_prefs
+                R.xml.network_datasource_prefs
         };
     }
 

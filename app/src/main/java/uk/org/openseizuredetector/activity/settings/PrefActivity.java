@@ -632,6 +632,22 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             }
             // Ensure EditTextPreference summaries show the current value immediately and update automatically
             try {
+                EditTextPreference bleAddrPref = findPreference("BLE_Device_Addr");
+                if (bleAddrPref != null) {
+                    bleAddrPref.setSummaryProvider(preference -> {
+                        String val = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("BLE_Device_Addr", "");
+                        return val.isEmpty() ? "Not set" : val;
+                    });
+                }
+
+                EditTextPreference bleNamePref = findPreference("BLE_Device_Name");
+                if (bleNamePref != null) {
+                    bleNamePref.setSummaryProvider(preference -> {
+                        String val = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("BLE_Device_Name", "");
+                        return val.isEmpty() ? "Not set" : val;
+                    });
+                }
+
                 EditTextPreference serverIpPref = findPreference("ServerIP");
                 if (serverIpPref != null) {
                     serverIpPref.setSummaryProvider(preference -> {
@@ -684,12 +700,20 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         }
 
         private void updateBleButtonVisibility() {
+            String datasource = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataSource", "SET_FROM_XML");
+            boolean isBle = datasource.equals("BLE") || datasource.equals("BLE2");
             Preference bleButton = findPreference("SelectBLEDevice");
             if (bleButton != null) {
-                String datasource = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataSource", "SET_FROM_XML");
-                bleButton.setVisible(datasource.equals("BLE") || datasource.equals("BLE2"));
+                bleButton.setVisible(isBle);
             }
-            String datasource = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("DataSource", "SET_FROM_XML");
+            Preference bleDeviceAddr = findPreference("BLE_Device_Addr");
+            if (bleDeviceAddr != null) {
+                bleDeviceAddr.setVisible(isBle);
+            }
+            Preference bleDeviceName = findPreference("BLE_Device_Name");
+            if (bleDeviceName != null) {
+                bleDeviceName.setVisible(isBle);
+            }
             Preference installWatch = findPreference("InstallWatchApp");
             if (installWatch != null) {
                 installWatch.setVisible("Garmin".equals(datasource) || "Pebble".equals(datasource));

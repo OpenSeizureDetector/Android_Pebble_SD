@@ -10,6 +10,18 @@
         android:defaultValue="Phone"
         android:dialogTitle="@string/select_datasource_title" />
 
+    <EditTextPreference
+        android:key="BLE_Device_Addr"
+        android:title="@string/ble_mac_addr_title"
+        android:summary="@string/ble_mac_addr_summary"
+        android:defaultValue="" />
+
+    <EditTextPreference
+        android:key="BLE_Device_Name"
+        android:title="@string/ble_device_name_title"
+        android:summary="@string/ble_device_name_summary"
+        android:defaultValue="" />
+
     <Preference
         android:key="SelectBLEDevice"
         android:title="@string/select_ble_device_title"
