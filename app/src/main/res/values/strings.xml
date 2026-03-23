@@ -761,4 +761,10 @@
     <string name="server_validated_successfully">✓ Server validated successfully</string>
     <string name="cannot_reach_server_error">✗ Cannot reach server. Please check:\n• IP address is correct\n• Server is running\n• Device is on the same WiFi network</string>
     <string name="cannot_open_google_play">Cannot open Google Play Store</string>
+
+    <!-- Foreground service startup failure strings -->
+    <string name="fgs_error_channel_name">OpenSeizureDetector Errors</string>
+    <string name="fgs_start_failed_toast">OpenSeizureDetector could not start monitoring — please restart the app or reboot your phone.</string>
+    <string name="fgs_start_failed_notification_title">OSD Monitoring Not Started</string>
+    <string name="fgs_start_failed_notification_text">OpenSeizureDetector could not start its background monitoring service. This can happen if Android has reached its daily limit for this type of background service. Please restart the app. If the problem persists, reboot your phone.</string>
 </resources>

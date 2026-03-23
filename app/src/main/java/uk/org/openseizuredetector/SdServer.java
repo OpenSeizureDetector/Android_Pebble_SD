@@ -63,6 +63,8 @@ import uk.org.openseizuredetector.data.logging.Log;
 
 import java.util.Calendar;
 
+import android.widget.Toast;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
@@ -315,6 +317,21 @@ public class SdServer extends Service implements SdDataReceiver {
                     // Defensive fallback for vendor-specific behavior.
                     Log.e(TAG, "Invalid foreground service type " + foregroundServiceType + ". Falling back to manifest default.", e);
                     startForeground(NOTIFICATION_ID, mNotification);
+                } catch (android.app.ForegroundServiceStartNotAllowedException e) {
+                    // Android 15+: time limit for the requested foreground service type has been
+                    // exhausted (e.g. dataSync is capped at 6 h/day). Try the next best type
+                    // (connectedDevice has no such cap) before giving up.
+                    Log.e(TAG, "ForegroundServiceStartNotAllowedException for type "
+                            + foregroundServiceTypeToLabel(foregroundServiceType)
+                            + " – retrying with connectedDevice type.", e);
+                    try {
+                        startForeground(NOTIFICATION_ID, mNotification,
+                                ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
+                    } catch (Exception e2) {
+                        Log.e(TAG, "startForeground fallback also failed – notifying user and stopping service.", e2);
+                        showFgsStartupFailureNotification();
+                        stopSelf();
+                    }
                 }
             } else {
                 startForeground(NOTIFICATION_ID, mNotification);
@@ -338,11 +355,49 @@ public class SdServer extends Service implements SdDataReceiver {
             return ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
         }
         if ("Network".equals(dataSourceName) || "Garmin".equals(dataSourceName)) {
-            return ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC;
+            // connectedDevice has no time limit (unlike dataSync which is capped at 6h/day on
+            // Android 15+) and is semantically correct – these are connections to remote devices.
+            return ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
         }
 
-        // Unknown source: pick a conservative non-health type to avoid extra runtime permission coupling.
-        return ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC;
+        // Unknown source: default to connectedDevice – it has no time limit and avoids the
+        // Android 15 dataSync 6-hour exhaustion that previously caused a crash here.
+        return ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
+    }
+
+    /**
+     * Shows a Toast AND a persistent status-bar notification when the foreground service
+     * fails to start (e.g. Android 15 dataSync time-limit exhausted and all fallbacks failed).
+     * Both channels are used so the user sees feedback whether or not they are actively
+     * looking at the screen.
+     */
+    private void showFgsStartupFailureNotification() {
+        // Immediate on-screen feedback for users who are actively looking at their phone.
+        new Handler(Looper.getMainLooper()).post(() ->
+                Toast.makeText(this,
+                        getString(R.string.fgs_start_failed_toast),
+                        Toast.LENGTH_LONG).show()
+        );
+
+        // Persistent status-bar notification so the user is informed even if they miss the Toast.
+        // Use a dedicated HIGH-importance channel so it appears as a heads-up banner.
+        final String errorChId = "OSD_Error_Channel";
+        NotificationChannel errorChannel = new NotificationChannel(
+                errorChId,
+                getString(R.string.fgs_error_channel_name),
+                NotificationManager.IMPORTANCE_HIGH);
+        mNM.createNotificationChannel(errorChannel);
+
+        Notification errorNotification = new NotificationCompat.Builder(this, errorChId)
+                .setSmallIcon(R.drawable.star_of_life_48x48)
+                .setContentTitle(getString(R.string.fgs_start_failed_notification_title))
+                .setContentText(getString(R.string.fgs_start_failed_notification_text))
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText(getString(R.string.fgs_start_failed_notification_text)))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .build();
+        mNM.notify(NOTIFICATION_ID + 1, errorNotification);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
