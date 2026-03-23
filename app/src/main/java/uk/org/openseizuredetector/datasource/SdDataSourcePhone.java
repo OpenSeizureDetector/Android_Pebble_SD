@@ -140,6 +140,13 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                         mSdData.mHR = -1;
                         mSdData.mO2Sat = -1;
                         doAnalysis();
+                        // Re-affirm haveSettings after every analysis cycle.
+                        // The base class settings timer resets haveSettings=false every 60 seconds
+                        // (designed for watch sources that must re-request settings). The Phone
+                        // datasource derives its settings locally during calibration, so we must
+                        // re-assert haveSettings=true here to prevent StartupActivity stalling
+                        // if the battery-optimisation dialog is displayed for more than 60 seconds.
+                        mSdData.haveSettings = true;
                         mSdData.mNsamp = 0;
                         mStartTs = event.timestamp;
                     } else if (mSdData.mNsamp > mSdData.rawData.length) {
