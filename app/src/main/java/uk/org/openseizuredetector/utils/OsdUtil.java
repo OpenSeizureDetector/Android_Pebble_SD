@@ -25,6 +25,7 @@
 package uk.org.openseizuredetector.utils;
 import uk.org.openseizuredetector.R;
 import uk.org.openseizuredetector.client.SdServiceConnection;
+import uk.org.openseizuredetector.data.AlarmState;
 
 import android.Manifest;
 import android.app.ActivityManager;
@@ -542,24 +543,20 @@ public class OsdUtil {
     }
 
 
-    public final int ALARM_STATUS_WARNING = 1;
-    public final int ALARM_STATUS_ALARM = 2;
-    public final int ALARM_STATUS_FALL = 3;
-    public final int ALARM_STATUS_MANUAL = 5;
 
     public String alarmStatusToString(int eventAlarmStatus) {
         String retVal = "Unknown";
         switch (eventAlarmStatus) {
-            case ALARM_STATUS_WARNING: // Warning
+            case AlarmState.WARNING:
                 retVal = "WARNING";
                 break;
-            case ALARM_STATUS_ALARM: // alarm
+            case AlarmState.ALARM:
                 retVal = "ALARM";
                 break;
-            case ALARM_STATUS_FALL: // fall
+            case AlarmState.FALL:
                 retVal = "FALL";
                 break;
-            case ALARM_STATUS_MANUAL: // Manual alarm
+            case AlarmState.MANUAL:
                 retVal = "MANUAL ALARM";
                 break;
 

@@ -78,6 +78,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import uk.org.openseizuredetector.activity.auth.AuthenticateActivity;
+import uk.org.openseizuredetector.data.AlarmState;
 import uk.org.openseizuredetector.activity.events.EditEventActivity;
 import uk.org.openseizuredetector.activity.events.ReportSeizureActivity;
 import uk.org.openseizuredetector.activity.export.ExportDataActivity;
@@ -112,13 +113,18 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
     private String normalizeIso8601Offset(String value) {
         /**
-         * normalizeIso8601Offset() - Convert "...+00:00" to "...+0000" for SimpleDateFormat with Z pattern.
+         * normalizeIso8601Offset() - Normalise ISO 8601 timezone suffixes for SimpleDateFormat 'Z' pattern.
+         * Handles:
+         *   "...Z"        → "...+0000"   (UTC 'Z' literal)
+         *   "...+HH:MM"   → "...+HHMM"  (colon-separated offset)
          */
         if (value == null) {
             return null;
         }
-        // Convert "...+00:00" to "...+0000" for SimpleDateFormat with Z pattern.
-        return value.replaceFirst("([+-]\\d\\d):(\\d\\d)$", "$1$2");
+        // Replace trailing 'Z' (UTC) with '+0000' before handling colon-separated offsets.
+        String normalized = value.replaceAll("Z$", "+0000");
+        // Convert "+HH:MM" / "-HH:MM" to "+HHMM" / "-HHMM".
+        return normalized.replaceFirst("([+-]\\d\\d):(\\d\\d)$", "$1$2");
     }
 
     @Override
@@ -425,8 +431,8 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         eventHashMap.put("type", typeStr);
                         eventHashMap.put("subType", subType);
                         eventHashMap.put("desc", desc);
-                        if ((osdAlarmState != 1 | includeWarnings) &&
-                                (osdAlarmState != 6 | includeNDA)) {
+                        if ((osdAlarmState != AlarmState.WARNING | includeWarnings) &&
+                                (osdAlarmState != AlarmState.MUTE | includeNDA)) {
                             mRemoteEventsList.add(eventHashMap);
                         } else {
                             Log.v(TAG, "getRemoteEvents - skipping warning or NDA record");
@@ -553,24 +559,33 @@ public class LogManagerControlActivity extends AppCompatActivity {
 
     /**
      * moveFirstAlarmToFront() - This method checks the group for the first
-     * event with an ALARM state (osdAlarmState = 2) and makes that event the
+     * event with an ALARM state (osdAlarmState = ALARM_STATUS_ALARM) and makes that event the
      * first in the list.
      *
       * @param group An ArrayList of HashMaps representing a group of events.
      */
     private void moveFirstAlarmToFront(ArrayList<HashMap<String, String>> group) {
-        //Log.i(TAG, "moveFirstAlarmToFront() - Checking group of size: " + group.size());
-        for (int i = 0; i < group.size(); i++) {
-            HashMap<String, String> event = group.get(i);
-            String alarmStateStr = event.get("osdAlarmState");
-            if (alarmStateStr != null && alarmStateStr.equals("2")) { // ALARM is 2
-                //Log.v(TAG," moveFirstAlarmToFront() - Found ALARM event at index: " + i);
-                if (i != 0) {
-                    group.remove(i);
-                    group.add(0, event);
-                }
+        // Group is sorted newest-first; iterate backward to find the EARLIEST (oldest) event
+        // of the desired alarm state. Try ALARM first, then fall back to WARNING.
+        int foundIdx = -1;
+        // Find the earliest ALARM event
+        for (int i = group.size() - 1; i >= 0; i--) {
+            if (String.valueOf(AlarmState.ALARM).equals(group.get(i).get("osdAlarmState"))) {
+                foundIdx = i;
                 break;
             }
+        }
+        // If no ALARM found, find the earliest WARNING event
+        if (foundIdx == -1) {
+            for (int i = group.size() - 1; i >= 0; i--) {
+                if (String.valueOf(AlarmState.WARNING).equals(group.get(i).get("osdAlarmState"))) {
+                    foundIdx = i;
+                    break;
+                }
+            }
+        }
+        if (foundIdx > 0) {
+            group.add(0, group.remove(foundIdx));
         }
     }
 
@@ -627,59 +642,67 @@ public class LogManagerControlActivity extends AppCompatActivity {
             if (mGroupEventsCb.isChecked() && mGroupedRemoteEventsList != null) {
                 // Show group summary with start time and duration
                 ArrayList<HashMap<String, String>> displayList = new ArrayList<>();
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", Locale.getDefault());
+                SimpleDateFormat displayFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault());
 
                 for (ArrayList<HashMap<String, String>> group : mGroupedRemoteEventsList) {
-                    HashMap<String, String> groupSummary = new HashMap<>(group.get(0)); // Start with first event data
+                    // group.get(0) is the earliest alarm/warning event (set by moveFirstAlarmToFront)
+                    HashMap<String, String> groupSummary = new HashMap<>(group.get(0));
 
-                    // Get the start time (last/oldest event in group) and end time (first/newest event)
-                    long startTimeMillis = 0;
-                    long endTimeMillis = 0;
-                    String startTimeStr = null;
-                    String endTimeStr = null;
-
-                    try {
-                        // First event in group is newest
-                        endTimeStr = group.get(0).get("dataTime");
-                        if (endTimeStr != null && !endTimeStr.equals("null")) {
-                            try {
-                                Date endDate = sdf.parse(normalizeIso8601Offset(endTimeStr));
-                                endTimeMillis = endDate.getTime();
-                            } catch (ParseException pe) {
-                                Log.w(TAG, "Failed to parse end time: " + endTimeStr);
-                            }
-                        }
-
-                        // Last event in group is oldest
-                        startTimeStr = group.get(group.size() - 1).get("dataTime");
-                        if (startTimeStr != null && !startTimeStr.equals("null")) {
-                            try {
-                                Date startDate = sdf.parse(normalizeIso8601Offset(startTimeStr));
-                                startTimeMillis = startDate.getTime();
-                            } catch (ParseException pe) {
-                                Log.w(TAG, "Failed to parse start time: " + startTimeStr);
-                            }
-                        }
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error parsing group dates: " + e.getMessage());
+                    // Override osdAlarmStateStr with the most severe state present in the group.
+                    // group.get(0) may be a WARNING even when an ALARM exists elsewhere in the group.
+                    boolean groupHasAlarm = false;
+                    boolean groupHasWarning = false;
+                    for (HashMap<String, String> evt : group) {
+                        String s = evt.get("osdAlarmState");
+                        if (String.valueOf(AlarmState.ALARM).equals(s)) { groupHasAlarm = true; break; }
+                        if (String.valueOf(AlarmState.WARNING).equals(s)) { groupHasWarning = true; }
+                    }
+                    if (groupHasAlarm) {
+                        groupSummary.put("osdAlarmStateStr", mUtil.alarmStatusToString(AlarmState.ALARM));
+                    } else if (groupHasWarning) {
+                        groupSummary.put("osdAlarmStateStr", mUtil.alarmStatusToString(AlarmState.WARNING));
                     }
 
-                    // Set the group start time (oldest event) - always set it even if parsing failed
-                    if (startTimeMillis > 0) {
-                        SimpleDateFormat displayFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault());
-                        String formattedTime = displayFormat.format(new Date(startTimeMillis));
-                        Log.v(TAG, "Setting grouped event dataTime to: " + formattedTime);
-                        groupSummary.put("dataTime", formattedTime);
-                    } else if (startTimeStr != null) {
-                        // If parsing failed, use the original time string
-                        Log.v(TAG, "Using raw start time: " + startTimeStr);
-                        groupSummary.put("dataTime", startTimeStr);
+                    // Scan all events to find the true time range (min = oldest, max = newest)
+                    long minTimeMillis = Long.MAX_VALUE;
+                    long maxTimeMillis = 0;
+                    for (HashMap<String, String> evt : group) {
+                        Date evtDate = mUtil.string2date(evt.get("dataTime"));
+                        if (evtDate != null) {
+                            long t = evtDate.getTime();
+                            if (t < minTimeMillis) minTimeMillis = t;
+                            if (t > maxTimeMillis) maxTimeMillis = t;
+                        }
                     }
 
-                    // Calculate duration in seconds
+                    // Find the earliest ALARM (ALARM_STATUS_ALARM), fall back to earliest WARNING (ALARM_STATUS_WARNING)
+                    long alarmTimeMillis = 0;
+                    for (int targetState : new int[]{AlarmState.ALARM, AlarmState.WARNING}) {
+                        for (HashMap<String, String> evt : group) {
+                            if (String.valueOf(targetState).equals(evt.get("osdAlarmState"))) {
+                                Date evtDate = mUtil.string2date(evt.get("dataTime"));
+                                if (evtDate != null) {
+                                    long t = evtDate.getTime();
+                                    if (alarmTimeMillis == 0 || t < alarmTimeMillis) {
+                                        alarmTimeMillis = t;
+                                    }
+                                }
+                            }
+                        }
+                        if (alarmTimeMillis > 0) break;
+                    }
+
+                    // Display time: earliest alarm/warning, or oldest event as fallback
+                    long displayTimeMillis = alarmTimeMillis > 0 ? alarmTimeMillis
+                            : (minTimeMillis < Long.MAX_VALUE ? minTimeMillis : 0);
+                    if (displayTimeMillis > 0) {
+                        groupSummary.put("dataTime", displayFormat.format(new Date(displayTimeMillis)));
+                    }
+
+                    // Duration: full span from oldest to newest event in the group
                     long durationSeconds = 0;
-                    if (startTimeMillis > 0 && endTimeMillis > 0) {
-                        durationSeconds = (endTimeMillis - startTimeMillis) / 1000;
+                    if (minTimeMillis < Long.MAX_VALUE && maxTimeMillis > minTimeMillis) {
+                        durationSeconds = (maxTimeMillis - minTimeMillis) / 1000;
                     }
                     groupSummary.put("duration", String.format("%d sec", durationSeconds));
 

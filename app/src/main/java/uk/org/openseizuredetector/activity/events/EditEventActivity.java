@@ -376,7 +376,9 @@ public class EditEventActivity extends AppCompatActivity {
                     }
                     Log.v(TAG, "onOK() - eventObj=" + mEventObj.toString());
 
-                    // First we just save the open event, irrespective of whether it is a group edit or not.
+                    // Save the primary event first.  For a group edit the remaining events
+                    // are updated sequentially from inside the success callback so that
+                    // finish() is never called before all group updates have completed.
                     try {
                         mWac.updateEvent(mEventObj, new WebApiConnection.JSONObjectCallback() {
                             @Override
@@ -386,15 +388,26 @@ public class EditEventActivity extends AppCompatActivity {
                                     Log.w(TAG, "Activity not active, ignoring updateEvent callback");
                                     return;
                                 }
-                                //mEventObj = eventObj;
                                 if (eventObj != null) {
-                                    Log.v(TAG, "onOk.getEvent:  eventObj=" + eventObj.toString());
-                                    mUiHandler.post(() -> {
-                                        if (mIsActive && !isFinishing() && !isDestroyed()) {
-                                            mUtil.showToast("Event Updated OK");
-                                            finish();
-                                        }
-                                    });
+                                    Log.v(TAG, "onOk.updateEvent: primary event saved - eventObj=" + eventObj.toString());
+                                    if (mEventIds != null && mEventIds.size() > 1) {
+                                        // Group edit: update the remaining events (index 1 onwards).
+                                        // finish() will be called by updateGroupEventsSequentially
+                                        // once every event has been saved, so we must NOT call it here.
+                                        Log.v(TAG, "onOK() - Group Edit - updating other events in group");
+                                        mUiHandler.post(() -> {
+                                            if (mIsActive && !isFinishing() && !isDestroyed()) {
+                                                updateGroupEventsSequentially(1);
+                                            }
+                                        });
+                                    } else {
+                                        mUiHandler.post(() -> {
+                                            if (mIsActive && !isFinishing() && !isDestroyed()) {
+                                                mUtil.showToast("Event Updated OK");
+                                                finish();
+                                            }
+                                        });
+                                    }
                                 } else {
                                     Log.e(TAG, "onOk.updateEvent - Error - returned NULL");
                                     mUiHandler.post(() -> {
@@ -416,23 +429,25 @@ public class EditEventActivity extends AppCompatActivity {
                             }
                         });
                     }
-
-                    // If this is a group edit, we need to update the other events in the group.
-                    if (mEventIds != null && mEventIds.size() > 1) {
-                        Log.v(TAG, "onOK() - Group Edit - updating other events in group");
-                        updateGroupEventsSequentially(0);
-                    }
                 }
 
             };
 
     private void updateGroupEventsSequentially(final int index) {
-        if (!mIsActive || isFinishing() || isDestroyed() || mEventIds == null || index >= mEventIds.size()) {
-            if (index >= mEventIds.size()) {
-                Log.v(TAG, "updateGroupEventsSequentially - All events updated");
-            } else {
-                Log.v(TAG, "updateGroupEventsSequentially - Cancelled (activity not active)");
-            }
+        // All events processed — close the activity.
+        if (mEventIds == null || index >= mEventIds.size()) {
+            Log.v(TAG, "updateGroupEventsSequentially - All events updated");
+            mUiHandler.post(() -> {
+                if (mIsActive && !isFinishing() && !isDestroyed()) {
+                    mUtil.showToast("All events in group updated OK");
+                    finish();
+                }
+            });
+            return;
+        }
+        // Activity was stopped before we finished — abort quietly.
+        if (!mIsActive || isFinishing() || isDestroyed()) {
+            Log.v(TAG, "updateGroupEventsSequentially - Cancelled (activity not active)");
             return;
         }
         final String eventId = mEventIds.get(index);
