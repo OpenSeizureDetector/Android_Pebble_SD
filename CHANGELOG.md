@@ -1,5 +1,10 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.0.0V - Fixed start-up crash relating to foreground service starting.
+            - Fixed issue with data sharing not updating all events in a group.
+            - Fixed data sharing group event duration calculation.
+            - Fixed issue with phone datasource stalling if start-up dialog left displayed for too long
+            - Added 'Developer Mode' which displays more data source options, and enables NDA menu item.
     V5.0.0U - Fixed issue with trying to access closed instance of sqlite database.   
               Added logging for reason for last shutdown given we see occasional silent crashes.
               Improved automatic re-starting attempts if the system kills the SdServer service.
