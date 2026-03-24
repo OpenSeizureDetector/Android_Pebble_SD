@@ -1,5 +1,6 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.0.0W - Fixed network datasource crash on Android 16 by adding network permissions to manifest.
     V5.0.0V - Fixed start-up crash relating to foreground service starting.
             - Fixed issue with data sharing not updating all events in a group.
             - Fixed data sharing group event duration calculation.
