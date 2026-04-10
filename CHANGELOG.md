@@ -1,5 +1,7 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.0.0X - Improved logging of Fall Algorithm debug data, fixed issue with fall detector not working for PineTime because sampleFrequency was not set correctly, 
+              and made a fall override all algorithm voting to create an alarm because it is a one-shot event.
     V5.0.0W - Fixed network datasource crash on Android 16 by adding network permissions to manifest.
     V5.0.0V - Fixed start-up crash relating to foreground service starting.
             - Fixed issue with data sharing not updating all events in a group.

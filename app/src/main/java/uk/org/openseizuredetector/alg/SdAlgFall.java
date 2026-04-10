@@ -1,6 +1,8 @@
 package uk.org.openseizuredetector.alg;
 
 import android.content.Context;
+
+import uk.org.openseizuredetector.data.AlarmState;
 import uk.org.openseizuredetector.data.logging.Log;
 
 import uk.org.openseizuredetector.data.SdData;
@@ -48,13 +50,13 @@ public class SdAlgFall extends SdAlgBase {
 
     @Override
     public int processSdData(SdData sdData) {
-        // ...existing code...
-
         int i, j;
         double minAcc, maxAcc;
+        boolean fallDetected = false;
+
 
         long fallWindowSamp = (mFallWindow * sdData.mSampleFreq) / 1000; // Convert ms to samples.
-        Log.v(TAG, "processSdData() - fallWindowSamp=" + fallWindowSamp);
+        Log.d(TAG, "processSdData() - mFallWindow="+mFallWindow+", sdData.mSampleFreq="+sdData.mSampleFreq+", fallWindowSamp=" + fallWindowSamp + " (mFallThreshMin=" + mFallThreshMin + ", mFallThreshMax=" + mFallThreshMax);
 
         // Move window through sample buffer, checking for fall.
         for (i = 0; i < sdData.mNsamp - fallWindowSamp; i++) {  // i = window start point
@@ -65,15 +67,18 @@ public class SdAlgFall extends SdAlgBase {
                 if (sdData.rawData[i + j] < minAcc) minAcc = sdData.rawData[i + j];
                 if (sdData.rawData[i + j] > maxAcc) maxAcc = sdData.rawData[i + j];
             }
-            Log.d(TAG, "processSdData() - minAcc=" + minAcc + " (mFallThreshMin=" + mFallThreshMin +
-                    "), maxAcc=" + maxAcc + " (mFallThreshMax=" + mFallThreshMax + ")");
+            Log.d(TAG, "processSdData() - i="+i+", minAcc=" + String.format("%.1f", minAcc) + ", maxAcc=" + String.format("%.1f", maxAcc));
 
             if ((minAcc < mFallThreshMin) && (maxAcc > mFallThreshMax)) {
                 Log.i(TAG, "processSdData() ****FALL DETECTED***** minAcc=" + minAcc + ", maxAcc=" + maxAcc);
-                return 2;  // ALARM
+                fallDetected = true;
             }
         }
 
-        return 0;  // OK
+        if (fallDetected) {
+            return AlarmState.ALARM;  // ALARM
+        }
+        return AlarmState.OK;  // OK
+
     }
 }

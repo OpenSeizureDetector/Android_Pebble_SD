@@ -72,11 +72,6 @@ public class SeizureDetector {
             activeCount++;
         }
 
-        if (mFallActive) {
-            mSdAlgFall = new SdAlgFall(mContext);
-            activeCount++;
-        }
-
         if (mCnnAlarmActive) {
             // Using SdAlgMl for all ML detection - handles any number of installed models
             mSdAlgMl = new SdAlgMl(mContext);
@@ -87,6 +82,13 @@ public class SeizureDetector {
         if (mHRAlarmActive) {
             mSdAlgHr = new SdAlgHr(mContext);
             activeCount++;
+        }
+
+        if (mFallActive) {
+            mSdAlgFall = new SdAlgFall(mContext);
+            // NOTE: Fall is intentionally NOT counted in activeCount.
+            // A fall alarm bypasses voting entirely and directly produces an ALARM state
+            // (see processData). It therefore plays no role in the voting pool.
         }
 
         // Enable voting if we have multiple algorithms or multiple ML models
@@ -144,14 +146,23 @@ public class SeizureDetector {
             if (flapResult == AlarmState.ALARM) alarmCauses.add(mSdAlgFlap.getAlarmCause());
         }
 
+        // -----------------------------------------------------------------------
+        // Fall detection is handled SEPARATELY from the voting pool.
+        // If a fall alarm fires it will directly override the final alarm state
+        // (see the override check below), so we do NOT add its result to
+        // algorithmResults and it does NOT participate in voting.
+        // -----------------------------------------------------------------------
+        boolean fallAlarmTriggered = false;
         if (mSdAlgFall != null) {
             int fallResult = mSdAlgFall.processSdData(sdData);
             Log.d(TAG,"fallResult=" + fallResult);
             sdData.fallAlgState = fallResult;
-            algorithmResults.add(new AlgorithmResult("FALL", fallResult, 1.0f, 1.0f));
             if (fallResult == AlarmState.ALARM) {
+                // Mark that a fall alarm has fired - this will override voting below.
+                fallAlarmTriggered = true;
                 alarmCauses.add(mSdAlgFall.getAlarmCause());
                 sdData.fallAlarmStanding = true;
+                Log.i(TAG, "Fall alarm detected - will override voting and time thresholds");
             }
         }
 
@@ -242,6 +253,20 @@ public class SeizureDetector {
                 mAlarmTime = 0;
                 sdData.alarmStanding = false;
             }
+        }
+
+        // -----------------------------------------------------------------------
+        // Fall alarm override: if the fall algorithm fired an alarm, bypass the
+        // voting result and the warning/alarm time-accumulation state machine and
+        // immediately return ALARM.  Fall events represent an acute physical event
+        // that requires an instant response - they must never be down-graded to
+        // WARNING or delayed by the warn/alarm time thresholds.
+        // -----------------------------------------------------------------------
+        if (fallAlarmTriggered) {
+            Log.i(TAG, "processData() - Fall alarm OVERRIDE: returning ALARM directly (bypassing voting and time thresholds)");
+            sdData.alarmStanding = true;
+            // sdData.alarmCause is already populated by the alarmCauses loop above.
+            return AlarmState.ALARM;
         }
 
         Log.i(TAG, "processData() - returning " + alarmState);
