@@ -100,7 +100,7 @@
     <string name="UseMobileSummary">Use mobile internet to log remote data</string>
     <string name="SeizureDetectorSettingsTitle">Seizure Detector Settings</string>
     <string name="AlarmThreshTitle">Alarm Threshold</string>
-    <string name="AlarmThreshSummary">Alarm Threshold (Default = 100)</string>
+    <string name="AlarmThreshSummary">Alarm Threshold (Default = 500)</string>
     <string name="AlarmRatioThreshTitle">Alarm Ratio Threshold</string>
     <string name="AlarmRatioThreshSummary">Alarm Ratio Threshold (Default = 57). Increase to reduce sensitivity.</string>
     <string name="AlarmFreqMaxTitle">AlarmFreqMax (Hz)</string>

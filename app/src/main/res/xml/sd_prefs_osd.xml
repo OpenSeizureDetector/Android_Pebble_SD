@@ -16,7 +16,7 @@
             android:selectable="false" />
 
         <EditTextPreference
-            android:defaultValue="100"
+            android:defaultValue="500"
             android:key="AlarmThresh"
             android:summary="@string/AlarmThreshSummary"
             android:title="@string/AlarmThreshTitle" />
