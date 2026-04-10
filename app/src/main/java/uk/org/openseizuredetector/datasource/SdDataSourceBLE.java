@@ -554,6 +554,7 @@ public class SdDataSourceBLE extends SdDataSource {
                             //Log.v(TAG,"onDataReceived() i="+i+", "+rawData[i]);
                         }
                         mSdData.mNsamp = rawData.length;
+                        mSdData.mSampleFreq = 25;  // BLE device always sends data at 25 Hz
                         mWatchAppRunningCheck = true;
                         mDataStatusTimeMillis = System.currentTimeMillis();
                         // Process the data to do seizure detection

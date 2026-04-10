@@ -270,8 +270,10 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
                 mSdData.watchSdName = json.getString("name");
             }
             if (json.has("sample_freq")) {
-                // Could validate sample frequency
-                Log.v(TAG, "Watch sample frequency: " + json.getInt("sample_freq"));
+                mSdData.mSampleFreq = json.getInt("sample_freq");
+                Log.v(TAG, "Watch sample frequency: " + mSdData.mSampleFreq);
+            } else {
+                mSdData.mSampleFreq = 25;  // default if not provided by watch
             }
 
             mSdData.haveSettings = true;
