@@ -179,7 +179,7 @@ public class SdData implements Parcelable {
      * Strict: throw JSONException on missing/invalid fields.
      */
     public void fromJSON(String jsonStr) throws JSONException {
-        Log.v(TAG, "fromJSON() - parsing jsonString - " + jsonStr);
+        Log.d(TAG, "fromJSON() - parsing jsonString - " + jsonStr);
         JSONObject jo = new JSONObject(jsonStr);
 
         // Required fields - use get* so JSONException thrown if missing or wrong type
@@ -298,7 +298,6 @@ public class SdData implements Parcelable {
                 jsonObj.put("dataTimeStr", "00000000T000000");
                 jsonObj.put("dataTime", "00-00-00 00:00:00");
             }
-            Log.v(TAG, "mSdData.dataTimeMillis = " + dataTimeMillis);
             jsonObj.put("maxVal", maxVal);
             jsonObj.put("maxFreq", maxFreq);
             jsonObj.put("specPower", specPower);
@@ -333,9 +332,9 @@ public class SdData implements Parcelable {
             jsonObj.put("rawData3D", raw3DArr);
 
             retval = jsonObj.toString();
-            Log.v(TAG, "retval rawData=" + retval);
+            Log.d(TAG, "toDatapointJSON() - retval=" + retval);
         } catch (Exception ex) {
-            Log.v(TAG, "Error Creating Data Object - " + ex.toString());
+            Log.e(TAG, "Error Creating Data Object - " + ex.toString());
             retval = "Error Creating Data Object - " + ex.toString();
         }
 
@@ -390,7 +389,6 @@ public class SdData implements Parcelable {
             jsonObj.put("o2SatAlarmStanding", mO2SatAlarmStanding);
             jsonObj.put("o2SatThreshMin", mO2SatThreshMin);
             jsonObj.put("dataSourceName", dataSourceName);
-            Log.v(TAG, "phoneAppVersion=" + phoneAppVersion);
             jsonObj.put("phoneAppVersion", phoneAppVersion);
             jsonObj.put("watchManuf", watchManuf);
             jsonObj.put("watchPartNo", watchPartNo);
@@ -428,7 +426,6 @@ public class SdData implements Parcelable {
                 jsonObj.put("dataTimeStr", "00000000T000000");
                 jsonObj.put("dataTime", "00-00-00 00:00:00");
             }
-            Log.v(TAG, "mSdData.dataTimeMillis = " + dataTimeMillis);
             jsonObj.put("maxVal", maxVal);
             jsonObj.put("maxFreq", maxFreq);
             jsonObj.put("specPower", specPower);
@@ -502,7 +499,7 @@ public class SdData implements Parcelable {
 
             retval = jsonObj.toString();
         } catch (Exception ex) {
-            Log.v(TAG, "Error Creating Data Object - " + ex.toString());
+            Log.e(TAG, "Error Creating Data Object - " + ex.toString());
             retval = "Error Creating Data Object - " + ex.toString();
         }
 

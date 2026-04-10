@@ -35,7 +35,7 @@ public class CircBuf {
         /**
          * Add value val to the circular buffer.
          */
-        Log.v(TAG, "add() - before: mHead=" + mHead + ", mTail=" + mTail);
+        //Log.v(TAG, "add() - before: mHead=" + mHead + ", mTail=" + mTail);
         //System.out.println(TAG+" add() - before: mHead="+mHead+", mTail="+mTail);
         if (mIsFull)
             mHead = (mHead + 1) % mBuffLen;
@@ -44,7 +44,7 @@ public class CircBuf {
         mTail = (mTail + 1) % mBuffLen;
         if (mTail == mHead)
             mIsFull = true;
-        Log.v(TAG, "add() -  after: mHead=" + mHead + ", mTail=" + mTail);
+        //Log.v(TAG, "add() -  after: mHead=" + mHead + ", mTail=" + mTail);
         //System.out.println(TAG+" add() - before: mHead="+mHead+", mTail="+mTail);
     }
 
