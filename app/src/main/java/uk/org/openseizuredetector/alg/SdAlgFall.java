@@ -37,6 +37,7 @@ public class SdAlgFall extends SdAlgBase {
                     ", mFallWindow=" + mFallWindow);
         } catch (Exception ex) {
             Log.e(TAG, "updatePrefs() - Problem parsing preferences: " + ex.toString());
+            showToast("Problem parsing preferences, using defaults: " + ex.toString());
             mFallThreshMin = 500;
             mFallThreshMax = 3000;
             mFallWindow = 1500;

@@ -69,7 +69,7 @@ public abstract class SdAlgBase {
     /**
      * Helper method to show Toast on the main thread safely
      */
-    protected void showToast(String message, int duration) {
-        mHandler.post(() -> Toast.makeText(mContext, message, duration).show());
+    protected void showToast(String message) {
+        mHandler.post(() -> Toast.makeText(mContext, message, Toast.LENGTH_LONG).show());
     }
 }
