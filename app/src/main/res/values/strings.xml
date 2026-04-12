@@ -593,6 +593,8 @@
     <string name="use_new_ui_title">Use New User Interface</string>
     <string name="heart_rate_algorithm">Heart Rate Algorithm</string>
     <string name="heart_rate_history_bpm">"Heart Rate History (bpm): "</string>
+    <string name="fall_algorithm">Fall Detection Algorithm</string>
+    <string name="fall_accel_history_mg">"Fall Accel History (mg): "</string>
     <string name="minutes">minutes</string>
     <string name="algorithms">"Algorithms: "</string>
     <string name="battery_history">Battery History</string>

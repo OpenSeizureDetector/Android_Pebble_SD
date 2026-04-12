@@ -26,12 +26,12 @@ import uk.org.openseizuredetector.R;
  * - Position numbers must be consecutive starting from 0
  * - Commented out cases do NOT count toward the total
  *
- * Current Active Tabs (as of January 2026):
+ * Current Active Tabs (as of April 2026):
  * - Position 0: OSD Algorithm (FragmentOsdAlg)
  * - Position 1: ML Algorithm (FragmentMlAlg)
  * - Position 2: Heart Rate (FragmentHrAlg)
- * - Position 3: System (FragmentSystem - includes Signal & Battery graphs)
- *
+ * - Position 3: Fall Detection (FragmentFallAlg)  ← between HR and System
+ * - Position 4: System (FragmentSystem - includes Signal & Battery graphs)
  * Removed/Inactive:
  * - FragmentWatchSig (signal graph moved to System tab)
  * - FragmentBatt (battery graph moved to System tab)
@@ -328,21 +328,35 @@ public class MainActivity2 extends AppCompatActivity {
                                 case 2:
                                     tab.setText("Heart Rate");
                                     break;
-                                case 3:
-                                    tab.setText("System");
-                                    break;
-                                //case 4:
-                                //    tab.setText("Signal");
-                                //    break;
-                                //case 5:
-                                //    tab.setText("Battery");
-                                //    break;
+                                 case 3:
+                                     tab.setText("Fall");
+                                     break;
+                                 case 4:
+                                     tab.setText("System");
+                                     break;
                                 default:
                                     tab.setText("Screen " + position);
                             }
                         }
                     });
             mTabLayoutMediator.attach();
+
+            // Grey out the Fall tab (position 3) when fall detection is disabled,
+            // so users can immediately see which tabs are relevant to the current configuration.
+            // We access the tab strip's child view directly as TabLayout has no public alpha API.
+            try {
+                SharedPreferences tabPrefs = mSharedPrefs != null ? mSharedPrefs
+                        : PreferenceManager.getDefaultSharedPreferences(this);
+                boolean fallActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "FallActive");
+                if (!fallActive) {
+                    ViewGroup tabStrip = (ViewGroup) mTabLayout.getChildAt(0);
+                    if (tabStrip != null && tabStrip.getChildCount() > 3) {
+                        tabStrip.getChildAt(3).setAlpha(0.4f);
+                    }
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "onResume() - could not grey out Fall tab: " + e.getMessage());
+            }
         } else {
             Log.d(TAG, "onResume() - TabLayout not found (landscape layout detected), skipping TabLayoutMediator");
         }
@@ -564,13 +578,10 @@ public class MainActivity2 extends AppCompatActivity {
                 case 2:
                     return new FragmentHrAlg();
                 case 3:
+                    // Fall detection debug tab - graphs window min/max acceleration history
+                    return new FragmentFallAlg();
+                case 4:
                     return new FragmentSystem();
-                //case 4:
-                //    return new FragmentWatchSig();
-                //case 5:
-                //    return new FragmentBatt();
-                //case 4:
-                //    return new FragmentDataSharing();
 
                 default:
                     Log.e(TAG, "createFragment() - invalid Position " + position);
@@ -580,7 +591,7 @@ public class MainActivity2 extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return 4; // Must match the number of active cases in createFragment() above
+            return 5; // Must match the number of active cases in createFragment() above
         }
     }
 

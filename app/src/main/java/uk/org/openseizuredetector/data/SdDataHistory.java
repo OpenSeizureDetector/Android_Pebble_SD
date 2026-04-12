@@ -50,14 +50,26 @@ public class SdDataHistory {
     public CircBuf mAccelMagStdDevHistBuf = new CircBuf(120, -1.0);     // 10 minute buffer (120 samples)
     public CircBuf mHrHistBuf = new CircBuf(120, -1.0);                 // 10 minute heart rate history (120 samples)
 
+    // Fall detection window statistics history - 120 samples at 5s intervals = 10 minutes.
+    // mFallWindowMinBuf: rolling lowest "window-minimum" acceleration (free-fall phase indicator).
+    // mFallWindowMaxBuf: rolling highest "window-maximum" acceleration (impact phase indicator).
+    // mFallEventBuf:     1.0 at times when a fall was detected; 0.0 otherwise.
+    public CircBuf mFallWindowMinBuf = new CircBuf(120, -1.0);
+    public CircBuf mFallWindowMaxBuf = new CircBuf(120, -1.0);
+    public CircBuf mFallEventBuf = new CircBuf(120, 0.0);
+
     public SdDataHistory() {
         Log.d(TAG, "SdDataHistory created - history buffers initialized");
 
-        // Initialize seizure, accel, and heart rate buffers with zeros so we have initial data for charts
+        // Initialize seizure, accel, heart rate, and fall buffers with zeros so charts have
+        // initial data and don't appear empty on first render.
         for (int i = 0; i < 120; i++) {
             mPseizureHistBuf.add(0.0);
             mAccelMagStdDevHistBuf.add(0.0);
             mHrHistBuf.add(0.0);
+            mFallWindowMinBuf.add(0.0);
+            mFallWindowMaxBuf.add(0.0);
+            mFallEventBuf.add(0.0);
         }
         
         // Initialize individual ML model buffers
@@ -71,12 +83,17 @@ public class SdDataHistory {
 
     /**
      * Add a new data point to all history buffers.
-     * Including individual ML model probabilities.
+     * Including individual ML model probabilities and fall detection window statistics.
      * Called every time new data arrives via SdData.
+     *
+     * @param fallWindowMin  Lowest window-minimum acceleration this period (-1.0 = no data)
+     * @param fallWindowMax  Highest window-maximum acceleration this period (-1.0 = no data)
+     * @param fallDetected   True if a fall was detected this analysis period
      */
     public void addDataPoint(long batteryPc, int phoneBatteryPc, double watchSignalStrength,
                              double pSeizure, double accelMagStdDev, double heartRate,
-                             double[] mlModelProbs) {
+                             double[] mlModelProbs,
+                             double fallWindowMin, double fallWindowMax, boolean fallDetected) {
         if (batteryPc >= 0) {
             watchBattBuff.add(batteryPc);
         }
@@ -95,12 +112,20 @@ public class SdDataHistory {
         if (heartRate >= 0) {
             mHrHistBuf.add(heartRate);
         }
-        
+
         // Add individual ML model probabilities
         if (mlModelProbs != null) {
             for (int i = 0; i < Math.min(mlModelProbs.length, 5); i++) {
                 mlModelProbBuffs[i].add(mlModelProbs[i]);
             }
         }
+
+        // Add fall detection window statistics.
+        // When no valid data is available (-1.0), record 0.0 so the graph still has a data point
+        // at the correct time position (gap-free display).
+        mFallWindowMinBuf.add(fallWindowMin >= 0 ? fallWindowMin : 0.0);
+        mFallWindowMaxBuf.add(fallWindowMax >= 0 ? fallWindowMax : 0.0);
+        // Record fall events as 1.0 (fall) or 0.0 (no fall) for overlay on the graph.
+        mFallEventBuf.add(fallDetected ? 1.0 : 0.0);
     }
 }

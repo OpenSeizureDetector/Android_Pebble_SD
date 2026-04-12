@@ -158,6 +158,14 @@ public class SdData implements Parcelable {
     public int hrAlgState = 0;
     public int cnnAlgState = 0;    // Combined ML state (for backward compatibility)
 
+    // Fall detection window statistics (populated by SdAlgFall each analysis period).
+    // These hold the most extreme acceleration values seen across all sliding windows,
+    // allowing the fall detection debug UI to plot min/max acceleration history over time.
+    // A value of -1.0 means no data was processed this period (e.g. window too small).
+    // Whether a fall was detected is indicated by fallAlgState == AlarmState.ALARM.
+    public double mFallWindowMin = -1.0;  // Lowest min-acceleration seen in any window (free-fall indicator)
+    public double mFallWindowMax = -1.0;  // Highest max-acceleration seen in any window (impact indicator)
+
     public SdData() {
         simpleSpec = new int[10];
         rawData = new double[N_RAW_DATA];

@@ -38,8 +38,8 @@ public class SdAlgFall extends SdAlgBase {
         } catch (Exception ex) {
             Log.e(TAG, "updatePrefs() - Problem parsing preferences: " + ex.toString());
             mFallThreshMin = 500;
-            mFallThreshMax = 2000;
-            mFallWindow = 500;
+            mFallThreshMax = 3000;
+            mFallWindow = 1500;
         }
     }
 
@@ -54,6 +54,13 @@ public class SdAlgFall extends SdAlgBase {
         double minAcc, maxAcc;
         boolean fallDetected = false;
 
+        // Track the most extreme values seen across all window positions this analysis period.
+        // These are stored in sdData so SdDataHistory can record them for the fall debug UI graph.
+        // overallMinAcc = lowest "window minimum" (most free-fall-like)
+        // overallMaxAcc = highest "window maximum" (most impact-like)
+        double overallMinAcc = Double.MAX_VALUE;
+        double overallMaxAcc = -Double.MAX_VALUE;
+        boolean dataProcessed = false;
 
         long fallWindowSamp = (mFallWindow * sdData.mSampleFreq) / 1000; // Convert ms to samples.
         Log.d(TAG, "processSdData() - mFallWindow="+mFallWindow+", sdData.mSampleFreq="+sdData.mSampleFreq+", fallWindowSamp=" + fallWindowSamp + " (mFallThreshMin=" + mFallThreshMin + ", mFallThreshMax=" + mFallThreshMax);
@@ -69,10 +76,28 @@ public class SdAlgFall extends SdAlgBase {
             }
             Log.d(TAG, "processSdData() - i="+i+", minAcc=" + String.format("%.1f", minAcc) + ", maxAcc=" + String.format("%.1f", maxAcc));
 
+            // Track the extremes across all windows for history recording
+            dataProcessed = true;
+            if (minAcc < overallMinAcc) overallMinAcc = minAcc;
+            if (maxAcc > overallMaxAcc) overallMaxAcc = maxAcc;
+
             if ((minAcc < mFallThreshMin) && (maxAcc > mFallThreshMax)) {
                 Log.i(TAG, "processSdData() ****FALL DETECTED***** minAcc=" + minAcc + ", maxAcc=" + maxAcc);
                 fallDetected = true;
             }
+        }
+
+        // Record window statistics in sdData so SdDataHistory can accumulate a 10-minute
+        // rolling history for the fall detection debug UI tab.
+        // -1.0 signals "no valid data" (e.g. window larger than sample buffer).
+        // Whether a fall was detected is conveyed by the return value, which SeizureDetector
+        // stores in sdData.fallAlgState – so no separate mFallDetected field is needed.
+        if (dataProcessed) {
+            sdData.mFallWindowMin = overallMinAcc;
+            sdData.mFallWindowMax = overallMaxAcc;
+        } else {
+            sdData.mFallWindowMin = -1.0;
+            sdData.mFallWindowMax = -1.0;
         }
 
         if (fallDetected) {

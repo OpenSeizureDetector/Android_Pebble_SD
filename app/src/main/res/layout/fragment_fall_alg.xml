@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activity.main.FragmentFallAlg">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="@string/fall_algorithm"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/fragment_fall_alg_tv1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Fall Algorithm Status"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Current window min/max acceleration values -->
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Window Min Accel: " />
+
+                <TextView
+                    android:id="@+id/fall_window_min_tv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="---" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" mg" />
+            </androidx.appcompat.widget.LinearLayoutCompat>
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Window Max Accel: " />
+
+                <TextView
+                    android:id="@+id/fall_window_max_tv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="---" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" mg" />
+            </androidx.appcompat.widget.LinearLayoutCompat>
+
+            <!-- Status info (alarm state, alarm standing) -->
+            <TextView
+                android:id="@+id/fall_status_tv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Status Info"
+                android:layout_marginBottom="16dp" />
+
+            <!--
+                Fall detection acceleration history graph.
+                Solid lines: min accel (blue/accent) and max accel (red).
+                Dashed lines: FallThreshMin (blue/accent dashed) and FallThreshMax (red dashed).
+                Orange circles: times when a fall alarm was raised.
+            -->
+            <com.jjoe64.graphview.GraphView
+                android:id="@+id/fall_line_chart"
+                android:layout_width="match_parent"
+                android:layout_height="250dp" />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+    </ScrollView>
+
+</FrameLayout>
+

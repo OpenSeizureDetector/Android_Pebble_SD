@@ -1143,7 +1143,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     sendPhoneAlarm();
                     mSMSTimeMillis = tnowMillis;
                 } else {
-                    mUtil.showToast(getString(R.string.SMSAlarmAlreadySentMsg));
+                    //mUtil.showToast(getString(R.string.SMSAlarmAlreadySentMsg));
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
@@ -1189,11 +1189,11 @@ public class SdServer extends Service implements SdDataReceiver {
                     sendSMSAlarm();
                     mSMSTimeMillis = tnowMillis;
                 } else {
-                    mUtil.showToast(getString(R.string.SMSAlarmAlreadySentMsg));
+                    //mUtil.showToast(getString(R.string.SMSAlarmAlreadySentMsg));
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
-                mUtil.showToast(getString(R.string.msmsalarm_false_msg));
+                //mUtil.showToast(getString(R.string.msmsalarm_false_msg));
                 Log.v(TAG, "mSMSAlarm is false - not sending");
             }
 
@@ -1226,7 +1226,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     sendSMSAlarm();
                     mSMSTimeMillis = tnowMillis;
                 } else {
-                    mUtil.showToast(getString(R.string.SMSAlarmAlreadySentMsg));
+                    //mUtil.showToast(getString(R.string.SMSAlarmAlreadySentMsg));
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
@@ -1269,7 +1269,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     sendSMSAlarm();
                     mSMSTimeMillis = tnowMillis;
                 } else {
-                    mUtil.showToast(getString(R.string.sms_alarm_already_sent_msg));
+                    //mUtil.showToast(getString(R.string.sms_alarm_already_sent_msg));
                     Log.v(TAG, "SMS Alarm already sent - not re-sending");
                 }
             } else {
@@ -1294,12 +1294,17 @@ public class SdServer extends Service implements SdDataReceiver {
         if (webServer != null) webServer.setSdData(mSdData);
         Log.v(TAG, "onSdDataReceived() - setting mSdData to " + mSdData.toString());
 
-        // Add current data point to the persistent history (SdDataHistory persists across SdData replacements)
+        // Add current data point to the persistent history (SdDataHistory persists across SdData replacements).
+        // fallAlgState is set by SeizureDetector from the SdAlgFall return value, so comparing it to
+        // AlarmState.ALARM is the canonical way to check whether a fall was detected this period
+        // (no separate mFallDetected field is needed on SdData).
         if (mSdDataHistory != null) {
             mSdDataHistory.addDataPoint(sdData.batteryPc, sdData.phoneBatteryPc,
                     sdData.watchSignalStrength, sdData.mPseizure,
                     sdData.mAccelMagStdDev, sdData.mHR,
-                    sdData.mlModelProbs);
+                    sdData.mlModelProbs,
+                    sdData.mFallWindowMin, sdData.mFallWindowMax,
+                    sdData.fallAlgState == AlarmState.ALARM);
         }
 
         mLm.updateSdData(mSdData);
@@ -1514,7 +1519,7 @@ public class SdServer extends Service implements SdDataReceiver {
                 sendPhoneAlarm();
             } else {
                 Log.i(TAG, "sendSMSAlarm() - Cancel Audible Active - not making Phone Call");
-                mUtil.showToast(getString(R.string.cancel_audible_not_sending_sms));
+                //mUtil.showToast(getString(R.string.cancel_audible_not_sending_sms));
             }
         } else {
             Log.i(TAG, "sendSMSAlarm() - Phone Alarms Disabled - not doing anything!");
@@ -1885,8 +1890,6 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             Log.i(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             mPhoneAlarm = SP.getBoolean("PhoneCallAlarm", false);
-            Log.v(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
-            Log.i(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             String SMSNumberStr = SP.getString("SMSNumbers", "SET_FROM_XML");
             mSMSNumbers = SMSNumberStr.split(",");
             Log.v(TAG, "updatePrefs() - SMSNumberStr = " + SMSNumberStr);
@@ -2143,7 +2146,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     String messageStr = mSMSMsgStr + " - " +
                             dateStr + " - " + googleUrl + " " + shortUuidStr;
                     Log.i(TAG, "onSdLocationReceived() - Message is " + messageStr);
-                    mUtil.showToast(messageStr);
+                    //mUtil.showToast(messageStr);
                     for (int i = 0; i < mSMSNumbers.length; i++) {
                         Log.i(TAG, "onSdLocationReceived() - Sending to " + mSMSNumbers[i]);
                         sendSMS(mSMSNumbers[i], messageStr);
