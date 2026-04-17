@@ -46,7 +46,7 @@
             android:title="@string/sms_delay_sec"
             android:summary="@string/sms_delay_sec_desc"
             android:inputType="number"
-            android:defaultValue="10" />
+            android:defaultValue="30" />
         <EditTextPreference
             android:defaultValue=""
             android:key="SMSNumbers"

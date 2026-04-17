@@ -1996,15 +1996,19 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Check watch button mute (from the watch JSON data)
         if (sdData.mMute != 0) {
-            Log.v(TAG, "muteCheck() - Mute active from watch button");
+            Log.d(TAG, "muteCheck() - Mute active from watch button");
             sdData.alarmState = AlarmState.MUTE;  // MUTE state
+            Log.d(TAG, "muteCheck() - cancelling SmSTimer to prevent alert being sent");
+            stopSmsTimer();
             return;
         }
 
         // Check phone UI button mute (from mCancelAudible)
         if (mCancelAudible) {
-            Log.v(TAG, "muteCheck() - Mute active from phone UI button");
+            Log.d(TAG, "muteCheck() - Mute active from phone UI button");
             sdData.alarmState = AlarmState.MUTE;  // MUTE state
+            Log.d(TAG, "muteCheck() - cancelling SmSTimer to prevent alert being sent");
+            stopSmsTimer();
             return;
         }
     }
