@@ -32,6 +32,20 @@
             android:key="UseMp3Alarm"
             android:summary="@string/use_mp3_alarm_summary"
             android:title="@string/use_mp3_alarm_title" />
+        <!-- Sound file pickers — only visible when UseMp3Alarm is checked.
+             Visibility is controlled programmatically in AlarmPrefsFragment. -->
+        <Preference
+            android:key="Mp3WarningUri"
+            android:title="@string/mp3_warning_sound_title"
+            android:summary="@string/mp3_warning_sound_summary_default" />
+        <Preference
+            android:key="Mp3AlarmUri"
+            android:title="@string/mp3_alarm_sound_title"
+            android:summary="@string/mp3_alarm_sound_summary_default" />
+        <Preference
+            android:key="Mp3FaultUri"
+            android:title="@string/mp3_fault_sound_title"
+            android:summary="@string/mp3_fault_sound_summary_default" />
 
     </PreferenceCategory>
 

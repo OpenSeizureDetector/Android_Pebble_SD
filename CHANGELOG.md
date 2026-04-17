@@ -1,6 +1,7 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
     V5.0.0Z - Made the watch 'Mute' function cancel any pending SMS alerts.
+            - Fixed mp3 alarms, and added support for user-selectable audio files for the alarms.
     V5.0.0Y - Added a fall algorithm tab to MainActivity to visualise the data to help with setting parameters for the algorithm.
     V5.0.0X - Improved logging of Fall Algorithm debug data, fixed issue with fall detector not working for PineTime because sampleFrequency was not set correctly, 
               and made a fall override all algorithm voting to create an alarm because it is a one-shot event.

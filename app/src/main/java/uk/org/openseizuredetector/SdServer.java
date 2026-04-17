@@ -127,10 +127,9 @@ public class SdServer extends Service implements SdDataReceiver {
     // On Android 8+, notification sound is controlled by the channel, NOT by setSound() on the
     // notification builder. We therefore use a separate channel per alarm level, each pre-configured
     // with its own sound. Channel IDs are versioned so a fresh channel is created if they change.
-    private static final String NOTCH_OK      = "OSD_OK_v1";
-    private static final String NOTCH_WARNING = "OSD_WARNING_v1";
-    private static final String NOTCH_ALARM   = "OSD_ALARM_v1";
-    private static final String NOTCH_FAULT   = "OSD_FAULT_v1";
+    // Single silent notification channel used for the foreground service status display.
+    // Sound is played directly via MediaPlayer — not via notification channels.
+    private static final String NOTCH_OK = "OSD_NOTIFICATION_v1";
 
     // Data Sharing Status Message to be displayed in the notification
     private String mDataShareMsg = null;
@@ -183,6 +182,10 @@ public class SdServer extends Service implements SdDataReceiver {
     private boolean mAudibleWarning = false;
     private boolean mAudibleFaultWarning = false;
     private boolean mMp3Alarm = false;
+    // User-selected MP3 URIs (null/empty = use bundled res/raw/ file)
+    private String mMp3WarningUri = "";
+    private String mMp3AlarmUri   = "";
+    private String mMp3FaultUri   = "";
     private boolean mPhoneAlarm = false;
     private boolean mSMSAlarm = false;
     private String[] mSMSNumbers;
@@ -213,6 +216,7 @@ public class SdServer extends Service implements SdDataReceiver {
     private OsdUtil mUtil;
     private Handler mHandler;
     private ToneGenerator mToneGenerator;
+    private android.media.MediaPlayer mMediaPlayer = null; // used for MP3 alarm sounds
 
     private NetworkBroadcastReceiver mNetworkBroadcastReceiver;
 
@@ -537,11 +541,21 @@ public class SdServer extends Service implements SdDataReceiver {
 
 
         // Create our log manager.
+        // If there's an old instance (e.g. settings-triggered restart), stop it asynchronously
+        // so the main thread is not blocked by the upload-wait inside LogUploader.requestShutdown().
         if (mLm != null) {
-            Log.i(TAG, "onStartCommand() - Stopping existing LogManager instance before re-creating");
-            mLm.stop();
-            LogManager.close();
+            Log.i(TAG, "onStartCommand() - Stopping existing LogManager instance asynchronously before re-creating");
+            final LogManager oldLm = mLm;
             mLm = null;
+            new Thread(() -> {
+                try {
+                    oldLm.stop();
+                    LogManager.close();
+                    Log.d(TAG, "onStartCommand(): old LogManager stopped on background thread");
+                } catch (Exception e) {
+                    Log.e(TAG, "onStartCommand(): error stopping old LogManager: " + e.getMessage());
+                }
+            }, "LogManager-old-shutdown").start();
         }
         mLm = new LogManager(this, mLogDataRemote, mLogDataRemoteMobile, mAuthToken, mEventDuration,
                 mRemoteLogPeriod, mLogNDA, mAutoPruneDb, mDataRetentionPeriod, mSdData);
@@ -793,9 +807,12 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.i(TAG, "SdServer.onDestroy() - stopping Web Server");
             stopWebServer();
 
+            stopMp3();  // release MediaPlayer if active (must be before ToneGenerator release)
             Log.i(TAG, "SdServer.onDestroy() - releasing mToneGenerator");
-            mToneGenerator.release();
-            mToneGenerator = null;
+            if (mToneGenerator != null) {
+                mToneGenerator.release();
+                mToneGenerator = null;
+            }
 
             this.stopForeground(STOP_FOREGROUND_REMOVE);
             // Cancel the notification.
@@ -814,11 +831,23 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.i(TAG, "SdServer.onDestroy() -error " + e.toString());
         }
 
+        // Stop LogManager on a background thread — its requestShutdown() can block for up to
+        // 5 seconds waiting for an in-flight upload, which freezes the main thread and triggers
+        // "Skipped N frames" and (worse) lets Android classify the app as background before the
+        // service restart, causing startForegroundService() to be denied.
         if (mLm != null) {
-            Log.d(TAG, "Closing Down Log Manager");
-            mLm.stop();
-            LogManager.close();
-            mLm = null;
+            final LogManager lmToStop = mLm;
+            mLm = null;  // clear the reference immediately so nothing else uses it
+            Log.d(TAG, "Closing Down Log Manager (async)");
+            new Thread(() -> {
+                try {
+                    lmToStop.stop();
+                    LogManager.close();
+                    Log.d(TAG, "onDestroy(): LogManager stopped on background thread");
+                } catch (Exception e) {
+                    Log.e(TAG, "onDestroy(): error stopping LogManager: " + e.getMessage());
+                }
+            }, "LogManager-shutdown").start();
         }
 
         super.onDestroy();
@@ -859,59 +888,69 @@ public class SdServer extends Service implements SdDataReceiver {
     }
 
     /**
-     * Create one notification channel per alarm level, each pre-configured with the appropriate
-     * sound. On Android 8+, the channel controls the sound — setSound() on the notification
-     * builder itself is ignored. Channels are only created once; if they already exist this is a
-     * no-op (Android ignores duplicate createNotificationChannel calls).
+     * Create the single silent notification channel used for the foreground service status
+     * display.  Sound is played independently via MediaPlayer — not through channels.
      */
     private void createNotificationChannels() {
-        AudioAttributes audioAttrs = new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build();
-
-        // Delete existing channels first to ensure sound settings are applied fresh.
-        // Android ignores setSound() / setImportance() calls on channels that already exist,
-        // so we must delete and recreate to guarantee the correct configuration.
-        mNM.deleteNotificationChannel(NOTCH_OK);
-        mNM.deleteNotificationChannel(NOTCH_WARNING);
-        mNM.deleteNotificationChannel(NOTCH_ALARM);
-        mNM.deleteNotificationChannel(NOTCH_FAULT);
-
-        // OK channel — uses default importance so the initial foreground notification
-        // makes the normal system sound, but no custom MP3.
         NotificationChannel okChannel = new NotificationChannel(
                 NOTCH_OK, "OSD Status", NotificationManager.IMPORTANCE_DEFAULT);
         okChannel.setDescription("OpenSeizureDetector status notification");
         okChannel.setSound(null, null);
         okChannel.enableVibration(false);
         mNM.createNotificationChannel(okChannel);
+        Log.i(TAG, "createNotificationChannels() - created silent status channel " + NOTCH_OK);
+    }
 
-        // Warning channel
-        NotificationChannel warnChannel = new NotificationChannel(
-                NOTCH_WARNING, "OSD Warning", NotificationManager.IMPORTANCE_HIGH);
-        warnChannel.setDescription("OpenSeizureDetector warning alert");
-        warnChannel.setSound(Uri.parse("android.resource://" + getPackageName() + "/raw/warning"), audioAttrs);
-        warnChannel.enableVibration(false);
-        mNM.createNotificationChannel(warnChannel);
+    /**
+     * Stop and release any currently-playing MediaPlayer instance.
+     */
+    private void stopMp3() {
+        if (mMediaPlayer != null) {
+            try {
+                if (mMediaPlayer.isPlaying()) mMediaPlayer.stop();
+                mMediaPlayer.release();
+            } catch (Exception e) {
+                Log.w(TAG, "stopMp3() - error releasing MediaPlayer: " + e.getMessage());
+            }
+            mMediaPlayer = null;
+        }
+    }
 
-        // Alarm channel
-        NotificationChannel alarmChannel = new NotificationChannel(
-                NOTCH_ALARM, "OSD Alarm", NotificationManager.IMPORTANCE_HIGH);
-        alarmChannel.setDescription("OpenSeizureDetector seizure alarm");
-        alarmChannel.setSound(Uri.parse("android.resource://" + getPackageName() + "/raw/alarm"), audioAttrs);
-        alarmChannel.enableVibration(false);
-        mNM.createNotificationChannel(alarmChannel);
-
-        // Fault channel
-        NotificationChannel faultChannel = new NotificationChannel(
-                NOTCH_FAULT, "OSD Fault", NotificationManager.IMPORTANCE_HIGH);
-        faultChannel.setDescription("OpenSeizureDetector fault warning");
-        faultChannel.setSound(Uri.parse("android.resource://" + getPackageName() + "/raw/fault"), audioAttrs);
-        faultChannel.enableVibration(false);
-        mNM.createNotificationChannel(faultChannel);
-
-        Log.i(TAG, "createNotificationChannels() - created OK/WARNING/ALARM/FAULT channels");
+    /**
+     * Play an MP3 sound: uses the user-selected content URI if non-empty, otherwise falls back
+     * to the bundled res/raw/ resource identified by rawResName.
+     * Audio attributes are set to USAGE_ALARM so the phone's alarm volume is used and the
+     * sound plays even in DND/silent modes (subject to user's DND alarm exception settings).
+     */
+    private void playMp3(String userUriStr, String rawResName) {
+        stopMp3();  // stop any previously playing sound first
+        try {
+            Uri soundUri;
+            if (userUriStr != null && !userUriStr.isEmpty()) {
+                soundUri = Uri.parse(userUriStr);
+                Log.i(TAG, "playMp3() - using user URI: " + soundUri);
+            } else {
+                soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/" + rawResName);
+                Log.i(TAG, "playMp3() - using bundled sound: " + soundUri);
+            }
+            mMediaPlayer = new android.media.MediaPlayer();
+            mMediaPlayer.setAudioAttributes(new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build());
+            mMediaPlayer.setDataSource(getApplicationContext(), soundUri);
+            mMediaPlayer.setOnPreparedListener(android.media.MediaPlayer::start);
+            mMediaPlayer.setOnCompletionListener(mp -> stopMp3());
+            mMediaPlayer.setOnErrorListener((mp, what, extra) -> {
+                Log.e(TAG, "playMp3() - MediaPlayer error what=" + what + " extra=" + extra);
+                stopMp3();
+                return true;
+            });
+            mMediaPlayer.prepareAsync();
+        } catch (Exception e) {
+            Log.e(TAG, "playMp3() - failed to start MediaPlayer: " + e.getMessage());
+            stopMp3();
+        }
     }
 
     /**
@@ -940,17 +979,17 @@ public class SdServer extends Service implements SdDataReceiver {
             case 1:
                 iconId = R.drawable.star_of_life_yellow_24x24;
                 titleStr = getString(R.string.Warning);
-                channelId = (mMp3Alarm && mAudibleWarning && !mCancelAudible) ? NOTCH_WARNING : NOTCH_OK;
+                channelId = NOTCH_OK;
                 break;
             case 2:
                 iconId = R.drawable.star_of_life_red_24x24;
                 titleStr = getString(R.string.Alarm);
-                channelId = (mMp3Alarm && mAudibleAlarm && !mCancelAudible) ? NOTCH_ALARM : NOTCH_OK;
+                channelId = NOTCH_OK;
                 break;
             case -1:
                 iconId = R.drawable.star_of_life_fault_24x24;
                 titleStr = getString(R.string.Fault);
-                channelId = (mMp3Alarm && mAudibleFaultWarning && !mCancelAudible) ? NOTCH_FAULT : NOTCH_OK;
+                channelId = NOTCH_OK;
                 break;
             default: // case 0 and anything else
                 iconId = R.drawable.star_of_life_24x24;
@@ -960,7 +999,6 @@ public class SdServer extends Service implements SdDataReceiver {
         }
 
         Log.i(TAG, "showNotification - alarmLevel=" + alarmLevel
-                + " channelId=" + channelId
                 + " mMp3Alarm=" + mMp3Alarm
                 + " mCancelAudible=" + mCancelAudible);
 
@@ -1360,7 +1398,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     sdData.fallAlgState == AlarmState.ALARM);
         }
 
-        mLm.updateSdData(mSdData);
+        if (mLm != null) mLm.updateSdData(mSdData);
 
         logData();
 
@@ -1491,7 +1529,8 @@ public class SdServer extends Service implements SdDataReceiver {
         } else {
             if (mAudibleFaultWarning) {
                 if (mMp3Alarm) {
-                    Log.v(TAG, "Not making MP3 fault beep - handled by notification");
+                    Log.i(TAG, "SdServer.faultWarningBeep() - playing MP3");
+                    playMp3(mMp3FaultUri, "fault");
                 } else {
                     beep(10);
                 }
@@ -1501,7 +1540,6 @@ public class SdServer extends Service implements SdDataReceiver {
                 Log.v(TAG, "faultWarningBeep() - silent...");
             }
         }
-
     }
 
 
@@ -1514,7 +1552,8 @@ public class SdServer extends Service implements SdDataReceiver {
         } else {
             if (mAudibleAlarm) {
                 if (mMp3Alarm) {
-                    Log.v(TAG, "Not making MP3 alarm beep - handled by ShowNotification");
+                    Log.i(TAG, "SdServer.alarmBeep() - playing MP3");
+                    playMp3(mMp3AlarmUri, "alarm");
                 } else {
                     beep(3000);
                 }
@@ -1535,7 +1574,8 @@ public class SdServer extends Service implements SdDataReceiver {
         } else {
             if (mAudibleWarning) {
                 if (mMp3Alarm) {
-                    Log.v(TAG, "not making MP3 alarm beep - handled by showNotification");
+                    Log.i(TAG, "SdServer.warningBeep() - playing MP3");
+                    playMp3(mMp3WarningUri, "warning");
                 } else {
                     beep(100);
                 }
@@ -1936,6 +1976,15 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.i(TAG, "updatePrefs() - mAudibleWarning = " + mAudibleWarning);
             mMp3Alarm = SP.getBoolean("UseMp3Alarm", false);
             Log.i(TAG, "updatePrefs() - mMp3Alarm = " + mMp3Alarm);
+            // User-selected MP3 URIs — empty string means "use bundled sound"
+            mMp3WarningUri = SP.getString("Mp3WarningUri", "");
+            mMp3AlarmUri   = SP.getString("Mp3AlarmUri",   "");
+            mMp3FaultUri   = SP.getString("Mp3FaultUri",   "");
+            Log.i(TAG, "updatePrefs() - Mp3WarningUri=" + mMp3WarningUri
+                    + " Mp3AlarmUri=" + mMp3AlarmUri
+                    + " Mp3FaultUri=" + mMp3FaultUri);
+            // Recreate notification channels so the new sound URIs take effect immediately.
+            createNotificationChannels();
 
             mSMSAlarm = PreferenceUtils.getBooleanFromXml(SP, "SMSAlarm");
             Log.i(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
@@ -2316,7 +2365,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
                 // Log memory status every minute (every 60 ticks at 1-second interval)
                 if (mFaultTimerRemaining % 60 == 0) {
-                    mUtil.writeMemoryLog("FaultTimer heartbeat");
+                    mUtil.writeMemoryLog("Watchdog heartbeat");
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error in FaultTimer.onTick()", e);
@@ -2364,6 +2413,10 @@ public class SdServer extends Service implements SdDataReceiver {
 
     private void checkEvents() {
         // Retrieve events from remote database
+        if (mLm == null) {
+            Log.w(TAG, "checkEvents() - mLm is null, skipping");
+            return;
+        }
         if (mLm.mWac.getEvents((JSONObject remoteEventsObj) -> {
             Log.v(TAG, "checkEvents.getEvents.Callback()");
             Boolean haveUnvalidatedEvent = false;
@@ -2445,25 +2498,6 @@ public class SdServer extends Service implements SdDataReceiver {
         }
     }
 
-    /**
-     * isNotificationShown - returns true if the specified notificationID is shown, otherwise returns false.
-     *
-     * @param notificationId - Notification ID to check
-     * @return boolean - true if notification is currently shown
-     */
-    private boolean isNotificationShown(int notificationId) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            StatusBarNotification[] activeNotifications = mNM.getActiveNotifications();
-            if (activeNotifications != null) {
-                for (StatusBarNotification notification : activeNotifications) {
-                    if (notification.getId() == notificationId) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
 
     /**
      * Start the ML model update check timer

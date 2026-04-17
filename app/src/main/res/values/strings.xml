@@ -226,6 +226,14 @@
     <string name="data_frequency_fault_too_slow">Data arriving too slowly: %.1fs (expected 5±1s)</string>
     <string name="use_mp3_alarm_summary">Play an MP3 file to create the alarm beeps rather than using the default tone generator.</string>
     <string name="use_mp3_alarm_title">Use MP3 Alarm Sound</string>
+    <string name="mp3_warning_sound_title">Warning Sound File</string>
+    <string name="mp3_warning_sound_summary_default">Using bundled warning sound</string>
+    <string name="mp3_alarm_sound_title">Alarm Sound File</string>
+    <string name="mp3_alarm_sound_summary_default">Using bundled alarm sound</string>
+    <string name="mp3_fault_sound_title">Fault Sound File</string>
+    <string name="mp3_fault_sound_summary_default">Using bundled fault sound</string>
+    <string name="mp3_sound_select_button">Select MP3 File…</string>
+    <string name="mp3_sound_clear_button">Use Bundled Sound</string>
     <string name="enable_sms_alarm_summary">Issue a SMS (Text Message) alarm if the seizure detector enters an alarm condition. NOTE: THE MESSAGE WILL INCLUDE THE USER\'s LOCATION. Disable this option if sharing your location is a concern.</string>
     <string name="enable_sms_alarm_title">Enable SMS Alarm</string>
     <string name="sms_numbers_summary">Telephone number(s) to notify by SMS of Alarm (comma separated).</string>

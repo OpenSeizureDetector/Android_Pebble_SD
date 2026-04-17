@@ -80,6 +80,8 @@ import uk.org.openseizuredetector.activity.bluetooth.BLEScanActivity;
 import uk.org.openseizuredetector.activity.startup.StartupActivity;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 
 public class PrefActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener {
     private static final String TAG = "PreferenceActivity";
@@ -298,6 +300,14 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     public void onStart() {
         super.onStart();
         Log.i(TAG, "onStart()");
+    }
+
+    /**
+     * Called by child fragments that change preferences via ActivityResultLauncher callbacks,
+     * which fire before onResume so the SharedPreferenceChangeListener is not yet registered.
+     */
+    public void notifyPrefChanged() {
+        mPrefChanged = true;
     }
 
     @Override
@@ -725,10 +735,234 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         }
     }
 
-    public static class AlarmPrefsFragment extends PreferenceFragmentCompat {
+    public static class AlarmPrefsFragment extends PreferenceFragmentCompat
+            implements SharedPreferences.OnSharedPreferenceChangeListener {
+
+        // Keys for the three file-picker preferences
+        private static final String KEY_WARNING_URI = "Mp3WarningUri";
+        private static final String KEY_ALARM_URI   = "Mp3AlarmUri";
+        private static final String KEY_FAULT_URI   = "Mp3FaultUri";
+        private static final String KEY_USE_MP3     = "UseMp3Alarm";
+
+        // Request-code constants used with startActivityForResult (legacy path, but we use
+        // ActivityResultLauncher instead — these are kept as documentation only).
+        private ActivityResultLauncher<Intent> mPickerWarning;
+        private ActivityResultLauncher<Intent> mPickerAlarm;
+        private ActivityResultLauncher<Intent> mPickerFault;
+
+        @Override
+        public void onAttach(@androidx.annotation.NonNull android.content.Context context) {
+            super.onAttach(context);
+            // Register file-picker launchers as early as possible (onAttach) so they are
+            // always ready before onCreatePreferences wires up click listeners.
+            if (mPickerWarning == null) {
+                mPickerWarning = registerForActivityResult(
+                        new ActivityResultContracts.StartActivityForResult(),
+                        result -> handlePickerResult(result, KEY_WARNING_URI));
+            }
+            if (mPickerAlarm == null) {
+                mPickerAlarm = registerForActivityResult(
+                        new ActivityResultContracts.StartActivityForResult(),
+                        result -> handlePickerResult(result, KEY_ALARM_URI));
+            }
+            if (mPickerFault == null) {
+                mPickerFault = registerForActivityResult(
+                        new ActivityResultContracts.StartActivityForResult(),
+                        result -> handlePickerResult(result, KEY_FAULT_URI));
+            }
+        }
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+        }
+
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.alarm_prefs, rootKey);
+            refreshSoundPickerVisibility();
+            refreshSoundSummaries();
+            // Wire click listeners for the three file-picker prefs
+            wirePickerPref(KEY_WARNING_URI, mPickerWarning);
+            wirePickerPref(KEY_ALARM_URI,   mPickerAlarm);
+            wirePickerPref(KEY_FAULT_URI,   mPickerFault);
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .registerOnSharedPreferenceChangeListener(this);
+        }
+
+        @Override
+        public void onPause() {
+            super.onPause();
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .unregisterOnSharedPreferenceChangeListener(this);
+        }
+
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+            if (KEY_USE_MP3.equals(key)) {
+                refreshSoundPickerVisibility();
+            }
+        }
+
+        // -----------------------------------------------------------------------------------------
+        // Helpers
+
+        /** Show/hide the three sound-file pickers based on the UseMp3Alarm checkbox. */
+        private void refreshSoundPickerVisibility() {
+            SharedPreferences prefs =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext());
+            boolean useMp3 = prefs.getBoolean(KEY_USE_MP3, false);
+            setPickerVisible(KEY_WARNING_URI, useMp3);
+            setPickerVisible(KEY_ALARM_URI,   useMp3);
+            setPickerVisible(KEY_FAULT_URI,   useMp3);
+        }
+
+        private void setPickerVisible(String key, boolean visible) {
+            Preference p = findPreference(key);
+            if (p != null) p.setVisible(visible);
+        }
+
+        /** Update each picker's summary to show the selected filename (or default text). */
+        private void refreshSoundSummaries() {
+            refreshOneSummary(KEY_WARNING_URI,
+                    getString(R.string.mp3_warning_sound_summary_default));
+            refreshOneSummary(KEY_ALARM_URI,
+                    getString(R.string.mp3_alarm_sound_summary_default));
+            refreshOneSummary(KEY_FAULT_URI,
+                    getString(R.string.mp3_fault_sound_summary_default));
+        }
+
+        private void refreshOneSummary(String key, String defaultSummary) {
+            Preference p = findPreference(key);
+            if (p == null) return;
+            SharedPreferences prefs =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext());
+            String uriStr = prefs.getString(key, "");
+            if (uriStr == null || uriStr.isEmpty()) {
+                p.setSummary(defaultSummary);
+            } else {
+                // Show just the filename portion for readability
+                Uri uri = Uri.parse(uriStr);
+                String name = uriStr;
+                try {
+                    android.database.Cursor cursor = requireContext().getContentResolver()
+                            .query(uri, new String[]{android.provider.OpenableColumns.DISPLAY_NAME},
+                                    null, null, null);
+                    if (cursor != null) {
+                        if (cursor.moveToFirst()) {
+                            name = cursor.getString(0);
+                        }
+                        cursor.close();
+                    }
+                } catch (Exception ignored) { /* fall back to raw URI */ }
+                p.setSummary(name);
+            }
+        }
+
+        /**
+         * Wire a Preference so a click either:
+         *  - launches the file picker (if no URI set yet), or
+         *  - shows a dialog offering "Change file" or "Use bundled sound" (if a URI is already set).
+         */
+        private void wirePickerPref(String key,
+                                    ActivityResultLauncher<Intent> launcher) {
+            Preference p = findPreference(key);
+            if (p == null) return;
+
+            p.setOnPreferenceClickListener(pref -> {
+                SharedPreferences prefs =
+                        PreferenceManager.getDefaultSharedPreferences(requireContext());
+                String existing = prefs.getString(key, "");
+                if (existing == null || existing.isEmpty()) {
+                    // No file selected yet — go straight to picker
+                    launchPicker(launcher);
+                } else {
+                    // Already have a file — offer Change or Clear
+                    String defaultSummary = getDefaultSummary(key);
+                    new MaterialAlertDialogBuilder(requireContext())
+                            .setTitle(pref.getTitle())
+                            .setMessage(pref.getSummary())
+                            .setPositiveButton(R.string.mp3_sound_select_button,
+                                    (d, w) -> launchPicker(launcher))
+                            .setNegativeButton(R.string.mp3_sound_clear_button,
+                                    (d, w) -> clearUri(key, defaultSummary))
+                            .setNeutralButton(android.R.string.cancel, null)
+                            .show();
+                }
+                return true;
+            });
+        }
+
+        private void launchPicker(ActivityResultLauncher<Intent> launcher) {
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.setType("audio/*");
+            // Hint to the system file picker to open in the Audio section.
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                Uri audioUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                intent.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, audioUri);
+            }
+            launcher.launch(intent);
+        }
+
+        private String getDefaultSummary(String key) {
+            if (KEY_WARNING_URI.equals(key)) return getString(R.string.mp3_warning_sound_summary_default);
+            if (KEY_ALARM_URI.equals(key))   return getString(R.string.mp3_alarm_sound_summary_default);
+            if (KEY_FAULT_URI.equals(key))   return getString(R.string.mp3_fault_sound_summary_default);
+            return "";
+        }
+
+        /** Clears a stored URI and releases the persistent permission. */
+        private void clearUri(String key, String defaultSummary) {
+            SharedPreferences prefs =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext());
+            String old = prefs.getString(key, "");
+            if (!old.isEmpty()) {
+                try {
+                    requireContext().getContentResolver().releasePersistableUriPermission(
+                            Uri.parse(old),
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                } catch (Exception ignored) { /* URI may already be revoked */ }
+            }
+            prefs.edit().remove(key).apply();
+            Preference p = findPreference(key);
+            if (p != null) p.setSummary(defaultSummary);
+        }
+
+        /** Called by the ActivityResultLauncher when the user picks (or dismisses) a file. */
+        private void handlePickerResult(androidx.activity.result.ActivityResult result,
+                                        String prefKey) {
+            if (result.getResultCode() != android.app.Activity.RESULT_OK
+                    || result.getData() == null) return;
+            Uri uri = result.getData().getData();
+            if (uri == null) return;
+
+            // Take a persistent read permission so the URI survives app restarts.
+            try {
+                requireContext().getContentResolver().takePersistableUriPermission(
+                        uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } catch (Exception e) {
+                Log.w("AlarmPrefsFragment",
+                        "Could not take persistable URI permission: " + e.getMessage());
+            }
+
+            // Save to SharedPreferences
+            PreferenceManager.getDefaultSharedPreferences(requireContext())
+                    .edit().putString(prefKey, uri.toString()).apply();
+
+            // Notify PrefActivity directly — the ActivityResultLauncher callback fires before
+            // onResume, so the SharedPreferenceChangeListener is not yet re-registered and
+            // the normal onSharedPreferenceChanged path is missed.
+            if (getActivity() instanceof PrefActivity) {
+                ((PrefActivity) getActivity()).notifyPrefChanged();
+            }
+
+            refreshOneSummary(prefKey, getDefaultSummary(prefKey));
         }
     }
 
