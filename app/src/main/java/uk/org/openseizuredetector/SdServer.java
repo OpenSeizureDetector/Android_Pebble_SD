@@ -32,6 +32,7 @@ import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.media.AudioAttributes;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -123,17 +124,23 @@ public class SdServer extends Service implements SdDataReceiver {
 
     // Notification ID
     private final int NOTIFICATION_ID = 1;
-    private String mNotChId = "OSD Notification Channel";
-    private CharSequence mNotChName = "OSD Notification Channel";
-    private String mNotChDesc = "OSD Notification Channel Description";
+    // On Android 8+, notification sound is controlled by the channel, NOT by setSound() on the
+    // notification builder. We therefore use a separate channel per alarm level, each pre-configured
+    // with its own sound. Channel IDs are versioned so a fresh channel is created if they change.
+    private static final String NOTCH_OK      = "OSD_OK_v1";
+    private static final String NOTCH_WARNING = "OSD_WARNING_v1";
+    private static final String NOTCH_ALARM   = "OSD_ALARM_v1";
+    private static final String NOTCH_FAULT   = "OSD_FAULT_v1";
 
     // Data Sharing Status Message to be displayed in the notification
     private String mDataShareMsg = null;
 
     private NotificationManager mNM;
+    // NotificationCompat.Builder is kept but we pass the correct channel ID per alarm level.
     private NotificationCompat.Builder mNotificationBuilder;
     private Notification mNotification;
     private int mCurrentNotificationAlarmLevel = -999;
+    private String mCurrentNotificationContent = null; // tracks last content text to avoid redundant notify() calls
     private boolean mIsDestroying = false;  // Flag to prevent actions during shutdown
     private SdWebServer webServer = null;
     private final static String TAG = "SdServer";
@@ -264,15 +271,14 @@ public class SdServer extends Service implements SdDataReceiver {
         mWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
                 "OSD:WakeLock");
 
-        // Initialise Notification channel for SDK 26+
+        // Initialise Notification channels for SDK 26+.
+        // On Android 8+, sound is controlled by the channel, NOT by setSound() on the notification.
+        // We create a separate channel per alarm level so each can have its own sound.
+        // The OK channel has no sound (IMPORTANCE_DEFAULT); alert channels use IMPORTANCE_HIGH.
         mNM = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationBuilder = new NotificationCompat.Builder(this, mNotChId);
-
-        NotificationChannel channel = new NotificationChannel(mNotChId,
-                mNotChName,
-                NotificationManager.IMPORTANCE_DEFAULT);
-        channel.setDescription(mNotChDesc);
-        mNM.createNotificationChannel(channel);
+        createNotificationChannels();
+        // Builder will be re-created per-notification with the correct channel ID.
+        mNotificationBuilder = new NotificationCompat.Builder(this, NOTCH_OK);
 
         // Display a notification icon in the status bar of the phone to
         // show the service is running.
@@ -853,6 +859,62 @@ public class SdServer extends Service implements SdDataReceiver {
     }
 
     /**
+     * Create one notification channel per alarm level, each pre-configured with the appropriate
+     * sound. On Android 8+, the channel controls the sound — setSound() on the notification
+     * builder itself is ignored. Channels are only created once; if they already exist this is a
+     * no-op (Android ignores duplicate createNotificationChannel calls).
+     */
+    private void createNotificationChannels() {
+        AudioAttributes audioAttrs = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build();
+
+        // Delete existing channels first to ensure sound settings are applied fresh.
+        // Android ignores setSound() / setImportance() calls on channels that already exist,
+        // so we must delete and recreate to guarantee the correct configuration.
+        mNM.deleteNotificationChannel(NOTCH_OK);
+        mNM.deleteNotificationChannel(NOTCH_WARNING);
+        mNM.deleteNotificationChannel(NOTCH_ALARM);
+        mNM.deleteNotificationChannel(NOTCH_FAULT);
+
+        // OK channel — uses default importance so the initial foreground notification
+        // makes the normal system sound, but no custom MP3.
+        NotificationChannel okChannel = new NotificationChannel(
+                NOTCH_OK, "OSD Status", NotificationManager.IMPORTANCE_DEFAULT);
+        okChannel.setDescription("OpenSeizureDetector status notification");
+        okChannel.setSound(null, null);
+        okChannel.enableVibration(false);
+        mNM.createNotificationChannel(okChannel);
+
+        // Warning channel
+        NotificationChannel warnChannel = new NotificationChannel(
+                NOTCH_WARNING, "OSD Warning", NotificationManager.IMPORTANCE_HIGH);
+        warnChannel.setDescription("OpenSeizureDetector warning alert");
+        warnChannel.setSound(Uri.parse("android.resource://" + getPackageName() + "/raw/warning"), audioAttrs);
+        warnChannel.enableVibration(false);
+        mNM.createNotificationChannel(warnChannel);
+
+        // Alarm channel
+        NotificationChannel alarmChannel = new NotificationChannel(
+                NOTCH_ALARM, "OSD Alarm", NotificationManager.IMPORTANCE_HIGH);
+        alarmChannel.setDescription("OpenSeizureDetector seizure alarm");
+        alarmChannel.setSound(Uri.parse("android.resource://" + getPackageName() + "/raw/alarm"), audioAttrs);
+        alarmChannel.enableVibration(false);
+        mNM.createNotificationChannel(alarmChannel);
+
+        // Fault channel
+        NotificationChannel faultChannel = new NotificationChannel(
+                NOTCH_FAULT, "OSD Fault", NotificationManager.IMPORTANCE_HIGH);
+        faultChannel.setDescription("OpenSeizureDetector fault warning");
+        faultChannel.setSound(Uri.parse("android.resource://" + getPackageName() + "/raw/fault"), audioAttrs);
+        faultChannel.enableVibration(false);
+        mNM.createNotificationChannel(faultChannel);
+
+        Log.i(TAG, "createNotificationChannels() - created OK/WARNING/ALARM/FAULT channels");
+    }
+
+    /**
      * Show a notification while this service is running.
      */
     private void showNotification(int alarmLevel) {
@@ -862,110 +924,101 @@ public class SdServer extends Service implements SdDataReceiver {
             return;
         }
 
-        int iconId;
-        String titleStr;
-        Uri soundUri = null;
-
-        // Force update of notification if the message has changed, even if alarm level is same
-        // But mCurrentNotificationAlarmLevel only tracks level.
-        // We might need to track the last message to avoid spamming notify() if nothing changed?
-        // showNotification is called frequently (every data packet?).
-        // Actually onSdDataReceived calls it.
-        // If content changes, we should update.
-        // For now, I'll rely on the existing check but relax it if content text usually changes?
-        // The existing check:
-        // if ((alarmLevel == mCurrentNotificationAlarmLevel) && (isNotificationShown(NOTIFICATION_ID))) { return; }
-        // This prevents updating if level hasn't changed.
-        // But if DataShareMsg changes, we DO want to update.
-        // So I should modify this check or move the text generation before it?
-        // Actually, onSdDataReceived calls showNotification repeatedly.
-        // If I change mDataShareMsg, I call showNotification from checkEvents.
-        // I need to ensure it actually updates.
-
         Log.v(TAG, "showNotification() - alarmLevel=" + alarmLevel);
 
+        // Choose icon, title, and the correct channel ID for this alarm level.
+        // On Android 8+, sound is controlled entirely by the channel — setSound() on the
+        // notification builder is ignored. Each channel was pre-configured with its sound in
+        // createNotificationChannels(). We simply post to the right channel.
+        // When mMp3Alarm is false, or mCancelAudible is set, we post to the silent OK channel
+        // so that no sound plays even if the level is WARNING/ALARM/FAULT.
+        int iconId;
+        String titleStr;
+        String channelId;
+
         switch (alarmLevel) {
-            case 0:
-                iconId = R.drawable.star_of_life_24x24;
-                titleStr = getString(R.string.okBtnTxt);
-                soundUri = null;
-                break;
             case 1:
                 iconId = R.drawable.star_of_life_yellow_24x24;
                 titleStr = getString(R.string.Warning);
-                if (mAudibleWarning)
-                    soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/warning");
+                channelId = (mMp3Alarm && mAudibleWarning && !mCancelAudible) ? NOTCH_WARNING : NOTCH_OK;
                 break;
             case 2:
                 iconId = R.drawable.star_of_life_red_24x24;
                 titleStr = getString(R.string.Alarm);
-                if (mAudibleAlarm)
-                    soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/alarm");
+                channelId = (mMp3Alarm && mAudibleAlarm && !mCancelAudible) ? NOTCH_ALARM : NOTCH_OK;
                 break;
             case -1:
                 iconId = R.drawable.star_of_life_fault_24x24;
                 titleStr = getString(R.string.Fault);
-                if (mAudibleFaultWarning)
-                    soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/fault");
+                channelId = (mMp3Alarm && mAudibleFaultWarning && !mCancelAudible) ? NOTCH_FAULT : NOTCH_OK;
                 break;
-            default:
+            default: // case 0 and anything else
                 iconId = R.drawable.star_of_life_24x24;
-                soundUri = null;
                 titleStr = getString(R.string.okBtnTxt);
+                channelId = NOTCH_OK;
+                break;
         }
 
-        if (mCancelAudible) {
-            Log.v(TAG, "ShowNotification - Not beeping because mCancelAudible set");
-            soundUri = null;
-        }
+        Log.i(TAG, "showNotification - alarmLevel=" + alarmLevel
+                + " channelId=" + channelId
+                + " mMp3Alarm=" + mMp3Alarm
+                + " mCancelAudible=" + mCancelAudible);
 
-        Intent i;
-        i = new Intent(getApplicationContext(), MainActivity2.class);
+        Intent i = new Intent(getApplicationContext(), MainActivity2.class);
         i.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         PendingIntent contentIntent =
                 PendingIntent.getActivity(this,
                         0, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         StringBuilder contentSb = new StringBuilder();
-        // Status Message (Phone/SMS Alarm Active)
         if (mPhoneAlarm) {
             contentSb.append("Phone Call Alarm Active");
         } else if (mSMSAlarm) {
             contentSb.append(getString(R.string.sms_location_alarm_active));
         }
-
-        // Append Data Sharing Message on new line if available
         if (mDataShareMsg != null && !mDataShareMsg.isEmpty()) {
-            if (contentSb.length() > 0) {
-                contentSb.append("\n");
-            }
+            if (contentSb.length() > 0) contentSb.append("\n");
             contentSb.append(mDataShareMsg);
         }
-
         String contentStr = contentSb.toString();
         if (contentStr.isEmpty()) contentStr = null;
 
-        if (mNotificationBuilder != null) {
-            mNotification = mNotificationBuilder.setContentIntent(contentIntent)
-                    .setSmallIcon(iconId)
-                    .setColor(0x00ffffff)
-                    .setAutoCancel(false)
-                    .setContentTitle(titleStr)
-                    .setContentText(contentStr)
-                    .setStyle(new NotificationCompat.BigTextStyle().bigText(contentStr))
-                    .setOnlyAlertOnce(true)
-                    .build();
-            if (mMp3Alarm) {
-                if (soundUri != null) {
-                    Log.v(TAG, "showNotification - setting Notification Sound to " + soundUri.toString());
-                    mNotificationBuilder.setSound(soundUri);
-                }
-            }
-            mNM.notify(NOTIFICATION_ID, mNotification);
-            mCurrentNotificationAlarmLevel = alarmLevel;
-        } else {
-            Log.i(TAG, "showNotification() - notification builder is null, so not showing notification.");
+        // Determine whether anything actually changed. If not, skip notify() entirely —
+        // without setOnlyAlertOnce(), calling notify() on the same channel would re-trigger sound.
+        boolean alarmLevelChanged = (alarmLevel != mCurrentNotificationAlarmLevel);
+        boolean contentChanged = !java.util.Objects.equals(contentStr, mCurrentNotificationContent);
+        if (!alarmLevelChanged && !contentChanged) {
+            Log.v(TAG, "showNotification - nothing changed, skipping notify()");
+            return;
         }
+
+        // When the alarm level changes, cancel the existing notification first then re-post to
+        // the new channel. Android does not allow moving a notification between channels by
+        // updating it — it must be cancelled and re-posted.
+        if (alarmLevelChanged) {
+            Log.i(TAG, "showNotification - alarm level changed from "
+                    + mCurrentNotificationAlarmLevel + " to " + alarmLevel + ", cancelling old notification");
+            mNM.cancel(NOTIFICATION_ID);
+        }
+
+        // Build with the channel for this alarm level. A new Builder is created each time because
+        // the channel ID is baked in at construction and cannot be changed afterwards.
+        // We do NOT use setOnlyAlertOnce() here — sound suppression is handled by only posting
+        // to a sound-enabled channel when the alarm level actually changes (see channelId selection
+        // above and the early-return guard above). setOnlyAlertOnce(true) sets the ONLY_ALERT_ONCE
+        // flag which causes Android/Samsung to suppress sound even on freshly-posted notifications.
+        mNotification = new NotificationCompat.Builder(this, channelId)
+                .setContentIntent(contentIntent)
+                .setSmallIcon(iconId)
+                .setColor(0x00ffffff)
+                .setAutoCancel(false)
+                .setContentTitle(titleStr)
+                .setContentText(contentStr)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(contentStr))
+                .build();
+        mNM.notify(NOTIFICATION_ID, mNotification);
+        mCurrentNotificationAlarmLevel = alarmLevel;
+        mCurrentNotificationContent = contentStr;
     }
 
     // Show the main activity on the user's screen.
@@ -1880,75 +1933,54 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "updatePrefs() - mAudibleAlarm = " + mAudibleAlarm);
             Log.i(TAG, "updatePrefs() - mAudibleAlarm = " + mAudibleAlarm);
             mAudibleWarning = SP.getBoolean("AudibleWarning", true);
-            Log.v(TAG, "updatePrefs() - mAudibleWarning = " + mAudibleWarning);
             Log.i(TAG, "updatePrefs() - mAudibleWarning = " + mAudibleWarning);
             mMp3Alarm = SP.getBoolean("UseMp3Alarm", false);
-            Log.v(TAG, "updatePrefs() - mMp3Alarm = " + mMp3Alarm);
             Log.i(TAG, "updatePrefs() - mMp3Alarm = " + mMp3Alarm);
 
             mSMSAlarm = PreferenceUtils.getBooleanFromXml(SP, "SMSAlarm");
-            Log.v(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             Log.i(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             mPhoneAlarm = SP.getBoolean("PhoneCallAlarm", false);
             String SMSNumberStr = SP.getString("SMSNumbers", "SET_FROM_XML");
             mSMSNumbers = SMSNumberStr.split(",");
-            Log.v(TAG, "updatePrefs() - SMSNumberStr = " + SMSNumberStr);
             Log.i(TAG, "updatePrefs() - SMSNumberStr = " + SMSNumberStr);
-            Log.v(TAG, "updatePrefs() - mSMSNumbers = " + mSMSNumbers);
             Log.i(TAG, "updatePrefs() - mSMSNumbers = " + mSMSNumbers);
             mSMSMsgStr = SP.getString("SMSMsg", "SET_FROM_XML");
-            Log.v(TAG, "updatePrefs() - SMSMsgStr = " + mSMSMsgStr);
+            Log.i(TAG, "updatePrefs() - SMSMsgStr = " + mSMSMsgStr);
             mSMSFalseAlarmMsgStr = SP.getString("SMSFalseAlarmMsg", "SET_FROM_XML");
 
             String smsDelayPeriodStr = SP.getString("SMSDelayPeriod", "SET_FROM_XML");
             mSmsTimerSecs = Integer.parseInt(smsDelayPeriodStr);
-            Log.v(TAG,"updatePrefs() - mSmsTimerSecs = "+mSmsTimerSecs);
+            Log.i(TAG,"updatePrefs() - mSmsTimerSecs = "+mSmsTimerSecs);
 
             mLogAlarms = SP.getBoolean("LogAlarms", true);
-            Log.v(TAG, "updatePrefs() - mLogAlarms = " + mLogAlarms);
             Log.i(TAG, "updatePrefs() - mLogAlarms = " + mLogAlarms);
             //mLogData = SP.getBoolean("LogData", true);
             mLogData = true;
-            Log.v(TAG, "SdServer.updatePrefs() - mLogData = " + mLogData);
             Log.i(TAG, "updatePrefs() - mLogData = " + mLogData);
             //mLogDataRemote = SP.getBoolean("LogDataRemote", false);
             mLogDataRemote = true;
-            Log.v(TAG, "updatePrefs() - mLogDataRemote = " + mLogDataRemote);
             Log.i(TAG, "updatePrefs() - mLogDataRemote = " + mLogDataRemote);
             mLogDataRemoteMobile = PreferenceUtils.getBooleanFromXml(SP, "LogDataRemoteMobile");
-            Log.v(TAG, "updatePrefs() - mLogDataRemoteMobile = " + mLogDataRemoteMobile);
-            mLogNDA = PreferenceUtils.getBooleanFromXml(SP, "LogNDA");
-            Log.v(TAG, "updatePrefs() - mLogNDA = " + mLogNDA);
             Log.i(TAG, "updatePrefs() - mLogDataRemoteMobile = " + mLogDataRemoteMobile);
+            mLogNDA = PreferenceUtils.getBooleanFromXml(SP, "LogNDA");
+            Log.i(TAG, "updatePrefs() - mLogNDA = " + mLogNDA);
             mAuthToken = SP.getString("webApiAuthToken", null);
-            Log.v(TAG, "updatePrefs() - mAuthToken = " + mAuthToken);
             Log.i(TAG, "updatePrefs() - mAuthToken = " + mAuthToken);
 
             String prefVal;
             prefVal = SP.getString("EventDurationSec", "SET_FROM_XML");
             mEventDuration = Integer.parseInt(prefVal);
-            Log.v(TAG, "mEventDuration=" + mEventDuration);
+            Log.i(TAG, "mEventDuration=" + mEventDuration);
 
             mAutoPruneDb = PreferenceUtils.getBooleanFromXml(SP, "AutoPruneDb");
-            Log.v(TAG, "mAutoPruneDb=" + mAutoPruneDb);
+            Log.i(TAG, "mAutoPruneDb=" + mAutoPruneDb);
 
             prefVal = SP.getString("DataRetentionPeriod", "SET_FROM_XML");
             mDataRetentionPeriod = Integer.parseInt(prefVal);
-            Log.v(TAG, "mDataRetentionPeriod=" + mDataRetentionPeriod);
+            Log.i(TAG, "mDataRetentionPeriod=" + mDataRetentionPeriod);
+            Log.i(TAG, "mRemoteLogPeriod=" + mRemoteLogPeriod);
 
-            //prefVal = SP.getString("RemoteLogPeriod", "60");
-            //mRemoteLogPeriod = Integer.parseInt(prefVal);
-            //mRemoteLogPeriod = 60;
-            Log.v(TAG, "mRemoteLogPeriod=" + mRemoteLogPeriod);
-
-            //mOSDUname = SP.getString("OSDUname", "<username>");
-            //Log.v(TAG, "updatePrefs() - mOSDUname = " + mOSDUname);
-            //mOSDPasswd = SP.getString("OSDPasswd", "<passwd>");
-            //Log.v(TAG, "updatePrefs() - mOSDPasswd = " + mOSDPasswd);
-            //mOSDWearerId = Integer.parseInt(SP.getString("OSDWearerId", "0"));
-            //Log.v(TAG, "updatePrefs() - mOSDWearerId = " + mOSDWearerId);
             mOSDUrl = SP.getString("OSDUrl", "SET_FROM_XML");
-            Log.v(TAG, "updatePrefs() - mOSDUrl = " + mOSDUrl);
             Log.i(TAG, "updatePrefs() - mOSDUrl = " + mOSDUrl);
 
             // ML Model Update Check Period
@@ -1962,11 +1994,11 @@ public class SdServer extends Service implements SdDataReceiver {
                     startModelUpdateTimer();
                 }
             }
-            Log.v(TAG, "updatePrefs() - mModelUpdateCheckPeriod = " + mModelUpdateCheckPeriod);
+            Log.i(TAG, "updatePrefs() - mModelUpdateCheckPeriod = " + mModelUpdateCheckPeriod);
 
         } catch (Exception ex) {
-            Log.v(TAG, "updatePrefs() - Problem parsing preferences!" + ex.toString());
-            Log.i(TAG, "SdServer.updatePrefs() - Error " + ex.toString());
+            Log.e(TAG, "updatePrefs() - Problem parsing preferences!" + ex.toString());
+            Log.e(TAG, "SdServer.updatePrefs() - Error " + ex.toString());
             mUtil.showToast(getString(R.string.problem_parsing_preferences));
             faultWarningBeep();
         }
