@@ -49,7 +49,11 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
     private long mStartTs = 0;
     public double mSampleFreq = 0;
 
-    private boolean mUseNextSample = true;
+    // Target sample period for 25 Hz (40 ms).
+    // registerListener() takes microseconds; timestamp comparisons use nanoseconds.
+    private static final long TARGET_SAMPLE_PERIOD_US = 40_000L;           // µs
+    private static final long TARGET_SAMPLE_PERIOD_NS = TARGET_SAMPLE_PERIOD_US * 1_000L; // ns
+    private long mLastUsedSampleTs = 0;
 
 
     public SdDataSourcePhone(Context context, Handler handler,
@@ -68,8 +72,11 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
         Log.i(TAG, "SdDataSourcePhone.start()");
         mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        // SENSOR_DELAY_GAME should give us 20 us delay, which is 50 Hz, so more frequent than we really want (OSD works at 25 Hz)
-        mSensorManager.registerListener(this, mSensor, SensorManager.SENSOR_DELAY_GAME);
+        // Request 25 Hz by specifying the period as 40,000 µs.
+        // SENSOR_DELAY_GAME was previously used but delivers 50–100+ Hz on modern
+        // phones, causing data windows to complete in ~2 s instead of ~5 s.
+        // Android treats this value as a hint, so we also filter by timestamp below.
+        mSensorManager.registerListener(this, mSensor, (int) TARGET_SAMPLE_PERIOD_US);
         super.start();
     }
 
@@ -109,11 +116,15 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     mMode = 1;
                     mSdData.mNsamp = 0;
                     mStartTs = event.timestamp;
+                    mLastUsedSampleTs = 0; // reset so first sample in mode 1 is always accepted
                 }
             } else if (mMode == 1) {
-                // The phone gives us 50 Hz sample frequency so we do a crude factor of 2 downsampling to get 25 Hz.
-                if (mUseNextSample) {
-                    mUseNextSample = false;
+                // Timestamp-based rate limiting: only accept a sample if at least
+                // TARGET_SAMPLE_PERIOD_NS has elapsed since the last accepted sample.
+                // This is more robust than the previous fixed factor-of-2 toggle because
+                // it works correctly regardless of the actual hardware delivery rate.
+                if (mLastUsedSampleTs == 0 || (event.timestamp - mLastUsedSampleTs) >= TARGET_SAMPLE_PERIOD_NS) {
+                    mLastUsedSampleTs = event.timestamp;
                     // mMode=1 is normal operation - collect NSAMP accelerometer data samples, then analyse them by calling doAnalysis().
                     float x = event.values[0];
                     float y = event.values[1];
@@ -154,7 +165,8 @@ public class SdDataSourcePhone extends SdDataSource implements SensorEventListen
                     }
 
                 } else {
-                    mUseNextSample = true;
+                    // Sample arrived too soon after the last accepted one — discard it to maintain ~25 Hz.
+                    Log.v(TAG, "onSensorChanged(): discarding sample - too soon after last accepted sample");
                 }
             } else {
                 Log.v(TAG, "onSensorChanged(): ERROR - Mode " + mMode + " unrecognised");
