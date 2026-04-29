@@ -435,18 +435,23 @@ public class MainActivity2 extends AppCompatActivity {
         } else if (itemId == R.id.action_exit) {
             // Respond to the start/stop server menu item.
             Log.i(TAG, "action_exit: Stopping Server");
+            // Show progress dialog immediately so user knows we are shutting down
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Shutting Down")
+                    .setMessage("Stopping OpenSeizureDetector...")
+                    .setCancelable(false)
+                    .show();
 
-            // Set flag to indicate user explicitly stopped the service
-            SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
-            prefs.edit().putBoolean("user_stopped_service", true).apply();
-            Log.i(TAG, "action_exit: Set user_stopped_service flag");
-
-            mUtil.unbindFromServer(getApplicationContext(), mConnection);
-            stopServer();
-            // We exit this activity as a crude way of forcing the fragments to disconnect from the server
-            // so that the server exits properly - otherwise we end up with multiple threads running.
-            // FIXME - tell the threads to unbind from the serer before calling stopServer as an alternative.
-            finish();
+            // Delay the actual stop slightly to allow the dialog to render
+            mHandler.postDelayed(() -> {
+                // Set flag to indicate user explicitly stopped the service
+                SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
+                prefs.edit().putBoolean("user_stopped_service", true).apply();
+                Log.i(TAG, "action_exit: Set user_stopped_service flag");
+                mUtil.unbindFromServer(getApplicationContext(), mConnection);
+                stopServer();
+                finish();
+            }, 150);
             return true;
         } else if (itemId == R.id.action_test_alarm_beep) {
             Log.i(TAG, "action_test_alarm_beep");
