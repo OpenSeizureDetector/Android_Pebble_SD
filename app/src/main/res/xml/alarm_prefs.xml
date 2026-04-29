@@ -121,4 +121,20 @@
             android:title="@string/log_data_title"/>
     </PreferenceCategory>
     -->
+    <PreferenceCategory android:title="@string/phone_battery_alarm_category_title">
+        <!-- Raises a FAULT condition when the phone battery is critically low.
+             This ensures the carer is alerted before the phone dies and monitoring stops silently. -->
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="PhoneBatteryAlarmActive"
+            android:summary="@string/phone_battery_alarm_active_summary"
+            android:title="@string/phone_battery_alarm_active_title" />
+        <EditTextPreference
+            android:key="PhoneBatteryAlarmThreshold"
+            android:title="@string/phone_battery_alarm_threshold_title"
+            android:summary="@string/phone_battery_alarm_threshold_summary"
+            android:inputType="number"
+            android:defaultValue="5" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

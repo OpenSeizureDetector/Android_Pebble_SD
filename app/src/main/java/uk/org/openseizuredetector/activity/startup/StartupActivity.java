@@ -169,6 +169,18 @@ public class StartupActivity extends AppCompatActivity {
             return; // Exit onCreate early
         }
 
+        // If the background service is already running (e.g. user tapped the launcher icon
+        // while monitoring was active), skip the whole startup sequence and go straight to
+        // MainActivity2.  There is nothing to set up — just bring the UI to the front.
+        if (mUtil.isServerRunning()) {
+            Log.i(TAG, "onCreate() - service already running, skipping startup and opening MainActivity2");
+            Intent intent = new Intent(this, MainActivity2.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         setContentView(R.layout.startup_activity);
 
         // Capture default indeterminate drawable from a progress bar to allow us to restore it
@@ -864,18 +876,19 @@ public class StartupActivity extends AppCompatActivity {
                             mDialogDisplayed = false;
                         }
                     })
-                    .setNegativeButton(R.string.data_sharing, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            dialog.cancel();
-                            mDialogDisplayed = false;
-                            String url = OsdUtil.DATA_SHARING_URL;
-                            Intent i = new Intent(Intent.ACTION_VIEW);
-                            i.setData(Uri.parse(url));
-                            startActivity(i);
-                            dialog.cancel();
-                            mDialogDisplayed = false;
-                        }
-                    })
+                    // Data Sharing button removed to keep all buttons on one row - re-add if needed:
+                    //.setNegativeButton(R.string.data_sharing, new DialogInterface.OnClickListener() {
+                    //    public void onClick(DialogInterface dialog, int id) {
+                    //        dialog.cancel();
+                    //        mDialogDisplayed = false;
+                    //        String url = OsdUtil.DATA_SHARING_URL;
+                    //        Intent i = new Intent(Intent.ACTION_VIEW);
+                    //        i.setData(Uri.parse(url));
+                    //        startActivity(i);
+                    //        dialog.cancel();
+                    //        mDialogDisplayed = false;
+                    //    }
+                    //})
             ;
             FirstRunDialog = alertDialogBuilder.create();
             Log.i(TAG, "Displaying First Run Dialog");
@@ -911,18 +924,20 @@ public class StartupActivity extends AppCompatActivity {
                             mDialogDisplayed = false;
                         }
                     })
-                    .setNegativeButton(R.string.data_sharing, new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            dialog.cancel();
-                            mDialogDisplayed = false;
-                            String url = OsdUtil.DATA_SHARING_URL;
-                            Intent i = new Intent(Intent.ACTION_VIEW);
-                            i.setData(Uri.parse(url));
-                            startActivity(i);
-                            dialog.cancel();
-                            mDialogDisplayed = false;
-                        }
-                    });
+                    // Data Sharing button removed to keep all buttons on one row - re-add if needed:
+                    //.setNegativeButton(R.string.data_sharing, new DialogInterface.OnClickListener() {
+                    //    public void onClick(DialogInterface dialog, int id) {
+                    //        dialog.cancel();
+                    //        mDialogDisplayed = false;
+                    //        String url = OsdUtil.DATA_SHARING_URL;
+                    //        Intent i = new Intent(Intent.ACTION_VIEW);
+                    //        i.setData(Uri.parse(url));
+                    //        startActivity(i);
+                    //        dialog.cancel();
+                    //        mDialogDisplayed = false;
+                    //    }
+                    //})
+                    ;
             UpdateDialog = alertDialogBuilder.create();
             Log.i(TAG, "Displaying Update Dialog");
             UpdateDialog.show();

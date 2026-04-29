@@ -2,18 +2,16 @@
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
-        "\n
-        \nV5.0.0 - Support downloadable machine learning models.
-        \n         First-Use setup wizard.
-        \n         UI Improvements.
-        \n         Significant modernisation of underlying code.
-        \nV4.3.1 - Fixed user interface issues on Android-15 and Android-16
-        \nV4.3.0  - Added support for Android 15 (API 35) and above.
-        \n        - Simplified data sharing editor by grouping events for editing.
+        "
+        &lt;br/>V5.0.0
+        &lt;br/>       - Support downloadable machine learning models.
+        &lt;br/>       - First-Use setup wizard.
+        &lt;br/>       - User Interface Improvements.
+        &lt;br/>       - Significant modernisation of underlying code.
           "</string>
     <string name="UpgradeMsg">
-        Please enable the new &lt;b>Data Sharing&lt;/b> feature to help improve OpenSeizureDetector!&lt;br/>
-                (see below for details)&lt;br/>&lt;br/>
+        Please enable the &lt;b>Data Sharing&lt;/b> feature to help improve OpenSeizureDetector!&lt;br/>
+                (select Data Sharing in the main menu)&lt;br/>&lt;br/>
 
         Please subscribe to updates at &lt;b>www.openseizuredetector.org.uk&lt;/b>
         so we can inform you of any issues.
@@ -221,7 +219,12 @@
     <string name="fault_timer_period_title">Fault Timer Duration (sec)</string>
     <string name="fault_timer_period_summary">Duration that fault alarms are muted before initiating.</string>
     <string name="enable_data_frequency_check_title">Enable Data Sample Frequency Checks</string>
-    <string name="enable_data_frequency_check_summary">Check that data arrives at the expected frequency (5±1 seconds) and raise a fault if not.</string>
+    <string name="enable_data_frequency_check_summary">Check that data arrives at the expected frequency (5±1s seconds) and raise a fault if not.</string>
+    <string name="phone_battery_alarm_category_title">Phone Battery Alarm</string>
+    <string name="phone_battery_alarm_active_title">Enable Low Battery Fault</string>
+    <string name="phone_battery_alarm_active_summary">Raise a FAULT condition when the phone battery is critically low, to alert the carer before monitoring fails silently</string>
+    <string name="phone_battery_alarm_threshold_title">Battery Threshold (%)</string>
+    <string name="phone_battery_alarm_threshold_summary">Raise a FAULT when phone battery falls to or below this percentage (default: 5%)</string>
     <string name="data_frequency_fault_too_fast">Data arriving too quickly: %.1fs (expected 5±1s)</string>
     <string name="data_frequency_fault_too_slow">Data arriving too slowly: %.1fs (expected 5±1s)</string>
     <string name="use_mp3_alarm_summary">Play an MP3 file to create the alarm beeps rather than using the default tone generator.</string>
@@ -484,7 +487,7 @@
     <string name="alarm_state">Alarm State</string>
     <string name="notes_about_event">notes about event</string>
     <string name="SpO2">O2 Sat</string>
-    <string name="data_sharing">Data Sharing</string>
+    <string name="data_sharing">Data\nSharing</string>
     <string name="prevent_bat_opt_summary">Do not display the battery optimisation dialog on start-up (some phones report that OpenSeizureDetector is optimised, even if it is not, so the dialog is a nuissance)</string>
     <string name="prevent_bat_opt_title">Inhibit Battery Optimisation Warning Dialog</string>
     <string name="o2_sat">O2 Sat</string>
@@ -500,8 +503,8 @@
     <string name="prune_database_dialog_msg">This will remove all data from the database that is more than %d days old.\nThis can NOT be undone.\nAre you sure?</string>
     <string name="yes_button_title">YES</string>
     <string name="no_button_title">NO</string>
-    <string name="privacy_policy_button_title">Privacy Policy</string>
-    <string name="data_sharing_button_title">Data Sharing</string>
+    <string name="privacy_policy_button_title">Privacy\nPolicy</string>
+    <string name="data_sharing_button_title">Data\nSharing</string>
     <string name="HRAdaptiveAlarmEnabledTitle">Enable Adaptive Threshold Heart Rate Alarm</string>
     <string name="HRAdaptiveAlarmWindowTitle">Window Size for Adaptive Threshold Calculation</string>
     <string name="HRAdaptiveAlarmWindowSummary">Moving Average Time Window (seconds) must be a multiple of 5 seconds</string>

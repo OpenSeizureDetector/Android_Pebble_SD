@@ -132,6 +132,7 @@ public class SdData implements Parcelable {
 
     public boolean mHRAlarmStanding = false;
     public boolean mHRFaultStanding = false;
+    public boolean mPhoneBatteryFaultStanding = false;  // true when phone battery is below the low-battery threshold
     public boolean mAdaptiveHrAlarmStanding = false;
     public boolean mAverageHrAlarmStanding = false;
     public double mHR = 0;

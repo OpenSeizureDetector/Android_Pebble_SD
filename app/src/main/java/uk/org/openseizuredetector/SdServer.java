@@ -42,6 +42,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.BatteryManager;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.location.Location;
@@ -188,6 +189,10 @@ public class SdServer extends Service implements SdDataReceiver {
     private String mMp3FaultUri   = "";
     private boolean mPhoneAlarm = false;
     private boolean mSMSAlarm = false;
+
+    // Phone battery low-battery fault
+    private boolean mPhoneBatteryAlarmActive = true;
+    private int mPhoneBatteryAlarmThreshold = 5;  // percent (value set in updatePrefs())
     private String[] mSMSNumbers;
     private String mSMSMsgStr = "default SMS Message";
     private String mSMSFalseAlarmMsgStr = "default SMS False Alarm Message";
@@ -1143,10 +1148,27 @@ public class SdServer extends Service implements SdDataReceiver {
         // Apply mute check (from either watch button or phone UI button)
         muteCheck(sdData);
 
+        // Check phone battery level — raise a fault if below threshold so the user is alerted
+        // before the phone dies silently and monitoring stops.
+        if (mPhoneBatteryAlarmActive) {
+            int battLevel = getPhoneBatteryLevel();
+            Log.v(TAG, "onSdDataReceived() - phone battery level=" + battLevel + "%");
+            if (battLevel >= 0 && battLevel <= mPhoneBatteryAlarmThreshold) {
+                Log.w(TAG, "PHONE_BATTERY_LOW: battLevel=" + battLevel
+                        + "% <= threshold=" + mPhoneBatteryAlarmThreshold + "%");
+                sdData.mPhoneBatteryFaultStanding = true;
+            } else {
+                sdData.mPhoneBatteryFaultStanding = false;
+            }
+        } else {
+            sdData.mPhoneBatteryFaultStanding = false;
+        }
+
         boolean hasFault = (sdData.alarmState == AlarmState.FAULT
                 || sdData.alarmState == AlarmState.NETFAULT
                 || sdData.mHRFaultStanding
-                || sdData.mHrFrozenFaultStanding);
+                || sdData.mHrFrozenFaultStanding
+                || sdData.mPhoneBatteryFaultStanding);
         if (hasFault) {
             // Force fault state to override any alarm/warning state handling.
             sdData.alarmState = AlarmState.FAULT;
@@ -1159,6 +1181,9 @@ public class SdServer extends Service implements SdDataReceiver {
             if (sdData.alarmState == AlarmState.NETFAULT) faultReason += "Network Fault. ";
             if (sdData.mHRFaultStanding) faultReason += "HR Fault. ";
             if (sdData.mHrFrozenFaultStanding) faultReason += "HR Frozen. ";
+            if (sdData.mPhoneBatteryFaultStanding) {
+                faultReason += "Phone battery low (" + getPhoneBatteryLevel() + "%). ";
+            }
 
             sdData.faultCause = faultReason.trim();
         }
@@ -1517,6 +1542,26 @@ public class SdServer extends Service implements SdDataReceiver {
             mUtil.showToast(getString(R.string.PleaseForceStopOSDorRebootMsg));
             Log.v(TAG, "beep() - Warming mToneGenerator is null - not beeping!!!");
             Log.i(TAG, "SdServer.beep() - mToneGenerator is null???");
+        }
+    }
+
+    /**
+     * Returns the current phone battery level as a percentage (0–100),
+     * or -1 if it cannot be determined.
+     * Uses the sticky ACTION_BATTERY_CHANGED broadcast — no persistent registration needed.
+     */
+    private int getPhoneBatteryLevel() {
+        try {
+            Intent batteryStatus = registerReceiver(null,
+                    new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+            if (batteryStatus == null) return -1;
+            int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+            int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+            if (level < 0 || scale <= 0) return -1;
+            return (int) ((level / (float) scale) * 100);
+        } catch (Exception e) {
+            Log.e(TAG, "getPhoneBatteryLevel() - exception: " + e.getMessage());
+            return -1;
         }
     }
 
@@ -1931,106 +1976,109 @@ public class SdServer extends Service implements SdDataReceiver {
      * - defined in res/xml/prefs.xml
      */
     public void updatePrefs() {
-        Log.i(TAG, "updatePrefs()");
         Log.i(TAG, "SdServer.updatePrefs()");
 
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
         try {
             mSdDataSourceName = SP.getString("DataSource", "SET_FROM_XML");
-            Log.v(TAG, "updatePrefs() - DataSource = " + mSdDataSourceName);
-            Log.i(TAG, "updatePrefs() - DataSource = " + mSdDataSourceName);
+            Log.d(TAG, "updatePrefs() - DataSource = " + mSdDataSourceName);
             mLatchAlarms = SP.getBoolean("LatchAlarms", false);
-            Log.v(TAG, "updatePrefs() - mLatchAlarms = " + mLatchAlarms);
-            Log.i(TAG, "updatePrefs() - mLatchAlarms = " + mLatchAlarms);
+            Log.d(TAG, "updatePrefs() - mLatchAlarms = " + mLatchAlarms);
             // Parse the LatchAlarmPeriod setting.
             try {
                 String latchAlarmPeriodStr = SP.getString("LatchAlarmTimerPeriod", "SET_FROM_XML");
                 mLatchAlarmPeriod = Integer.parseInt(latchAlarmPeriodStr);
-                Log.v(TAG, "updatePrefs() - mLatchAlarmTimerPeriod = " + mLatchAlarmPeriod);
-                Log.i(TAG, "updatePrefs() - mLatchAlarmTimerPeriod = " + mLatchAlarmPeriod);
+                Log.d(TAG, "updatePrefs() - mLatchAlarmTimerPeriod = " + mLatchAlarmPeriod);
             } catch (Exception ex) {
-                Log.v(TAG, "updatePrefs() - Problem with LatchAlarmTimerPeriod preference!");
-                Log.i(TAG, "updatePrefs() - Problem with LatchAlarmTimerPeriod preference!");
+                Log.w(TAG, "updatePrefs() - Problem with LatchAlarmTimerPeriod preference!");
                 mUtil.showToast(getString(R.string.problem_parsing_preferences));
             }
             mAudibleFaultWarning = SP.getBoolean("AudibleFaultWarning", true);
-            Log.v(TAG, "updatePrefs() - mAuidbleFaultWarning = " + mAudibleFaultWarning);
-            Log.i(TAG, "updatePrefs() - mAuidbleFaultWarning = " + mAudibleFaultWarning);
+            Log.d(TAG, "updatePrefs() - mAuidbleFaultWarning = " + mAudibleFaultWarning);
             // Parse the faultTimer period setting.
             try {
                 String faultTimerPeriodStr = SP.getString("FaultTimerPeriod", "SET_FROM_XML");
                 mFaultTimerPeriod = Integer.parseInt(faultTimerPeriodStr);
-                Log.v(TAG, "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
-                Log.i(TAG, "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
+                Log.d(TAG, "updatePrefs() - mFaultTimerPeriod = " + mFaultTimerPeriod);
             } catch (Exception ex) {
-                Log.v(TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!");
-                Log.i(TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!");
+                Log.w(TAG, "updatePrefs() - Problem with FaultTimerPeriod preference!");
                 mUtil.showToast(getString(R.string.problem_parsing_preferences));
             }
 
+            // Phone battery low-battery fault preferences
+            mPhoneBatteryAlarmActive = SP.getBoolean("PhoneBatteryAlarmActive", true);
+            Log.d(TAG, "updatePrefs() - mPhoneBatteryAlarmActive = " + mPhoneBatteryAlarmActive);
+            try {
+                String battThreshStr = SP.getString("PhoneBatteryAlarmThreshold", "5");
+                mPhoneBatteryAlarmThreshold = Integer.parseInt(battThreshStr);
+                Log.d(TAG, "updatePrefs() - mPhoneBatteryAlarmThreshold = " + mPhoneBatteryAlarmThreshold);
+            } catch (Exception ex) {
+                Log.w(TAG, "updatePrefs() - Problem with PhoneBatteryAlarmThreshold preference, using default 5%");
+                mPhoneBatteryAlarmThreshold = 5;
+            }
+
             mAudibleAlarm = SP.getBoolean("AudibleAlarm", true);
-            Log.v(TAG, "updatePrefs() - mAudibleAlarm = " + mAudibleAlarm);
-            Log.i(TAG, "updatePrefs() - mAudibleAlarm = " + mAudibleAlarm);
+            Log.d(TAG, "updatePrefs() - mAudibleAlarm = " + mAudibleAlarm);
             mAudibleWarning = SP.getBoolean("AudibleWarning", true);
-            Log.i(TAG, "updatePrefs() - mAudibleWarning = " + mAudibleWarning);
+            Log.d(TAG, "updatePrefs() - mAudibleWarning = " + mAudibleWarning);
             mMp3Alarm = SP.getBoolean("UseMp3Alarm", false);
-            Log.i(TAG, "updatePrefs() - mMp3Alarm = " + mMp3Alarm);
+            Log.d(TAG, "updatePrefs() - mMp3Alarm = " + mMp3Alarm);
             // User-selected MP3 URIs — empty string means "use bundled sound"
             mMp3WarningUri = SP.getString("Mp3WarningUri", "");
             mMp3AlarmUri   = SP.getString("Mp3AlarmUri",   "");
             mMp3FaultUri   = SP.getString("Mp3FaultUri",   "");
-            Log.i(TAG, "updatePrefs() - Mp3WarningUri=" + mMp3WarningUri
+            Log.d(TAG, "updatePrefs() - Mp3WarningUri=" + mMp3WarningUri
                     + " Mp3AlarmUri=" + mMp3AlarmUri
                     + " Mp3FaultUri=" + mMp3FaultUri);
             // Recreate notification channels so the new sound URIs take effect immediately.
             createNotificationChannels();
 
             mSMSAlarm = PreferenceUtils.getBooleanFromXml(SP, "SMSAlarm");
-            Log.i(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
+            Log.d(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             mPhoneAlarm = SP.getBoolean("PhoneCallAlarm", false);
             String SMSNumberStr = SP.getString("SMSNumbers", "SET_FROM_XML");
             mSMSNumbers = SMSNumberStr.split(",");
-            Log.i(TAG, "updatePrefs() - SMSNumberStr = " + SMSNumberStr);
-            Log.i(TAG, "updatePrefs() - mSMSNumbers = " + mSMSNumbers);
+            Log.d(TAG, "updatePrefs() - SMSNumberStr = " + SMSNumberStr);
+            Log.d(TAG, "updatePrefs() - mSMSNumbers = " + mSMSNumbers);
             mSMSMsgStr = SP.getString("SMSMsg", "SET_FROM_XML");
-            Log.i(TAG, "updatePrefs() - SMSMsgStr = " + mSMSMsgStr);
+            Log.d(TAG, "updatePrefs() - SMSMsgStr = " + mSMSMsgStr);
             mSMSFalseAlarmMsgStr = SP.getString("SMSFalseAlarmMsg", "SET_FROM_XML");
 
             String smsDelayPeriodStr = SP.getString("SMSDelayPeriod", "SET_FROM_XML");
             mSmsTimerSecs = Integer.parseInt(smsDelayPeriodStr);
-            Log.i(TAG,"updatePrefs() - mSmsTimerSecs = "+mSmsTimerSecs);
+            Log.d(TAG,"updatePrefs() - mSmsTimerSecs = "+mSmsTimerSecs);
 
             mLogAlarms = SP.getBoolean("LogAlarms", true);
-            Log.i(TAG, "updatePrefs() - mLogAlarms = " + mLogAlarms);
+            Log.d(TAG, "updatePrefs() - mLogAlarms = " + mLogAlarms);
             //mLogData = SP.getBoolean("LogData", true);
             mLogData = true;
-            Log.i(TAG, "updatePrefs() - mLogData = " + mLogData);
+            Log.d(TAG, "updatePrefs() - mLogData = " + mLogData);
             //mLogDataRemote = SP.getBoolean("LogDataRemote", false);
             mLogDataRemote = true;
-            Log.i(TAG, "updatePrefs() - mLogDataRemote = " + mLogDataRemote);
+            Log.d(TAG, "updatePrefs() - mLogDataRemote = " + mLogDataRemote);
             mLogDataRemoteMobile = PreferenceUtils.getBooleanFromXml(SP, "LogDataRemoteMobile");
-            Log.i(TAG, "updatePrefs() - mLogDataRemoteMobile = " + mLogDataRemoteMobile);
+            Log.d(TAG, "updatePrefs() - mLogDataRemoteMobile = " + mLogDataRemoteMobile);
             mLogNDA = PreferenceUtils.getBooleanFromXml(SP, "LogNDA");
-            Log.i(TAG, "updatePrefs() - mLogNDA = " + mLogNDA);
+            Log.d(TAG, "updatePrefs() - mLogNDA = " + mLogNDA);
             mAuthToken = SP.getString("webApiAuthToken", null);
-            Log.i(TAG, "updatePrefs() - mAuthToken = " + mAuthToken);
+            Log.d(TAG, "updatePrefs() - mAuthToken = " + mAuthToken);
 
             String prefVal;
             prefVal = SP.getString("EventDurationSec", "SET_FROM_XML");
             mEventDuration = Integer.parseInt(prefVal);
-            Log.i(TAG, "mEventDuration=" + mEventDuration);
+            Log.d(TAG, "mEventDuration=" + mEventDuration);
 
             mAutoPruneDb = PreferenceUtils.getBooleanFromXml(SP, "AutoPruneDb");
-            Log.i(TAG, "mAutoPruneDb=" + mAutoPruneDb);
+            Log.d(TAG, "mAutoPruneDb=" + mAutoPruneDb);
 
             prefVal = SP.getString("DataRetentionPeriod", "SET_FROM_XML");
             mDataRetentionPeriod = Integer.parseInt(prefVal);
-            Log.i(TAG, "mDataRetentionPeriod=" + mDataRetentionPeriod);
-            Log.i(TAG, "mRemoteLogPeriod=" + mRemoteLogPeriod);
+            Log.d(TAG, "mDataRetentionPeriod=" + mDataRetentionPeriod);
+            Log.d(TAG, "mRemoteLogPeriod=" + mRemoteLogPeriod);
 
             mOSDUrl = SP.getString("OSDUrl", "SET_FROM_XML");
-            Log.i(TAG, "updatePrefs() - mOSDUrl = " + mOSDUrl);
+            Log.d(TAG, "updatePrefs() - mOSDUrl = " + mOSDUrl);
 
             // ML Model Update Check Period
             prefVal = SP.getString("MlModelUpdateCheckPeriod", "SET_FROM_XML");
@@ -2043,7 +2091,7 @@ public class SdServer extends Service implements SdDataReceiver {
                     startModelUpdateTimer();
                 }
             }
-            Log.i(TAG, "updatePrefs() - mModelUpdateCheckPeriod = " + mModelUpdateCheckPeriod);
+            Log.d(TAG, "updatePrefs() - mModelUpdateCheckPeriod = " + mModelUpdateCheckPeriod);
 
         } catch (Exception ex) {
             Log.e(TAG, "updatePrefs() - Problem parsing preferences!" + ex.toString());
@@ -2058,7 +2106,7 @@ public class SdServer extends Service implements SdDataReceiver {
         /**
          * Use the separate OpenSeizureDetector Dialler app to generate a phone call alarm to the numbers selected for SMS Alarms.
          */
-        Log.v(TAG, "sendPhoneAlarm() - sending broadcast intent");
+        Log.i(TAG, "sendPhoneAlarm() - sending broadcast intent");
         Intent intent = new Intent();
         intent.setAction("uk.org.openseizuredetector.dialler.ALARM");
         intent.putExtra("NUMBERS", mSMSNumbers);
@@ -2077,18 +2125,18 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Check watch button mute (from the watch JSON data)
         if (sdData.mMute != 0) {
-            Log.d(TAG, "muteCheck() - Mute active from watch button");
+            Log.i(TAG, "muteCheck() - Mute active from watch button");
             sdData.alarmState = AlarmState.MUTE;  // MUTE state
-            Log.d(TAG, "muteCheck() - cancelling SmSTimer to prevent alert being sent");
+            Log.i(TAG, "muteCheck() - cancelling SmSTimer to prevent alert being sent");
             stopSmsTimer();
             return;
         }
 
         // Check phone UI button mute (from mCancelAudible)
         if (mCancelAudible) {
-            Log.d(TAG, "muteCheck() - Mute active from phone UI button");
+            Log.i(TAG, "muteCheck() - Mute active from phone UI button");
             sdData.alarmState = AlarmState.MUTE;  // MUTE state
-            Log.d(TAG, "muteCheck() - cancelling SmSTimer to prevent alert being sent");
+            Log.i(TAG, "muteCheck() - cancelling SmSTimer to prevent alert being sent");
             stopSmsTimer();
             return;
         }
@@ -2099,7 +2147,7 @@ public class SdServer extends Service implements SdDataReceiver {
      * Sets mCancelAudible flag to activate mute
      */
     public void muteAlarm() {
-        Log.v(TAG, "muteAlarm() - User clicked mute on phone UI");
+        Log.i(TAG, "muteAlarm() - User clicked mute on phone UI");
         mCancelAudible = true;
         // The mute will be applied on next data reception via muteCheck()
     }
@@ -2119,7 +2167,7 @@ public class SdServer extends Service implements SdDataReceiver {
         // called after startTime ms.
         @Override
         public void onFinish() {
-            Log.v(TAG, "SmsTimer.onFinish()");
+            Log.i(TAG, "SmsTimer.onFinish()");
             mTimeLeft = 0;
             if (mLocationFinder != null) {
                 mLocationFinder.getLocation(this);
@@ -2157,7 +2205,7 @@ public class SdServer extends Service implements SdDataReceiver {
         // Called every 'interval' ms.
         @Override
         public void onTick(long timeRemaining) {
-            Log.v(TAG, "SmsTimer.onTick() - time remaining = " + timeRemaining / 1000 + " sec");
+            Log.d(TAG, "SmsTimer.onTick() - time remaining = " + timeRemaining / 1000 + " sec");
             // The MainActivity screen picks up mTimeLeft to update the screen.
             mTimeLeft = timeRemaining;
             alarmBeep();
@@ -2179,7 +2227,6 @@ public class SdServer extends Service implements SdDataReceiver {
                 }
             } catch (Exception e) {
                 Log.e(TAG, "sendSMS - Failed to send SMS Message");
-                Log.i(TAG, "sendSMS - Failed to send SMS Message");
                 Log.e(TAG, e.toString());
                 mUtil.showToast(getString(R.string.failed_to_send_sms));
             }
