@@ -778,7 +778,8 @@ public class StartupActivity extends AppCompatActivity {
                                 intent = new Intent(
                                         getApplicationContext(),
                                         MainActivity2.class);
-                                startActivity(intent);
+                                // make sure StartUpActivity is not on the back stack after starting main activity
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);                                startActivity(intent);
                                 mStartedMainActivity = true;
                                 finish();
                                 return;
