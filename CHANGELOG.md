@@ -3,6 +3,7 @@
     V5.0.0rc2 - Fixed issue with app sometimes restarting rather than exiting when 'exit' menu item is selected.
               - Fixed issue with long delay between selecting 'exit' and the UI doing anything.
               - Added a low phone battery fault warning so the system will not fail silently if the phone battery runs out.
+              - Set notification to re-post silently every 15 seconds in case it is dismissed by the user.
     V5.0.0rc1 - Added new logo.
             - Fixed phone data source sample frequency.
     V5.0.0Z - Made the watch 'Mute' function cancel any pending SMS alerts.

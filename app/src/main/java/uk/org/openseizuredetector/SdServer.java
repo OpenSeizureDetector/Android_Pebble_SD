@@ -141,6 +141,10 @@ public class SdServer extends Service implements SdDataReceiver {
     private Notification mNotification;
     private int mCurrentNotificationAlarmLevel = -999;
     private String mCurrentNotificationContent = null; // tracks last content text to avoid redundant notify() calls
+    private long mLastNotificationPostTimeMs = 0L;     // timestamp of last actual notify() call
+    // Android 13+ allows users to dismiss foreground service notifications. Re-post silently
+    // at this interval so the notification reappears within one data cycle of being dismissed.
+    private static final long NOTIFICATION_REPOST_INTERVAL_MS = 15_000L; // 15 seconds
     private boolean mIsDestroying = false;  // Flag to prevent actions during shutdown
     private SdWebServer webServer = null;
     private final static String TAG = "SdServer";
@@ -1031,7 +1035,34 @@ public class SdServer extends Service implements SdDataReceiver {
         boolean alarmLevelChanged = (alarmLevel != mCurrentNotificationAlarmLevel);
         boolean contentChanged = !java.util.Objects.equals(contentStr, mCurrentNotificationContent);
         if (!alarmLevelChanged && !contentChanged) {
-            Log.v(TAG, "showNotification - nothing changed, skipping notify()");
+            // Nothing changed in content or level, but Android 13+ allows users to swipe away
+            // foreground service notifications. If the repost interval has elapsed, re-post
+            // silently (setSilent=true suppresses sound regardless of channel importance) so the
+            // notification reappears within one data cycle of being dismissed.
+            long now = System.currentTimeMillis();
+            if (now - mLastNotificationPostTimeMs < NOTIFICATION_REPOST_INTERVAL_MS) {
+                Log.v(TAG, "showNotification - nothing changed, within repost interval, skipping");
+                return;
+            }
+            Log.v(TAG, "showNotification - nothing changed but repost interval elapsed, re-posting silently");
+            // Use mNM.notify() rather than startForeground() here — the service is already
+            // running as a foreground service so calling startForeground() again would trigger
+            // Android's foreground-service-type permission re-validation (causing a
+            // SecurityException on devices that enforce the 'health' type strictly, e.g. Android 16).
+            // mNM.notify() simply re-posts the notification in the shade, which is all we need
+            // to restore it after the user dismissed it.
+            Notification silentNotification = new NotificationCompat.Builder(this, channelId)
+                    .setContentIntent(contentIntent)
+                    .setSmallIcon(iconId)
+                    .setColor(0x00ffffff)
+                    .setAutoCancel(false)
+                    .setContentTitle(titleStr)
+                    .setContentText(contentStr)
+                    .setStyle(new NotificationCompat.BigTextStyle().bigText(contentStr))
+                    .setSilent(true)  // Do NOT re-trigger sound/vibration — only restoring dismissed notification
+                    .build();
+            mNM.notify(NOTIFICATION_ID, silentNotification);
+            mLastNotificationPostTimeMs = now;
             return;
         }
 
@@ -1062,6 +1093,7 @@ public class SdServer extends Service implements SdDataReceiver {
         mNM.notify(NOTIFICATION_ID, mNotification);
         mCurrentNotificationAlarmLevel = alarmLevel;
         mCurrentNotificationContent = contentStr;
+        mLastNotificationPostTimeMs = System.currentTimeMillis();
     }
 
     // Show the main activity on the user's screen.
