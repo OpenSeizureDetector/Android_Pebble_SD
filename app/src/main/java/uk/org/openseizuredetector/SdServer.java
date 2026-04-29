@@ -399,7 +399,7 @@ public class SdServer extends Service implements SdDataReceiver {
         mNM.createNotificationChannel(errorChannel);
 
         Notification errorNotification = new NotificationCompat.Builder(this, errorChId)
-                .setSmallIcon(R.drawable.star_of_life_48x48)
+                .setSmallIcon(R.drawable.logo_new_simplified_48x48)
                 .setContentTitle(getString(R.string.fgs_start_failed_notification_title))
                 .setContentText(getString(R.string.fgs_start_failed_notification_text))
                 .setStyle(new NotificationCompat.BigTextStyle()
