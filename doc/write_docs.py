@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 """Writes the three OSD onboarding setup guides to the doc subfolders."""
-import os
+import os, re
+
+IMG_WIDTH = 300  # pixels - keeps phone screenshots readable without dominating the page
+
+def scale_images(text):
+    """Replace ![alt](images/foo.png) with <img src="images/foo.png" alt="alt" width="300">"""
+    return re.sub(
+        r'!\[([^\]]*)\]\((images/[^)]+)\)',
+        lambda m: f'<img src="{m.group(2)}" alt="{m.group(1)}" width="{IMG_WIDTH}">',
+        text
+    )
 
 BASE = "/home/graham/osd/Android_Pebble_SD/doc"
 
@@ -532,6 +542,7 @@ files = {
 
 for path, content in files.items():
     os.makedirs(os.path.dirname(path), exist_ok=True)
+    content = scale_images(content)
     with open(path, "w") as f:
         f.write(content)
     print(f"Written: {path}  ({len(content)} chars)")

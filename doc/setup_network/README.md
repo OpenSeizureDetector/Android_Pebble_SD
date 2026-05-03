@@ -46,7 +46,7 @@ Alternatively, find the IP address in your router's connected devices list.
 Install OpenSeizureDetector on the second device. When you first launch it, the setup
 wizard starts automatically.
 
-![Welcome screen](images/01_welcome.png)
+<img src="images/01_welcome.png" alt="Welcome screen" width="300">
 
 Press **Next** to continue.
 
@@ -56,7 +56,7 @@ Press **Next** to continue.
 
 On the *Choose Data Source* screen, select **Network (Remote Monitoring)**.
 
-![Data source selection - Network selected](images/02_datasource_network.png)
+<img src="images/02_datasource_network.png" alt="Data source selection - Network selected" width="300">
 
 | Option | Description |
 |--------|-------------|
@@ -75,7 +75,7 @@ The network configuration screen asks for the IP address of the primary device.
 
 ### Empty state (before entering IP)
 
-![Network configuration - empty](images/03_datasource_config_network_empty.png)
+<img src="images/03_datasource_config_network_empty.png" alt="Network configuration - empty" width="300">
 
 The screen explains:
 - This device will receive alarm notifications from the remote (primary) device
@@ -86,7 +86,7 @@ The screen explains:
 
 Tap the IP address field and type the IP address of the primary device.
 
-![Network configuration - IP address entered and validated](images/03b_datasource_config_network_validated.png)
+<img src="images/03b_datasource_config_network_validated.png" alt="Network configuration - IP address entered and validated" width="300">
 
 As you type a valid IP address (four numbers separated by dots, e.g. `192.168.1.50`),
 the app automatically attempts to connect to the primary device on port 8080.
@@ -114,7 +114,7 @@ Press **Next** once validation succeeds (shown in green).
 The wizard skips the algorithm selection step (since algorithms run on the primary device)
 and goes straight to the completion screen.
 
-![Setup complete screen](images/04_complete.png)
+<img src="images/04_complete.png" alt="Setup complete screen" width="300">
 
 The summary shows:
 - **Data Source** - Network (Remote Device)

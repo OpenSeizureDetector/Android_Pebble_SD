@@ -17,7 +17,7 @@ You will need:
 
 When you first install and launch OpenSeizureDetector, the setup wizard starts automatically.
 
-![Welcome screen](images/01_welcome.png)
+<img src="images/01_welcome.png" alt="Welcome screen" width="300">
 
 The wizard guides you through:
 - Choosing your data source (the watch)
@@ -32,7 +32,7 @@ Press **Next** to continue, or **Skip** to configure manually via Settings later
 
 On the *Choose Data Source* screen, select **PineTime Watch (Recommended)**.
 
-![Data source selection - PineTime selected](images/02_datasource_pinetime.png)
+<img src="images/02_datasource_pinetime.png" alt="Data source selection - PineTime selected" width="300">
 
 | Option | Description |
 |--------|-------------|
@@ -49,7 +49,7 @@ Press **Next** to continue.
 
 The PineTime configuration screen guides you through three sub-steps.
 
-![PineTime configuration screen](images/03_datasource_config_pinetime.png)
+<img src="images/03_datasource_config_pinetime.png" alt="PineTime configuration screen" width="300">
 
 ### 3a - Install the PineTime Updater App
 
@@ -91,7 +91,7 @@ Press **Next** when your watch appears in green.
 
 Choose which seizure detection algorithms to enable. You can select **more than one**.
 
-![Algorithm selection screen](images/04_algorithms.png)
+<img src="images/04_algorithms.png" alt="Algorithm selection screen" width="300">
 
 | Algorithm | Description |
 |-----------|-------------|
@@ -110,7 +110,7 @@ Choose which seizure detection algorithms to enable. You can select **more than 
 
 After pressing Next, a short confirmation dialog appears for each enabled algorithm:
 
-![OSD Algorithm configuration dialog](images/04b_algorithm_osd_dialog.png)
+<img src="images/04b_algorithm_osd_dialog.png" alt="OSD Algorithm configuration dialog" width="300">
 
 - **OSD Algorithm** - default settings applied automatically. Tap **OK**.
 - **OSD with Flap Detection** - default settings applied. Tap **OK**.
@@ -124,7 +124,7 @@ After pressing Next, a short confirmation dialog appears for each enabled algori
 
 The final screen confirms your configuration.
 
-![Setup complete screen](images/05_complete.png)
+<img src="images/05_complete.png" alt="Setup complete screen" width="300">
 
 The summary shows:
 - **Data Source** - your PineTime name and Bluetooth MAC address

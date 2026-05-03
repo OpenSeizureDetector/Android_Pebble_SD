@@ -23,7 +23,7 @@ instructions: https://openseizuredetector.org.uk
 
 When you first install and launch OpenSeizureDetector, the setup wizard starts automatically.
 
-![Welcome screen](images/01_welcome.png)
+<img src="images/01_welcome.png" alt="Welcome screen" width="300">
 
 The wizard guides you through:
 - Choosing your data source (the watch)
@@ -38,7 +38,7 @@ Press **Next** to continue, or **Skip** to configure manually via Settings later
 
 On the *Choose Data Source* screen, select **Garmin Watch**.
 
-![Data source selection - Garmin selected](images/02_datasource_garmin.png)
+<img src="images/02_datasource_garmin.png" alt="Data source selection - Garmin selected" width="300">
 
 | Option | Description |
 |--------|-------------|
@@ -55,7 +55,7 @@ Press **Next** to continue.
 
 The Garmin configuration screen summarises the steps needed to set up your watch.
 
-![Garmin configuration screen](images/03_datasource_config_garmin.png)
+<img src="images/03_datasource_config_garmin.png" alt="Garmin configuration screen" width="300">
 
 **Note:** For full details refer to the *Garmin Seizure Detector* page on the
 OpenSeizureDetector website: https://openseizuredetector.org.uk
@@ -100,7 +100,7 @@ Press **Next** once the watch app is confirmed running.
 
 Choose which seizure detection algorithms to enable. You can select **more than one**.
 
-![Algorithm selection screen](images/04_algorithms.png)
+<img src="images/04_algorithms.png" alt="Algorithm selection screen" width="300">
 
 | Algorithm | Description |
 |-----------|-------------|
@@ -120,7 +120,7 @@ Choose which seizure detection algorithms to enable. You can select **more than 
 
 After pressing Next, a short confirmation dialog appears for each enabled algorithm:
 
-![Algorithm configuration dialog](images/04b_algorithm_dialog.png)
+<img src="images/04b_algorithm_dialog.png" alt="Algorithm configuration dialog" width="300">
 
 - **OSD Algorithm** - default settings applied. Tap **OK**.
 - **OSD with Flap Detection** - default settings applied. Tap **OK**.
@@ -135,7 +135,7 @@ After pressing Next, a short confirmation dialog appears for each enabled algori
 
 The final screen confirms your configuration.
 
-![Setup complete screen](images/05_complete.png)
+<img src="images/05_complete.png" alt="Setup complete screen" width="300">
 
 The summary shows:
 - **Data Source** - Garmin Watch
