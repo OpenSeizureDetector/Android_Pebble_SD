@@ -1432,6 +1432,7 @@ public class SdServer extends Service implements SdDataReceiver {
             sdData.alarmStanding = false;
             sdData.fallAlarmStanding = false;
             showNotification(1);
+            doFaultPipCheck();  // start timer / beep when timer expires
         } else {
             stopFaultTimer();
         }
@@ -1496,10 +1497,8 @@ public class SdServer extends Service implements SdDataReceiver {
         // We only take action to warn the user and re-start the data source to attempt to fix it
         // ourselves if we have been in a fault condition for a while - signified by the mFaultTimerCompleted
         // flag.
+        doFaultPipCheck();
         if (mFaultTimerCompleted) {
-            Log.e(TAG, "FAULT: Timer completed - emitting fault warning");
-            Log.i(TAG, "FAULT: Timer completed - calling faultWarningBeep()");
-            faultWarningBeep();
             // Re-start the data source to attempt recovery
             // Only restart if:
             // 1. Not already in progress
@@ -1507,7 +1506,6 @@ public class SdServer extends Service implements SdDataReceiver {
             long timeSinceLastRestart = System.currentTimeMillis() - mLastDatasourceRestartMillis;
             if (!mDataSourceRestartInProgress && timeSinceLastRestart > 60000) {
                 Log.w(TAG, "FAULT: Attempting to restart data source to recover from fault");
-                Log.i(TAG, "FAULT: Restarting datasource to recover");
                 mDataSourceRestartInProgress = true;
                 mLastDatasourceRestartMillis = System.currentTimeMillis();
 
@@ -1515,27 +1513,23 @@ public class SdServer extends Service implements SdDataReceiver {
                     public void run() {
                         try {
                             Log.w(TAG, "FAULT: Stopping data source for restart");
-                            Log.i(TAG, "FAULT: Stopping datasource");
                             if (mSdDataSource != null) {
                                 mSdDataSource.stop();
                             }
                         } catch (Exception e) {
                             Log.e(TAG, "FAULT: Error stopping datasource: " + e.getMessage());
-                            Log.i(TAG, "FAULT: Error stopping datasource: " + e.getMessage());
                         }
 
                         mHandler.postDelayed(new Runnable() {
                             public void run() {
                                 try {
                                     Log.w(TAG, "FAULT: Restarting data source");
-                                    Log.i(TAG, "FAULT: Restarting datasource");
                                     if (mSdDataSource != null) {
                                         mSdDataSource.start();
                                         mLastDataReceivedMillis = System.currentTimeMillis(); // Reset watchdog timer
                                     }
                                 } catch (Exception e) {
                                     Log.e(TAG, "FAULT: Error restarting datasource: " + e.getMessage());
-                                    Log.i(TAG, "FAULT: Error restarting datasource: " + e.getMessage());
                                 } finally {
                                     mDataSourceRestartInProgress = false;
                                 }
@@ -1546,16 +1540,10 @@ public class SdServer extends Service implements SdDataReceiver {
             } else {
                 if (mDataSourceRestartInProgress) {
                     Log.w(TAG, "FAULT: Datasource restart already in progress, skipping");
-                    Log.i(TAG, "FAULT: Datasource restart already in progress");
                 } else {
                     Log.w(TAG, "FAULT: Last restart was " + (timeSinceLastRestart/1000) + "s ago, skipping to prevent restart loop");
-                    Log.i(TAG, "FAULT: Skipping restart (too soon - " + (timeSinceLastRestart/1000) + "s)");
                 }
             }
-        } else {
-            startFaultTimer();
-            Log.v(TAG, "onSdDataFault() - starting Fault Timer");
-            Log.i(TAG, "onSdDataFault() - starting Fault Timer");
         }
 
         showNotification(-1);
@@ -2380,6 +2368,21 @@ public class SdServer extends Service implements SdDataReceiver {
      * Start the fault timer that is used to require a fault to remain
      * standing for a period before raising fault beeps.
      */
+    /**
+     * Common fault-pip logic shared by onSdDataFault() and the hasFault block in onSdDataReceived().
+     * If the fault timer has already expired, plays the fault pip beep; otherwise starts the timer
+     * so the beep fires after the configured delay period.
+     */
+    private void doFaultPipCheck() {
+        if (mFaultTimerCompleted) {
+            Log.w(TAG, "FAULT: Timer completed - calling faultWarningBeep()");
+            faultWarningBeep();
+        } else {
+            startFaultTimer();
+            Log.i(TAG, "doFaultPipCheck() - starting Fault Timer");
+        }
+    }
+
     public void startFaultTimer() {
         if (mFaultTimer != null) {
             Log.v(TAG, "startFaultTimer(): fault timer already running - not doing anything.");
