@@ -898,7 +898,7 @@ public class StartupActivity extends AppCompatActivity {
             // Check for update of installed application
             MaterialAlertDialogBuilder alertDialogBuilder = new MaterialAlertDialogBuilder(this);
             final String s = new String(
-                    getString(R.string.UpgradeMsg) + getString(R.string.changelog)
+                    getString(R.string.changelog) + getString(R.string.UpgradeMsg)
             );
 
             alertDialogBuilder
