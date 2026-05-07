@@ -1,5 +1,8 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.0.0  - Build for publication on Play Store  
+            - Fixed issue with low battery warning not emitting fault sounds'
+            - Corrected colour of OK/Cancel buttons in data sharing dialogs. 
     V5.0.0rc2 - Fixed issue with app sometimes restarting rather than exiting when 'exit' menu item is selected.
               - Fixed issue with long delay between selecting 'exit' and the UI doing anything.
               - Added a low phone battery fault warning so the system will not fail silently if the phone battery runs out.

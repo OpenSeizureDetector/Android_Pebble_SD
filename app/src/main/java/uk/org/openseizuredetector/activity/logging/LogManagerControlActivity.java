@@ -27,7 +27,7 @@ import android.provider.MediaStore;
 
 import androidx.core.graphics.Insets;
 import androidx.core.view.MenuCompat;
-import androidx.appcompat.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
@@ -900,7 +900,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
         } else if (itemId == R.id.start_stop_nda) {
             Log.i(TAG, "start/stop NDA");
             if (mConnection.mSdServer.mLogNDA) {
-                new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
+                new MaterialAlertDialogBuilder(this)
                         .setTitle(R.string.stop_nda_logging_dialog_title)
                         .setMessage(R.string.stop_nda_logging_dialog_meassage)
                         .setIcon(android.R.drawable.ic_dialog_alert)
@@ -923,7 +923,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                         .setNegativeButton(R.string.no_button_title, null)
                         .show();
             } else {
-                new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
+                new MaterialAlertDialogBuilder(this)
                         .setTitle(R.string.start_nda_logging_dialog_title)
                         .setMessage(R.string.start_nda_logging_dialog_meassage)
                         .setIcon(android.R.drawable.ic_dialog_alert)
@@ -948,7 +948,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
             return true;
         } else if (itemId == R.id.action_mark_unknown) {
             Log.i(TAG, "action_mark_unknown");
-            new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
+            new MaterialAlertDialogBuilder(this)
                     .setTitle(R.string.mark_unverified_events_unknown_dialog_title)
                     .setMessage(R.string.mark_unverified_events_unknown_dialog_message)
                     .setIcon(android.R.drawable.ic_dialog_alert)
@@ -962,7 +962,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
             return true;
         } else if (itemId == R.id.action_mark_false_alarm) {
             Log.i(TAG, "action_mark_false_alarm");
-            new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
+            new MaterialAlertDialogBuilder(this)
                     .setTitle(R.string.mark_unverified_events_false_alarm_dialog_title)
                     .setMessage(R.string.mark_unverified_events_false_alarm_dialog_message)
                     .setIcon(android.R.drawable.ic_dialog_alert)
@@ -1011,7 +1011,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 public void onClick(View view) {
                     Log.v(TAG, "onPruneBtn");
                     // Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
-                    AlertDialog.Builder builder = new AlertDialog.Builder(new android.view.ContextThemeWrapper(mContext, R.style.AppTheme_AlertDialog));
+                    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(mContext);
                     builder.setTitle(R.string.prune_database_title);
                     builder.setMessage(String.format(getString(R.string.prune_database_dialog_msg), mLm.mDataRetentionPeriod));
                     builder.setPositiveButton(R.string.yes_button_title, new DialogInterface.OnClickListener() {
@@ -1027,8 +1027,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
                             dialog.dismiss();
                         }
                     });
-                    AlertDialog alert = builder.create();
-                    alert.show();
+                    builder.show();
                 }
             };
 
@@ -1296,7 +1295,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private void showDataSharingDialog() {
         Log.i(TAG, "MainActivity.showDataSharingDialog()");
         View aboutView = getLayoutInflater().inflate(R.layout.data_sharing_dialog_layout, null, false);
-        AlertDialog.Builder builder = new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setIcon(R.drawable.datasharing_fault_24x24);
         builder.setTitle(R.string.data_sharing_dialog_title);
         builder.setNegativeButton(getString(R.string.cancel), null);
@@ -1351,7 +1350,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
             names[i] = mLogFiles[i].getName();
         }
 
-        new AlertDialog.Builder(new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog))
+        new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.syslog_select_file_title)
                 .setItems(names, (dialog, which) -> {
                     mCurrentLogFile = mLogFiles[which];
