@@ -13,6 +13,10 @@ This repository contains the source code for the main
 Android App, which is published on 
 [Google Play Store](https://play.google.com/store/apps/details?id=uk.org.openseizuredetector).
 
+<img width=300 src="doc/images/Basic_Mode_OK.jpg"/> <img width=300 src="doc/images/Basic_Mode_ALARM.jpg"/>
+
+<img width=300 src="doc/images/Advanced_Mode_ML_History.jpg"/> <img width=300 src="doc/images/Advanced_Mode_System.jpg.jpg"/>
+
 For a detailed architectural overview (activities, service, data flow, resources) see [APP_STRUCTURE.md](doc/APP_STRUCTURE.md).
 
 See the [OpenSeizureDetector Web Site](https://www.openseizuredetector.org.uk/) for more details.
