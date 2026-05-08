@@ -13,22 +13,27 @@ This repository contains the source code for the main
 Android App, which is published on 
 [Google Play Store](https://play.google.com/store/apps/details?id=uk.org.openseizuredetector).
 
-<img width=150 src="doc/images/Onboarding_1.jpg"/> <img width=150 src="doc/images/Onboarding_2.jpg"/> <img width=150 src="doc/images/Onboarding_3.jpg"/> <img width=150 src="doc/images/Onboarding_4.jpg"/>
-
-<img width=150 src="doc/images/Basic_Mode_OK.jpg"/> <img width=150 src="doc/images/Basic_Mode_ALARM.jpg"/>
-
-<img width=150 src="doc/images/Advanced_Mode_ML_History.jpg"/> <img width=150 src="doc/images/Advanced_Mode_System.jpg"/>
-
 For a detailed architectural overview (activities, service, data flow, resources) see [APP_STRUCTURE.md](doc/APP_STRUCTURE.md).
 
 See the [OpenSeizureDetector Web Site](https://www.openseizuredetector.org.uk/) for more details.
+
+
+## First-Run Setup 'Wizard'
+<img width=150 src="doc/images/Onboarding_1.jpg"/> <img width=150 src="doc/images/Onboarding_2.jpg"/> <img width=150 src="doc/images/Onboarding_3.jpg"/> <img width=150 src="doc/images/Onboarding_4.jpg"/>
+
+## Simple Basic Mode User Interface
+<img width=150 src="doc/images/Basic_Mode_OK.jpg"/> <img width=150 src="doc/images/Basic_Mode_ALARM.jpg"/>
+
+## Detailed Advanced Mode User Interface
+<img width=150 src="doc/images/Advanced_Mode_ML_History.jpg"/> <img width=150 src="doc/images/Advanced_Mode_System.jpg"/>
+
 
 
 Principle of Operation
 ======================
 It is based on an accelerometer monitoring movement, or detection of abnormal heart rate.  
 
-The movement analysis can use either a deterministic altorithm based on fourier analysis to extract the 
+The movement analysis can use either a deterministic altorithm based on Fourier analysis to extract the 
 frequency spectrum of the movement, and detect excessive movement in a given frequency band, or a Machine Learning
 model utilising neural networks.
 
