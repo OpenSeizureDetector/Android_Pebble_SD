@@ -13,9 +13,11 @@ This repository contains the source code for the main
 Android App, which is published on 
 [Google Play Store](https://play.google.com/store/apps/details?id=uk.org.openseizuredetector).
 
-<img width=300 src="doc/images/Basic_Mode_OK.jpg"/> <img width=300 src="doc/images/Basic_Mode_ALARM.jpg"/>
+<img width=150 src="doc/images/Onboarding_1.jpg"/> <img width=150 src="doc/images/Onboarding_2.jpg"/> <img width=150 src="doc/images/Onboarding_3.jpg"/> <img width=150 src="doc/images/Onboarding_4.jpg"/>
 
-<img width=300 src="doc/images/Advanced_Mode_ML_History.jpg"/> <img width=300 src="doc/images/Advanced_Mode_System.jpg"/>
+<img width=150 src="doc/images/Basic_Mode_OK.jpg"/> <img width=150 src="doc/images/Basic_Mode_ALARM.jpg"/>
+
+<img width=150 src="doc/images/Advanced_Mode_ML_History.jpg"/> <img width=150 src="doc/images/Advanced_Mode_System.jpg"/>
 
 For a detailed architectural overview (activities, service, data flow, resources) see [APP_STRUCTURE.md](doc/APP_STRUCTURE.md).
 
