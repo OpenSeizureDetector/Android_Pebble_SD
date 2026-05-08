@@ -1,377 +1,735 @@
-# OpenSeizureDetector Android App Structure
+# OpenSeizureDetector Android App — Structure Reference
 
-This document gives new contributors a fast, high-level map of how the Android application is organised: the major Java classes, resource folders, the startup / shutdown lifecycle, and the data + alarm flow.
-
-## 1. Top-Level Overview
-OpenSeizureDetector is an Android foreground-service based application that:
-- Collects motion (acceleration) and physiological (heart rate, optionally SpO₂) data from a wearable (Garmin, Pebble, BLE devices, phone sensors, etc.).
-- Analyses incoming samples to detect tonic–clonic seizure patterns.
-- Raises local (audible) and remote (SMS / phone call) alarms and optionally shares anonymised data with a central server.
-- Provides a swipe-based main UI (MainActivity2 + fragments) and a startup checklist screen (StartupActivity) to ensure prerequisites are satisfied before normal operation.
-
-Core runtime logic lives in the `SdServer` foreground service; Activities and Fragments mostly visualize status and manipulate preferences.
-
-## 2. Startup Lifecycle (Happy Path)
-1. User taps the launcher icon -> Android launches `StartupActivity` (declared with MAIN/LAUNCHER intent filter in `AndroidManifest.xml`).
-2. `StartupActivity`:
-   - Applies default preference values from XML (alarm, general, datasource, logging, etc.).
-   - Requests / validates required runtime permissions (notifications, SMS, location, Bluetooth, activity recognition, etc.).
-   - Starts (or restarts) the foreground service `SdServer` via `OsdUtil.startServer()` if not already running.
-   - Binds to the service through `SdServiceConnection` to monitor status (watch connection, settings received, data flowing).
-   - Displays a checklist (ProgressBars + TextViews) updated by a periodic timer until all conditions are OK.
-   - When all OK, transitions to either `MainActivity2` (new UI) or legacy `MainActivity` depending on the `UseNewUi` preference.
-3. `SdServer.onStartCommand()`:
-   - Calls `updatePrefs()`; selects concrete `SdDataSource*` implementation based on `DataSource` preference.
-   - Instantiates and starts the chosen data source (e.g., `SdDataSourceGarmin`, `SdDataSourceBLE`, `SdDataSourcePhone`, etc.).
-   - Initialises logging (`LogManager`), location (`LocationFinder` if SMS alarms enabled), timers, embedded HTTP server (`SdWebServer`), wake lock, and notification channels; enters foreground (persistent notification).
-   - Begins receiving data; populates `SdData` and runs analysis algorithms (e.g., seizure + heart rate) to update alarm state.
-4. `MainActivity2` binds to the already running `SdServer` to present live status via Fragments.
-
-## 3. Shutdown Lifecycle
-There are several ways the service stops:
-- User selects an "Exit" / stop option (menu action triggers `OsdUtil.stopServer()`), which calls `stopService` for `SdServer`.
-- System kills the service (low memory or user force-stop) -> `SdServer.onDestroy()` releases wake lock, stops data source, timers, web server, and cleans up.
-- Device reboot triggers `BootBroadcastReceiver` which, if `AutoStart` preference is true, launches `StartupActivity` to restart.
-
-## 4. Major Java Components
-### Activities
-- `StartupActivity`: Launcher activity; initial permission + readiness checklist; starts/binds the service; routes to main UI.
-- `MainActivity2`: Modern, swipe-based interface using `ViewPager2` + Fragments; shows system/algorithm status, data sharing, web server info, heart rate, ML algorithm, battery, watch signal etc.
-- `MainActivity`: Legacy UI retained for backward compatibility (optionally used if `UseNewUi` is false).
-- `PrefActivity`: Preferences editor (headers + fragments defined in `res/xml/*prefs.xml`).
-- `BLEScanActivity`: Discovers and selects BLE devices when using BLE/BLE2 data source.
-- `AuthenticateActivity`: Handles login for data sharing / remote API.
-- `LogManagerControlActivity`, `ExportDataActivity`, `RemoteDbActivity`: Data sharing, viewing, exporting, pruning local DB.
-- `ReportSeizureActivity`, `EditEventActivity`: Manual event reporting / editing.
-
-### Foreground Service
-- `SdServer`: Heart of the application. Manages:
-  - Data source selection and life-cycle.
-  - Alarm evaluation (seizure, heart rate, fall, etc.).
-  - Notification updates (different channels for service status, events, data sharing issues).
-  - SMS & phone call alarm orchestration (timers to allow cancellation).
-  - Logging & data sharing upload scheduling.
-  - Embedded HTTP server (`SdWebServer`) for local access.
-  - Wake lock to keep CPU active during monitoring.
-
-### Data Sources (inherit from / similar pattern to `SdDataSource`)
-Each encapsulates a communication protocol + parsing logic:
-- `SdDataSourcePebble` – Legacy Pebble watch integration.
-- `SdDataSourceAw` – Android Wear devices.
-- `SdDataSourceGarmin` – Garmin watch app (acceleration + heart rate streams).
-- `SdDataSourceBLE` / `SdDataSourceBLE2` – Generic BLE device integrations (v1 / v2 protocols for devices like PineTime / BangleJS).
-- `SdDataSourceNetwork` – Pulls detector data over network from a remote instance.
-- `SdDataSourcePhone` – Uses phone onboard sensors as the detector.
-
-### Algorithms & Data Structures
-- `SdData`: Aggregates current sample values, processing results, and metadata (data source name, versions, etc.).
-- `SdAlgHr`: Heart rate alarm algorithms (simple threshold, adaptive, average-based).
-- `SdAlgNn`: Neural network / machine learning based seizure detection (see `FragmentMlAlg` for UI).
-- `CircBuf`: Circular buffer used for windowed averaging and historical metrics.
-
-#### Core Analysis Pipeline (`SdDataSource.doAnalysis()`)
-The principal seizure detection loop lives in the protected method `SdDataSource.doAnalysis()`, called each time a fresh window of accelerometer samples arrives (vector magnitude or derived from 3D data):
-1. Phone/watch battery percentages are updated and appended to rolling buffers.
-2. (Currently hard-coded) sample frequency set (e.g. 25 Hz) and frequency resolution derived from window length (`mNsamp`).
-3. FFT performed on the raw acceleration window using JTransforms `DoubleFFT_1D.realForward`.
-4. Overall spectrum "power" (`specPower`) accumulated up to a cutoff frequency (`FreqCutoff`), zeroing higher bins to reduce noise.
-5. Region of Interest (ROI) defined by preferences `AlarmFreqMin`/`AlarmFreqMax`; average ROI power (`roiPower`) and the ratio `roiRatio = 10 * roiPower / specPower` computed.
-6. Simplified spectrum (`simpleSpec[]`) built in 1 Hz bins for UI visualisation (scaled by `ACCEL_SCALE_FACTOR` to align with historic Pebble scaling).
-7. Populates fields in `mSdData` (timestamps, `specPower`, `roiPower`, thresholds, ROI freq bounds, simplified spectrum array, flags) and marks `haveData`.
-8. If the CNN alarm feature is enabled (`mCnnAlarmActive`) then `nnAnalysis()` updates `mPseizure` probability.
-9. Secondary narrow-band motion check via `flapCheck()` (arm flapping detection) producing a boolean fed into `alarmCheck()`.
-10. `alarmCheck()` applies thresholds (`AlarmThresh`, `AlarmRatioThresh`) and enabled algorithm flags (classic OSD, flap, CNN) to set alarm cause/state.
-11. Additional modalities processed: `hrCheck()` (heart rate alarms / frozen HR detection), `o2SatCheck()` (oxygen saturation), `fallCheck()` (fall detection), and `muteCheck()` (user-induced mute logic).
-12. Result dispatched upstream via `mSdDataReceiver.onSdDataReceived(mSdData)` (SdServer consumes to raise notifications / alarms).
-
-Key preferences influencing `doAnalysis()`:
-- `AlarmFreqMin` / `AlarmFreqMax`: ROI frequency band.
-- `AlarmThresh` / `AlarmRatioThresh`: Power and ratio thresholds for alarm state.
-- Flap detection thresholds (`FlapThresh`, `FlapRatioThresh`, min/max flap band) when flap alarm active.
-- Flags enabling algorithms: `mOsdAlarmActive`, `mFlapAlarmActive`, `mCnnAlarmActive`.
-
-Performance / Extension Notes:
-- Current implementation re-allocates FFT arrays each call; optimisation could reuse buffers.
-- Sample frequency is hard-coded (25 Hz) inside analysis; aligning it with dynamic settings from watch would improve fidelity.
-- Multiple ROIs could be generalised (current flapCheck duplicates spectral processing).
-- Scaling (`ACCEL_SCALE_FACTOR`) is applied post-hoc; future refactor could normalise early and adopt floating-point consistently for UI.
-
-#### `doAnalysis()` Invocation & Alarm Propagation
-`doAnalysis()` is not called in a tight loop by the service; instead each concrete `SdDataSource` decides when a complete window of samples is ready and then invokes it:
-- BLE (`SdDataSourceBLE` / `SdDataSourceBLE2`): Acceleration notifications fill a raw buffer (`rawData` length 125 = 5s @25Hz). When full, the datasource copies buffered samples into `mSdData`, sets `mNsamp`, calls `doAnalysis()`, then sends a one–byte alarm state back to the device via a status GATT characteristic.
-- Phone (`SdDataSourcePhone`): Collects accelerometer sensor events, performs crude downsampling from ~50Hz to 25Hz. Once `rawData` is full it triggers `doAnalysis()`, resets counters and continues.
-- Pebble (`SdDataSourcePebble`): The watch app performs analysis on-device and sends already processed results (including `alarmState`, spectrum) – so `doAnalysis()` is NOT used for Pebble; received data directly calls `mSdDataReceiver.onSdDataReceived`.
-- Network (`SdDataSourceNetwork`): Fetches remote JSON; if successful passes parsed `SdData` upward. Remote faults set `alarmState` to NET FAULT (7). Local `doAnalysis()` not used.
-- Garmin (`SdDataSourceGarmin`): Similar pattern (buffer fill -> `doAnalysis()`).
-
-After `doAnalysis()` completes in a source that uses it:
-1. Spectral metrics (`roiPower`, `specPower`, simplified spectrum) and timing fields are populated.
-2. `flapCheck()` optionally computes a narrow-band flap detection boolean.
-3. `alarmCheck(flapDetected)` applies power & ratio thresholds and accumulates time in alarm (`mAlarmCount += mSamplePeriod`) to transition through:
-   - OK (0) -> WARNING (1) after `mWarnTime` seconds of continuous in-alarm condition.
-   - WARNING (1) -> ALARM (2) after `mAlarmTime` seconds.
-   - Recovery logic: leaving in-alarm state downgrades from ALARM (2) to WARNING (1) (simulating a just-entered warning), or from WARNING (1) to OK (0).
-4. Other modality checks may elevate alarmState:
-   - `hrCheck()`: If any heart rate alarm stands (simple / adaptive / average) sets `alarmState = 2` and appends cause tags (`HR`, `HR_ADAPT`, `HR_AVG`). Null HR may either cause alarm or fault depending on `mHRNullAsAlarm`.
-   - `o2SatCheck()`: Low or null oxygen saturation (with null-as-alarm enabled) sets standing flags and may escalate to ALARM.
-   - `fallCheck()`: Sets `fallAlarmStanding` and may signal FALL alarm state (3).
-   - `muteCheck()`: Watch/user mute sets `alarmState = 6` (MUTE) overriding other transient states.
-   - Fault timers (`faultCheck()` elsewhere) may set FAULT (4) or NET FAULT (7).
-5. The datasource calls `mSdDataReceiver.onSdDataReceived(mSdData)` (implemented by `SdServer`).
-
-##### Alarm State Codes (as observed in code)
-| Code | Meaning | Origin / Trigger |
-|------|---------|------------------|
-| 0 | OK | No current alarm condition or post-recovery. |
-| 1 | WARNING | Thresholds exceeded for > `warnTime` but < `alarmTime`. |
-| 2 | ALARM | Thresholds exceeded for > `alarmTime`, or HR/O₂/fall promoted, or HR adaptive/average thresholds stand. |
-| 3 | FALL | Fall detection logic sets `fallAlarmStanding` or explicit fall state. |
-| 4 | FAULT | Internal fault (e.g., missing data, HR sensor failure without null-as-alarm). |
-| 5 | MANUAL ALARM | Raised manually (e.g., `SdServer.raiseManualAlarm()`). |
-| 6 | MUTE | User/watch initiated mute; prevents audible alarm but maintains monitoring. |
-| 7 | NET FAULT | Network datasource error / fault condition (`SdDataSourceNetwork`). |
-
-##### How `SdServer` Reacts (`onSdDataReceived`)
-`SdServer.onSdDataReceived(sdData)` interprets `alarmState` plus standing flags and performs side-effects:
-- OK (0): Clears `alarmStanding` unless latched (`mLatchAlarms`) from previous alarm or fall.
-- MUTE (6): Sets phrase "MUTE", suppresses alarms and notifications severity.
-- WARNING (1): Plays warning tone (`warningBeep()`), logs (if enabled), updates notification to warning channel/state.
-- ALARM (2) or MANUAL ALARM (5): Sets phrase "ALARM", raises `alarmStanding`, plays alarm tone (`alarmBeep()`), shows main UI, posts high-severity notification, initiates latch timer (`startLatchTimer()`), and sends SMS / phone alarms if enabled (rate-limited to one per minute).
-- FALL (3 or `fallAlarmStanding` true): Behaves similarly to ALARM but with phrase "FALL" (alarms + SMS sending). Fall may remain standing until cleared.
-- HR / O₂ / Adaptive HR / Average HR: These set `alarmState = 2` when standing; `alarmCause` accumulates tokens; downstream handling identical to ALARM.
-- FAULT (4, 7, HR fault, frozen HR fault): Plays fault warning beep (`faultWarningBeep()`), shows fault notification; may attempt datasource restart after timer (auto-restart currently disabled for BLE2 to prevent duplicate notifications).
-
-##### Latching & Reset
-With `mLatchAlarms` enabled, returning to OK does not immediately clear previous ALARM/FALL states; user must manually accept/reset (e.g., via UI actions) or wait for latch timer expiry (`mLatchAlarmTimer`). Without latching, state machine freely transitions downwards.
-
-##### Data Sharing & Logging Post-Analysis
-Upon each received dataset, `SdServer` updates internal `mSdData`, pushes it to `SdWebServer` for external viewing, and passes it to `LogManager` (`mLm.updateSdData(mSdData)`), which may create/append local events (especially on transitions into ALARM states) and schedule remote uploads.
-
-##### Device Feedback
-BLE/BLE2 write a single-byte alarm state back to the watch/device after analysis (`executeWriteCharacteristic(mStatusChar, statusVal)` or peripheral write) enabling haptic / on-watch UI feedback.
-Pebble handles its own alarm transitions internally before sending results.
-
-This separation lets wearable implementations stay lightweight (simple streaming) while centralizing threshold timing, multi-modal fusion, and alarm escalation logic on the phone (except for Pebble legacy analysis).
-
-### UI Fragments (used in `MainActivity2` ViewPager)
-- `FragmentCommon`: Overall status & key indicators.
-- `FragmentOsdAlg`: Seizure algorithm metrics (spectrum ratio, thresholds, raw/processed values).
-- `FragmentHrAlg`: Heart rate algorithm status & thresholds.
-- `FragmentMlAlg`: ML model results / confidence scores.
-- `FragmentBatt`: Watch + phone battery status.
-- `FragmentSystem`: System info (permissions, service state, logging flags).
-- `FragmentWatchSig`: Signal quality / connectivity indicators.
-- `FragmentWebServer`: Local web server URL / status.
-- `FragmentDataSharing`: Data sharing setup state, counts of local vs remote events.
-
-### Utilities & Helpers
-- `OsdUtil`: Starts/stops/binds the service; permission checks; logging helpers; system/environment utilities.
-- `LogManager`: Handles local + remote logging, event packaging, pruning, and upload scheduling.
-- `MlModelManager`: Manages loading / inference of ML models (if in use).
-- `LocationFinder`: Acquires GPS coordinates for SMS alarms.
-- `WebApiConnection` / `WebApiConnection_firebase` / `WebApiConnection_osdapi`: Remote data sharing / API integrations.
-- `SdServiceConnection`: Wraps service binding / connection callbacks, exposes convenience methods (`watchConnected()`, `hasSdData()`, `hasSdSettings()`).
-- `BootBroadcastReceiver`: Auto-start on device boot when preference enabled.
-- `GattAttributes`: BLE UUID constants and attribute names.
-- `SdWebServer`: Lightweight embedded HTTP server (for local status / data access).
-
-### Data Sharing Module
-Under `uk/org/openseizuredetector/data/...`:
-- Repository pattern for authentication: `LoginRepository`, `LoginDataSource`, `LoggedInUser`, `Result` (standard wrapper around success/error).
-
-## 5. Resource Folder Structure
-```
-res/
-  layout/        Activity & Fragment UI XML (e.g., startup_activity, activity_main2, fragment_*).
-  menu/          Action bar & overflow menus (e.g., main_activity_actions.xml).
-  values/        Strings (`strings.xml`), styles, colors, dimensions; base resources.
-  values-XX/     Localized strings (de, es, pl, ru, sl, sv, etc.).
-  drawable/      Icons and graphics (e.g., star_of_life_48x48). Might also include vector assets.
-  xml/           Preference definition files and network security config:
-                 - alarm_prefs.xml
-                 - basic_prefs.xml
-                 - general_prefs.xml
-                 - logging_prefs.xml
-                 - pebble_datasource_prefs.xml
-                 - network_datasource_prefs.xml
-                 - network_passive_datasource_prefs.xml
-                 - seizure_detector_prefs.xml
-                 - preference_headers.xml (groups preferences)
-                 - network_security_config.xml
-```
-Other notable folders:
-- `assets/` (if present) – Additional static assets (not heavily used here).
-- `libs/` – Third-party JARs (e.g., FFT / chart libraries) bundled with the app.
-
-## 6. Preferences Flow
-1. XML files under `res/xml` define keys and defaults.
-2. `StartupActivity.onCreate()` calls `PreferenceManager.setDefaultValues(...)` for each preference file (once per install/version).
-3. Classes such as `OsdUtil`, `SdServer`, `SdAlgHr` invoke `updatePrefs()` to read `SharedPreferences` (
-   `PreferenceManager.getDefaultSharedPreferences(context)`), caching operational parameters (thresholds, window lengths, flags).
-4. Preference changes may trigger service restarts or algorithm behavior changes (e.g., enabling SMS alarms requires location permission and `LocationFinder`).
-
-## 7. Data & Alarm Flow
-```
-Wearable / Phone Sensors --> Concrete SdDataSource --> SdServer (receives callbacks) -->
-  Algorithms (SdAlgNn, SdAlgHr, fall detection, etc.) --> Alarm State Transitions -->
-    Audible ToneGenerator / MP3 playback
-    Foreground Notification Updates
-    Timed SMS / Phone Call Alerts (with cancellation window)
-    Data Logging (local DB) / Remote Sharing (LogManager, WebApiConnection*)
-    Web Server exposure (SdWebServer)
-```
-Heart rate buffering uses `CircBuf` windows for simple/adaptive thresholding; seizure analysis (frequency spectrum, ratio thresholds) executed inside data source analysis routines (see respective `SdDataSource*` classes).
-
-## 8. Foreground Service & Resilience
-- Service runs in foreground with a persistent notification (required for stable long-running monitoring on modern Android).
-- Wake lock prevents CPU sleep during monitoring sessions (battery intensive but improves reliability).
-- Timers manage periodic tasks (event validation checks, remote upload scheduling, alarm muting windows).
-- Boot auto-start via broadcast receiver ensures continuity if user opted in.
-
-## 9. Adding a New Data Source (High-Level Guide)
-1. Create a new `SdDataSource<YourDevice>` class implementing the expected interface / callback pattern (see existing sources for template).
-2. Handle connection, authentication/handshake, data parsing, and call back into `SdServer` with new samples.
-3. Add a selection case in `SdServer.onStartCommand()` for your `DataSource` preference string.
-4. Provide any additional preferences XML (e.g., update period, device address) and add them to default initialization in `StartupActivity`.
-5. Update UI fragments if device supplies new metrics.
-
-## 10. Where to Look for Key Logic
-- Service lifecycle & alarm orchestration: `SdServer.java` (`onStartCommand`, `onDestroy`, timers, notifications).
-- Startup readiness checklist: `StartupActivity.serverStatusRunnable`.
-- Data source selection: `SdServer.onStartCommand()` switch over `mSdDataSourceName`.
-- Heart rate algorithms: `SdAlgHr.java`.
-- ML / seizure algorithm UI: `FragmentMlAlg.java` + `SdAlgNn.java`.
-- Permission checks: `StartupActivity` & `OsdUtil` (Bluetooth, activity recognition, SMS, location).
-- Logging & data sharing: `LogManager.java`, `RemoteDbActivity.java`, `FragmentDataSharing.java`.
-- Embedded web server logic: `SdWebServer.java`.
-
-## 11. Key Preference Examples (Selected)
-| Preference Key | Purpose |
-| -------------- | ------- |
-| `DataSource` | Selects which device source (Pebble, Garmin, BLE, Phone, Network). |
-| `AlarmThresh` / `AlarmRatioThresh` | Seizure detection thresholds (spectrum amplitude / ratio). |
-| `HRThreshMin` / `HRThreshMax` | Simple heart rate alarm bounds. |
-| `HRAdaptiveAlarmWindowSecs` | Window size for adaptive HR average buffering. |
-| `SMSAlarm` / `PhoneCallAlarm` | Enable remote alerts. |
-| `LogData` / `LogDataRemote` | Enable local logging vs remote data sharing. |
-| `UseNewUi` | Switch between legacy and modern main UI. |
-| `AutoStart` | Auto-launch on device boot. |
-
-(See `res/xml/*_prefs.xml` for full list.)
-
-## 12. Notifications & Timers
-- Multiple channels for service status and events (IDs inside `SdServer`).
-- Timers: `FaultTimer`, `CheckEventsTimer`, SMS countdown (`SmsTimer`), latch alarm timer, etc., each controlling asynchronous transitions.
-
-## 13. Data Sharing Flow
-1. User authenticates (`AuthenticateActivity`) -> obtains token stored in preferences.
-2. `LogManager` packages events (timestamped, with retention pruning) and attempts periodic uploads (`remoteLogPeriod`).
-3. Unvalidated remote events prompt UI reminders (`FragmentDataSharing`).
-
-## 14. Crash Handling
-`UCEHandler` integrated in Activities and Service to capture uncaught exceptions and offer sending logs via email.
-
-## 15. Embedded Web Server
-`SdWebServer` exposes (read-only) status / logged data for local network access; started automatically by `SdServer` after data source initialisation.
-
-## 16. Stopping / Restarting Service Programmatically
-- Stop: `OsdUtil.stopServer()` -> calls `stopService(Intent(SdServer))`.
-- Start: `OsdUtil.startServer()` -> `Context.startForegroundService(...)` (on modern Android) then service builds notification & begins monitoring.
-- Restart triggered implicitly if critical permissions change (logic can call stop/start to reinitialise components).
-
-## 17. Extending Alarms / Algorithms
-To add new alarm logic (e.g., oxygen saturation):
-1. Introduce algorithm class (`SdAlgO2` style) storing buffers and thresholds.
-2. Update data source parsing to capture new metric.
-3. Integrate into `SdServer` evaluation loop; amend notification text generation.
-4. Provide preference keys + XML + UI Fragment display.
-
-## 18. Glossary
-- "Latch Alarm": Alarm remains active until explicitly reset (even if underlying condition clears) for a configured duration.
-- "Adaptive HR Alarm": Builds a moving average; raises alarm when HR deviates beyond +/- configurable delta.
-- "Foreground Service": Long-lived component with persistent notification; less likely to be killed.
-- "Data Sharing": User-consented upload of anonymised seizure events / sensor data to central server for algorithm improvement.
-
-## 19. Useful Entry Points for Debugging
-- Set breakpoints in `SdServer.onStartCommand()` to inspect data source initialisation.
-- Use logs emitted via `OsdUtil.writeToSysLogFile` to trace state transitions.
-- Inspect `StartupActivity.serverStatusRunnable` for readiness gating issues.
-
-## 20. Related Documents
-- `README.md`: General project overview, build instructions.
-- `DEV_NOTES.txt`: Developer notes / historical comments.
-- `BLE_Datasource_Specification.md`: Protocol specifics for BLE devices.
-- PDFs under `doc/` for algorithm assessment and app structure diagrams.
-
-## 21. End-to-End Data -> Alarm Flow Diagram
-Below are two complementary diagrams (ASCII and Mermaid) showing how a data window travels from the wearable to an alarm being raised.
-
-PNG Version: See `FLOW_DIAGRAM.png` in the repository root for a downloadable image.
-
-ASCII Flow
-```
-Wearable Sensors (Accel / HR / O₂) 
-   |
-   v
-Watch Firmware / Device App
-   |   (Pebble: does analysis + sends results)
-   |   (BLE/Garmin/PineTime/etc.: streams raw samples)
-   v
-SdDataSource (Buffer + Parse + Downsample/Scale)
-   |  (Collect ~125 samples = 5s @25Hz) 
-   v (window full)
-doAnalysis()
-   |-> FFT (JTransforms) & Spectrum Power (specPower)
-   |-> ROI Power & Ratio (roiPower / roiRatio)
-   |-> Simplified Spectrum (simpleSpec[])
-   |-> flapCheck() narrow band detection
-   |-> nnAnalysis() (if CNN enabled)
-   |-> hrCheck(), o2SatCheck(), fallCheck(), muteCheck()
-   v
-Populate mSdData (specPower, roiPower, simpleSpec, alarmState, alarmCause, metrics)
-   v
-mSdDataReceiver.onSdDataReceived(mSdData)
-   v
-SdServer.onSdDataReceived()
-   |-> Alarm state machine (OK/WARNING/ALARM/FALL/FAULT/MUTE)
-   |-> Latching logic (startLatchTimer if ALARM)
-   |-> Notifications (foreground + event channels)
-   |-> Tones (warningBeep / alarmBeep / faultWarningBeep)
-   |-> SMS / Phone Call (rate-limited, if enabled)
-   |-> Logging & Data Sharing (LogManager update, remote upload scheduling)
-   |-> Web Server update (SdWebServer.setSdData)
-   |-> Write alarmState byte back to device (BLE/Garmin)
-   v
-UI Fragments / Web Server / Remote API Consumers
-```
-
-Mermaid Diagram (optional rendering if supported):
-```mermaid
-flowchart TD
-  W[Wearable Sensors\n(Accel / HR / O₂)] --> WF[Watch Firmware / Device App]
-  WF --> DS{SdDataSource\nBuffer & Parse}
-  DS -->|Window Full| AN[doAnalysis()]
-  AN --> FFT[FFT + Spectrum]
-  FFT --> ROI[ROI Power & Ratio]
-  ROI --> ALG[flapCheck / nnAnalysis / hrCheck / o2SatCheck / fallCheck / muteCheck]
-  ALG --> SD[SdData Populated\n(alarmState, metrics)]
-  SD --> RCV[mSdDataReceiver.onSdDataReceived]
-  RCV --> SRV[SdServer.onSdDataReceived]
-  SRV --> ACT[Alarm Actions\nNotification / Tone / SMS / Phone / Latch / Log]
-  SRV --> FEED[Write alarmState\nback to Device]
-  ACT --> UI[UI Fragments / Web Server / Data Sharing]
-  WF -. Pebble path (analysis on watch) .-> SD
-```
-Notes:
-- Pebble path bypasses local `doAnalysis()`; analysis executes on the watch and sets `alarmState` before dispatch.
-- Network datasource substitutes "Buffer & Parse" with remote JSON fetch and may directly set NET FAULT (7) on failure.
-- Latching prevents immediate clearing of ALARM/FALL states until user intervention or timer expiry.
-
-## 22. Related Documents
-- `README.md`: General project overview, build instructions.
-- `DEV_NOTES.txt`: Developer notes / historical comments.
-- `BLE_Datasource_Specification.md`: Protocol specifics for BLE devices.
-- PDFs under `doc/` for algorithm assessment and app structure diagrams.
+> **Version 5.x** · Last updated May 2026  
+> This document is the authoritative architectural reference for contributors. It describes the package layout, component responsibilities, data flow, and the detection algorithm pipeline as they exist in the current codebase.
 
 ---
-Questions / Improvements: Feel free to open issues or pull requests on GitHub.
+
+## Table of Contents
+
+1. [High-Level Architecture](#1-high-level-architecture)
+2. [Package Layout](#2-package-layout)
+3. [Application Startup & Lifecycle](#3-application-startup--lifecycle)
+4. [Foreground Service — SdServer](#4-foreground-service--sdserver)
+5. [Data Sources](#5-data-sources)
+6. [Detection Algorithm Pipeline](#6-detection-algorithm-pipeline)
+7. [UI — Activities & Fragments](#7-ui--activities--fragments)
+8. [Data Layer](#8-data-layer)
+9. [Logging & Data Sharing](#9-logging--data-sharing)
+10. [Utilities](#10-utilities)
+11. [Embedded Web Server](#11-embedded-web-server)
+12. [Preferences System](#12-preferences-system)
+13. [Resource Folder Structure](#13-resource-folder-structure)
+14. [Permissions](#14-permissions)
+15. [Alarm State Reference](#15-alarm-state-reference)
+16. [End-to-End Data Flow](#16-end-to-end-data-flow)
+17. [Adding a New Data Source](#17-adding-a-new-data-source)
+18. [Adding a New Algorithm](#18-adding-a-new-algorithm)
+19. [Key Entry Points for Debugging](#19-key-entry-points-for-debugging)
+20. [Related Documents](#20-related-documents)
+
+---
+
+## 1. High-Level Architecture
+
+OpenSeizureDetector is a **foreground-service Android application** that continuously collects motion (accelerometer) and physiological (heart rate, SpO₂) data from a paired wearable device or the phone's own sensors. It analyses the data in real time to detect tonic–clonic seizures and other health events, raising local audible alarms and optionally sending SMS/phone-call alerts.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Android Phone                                                      │
+│                                                                     │
+│  ┌─────────────┐     ┌──────────────────────────────────────────┐  │
+│  │  UI Layer   │◄────│           SdServer (Foreground Service)  │  │
+│  │ (Activities │     │                                          │  │
+│  │  Fragments) │     │  ┌────────────┐   ┌──────────────────┐  │  │
+│  └─────────────┘     │  │ SdDataSource│──►│ SeizureDetector  │  │  │
+│                      │  │ (one of N  │   │ (algorithm hub)  │  │  │
+│  ┌─────────────┐     │  │  sources)  │   └──────────────────┘  │  │
+│  │ SdWebServer │◄────│  └────────────┘                         │  │
+│  │ (local HTTP)│     │  ┌────────────┐   ┌──────────────────┐  │  │
+│  └─────────────┘     │  │ LogManager │   │  Alarm / Notify  │  │  │
+│                      │  └────────────┘   └──────────────────┘  │  │
+│  ┌─────────────┐     └──────────────────────────────────────────┘  │
+│  │Remote APIs  │                                                    │
+│  │(Firebase /  │                                                    │
+│  │ OSD API)    │                                                    │
+│  └─────────────┘                                                    │
+└─────────────────────────────────────────────────────────────────────┘
+         ▲                         ▲
+         │ BLE / Garmin Connect    │ SMS / Phone Call
+    Wearable Device             Mobile Network
+```
+
+**Core design principles:**
+- `SdServer` is the runtime heart. Activities bind to it for display only; they never own detection state.
+- `SdDataSource` subclasses handle **data acquisition only**. All analysis is delegated to `SeizureDetector`.
+- `SeizureDetector` is a pluggable coordinator: it instantiates only the active algorithm objects and combines their results via a configurable `VotingStrategy`.
+
+---
+
+## 2. Package Layout
+
+All application code lives under `uk.org.openseizuredetector`. Third-party sources bundled directly are under `com.rohitss.uceh` (crash handler) and `fi.iki.elonen` (NanoHTTPD web server).
+
+```
+uk.org.openseizuredetector/
+│
+├── OsdApplication.java          Application subclass; installs UCEHandler, applies theme
+├── SdServer.java                 Foreground service (central runtime)
+│
+├── activity/
+│   ├── OsdBaseActivity.java      Base class for all activities
+│   ├── auth/
+│   │   └── AuthenticateActivity.java
+│   ├── bluetooth/
+│   │   └── BLEScanActivity.java
+│   ├── events/
+│   │   ├── EditEventActivity.java
+│   │   └── ReportSeizureActivity.java
+│   ├── export/
+│   │   └── ExportDataActivity.java
+│   ├── logging/
+│   │   └── LogManagerControlActivity.java
+│   ├── main/
+│   │   ├── MainActivity2.java            Main swipe UI (ViewPager2)
+│   │   ├── FragmentOsdBaseClass.java     Base class for status fragments
+│   │   ├── FragmentCommon.java
+│   │   ├── FragmentOsdAlg.java
+│   │   ├── FragmentHrAlg.java
+│   │   ├── FragmentMlAlg.java
+│   │   ├── FragmentFallAlg.java
+│   │   ├── FragmentBatt.java
+│   │   ├── FragmentSystem.java
+│   │   ├── FragmentWatchSig.java
+│   │   ├── FragmentWebServer.java
+│   │   └── FragmentDataSharing.java
+│   ├── onboarding/
+│   │   ├── OnboardingActivity.java
+│   │   ├── OnboardingWelcomeFragment.java
+│   │   ├── OnboardingDataSourceFragment.java
+│   │   ├── OnboardingDataSourceConfigFragment.java
+│   │   ├── OnboardingAlgorithmsFragment.java
+│   │   └── OnboardingCompleteFragment.java
+│   ├── remote/
+│   │   └── RemoteDbActivity.java
+│   ├── settings/
+│   │   └── PrefActivity.java
+│   └── startup/
+│       └── StartupActivity.java
+│
+├── alg/
+│   ├── SdAlgBase.java            Abstract base for all detection algorithms
+│   ├── SdAlgOsd.java             Classic OSD frequency-spectrum algorithm
+│   ├── SdAlgFlap.java            Arm-flap / limb-movement narrow-band detection
+│   ├── SdAlgFall.java            Fall detection
+│   ├── SdAlgHr.java              Heart rate alarm algorithms
+│   ├── SdAlgMl.java              Multi-model ML coordinator (TFLite + ExecuTorch)
+│   ├── SeizureDetector.java      Algorithm hub; manages voting & time thresholds
+│   ├── VotingStrategy.java       ANY / MAJORITY / UNANIMOUS / WEIGHTED voting
+│   ├── AlgorithmResult.java      Result value object
+│   ├── MlModelManager.java       ML model download, storage, enumeration
+│   └── MlAutoConfigurator.java   Wizard for automatic ML model setup
+│
+├── client/
+│   └── SdServiceConnection.java  Service binding helper used by Activities
+│
+├── comms/
+│   ├── GattAttributes.java       BLE GATT UUID constants
+│   ├── WebApiConnection.java     Abstract remote API client
+│   ├── WebApiConnection_firebase.java
+│   └── WebApiConnection_osdapi.java
+│
+├── data/
+│   ├── AlarmState.java           Alarm state integer constants (OK=0 … NETFAULT=7)
+│   ├── SdData.java               Snapshot of all current sensor/algorithm state
+│   ├── SdDataHistory.java        Rolling history of SdData snapshots
+│   └── logging/
+│       ├── Log.java              Wrapper around android.util.Log + file logging
+│       ├── LogManager.java       Local SQLite DB + remote upload orchestration
+│       ├── LogRepository.java    DB access layer
+│       ├── LogUploader.java      Handles remote upload batches
+│       └── LocalEventQuerier.java
+│
+├── datasource/
+│   ├── SdDataReceiver.java       Callback interface implemented by SdServer
+│   ├── SdDataSource.java         Abstract base for all data sources
+│   ├── SdDataSourcePebble.java
+│   ├── SdDataSourceAw.java
+│   ├── SdDataSourceGarmin.java
+│   ├── SdDataSourceBLE.java
+│   ├── SdDataSourceBLE2.java
+│   ├── SdDataSourceNetwork.java
+│   └── SdDataSourcePhone.java
+│
+├── utils/
+│   ├── BackgroundTaskExecutor.java
+│   ├── BootBroadcastReceiver.java
+│   ├── CircBuf.java              Fixed-size circular buffer (rolling averages)
+│   ├── CircBufHistoryLoader.java
+│   ├── CircBufPersistenceManager.java
+│   ├── LocationFinder.java       GPS coordinate acquisition for SMS alerts
+│   ├── OsdUtil.java              Service control, permissions, general helpers
+│   ├── PersistentFileLogger.java
+│   ├── PreferenceUtils.java      Type-safe preference helpers
+│   ├── SdLocationReceiver.java
+│   ├── SdServerCompat.java
+│   └── SettingsUtil.java
+│
+└── webserver/
+    └── SdWebServer.java          Embedded NanoHTTPD HTTP server
+```
+
+---
+
+## 3. Application Startup & Lifecycle
+
+### 3.1 First Run — Onboarding
+
+On first launch (or when the `OnboardingComplete` preference is not set), `StartupActivity` redirects to `OnboardingActivity`, a 5-step wizard built on `ViewPager2`:
+
+```
+Step 0: OnboardingWelcomeFragment       — intro / safety information
+Step 1: OnboardingDataSourceFragment    — select wearable type
+Step 2: OnboardingDataSourceConfigFragment — device-specific setup (BLE address, etc.)
+Step 3: OnboardingAlgorithmsFragment    — enable algorithms; triggers MlAutoConfigurator
+Step 4: OnboardingCompleteFragment      — finish; marks onboarding done
+```
+
+`MlAutoConfigurator` (called from Step 3) fetches the model index from the OSD server, presents a selection dialog, downloads the recommended TFLite/ExecuTorch model, and saves it to internal storage.
+
+### 3.2 Normal Startup
+
+```
+User taps icon
+    └─► StartupActivity.onCreate()
+            ├─ Initialises default preferences (PrefActivity.initialiseDefaultValues)
+            ├─ Requests runtime permissions (Notifications, SMS, Location, Bluetooth, etc.)
+            ├─ Calls OsdUtil.startServer() → Context.startForegroundService(SdServer)
+            ├─ Binds to SdServer via SdServiceConnection
+            └─ Polls SdServiceConnection until:
+                    watchConnected() == true
+                    hasSdSettings()  == true
+                    hasSdData()      == true
+               then launches MainActivity2
+```
+
+### 3.3 Service Startup (`SdServer.onStartCommand`)
+
+```
+SdServer.onStartCommand()
+    ├─ updatePrefs()            — reads all SharedPreferences
+    ├─ Selects SdDataSource     — based on DataSource preference string
+    ├─ Creates SeizureDetector  — instantiates active algorithm objects
+    ├─ Starts LogManager        — opens/creates local SQLite database
+    ├─ Starts LocationFinder    — if SMS alarms are enabled
+    ├─ Creates SdWebServer      — starts local HTTP server
+    ├─ Acquires WakeLock        — prevents CPU sleep
+    ├─ Creates notification channels and enters foreground
+    └─ Calls mSdDataSource.startMonitoring()
+```
+
+### 3.4 Shutdown
+
+- **User-initiated:** Menu "Exit" → `OsdUtil.stopServer()` → `stopService(SdServer)`
+- **System kill:** `SdServer.onDestroy()` releases WakeLock, stops data source, timers, and web server
+- **Auto-start on reboot:** `BootBroadcastReceiver` catches `BOOT_COMPLETED` / `LOCKED_BOOT_COMPLETED`; if `AutoStart` preference is true, starts `StartupActivity`
+
+---
+
+## 4. Foreground Service — SdServer
+
+`SdServer` (~2 800 lines) is the runtime hub. Its key responsibilities are:
+
+| Responsibility | Detail |
+|---|---|
+| Data source lifecycle | Instantiates, starts and stops the active `SdDataSource` |
+| Algorithm coordination | Holds `SeizureDetector`; calls `processData(sdData)` on each received data update |
+| Alarm state machine | Transitions OK → WARNING → ALARM based on detector output; handles latching |
+| Notifications | Multiple channels: service status, events (alarm/fall), data-sharing issues |
+| Audible feedback | `ToneGenerator` for warning/alarm/fault beeps; `MediaPlayer` for alarm tones |
+| SMS & phone calls | Rate-limited (one per minute); countdown timer allows user cancellation |
+| Wake lock | Keeps CPU active during monitoring |
+| Web server update | Pushes `SdData` to `SdWebServer` after each analysis cycle |
+| Logging | Calls `LogManager.updateSdData()` to record events and schedule remote uploads |
+| Device feedback | Writes alarm-state byte back to BLE/Garmin wearable after each analysis |
+
+### SdServer — onSdDataReceived (simplified)
+
+```
+onSdDataReceived(sdData)
+    ├─ mSeizureDetector.processData(sdData)  → returns combined alarmState
+    ├─ Evaluate alarmState:
+    │     OK(0)      → clear standing alarms (unless latched)
+    │     WARNING(1) → warningBeep(); update notification
+    │     ALARM(2)   → alarmBeep(); show UI; send SMS/call; start latch timer
+    │     FALL(3)    → same as ALARM with "FALL" cause label
+    │     FAULT(4)   → faultWarningBeep(); fault notification
+    │     MUTE(6)    → suppress audible alarms
+    │     NETFAULT(7)→ faultWarningBeep(); show network fault
+    ├─ LogManager.updateSdData(sdData)
+    ├─ SdWebServer.setSdData(sdData)
+    └─ Write alarmState byte to BLE/Garmin device characteristic
+```
+
+---
+
+## 5. Data Sources
+
+All data sources extend `SdDataSource` (abstract). `SdDataSource` is responsible **only for data acquisition**; it does not perform signal analysis. Once a window of raw samples is ready, each concrete source packages them into `SdData` and calls `mSdDataReceiver.onSdDataReceived(sdData)`, which triggers analysis inside `SdServer`.
+
+```
+SdDataSource  (abstract)
+├── startMonitoring() / stopMonitoring()  — lifecycle
+├── mSdData                               — shared data object
+└── mSdDataReceiver                       — callback to SdServer
+```
+
+| Class | Transport | Notes                                                                                        |
+|---|---|----------------------------------------------------------------------------------------------|
+| `SdDataSourcePebble` | BLE (PebbleKit) | Pebble watch runs analysis on-device; sends pre-computed results including `alarmState` and spectrum |
+| `SdDataSourceAw` | Android Wear API | Android Wear / WearOS devices                                                                |
+| `SdDataSourceGarmin` | Garmin Connect IQ | Buffers raw accel + HR samples; delegates to SeizureDetector                                 |
+| `SdDataSourceBLE` | Raw BLE (BLESSED v1) | BLE protocol v1 (used by BangleJS); 125-sample buffer @25 Hz                                 |
+| `SdDataSourceBLE2` | Raw BLE (BLESSED v2) | BLE protocol v2 (used by PineTime); writes alarm-state byte back via GATT characteristic     |
+| `SdDataSourceNetwork` | HTTP/JSON | Fetches data from a remote OSD instance; sets NETFAULT(7) on failure                         |
+| `SdDataSourcePhone` | On-device sensors | Phone's own accelerometer; downsamples ~50 Hz to 25 Hz before dispatch                       |
+
+> **Pebble note:** `SdDataSourcePebble` bypasses the local `SeizureDetector` entirely because the Pebble watch performs its own FFT-based analysis and sends processed results directly.
+
+---
+
+## 6. Detection Algorithm Pipeline
+
+### 6.1 Architecture Overview
+
+Version 5 introduced a clean separation between data acquisition and analysis. `SeizureDetector` is the single entry point for all algorithm logic.
+
+```
+SdDataSource ──► SdServer.onSdDataReceived()
+                        │
+                        ▼
+               SeizureDetector.processData(sdData)
+                        │
+          ┌─────────────┼──────────────────┬──────────────┐
+          ▼             ▼                  ▼              ▼
+      SdAlgOsd     SdAlgFlap          SdAlgMl         SdAlgHr
+      (spectral)   (narrow-band)   (TFLite/ExecuTorch) (heart rate)
+          │             │                  │              │
+          └─────────────┴──────────────────┴──────────────┘
+                        │
+                   VotingStrategy
+                   (ANY / MAJORITY / UNANIMOUS / WEIGHTED)
+                        │
+                   Time state machine
+                   (OK → WARNING → ALARM)
+                        │
+                        ▼ (fall alarm bypasses voting)
+                   SdAlgFall ──────────────────────────────►  ALARM (immediate)
+```
+
+### 6.2 Algorithm Classes
+
+All algorithms extend `SdAlgBase` and implement `processSdData(SdData) → int` (returning an `AlarmState` constant) and `getAlarmCause() → String`.
+
+| Class | Purpose |
+|---|---|
+| `SdAlgOsd` | Classic OSD algorithm: FFT on accelerometer window, computes spectral power in a region of interest (ROI) defined by `AlarmFreqMin`/`AlarmFreqMax`; triggers on `roiRatio` exceeding `AlarmRatioThresh` |
+| `SdAlgFlap` | Arm-flap / limb movement: narrow-band power check in a separately configurable frequency band |
+| `SdAlgFall` | Fall detection; result **bypasses voting** and immediately returns `ALARM` |
+| `SdAlgHr` | Heart rate alarms: simple threshold, adaptive (moving-average deviation), and rolling-average strategies; can treat null HR as alarm condition |
+| `SdAlgMl` | Multi-model ML: loads all installed TFLite and ExecuTorch models; evaluates each and returns a list of `AlgorithmResult` objects that are merged into voting |
+
+### 6.3 SeizureDetector — processData() Flow
+
+```
+processData(sdData)
+    │
+    ├── SdAlgOsd.processSdData(sdData)     → osdResult     (if active)
+    ├── SdAlgFlap.processSdData(sdData)    → flapResult    (if active)
+    ├── SdAlgFall.processSdData(sdData)    → fallResult    (if active; NOT in voting pool)
+    ├── SdAlgMl.evaluateAllModels(sdData)  → List<AlgorithmResult> (if active)
+    ├── SdAlgHr.processSdData(sdData)      → hrResult      (if active)
+    │
+    ├── VotingStrategy.vote(algorithmResults)  → combinedAlarmState
+    │
+    ├── Time state machine:
+    │     combinedAlarmState == ALARM?
+    │         mAlarmTime += mSamplePeriod (5 s)
+    │         mAlarmTime > AlarmTimeThreshold  → ALARM
+    │         mAlarmTime > WarnTimeThreshold   → WARNING
+    │         else                             → OK
+    │     else (condition cleared):
+    │         was ALARM → downgrade to WARNING
+    │         was WARNING → OK, reset mAlarmTime
+    │
+    └── Fall override: if fallAlarmTriggered → return ALARM immediately
+```
+
+### 6.4 Voting Strategies (`VotingStrategy`)
+
+| Strategy | Trigger condition |
+|---|---|
+| `ANY` | Any single algorithm in ALARM → combined ALARM (OR logic) |
+| `MAJORITY` | >50% of algorithms in ALARM → combined ALARM |
+| `UNANIMOUS` | All algorithms in ALARM → combined ALARM (AND logic) |
+| `WEIGHTED` | Weighted average of (alarmState × confidence × weight) > 1.5 → ALARM |
+
+Configured via the `VotingStrategy` preference (see `sd_prefs_voting.xml`).
+
+### 6.5 ML Model Support (`SdAlgMl`)
+
+- Supports **TensorFlow Lite** (`.tflite`) models via Google Play Services TFLite.
+- Supports **ExecuTorch** (`.pte`) models via PyTorch ExecuTorch Android runtime.
+- Multiple models may be installed simultaneously; each is evaluated independently and contributes a separate `AlgorithmResult` to voting.
+- `MlModelManager` handles download, storage (internal files dir), and enumeration.
+- `MlAutoConfigurator` provides a guided download flow during onboarding or from the ML fragment.
+
+---
+
+## 7. UI — Activities & Fragments
+
+### 7.1 Activities
+
+| Class | Role |
+|---|---|
+| `OsdApplication` | `Application` subclass; installs UCEHandler crash reporter; applies theme; creates shared `OsdUtil` instance |
+| `StartupActivity` | **Launcher activity.** Permission checks, service start, readiness checklist, routes to `MainActivity2` or `OnboardingActivity` |
+| `OnboardingActivity` | First-run wizard (5 steps, `ViewPager2`); guides user through data source and algorithm setup |
+| `MainActivity2` | Main monitoring UI; `ViewPager2` + 10 status fragments |
+| `PrefActivity` | Full settings editor (preference headers + per-screen fragments) |
+| `BLEScanActivity` | BLE device scan and selection for BLE/BLE2 data sources |
+| `AuthenticateActivity` | Login flow for data-sharing / remote API |
+| `LogManagerControlActivity` | View, prune and export the local event database |
+| `ExportDataActivity` | Export logged data to external storage / share intent |
+| `RemoteDbActivity` | Inspect and validate events on the remote server |
+| `ReportSeizureActivity` | Manual seizure event reporting |
+| `EditEventActivity` | Edit / annotate a stored event |
+
+### 7.2 Main UI Fragments (`MainActivity2`)
+
+`MainActivity2` hosts a `ViewPager2` with the following swipeable fragments, all extending `FragmentOsdBaseClass`:
+
+| Fragment | Content |
+|---|---|
+| `FragmentCommon` | Overall status: alarm state, watch connection, data freshness |
+| `FragmentOsdAlg` | OSD algorithm: spectrum ratio, ROI power, thresholds |
+| `FragmentHrAlg` | Heart rate algorithm: current HR, trend, alarm bounds |
+| `FragmentMlAlg` | ML algorithm: per-model seizure probability, model names |
+| `FragmentFallAlg` | Fall detection status and configuration summary |
+| `FragmentBatt` | Watch + phone battery levels |
+| `FragmentSystem` | Service state, permissions, build info |
+| `FragmentWatchSig` | Signal quality and connectivity indicators |
+| `FragmentWebServer` | Local web server URL and access status |
+| `FragmentDataSharing` | Data sharing status: local vs. remote event counts, upload state |
+
+---
+
+## 8. Data Layer
+
+### 8.1 SdData
+
+`SdData` is the central data transfer object shared between the data source, `SeizureDetector`, and `SdServer`. Key fields:
+
+- **Raw/processed signal:** `rawData[]` (vector magnitude, milli-g), `rawData3D[]` (X/Y/Z, milli-g), `specPower`, `roiPower`, `roiRatio`, `simpleSpec[]`
+- **Algorithm states:** `osdAlgState`, `flapAlgState`, `cnnAlgState`, `hrAlgState`, `fallAlgState`
+- **ML:** `mlNumModels`, `mlModelNames[]`, `mlModelProbs[]`, `mlModelStates[]`
+- **HR:** `mHR`, `mHRAlarmStanding`, `mAdaptiveHrAlarmStanding`, `mAverageHrAlarmStanding`
+- **Alarm:** `alarmState`, `alarmCause`, `alarmStanding`, `fallAlarmStanding`
+- **Flags:** `mOsdAlarmActive`, `mCnnAlarmActive`, `mHRAlarmActive`, `mFallActive`, etc.
+
+### 8.2 AlarmState Constants
+
+```java
+AlarmState.OK        = 0   // No alarm condition
+AlarmState.WARNING   = 1   // Thresholds exceeded but within warning window
+AlarmState.ALARM     = 2   // Full alarm
+AlarmState.FALL      = 3   // Fall detected
+AlarmState.FAULT     = 4   // Internal fault (sensor failure, etc.)
+AlarmState.MANUAL    = 5   // User-initiated manual alarm
+AlarmState.MUTE      = 6   // User or watch muted the alarm
+AlarmState.NETFAULT  = 7   // Network data source error
+```
+
+### 8.3 SdDataHistory
+
+Maintains a rolling history of `SdData` snapshots for trend display in UI fragments.
+
+### 8.4 CircBuf
+
+`CircBuf` is a fixed-capacity circular buffer of `double` values used for rolling averages inside heart rate algorithms and the ML input buffer.
+
+`CircBufPersistenceManager` saves/restores buffer contents across service restarts; `CircBufHistoryLoader` reconstructs buffers from the local event log.
+
+---
+
+## 9. Logging & Data Sharing
+
+```
+SdServer ──► LogManager.updateSdData(sdData)
+                    │
+                    ├── Create/append local SQLite event (on ALARM/FALL transitions)
+                    ├── Prune old events beyond retention window
+                    └── Schedule remote upload (if LogDataRemote == true)
+                                │
+                        LogUploader.upload()
+                                │
+                    ┌───────────┴───────────────┐
+                    ▼                           ▼
+        WebApiConnection_firebase    WebApiConnection_osdapi
+        (Firebase Firestore)         (OSD REST API)
+```
+
+- `LogRepository` provides the SQLite access layer.
+- `LocalEventQuerier` supports event browsing in `LogManagerControlActivity`.
+- Authentication for remote uploads is handled by `AuthenticateActivity` → token stored in preferences.
+- `FragmentDataSharing` shows local/remote event counts and upload status.
+
+---
+
+## 10. Utilities
+
+| Class | Purpose |
+|---|---|
+| `OsdUtil` | Service start/stop, permission queries, network state, theme application, system log writing |
+| `PreferenceUtils` | Type-safe wrappers for reading typed values from `SharedPreferences` |
+| `SettingsUtil` | Preference migration helpers |
+| `BackgroundTaskExecutor` | Thread-pool wrapper for off-main-thread tasks |
+| `LocationFinder` | Acquires GPS coordinates for inclusion in SMS alerts |
+| `SdLocationReceiver` | Broadcast receiver for location updates |
+| `BootBroadcastReceiver` | Handles `BOOT_COMPLETED` / `LOCKED_BOOT_COMPLETED` for auto-start |
+| `PersistentFileLogger` | Low-level file append logger used by `Log` wrapper |
+| `SdServerCompat` | Compatibility helpers for starting foreground services across API levels |
+| `CircBuf` | Circular buffer (see §8.4) |
+| `CircBufPersistenceManager` | CircBuf save/restore across restarts |
+| `CircBufHistoryLoader` | Reconstructs CircBuf from event log history |
+
+---
+
+## 11. Embedded Web Server
+
+`SdWebServer` is built on **NanoHTTPD** (source bundled at `fi.iki.elonen.NanoHTTPD`). It exposes a lightweight read-only HTTP interface on the local network so that external tools (dashboards, scripts) can poll current seizure detector state and logged events.
+
+Started automatically by `SdServer` after the data source initialises. The URL is displayed in `FragmentWebServer`.
+
+---
+
+## 12. Preferences System
+
+Preferences are defined in XML files under `res/xml/` and managed via AndroidX `PreferenceManager`. `PrefActivity` groups them using `preference_headers.xml`.
+
+| File | Content |
+|---|---|
+| `alarm_prefs.xml` | Alarm timing (WarnTime, AlarmTime), latch, SMS/call settings |
+| `general_prefs.xml` | AutoStart, UseNewUi, theme |
+| `data_source_prefs.xml` | DataSource selection, BLE address |
+| `pebble_datasource_prefs.xml` | Pebble-specific settings |
+| `network_datasource_prefs.xml` | Network data source, passive mode |
+| `logging_prefs.xml` | LogData, LogDataRemote, retention period |
+| `sd_prefs_main.xml` | Common detection parameters (AlarmFreqMin/Max, sample period) |
+| `sd_prefs_osd.xml` | OSD algorithm (AlarmThresh, AlarmRatioThresh) |
+| `sd_prefs_flap.xml` | Flap algorithm parameters |
+| `sd_prefs_fall.xml` | Fall detection parameters |
+| `sd_prefs_hr.xml` | HR alarm thresholds and mode |
+| `sd_prefs_ml.xml` | ML model selection, seizure probability threshold |
+| `sd_prefs_voting.xml` | VotingStrategy selection |
+| `sd_prefs_o2.xml` | SpO₂ alarm parameters |
+| `sd_prefs_fidget.xml` | Fidget / movement suppression |
+
+`PrefActivity.initialiseDefaultValues()` applies default values from all preference files once per install/upgrade. Components call their own `updatePrefs()` to re-read settings at runtime.
+
+---
+
+## 13. Resource Folder Structure
+
+```
+res/
+  drawable/          Icons (logo, star-of-life, notification icons)
+  layout/            Activity and Fragment XML layouts
+  layout-land/       Landscape overrides
+  menu/              Action bar and overflow menu definitions
+  raw/               Alarm audio files
+  values/            strings.xml, colors.xml, styles.xml, dimens.xml
+  values-de/         German strings
+  values-es/         Spanish strings
+  values-pl/         Polish strings
+  values-ru/         Russian strings
+  values-sl/         Slovenian strings
+  values-sv/         Swedish strings
+  values-night/      Dark-theme color overrides
+  values-v31/        Android 12+ theme overrides
+  values-w820dp/     Tablet layout tweaks
+  xml/               Preference XMLs + network_security_config.xml
+```
+
+---
+
+## 14. Permissions
+
+| Permission | Reason |
+|---|---|
+| `FOREGROUND_SERVICE_HEALTH` | Service type `health` (Android 14+) |
+| `FOREGROUND_SERVICE_LOCATION` | Location for SMS alerts |
+| `FOREGROUND_SERVICE_CONNECTED_DEVICE` | BLE connectivity |
+| `FOREGROUND_SERVICE_DATA_SYNC` | Remote data upload |
+| `BLUETOOTH_SCAN` / `BLUETOOTH_CONNECT` | BLE device scanning and communication (API 31+) |
+| `ACCESS_FINE_LOCATION` | BLE scan (pre-API 31) + GPS for SMS |
+| `ACCESS_BACKGROUND_LOCATION` | Continuous location for SMS alerts |
+| `SEND_SMS` | SMS alarm delivery |
+| `ACTIVITY_RECOGNITION` | Step/movement detection |
+| `POST_NOTIFICATIONS` | Alarm and status notifications (API 33+) |
+| `WAKE_LOCK` | Prevent CPU sleep during monitoring |
+| `RECEIVE_BOOT_COMPLETED` | Auto-start after reboot |
+| `INTERNET` | Remote data sharing, ML model download |
+| `READ_PHONE_STATE` | Detect active calls before sending phone alarm |
+
+---
+
+## 15. Alarm State Reference
+
+| Code | Constant | Origin |
+|---|---|---|
+| 0 | `AlarmState.OK` | No alarm condition; post-recovery |
+| 1 | `AlarmState.WARNING` | Thresholds exceeded for > `WarnTime` but < `AlarmTime` |
+| 2 | `AlarmState.ALARM` | Thresholds exceeded for > `AlarmTime`; or HR/SpO₂/fall override |
+| 3 | `AlarmState.FALL` | Fall algorithm detected a fall event |
+| 4 | `AlarmState.FAULT` | Internal fault (sensor missing, HR null-as-alarm, etc.) |
+| 5 | `AlarmState.MANUAL` | User manually triggered an alarm |
+| 6 | `AlarmState.MUTE` | User or watch muted the alarm |
+| 7 | `AlarmState.NETFAULT` | Network data source error |
+
+**Latching:** When `LatchAlarms` is enabled, ALARM/FALL states persist until the user explicitly resets them (or the latch timer expires), even if the underlying condition clears.
+
+---
+
+## 16. End-to-End Data Flow
+
+### 16.1 ASCII Diagram
+
+```
+Wearable / Phone Sensors
+(Accelerometer, HR, SpO₂)
+         │
+         ▼
+Watch Firmware / Device App
+  ├── Pebble:  analyses on-device; sends processed results (alarmState, spectrum)
+  └── Others:  stream raw samples over BLE / Garmin Connect / Network
+         │
+         ▼
+SdDataSource subclass
+  ├── Buffer raw samples (e.g. 125 samples = 5 s @ 25 Hz for BLE)
+  ├── Parse / decode protocol
+  └── Call mSdDataReceiver.onSdDataReceived(sdData)
+         │
+         ▼
+SdServer.onSdDataReceived(sdData)
+         │
+         ▼
+SeizureDetector.processData(sdData)
+  ├── SdAlgOsd     → FFT, specPower, roiPower, roiRatio
+  ├── SdAlgFlap    → narrow-band limb-movement check
+  ├── SdAlgMl      → TFLite / ExecuTorch models → per-model seizure probability
+  ├── SdAlgHr      → HR threshold / adaptive / average checks
+  ├── SdAlgFall    → fall detection (bypasses voting → immediate ALARM)
+  └── VotingStrategy.vote() + time state machine → alarmState
+         │
+         ▼
+SdServer — act on alarmState
+  ├── Audible tone (warningBeep / alarmBeep / faultWarningBeep)
+  ├── Foreground notification update
+  ├── Show MainActivity2 (on ALARM)
+  ├── SMS / phone call (rate-limited, if enabled)
+  ├── Start latch timer (if LatchAlarms enabled)
+  ├── LogManager.updateSdData() → local DB event, remote upload
+  ├── SdWebServer.setSdData()   → local HTTP server
+  └── Write alarmState byte back to BLE/Garmin wearable
+         │
+         ▼
+UI Fragments / Web Clients / Remote Data Sharing API
+```
+
+### 16.2 Mermaid Diagram
+
+```mermaid
+flowchart TD
+    W["Wearable Sensors\n(Accel / HR / SpO₂)"] --> WF["Watch Firmware\n/ Device App"]
+    WF -->|"Raw samples\n(BLE / Garmin / Network)"| DS["SdDataSource\n(Buffer & Parse)"]
+    WF -. "Pebble: pre-analysed results" .-> RCV
+
+    DS -->|"Window ready"| RCV["SdServer\n.onSdDataReceived()"]
+    RCV --> SD["SeizureDetector\n.processData()"]
+
+    SD --> OSD["SdAlgOsd\nFFT spectrum"]
+    SD --> FLAP["SdAlgFlap\nNarrow-band"]
+    SD --> ML["SdAlgMl\nTFLite/ExecuTorch"]
+    SD --> HR["SdAlgHr\nHeart rate"]
+    SD --> FALL["SdAlgFall\n(bypasses voting)"]
+
+    OSD & FLAP & ML & HR --> VOT["VotingStrategy\n+ Time FSM"]
+    FALL -->|"Immediate ALARM"| ACT
+
+    VOT --> ACT["SdServer — Alarm Actions\nTone / Notification / SMS / Latch"]
+
+    ACT --> LOG["LogManager\nLocal DB + Remote Upload"]
+    ACT --> WEB["SdWebServer\nLocal HTTP"]
+    ACT --> UI["UI Fragments\n(MainActivity2)"]
+    ACT --> DEV["Write status byte\nback to Wearable"]
+```
+
+---
+
+## 17. Adding a New Data Source
+
+1. Create `SdDataSourceXxx extends SdDataSource` in the `datasource/` package.
+2. Implement `startMonitoring()` / `stopMonitoring()` for connection lifecycle.
+3. Buffer incoming raw samples; when a window is ready, populate `mSdData` fields (`rawData`, `mNsamp`, etc.) and call `mSdDataReceiver.onSdDataReceived(mSdData)`.
+4. Add a case in `SdServer.onStartCommand()` for your `DataSource` preference value string.
+5. Add any device-specific preference XML under `res/xml/` and register it in `PrefActivity.initialiseDefaultValues()` and `preference_headers.xml`.
+6. If the device supports receiving alarm-state feedback, write the status byte in `onSdDataReceived` after calling the receiver.
+
+---
+
+## 18. Adding a New Algorithm
+
+1. Create `SdAlgXxx extends SdAlgBase` in the `alg/` package.
+2. Implement `processSdData(SdData sdData)` — read what you need from `sdData`, write algorithm-specific results back, return an `AlarmState` constant.
+3. Implement `getAlarmCause()` — return a short cause tag string (e.g., `"XxxAlg"`).
+4. Register it in `SeizureDetector`: add an enable flag (`mXxxActive`), read it from preferences in `updatePrefs()`, instantiate in the constructor, call `processSdData` in `processData()`, and add the result to `algorithmResults`.
+5. Add result fields to `SdData` as needed.
+6. Create preference XML (`sd_prefs_xxx.xml`) and add a UI fragment (`FragmentXxxAlg`) for real-time display.
+
+---
+
+## 19. Key Entry Points for Debugging
+
+| Area | Starting Point |
+|---|---|
+| Service lifecycle | `SdServer.onStartCommand()` — data source selection, SeizureDetector creation |
+| Startup readiness | `StartupActivity.serverStatusRunnable` — checklist polling loop |
+| Algorithm execution | `SeizureDetector.processData()` — all algorithm calls and voting |
+| Alarm actions | `SdServer.onSdDataReceived()` — tone, notification, SMS dispatch |
+| ML model loading | `SdAlgMl` constructor + `MlModelManager.loadModels()` |
+| BLE connectivity | `SdDataSourceBLE2` + `GattAttributes` for UUID reference |
+| Logging / upload | `LogManager.updateSdData()` and `LogUploader.upload()` |
+| Crash reports | `UCEHandler` in `OsdApplication.onCreate()` — sends logs to `crashreports@openseizuredetector.org.uk` |
+
+System log output via `OsdUtil.writeToSysLogFile()` / `PersistentFileLogger` can be extracted from the device and is the primary diagnostic tool for field issues.
+
+---
+
+## 20. Related Documents
+
+| Document | Location |
+|---|---|
+| General project overview & build instructions | `README.md` |
+| BLE device protocol specification | `doc/BLE_Datasource_Specification.md` |
+| Algorithm assessment | `doc/OSD_ALGORITHM_ANALYSIS.md` |
+| Data format specification | `doc/Data_Formats.md` |
+| Web server API | `doc/WEB_SERVER_API.md` |
+| ML model JSON format | `doc/ML_Model_JSON_Format.md` |
+| End-to-end test proposal | `doc/End_to_End_Testing_Proposal.md` |
+| Change history | `CHANGELOG.md` |
+| Third-party attributions | `CREDITS.md` |
+
+---
+
+*Questions or corrections: open an issue or pull request on GitHub at https://github.com/OpenSeizureDetector/Android_Pebble_SD*

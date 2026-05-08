@@ -1,5 +1,7 @@
 CREDITS
 -------
+
+## Contributors 
 Thank you to the following people who have contributed to this app:
 
  * [Bram Regtien](https://github.com/aroonpro) - A lot of the ideas for improvements included in Version 5.
@@ -13,7 +15,15 @@ Thank you to the following people who have contributed to this app:
  * Jolanta Kowalska and Artur Chlebek - Polish Translation
  * Jozefus Gaarthuis - high resolution star of life icon.
 
-This app also uses the following Open Source libraries - it would not be possible without many of them:
+## Media
+ * Logo based on ["Star of life2" by Verdy p - Own work. Licensed under Public Domain via Wikimedia Commons](http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).
+ * Alarm Bell Icon by <a href="https://icon54.com/" title="Pixel perfect">Pixel perfect</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a>
+ * Other icons crated using http://romannurik.github.io/AndroidAssetStudio.
+ * Audio Alarm sounds from freesound https://freesound.org/people/coltonmanz/sounds/381382/, https://freesound.org/people/NoiseCollector/sounds/4270/, https://freesound.org/people/pistak23/sounds/271632/
+
+## Open Source Libraries
+
+This app uses the following Open Source libraries - it would not be possible without many of them:
 
  * [JTransforms](https://github.com/wendykierp/JTransforms) - Fast Fourier Transform (FFT) library
  * [ExecuTorch Android](https://github.com/pytorch/executorch) - PyTorch mobile inference runtime

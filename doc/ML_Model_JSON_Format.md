@@ -14,8 +14,13 @@ It covers two related formats:
 ```json
 [
   {
-    "name": "OSD PyTorch v1",
-    "fname": "osd_v1.ptl",
+    "name": "OSD TFLite v2",
+    "fname": "osd_v2.tflite",
+    "framework": "tflite"
+  },
+  {
+    "name": "OSD ExecuTorch v3",
+    "fname": "osd_v3.pte",
     "framework": "pytorch"
   }
 ]
@@ -36,11 +41,11 @@ If either is missing/empty, the model is filtered out.
 
 | Field | Type | Default if missing | Used for |
 |---|---|---|---|
-| `framework` | string | `"tflite"` | Runtime loader + compatibility checks. |
+| `framework` | string | `"tflite"` | Runtime loader. `"tflite"` loads via Google Play Services TFLite (file extension `.tflite`). `"pytorch"` loads via ExecuTorch (file extension `.pte`). |
 | `input_size` | integer | `125` | Input window size. |
 | `input_format_val` | integer | `1` | Numeric input format used at runtime. |
 | `input_format` | string | `"1d_mag"` | UI/update metadata path. |
-| `alarm_threshold` | number | `2.0` | Legacy movement threshold fallback / alias. |
+| `alarm_threshold` | number | `2.0` | Legacy field retained for backward compatibility; not used by the current alarm logic. |
 | `recommended` | boolean | `false` | Whether update checks prefer this model. |
 
 ## Optional compatibility and UI metadata
@@ -52,7 +57,7 @@ If either is missing/empty, the model is filtered out.
 | `version` | string | `"?"` (UI fallback) | Shown in installed model list. |
 | `size` | string | `"?"` (UI fallback) | Shown in installed model list. |
 
-Additionally, if `framework` is `"pytorch"`, the device must be 64-bit.
+Additionally, if `framework` is `"pytorch"`, the device must be 64-bit (ExecuTorch ARM64 only).
 
 ## Threshold recommendation fields
 
@@ -86,8 +91,8 @@ If `localPath` is absent but `fname` exists, the loader falls back to:
 
 ```json
 {
-  "name": "OSD PyTorch v3",
-  "fname": "osd_pytorch_v3.ptl",
+  "name": "OSD ExecuTorch v3",
+  "fname": "osd_executorch_v3.pte",
   "framework": "pytorch",
   "input_format": "1d_mag",
   "input_format_val": 1,
@@ -95,7 +100,7 @@ If `localPath` is absent but `fname` exists, the loader falls back to:
   "recommended": true,
   "version": "3.1.0",
   "size": "2.4 MB",
-  "description": "General-purpose seizure detection model",
+  "description": "General-purpose seizure detection model (ExecuTorch)",
   "min_cpu_features": ["asimd"],
   "accel_std_threshold_pct": 5,
   "seizure_probability_threshold_pct": 50
@@ -106,9 +111,9 @@ If `localPath` is absent but `fname` exists, the loader falls back to:
 
 ```json
 {
-  "name": "My Model",
-  "fname": "my_model.ptl",
-  "framework": "pytorch"
+  "name": "My TFLite Model",
+  "fname": "my_model.tflite",
+  "framework": "tflite"
 }
 ```
 
