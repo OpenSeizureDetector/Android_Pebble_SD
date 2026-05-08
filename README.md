@@ -15,7 +15,7 @@ Android App, which is published on
 
 <img width=300 src="doc/images/Basic_Mode_OK.jpg"/> <img width=300 src="doc/images/Basic_Mode_ALARM.jpg"/>
 
-<img width=300 src="doc/images/Advanced_Mode_ML_History.jpg"/> <img width=300 src="doc/images/Advanced_Mode_System.jpg.jpg"/>
+<img width=300 src="doc/images/Advanced_Mode_ML_History.jpg"/> <img width=300 src="doc/images/Advanced_Mode_System.jpg"/>
 
 For a detailed architectural overview (activities, service, data flow, resources) see [APP_STRUCTURE.md](doc/APP_STRUCTURE.md).
 
