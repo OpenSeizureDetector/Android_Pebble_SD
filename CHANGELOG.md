@@ -1,5 +1,51 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.0.0  - Build for publication on Play Store  
+            - Fixed issue with low battery warning not emitting fault sounds'
+            - Corrected colour of OK/Cancel buttons in data sharing dialogs. 
+    V5.0.0rc2 - Fixed issue with app sometimes restarting rather than exiting when 'exit' menu item is selected.
+              - Fixed issue with long delay between selecting 'exit' and the UI doing anything.
+              - Added a low phone battery fault warning so the system will not fail silently if the phone battery runs out.
+              - Set notification to re-post silently every 15 seconds in case it is dismissed by the user.
+    V5.0.0rc1 - Added new logo.
+            - Fixed phone data source sample frequency.
+    V5.0.0Z - Made the watch 'Mute' function cancel any pending SMS alerts.
+            - Fixed mp3 alarms, and added support for user-selectable audio files for the alarms.
+    V5.0.0Y - Added a fall algorithm tab to MainActivity to visualise the data to help with setting parameters for the algorithm.
+    V5.0.0X - Improved logging of Fall Algorithm debug data, fixed issue with fall detector not working for PineTime because sampleFrequency was not set correctly, 
+              and made a fall override all algorithm voting to create an alarm because it is a one-shot event.
+    V5.0.0W - Fixed network datasource crash on Android 16 by adding network permissions to manifest.
+    V5.0.0V - Fixed start-up crash relating to foreground service starting.
+            - Fixed issue with data sharing not updating all events in a group.
+            - Fixed data sharing group event duration calculation.
+            - Fixed issue with phone datasource stalling if start-up dialog left displayed for too long
+            - Added 'Developer Mode' which displays more data source options, and enables NDA menu item.
+    V5.0.0U - Fixed issue with trying to access closed instance of sqlite database.   
+              Added logging for reason for last shutdown given we see occasional silent crashes.
+              Improved automatic re-starting attempts if the system kills the SdServer service.
+    V5.0.0T - Added Acceleration Standard Deviation Threshold user perference to adjust low-movement sensitivity of SdAlgMl
+    V5.0.0S - Fixed permissions issue with Android 14 network data source - we should be more robust now about which permissions we request for which data source.
+    V5.0.0R - Fixed another issue that caused BLE2 to sometimes subscribe to acceleration updates twice, resulting in incorrect data.
+    V5.0.0Q - Fixed? Issue that caused SdDataSourceBLE2 to sometimes reconnect incorrectly resulting in incorrect data arrival frequency.
+    V5.0.0P - Tidied up data sharing screen, and addressed issues with multiple events being uploaded (#225)
+            - Major re-factor of logging system to improve future maintainability - no functional change.
+    V5.0.0N - Updated to accept a device MAC address returned by Android_PineTime_Updater to avoid the user having to select the device twice.
+            - Tidied up BLEScanActivity to make it look more like PineTimeUpdater
+    V5.0.0A - Tidied up build settings (into gradle.properties)
+            - Added MlModelManager to download ML models from web service.
+            - Added support for pytorch models (executorch) (As well as TFLite)
+            - Added initial support for AndroidWear from Dylan Griffiths (not tested, but included to make sure it doesn't break anything else)
+            - Fixed issue with 16kB page alignment (requirement for Play Store)
+            - Tidied up events list in data sharing (log manager) screen
+            - Tidied up main activity UI - tabbed switching between screens, material design colours.
+            - Migrated all graphs from MPAndroidChart to GraphView library (simpler, more maintainable)
+            - Added version number to action bar title
+            - Improved UI consistency with unified Material Design color scheme
+            - Improved settings experience - system now only restarts when exiting settings screen, not on every change
+            - CRITICAL FIX: Fixed server lifecycle bug that caused multiple server instances and FAULT/OK oscillation after changing settings
+            - Added onboarding setup wizard that covers PineTime, Garmin or Network data source, and OSD, ML or HR algorithms.
+            - Created a separate SeizureDetector class rather than having the seizure detection analysis in SdDataSource
+            - Added support for multiple ML models, and voting between models to decide whether to alarm or not
     V4.3.1 - Fixed corrupted user interface issues on Android 15 and Android 16.
     V4.3.0 - 2025-07-16
              - Added support for Android 15 (API 35) to allow publishing on Play Store.
@@ -223,5 +269,3 @@
 	- Added ability to latch alarms so they have to be actively accepted to silence the alarm, rather than it re-setting when the movement stops.
 	- Fixed problem with the system being difficult to shut down if as multiple instances of main screen could be active at once.
 
-
-	

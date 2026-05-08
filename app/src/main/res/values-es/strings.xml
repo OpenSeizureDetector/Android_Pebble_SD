@@ -35,7 +35,6 @@
     <string name="SeizureDetectorSettingsReceived">Configuración del Detector de Convulsiones Recibida OK</string>
     <string name="WaitingForSeizureDetectorSettings">Esperando por la Configuración del Detector de Convulsiones...</string>
     <string name="DataSource">Fuente de los Datos</string>
-    <string name="AppTitleText">Detector de Convulsiones Abierto para Android App Versión </string>
     <string name="ServerRunningOK">Servidor Funcionando OK\n</string>
     <string name="AccessServerAt">Accese al Servidor en </string>
     <string name="ServerStopped">El Servidor se detuvo</string>

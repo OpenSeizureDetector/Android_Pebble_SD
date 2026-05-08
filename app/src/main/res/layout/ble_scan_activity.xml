@@ -1,86 +1,137 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingLeft="8dp"
-    android:paddingRight="8dp">
-
-    <TextView
-        android:id="@+id/ble_scan_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="16pt"
-        android:text="Scan for Bluetooth Data Sources" />
-
-    <TextView
-        android:id="@+id/ble_connection_warning_tv"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/ble_connected_warning_text" />
-
-
-    <TextView
-        android:id="@+id/ble_present_tv"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="ble_present_tv" />
-    <TextView
-        android:id="@+id/ble_adapter_tv"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="ble_adapter_tv" />
-    <TextView
-        android:id="@+id/current_ble_device_tv"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="current_ble_device_tv" />
-
-    <TextView
-        android:id="@+id/ble_perm1_tv"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="ble_perm1_tv" />
+    android:fitsSystemWindows="true"
+    android:background="?attr/colorSurface">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <TextView
-            android:id="@+id/ble_scan_status_tv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="16pt"
-            android:text="ble_scan_status_tv" />
-
-        <Button
-            android:id="@+id/startScanButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="onScanButtonClick"
-            android:text="Start Scan"/>
-    </LinearLayout>
-
-
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="fill_parent"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <ListView
-            android:id="@android:id/list"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:drawSelectorOnTop="false" />
-
+        <!-- Status Header -->
         <TextView
-            android:id="@android:id/empty"
+            android:id="@+id/ble_scan_status_tv"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#101010"
-            android:text="No data" />
+            android:layout_height="wrap_content"
+            android:background="?attr/colorSurfaceContainer"
+            android:padding="16dp"
+            android:text="Ready to scan"
+            android:textColor="?attr/colorOnSurface"
+            android:textStyle="bold"
+            android:textSize="16sp" />
+
+        <!-- Device List Container -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <ListView
+                android:id="@+id/list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:choiceMode="singleChoice"
+                android:drawSelectorOnTop="false"
+                android:padding="8dp" />
+
+            <TextView
+                android:id="@+id/empty"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="No devices found"
+                android:textSize="18sp"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
+        <!-- Connection Warning (Footer) -->
+        <TextView
+            android:id="@+id/ble_connection_warning_tv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/ble_connected_warning_text"
+            android:textSize="12sp"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:padding="8dp"
+            android:background="?attr/colorSurfaceContainer"
+            android:layout_marginBottom="8dp"
+            android:gravity="center_vertical" />
+
+        <!-- Buttons -->
+        <LinearLayout
+            android:id="@+id/buttons"
+            style="?android:attr/buttonBarStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="4dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/cancelButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:onClick="onCancelButtonClick"
+                android:text="Cancel" />
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/scanButtonFilled"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:onClick="onScanButtonClick"
+                    android:text="Scan"
+                    android:visibility="gone"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/scanButtonOutlined"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:onClick="onScanButtonClick"
+                    android:text="Scan"/>
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/selectButtonFilled"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:onClick="onSelectButtonClick"
+                    android:text="Select"
+                    android:visibility="gone"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/selectButtonOutlined"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:onClick="onSelectButtonClick"
+                    android:text="Select"/>
+            </FrameLayout>
+
+        </LinearLayout>
+
     </LinearLayout>
-</LinearLayout>
- 
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

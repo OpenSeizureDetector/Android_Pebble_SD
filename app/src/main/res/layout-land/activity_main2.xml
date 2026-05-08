@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Landscape-optimized MainActivity2 with horizontal tab bar:
+     Left: FragmentCommon (status info) - 280dp
+     Right: TabLayout (top) + ViewPager (content) - remaining space
+-->
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main2_root_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context="uk.org.openseizuredetector.activity.main.MainActivity2">
+
+    <LinearLayout
+        android:id="@+id/activity_main2_content_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <!-- Left Column: Status Card (FragmentCommon) - Fixed width 280dp for readable buttons -->
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/fragment_common_container_view"
+            android:layout_width="280dp"
+            android:layout_height="match_parent"
+            android:background="?attr/colorSurfaceVariant" />
+
+        <!-- Right Column: TabLayout + ViewPager (vertical arrangement) -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- Horizontal Tab Navigation -->
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/tab_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:tabIndicatorColor="?attr/colorPrimary"
+                app:tabSelectedTextColor="?attr/colorPrimary"
+                app:tabTextColor="?android:attr/textColorSecondary"
+                app:tabMode="scrollable"
+                app:tabGravity="start"
+                app:tabIndicatorHeight="4dp"
+                app:tabRippleColor="?attr/colorPrimaryVariant"
+                app:tabPaddingStart="16dp"
+                app:tabPaddingEnd="16dp"
+                app:tabMinWidth="72dp"
+                app:tabTextAppearance="@style/TabTextAppearance" />
+
+            <!-- Content Area with ViewPager -->
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/fragment_pager"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+        </LinearLayout>
+    </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+
+
+

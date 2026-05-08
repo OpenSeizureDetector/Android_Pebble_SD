@@ -12,6 +12,7 @@
         android:id="@+id/edit_event_content_layout"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
+        android:background="?attr/colorSurface"
         android:orientation="vertical">
 
         <LinearLayout
@@ -19,18 +20,26 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/cancelBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="?attr/colorOutline"
+                android:textColor="?attr/colorOnSurface"
                 android:text="@string/cancel" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/loginBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="?attr/colorOutline"
+                android:textColor="?attr/colorOnSurface"
                 android:text="@string/save" />
         </LinearLayout>
 
@@ -53,17 +62,20 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="@string/eventid" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text=": " />
 
                     <TextView
                         android:id="@+id/eventIdTv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="[id]" />
                 </LinearLayout>
 
@@ -75,12 +87,14 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="@string/event_date"
                         android:textSize="20sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text=": "
                         android:textSize="20sp" />
 
@@ -88,6 +102,7 @@
                         android:id="@+id/eventDateTv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="..."
                         android:textSize="20sp" />
                 </LinearLayout>
@@ -100,12 +115,14 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="@string/alarm_state"
                         android:textSize="20sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text=": "
                         android:textSize="20sp" />
 
@@ -113,6 +130,7 @@
                         android:id="@+id/eventAlarmStateTv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="..."
                         android:textSize="20sp" />
                 </LinearLayout>
@@ -125,12 +143,14 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="@string/event_type"
                         android:textSize="20sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text=": "
                         android:textSize="20sp" />
 
@@ -149,12 +169,14 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text="@string/event_sub_type"
                         android:textSize="20sp" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="?android:attr/textColorPrimary"
                         android:text=": "
                         android:textSize="20sp" />
 
@@ -173,6 +195,7 @@
                     android:layout_marginTop="16dp"
                     android:layout_marginRight="4dp"
                     android:layout_marginBottom="4dp"
+                    android:textColor="?attr/colorOnSurface"
                     android:hint="@string/notes_about_event" />
 
 

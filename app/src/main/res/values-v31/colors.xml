@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Original blue Material Design colors for main UI (Android 12+) -->
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+
+    <!-- Material Design Colors - For older Android/Material versions -->
+    <!-- Primary Colors -->
+    <color name="material3_primary">#3F51B5</color>
+    <color name="material3_on_primary">#FFFFFF</color>
+    <color name="material3_primary_container">#3F51B5</color>
+    <color name="material3_on_primary_container">#FFFFFF</color>
+
+    <!-- Secondary Colors -->
+    <color name="material3_secondary">#7F8FB7</color>
+    <color name="material3_on_secondary">#FFFFFF</color>
+    <color name="material3_secondary_container">#7F8FB7</color>
+    <color name="material3_on_secondary_container">#FFFFFF</color>
+
+    <!-- Error Colors -->
+    <color name="material3_error">#B3261E</color>
+    <color name="material3_on_error">#FFFFFF</color>
+    <color name="material3_error_container">#F9DEDC</color>
+    <color name="material3_on_error_container">#410E0B</color>
+
+    <!-- Surface and Background Colors -->
+    <color name="material3_background">#1E1E2E</color>
+    <color name="material3_on_background">#E8E8F0</color>
+    <color name="material3_surface">#2A2A3F</color>
+    <color name="material3_on_surface">#E8E8F0</color>
+</resources>

@@ -44,7 +44,6 @@
     <string name="SeizureDetectorSettingsReceived">Nastavitve detektorja napadov sprejeti OK</string>
     <string name="WaitingForSeizureDetectorSettings">Čakanje nastavitev detektorja napadov ...</string>
     <string name="DataSource">Vir podatkov</string>
-    <string name="AppTitleText">OpenSeizureDetector Android App Verzija </string>
     <string name="ServerRunningOK">Strežnik deluje OK\n</string>
     <string name="AccessServerAt">Dostopanje strežnika na  </string>
     <string name="ServerStopped">Strežnik ustavljen</string>

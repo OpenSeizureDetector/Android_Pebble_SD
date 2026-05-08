@@ -3,102 +3,90 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".FragmentOsdBaseClass">
+    tools:context=".activity.main.FragmentHrAlg">
 
-    <!-- TODO: Update blank fragment layout -->
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/okBackgroundColor"
-        android:orientation="vertical">
+        android:fillViewport="true">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="@string/heart_rate_algorithm"
-            android:textColor="@color/okTextColor"/>
+            android:layout_marginBottom="8dp" />
 
         <TextView
             android:id="@+id/fragment_hr_alg_tv1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="HR Algorithm Status"
-            android:textColor="@color/okTextColor" />
+            android:layout_marginBottom="16dp" />
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Current HR: "
-                android:textColor="@color/okTextColor" />
+                android:text="Current HR: " />
 
             <TextView
                 android:id="@+id/current_hr_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="---"
-                android:textColor="@color/okTextColor" />
+                android:text="---" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" bpm"
-                android:textColor="@color/okTextColor" />
+                android:text=" bpm" />
         </androidx.appcompat.widget.LinearLayoutCompat>
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Adaptive Threshold Average HR: "
-                android:textColor="@color/okTextColor" />
+                android:text="Adaptive Threshold Average HR: " />
 
             <TextView
                 android:id="@+id/adaptive_avg_hr_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="---"
-                android:textColor="@color/okTextColor" />
+                android:text="---" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" bpm"
-                android:textColor="@color/okTextColor" />
+                android:text=" bpm" />
         </androidx.appcompat.widget.LinearLayoutCompat>
 
         <TextView
             android:id="@+id/textView2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="TextView"
-            android:textColor="@color/okTextColor"/>
-<!--
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/hr_average_switch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Show averages"
-            android:textColor="@color/okTextColor"/>
--->
-        <FrameLayout
+            android:text="Status Info"
+            android:layout_marginBottom="16dp" />
+
+        <com.jjoe64.graphview.GraphView
+            android:id="@+id/lineChart"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="250dp" />
 
-            <com.github.mikephil.charting.charts.LineChart
-                android:id="@+id/lineChart"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent">
-
-            </com.github.mikephil.charting.charts.LineChart>
-        </FrameLayout>
-
-    </androidx.appcompat.widget.LinearLayoutCompat>
-
+        </androidx.appcompat.widget.LinearLayoutCompat>
+    </ScrollView>
 
 </FrameLayout>

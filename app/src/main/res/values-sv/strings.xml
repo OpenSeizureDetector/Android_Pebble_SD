@@ -34,7 +34,6 @@
     <string name="SeizureDetectorSettingsReceived">Mottagning av Seizure Detector inställningar OK</string>
     <string name="WaitingForSeizureDetectorSettings">Väntar på Seizure Detector inställningar...</string>
     <string name="DataSource">Datakälla</string>
-    <string name="AppTitleText">OpenSeizureDetector Android app version </string>
     <string name="ServerRunningOK">Server status OK\n</string>
     <string name="AccessServerAt">Anslut till server på </string>
     <string name="ServerStopped">Server stoppad</string>

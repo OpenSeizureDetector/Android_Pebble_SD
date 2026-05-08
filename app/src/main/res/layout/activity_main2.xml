@@ -6,27 +6,34 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="uk.org.openseizuredetector.LogManager">
-
+    tools:context="uk.org.openseizuredetector.activity.main.MainActivity2">
 
     <LinearLayout
         android:id="@+id/activity_main2_content_layout"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/versionTv"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/app_name" />
-
-
-        <androidx.fragment.app.FragmentContainerView xmlns:android="http://schemas.android.com/apk/res/android"
+        <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fragment_common_container_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tab_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:tabIndicatorColor="?attr/colorPrimary"
+            app:tabSelectedTextColor="?attr/colorPrimary"
+            app:tabTextColor="?android:attr/textColorSecondary"
+            app:tabMode="scrollable"
+            app:tabGravity="fill"
+            app:tabIndicatorHeight="4dp"
+            app:tabRippleColor="?attr/colorPrimaryVariant"
+            app:tabPaddingStart="16dp"
+            app:tabPaddingEnd="16dp"
+            app:tabMinWidth="72dp"
+            app:tabTextAppearance="@style/TabTextAppearance" />
 
         <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/fragment_pager"

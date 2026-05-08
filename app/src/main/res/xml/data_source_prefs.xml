@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ListPreference
+        android:key="DataSource"
+        android:title="@string/select_datasource_title"
+        android:summary="@string/select_datasource_summary"
+        android:entries="@array/datasource_list"
+        android:entryValues="@array/datasource_list_values"
+        android:defaultValue="Phone"
+        android:dialogTitle="@string/select_datasource_title" />
+
+    <EditTextPreference
+        android:key="BLE_Device_Addr"
+        android:title="@string/ble_mac_addr_title"
+        android:summary="@string/ble_mac_addr_summary"
+        android:defaultValue="" />
+
+    <EditTextPreference
+        android:key="BLE_Device_Name"
+        android:title="@string/ble_device_name_title"
+        android:summary="@string/ble_device_name_summary"
+        android:defaultValue="" />
+
+    <Preference
+        android:key="SelectBLEDevice"
+        android:title="@string/select_ble_device_title"
+        android:summary="@string/select_ble_device_summary"
+        android:widgetLayout="@layout/preference_widget_ble_button" />
+
+    <Preference
+        android:key="InstallWatchApp"
+        android:title="@string/install_watch_app"
+        android:widgetLayout="@layout/preference_widget_install_watch_button" />
+
+    <Preference
+        android:key="UpdatePineTimeFirmware"
+        android:title="@string/update_pinetime_firmware"
+        android:widgetLayout="@layout/preference_widget_update_pinetime_button" />
+
+</PreferenceScreen>

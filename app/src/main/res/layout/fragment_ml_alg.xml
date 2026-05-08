@@ -1,28 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".FragmentOsdBaseClass">
+    tools:context=".activity.main.FragmentMlAlg">
 
-    <!-- TODO: Update blank fragment layout -->
-    <androidx.appcompat.widget.LinearLayoutCompat
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="253dp"
-        android:orientation="vertical">
-        <!-- TODO: Update blank fragment layout -->
-        <TextView
-            android:id="@+id/fragment_ml_alg_tv1"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Fragment_MlAlg" />
+            android:orientation="vertical"
+            android:padding="12dp">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Machine Learning Algorithm Status" />
+            <TextView
+                android:id="@+id/fragment_ml_alg_tv1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textStyle="bold"
+                android:text="Machine Learning Algorithm Status"
+                android:layout_marginBottom="4dp" />
 
-    </androidx.appcompat.widget.LinearLayoutCompat>
+            <TextView
+                android:id="@+id/fragment_ml_alg_model_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="---"
+                android:textSize="12sp"
+                android:layout_marginBottom="12dp" />
 
+            <!-- Grid container for up to 6 models (2 columns x 3 rows) -->
+            <GridLayout
+                android:id="@+id/individual_models_grid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="2"
+                android:alignmentMode="alignMargins"
+                android:columnOrderPreserved="false"
+                android:useDefaultMargins="true"
+                android:layout_marginBottom="16dp" />
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Seizure Probability History (%) (Last 10 Minutes):"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Custom Legend Display (bypasses GraphView's broken legend sizing) -->
+            <HorizontalScrollView
+                android:id="@+id/legend_scroll_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:scrollbars="none">
+                <LinearLayout
+                    android:id="@+id/custom_legend_layout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="8dp"
+                    android:background="?attr/colorSurfaceVariant" />
+            </HorizontalScrollView>
+
+            <com.jjoe64.graphview.GraphView
+                android:id="@+id/seizure_history_chart"
+                android:layout_width="match_parent"
+                android:layout_height="280dp" />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+    </ScrollView>
 </FrameLayout>

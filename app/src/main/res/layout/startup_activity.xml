@@ -1,22 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/startup_root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="uk.org.openseizuredetector.StartupActivity"
-    android:orientation="vertical">
+    android:fitsSystemWindows="true"
+    tools:context="uk.org.openseizuredetector.activity.startup.StartupActivity">
+
+<ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
 
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/imageView"
         android:layout_gravity="center_horizontal"
-        app:srcCompat="@drawable/star_of_life_48x48" />
+        android:layout_marginBottom="16dp"
+        app:srcCompat="@drawable/logo_new_simplified_48x48" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -32,151 +41,166 @@
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="@string/StartingTitle"
         android:id="@+id/dataSourceTextView"
-        android:layout_gravity="center_horizontal" />
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="24dp" />
 
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="24dp">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
             android:text="Help"
             android:id="@+id/instructionsButton"
-            android:layout_gravity="center_horizontal" />
+            style="@style/Widget.Material3.Button.TonalButton" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
             android:text="Trouble-\nshooting"
             android:id="@+id/troubleshootingButton"
-            android:layout_gravity="center_horizontal" />
+            style="@style/Widget.Material3.Button.TonalButton" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"
             android:text="@string/edit_settings"
             android:id="@+id/settingsButton"
-            android:layout_gravity="center_horizontal" />
+            style="@style/Widget.Material3.Button.TonalButton" />
 
     </LinearLayout>
-
-
 
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="fill_parent">
+        android:layout_height="wrap_content">
 
+        <!-- Status Item 1 -->
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="8dp">
+            <ProgressBar
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center_vertical"
+                android:id="@+id/progressBar1" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="12dp"
+                android:gravity="center_vertical"
+                android:text="Permissions"
+                android:id="@+id/textItem1" />
+        </LinearLayout>
+
+        <!-- Status Item 2 -->
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="8dp">
+            <ProgressBar
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center_vertical"
+                android:id="@+id/progressBar2" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="12dp"
+                android:gravity="center_vertical"
+                android:text="Service Status"
+                android:id="@+id/textItem2" />
+        </LinearLayout>
+
+        <!-- Status Item 3 -->
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="8dp">
+            <ProgressBar
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center_vertical"
+                android:id="@+id/progressBar3" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="12dp"
+                android:gravity="center_vertical"
+                android:text="Watch Status"
+                android:id="@+id/textItem3" />
+        </LinearLayout>
+
+        <!-- Status Item 5 -->
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            >
-
+            android:minHeight="48dp"
+            android:layout_marginBottom="8dp"
+            android:gravity="center_vertical">
             <ProgressBar
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:id="@+id/progressBar1" />
-
-            <TextView
-                android:layout_width="fill_parent"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:text="New Text"
-                android:id="@+id/textItem1" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <ProgressBar
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/progressBar2" />
-
-            <TextView
-                android:layout_width="fill_parent"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:text="New Text"
-                android:id="@+id/textItem2" />
-        </LinearLayout>
-
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <ProgressBar
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/progressBar3" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:text="New Text"
-                android:id="@+id/textItem3" />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <ProgressBar
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center_vertical"
                 android:id="@+id/progressBar5" />
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="match_parent"
-                android:text="New Text"
+                android:layout_marginStart="12dp"
+                android:text="Data Received"
                 android:gravity="center_vertical"
                 android:id="@+id/textItem5" />
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/install_watch_app"
+                style="@style/Widget.Material3.Button.TonalButton"
                 android:id="@+id/installOsdAppButton" />
         </LinearLayout>
 
+        <!-- Status Item 6 -->
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="48dp">
             <ProgressBar
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center_vertical"
                 android:id="@+id/progressBar6" />
             <TextView
-                android:layout_width="fill_parent"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:layout_marginStart="12dp"
                 android:gravity="center_vertical"
-                android:text="New Text"
+                android:text="Settings Status"
                 android:autoLink="web"
                 android:id="@+id/textItem6" />
         </LinearLayout>
 
-
     </LinearLayout>
 
-
-
 </LinearLayout>
-    </ScrollView>
+</ScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+

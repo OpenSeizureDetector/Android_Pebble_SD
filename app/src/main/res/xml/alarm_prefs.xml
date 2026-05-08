@@ -1,19 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="@string/AlarmFunctionalitySettingsTitle">
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="LatchAlarms"
-            android:summary="@string/latch_alarms_summary"
-            android:title="@string/latch_alarms_title" />
-        <EditTextPreference
-            android:key="LatchAlarmTimerPeriod"
-            android:title="@string/latch_timer_period_title"
-            android:summary="@string/latch_timer_period_summary"
-            android:numeric="integer"
-            android:defaultValue="10" />
-
-    </PreferenceCategory>
     <PreferenceCategory android:title="@string/AudibleAlarmSettingsTitle">
         <CheckBoxPreference
             android:defaultValue="true"
@@ -37,10 +23,29 @@
             android:numeric="integer"
             android:defaultValue="30" />
         <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="DataFrequencyCheck"
+            android:summary="@string/enable_data_frequency_check_summary"
+            android:title="@string/enable_data_frequency_check_title" />
+        <CheckBoxPreference
             android:defaultValue="false"
             android:key="UseMp3Alarm"
             android:summary="@string/use_mp3_alarm_summary"
             android:title="@string/use_mp3_alarm_title" />
+        <!-- Sound file pickers — only visible when UseMp3Alarm is checked.
+             Visibility is controlled programmatically in AlarmPrefsFragment. -->
+        <Preference
+            android:key="Mp3WarningUri"
+            android:title="@string/mp3_warning_sound_title"
+            android:summary="@string/mp3_warning_sound_summary_default" />
+        <Preference
+            android:key="Mp3AlarmUri"
+            android:title="@string/mp3_alarm_sound_title"
+            android:summary="@string/mp3_alarm_sound_summary_default" />
+        <Preference
+            android:key="Mp3FaultUri"
+            android:title="@string/mp3_fault_sound_title"
+            android:summary="@string/mp3_fault_sound_summary_default" />
 
     </PreferenceCategory>
 
@@ -55,7 +60,7 @@
             android:title="@string/sms_delay_sec"
             android:summary="@string/sms_delay_sec_desc"
             android:inputType="number"
-            android:defaultValue="10" />
+            android:defaultValue="30" />
         <EditTextPreference
             android:defaultValue=""
             android:key="SMSNumbers"
@@ -72,7 +77,28 @@
             android:summary="@string/sms_false_alarm_message_summary"
             android:title="@string/sms_false_alarm_message_title" />
     </PreferenceCategory>
-<!--
+
+    <PreferenceCategory android:title="@string/AlarmFunctionalitySettingsTitle">
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="DisplayMainActivityOnAlarm"
+            android:summary="@string/display_main_activity_on_alarm_summary"
+            android:title="@string/display_main_activity_on_alarm_title" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="LatchAlarms"
+            android:summary="@string/latch_alarms_summary"
+            android:title="@string/latch_alarms_title" />
+        <EditTextPreference
+            android:key="LatchAlarmTimerPeriod"
+            android:title="@string/latch_timer_period_title"
+            android:summary="@string/latch_timer_period_summary"
+            android:numeric="integer"
+            android:defaultValue="10" />
+
+    </PreferenceCategory>
+
+    <!--
     <PreferenceCategory android:title="Phone Call Alarm Settings">
         <CheckBoxPreference
             android:defaultValue="false"
@@ -95,4 +121,20 @@
             android:title="@string/log_data_title"/>
     </PreferenceCategory>
     -->
+    <PreferenceCategory android:title="@string/phone_battery_alarm_category_title">
+        <!-- Raises a FAULT condition when the phone battery is critically low.
+             This ensures the carer is alerted before the phone dies and monitoring stops silently. -->
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="PhoneBatteryAlarmActive"
+            android:summary="@string/phone_battery_alarm_active_summary"
+            android:title="@string/phone_battery_alarm_active_title" />
+        <EditTextPreference
+            android:key="PhoneBatteryAlarmThreshold"
+            android:title="@string/phone_battery_alarm_threshold_title"
+            android:summary="@string/phone_battery_alarm_threshold_summary"
+            android:inputType="number"
+            android:defaultValue="5" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

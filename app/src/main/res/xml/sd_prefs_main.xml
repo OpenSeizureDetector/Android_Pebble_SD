@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="@string/AlgorithmSelectionTitle">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="OsdAlarmActive"
+            android:title="@string/OsdAlarmEnabledTitle" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="FlapAlarmActive"
+            android:title="@string/flap_alarm_title" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="CnnAlarmActive"
+            android:title="@string/CnnAlarmEnabledTitle" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="HRAlarmActive"
+            android:title="@string/HRAlarmEnabledTitle" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="O2SatAlarmActive"
+            android:title="@string/O2Sat_enabled_title" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="FallActive"
+            android:title="@string/fall_detect_active_title" />
+    </PreferenceCategory>
+</PreferenceScreen>

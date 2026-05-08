@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="OSD Algorithm"
+        android:summary="@string/OsdAlarmEnabledSummary">
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="OsdAlarmActive"
+            android:summary="@string/OsdAlarmEnabledSummary"
+            android:title="@string/OsdAlarmEnabledTitle" />
+
+        <Preference
+            android:key="osd_description"
+            android:summary="@string/OsdAlarmEnabledSummary"
+            android:selectable="false" />
+
+        <EditTextPreference
+            android:defaultValue="500"
+            android:key="AlarmThresh"
+            android:summary="@string/AlarmThreshSummary"
+            android:title="@string/AlarmThreshTitle" />
+        <EditTextPreference
+            android:defaultValue="57"
+            android:key="AlarmRatioThresh"
+            android:summary="@string/AlarmRatioThreshSummary"
+            android:title="@string/AlarmRatioThreshTitle" />
+        <EditTextPreference
+            android:defaultValue="3"
+            android:key="AlarmFreqMin"
+            android:summary="@string/AlarmFreqMinSummary"
+            android:title="@string/AlarmFreqMinTitle" />
+        <EditTextPreference
+            android:defaultValue="8"
+            android:key="AlarmFreqMax"
+            android:summary="@string/AlarmFreqMaxSummary"
+            android:title="@string/AlarmFreqMaxTitle" />
+    </PreferenceCategory>
+</PreferenceScreen>

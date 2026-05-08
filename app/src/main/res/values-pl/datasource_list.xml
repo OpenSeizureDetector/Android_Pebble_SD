@@ -7,5 +7,6 @@
         <item>"Zegarek Pebble"</item>
         <item>"Czujnik w telefonie (dla testów)"</item>
         <item>"Sieć (dla alarmów przez Wifi)"</item>
+        <item>"Android Wear"</item>
     </string-array>
 </resources>

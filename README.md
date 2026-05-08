@@ -1,28 +1,41 @@
 OpenSeizureDetector - Android App
 =================================
+
+Open Seizure Detector is a set of software tools intended to support people caring for someone with epilepsy.
+It is intended to monitor movement (and optionally heart rate) and generate alarms if seizure-like movement or
+abnormal heart rate is detected.
+
+It uses a [PineTime](https://pine64.org/devices/pinetime/) or Garmin watch to collect movement (acceleration) data and transfer the data to an Android phone.
+The phone processes the data using either deterministic or machine learning ("AI") algorithms to identify seizure-like activity
+
 This repository contains the source code for the main 
-(OpenSeizureDetector)[https://www.openseizuredetector.org.uk/] 
+[OpenSeizureDetector](https://www.openseizuredetector.org.uk/) 
 Android App, which is published on 
-(Google Play Store)[https://play.google.com/store/apps/details?id=uk.org.openseizuredetector].
+[Google Play Store](https://play.google.com/store/apps/details?id=uk.org.openseizuredetector).
 
-For a detailed architectural overview (activities, service, data flow, resources) see APP_STRUCTURE.md.
+For a detailed architectural overview (activities, service, data flow, resources) see [APP_STRUCTURE.md](doc/APP_STRUCTURE.md).
 
-This seizure detector uses a Garmin smart watch to collect movement (acceleration) and heart rate data which is used to detect tonic-clonic epileptic seizures.  
-See (the OpenSeizureDetector Web Site)[https://www.openseizuredetector.org.uk/] for more details.
+See the [OpenSeizureDetector Web Site](https://www.openseizuredetector.org.uk/) for more details.
+
+
+## First-Run Setup 'Wizard'
+<img width=150 src="doc/images/Onboarding_1.jpg"/> <img width=150 src="doc/images/Onboarding_2.jpg"/> <img width=150 src="doc/images/Onboarding_3.jpg"/> <img width=150 src="doc/images/Onboarding_4.jpg"/>
+
+## Simple Basic Mode User Interface
+<img width=150 src="doc/images/Basic_Mode_OK.jpg"/> <img width=150 src="doc/images/Basic_Mode_ALARM.jpg"/>
+
+## Detailed Advanced Mode User Interface
+<img width=150 src="doc/images/Advanced_Mode_ML_History.jpg"/> <img width=150 src="doc/images/Advanced_Mode_System.jpg"/>
+
+
 
 Principle of Operation
 ======================
-It is based on an accelerometer monitoring movement.  It uses a fourier
-transform to extract the frequency spectrum of the movement, and monitors
-movements in a given frequency band.   The idea is that it will detect the
-rhythmic movements associated with a seizure, but not normal day to day
-activities.
+It is based on an accelerometer monitoring movement, or detection of abnormal heart rate.  
 
-If the acceleration within the given frequency band is more than a
-threshold value, it starts a timer.  If the acceleration remains above
-the threshold for a given period, it issues a warning beep.
-If it remains above the threshold for a longer specified period, the unit
-alarms (continuous tone rather than beep).
+The movement analysis can use either a deterministic altorithm based on Fourier analysis to extract the 
+frequency spectrum of the movement, and detect excessive movement in a given frequency band, or a Machine Learning
+model utilising neural networks.
 
 Development
 ===========
@@ -31,20 +44,16 @@ Git Branches
   - The version which is currently published on Play Store is the 'master' branch.
   - The development version which will be the next major release is the Beta branch - this is released on play store for beta testers.
   - The current working development version is the Alpha branch - this is released on play store for alpha testers.
-  - The V5.x branch by user @aroonpro addresses deprecation warnings and a more modern coding style - this will become the development version once we have it working reliably.
 
-So new developers wishing to implement features should create a fork of the Alpha branch and create a pull request agains that.
+So new developers wishing to implement features should create a fork of the Alpha or Beta branch and create a pull request agains that.
 
 Compilation
 -----------
   - Install the latest version of Android Studio
-  - Clone this repository and checkout the V4.2.x branch
+  - Clone this repository and checkout the beta or alpha branch
   - In android studio, open the folder containing the cloned repository
   - Android Studio will take quite a long time downloading dependencies ('Gradle Sync')
   - Select the Build->Make Project menu option - the code should compile, leading to a 'Build Successful' message.
-      - There will be lots of warnings about use of deprecated libraries etc!
-  - Android Studio may complain about the version of the Android Gradle Plug-in - Try Build->Clean Project; Build->Make Project
-      - If this does not work, let Android Studio upgrade the project to the newer version of Gradle - it usually works without problems now.
    
 Installation
 ------------
@@ -57,42 +66,88 @@ Installation
 - The .apk file that is generated by 'make project' can be transferred to the phone, then the phone file browser should allow it to be installed (with warnings about installing apps from untrusted sources).
     - If you have the official release from Play Store installed, it will refuse to install a development build - you have to uninstall the official version first.
  
-Note that the Garmin watch app needs to be installed separately - see the (web site)[https://www.openseizuredetector.org.uk/?page_id=1128] for details.  
+The setup 'wizard' that is provided in Version 5.x will guide the user through setting up the PineTime watch and
+selecting which algorithms to use.
+If using a Garmin watch, the Garmin watch app needs to be installed separately using a computer - see the [web site](https://www.openseizuredetector.org.uk/?page_id=1128) for details.  
 
 Code Structure
 --------------
-  - StartUpActivity is the entry point (This is the view that shows the checklist of things initialising, then exits)
-  - SdServer is started by StartUpActivity
-       - This creates an instance of SdDataSource for the particular data source in use (Garmin, BLE, Phone)
-       - SdDataSource collects data from the watch, and when a set of data is available, it calls the doAnalysis function to do the seizure detection.
-       - SdServer deals with raising the alarms based on the analysis results.
-       - SdServer also details with logging to the Data Sharing system.
-  - MainActivity provides a front end to view what is going on with SdServer
+See the [APP_STRUCTURE.md](doc/APP_STRUCTURE.md) file in the doc folder for a detailed overview of the code structure.)
+
+## Testing
+
+This project includes unit tests and Android instrumentation tests for `MlModelManager` covering network failures, invalid JSON, download cancellation, invalid filenames, and model loading (downloaded vs bundled fallback).
+
+- Unit tests location: `app/src/test/java/uk/org/openseizuredetector/MlModelManagerTest.java`
+- Instrumentation tests location: `app/src/androidTest/java/uk/org/openseizuredetector/MlModelManagerInstrumentedTest.java`
+
+*It would be very good to add instrumentation tests for other aspects of the app to help with testing future updates.*
+
+### Prerequisites
+
+- Ensure Gradle sync completes so test dependencies are resolved.
+- Tests rely on:
+  - JUnit 4
+  - Robolectric (unit tests)
+  - OkHttp MockWebServer (unit and instrumentation tests)
+  - AndroidX Test and Espresso (instrumentation tests)
+
+### Running unit tests
+
+```bash
+./gradlew test
+```
+
+The unit tests validate:
+- Index fetch network failure returns `null` to the callback
+- Invalid JSON in index returns `null`
+- Download cancellation reports failure and cleans partial files
+- Fallback to bundled model when no downloaded model exists
+- Use downloaded model when present
+- 404 invalid filename download failure
+
+### Running instrumentation tests
+
+Start an emulator or connect a device, then run:
+
+```bash
+./gradlew connectedAndroidTest
+```
+
+Instrumentation tests validate on-device behavior:
+- Bundled model fallback loads successfully when no downloaded model is present
+- Downloaded model from app storage loads successfully
+- Invalid filename (404) results in a failed download callback
+
+### Troubleshooting
+
+- If the IDE shows unresolved symbols like `RobolectricTestRunner` or `MockWebServer`, ensure Gradle sync is completed and `mavenCentral()` is present in repositories.
+- If `testBundledFallbackLoadsOnDevice` fails due to missing bundled asset:
+  - Confirm the bundled model file (`cnn_v0.24.tflite`) is packaged and accessible via `org.tensorflow.lite.support.common.FileUtil.loadMappedFile(context, filename)`.
+  - If needed, adjust packaging location (e.g., `src/main/assets`) and loading method.
+- For flaky network-dependent tests, MockWebServer enqueues deterministic responses; re-run if the emulator/device is under high load.
+
+### Updating tests
+
+`MlModelManager` provides a test-friendly constructor to inject a base URL and index filename:
+
+```java
+// For tests with MockWebServer
+MlModelManager mm = new MlModelManager(context, baseUrl, "index.json");
+```
+
+This allows unit and instrumentation tests to point at a local server for predictable behavior.
 
 Licence
 =======
 My code is licenced under the GNU Public Licence - for associated libraries 
-please see Credits below.
+please see [CREDITS.md](CREDITS.md) for details of contributors and open source libraries used.
 
 Credits
 =======
-The following libraries are used:
-* (SYLT-FFT)[https://github.com/stg/SYLT-FFT] by D. Taylor.
-* (NanoHTTPD)[https://github.com/NanoHttpd/nanohttpd]
-* (jQuery)[http://jquery.org]
-* (jBeep)[http://www.ultraduz.com.br]
-* (Chartjs)[http://www.chartjs.org]
-* (MPAndroidChart)[https://github.com/PhilJay/MPAndroidChart]
-* (CurrentTimeService)[https://github.com/RideBeeline/android-bluetooth-current-time-service]
-
-Logo based on ["Star of life2" by Verdy p - Own work. Licensed under Public Domain via Wikimedia Commons](http://commons.wikimedia.org/wiki/File:Star_of_life2.svg#mediaviewer/File:Star_of_life2.svg).
-
-Alarm Bell Icon by <a href="https://icon54.com/" title="Pixel perfect">Pixel perfect</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a>
-
-Other icons crated using http://romannurik.github.io/AndroidAssetStudio.
-
-Audio Alarm sounds from freesound https://freesound.org/people/coltonmanz/sounds/381382/, https://freesound.org/people/NoiseCollector/sounds/4270/, https://freesound.org/people/pistak23/sounds/271632/
+see [CREDITS.md](CREDITS.md) for details of contributors and open source libraries used.
 
 
 
-Graham Jones, 03 December 2017.  (graham@openseizuredetector.org.uk)
+
+Graham Jones, May 2026.  (graham@openseizuredetector.org.uk)

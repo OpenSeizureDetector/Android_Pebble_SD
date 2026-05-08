@@ -1,6 +1,7 @@
 package uk.org.openseizuredetector;
 
 import junit.framework.TestCase;
+import uk.org.openseizuredetector.utils.CircBuf;
 
 public class CircBufTest extends TestCase {
     private CircBuf mCb;

@@ -12,17 +12,21 @@
         android:id="@+id/export_data_content_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:background="?attr/colorSurface"
+        android:orientation="vertical"
+        android:padding="16dp">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="?android:attr/textColorPrimary"
             android:text="Export Local Data"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="?android:attr/textColorPrimary"
             android:text="End Date/Time (dd-mm-yyyy hh:mm)" />
 
         <LinearLayout
@@ -35,12 +39,17 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ems="10"
+                android:textColor="?android:attr/textColorPrimary"
                 android:text="(end date)" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/dateBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="?attr/colorOutline"
+                android:textColor="?attr/colorOnSurface"
                 android:text="Select Date" />
 
 
@@ -56,12 +65,17 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ems="10"
+                android:textColor="?android:attr/textColorPrimary"
                 android:text="(end time)" />
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/timeBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="?attr/colorOutline"
+                android:textColor="?attr/colorOnSurface"
                 android:text="Select Time" />
 
 
@@ -70,6 +84,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="?android:attr/textColorPrimary"
             android:text="Duration (hrs)" />
 
         <EditText
@@ -78,6 +93,7 @@
             android:layout_height="wrap_content"
             android:ems="10"
             android:inputType="numberDecimal"
+            android:textColor="?android:attr/textColorPrimary"
             android:text="1.0" />
 
         <LinearLayout
@@ -85,10 +101,13 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/exportBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="?attr/colorOutline"
+                android:textColor="?attr/colorOnSurface"
                 android:text="Export Data" />
 
             <ProgressBar

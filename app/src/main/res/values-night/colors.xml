@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Highlight Colors for Remote Events (Dark Theme) -->
+    <color name="remote_event_unvalidated_bg">#4A2A2A</color>
+    <color name="remote_event_seizure_bg">#6A2E2E</color>
+</resources>
+

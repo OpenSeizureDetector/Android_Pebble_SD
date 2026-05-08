@@ -51,6 +51,11 @@
         android:key="OSDUrl"
         android:summary="@string/remote_url_summary"
         android:title="@string/remote_url_title" /> -->
-
-
+    <ListPreference
+        android:key="SysLogLevel"
+        android:title="@string/syslog_level_title"
+        android:summary="@string/syslog_level_summary"
+        android:defaultValue="INFO"
+        android:entries="@array/syslog_level_entries"
+        android:entryValues="@array/syslog_level_values" />
 </PreferenceScreen>

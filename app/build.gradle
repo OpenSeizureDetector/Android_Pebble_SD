@@ -1,21 +1,25 @@
+import com.android.build.api.artifact.SingleArtifact
+
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 android {
-    compileSdk 36
+    compileSdk = COMPILE_SDK.toInteger()
 // Android 14
     useLibrary 'org.apache.http.legacy'
 
     defaultConfig {
-        applicationId "uk.org.openseizuredetector"
-        minSdkVersion 23  // Android 6
-        targetSdkVersion 35  // Android 15 = 35
-        multiDexEnabled true
+        applicationId APPLICATION_ID
+        minSdk MIN_SDK.toInteger()
+        targetSdk TARGET_SDK.toInteger()
+        versionCode VERSION_CODE.toInteger()
+        versionName VERSION_NAME
+        multiDexEnabled = MULTI_DEX_ENABLED.toBoolean()
     }
 
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.txt'
         }
     }
 
@@ -26,17 +30,97 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     namespace 'uk.org.openseizuredetector'
     buildFeatures {
         viewBinding true
     }
+    packagingOptions {
+        jniLibs {
+            // This ensures native libs are not compressed, allowing them to be memory-mapped
+            useLegacyPackaging = false
+        }
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE', 'META-INF/LICENSE.txt', 'META-INF/license.txt', 'META-INF/NOTICE', 'META-INF/NOTICE.txt', 'META-INF/notice.txt', 'META-INF/ASL2.0']
+        }
+// Exclude duplicate files that cause build warnings
+    }
+    androidResources {
+        noCompress 'tflite', 'lite', 'ptl'
+    }
+}
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        def capName = variant.name.capitalize()
+        def alignTask = tasks.register("align${capName}Apk") {
+            dependsOn(variant.artifacts.get(SingleArtifact.APK.INSTANCE))
+            doLast {
+                def apkFile = variant.artifacts.get(SingleArtifact.APK.INSTANCE).get().asFile
+                if (!apkFile.name.endsWith('.apk')) {
+                    return
+                }
+
+                def alignedApk = new File(apkFile.parentFile,
+                    apkFile.name.replace('.apk', '-16kb-aligned.apk'))
+
+                def sdkDir = android.sdkDirectory
+                def buildToolsDir = new File(sdkDir, "build-tools/${android.buildToolsVersion}")
+                def zipalign = new File(buildToolsDir, "zipalign")
+
+                if (!zipalign.exists()) {
+                    def buildToolsParent = new File(sdkDir, "build-tools")
+                    if (buildToolsParent.exists()) {
+                        def versions = buildToolsParent.listFiles()?.sort()?.reverse()
+                        for (def version : versions) {
+                            zipalign = new File(version, "zipalign")
+                            if (zipalign.exists()) break
+                        }
+                    }
+                }
+
+                if (zipalign.exists()) {
+                    try {
+                        exec {
+                            commandLine zipalign.absolutePath, '-f', '-p', '16384',
+                                apkFile.absolutePath, alignedApk.absolutePath
+                            ignoreExitValue = true
+                        }
+
+                        def verifyResult = exec {
+                            commandLine zipalign.absolutePath, '-c', '-p', '16384',
+                                alignedApk.absolutePath
+                            ignoreExitValue = true
+                        }
+
+                        if (verifyResult.exitValue == 0) {
+                            println "✅ Created 16KB-aligned APK: ${alignedApk.name}"
+                            println "   Original: ${apkFile.name}"
+                            println "   Aligned:  ${alignedApk.name}"
+                        } else {
+                            println "⚠️  Warning: 16KB alignment verification failed for ${alignedApk.name}"
+                        }
+                    } catch (Exception e) {
+                        println "⚠️  Warning: Failed to create 16KB-aligned APK: ${e.message}"
+                    }
+                } else {
+                    println "⚠️  Warning: zipalign not found - cannot create 16KB-aligned APK"
+                    println "   Install Android SDK build-tools to enable automatic alignment"
+                }
+            }
+        }
+        tasks.matching { it.name == "assemble${capName}" }.configureEach { finalizedBy(alignTask) }
+    }
+}
+
+configurations.all {
+    exclude group: 'com.android.support', module: 'support-compat'
+    exclude group: 'com.android.support', module: 'support-media-compat'
 }
 
 dependencies {
-    implementation 'androidx.multidex:multidex:2.0.1'
     //implementation files('libs/mpandroidchartlibrary-2-0-7.jar')
     //implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
     // V2.1.3 of MPAndroidChart is the most recent version that compiles without modifying
@@ -49,10 +133,11 @@ dependencies {
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'com.google.firebase:firebase-auth:22.3.1'
     implementation 'androidx.test:core:1.5.0'
-    implementation 'com.google.android.gms:play-services-tflite-java:16.1.0'
-    implementation 'com.google.android.gms:play-services-tflite-support:16.1.0'
+    implementation 'com.google.android.gms:play-services-tflite-java:16.4.0'
+    implementation 'com.google.android.gms:play-services-tflite-support:16.4.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'androidx.preference:preference:1.2.1'
     implementation 'org.apache.commons:commons-math3:3.6.1'
     // google play services used for location finding for SMS alerts.
     //implementation 'com.google.android.gms:play-services:+'
@@ -67,12 +152,21 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore'
     implementation 'androidx.navigation:navigation-fragment:2.7.6'
     implementation 'androidx.navigation:navigation-ui:2.7.6'
+    // GraphView - Simple, lightweight charting library for Android
+    implementation 'com.jjoe64:graphview:4.2.2+'
+    // Using ExecuTorch (PyTorch's new mobile runtime) instead of deprecated pytorch_android
+    // ExecuTorch is smaller (~10-20MB vs ~70MB), faster, and has better 16KB alignment support
+    implementation 'org.pytorch:executorch-android:1.0.1'
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation "androidx.test:core"
     testImplementation 'org.mockito:mockito-core:5.9.0'
-    //testImplementation 'org.hamcrest:hamcrest-library:2.2'
-    //testImplementation 'org.robolectric:robolectric:4.7.3'
+    testImplementation 'org.robolectric:robolectric:4.10.3'
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.11.0'
+
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'com.squareup.okhttp3:mockwebserver:4.11.0'
 
     //androidTestImplementation 'androidx.test:core:1.1.0'
     //androidTestImplementation 'androidx.test:runner:1.1.1'

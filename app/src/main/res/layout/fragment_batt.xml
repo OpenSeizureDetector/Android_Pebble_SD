@@ -8,22 +8,20 @@
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/okBackgroundColor"
+        android:background="?attr/colorSurface"
         android:orientation="vertical">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/battery_history"
-            android:textColor="@color/okTextColor" />
+            android:textColor="?attr/colorOnSurface" />
 
 
-        <com.github.mikephil.charting.charts.LineChart
+        <com.jjoe64.graphview.GraphView
             android:id="@+id/battLineChart"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent">
-
-        </com.github.mikephil.charting.charts.LineChart>
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 

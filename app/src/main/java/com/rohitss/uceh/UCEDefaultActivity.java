@@ -38,6 +38,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -46,6 +48,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import uk.org.openseizuredetector.R;
 
@@ -62,10 +67,25 @@ public final class UCEDefaultActivity extends AppCompatActivity {
     @SuppressLint("PrivateResource")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        setTheme(android.R.style.Theme_Holo_Light_DarkActionBar);
+        // Use the app's Material Design theme that adapts to light/dark mode
+        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         Log.i(TAG,"onCreate()");
         setContentView(R.layout.default_error_activity);
+
+        // Configure system bar appearance to be edge-to-edge and handle insets
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+            if (controller != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                boolean isLightMode = isLightTheme();
+                controller.setAppearanceLightStatusBars(isLightMode);
+                controller.setAppearanceLightNavigationBars(isLightMode);
+            }
+        }
+
+
+        // ...existing code...
         findViewById(R.id.button_close_app).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -125,6 +145,15 @@ public final class UCEDefaultActivity extends AppCompatActivity {
             }
         });
     }
+
+    /**
+     * Check if the current theme is light mode
+     */
+    private boolean isLightTheme() {
+        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
+    }
+
 
     public String getApplicationName(Context context) {
         ApplicationInfo applicationInfo = context.getApplicationInfo();
@@ -211,7 +240,7 @@ public final class UCEDefaultActivity extends AppCompatActivity {
         String errorLog = getAllErrorDetailsFromIntent(UCEDefaultActivity.this, getIntent());
         Intent share = new Intent(Intent.ACTION_SEND);
         share.setType("text/plain");
-        share.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        share.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         share.putExtra(Intent.EXTRA_SUBJECT, "Application Crash Error Log");
         share.putExtra(Intent.EXTRA_TEXT, errorLog);
         startActivity(Intent.createChooser(share, "Share Error Log"));
@@ -250,7 +279,7 @@ public final class UCEDefaultActivity extends AppCompatActivity {
             errorReport.append(Build.PRODUCT);
             errorReport.append(LINE_SEPARATOR);
             errorReport.append("SDK: ");
-            errorReport.append(Build.VERSION.SDK);
+            errorReport.append(Build.VERSION.SDK_INT);
             errorReport.append(LINE_SEPARATOR);
             errorReport.append("Release: ");
             errorReport.append(Build.VERSION.RELEASE);

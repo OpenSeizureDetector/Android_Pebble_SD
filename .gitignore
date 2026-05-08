@@ -3,6 +3,7 @@ build
 .idea
 local.properties
 *.iml
+app/release
 app/release/app-release.apk
 app/build
 app/app.iml

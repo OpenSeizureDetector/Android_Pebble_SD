@@ -2,24 +2,20 @@
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
-        "\n
-        \nV4.3.1 - Fixed user interface issues on Android-15 and Android-16
-        \nV4.3.0  - Added support for Android 15 (API 35) and above.
-        \n        - Simplified data sharing editor by grouping events for editing.
-        \nV4.2.12 - Added buttons and menu items for 'Help' and 'Troubleshooting' to point users to the web page instructions.
-        \nV4.2   - Added support for PineTime and BangleJS Watches using Bluetooth data source.
-        \n       - Added support for Version 2 of the Garmin watch app, which reduces battery drain
-        \n       - Added new, swipeable user interface to simplify the main screen.
-        \n       - various bug fixes and stability improvements
-          "</string>
+        &lt;b>V5.0.0: CHANGES IN THIS VERSION&lt;/b>&lt;br/>
+        &lt;br/>       - Support downloadable machine learning models.
+        &lt;br/>       - First-Use setup wizard.
+        &lt;br/>       - User Interface Improvements.
+        &lt;br/>       - Significant modernisation of underlying code.
+    </string>
     <string name="UpgradeMsg">
-        Please enable the new &lt;b>Data Sharing&lt;/b> feature to help improve OpenSeizureDetector!&lt;br/>
-                (see below for details)&lt;br/>&lt;br/>
+        &lt;br/>&lt;br/>
+        Please enable the &lt;b>Data Sharing&lt;/b> feature to help improve OpenSeizureDetector!&lt;br/>
+                (select Data Sharing in the main menu)&lt;br/>&lt;br/>
 
         Please subscribe to updates at &lt;b>www.openseizuredetector.org.uk&lt;/b>
         so we can inform you of any issues.
 &lt;br/>&lt;br/>
-        &lt;b>Changes in this version:&lt;/b>&lt;br/>
     </string>
     <string name="FirstRunDlgMsg">
         For details of how OpenSeizure Detector collects and uses
@@ -50,7 +46,7 @@
     <string name="SeizureDetectorSettingsReceived">Seizure Detector Settings Received OK</string>
     <string name="WaitingForSeizureDetectorSettings">Waiting for Seizure Detector Settings...</string>
     <string name="DataSource">DataSource</string>
-    <string name="AppTitleText">OpenSeizureDetector Android App Version </string>
+    <string name="AppTitleText" translatable="false">OpenSeizureDetector</string>
     <string name="ServerRunningOK">Server Running OK</string>
     <string name="AccessServerAt">Access Server at </string>
     <string name="ServerStopped">Server Stopped</string>
@@ -101,14 +97,14 @@
     <string name="UseMobileSummary">Use mobile internet to log remote data</string>
     <string name="SeizureDetectorSettingsTitle">Seizure Detector Settings</string>
     <string name="AlarmThreshTitle">Alarm Threshold</string>
-    <string name="AlarmThreshSummary">Alarm Threshold (Default = 100)</string>
+    <string name="AlarmThreshSummary">Alarm Threshold (Default = 500)</string>
     <string name="AlarmRatioThreshTitle">Alarm Ratio Threshold</string>
     <string name="AlarmRatioThreshSummary">Alarm Ratio Threshold (Default = 57). Increase to reduce sensitivity.</string>
     <string name="AlarmFreqMaxTitle">AlarmFreqMax (Hz)</string>
     <string name="AlarmFreqMaxSummary">Maximum Frequency of ROI (Hz) (Default = 8 Hz)</string>
     <string name="AlarmFreqMinTitle">AlarmFreqMin (Hz)</string>
     <string name="AlarmFreqMinSummary">Minimum Frequency of ROI (Hz) (Default = 3 Hz)</string>
-    <string name="HRAlarmEnabledTitle">Enable Simple Heart Rate Alarm</string>
+    <string name="HRAlarmEnabledTitle">Heart Rate Alarms</string>
     <string name="HRAlarmEnabledSummary" />
     <string name="HRNullAlarmTitle">Treat a Null heart rate as an alarm condition</string>
     <string name="HRNullAlarmSummary" />
@@ -121,6 +117,7 @@
     <string name="accept_alarm">Accept Alarm</string>
     <string name="start_stop_server">Exit</string>
     <string name="install_watch_app">Install Watch App</string>
+    <string name="update_pinetime_firmware">Update PineTime\nFirmware</string>
     <string name="test_alarm_beep">Test Alarm Beep</string>
     <string name="test_warning_beep">Test Warning Beep</string>
     <string name="test_sms_alarm_notification">Test SMS Alarm Notification</string>
@@ -165,12 +162,15 @@
     <string name="menu_stop">STOP</string>
     <string name="menu_scan">SCAN</string>
     <string name="unknown_device">Unknown Device</string>
-    <string name="select_ble_device_title">Select BLE Device (for Buetooth Data Source Only)</string>
+    <string name="select_ble_device_title">Select BLE Device</string>
+    <string name="select_ble_device_summary"></string>
     <string name="select_ble_device_desc">Select Bluetooth Low Energy (BLE) Device to provide seizure (acceleration and heart rate) data) when using the Bluetooth Device data source.</string>
     <string name="basic_settings_title">Basic</string>
     <string name="basic_settings_summary">Basic Settings</string>
     <string name="general_settings_title">General</string>
     <string name="general_settings_summary">General Preferences</string>
+    <string name="data_source_settings_title">Data Source</string>
+    <string name="data_source_settings_summary">Configure Seizure Detector Data Source</string>
     <string name="alarms_settings_title">Alarms</string>
     <string name="alarms_settings_summary">Alarms Preferences</string>
     <string name="seizure_detector_settings_title">Seizure Detector</string>
@@ -217,8 +217,25 @@
     <string name="enable_audible_fault_title">Enable Audible System FaultWarnings</string>
     <string name="fault_timer_period_title">Fault Timer Duration (sec)</string>
     <string name="fault_timer_period_summary">Duration that fault alarms are muted before initiating.</string>
+    <string name="enable_data_frequency_check_title">Enable Data Sample Frequency Checks</string>
+    <string name="enable_data_frequency_check_summary">Check that data arrives at the expected frequency (5±1s seconds) and raise a fault if not.</string>
+    <string name="phone_battery_alarm_category_title">Phone Battery Alarm</string>
+    <string name="phone_battery_alarm_active_title">Enable Low Battery Fault</string>
+    <string name="phone_battery_alarm_active_summary">Raise a FAULT condition when the phone battery is critically low, to alert the carer before monitoring fails silently</string>
+    <string name="phone_battery_alarm_threshold_title">Battery Threshold (%)</string>
+    <string name="phone_battery_alarm_threshold_summary">Raise a FAULT when phone battery falls to or below this percentage (default: 5%)</string>
+    <string name="data_frequency_fault_too_fast">Data arriving too quickly: %.1fs (expected 5±1s)</string>
+    <string name="data_frequency_fault_too_slow">Data arriving too slowly: %.1fs (expected 5±1s)</string>
     <string name="use_mp3_alarm_summary">Play an MP3 file to create the alarm beeps rather than using the default tone generator.</string>
     <string name="use_mp3_alarm_title">Use MP3 Alarm Sound</string>
+    <string name="mp3_warning_sound_title">Warning Sound File</string>
+    <string name="mp3_warning_sound_summary_default">Using bundled warning sound</string>
+    <string name="mp3_alarm_sound_title">Alarm Sound File</string>
+    <string name="mp3_alarm_sound_summary_default">Using bundled alarm sound</string>
+    <string name="mp3_fault_sound_title">Fault Sound File</string>
+    <string name="mp3_fault_sound_summary_default">Using bundled fault sound</string>
+    <string name="mp3_sound_select_button">Select MP3 File…</string>
+    <string name="mp3_sound_clear_button">Use Bundled Sound</string>
     <string name="enable_sms_alarm_summary">Issue a SMS (Text Message) alarm if the seizure detector enters an alarm condition. NOTE: THE MESSAGE WILL INCLUDE THE USER\'s LOCATION. Disable this option if sharing your location is a concern.</string>
     <string name="enable_sms_alarm_title">Enable SMS Alarm</string>
     <string name="sms_numbers_summary">Telephone number(s) to notify by SMS of Alarm (comma separated).</string>
@@ -237,7 +254,7 @@
     <string name="ble_mac_addr_summary">MAC Address of BLE Data Source Device</string>
     <string name="ble_mac_addr_title">Device Address</string>
     <string name="ble_device_name_summary">Name of BLE Data Source Device</string>
-    <string name="ble_device_name_title">Device Address</string>
+    <string name="ble_device_name_title">Device Name</string>
     <string name="user_interface_settings_title">User Interface Settings</string>
     <string name="pebble_update_period_summary">Time period at which data is sent to the phone (does not affect analysis frequency - see Sample Period setting for that)</string>
     <string name="mute_period_summary">Time that alarms are muted following a long press of the UP button</string>
@@ -264,8 +281,8 @@
     <string name="sample_freq_summary">Higher Frequency is more Accurate, but uses more battery power.</string>
     <string name="sample_freq_title">Select Sample Frequency</string>
     <string name="fall_detect_title">Fall Detector Settings</string>
-    <string name="fall_detect_active_title">Enable Fall Detection Function</string>
-    <string name="fall_detect_active_summary">Enable Fall Detection Function</string>
+    <string name="fall_detect_active_title">Fall Detection Function</string>
+    <string name="fall_detect_active_summary">Fall Detection Function</string>
     <string name="fall_thresh_min_title">Fall Detection Lower Threshold (milli-g)</string>
     <string name="fall_thresh_max_title">Fall Detection Upper Threshold (milli-g)</string>
     <string name="fall_thresh_min_summary">Fall Detection Lower Threshold (milli-g)</string>
@@ -309,7 +326,7 @@
     <string name="AlarmTimeTitle">AlarmTime (sec)</string>
     <string name="O2SatSettingsTitle">Blood Oxygen Saturation Alarm Settigs</string>
     <string name="O2Sat_enabled_summary">Generate alarm if low Blood Oxygen Saturation is detected</string>
-    <string name="O2Sat_enabled_title">Enable O2 Saturation Alarm</string>
+    <string name="O2Sat_enabled_title">O2 Saturation Alarm</string>
     <string name="O2SatNullAlarmSummary">Treat an error condition (null value of oxygen saturation reading) as an alarm condition</string>
     <string name="O2SatNullAlarmTitle">Treat Null Value as Alarm</string>
     <string name="O2SatThreshMinTitle">Oxygen Saturation Low Alarm Level (%)</string>
@@ -350,16 +367,16 @@
     <string name="refreshBtn">Refresh</string>
     <string name="back">Back</string>
     <string name="unvalidatedEventsTitle">Un-Confirmed Seizure Events</string>
-    <string name="register">Register New User</string>
-    <string name="reset_password">Reset Password</string>
-    <string name="login_to_osdapi">Log in to Share Data</string>
+    <string name="register">Register\nNew User</string>
+    <string name="reset_password">Reset\nPassword</string>
+    <string name="login_to_osdapi">Data Sharing: Not Logged In</string>
     <string name="login">Log In</string>
     <string name="data_sharing_status">Data Sharing</string>
     <string name="not_logging_data">Not Logging Data</string>
     <string name="not_sharing_logged_data">Not Sharing Logged Data</string>
     <string name="not_logged_in">Not Logged In</string>
     <string name="data_sharing_setup_ok">Data Sharing Setup OK</string>
-    <string name="please_confirm_seizure_events">Please Check your Shared Seizure Events</string>
+    <string name="please_confirm_seizure_events">Please Check your Data Sharing Events</string>
     <string name="data_sharing_log_in">Data Sharing Log-In</string>
     <string name="not_updating_mobile">Not Updating using Mobile Internet</string>
     <string name="not_updating_no_network">No Network Connection</string>
@@ -433,18 +450,19 @@
         and selecting <b>Apps->OpenSeizureDetector->Permissions</b>.
     </string>
     <string name="permissions_required">Permissions Disclosure</string>
-    <string name="about_data_sharing">About Data Sharing</string>
-    <string name="privacy_policy">Privacy Policy</string>
+    <string name="about_data_sharing">About\nData Sharing</string>
+    <string name="privacy_policy">Privacy\nPolicy</string>
+    <string name="more_information">More Information</string>
     <string name="mark_unverified_events_as_unknown">Mark Unverified Events as Unknown</string>
     <string name="mark_unverified_events_unknown_dialog_title">Mark All Unverified Events as Unknown?</string>
     <string name="mark_unverified_events_unknown_dialog_message">Please confirm that all genuine seizure events have been verified before marking all unverified events as type \'unknown\'.   \n\nContinue to mark unverified events as Unknown?</string>
     <string name="not_logged_in_dialog_title">Not Logged in to Data Sharing</string>
     <string name="not_logged_in_dialog_message">You must be logged in to the Data Sharing system to be able to report seizures.</string>
     <string name="include_warnings">Include Warnings</string>
-    <string name="OsdAlarmEnabledSummary">Enable the original deterministic OpenSeizureDetector Algorithm to generate alarms.  ***Disabling this algorithm is NOT recommended except for testing purposes***</string>
-    <string name="OsdAlarmEnabledTitle">Enable Original OSD Algorithm</string>
-    <string name="CnnAlarmEnabledTitle">Enable AI (Neural Network) Algorithm</string>
-    <string name="CnnAlarmEnabledSummary">Enable the Artificial Intelligence (Neural Network) algorithm to generate alarms.</string>
+    <string name="OsdAlarmEnabledSummary">Original deterministic OpenSeizureDetector Algorithm to generate alarms.  ***Disabling this algorithm is NOT recommended except for testing purposes***</string>
+    <string name="OsdAlarmEnabledTitle">Original OSD Algorithm</string>
+    <string name="CnnAlarmEnabledTitle">Machine Learning (ML or \'AI\') Algorithm</string>
+    <string name="CnnAlarmEnabledSummary">Machine Learning / Artificial Intelligence / Neural Network algorithm to generate alarms.</string>
     <string name="AlgorithmSelectionTitle">Seizure Detection Algorithms Selection</string>
     <string name="mark_unverified_events_false_alarm_dialog_title">Mark all Unverified Events as False Alarm</string>
     <string name="mark_unverified_events_false_alarm_dialog_message">Please confirm that all genuine seizure events have been verified before marking all unverified events as type \'False Alarm\'.   \n\nContinue to mark unverified events as False Alarm?</string>
@@ -453,7 +471,7 @@
     <string name="LogNDATitle">Log Normal Daily Activities (NDA)</string>
     <string name="NDATimerStartTimeParseError">Error Parsing NDATimerStartTime</string>
     <string name="include_nda">Include NDA</string>
-    <string name="start_nda">Start NDA Logging</string>
+    <string name="start_nda">Start/Stop NDA Logging</string>
     <string name="stop_nda">Stop NDA Logging</string>
     <string name="stop_nda_logging_dialog_title">Stop NDA Logging?</string>
     <string name="stop_nda_logging_dialog_meassage">Stop Normal Daily Activity (NDA) Logging?</string>
@@ -462,13 +480,13 @@
     <string name="NDATimeRemaining">"NDA Logging Time Remaining (hours): "</string>
     <string name="stop_nda_menu_title">Stop NDA</string>
     <string name="start_nda_menu_title">Start NDA</string>
-    <string name="seizure_probability">Seizure Probability (from CNN) (%)</string>
+    <string name="seizure_probability">Current Seizure Probability</string>
     <string name="eventid">EventId</string>
     <string name="event_date">Event Date</string>
     <string name="alarm_state">Alarm State</string>
     <string name="notes_about_event">notes about event</string>
     <string name="SpO2">O2 Sat</string>
-    <string name="data_sharing">Data Sharing</string>
+    <string name="data_sharing">Data\nSharing</string>
     <string name="prevent_bat_opt_summary">Do not display the battery optimisation dialog on start-up (some phones report that OpenSeizureDetector is optimised, even if it is not, so the dialog is a nuissance)</string>
     <string name="prevent_bat_opt_title">Inhibit Battery Optimisation Warning Dialog</string>
     <string name="o2_sat">O2 Sat</string>
@@ -484,8 +502,8 @@
     <string name="prune_database_dialog_msg">This will remove all data from the database that is more than %d days old.\nThis can NOT be undone.\nAre you sure?</string>
     <string name="yes_button_title">YES</string>
     <string name="no_button_title">NO</string>
-    <string name="privacy_policy_button_title">Privacy Policy</string>
-    <string name="data_sharing_button_title">Data Sharing</string>
+    <string name="privacy_policy_button_title">Privacy\nPolicy</string>
+    <string name="data_sharing_button_title">Data\nSharing</string>
     <string name="HRAdaptiveAlarmEnabledTitle">Enable Adaptive Threshold Heart Rate Alarm</string>
     <string name="HRAdaptiveAlarmWindowTitle">Window Size for Adaptive Threshold Calculation</string>
     <string name="HRAdaptiveAlarmWindowSummary">Moving Average Time Window (seconds) must be a multiple of 5 seconds</string>
@@ -509,8 +527,16 @@
     <string name="ml_sd_settings_title">Machine Learning Seizure Detector Settings</string>
     <string name="ml_sd_threshold_summary">Movement Threshold (% standard deviation) to activate the Machine Learning Algorithm</string>
     <string name="ml_sd_threshold_title">Movement Threshold (%std)</string>
+    <string name="ml_prob_threshold_title" translatable="false">Seizure Probability Threshold (%)</string>
+    <string name="ml_prob_threshold_summary" translatable="false">Minimum seizure probability (%) required for the ML algorithm to trigger an alarm</string>
     <string name="ml_sd_modelid_title">AI Model ID</string>
     <string name="ml_sd_modelid_summary">ID number of machine learning (AI) model to be used - users should not edit this, but use the model Manager page instead.</string>
+    <string name="ml_model_select_title">Select ML Model</string>
+    <string name="ml_model_select_summary">Download and select a machine learning model for seizure detection</string>
+    <string name="ml_model_download_in_progress">Downloading model...</string>
+    <string name="ml_model_download_failed">Failed to download model</string>
+    <string name="ml_model_download_success">Model downloaded</string>
+    <string name="ml_model_input_format_label">Input format: %1$d</string>
     <string name="title_activity_ml_model_manager">MlModelManager</string>
     <string name="FidgetSettingsTitle">Fidget Detector Settings</string>
     <string name="FidgetDetectorEnabledTitle">Enable Fidget Detector</string>
@@ -519,6 +545,12 @@
     <string name="FidgetDetectorThresholdTitle">Fidget Detector Threshold (%)</string>
     <string name="FidgetDetectorPeriodTitle">Fidget Detector Period (minutes)</string>
     <string name="FidgetDetectorPeriodSummary">A fault is generated if no movement (fidgets) are detected for more than the Fidget Detector Period.</string>
+    <string name="display_main_activity_on_alarm_title">Display Main Activity on Alarm</string>
+    <string name="display_main_activity_on_alarm_summary">Bring the Main Activity to the foreground when an alarm occurs (if enabled).</string>
+    <string name="selected_model_label">Selected model: %1$s</string>
+    <string name="selected_model_framework_label">Framework: %1$s</string>
+    <string name="selected_model_input_label">Input: %1$s, size %2$d</string>
+    <string name="no_model_selected">Selected model: None</string>
 
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
@@ -571,11 +603,13 @@
     <string name="use_new_ui_title">Use New User Interface</string>
     <string name="heart_rate_algorithm">Heart Rate Algorithm</string>
     <string name="heart_rate_history_bpm">"Heart Rate History (bpm): "</string>
+    <string name="fall_algorithm">Fall Detection Algorithm</string>
+    <string name="fall_accel_history_mg">"Fall Accel History (mg): "</string>
     <string name="minutes">minutes</string>
     <string name="algorithms">"Algorithms: "</string>
     <string name="battery_history">Battery History</string>
     <string name="watch_batt_hist">Watch Battery History (%)</string>
-    <string name="ble_connected_warning_text">NOTE: Devices will not appear on this list if they are already connected - disconnect device from GadgetBridge etc. to allow it to be selected here</string>
+    <string name="ble_connected_warning_text">NOTEs:\n  1: Devices will not appear on this list if they are already connected - disconnect device from GadgetBridge etc. to allow it to be selected here. \n  2: The PineTime bluetooth radio might go to sleep when not connected - press the button on the PineTime watch to wake it up to make sure it is detected.</string>
     <string name="BTPermissionWarning">Bluetooth Permissions Not Granted</string>
     <string name="BTpermissions_required">Bluetooth Permissions Required</string>
     <string name="BT_permissions_rationale">Bluetooth permissions are required to communicate with the bluetooth (BLE) data source</string>
@@ -592,4 +626,164 @@
     <string name="sms_false_alarm_message_summary">Text of \'False Alarm\' SMS message</string>
     <string name="sms_false_alarm_message_title">SMS False Alarm Message</string>
     <string name="group_remote_events">Group Remote Events</string>
+    <string name="ml_model_update_check_title">ML Model Update Check Frequency</string>
+    <string name="ml_model_update_check_summary">How often to check for new recommended ML models</string>
+    <string name="ml_model_update_available_title">New ML Model Available</string>
+    <string name="ml_model_update_available_message">A new recommended machine learning model is available:\n\n%1$s\n\nWould you like to download it now?</string>
+    <string name="ml_model_update_download_button">Download Now</string>
+    <string name="ml_model_update_later_button">Remind Me Later</string>
+    <string name="ml_model_update_skip_button">Skip This Version</string>
+    <string name="ml_model_checking_for_updates">Checking for ML model updates...</string>
+
+    <!-- Multi-model ML preferences -->
+    <string name="ml_use_multi_model_title">Use Multiple ML Models</string>
+    <string name="ml_use_multi_model_summary">Enable running multiple ML models simultaneously for voting</string>
+    <string name="ml_num_models_title">Number of ML Models</string>
+    <string name="ml_num_models_summary">How many ML models to use (1-5)</string>
+    <string name="ml_model_slot_title">ML Model %1$d</string>
+    <string name="ml_model_slot_summary">Configure ML model slot %1$d</string>
+    <string name="ml_model_enabled_title">Enable Model %1$d</string>
+    <string name="ml_model_weight_title">Model %1$d Weight</string>
+    <string name="ml_model_weight_summary">Weight for weighted voting (default 1.0)</string>
+
+    <!-- Voting strategy preferences -->
+    <string name="voting_strategy_title">Algorithm Voting Strategy</string>
+    <string name="voting_strategy_summary">How to combine results from multiple algorithms</string>
+
+    <string name="syslog_current_file">Current Log: %1$s</string>
+    <string name="syslog_refresh">Refresh</string>
+    <string name="syslog_select_file">Select</string>
+    <string name="syslog_export">Export</string>
+    <string name="syslog_no_files">No log files found</string>
+    <string name="syslog_file_tv">No log file selected</string>
+    <string name="syslog_exported">Log file exported to Downloads folder</string>
+    <string name="syslog_export_failed">Failed to export log file</string>
+    <string name="syslog_select_file_title">Select Log File</string>
+    <string name="syslog_level_title">System Log File Level</string>
+    <string name="syslog_level_summary">Choose the minimum logcat level mirrored to persistent system log files.</string>
+
+    <!-- Onboarding Welcome Fragment -->
+    <string name="onboarding_welcome_title">Welcome to OpenSeizureDetector</string>
+    <string name="onboarding_welcome_subtitle">This wizard will help you configure OpenSeizureDetector for your needs.</string>
+    <string name="onboarding_welcome_description">You will be asked to:\n\n• Choose your data source\n• Configure the data source\n• Select seizure detection algorithms\n\nYou can change these settings later in the Settings menu.</string>
+
+    <!-- Onboarding Data Source Fragment -->
+    <string name="onboarding_datasource_title">Choose Data Source</string>
+    <string name="onboarding_datasource_subtitle">Select where seizure detection data will come from:</string>
+    <string name="onboarding_datasource_phone">Phone (Demo Mode)</string>
+    <string name="onboarding_datasource_phone_desc">Uses phone\'s accelerometer for testing. Not suitable for real seizure detection.</string>
+    <string name="onboarding_datasource_pinetime">PineTime Watch (Recommended)</string>
+    <string name="onboarding_datasource_pinetime_desc">Uses a low-cost PineTime watch for reliable seizure detection.</string>
+    <string name="onboarding_datasource_garmin">Garmin Watch</string>
+    <string name="onboarding_datasource_garmin_desc">Uses a Garmin smart watch for reliable seizure detection and heart rate monitoring.</string>
+    <string name="onboarding_datasource_network">Network (Remote Monitoring)</string>
+    <string name="onboarding_datasource_network_desc">Connect to another device running OpenSeizureDetector for remote alarm annunciation.</string>
+
+    <!-- Onboarding Algorithms Fragment -->
+    <string name="onboarding_algorithms_title">Select Detection Algorithms</string>
+    <string name="onboarding_algorithms_subtitle">Choose which seizure detection algorithms to use. You can enable multiple algorithms.</string>
+    <string name="onboarding_algorithms_ml">ML Algorithm (Recommended)</string>
+    <string name="onboarding_algorithms_ml_desc">Machine Learning (\'AI\') detection.\nGives good seizure detection reliability with fewer false alarms than the original OSD Algorithm.\nFalse alarm performance should improve over time as users report false alarms and real seizures using our \'Data Sharing\' facility.</string>
+    <string name="onboarding_algorithms_hr">Heart Rate Alerts</string>
+    <string name="onboarding_algorithms_hr_desc">Detects abnormal heart rate patterns. Currently requires Garmin watch for reliable heart rate measurement.</string>
+    <string name="onboarding_algorithms_osd">OSD Algorithm</string>
+    <string name="onboarding_algorithms_osd_desc">Original OpenSeizureDetector Deterministic Algorithm (OSD)\nProven tonic-clonic seizure detection - good for night time use, but gives false alarms for some normal activities that involve repetitive movements (brushing teeth, washing dishes etc.).</string>
+    <string name="onboarding_algorithms_flap">OSD Algorithm with \'Flap\' Detection</string>
+    <string name="onboarding_algorithms_flap_desc">Enhanced OSD algorithm that detects arm flapping movements for maximum night time tonic-clonic seizure detection performance.</string>
+    <string name="onboarding_algorithms_note">Note: At least one algorithm should be enabled for seizure detection to work.</string>
+
+    <!-- Onboarding Complete Fragment -->
+    <string name="onboarding_complete_title">Setup Complete!</string>
+    <string name="onboarding_complete_subtitle">OpenSeizureDetector is ready to use.</string>
+    <string name="onboarding_complete_summary_title">Configuration Summary</string>
+    <string name="onboarding_complete_datasource_label">Data Source:</string>
+    <string name="onboarding_complete_algorithms_label">Enabled Algorithms:</string>
+    <string name="onboarding_complete_loading">Loading...</string>
+    <string name="onboarding_complete_description">You can change these settings at any time from the Settings menu.\n\nPress \'Get Started\' to begin using OpenSeizureDetector.</string>
+
+    <!-- Onboarding PineTime Configuration Fragment -->
+    <string name="onboarding_pinetime_config_step1_title">1. Install PineTime Updater App</string>
+    <string name="onboarding_pinetime_config_install_updater_btn">Install PineTime Updater App</string>
+    <string name="onboarding_pinetime_config_checking_status">Checking if PineTime Updater app is installed...</string>
+    <string name="onboarding_pinetime_config_updater_installed">✓ PineTime Updater app is installed</string>
+    <string name="onboarding_pinetime_config_updater_not_installed">✗ PineTime Updater app is not installed. Please install it from the Google Play Store using the button above, then press the back button to return to this screen.</string>
+    <string name="onboarding_pinetime_config_error_checking">Error checking app status</string>
+    <string name="onboarding_pinetime_config_step2_title">2. Install OpenSeizureDetector Firmware onto PineTime Watch</string>
+    <string name="onboarding_pinetime_config_install_firmware_btn">Install PineTime Firmware</string>
+    <string name="onboarding_pinetime_config_firmware_note">Install the custom OpenSeizureDetector firmware onto the PineTime watch, so that it will collect and send the data needed for seizure detection.\nNote:  You will be asked to grant the permissions needed to access the watch over bluetooth and display a notification to show progress during the update.</string>
+    <string name="onboarding_pinetime_config_step3_title">3. Connect your PineTime watch to OpenSeizureDetector via Bluetooth</string>
+    <string name="onboarding_pinetime_config_scan_btn">Scan for PineTime Watch</string>
+    <string name="onboarding_pinetime_config_no_device_selected">No device selected</string>
+    <string name="onboarding_pinetime_config_next_step">Next, we\'ll configure the seizure detection algorithm.</string>
+
+    <!-- Onboarding Phone Configuration Fragment -->
+    <string name="onboarding_phone_config_title">Demo Mode Configuration</string>
+    <string name="onboarding_phone_config_about_title">About Demo Mode:</string>
+    <string name="onboarding_phone_config_description">Demo mode uses your phone\'s built-in accelerometer to detect movement to demonstrate OpenSeizureDetector.  This is useful for testing the app\'s functionality, but it MUST NOT be used as a seizure detector in this mode.\n\nWhen the main app starts, you will be asked for permissions about monitoring activity in order to enable access to the accelerometer.</string>
+    <string name="onboarding_phone_config_important_title">Important:</string>
+    <string name="onboarding_phone_config_warning">⚠ Demo mode is NOT suitable for real seizure detection. The phone\'s accelerometer cannot reliably detect seizures when the phone is not attached to the wrist.\n\nFor real seizure detection, please use a wrist watch (PineTime or Garmin).</string>
+    <string name="onboarding_phone_config_switch_later">To switch to a different data source later, go to Settings menu in the main app screen after this wizard completes.</string>
+    <string name="onboarding_phone_config_next_step">Next, we\'ll configure the seizure detection algorithm.</string>
+
+    <!-- Onboarding Network Configuration Fragment -->
+    <string name="onboarding_network_config_title">Configure Network Connection</string>
+    <string name="onboarding_network_config_about_title">About Network Mode:</string>
+    <string name="onboarding_network_config_description">• Connects to another device running OpenSeizureDetector to generate Alarm and Warning Notifications\n\n• This device will receive alarm notifications from the remote device\n\n• Both devices must be on the same WiFi network\n\n• Useful if you can not hear the main OpenSeizureDevice alarms from another part of the house</string>
+    <string name="onboarding_network_config_find_device">To find the remote device\'s IP address, look on the \'System\' tab of the main OpenSeizureDetector screen for\n\'Access Server at: http://xxx.xxx.xxx.xxx:8080\',\nor check your router\'s client list.</string>
+    <string name="onboarding_network_config_ip_label">Remote Device IP Address</string>
+    <string name="onboarding_network_config_ip_hint">192.168.1.100</string>
+    <string name="onboarding_network_config_validation_prompt">Enter the IP address of the OpenSeizureDetector device above</string>
+    <string name="onboarding_network_config_retry_btn">Retry Validation</string>
+
+    <!-- Onboarding Other Configuration Fragment -->
+    <string name="onboarding_other_config_title">Data Source Configuration</string>
+    <string name="onboarding_other_config_subtitle">Complete your setup in Settings</string>
+    <string name="onboarding_other_config_needed_title">Additional Configuration Needed</string>
+    <string name="onboarding_other_config_needed_desc">Your selected data source may require additional configuration that cannot be completed in this wizard.</string>
+    <string name="onboarding_other_config_complete_title">To complete your configuration:</string>
+    <string name="onboarding_other_config_instructions">1. Finish this wizard by tapping \'Get Started\'\n2. Go to Settings in the main application\n3. Look for \'Data Source\' or \'Bluetooth\' settings\n4. Complete any additional setup steps there</string>
+    <string name="onboarding_other_config_help_title">Need Help?</string>
+    <string name="onboarding_other_config_help_text">For detailed instructions on configuring your specific device, please visit:\n\nhttps://github.com/OpenSeizureDetector/OpenSeizureDetector\n\nYou can also contact our support team through the app\'s settings.</string>
+    <string name="onboarding_other_config_next_step">Next, we\'ll configure the seizure detection algorithm.</string>
+
+    <!-- Onboarding Garmin Configuration Fragment -->
+    <string name="onboarding_garmin_config_title">Configure Garmin Watch</string>
+    <string name="onboarding_garmin_config_subtitle">Set up your Garmin watch for seizure detection - refer to the \'Garmin Seizure Detector\' page on the OpenSeizureDetector.org.uk web site for detailed instructions</string>
+    <string name="onboarding_garmin_config_steps_title">Installation Steps:</string>
+    <string name="onboarding_garmin_config_step1">1. Pair the watch with your phone using the Garmin Connect app as per the Garmin instructions.</string>
+    <string name="onboarding_garmin_config_step2">2. Download the GarminSD watch app file from the OpenSeizureDetector source code repository onto a computer (the installation can not be carried out on a phone)</string>
+    <string name="onboarding_garmin_config_step3">3. Connect your watch to the computer via USB.</string>
+    <string name="onboarding_garmin_config_step4">4. Copy the watch app file from the computer onto the watch.</string>
+    <string name="onboarding_garmin_config_step5">5. Launch the OpenSeizureDetector app on your watch</string>
+    <string name="onboarding_garmin_config_important_title">Important:</string>
+    <string name="onboarding_garmin_config_important_note">• Make sure the Garmin watch app is running before continuing</string>
+    <string name="onboarding_garmin_config_next_step">Next, we\'ll configure the seizure detection algorithm.</string>
+    <string name="flap_alarm_title">Flap Alarm</string>
+
+    <string name="pinetime_device_name_placeholder" translatable="false">PineTime</string>
+    <string name="pinetime_updater_package" translatable="false">uk.org.openseizuredetector.pinetime</string>
+    <string name="pinetime_device_display_format">✓ %1$s\nMAC: %2$s</string>
+    <string name="validating_server">Validating server...</string>
+    <string name="enter_ip_address_prompt">Enter the IP address of the OpenSeizureDetector device</string>
+    <string name="invalid_ip_address_format">Invalid IP address format</string>
+    <string name="enter_valid_ip_address">Please enter a valid IP address (e.g., 192.168.1.100)</string>
+    <string name="cannot_launch_pinetime_updater">Cannot launch PineTime Updater</string>
+    <string name="pinetime_updater_not_installed_toast">PineTime Updater not installed. Install from Play Store.</string>
+    <string name="error_message_format">Error: %1$s</string>
+    <string name="server_validated_successfully">✓ Server validated successfully</string>
+    <string name="cannot_reach_server_error">✗ Cannot reach server. Please check:\n• IP address is correct\n• Server is running\n• Device is on the same WiFi network</string>
+    <string name="cannot_open_google_play">Cannot open Google Play Store</string>
+
+    <!-- Foreground service startup failure strings -->
+    <string name="fgs_error_channel_name">OpenSeizureDetector Errors</string>
+    <string name="fgs_start_failed_toast">OpenSeizureDetector could not start monitoring — please restart the app or reboot your phone.</string>
+    <string name="fgs_start_failed_notification_title">OSD Monitoring Not Started</string>
+    <string name="fgs_start_failed_notification_text">OpenSeizureDetector could not start its background monitoring service. This can happen if Android has reached its daily limit for this type of background service. Please restart the app. If the problem persists, reboot your phone.</string>
+    <string name="view_system_logs">View System Logs</string>
+    <string name="basic_mode_summary">Simplify the interface by hiding advanced settings and tabs</string>
+    <string name="basic_mode">Basic Mode</string>
+    <string name="developer_mode_summary">Show additional options for developers</string>
+    <string name="developer_mode">Developer Mode</string>
+    <string name="app_theme">App Theme</string>
+    <string name="app_theme_summary">Choose between light, dark, or system default theme</string>
 </resources>

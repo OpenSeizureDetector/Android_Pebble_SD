@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Arrays used for Machine Learning Model preferences -->
+<resources>
+    <string-array name="ml_model_update_periods">
+        <item>"Never"</item>
+        <item>"Daily"</item>
+        <item>"Weekly"</item>
+        <item>"Monthly"</item>
+    </string-array>
+    <string-array name="ml_model_update_periods_values">
+        <item>"0"</item>
+        <item>"86400"</item>
+        <item>"604800"</item>
+        <item>"2592000"</item>
+    </string-array>
+
+    <!-- Voting strategies for combining multiple algorithm results -->
+    <string-array name="voting_strategies">
+        <item>Any Algorithm (OR)</item>
+        <item>Majority Vote</item>
+        <item>All Algorithms (AND)</item>
+        <item>Weighted Average</item>
+    </string-array>
+    <string-array name="voting_strategies_values">
+        <item>ANY</item>
+        <item>MAJORITY</item>
+        <item>UNANIMOUS</item>
+        <item>WEIGHTED</item>
+    </string-array>
+</resources>

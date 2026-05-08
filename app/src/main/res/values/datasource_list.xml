@@ -7,12 +7,30 @@
         <item>"Pebble Watch"</item>
         <item>"Phone Sensor (for testing)"</item>
         <item>"Network (for Wifi Alerts)"</item>
+        <item>"Android Wear"</item>
     </string-array>
     <string-array name="datasource_list_values">
         <item>"Garmin"</item>
         <item>"BLE"</item>
         <item>"BLE2"</item>
         <item>"Pebble"</item>
+        <item>"Phone"</item>
+        <item>"Network"</item>
+        <item>"AndroidWear"</item>
+    </string-array>
+
+    <!-- Normal (non-developer) mode data source list.
+         Edit this to remove entries that should not appear in normal mode.
+         The values array must stay in sync with the entries array. -->
+    <string-array name="datasource_list_normal">
+        <item>"PineTime (BLE2)"</item>
+        <item>"Garmin Watch"</item>
+        <item>"Phone Sensor (for testing)"</item>
+        <item>"Network (for Wifi Alerts)"</item>
+    </string-array>
+    <string-array name="datasource_list_normal_values">
+        <item>"BLE2"</item>
+        <item>"Garmin"</item>
         <item>"Phone"</item>
         <item>"Network"</item>
     </string-array>

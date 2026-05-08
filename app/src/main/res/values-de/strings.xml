@@ -38,8 +38,7 @@
   <string name="SeizureDetectorSettingsReceived">Anfall-Detector Einstellungen empfangen OK</string>
   <string name="WaitingForSeizureDetectorSettings">Warte auf Anfall-Detector Einstellungen...</string>
   <string name="DataSource">Daten-Quelle</string>
-  <string name="AppTitleText">OpenSeizureDetector Android App Version </string>
-  <string name="ServerRunningOK">Server laeuft OK\n</string>
+    <string name="ServerRunningOK">Server laeuft OK\n</string>
   <string name="AccessServerAt">Server-Zugriff bei </string>    <string name="ServerStopped">Server gestoppt</string>
   <string name="Warning">WARNUNG</string>
   <string name="Mute">PAUSE</string>

@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Landscape-optimized LogManagerControlActivity with 2-column layout:
+     Left: Static controls (tabs, buttons, checkboxes) - 280dp
+     Right: ListView - remaining space
+-->
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_layout_log_manager_control"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context="uk.org.openseizuredetector.activity.logging.LogManagerControlActivity">
+
+    <LinearLayout
+        android:id="@+id/log_manager_control_content_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:background="?attr/colorSurface">
+
+        <!-- Left Column: Static Controls (280dp) - SCROLLABLE -->
+        <ScrollView
+            android:layout_width="280dp"
+            android:layout_height="match_parent"
+            android:fillViewport="false">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp"
+                android:background="?attr/colorSurfaceVariant">
+
+            <!-- Data View Selection Tabs -->
+            <com.google.android.material.tabs.TabLayout
+                android:id="@+id/data_view_tabs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:background="?attr/colorSurface"
+                app:tabTextColor="?attr/colorOnSurfaceVariant"
+                app:tabSelectedTextColor="?attr/colorOnSurface"
+                app:tabIndicatorColor="?attr/colorPrimary"
+                app:tabIndicatorHeight="3dp"
+                app:tabMode="scrollable"
+                app:tabGravity="start" />
+
+            <!-- Title -->
+            <TextView
+                android:id="@+id/shared_data_title_tv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnSurface"
+                android:text="@string/remote_database"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Description -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnSurface"
+                android:text="@string/check_seizures_message"
+                android:textSize="12sp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Buttons Row 1 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp"
+                android:gravity="center_vertical">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/auth_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:strokeColor="?attr/colorOutline"
+                    android:textColor="?attr/colorOnSurface"
+                    android:text="@string/authenticate"
+                    android:layout_marginEnd="4dp"
+                    android:minWidth="0dp"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
+                    android:textSize="11sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/refresh_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:strokeColor="?attr/colorOutline"
+                    android:textColor="?attr/colorOnSurface"
+                    android:text="@string/refreshBtn"
+                    android:minWidth="0dp"
+                    android:paddingLeft="4dp"
+                    android:paddingRight="4dp"
+                    android:textSize="11sp" />
+
+                <ProgressBar
+                    android:id="@+id/remoteAccessPb"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginStart="4dp"
+                    android:visibility="invisible" />
+            </LinearLayout>
+
+            <!-- Checkboxes -->
+            <CheckBox
+                android:id="@+id/group_events_cb"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:textColor="?attr/colorOnSurface"
+                android:text="@string/group_remote_events"
+                android:buttonTint="?attr/colorOnSurface"
+                android:textSize="11sp"
+                android:layout_marginBottom="0dp" />
+
+            <CheckBox
+                android:id="@+id/include_warnings_cb"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnSurface"
+                android:text="@string/include_warnings"
+                android:buttonTint="?attr/colorOnSurface"
+                android:textSize="11sp"
+                android:layout_marginBottom="0dp" />
+
+            <CheckBox
+                android:id="@+id/include_nda_cb"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnSurface"
+                android:text="@string/include_nda"
+                android:buttonTint="?attr/colorOnSurface"
+                android:textSize="11sp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- System Log Controls (for syslog tab) -->
+            <TextView
+                android:id="@+id/syslog_file_tv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/syslog_current_file"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="11sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="12dp"
+                android:visibility="gone">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/syslog_refresh_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:strokeColor="?attr/colorOutline"
+                    android:textColor="?attr/colorOnSurface"
+                    android:text="@string/syslog_refresh"
+                    android:layout_marginBottom="4dp"
+                    android:padding="0dp"
+                    android:minWidth="0dp"
+                    android:textSize="11sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/syslog_select_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:strokeColor="?attr/colorOutline"
+                    android:textColor="?attr/colorOnSurface"
+                    android:text="@string/syslog_select_file"
+                    android:layout_marginBottom="4dp"
+                    android:padding="0dp"
+                    android:minWidth="0dp"
+                    android:textSize="11sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/syslog_export_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:strokeColor="?attr/colorOutline"
+                    android:textColor="?attr/colorOnSurface"
+                    android:text="@string/syslog_export"
+                    android:padding="0dp"
+                    android:minWidth="0dp"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+        </ScrollView>
+
+        <!-- Right Column: ListView (flexible width) -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <!-- Remote Events ListView -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/remote_list_card"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="8dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:strokeColor="?attr/colorOutline"
+                app:strokeWidth="1dp"
+                app:cardCornerRadius="8dp"
+                android:visibility="visible">
+
+                <ListView
+                    android:id="@+id/remoteEventsLv"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:divider="@android:color/darker_gray"
+                    android:dividerHeight="1dp" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Local Events ListView -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/local_list_card"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="8dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:strokeColor="?attr/colorOutline"
+                app:strokeWidth="1dp"
+                app:cardCornerRadius="8dp"
+                android:visibility="gone">
+
+                <ListView
+                    android:id="@+id/eventLogListView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:divider="@android:color/darker_gray"
+                    android:dividerHeight="1dp" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- System Logs ListView -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/syslog_list_card"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="8dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="?attr/colorSurface"
+                app:strokeColor="?attr/colorOutline"
+                app:strokeWidth="1dp"
+                app:cardCornerRadius="8dp"
+                android:visibility="gone">
+
+                <ListView
+                    android:id="@+id/sysLogListView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:divider="@android:color/darker_gray"
+                    android:dividerHeight="1dp" />
+            </com.google.android.material.card.MaterialCardView>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+
+
+
+
+
