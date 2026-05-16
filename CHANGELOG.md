@@ -1,5 +1,6 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.0.1  - Improved timeout error handling in authenticate activity
     V5.0.0  - Build for publication on Play Store  
             - Fixed issue with low battery warning not emitting fault sounds'
             - Corrected colour of OK/Cancel buttons in data sharing dialogs. 
