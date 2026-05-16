@@ -314,7 +314,7 @@ public class AuthenticateActivity extends AppCompatActivity {
                         mWac.authenticate(uname, passwd, new WebApiConnection.StringCallback() {
                             @Override
                             public void accept(String retVal) {
-                                if (retVal != null) {
+                                if (retVal != null && !retVal.startsWith("ERROR:")) {
                                     Log.d(TAG, "Authentication Success - token is " + retVal);
                                     mUtil.showToast("Login Successful");
                                     saveAuthToken(retVal);
@@ -325,9 +325,16 @@ public class AuthenticateActivity extends AppCompatActivity {
                                         mLm.triggerImmediateUpload();
                                     }
                                 } else {
-                                    Log.e(TAG, "onOk: Authentication failure for " + uname + ", " + passwd);
-                                    mUtil.showToast("ERROR: Authentication Failed - Please Try Again");
-                                    Log.i(TAG, "AuthActivity - Authorisation failed for " + uname + ", " + passwd);
+                                    Log.e(TAG, "onOk: Authentication failure for " + uname + " - error: " + retVal);
+                                    // Show a specific message so the user knows whether to check
+                                    // their credentials or their network connection.
+                                    if ("ERROR:TIMEOUT".equals(retVal)) {
+                                        mUtil.showToast("Server timeout - please check your connection and try again");
+                                    } else if ("ERROR:NETWORK".equals(retVal)) {
+                                        mUtil.showToast("Network error - please check your connection and try again");
+                                    } else {
+                                        mUtil.showToast("Authentication Failed - please check your username and password");
+                                    }
                                 }
                             }
                         });

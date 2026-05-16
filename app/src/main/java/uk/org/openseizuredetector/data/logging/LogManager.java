@@ -598,20 +598,14 @@ public class LogManager {
      */
 
     /**
-     * Trigger an immediate upload attempt, typically called when network state changes
-     * or after successful authentication.
-     * Delegates to LogUploader.
+     * Trigger an immediate upload attempt after successful authentication.
+     * Does NOT refresh the Volley queue — the queue is healthy at this point and recycling it
+     * would cancel any in-flight requests (e.g. getUserProfile) that were fired immediately
+     * after login.  Queue recycling is handled separately by onNetworkStateChanged() when
+     * an actual network transition occurs.
      */
     public void triggerImmediateUpload() {
-        Log.i(TAG, "triggerImmediateUpload() - triggered by network change or authentication");
-
-        // Refresh the network request queue to ensure we're using current network state
-        if (!USE_FIREBASE_BACKEND && mWac != null) {
-            if (mWac instanceof WebApiConnection_osdapi) {
-                ((WebApiConnection_osdapi) mWac).onNetworkChange();
-            }
-        }
-
+        Log.i(TAG, "triggerImmediateUpload() - triggered by authentication");
         writeToRemoteServer();
     }
 

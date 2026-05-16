@@ -5,9 +5,12 @@ import android.os.Handler;
 import uk.org.openseizuredetector.data.logging.Log;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.NetworkError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
+import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.StringRequest;
@@ -107,7 +110,16 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                         }
                         mServerConnectionOk = false;
                         setStoredToken(null);
-                        callback.accept(null);
+                        // Pass an error-type sentinel so the caller can display a specific message.
+                        // Using a dedicated prefix avoids changing the StringCallback interface.
+                        if (error instanceof TimeoutError) {
+                            callback.accept("ERROR:TIMEOUT");
+                        } else if (error instanceof NetworkError
+                                || (error != null && error.networkResponse == null)) {
+                            callback.accept("ERROR:NETWORK");
+                        } else {
+                            callback.accept("ERROR:AUTH_FAILURE");
+                        }
                     }
                 }) {
             // Note, this is overriding part of StringRequest, not one of the sub-classes above!
@@ -120,6 +132,13 @@ public class WebApiConnection_osdapi extends WebApiConnection {
                 return params;
             }
         };
+
+        // Use a generous timeout so that a slow server does not trigger a spurious auth failure.
+        // Default Volley timeout is ~2.5 s which is too short for an overloaded server.
+        req.setRetryPolicy(new DefaultRetryPolicy(
+                15000,                          // 15-second socket timeout
+                1,                              // 1 retry
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
 
         mQueue.add(req);
         return (true);
