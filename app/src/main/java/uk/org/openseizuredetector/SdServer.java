@@ -1185,9 +1185,10 @@ public class SdServer extends Service implements SdDataReceiver {
         if (mPhoneBatteryAlarmActive) {
             int battLevel = getPhoneBatteryLevel();
             Log.v(TAG, "onSdDataReceived() - phone battery level=" + battLevel + "%");
-            if (battLevel >= 0 && battLevel <= mPhoneBatteryAlarmThreshold) {
+            boolean charging = isPhoneCharging();
+            if (battLevel >= 0 && battLevel <= mPhoneBatteryAlarmThreshold && !charging) {
                 Log.w(TAG, "PHONE_BATTERY_LOW: battLevel=" + battLevel
-                        + "% <= threshold=" + mPhoneBatteryAlarmThreshold + "%");
+                        + "% <= threshold=" + mPhoneBatteryAlarmThreshold + "% (not charging)");
                 sdData.mPhoneBatteryFaultStanding = true;
             } else {
                 sdData.mPhoneBatteryFaultStanding = false;
@@ -1582,6 +1583,25 @@ public class SdServer extends Service implements SdDataReceiver {
         } catch (Exception e) {
             Log.e(TAG, "getPhoneBatteryLevel() - exception: " + e.getMessage());
             return -1;
+        }
+    }
+
+    /**
+     * Returns true if the phone is currently connected to a charger (charging or full),
+     * false otherwise (including when the status cannot be determined).
+     * Uses the same sticky ACTION_BATTERY_CHANGED broadcast as getPhoneBatteryLevel().
+     */
+    private boolean isPhoneCharging() {
+        try {
+            Intent batteryStatus = registerReceiver(null,
+                    new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+            if (batteryStatus == null) return false;
+            int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+            return status == BatteryManager.BATTERY_STATUS_CHARGING
+                    || status == BatteryManager.BATTERY_STATUS_FULL;
+        } catch (Exception e) {
+            Log.e(TAG, "isPhoneCharging() - exception: " + e.getMessage());
+            return false;
         }
     }
 
