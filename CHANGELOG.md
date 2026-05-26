@@ -1,5 +1,7 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.0.2  - Further improvements to user interface associated with authentication errors.
+            - Low bettery warning no only alerts if the device is running on battery, and not if it is charging.
     V5.0.1  - Improved timeout error handling in authenticate activity
     V5.0.0  - Build for publication on Play Store  
             - Fixed issue with low battery warning not emitting fault sounds'
