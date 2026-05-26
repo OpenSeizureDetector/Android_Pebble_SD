@@ -133,11 +133,13 @@ public class WebApiConnection_osdapi extends WebApiConnection {
             }
         };
 
-        // Use a generous timeout so that a slow server does not trigger a spurious auth failure.
-        // Default Volley timeout is ~2.5 s which is too short for an overloaded server.
+        // 8-second timeout with no automatic retries: this is the UX sweet spot for an interactive
+        // login — long enough to tolerate a momentarily slow server, short enough that the error
+        // dialog appears quickly so the user can take action.  Silent retries just double the wait
+        // with no benefit, so we set retries to 0 and let the user choose to try again.
         req.setRetryPolicy(new DefaultRetryPolicy(
-                15000,                          // 15-second socket timeout
-                1,                              // 1 retry
+                8000,                           // 8-second socket timeout
+                0,                              // no automatic retries
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
 
         mQueue.add(req);
