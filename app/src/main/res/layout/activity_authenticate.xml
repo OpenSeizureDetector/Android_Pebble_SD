@@ -50,8 +50,7 @@
                         <com.google.android.material.textfield.TextInputLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginBottom="12dp"
-                            app:boxBackgroundColor="@android:color/white">
+                            android:layout_marginBottom="12dp">
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/username"
                                 android:layout_width="match_parent"
@@ -63,7 +62,6 @@
                         <com.google.android.material.textfield.TextInputLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            app:boxBackgroundColor="@android:color/white"
                             app:passwordToggleEnabled="true">
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/password"
