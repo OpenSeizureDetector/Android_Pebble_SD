@@ -991,7 +991,10 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         @Override
         public void onResume() {
             super.onResume();
-            PreferenceManager.getDefaultSharedPreferences(getContext()).registerOnSharedPreferenceChangeListener(this);
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+            prefs.registerOnSharedPreferenceChangeListener(this);
+            mBasicMode = PreferenceUtils.getBooleanFromXml(prefs, "pref_basic_mode");
+            refreshSettingsCategory();
             syncAlgorithmToggles();
         }
 
@@ -1104,6 +1107,11 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         private void refreshSettingsCategory() {
             PreferenceScreen screen = getPreferenceScreen();
             if (screen == null) return;
+
+            Preference basicInfo = findPreference("pref_basic_mode_info");
+            if (basicInfo != null) {
+                basicInfo.setVisible(mBasicMode);
+            }
 
             if (mBasicMode) {
                 if (mSettingsCategory != null) {
