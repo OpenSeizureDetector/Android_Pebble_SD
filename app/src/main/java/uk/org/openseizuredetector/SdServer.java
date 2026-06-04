@@ -559,8 +559,13 @@ public class SdServer extends Service implements SdDataReceiver {
             new Thread(() -> {
                 try {
                     oldLm.stop();
-                    LogManager.close();
-                    Log.d(TAG, "onStartCommand(): old LogManager stopped on background thread");
+                    // Only close the old instance's network connection (Volley queue).
+                    // Do NOT call LogManager.close() / closeDatabase() here — the database is
+                    // shared/static in LogRepository and the new instance created below on the
+                    // main thread is already using it.  Calling closeDatabase() from this
+                    // background thread is the other half of the race condition that caused #239.
+                    oldLm.closeNetworkConnection();
+                    Log.d(TAG, "onStartCommand(): old LogManager network connection closed on background thread");
                 } catch (Exception e) {
                     Log.e(TAG, "onStartCommand(): error stopping old LogManager: " + e.getMessage());
                 }
@@ -851,7 +856,9 @@ public class SdServer extends Service implements SdDataReceiver {
             new Thread(() -> {
                 try {
                     lmToStop.stop();
-                    LogManager.close();
+                    // Full close on true shutdown: closes this instance's network queue AND the
+                    // shared database (safe here because we are exiting the process).
+                    lmToStop.close();
                     Log.d(TAG, "onDestroy(): LogManager stopped on background thread");
                 } catch (Exception e) {
                     Log.e(TAG, "onDestroy(): error stopping LogManager: " + e.getMessage());

@@ -116,7 +116,7 @@ public class LogManager {
     public double mNDALogPeriodHours = 24.0;  // hours
     private static Context mContext;
     private static OsdUtil mUtil;
-    public static WebApiConnection mWac;
+    public WebApiConnection mWac;   // Instance variable — each LogManager owns its own connection
     public static final boolean USE_FIREBASE_BACKEND = false;
 
     private volatile boolean mShutdownRequested = false;
@@ -685,19 +685,28 @@ public class LogManager {
 
 
     /**
-     * close() - shut down the logging system
-     * WARNING - this should only be called by the final destructor of the app (not individual class destructors)
-     * because it will close the DB for all instances of LogManger, not just the one on which it is called.
-     * FIXME:  If I was keen I would keep a count of how many instances of LogManager there are, and have this function do nothing
-     * unless it was the last instance.
+     * closeNetworkConnection() - stop only the network (Volley) queue owned by THIS instance.
+     * Safe to call during restart: it only touches this instance's mWac and never affects any
+     * other LogManager instance that may have been created on the main thread concurrently.
      */
-    public static void close() {
+    public void closeNetworkConnection() {
+        if (mWac != null) {
+            Log.i(TAG, "closeNetworkConnection() - Stopping Remote Database Interface for this instance");
+            mWac.close();
+            mWac = null;
+        }
+    }
+
+    /**
+     * close() - shut down the logging system fully (network + database).
+     * Should only be called on true app shutdown (onDestroy), not during a settings-triggered
+     * restart.  For restart, call closeNetworkConnection() instead so that the database
+     * (which is intentionally shared / static in LogRepository) stays open for the new instance.
+     */
+    public void close() {
+        closeNetworkConnection();
         LogRepository.closeDatabase();
         mOsdDb = null;
-        if (mWac != null) {
-            Log.i(TAG, "Stopping Remote Database Interface");
-            mWac.close();
-        }
     }
 
     public void stop() {
