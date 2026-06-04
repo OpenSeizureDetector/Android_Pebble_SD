@@ -1,5 +1,8 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.0.5  - Fixed potential race condition in LogManager that could prevent login and hang the UI
+    V5.0.4  - Added text to seizure detector settings screen to warn the user to disable basic mode if they want to change the seizure detector settings.
+    V5.0.3
     V5.0.2  - Further improvements to user interface associated with authentication errors.
             - Low bettery warning no only alerts if the device is running on battery, and not if it is charging.
     V5.0.1  - Improved timeout error handling in authenticate activity
