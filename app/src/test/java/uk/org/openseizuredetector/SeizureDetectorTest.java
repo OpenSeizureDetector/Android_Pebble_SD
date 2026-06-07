@@ -97,6 +97,21 @@ public class SeizureDetectorTest {
     }
 
     @Test
+    public void testProcessData_HighPower_UsesExactWarnAndAlarmThresholds() throws Exception {
+        for (int i = 0; i < mSdData.rawData.length; i++) {
+            mSdData.rawData[i] = 1000 + 200 * Math.sin(2 * Math.PI * 5 * i / 25.0);
+        }
+
+        int alarmState1 = mSeizureDetector.processData(mSdData);
+        int alarmState2 = mSeizureDetector.processData(mSdData);
+        int alarmState3 = mSeizureDetector.processData(mSdData);
+
+        assertEquals("At 5 seconds, should already be WARNING", 1, alarmState1);
+        assertEquals("At 10 seconds, should remain WARNING", 1, alarmState2);
+        assertEquals("At 15 seconds, should reach ALARM", 2, alarmState3);
+    }
+
+    @Test
     public void testProcessData_AlarmCauseString() throws Exception {
         // Set up alarm condition - high amplitude in ROI
         for (int i = 0; i < mSdData.rawData.length; i++) {
@@ -162,7 +177,6 @@ public class SeizureDetectorTest {
         mSeizureDetector.close();
     }
 }
-
 
 
 

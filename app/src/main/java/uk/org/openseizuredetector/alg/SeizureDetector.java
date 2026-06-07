@@ -228,11 +228,11 @@ public class SeizureDetector {
         if (combinedAlarmState == AlarmState.ALARM) {
             mAlarmTime += mSamplePeriod;
             Log.d(TAG, "mAlarmTime=" + mAlarmTime + " mWarnTimeThreshold=" + mWarnTimeThreshold + " mAlarmTimeThreshold=" + mAlarmTimeThreshold);
-            if (mAlarmTime > mAlarmTimeThreshold) {
+            if (mAlarmTime >= mAlarmTimeThreshold) {
                 Log.d(TAG,"Setting ALARM state");
                 alarmState = AlarmState.ALARM;
                 sdData.alarmStanding = true;
-            } else if (mAlarmTime > mWarnTimeThreshold) {
+            } else if (mAlarmTime >= mWarnTimeThreshold) {
                 Log.d(TAG,"Setting WARNING state");
                 alarmState = AlarmState.WARNING;
                 sdData.alarmStanding = false;
