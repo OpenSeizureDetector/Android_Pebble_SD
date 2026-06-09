@@ -792,4 +792,6 @@
     <string name="auth_timeout_message">Server timeout - please check your connection and try again.   If the issue persists, please report it to osdapi@openseizuredetector.org.uk</string>
     <string name="auth_network_error_message">Network error - please check your connection and try again</string>
     <string name="auth_failure_message">Authentication Failed - please check your username and password</string>
+    <string name="enable_raise_alarm_button_summary">Display a \'Raise Alarm\' button on the main user interface to generate an alarm manually if needed. Disable this option to prevent accidental alarms by touching the screen.</string>
+    <string name="enable_raise_alarm_button_title">Enable \'Raise Alarm\' Button</string>
 </resources>
