@@ -80,6 +80,7 @@
     <!-- Highlight Colors for Remote Events (Light Theme) -->
     <color name="remote_event_validated_bg">#D1E7DD</color>
     <color name="remote_event_validated_text">#0F5132</color>
-    <color name="remote_event_unvalidated_bg">#FFF1F1</color>
-    <color name="remote_event_seizure_bg">#FFC1C1</color>
+    <color name="remote_event_unvalidated_bg">#FFB6C1</color>
+    <color name="remote_event_seizure_bg">#FF6060</color>
+    <color name="remote_event_seizure_text">#dddddd</color>
 </resources>

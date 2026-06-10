@@ -1264,6 +1264,8 @@ public class LogManagerControlActivity extends AppCompatActivity {
             Log.v(TAG, "getView() " + dataItem.toString());
             if (dataItem.get("type").toString().equals("Seizure")) {
                 v.setBackgroundColor(ContextCompat.getColor(LogManagerControlActivity.this, R.color.remote_event_seizure_bg));
+            } else if (dataItem.get("type").toString().equals("")) {
+                v.setBackgroundColor(ContextCompat.getColor(LogManagerControlActivity.this, R.color.remote_event_unvalidated_bg));
             } else {
                 v.setBackgroundColor(Color.TRANSPARENT);
             }
