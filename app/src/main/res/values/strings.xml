@@ -7,7 +7,8 @@
         &lt;br/>       - First-Use setup wizard.
         &lt;br/>       - User Interface Improvements.
         &lt;br/>       - Significant modernisation of underlying code.
-        <br/>       - Improved data sharing login process.
+        &lt;br/>
+        &lt;br/> See CHANGELOG.md at https://github.com/OpenSeizureDetector/Android_Pebble_SD for details.
     </string>
     <string name="UpgradeMsg">
         &lt;br/>&lt;br/>
