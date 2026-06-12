@@ -1616,7 +1616,7 @@ public class SdServer extends Service implements SdDataReceiver {
      * beep, provided mAudibleAlarm is set
      */
     public void faultWarningBeep() {
-        if (mCancelAudible) {
+        if (mCancelAudible || (mSdData != null && mSdData.mMute != 0)) {
             Log.v(TAG, "faultWarningBeep() - CancelAudible Active - silent beep...");
         } else {
             if (mAudibleFaultWarning) {
