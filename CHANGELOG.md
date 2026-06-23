@@ -1,5 +1,6 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.0.8  - Fixed crash of advanced mode user interface (Issue #251)
     V5.0.7  - Fixed potential crash after changing settings (Issue #244).
             - Fixed issue where using the mute function on watch does not prevent fault pip sounds (Issue #247)
     V5.0.6  - Disable 'Raise Alarm' button when using Network Data Source to prevent accidental alarm activations.
