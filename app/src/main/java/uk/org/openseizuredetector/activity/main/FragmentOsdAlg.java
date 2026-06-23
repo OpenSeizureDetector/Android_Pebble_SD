@@ -106,20 +106,6 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
                 pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_red);
             pb.setProgressDrawable(pbDrawable);
 
-            long pSeizurePc;
-            pSeizurePc = (long) (mConnection.mSdServer.mSdData.mPseizure * 100);
-
-            ((TextView) mRootView.findViewById(R.id.pSeizureTvM2)).setText(getString(R.string.seizure_probability) + " : " + pSeizurePc + "%");
-
-            pb = ((ProgressBar) mRootView.findViewById(R.id.pSeizureProgressBarM2));
-            pb.setMax(100);
-            pb.setProgress((int) pSeizurePc);
-            pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_blue);
-            if (pSeizurePc > 30)
-                pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_yellow);
-            if (pSeizurePc > 50)
-                pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_red);
-            pb.setProgressDrawable(pbDrawable);
 
             ////////////////////////////////////////////////////////////
             // Produce graph using GraphView with smoothed line

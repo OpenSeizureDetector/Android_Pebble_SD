@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
-        &lt;b>V5.0.7: CHANGES IN THIS VERSION&lt;/b>&lt;br/>
+        &lt;b>V5.0.8: CHANGES IN THIS VERSION&lt;/b>&lt;br/>
         &lt;br/>       - Support downloadable machine learning models.
         &lt;br/>       - First-Use setup wizard.
         &lt;br/>       - User Interface Improvements.
