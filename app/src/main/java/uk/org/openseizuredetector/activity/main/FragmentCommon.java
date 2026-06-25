@@ -1,6 +1,7 @@
 package uk.org.openseizuredetector.activity.main;
 import uk.org.openseizuredetector.R;
 
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import uk.org.openseizuredetector.data.logging.Log;
@@ -11,11 +12,14 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.preference.PreferenceManager;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
 import uk.org.openseizuredetector.data.AlarmState;
+import uk.org.openseizuredetector.utils.PreferenceUtils;
 
 public class FragmentCommon extends FragmentOsdBaseClass {
     String TAG = "FragmentCommon";
@@ -88,7 +92,7 @@ public class FragmentCommon extends FragmentOsdBaseClass {
             }
         });
 
-        // Deal with the 'Raise Alarm'
+        // Deal with the 'Raise Alarm' Button - It is hidden if de-selected in the alarm preferences screen.
         button = (Button) mRootView.findViewById(R.id.manualAlarmButton);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -177,6 +181,17 @@ public class FragmentCommon extends FragmentOsdBaseClass {
             updateAlgorithmStatusDisplay();
 
             // The dataSourceInfoTv and serverStatusTv are now shown in FragmentSystem
+
+            // Deal with the 'Raise Alarm' Button - It is hidden if we are using network data source to reduce false alarm risk.
+            Button button = (Button) mRootView.findViewById(R.id.manualAlarmButton);
+            if (mConnection.mSdServer.mSdDataSourceName.equals("Network")) {
+                Log.v(TAG,"Network Data Source In Use - hiding manual alarm button - dataSourceName: " + mConnection.mSdServer.mSdDataSourceName);
+                button.setVisibility(View.GONE);
+            } else {
+                Log.v(TAG,"Showing manual alarm button");
+                button.setVisibility(View.VISIBLE);
+            }
+
 
         }
 

@@ -19,5 +19,14 @@ public final class PreferenceUtils {
         }
         return prefs.getBoolean(key, false);
     }
+
+    public static boolean getBooleanFromXml(SharedPreferences prefs, String key, boolean defVal) {
+        if (!prefs.contains(key)) {
+            Log.w(TAG, "Preference '" + key + "' not initialised - returning default value: " + defVal);
+        }
+        return prefs.getBoolean(key, defVal);
+    }
+
+
 }
 

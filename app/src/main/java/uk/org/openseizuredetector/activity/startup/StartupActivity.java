@@ -376,7 +376,7 @@ public class StartupActivity extends AppCompatActivity {
             if (preventBatteryOptWarning) {
                 Log.i(TAG, "onStart(): PreventBatteryOptWarning is true, so not displaying battery optimisation dialog");
             } else {
-                Log.e(TAG, "onStart(): Power Management Problem - not ignoring Battery Optimisations");
+                Log.w(TAG, "onStart(): Power Management Problem - not ignoring Battery Optimisations");
                 //mUtil.showToast("WARNING - Phone is Optimising OpenSeizureDetector Battery Usage - this is likely to prevent it working correctly when running on battery!");
                 if (!mBatteryOptDialogDisplayed) showBatteryOptimisationWarningDialog();
             }

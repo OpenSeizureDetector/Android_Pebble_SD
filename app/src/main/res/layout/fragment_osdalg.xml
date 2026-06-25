@@ -57,21 +57,6 @@
                 android:progressBackgroundTint="#EEEEEE"
                 android:layout_marginBottom="16dp" />
 
-            <TextView
-                android:id="@+id/pSeizureTvM2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/seizure_probability"
-                android:layout_marginBottom="4dp" />
-
-            <ProgressBar
-                android:id="@+id/pSeizureProgressBarM2"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:progressBackgroundTint="#EEEEEE"
-                android:layout_marginBottom="24dp" />
-
 
             <com.jjoe64.graphview.GraphView
                 android:id="@+id/chart1"

@@ -15,6 +15,7 @@ import androidx.preference.PreferenceManager;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -52,6 +53,7 @@ public class AuthenticateActivity extends AppCompatActivity {
     private WebApiConnection mWac;
     private LogManager mLm;
     private static final String TOKEN_ID = "webApiAuthToken";
+    private AlertDialog mProgressDialog;
 
 
     @Override
@@ -272,6 +274,22 @@ public class AuthenticateActivity extends AppCompatActivity {
         }
     }
 
+    private void showProgressDialog() {
+        if (mProgressDialog != null && mProgressDialog.isShowing()) return;
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(getString(R.string.logging_in));
+        builder.setCancelable(false);
+        mProgressDialog = builder.create();
+        mProgressDialog.show();
+    }
+
+    private void dismissProgressDialog() {
+        if (mProgressDialog != null && mProgressDialog.isShowing()) {
+            mProgressDialog.dismiss();
+        }
+        mProgressDialog = null;
+    }
+
     View.OnClickListener onCancel =
             new View.OnClickListener() {
                 @Override
@@ -311,10 +329,12 @@ public class AuthenticateActivity extends AppCompatActivity {
                         String uname = mUnameEt.getText().toString();
                         String passwd = mPasswdEt.getText().toString();
                         Log.v(TAG, "onOK() - uname=" + uname + ", passwd=" + passwd);
+                        showProgressDialog();
                         mWac.authenticate(uname, passwd, new WebApiConnection.StringCallback() {
                             @Override
                             public void accept(String retVal) {
-                                if (retVal != null) {
+                                dismissProgressDialog();
+                                if (retVal != null && !retVal.startsWith("ERROR:")) {
                                     Log.d(TAG, "Authentication Success - token is " + retVal);
                                     mUtil.showToast("Login Successful");
                                     saveAuthToken(retVal);
@@ -325,9 +345,16 @@ public class AuthenticateActivity extends AppCompatActivity {
                                         mLm.triggerImmediateUpload();
                                     }
                                 } else {
-                                    Log.e(TAG, "onOk: Authentication failure for " + uname + ", " + passwd);
-                                    mUtil.showToast("ERROR: Authentication Failed - Please Try Again");
-                                    Log.i(TAG, "AuthActivity - Authorisation failed for " + uname + ", " + passwd);
+                                    Log.e(TAG, "onOk: Authentication failure for " + uname + " - error: " + retVal);
+                                    // Show a specific message so the user knows whether to check
+                                    // their credentials or their network connection.
+                                    if ("ERROR:TIMEOUT".equals(retVal)) {
+                                        mUtil.showToast(getString(R.string.auth_timeout_message));
+                                    } else if ("ERROR:NETWORK".equals(retVal)) {
+                                        mUtil.showToast(getString(R.string.auth_network_error_message));
+                                    } else {
+                                        mUtil.showToast(getString(R.string.auth_failure_message));
+                                    }
                                 }
                             }
                         });

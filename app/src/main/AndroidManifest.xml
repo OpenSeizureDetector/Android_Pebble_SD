@@ -118,6 +118,20 @@
         <uses-library
             android:name="org.apache.http.legacy"
             android:required="false" />
+
+        <!-- Firebase backend is not in use (LogManager.USE_FIREBASE_BACKEND = false).
+             Disable all Firebase/Google Analytics auto-initialisation to prevent the SDK
+             from attempting to start with the placeholder google-services.json credentials
+             and logging "Invalid google_app_id" errors at runtime. -->
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_automatic_screen_reporting_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_data_collection_default_enabled"
+            android:value="false" />
     </application>
 
 </manifest>

@@ -489,6 +489,7 @@ public class OsdUtil {
      * - yyyy-MM-dd'T'HH:mm:ss'Z' (UTC)
      * - yyyy-MM-dd'T'HH:mm:ss+00:00 (with timezone offset)
      * - yyyy-MM-dd HH:mm:ss (basic datetime without timezone)
+     * It also handles the legacy dd-MM-yyyy HH:mm:ss format used in older app versions.
      *
      * @param dateStr String representing a date
      * @return Date object or null if parsing fails.
@@ -507,17 +508,22 @@ public class OsdUtil {
             Log.v(TAG, "string2date: Successfully parsed as unix timestamp");
             return dataTime;
         } catch (NumberFormatException e) {
-            Log.v(TAG, "string2date: Not a unix timestamp, attempting ISO 8601 format");
+            Log.v(TAG, "string2date: Not a unix timestamp, attempting date format parsing");
         }
 
-        // Try various ISO 8601 formats
+        // Try various formats.  ISO 8601 variants are tried first (yyyy-MM-dd prefix), then
+        // the legacy day-first formats (dd-MM-yyyy prefix) used in older app versions.
         String[] dateFormats = {
-            "yyyy-MM-dd'T'HH:mm:ss'Z'",           // UTC with Z suffix
-            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",       // UTC with milliseconds and Z suffix
-            "yyyy-MM-dd'T'HH:mm:ss",              // Without timezone
-            "yyyy-MM-dd'T'HH:mm:ss.SSS",          // With milliseconds
+            "yyyy-MM-dd'T'HH:mm:ss'Z'",           // ISO 8601 UTC with Z suffix
+            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",       // ISO 8601 UTC with milliseconds and Z suffix
+            "yyyy-MM-dd'T'HH:mm:ss",              // ISO 8601 without timezone
+            "yyyy-MM-dd'T'HH:mm:ss.SSS",          // ISO 8601 with milliseconds
             "yyyy-MM-dd HH:mm:ss",                // Space separator
-            "yyyy-MM-dd HH:mm:ss.SSS"             // Space separator with milliseconds
+            "yyyy-MM-dd HH:mm:ss.SSS",            // Space separator with milliseconds
+            "dd-MM-yyyy HH:mm:ss",                // Legacy day-first, dash separator
+            "dd-MM-yyyy HH:mm:ss.SSS",            // Legacy day-first, dash separator with ms
+            "dd/MM/yyyy HH:mm:ss",                // Legacy day-first, slash separator
+            "dd/MM/yyyy HH:mm:ss.SSS"             // Legacy day-first, slash separator with ms
         };
 
         for (String format : dateFormats) {

@@ -559,8 +559,13 @@ public class SdServer extends Service implements SdDataReceiver {
             new Thread(() -> {
                 try {
                     oldLm.stop();
-                    LogManager.close();
-                    Log.d(TAG, "onStartCommand(): old LogManager stopped on background thread");
+                    // Only close the old instance's network connection (Volley queue).
+                    // Do NOT call LogManager.close() / closeDatabase() here — the database is
+                    // shared/static in LogRepository and the new instance created below on the
+                    // main thread is already using it.  Calling closeDatabase() from this
+                    // background thread is the other half of the race condition that caused #239.
+                    oldLm.closeNetworkConnection();
+                    Log.d(TAG, "onStartCommand(): old LogManager network connection closed on background thread");
                 } catch (Exception e) {
                     Log.e(TAG, "onStartCommand(): error stopping old LogManager: " + e.getMessage());
                 }
@@ -851,7 +856,9 @@ public class SdServer extends Service implements SdDataReceiver {
             new Thread(() -> {
                 try {
                     lmToStop.stop();
-                    LogManager.close();
+                    // Full close on true shutdown: closes this instance's network queue AND the
+                    // shared database (safe here because we are exiting the process).
+                    lmToStop.close();
                     Log.d(TAG, "onDestroy(): LogManager stopped on background thread");
                 } catch (Exception e) {
                     Log.e(TAG, "onDestroy(): error stopping LogManager: " + e.getMessage());
@@ -1185,9 +1192,10 @@ public class SdServer extends Service implements SdDataReceiver {
         if (mPhoneBatteryAlarmActive) {
             int battLevel = getPhoneBatteryLevel();
             Log.v(TAG, "onSdDataReceived() - phone battery level=" + battLevel + "%");
-            if (battLevel >= 0 && battLevel <= mPhoneBatteryAlarmThreshold) {
+            boolean charging = isPhoneCharging();
+            if (battLevel >= 0 && battLevel <= mPhoneBatteryAlarmThreshold && !charging) {
                 Log.w(TAG, "PHONE_BATTERY_LOW: battLevel=" + battLevel
-                        + "% <= threshold=" + mPhoneBatteryAlarmThreshold + "%");
+                        + "% <= threshold=" + mPhoneBatteryAlarmThreshold + "% (not charging)");
                 sdData.mPhoneBatteryFaultStanding = true;
             } else {
                 sdData.mPhoneBatteryFaultStanding = false;
@@ -1585,11 +1593,30 @@ public class SdServer extends Service implements SdDataReceiver {
         }
     }
 
+    /**
+     * Returns true if the phone is currently connected to a charger (charging or full),
+     * false otherwise (including when the status cannot be determined).
+     * Uses the same sticky ACTION_BATTERY_CHANGED broadcast as getPhoneBatteryLevel().
+     */
+    private boolean isPhoneCharging() {
+        try {
+            Intent batteryStatus = registerReceiver(null,
+                    new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+            if (batteryStatus == null) return false;
+            int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+            return status == BatteryManager.BATTERY_STATUS_CHARGING
+                    || status == BatteryManager.BATTERY_STATUS_FULL;
+        } catch (Exception e) {
+            Log.e(TAG, "isPhoneCharging() - exception: " + e.getMessage());
+            return false;
+        }
+    }
+
     /*
      * beep, provided mAudibleAlarm is set
      */
     public void faultWarningBeep() {
-        if (mCancelAudible) {
+        if (mCancelAudible || (mSdData != null && mSdData.mMute != 0)) {
             Log.v(TAG, "faultWarningBeep() - CancelAudible Active - silent beep...");
         } else {
             if (mAudibleFaultWarning) {

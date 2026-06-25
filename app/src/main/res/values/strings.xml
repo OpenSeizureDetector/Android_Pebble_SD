@@ -2,11 +2,13 @@
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
-        &lt;b>V5.0.0: CHANGES IN THIS VERSION&lt;/b>&lt;br/>
+        &lt;b>V5.0.8: CHANGES IN THIS VERSION&lt;/b>&lt;br/>
         &lt;br/>       - Support downloadable machine learning models.
         &lt;br/>       - First-Use setup wizard.
         &lt;br/>       - User Interface Improvements.
         &lt;br/>       - Significant modernisation of underlying code.
+        &lt;br/>
+        &lt;br/> See CHANGELOG.md at https://github.com/OpenSeizureDetector/Android_Pebble_SD for details.
     </string>
     <string name="UpgradeMsg">
         &lt;br/>&lt;br/>
@@ -97,7 +99,7 @@
     <string name="UseMobileSummary">Use mobile internet to log remote data</string>
     <string name="SeizureDetectorSettingsTitle">Seizure Detector Settings</string>
     <string name="AlarmThreshTitle">Alarm Threshold</string>
-    <string name="AlarmThreshSummary">Alarm Threshold (Default = 500)</string>
+    <string name="AlarmThreshSummary">Alarm Threshold (Default = 100)</string>
     <string name="AlarmRatioThreshTitle">Alarm Ratio Threshold</string>
     <string name="AlarmRatioThreshSummary">Alarm Ratio Threshold (Default = 57). Increase to reduce sensitivity.</string>
     <string name="AlarmFreqMaxTitle">AlarmFreqMax (Hz)</string>
@@ -364,6 +366,7 @@
     <string name="event_sub_type">Event Sub-Type</string>
     <string name="selectFromOptionselow">"-- select option --"</string>
     <string name="waitingForData">...waiting for data...</string>
+    <string name="logging_in">Logging in, please wait…</string>
     <string name="refreshBtn">Refresh</string>
     <string name="back">Back</string>
     <string name="unvalidatedEventsTitle">Un-Confirmed Seizure Events</string>
@@ -463,6 +466,7 @@
     <string name="OsdAlarmEnabledTitle">Original OSD Algorithm</string>
     <string name="CnnAlarmEnabledTitle">Machine Learning (ML or \'AI\') Algorithm</string>
     <string name="CnnAlarmEnabledSummary">Machine Learning / Artificial Intelligence / Neural Network algorithm to generate alarms.</string>
+    <string name="basic_mode_active_info">Basic Mode Active: To change the settings of the selected algorithms, disable Basic Mode in the General Settings screen</string>
     <string name="AlgorithmSelectionTitle">Seizure Detection Algorithms Selection</string>
     <string name="mark_unverified_events_false_alarm_dialog_title">Mark all Unverified Events as False Alarm</string>
     <string name="mark_unverified_events_false_alarm_dialog_message">Please confirm that all genuine seizure events have been verified before marking all unverified events as type \'False Alarm\'.   \n\nContinue to mark unverified events as False Alarm?</string>
@@ -786,4 +790,7 @@
     <string name="developer_mode">Developer Mode</string>
     <string name="app_theme">App Theme</string>
     <string name="app_theme_summary">Choose between light, dark, or system default theme</string>
+    <string name="auth_timeout_message">Server timeout - please check your connection and try again.   If the issue persists, please report it to osdapi@openseizuredetector.org.uk</string>
+    <string name="auth_network_error_message">Network error - please check your connection and try again</string>
+    <string name="auth_failure_message">Authentication Failed - please check your username and password</string>
 </resources>

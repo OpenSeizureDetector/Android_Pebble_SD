@@ -95,7 +95,6 @@
             android:summary="@string/latch_timer_period_summary"
             android:numeric="integer"
             android:defaultValue="10" />
-
     </PreferenceCategory>
 
     <!--

@@ -113,6 +113,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private CheckBox mGroupEventsCb;
     private Menu mMenu;
     private boolean mUpdateSysLog = true;
+    private boolean mRestoreInstanceStateInProgress = false;  // Flag to prevent checkbox listeners during state restoration
 
     private String normalizeIso8601Offset(String value) {
         /**
@@ -310,6 +311,18 @@ public class LogManagerControlActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        Log.v(TAG, "onRestoreInstanceState() - starting");
+        mRestoreInstanceStateInProgress = true;
+        try {
+            super.onRestoreInstanceState(savedInstanceState);
+        } finally {
+            mRestoreInstanceStateInProgress = false;
+            Log.v(TAG, "onRestoreInstanceState() - completed");
+        }
+    }
+
+    @Override
     protected void onStop() {
         Log.v(TAG, "onStop()");
         super.onStop();
@@ -368,6 +381,19 @@ public class LogManagerControlActivity extends AppCompatActivity {
     }
 
     private void initialiseServiceConnection() {
+        // Safety check: ensure the service is bound before attempting to access it
+        // This prevents crashes during activity recreation when checkbox state is being restored
+        // before the service connection is fully established
+        if (mConnection == null || !mConnection.mBound || mConnection.mSdServer == null) {
+            Log.w(TAG, "initialiseServiceConnection() - Service not yet connected. mConnection=" +
+                    (mConnection != null ? "not null" : "null") +
+                    ", mBound=" + (mConnection != null ? mConnection.mBound : "N/A") +
+                    ", mSdServer=" + (mConnection != null && mConnection.mSdServer != null ? "not null" : "null"));
+            // Retry connection after a short delay
+            new Handler(Looper.getMainLooper()).postDelayed(this::initialiseServiceConnection, 100);
+            return;
+        }
+
         mLm = mConnection.mSdServer.mLm;
         startUiTimer(mUiTimerPeriodFast);
 
@@ -1081,7 +1107,11 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 @Override
                 public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                     Log.v(TAG, "onIncludeWarningsCb");
-                    initialiseServiceConnection();
+                    // Skip during activity restoration to avoid NullPointerException
+                    // when service connection is not yet established
+                    if (!mRestoreInstanceStateInProgress) {
+                        initialiseServiceConnection();
+                    }
                 }
             };
 
@@ -1090,7 +1120,11 @@ public class LogManagerControlActivity extends AppCompatActivity {
                 @Override
                 public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
                     Log.v(TAG, "onIncludeNDACb");
-                    initialiseServiceConnection();
+                    // Skip during activity restoration to avoid NullPointerException
+                    // when service connection is not yet established
+                    if (!mRestoreInstanceStateInProgress) {
+                        initialiseServiceConnection();
+                    }
                 }
             };
 
@@ -1264,6 +1298,8 @@ public class LogManagerControlActivity extends AppCompatActivity {
             Log.v(TAG, "getView() " + dataItem.toString());
             if (dataItem.get("type").toString().equals("Seizure")) {
                 v.setBackgroundColor(ContextCompat.getColor(LogManagerControlActivity.this, R.color.remote_event_seizure_bg));
+            } else if (dataItem.get("type").toString().equals("")) {
+                v.setBackgroundColor(ContextCompat.getColor(LogManagerControlActivity.this, R.color.remote_event_unvalidated_bg));
             } else {
                 v.setBackgroundColor(Color.TRANSPARENT);
             }
