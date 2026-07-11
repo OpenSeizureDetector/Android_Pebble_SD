@@ -103,6 +103,19 @@ public class RemoteDbActivity extends AppCompatActivity {
         // We want the UI to update as soon as it is displayed, but it takes a finite time for
         // the mConnection to bind to the service, so we delay half a second to give it chance
         // to connect before trying to update the UI for the first time (it happens again periodically using the uiTimer)
+        
+        // Check if activity is being destroyed or server is shutting down
+        if (isFinishing() || isDestroyed()) {
+            Log.w(TAG, "waitForConnection - Activity finishing, aborting connection attempt");
+            return;
+        }
+        
+        if (!mUtil.isServerRunning()) {
+            Log.w(TAG, "waitForConnection - Server stopped, finishing activity");
+            finish();
+            return;
+        }
+        
         if (mConnection.mBound) {
             Log.d(TAG, "waitForConnection - Bound!");
             initialiseServiceConnection();
@@ -118,7 +131,36 @@ public class RemoteDbActivity extends AppCompatActivity {
     }
 
     private void initialiseServiceConnection() {
+        // Check if activity is being destroyed
+        if (isFinishing() || isDestroyed()) {
+            Log.w(TAG, "initialiseServiceConnection() - Activity finishing, aborting");
+            return;
+        }
+        
+        // Check if connection and server are valid
+        if (mConnection == null || !mConnection.mBound || mConnection.mSdServer == null) {
+            Log.w(TAG, "initialiseServiceConnection() - Service not yet connected");
+            
+            // Check if we should retry or give up
+            if (!mUtil.isServerRunning()) {
+                Log.w(TAG, "initialiseServiceConnection() - Server stopped, finishing activity");
+                finish();
+                return;
+            }
+            
+            new Handler(Looper.getMainLooper()).postDelayed(this::initialiseServiceConnection, 100);
+            return;
+        }
+        
         mLm = mConnection.mSdServer.mLm;
+        
+        // Add null check for mLm
+        if (mLm == null) {
+            Log.e(TAG, "initialiseServiceConnection() - mLm is null, service may be shutting down");
+            finish();
+            return;
+        }
+        
         mWebView.loadUrl(mRemtoteUrl, getAuthHeaders());
         //mWac = mConnection.mSdServer.mLm.mWac;
     }
@@ -127,6 +169,14 @@ public class RemoteDbActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        
+        // Check if server is running before trying to bind
+        if (!mUtil.isServerRunning()) {
+            Log.w(TAG, "onStart() - Server not running, finishing activity");
+            finish();
+            return;
+        }
+        
         waitForConnection();
         updateUi();
         //startUiTimer();
@@ -173,7 +223,7 @@ public class RemoteDbActivity extends AppCompatActivity {
         // Remote Database Information
         tv = (TextView) findViewById(R.id.authStatusTv);
         btn = (Button) findViewById(R.id.auth_button);
-        if (mLm != null) {
+        if (mLm != null && mLm.mWac != null) {
             if (mLm.mWac.isLoggedIn()) {
                 tv.setText("Authenticated");
                 btn.setText("Log Out");
@@ -181,6 +231,10 @@ public class RemoteDbActivity extends AppCompatActivity {
                 tv.setText("NOT AUTHENTICATED");
                 btn.setText("Log In");
             }
+        } else {
+            Log.w(TAG, "updateUi() - mLm or mWac is null, skipping auth status update");
+            tv.setText("NOT CONNECTED");
+            btn.setText("Log In");
         }
     }
 

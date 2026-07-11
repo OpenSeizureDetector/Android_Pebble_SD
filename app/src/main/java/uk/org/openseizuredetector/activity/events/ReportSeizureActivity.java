@@ -136,6 +136,14 @@ public class ReportSeizureActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
+        
+        // Check if server is running before trying to bind
+        if (!mUtil.isServerRunning()) {
+            Log.w(TAG, "onStart() - Server not running, finishing activity");
+            finish();
+            return;
+        }
+        
         mUtil.bindToServer(getApplicationContext(), mConnection);
         waitForConnection();
     }
@@ -159,6 +167,18 @@ public class ReportSeizureActivity extends AppCompatActivity {
     }
 
     private void waitForConnection() {
+        // Check if activity is being destroyed or server is shutting down
+        if (isFinishing() || isDestroyed()) {
+            Log.w(TAG, "waitForConnection - Activity finishing, aborting connection attempt");
+            return;
+        }
+        
+        if (!mUtil.isServerRunning()) {
+            Log.w(TAG, "waitForConnection - Server stopped, finishing activity");
+            finish();
+            return;
+        }
+        
         if (mConnection.mBound) {
             Log.v(TAG, "waitForConnection - Bound!");
             initialiseServiceConnection();
@@ -174,7 +194,36 @@ public class ReportSeizureActivity extends AppCompatActivity {
     }
 
     private void initialiseServiceConnection() {
+        // Check if activity is being destroyed
+        if (isFinishing() || isDestroyed()) {
+            Log.w(TAG, "initialiseServiceConnection() - Activity finishing, aborting");
+            return;
+        }
+        
+        // Check if connection and server are valid
+        if (mConnection == null || !mConnection.mBound || mConnection.mSdServer == null) {
+            Log.w(TAG, "initialiseServiceConnection() - Service not yet connected");
+            
+            // Check if we should retry or give up
+            if (!mUtil.isServerRunning()) {
+                Log.w(TAG, "initialiseServiceConnection() - Server stopped, finishing activity");
+                finish();
+                return;
+            }
+            
+            new Handler(Looper.getMainLooper()).postDelayed(this::initialiseServiceConnection, 100);
+            return;
+        }
+        
         mLm = mConnection.mSdServer.mLm;
+        
+        // Add null check for mLm and mWac
+        if (mLm == null || mLm.mWac == null) {
+            Log.e(TAG, "initialiseServiceConnection() - mLm or mWac is null, service may be shutting down");
+            finish();
+            return;
+        }
+        
         mWac = mConnection.mSdServer.mLm.mWac;
 
         if (mWac.isLoggedIn()) {
@@ -182,6 +231,13 @@ public class ReportSeizureActivity extends AppCompatActivity {
                 @Override
                 public void accept(JSONObject eventTypesObj) {
                     Log.v(TAG, "initialiseServiceConnection().onEventTypesReceived");
+                    
+                    // Check if activity is still active before processing callback
+                    if (isFinishing() || isDestroyed()) {
+                        Log.w(TAG, "Activity not active, ignoring getEventTypes callback");
+                        return;
+                    }
+                    
                     if (eventTypesObj == null) {
                         Log.e(TAG, "initialiseServiceConnection().getEventTypes Callback:  Error Retrieving event types");
                         mUtil.showToast("Error Retrieving Event Types from Server - Please Try Again Later!");

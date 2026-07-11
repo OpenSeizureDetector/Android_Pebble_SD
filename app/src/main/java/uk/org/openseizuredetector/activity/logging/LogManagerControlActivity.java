@@ -305,6 +305,15 @@ public class LogManagerControlActivity extends AppCompatActivity {
     protected void onStart() {
         Log.v(TAG, "onStart()");
         super.onStart();
+        
+        // Check if server is running before trying to bind
+        if (!mUtil.isServerRunning()) {
+            Log.w(TAG, "onStart() - Server not running, finishing activity");
+            mUtil.showToast(getString(R.string.error_server_not_running));
+            finish();
+            return;
+        }
+        
         mUtil.bindToServer(getApplicationContext(), mConnection);
         waitForConnection();
         startUiTimer(mUiTimerPeriodFast);
@@ -359,6 +368,19 @@ public class LogManagerControlActivity extends AppCompatActivity {
         // We want the UI to update as soon as it is displayed, but it takes a finite time for
         // the mConnection to bind to the service, so we delay half a second to give it chance
         // to connect before trying to update the UI for the first time (it happens again periodically using the uiTimer)
+        
+        // Check if activity is being destroyed or server is shutting down
+        if (isFinishing() || isDestroyed()) {
+            Log.w(TAG, "waitForConnection - Activity finishing, aborting connection attempt");
+            return;
+        }
+        
+        if (!mUtil.isServerRunning()) {
+            Log.w(TAG, "waitForConnection - Server stopped, finishing activity");
+            finish();
+            return;
+        }
+        
         if (mConnection.mBound) {
             Log.v(TAG, "waitForConnection - Bound!");
             initialiseServiceConnection();
@@ -384,17 +406,41 @@ public class LogManagerControlActivity extends AppCompatActivity {
         // Safety check: ensure the service is bound before attempting to access it
         // This prevents crashes during activity recreation when checkbox state is being restored
         // before the service connection is fully established
+        
+        // Check if activity is being destroyed
+        if (isFinishing() || isDestroyed()) {
+            Log.w(TAG, "initialiseServiceConnection() - Activity finishing, aborting");
+            return;
+        }
+        
         if (mConnection == null || !mConnection.mBound || mConnection.mSdServer == null) {
             Log.w(TAG, "initialiseServiceConnection() - Service not yet connected. mConnection=" +
                     (mConnection != null ? "not null" : "null") +
                     ", mBound=" + (mConnection != null ? mConnection.mBound : "N/A") +
                     ", mSdServer=" + (mConnection != null && mConnection.mSdServer != null ? "not null" : "null"));
+            
+            // Check if we should retry or give up
+            if (!mUtil.isServerRunning()) {
+                Log.w(TAG, "initialiseServiceConnection() - Server stopped, finishing activity");
+                finish();
+                return;
+            }
+            
             // Retry connection after a short delay
             new Handler(Looper.getMainLooper()).postDelayed(this::initialiseServiceConnection, 100);
             return;
         }
 
         mLm = mConnection.mSdServer.mLm;
+        
+        // Add null check for mLm
+        if (mLm == null) {
+            Log.e(TAG, "ERROR: initialiseServiceConnection() - mLm is null, service may be shutting down");
+            mUtil.showToast(getString(R.string.error_failed_to_start_log_manager));
+            finish();
+            return;
+        }
+        
         startUiTimer(mUiTimerPeriodFast);
 
         final CheckBox includeWarningsCb = (CheckBox) findViewById(R.id.include_warnings_cb);
@@ -403,24 +449,30 @@ public class LogManagerControlActivity extends AppCompatActivity {
         ProgressBar pb = (ProgressBar) findViewById(R.id.remoteAccessPb);
         pb.setIndeterminate(true);
         pb.setVisibility(View.VISIBLE);
-        if (mLm != null) {
-            // Populate events list - we only do it once when the activity is created because the query might slow down the UI.
-            // We could try this code in updateUI() and see though.
-            // Based on https://www.tutlane.com/tutorial/android/android-sqlite-listview-with-examples
-            mLm.getEventsList(true, (ArrayList<HashMap<String, String>> eventsList) -> {
-                mEventsList = eventsList;
-                Log.v(TAG, "initialiseServiceConnection() - set mEventsList - Updating UI");
-                updateUi();
-            });
-            refreshSysLog();
-        } else {
-            Log.e(TAG, "ERROR: initialiseServiceConnection() - mLm is null");
-            mUtil.showToast(getString(R.string.error_failed_to_start_log_manager));
-        }
+        
+        // Populate events list - we only do it once when the activity is created because the query might slow down the UI.
+        // We could try this code in updateUI() and see though.
+        // Based on https://www.tutlane.com/tutorial/android/android-sqlite-listview-with-examples
+        mLm.getEventsList(true, (ArrayList<HashMap<String, String>> eventsList) -> {
+            mEventsList = eventsList;
+            Log.v(TAG, "initialiseServiceConnection() - set mEventsList - Updating UI");
+            updateUi();
+        });
+        refreshSysLog();
     }
 
 
     private void getRemoteEvents(boolean includeWarnings, boolean includeNDA) {
+        // Add null safety checks to prevent crash during service shutdown
+        if (mLm == null || mLm.mWac == null) {
+            Log.w(TAG, "getRemoteEvents() - mLm or mWac is null, skipping remote event retrieval");
+            ProgressBar pb = findViewById(R.id.remoteAccessPb);
+            if (pb != null) {
+                pb.setVisibility(View.GONE);
+            }
+            return;
+        }
+        
         mRemoteEventsList = null;  // clear existing data
         mGroupedRemoteEventsList = null;
         // Retrieve events from remote database

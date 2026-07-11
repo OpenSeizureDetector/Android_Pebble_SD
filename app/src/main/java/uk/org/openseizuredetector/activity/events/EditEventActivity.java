@@ -134,6 +134,14 @@ public class EditEventActivity extends AppCompatActivity {
         super.onStart();
         Log.i(TAG, "onStart()");
         mIsActive = true;
+        
+        // Check if server is running before trying to bind
+        if (!mUtil.isServerRunning()) {
+            Log.w(TAG, "onStart() - Server not running, finishing activity");
+            finish();
+            return;
+        }
+        
         mUtil.bindToServer(getApplicationContext(), mConnection);
         waitForConnection();
 
@@ -156,6 +164,19 @@ public class EditEventActivity extends AppCompatActivity {
         // We want the UI to update as soon as it is displayed, but it takes a finite time for
         // the mConnection to bind to the service, so we delay half a second to give it chance
         // to connect before trying to update the UI for the first time (it happens again periodically using the uiTimer)
+        
+        // Check if activity is being destroyed or server is shutting down
+        if (isFinishing() || isDestroyed()) {
+            Log.w(TAG, "waitForConnection - Activity finishing, aborting connection attempt");
+            return;
+        }
+        
+        if (!mUtil.isServerRunning()) {
+            Log.w(TAG, "waitForConnection - Server stopped, finishing activity");
+            finish();
+            return;
+        }
+        
         if (mConnection.mBound) {
             Log.v(TAG, "waitForConnection - Bound!");
             initialiseServiceConnection();
@@ -171,7 +192,36 @@ public class EditEventActivity extends AppCompatActivity {
     }
 
     private void initialiseServiceConnection() {
+        // Check if activity is being destroyed
+        if (isFinishing() || isDestroyed()) {
+            Log.w(TAG, "initialiseServiceConnection() - Activity finishing, aborting");
+            return;
+        }
+        
+        // Check if connection and server are valid
+        if (mConnection == null || !mConnection.mBound || mConnection.mSdServer == null) {
+            Log.w(TAG, "initialiseServiceConnection() - Service not yet connected");
+            
+            // Check if we should retry or give up
+            if (!mUtil.isServerRunning()) {
+                Log.w(TAG, "initialiseServiceConnection() - Server stopped, finishing activity");
+                finish();
+                return;
+            }
+            
+            new Handler(Looper.getMainLooper()).postDelayed(this::initialiseServiceConnection, 100);
+            return;
+        }
+        
         mLm = mConnection.mSdServer.mLm;
+        
+        // Add null check for mLm and mWac
+        if (mLm == null || mLm.mWac == null) {
+            Log.e(TAG, "initialiseServiceConnection() - mLm or mWac is null, service may be shutting down");
+            finish();
+            return;
+        }
+        
         mWac = mConnection.mSdServer.mLm.mWac;
 
         // Retrieve the JSONObject containing the standard event types.
