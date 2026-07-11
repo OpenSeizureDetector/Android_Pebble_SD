@@ -1,6 +1,7 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
     V5.1.0  - Fixed occasional crash during system shutdown (Issue #260)
+            - MP3 alerts now play for full duration of mp3 rather than re-starting every 5 seconds (Issue #250)
             - Hide Seizure Detector settings when using network data source because they are ignored (Issue #255)
             - Added the cause of the alarm to the data sharing event description (Issue #254)
             - Tidied up embedded web page (Issue #259)

@@ -226,6 +226,8 @@ public class SdServer extends Service implements SdDataReceiver {
     private Handler mHandler;
     private ToneGenerator mToneGenerator;
     private android.media.MediaPlayer mMediaPlayer = null; // used for MP3 alarm sounds
+    private String mCurrentMp3Uri = null; // URI of currently playing MP3
+    private long mMp3StartTimeMs = 0; // Time when current MP3 started playing
 
     private NetworkBroadcastReceiver mNetworkBroadcastReceiver;
 
@@ -930,6 +932,8 @@ public class SdServer extends Service implements SdDataReceiver {
             }
             mMediaPlayer = null;
         }
+        mCurrentMp3Uri = null;
+        mMp3StartTimeMs = 0;
     }
 
     /**
@@ -937,32 +941,80 @@ public class SdServer extends Service implements SdDataReceiver {
      * to the bundled res/raw/ resource identified by rawResName.
      * Audio attributes are set to USAGE_ALARM so the phone's alarm volume is used and the
      * sound plays even in DND/silent modes (subject to user's DND alarm exception settings).
+     * 
+     * If an MP3 is already playing, it will not be interrupted unless the latch alarm duration
+     * has been exceeded.
      */
     private void playMp3(String userUriStr, String rawResName) {
-        stopMp3();  // stop any previously playing sound first
-        try {
-            Uri soundUri;
-            if (userUriStr != null && !userUriStr.isEmpty()) {
-                soundUri = Uri.parse(userUriStr);
-                Log.i(TAG, "playMp3() - using user URI: " + soundUri);
-            } else {
-                soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/" + rawResName);
-                Log.i(TAG, "playMp3() - using bundled sound: " + soundUri);
+        // Build the URI we want to play
+        Uri soundUri;
+        if (userUriStr != null && !userUriStr.isEmpty()) {
+            soundUri = Uri.parse(userUriStr);
+            Log.i(TAG, "playMp3() - using user URI: " + soundUri);
+        } else {
+            soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/" + rawResName);
+            Log.i(TAG, "playMp3() - using bundled sound: " + soundUri);
+        }
+        String uriString = soundUri.toString();
+        
+        // If MP3 is already playing the same sound, check duration constraints
+        if (mMediaPlayer != null && mMediaPlayer.isPlaying() && 
+            uriString.equals(mCurrentMp3Uri)) {
+            
+            long elapsedMs = System.currentTimeMillis() - mMp3StartTimeMs;
+            
+            // If latch timer is active and we've exceeded duration, stop
+            if (mLatchAlarms && mLatchAlarmTimer != null && 
+                elapsedMs > mLatchAlarmPeriod * 1000) {
+                Log.i(TAG, "playMp3() - exceeded latch alarm duration (" + 
+                      (elapsedMs/1000) + "s > " + mLatchAlarmPeriod + "s), stopping");
+                stopMp3();
+                return;
             }
+            
+            // Otherwise, let it continue playing
+            Log.v(TAG, "playMp3() - MP3 already playing (" + (elapsedMs/1000) + "s), not restarting");
+            return;
+        }
+        
+        stopMp3();  // stop any previously playing sound first
+        
+        try {
             mMediaPlayer = new android.media.MediaPlayer();
             mMediaPlayer.setAudioAttributes(new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_ALARM)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                     .build());
             mMediaPlayer.setDataSource(getApplicationContext(), soundUri);
-            mMediaPlayer.setOnPreparedListener(android.media.MediaPlayer::start);
+            
+            // Set up prepared listener to enable looping for short sounds
+            mMediaPlayer.setOnPreparedListener(mp -> {
+                int duration = mp.getDuration();
+                Log.i(TAG, "playMp3() - MP3 duration: " + duration + "ms");
+                
+                // Loop if duration < 10 seconds, otherwise play once
+                if (duration > 0 && duration < 10000) {
+                    mp.setLooping(true);
+                    Log.i(TAG, "playMp3() - enabling looping for short MP3 (< 10s)");
+                } else {
+                    mp.setLooping(false);
+                    Log.i(TAG, "playMp3() - playing MP3 once (>= 10s)");
+                }
+                mp.start();
+            });
+            
             mMediaPlayer.setOnCompletionListener(mp -> stopMp3());
             mMediaPlayer.setOnErrorListener((mp, what, extra) -> {
                 Log.e(TAG, "playMp3() - MediaPlayer error what=" + what + " extra=" + extra);
                 stopMp3();
                 return true;
             });
+            
+            mCurrentMp3Uri = uriString;
+            mMp3StartTimeMs = System.currentTimeMillis();
             mMediaPlayer.prepareAsync();
+            
+            Log.i(TAG, "playMp3() - starting MP3 playback: " + soundUri);
         } catch (Exception e) {
             Log.e(TAG, "playMp3() - failed to start MediaPlayer: " + e.getMessage());
             stopMp3();
