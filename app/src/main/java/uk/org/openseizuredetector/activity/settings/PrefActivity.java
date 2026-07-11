@@ -278,6 +278,13 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 continue;
             }
 
+            // Hide algorithm selection when using Network data source
+            // (algorithms run on remote device, not locally) - Issue #255
+            if (fragmentName.contains("AlgorithmSelectionPrefsFragment") && "Network".equals(currentDatasource)) {
+                Log.d(TAG, "updateHeaders(): Skipping AlgorithmSelectionPrefsFragment for Network datasource");
+                continue;
+            }
+
             if (h.algorithmKey != null && !h.algorithmKey.isEmpty()) {
                 continue;
             }
