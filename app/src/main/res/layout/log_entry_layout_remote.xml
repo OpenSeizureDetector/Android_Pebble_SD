@@ -71,8 +71,17 @@
             android:id="@+id/event_subtype_remote_tv"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="0.75"
+            android:layout_weight="0.6"
             android:gravity="start"
+            android:text="---"
+            android:textColor="?attr/colorOnSurface" />
+
+        <TextView
+            android:id="@+id/event_alarmcause_remote_tv"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.15"
+            android:gravity="end"
             android:text="---"
             android:textColor="?attr/colorOnSurface" />
 

@@ -82,6 +82,66 @@ import uk.org.openseizuredetector.activity.export.ExportDataActivity;
 import uk.org.openseizuredetector.activity.remote.RemoteDbActivity;
 import uk.org.openseizuredetector.activity.settings.PrefActivity;
 import uk.org.openseizuredetector.data.logging.LogManager;
+
+/**
+ * LogManagerControlActivity - Displays event logs from local and remote databases
+ *
+ * DATA FLOW FOR LOCAL EVENTS (Events Tab):
+ * ==========================================
+ * 1. Local Database (SQLite) - Events table with columns: dataTime, status, alarmCause, uploaded, etc.
+ * 2. LogRepository.getEventsList() - Queries database, returns JSONArray
+ * 3. LocalEventQuerier.getEventsList() - Converts JSONArray to ArrayList<HashMap<String, String>>
+ *    - Each HashMap has keys: "dataTime", "status", "alarmCause", "uploaded"
+ *    - alarmCause defaults to "Unknown" if null/empty (Issue #254)
+ * 4. LogManager.getEventsList() - Delegates to LocalEventQuerier
+ * 5. LogManagerControlActivity.mEventsList - Stores the ArrayList
+ * 6. SimpleAdapter - Maps HashMap keys to TextView IDs in log_entry_layout.xml:
+ *    - "dataTime" → R.id.event_date
+ *    - "status" → R.id.event_alarmState
+ *    - "alarmCause" → R.id.event_subType (displays algorithm name)
+ *    - "uploaded" → R.id.event_uploaded
+ * 7. ListView displays the events using the adapter
+ *
+ * DATA FLOW FOR REMOTE EVENTS (Shared Data Tab):
+ * ===============================================
+ * 1. Remote Database (MySQL/Web Server) - Events stored with dataJSON containing full event details
+ * 2. LogManager.mWac.getEvents() - Fetches events via WebApiClient, returns JSONObject
+ * 3. getRemoteEvents() callback - Processes JSONObject.events array:
+ *    - Iterates through each event JSONObject
+ *    - Extracts: id, dataTime, osdAlarmState, type, subType, desc
+ *    - Extracts osdAlarmCause from:
+ *      a) Top-level "osdAlarmCause" field (if exists), OR
+ *      b) Parses "dataJSON" nested object and extracts "alarmCause" field
+ *    - Creates HashMap with keys: "id", "dataTime", "osdAlarmState", "osdAlarmStateStr",
+ *      "type", "subType", "osdAlarmCauseStr", "desc"
+ *    - Adds to mRemoteEventsList
+ * 4. createGroupedEventsList() (optional if grouping enabled):
+ *    - Groups events within 3-minute windows
+ *    - Creates mGroupedRemoteEventsList
+ *    - Each group represented by a summary HashMap with calculated duration
+ * 5. updateUi() - Creates RemoteEventsAdapter with log_entry_layout_remote.xml:
+ *    - Maps "id" → R.id.event_id_remote_tv
+ *    - Maps "dataTime" → R.id.event_date_remote_tv
+ *    - Maps "duration" → R.id.event_duration_remote_tv (for grouped events)
+ *    - Maps "type" → R.id.event_type_remote_tv
+ *    - Maps "subType" → R.id.event_subtype_remote_tv
+ *    - Maps "osdAlarmStateStr" → R.id.event_alarmState_remote_tv
+ *    - Maps "osdAlarmCauseStr" → R.id.event_alarmcause_remote_tv (Issue #254)
+ *    - Maps "desc" → R.id.event_notes_remote_tv
+ * 6. ListView displays remote events using the adapter
+ *
+ * KEY CLASSES:
+ * - LogRepository: Database operations (local SQLite)
+ * - LocalEventQuerier: Converts database cursor to HashMap list
+ * - LogManager: Coordinates logging, delegates to queriers
+ * - WebApiClient: Fetches data from remote server
+ * - RemoteEventsAdapter: Custom adapter extending SimpleAdapter for remote events
+ *
+ * ISSUE #254 IMPLEMENTATION:
+ * - Local events: alarmCause stored in database, read by LocalEventQuerier
+ * - Remote events: alarmCause extracted from dataJSON nested object
+ * - Both display in their respective layouts showing which algorithm triggered the event
+ */
 public class LogManagerControlActivity extends ServiceConnectedActivity {
     private final String TAG = "LogManagerControlActivity";
     public static final String EXTRA_INITIAL_TAB = "initialTab";
@@ -485,6 +545,20 @@ public class LogManagerControlActivity extends ServiceConnectedActivity {
                         if (!eventObj.isNull("desc")) {
                             desc = eventObj.getString("desc");
                         }
+                        // Extract alarmCause from dataJSON if available
+                        String osdAlarmCause = "Unknown";
+                        if (!eventObj.isNull("osdAlarmCause")) {
+                            osdAlarmCause = eventObj.getString("osdAlarmCause");
+                        } else if (!eventObj.isNull("dataJSON")) {
+                            try {
+                                JSONObject dataJSON = new JSONObject(eventObj.getString("dataJSON"));
+                                if (dataJSON.has("alarmCause")) {
+                                    osdAlarmCause = dataJSON.getString("alarmCause");
+                                }
+                            } catch (JSONException e) {
+                                Log.w(TAG, "getRemoteEvents() - Error parsing dataJSON for alarmCause: " + e.getMessage());
+                            }
+                        }
                         HashMap<String, String> eventHashMap = new HashMap<String, String>();
                         eventHashMap.put("id", id);
                         eventHashMap.put("osdAlarmState", String.valueOf(osdAlarmState));
@@ -492,6 +566,7 @@ public class LogManagerControlActivity extends ServiceConnectedActivity {
                         eventHashMap.put("dataTime", dataTime);
                         eventHashMap.put("type", typeStr);
                         eventHashMap.put("subType", subType);
+                        eventHashMap.put("osdAlarmCauseStr", osdAlarmCause);
                         eventHashMap.put("desc", desc);
                         if ((osdAlarmState != AlarmState.WARNING | includeWarnings) &&
                                 (osdAlarmState != AlarmState.MUTE | includeNDA)) {
@@ -776,15 +851,15 @@ public class LogManagerControlActivity extends ServiceConnectedActivity {
                     displayList.add(groupSummary);
                 }
                 ListAdapter adapter = new RemoteEventsAdapter(LogManagerControlActivity.this, displayList, R.layout.log_entry_layout_remote,
-                        new String[]{"id", "dataTime", "duration", "type", "subType", "osdAlarmStateStr", "desc"},
+                        new String[]{"id", "dataTime", "duration", "type", "subType", "osdAlarmStateStr", "osdAlarmCauseStr", "desc"},
                         new int[]{R.id.event_id_remote_tv, R.id.event_date_remote_tv, R.id.event_duration_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
-                                R.id.event_alarmState_remote_tv, R.id.event_notes_remote_tv});
+                                R.id.event_alarmState_remote_tv, R.id.event_alarmcause_remote_tv, R.id.event_notes_remote_tv});
                 lv.setAdapter(adapter);
             } else if (mRemoteEventsList != null) {
                 ListAdapter adapter = new RemoteEventsAdapter(LogManagerControlActivity.this, mRemoteEventsList, R.layout.log_entry_layout_remote,
-                        new String[]{"id", "dataTime", "duration", "type", "subType", "osdAlarmStateStr", "desc"},
+                        new String[]{"id", "dataTime", "duration", "type", "subType", "osdAlarmStateStr", "osdAlarmCauseStr", "desc"},
                         new int[]{R.id.event_id_remote_tv, R.id.event_date_remote_tv, R.id.event_duration_remote_tv, R.id.event_type_remote_tv, R.id.event_subtype_remote_tv,
-                                R.id.event_alarmState_remote_tv, R.id.event_notes_remote_tv});
+                                R.id.event_alarmState_remote_tv, R.id.event_alarmcause_remote_tv, R.id.event_notes_remote_tv});
                 lv.setAdapter(adapter);
             } else {
                 Log.i(TAG, "UpdateUi: No Remote Events");

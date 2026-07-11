@@ -526,9 +526,14 @@ public class LogRepository {
                     event.put("type", val == null ? "" : val);
                     val = c.getString(c.getColumnIndex("subType"));
                     event.put("subType", val == null ? "" : val);
+                    // Issue #254: Read alarmCause from database and provide default value "Unknown"
+                    // for backward compatibility with old events that don't have this field.
+                    // This shows which algorithm (HR, O2, Movement, ML, etc.) triggered the alarm.
                     if (c.getColumnIndex("alarmCause") != -1) {
                         val = c.getString(c.getColumnIndex("alarmCause"));
-                        event.put("alarmCause", val == null ? "" : val);
+                        event.put("alarmCause", (val == null || val.isEmpty()) ? "Unknown" : val);
+                    } else {
+                        event.put("alarmCause", "Unknown");
                     }
                     val = c.getString(c.getColumnIndex("notes"));
                     event.put("desc", val == null ? "" : val);

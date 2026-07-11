@@ -5,6 +5,7 @@
         &lt;b>V5.1.0: CHANGES IN THIS VERSION&lt;/b>&lt;br/>
         &lt;br/>       - Fixed occasional crash during system shutdown (Issue #260)
         &lt;br/>       - Hide Seizure Detector settings when using network data source because they are ignored (Issue #255)
+        &lt;br/>       - Added the cause of the alarm to the data sharing event description (Issue #254)
         &lt;br/>
         &lt;br/> See CHANGELOG.md at https://github.com/OpenSeizureDetector/Android_Pebble_SD for details.
     </string>
