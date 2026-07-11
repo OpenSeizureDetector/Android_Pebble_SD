@@ -1,10 +1,7 @@
 package uk.org.openseizuredetector.activity.logging;
 import uk.org.openseizuredetector.R;
 
-//import androidx.appcompat.app.AppCompatActivity;
-
-import uk.org.openseizuredetector.client.SdServiceConnection;
-import uk.org.openseizuredetector.utils.OsdUtil;
+import uk.org.openseizuredetector.activity.ServiceConnectedActivity;
 import uk.org.openseizuredetector.utils.PreferenceUtils;
 import android.content.SharedPreferences;
 import androidx.preference.PreferenceManager;
@@ -28,10 +25,7 @@ import android.provider.MediaStore;
 import androidx.core.graphics.Insets;
 import androidx.core.view.MenuCompat;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.content.ContextCompat;
 
@@ -88,7 +82,7 @@ import uk.org.openseizuredetector.activity.export.ExportDataActivity;
 import uk.org.openseizuredetector.activity.remote.RemoteDbActivity;
 import uk.org.openseizuredetector.activity.settings.PrefActivity;
 import uk.org.openseizuredetector.data.logging.LogManager;
-public class LogManagerControlActivity extends AppCompatActivity {
+public class LogManagerControlActivity extends ServiceConnectedActivity {
     private final String TAG = "LogManagerControlActivity";
     public static final String EXTRA_INITIAL_TAB = "initialTab";
     public static final int TAB_SHARED_DATA = 0;
@@ -105,9 +99,7 @@ public class LogManagerControlActivity extends AppCompatActivity {
     private ArrayList<HashMap<String, String>> mSysLogList;
     private File[] mLogFiles;
     private File mCurrentLogFile;
-    private SdServiceConnection mConnection;
-    private OsdUtil mUtil;
-    final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
+    // mConnection, mUtil, serverStatusHandler now inherited from ServiceConnectedActivity
     private final Integer mUiTimerPeriodFast = 2000;  // 2 seconds - we use fast updating while UI is blank and we are waiting for first data
     private String mUserId = null;
     private CheckBox mGroupEventsCb;
@@ -134,30 +126,10 @@ public class LogManagerControlActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.v(TAG, "onCreate()");
-        super.onCreate(savedInstanceState);
+        super.onCreate(savedInstanceState);  // This now initializes mUtil, mConnection, and configures system bars
         mContext = this;
-        mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
-
-        if (!mUtil.isServerRunning()) {
-            mUtil.showToast(getString(R.string.error_server_not_running));
-            finish();
-            return;
-        }
-
-        mConnection = new SdServiceConnection(getApplicationContext());
 
         setContentView(R.layout.activity_log_manager_control);
-
-        // Configure system bar appearance to be edge-to-edge and handle insets
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-            if (controller != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                boolean isLightMode = isLightTheme();
-                controller.setAppearanceLightStatusBars(isLightMode);
-                controller.setAppearanceLightNavigationBars(isLightMode);
-            }
-        }
 
 
         /* Force display of overflow menu - from stackoverflow
@@ -270,14 +242,6 @@ public class LogManagerControlActivity extends AppCompatActivity {
     }
 
     /**
-     * Check if the current theme is light mode
-     */
-    private boolean isLightTheme() {
-        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
-        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
-    }
-
-    /**
      * Create Action Bar
      */
     @Override
@@ -300,43 +264,50 @@ public class LogManagerControlActivity extends AppCompatActivity {
         return super.onPrepareOptionsMenu(menu);
     }
 
-
+    /**
+     * Called by ServiceConnectedActivity when service connection is established.
+     * This is where we initialize everything that depends on the service.
+     */
     @Override
-    protected void onStart() {
-        Log.v(TAG, "onStart()");
-        super.onStart();
+    protected void onServiceConnected(LogManager logManager) {
+        Log.v(TAG, "onServiceConnected()");
+        mLm = logManager;
         
-        // Check if server is running before trying to bind
-        if (!mUtil.isServerRunning()) {
-            Log.w(TAG, "onStart() - Server not running, finishing activity");
-            mUtil.showToast(getString(R.string.error_server_not_running));
-            finish();
-            return;
-        }
-        
-        mUtil.bindToServer(getApplicationContext(), mConnection);
-        waitForConnection();
         startUiTimer(mUiTimerPeriodFast);
+
+        final CheckBox includeWarningsCb = (CheckBox) findViewById(R.id.include_warnings_cb);
+        final CheckBox includeNDACb = (CheckBox) findViewById(R.id.include_nda_cb);
+        getRemoteEvents(includeWarningsCb.isChecked(), includeNDACb.isChecked());
+        ProgressBar pb = (ProgressBar) findViewById(R.id.remoteAccessPb);
+        pb.setIndeterminate(true);
+        pb.setVisibility(View.VISIBLE);
+        
+        // Populate events list - we only do it once when the activity is created because the query might slow down the UI.
+        // Based on https://www.tutlane.com/tutorial/android/android-sqlite-listview-with-examples
+        mLm.getEventsList(true, (ArrayList<HashMap<String, String>> eventsList) -> {
+            mEventsList = eventsList;
+            Log.v(TAG, "onServiceConnected() - set mEventsList - Updating UI");
+            updateUi();
+        });
+        refreshSysLog();
     }
 
     @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        Log.v(TAG, "onRestoreInstanceState() - starting");
-        mRestoreInstanceStateInProgress = true;
-        try {
-            super.onRestoreInstanceState(savedInstanceState);
-        } finally {
-            mRestoreInstanceStateInProgress = false;
-            Log.v(TAG, "onRestoreInstanceState() - completed");
+    protected void onStart() {
+        super.onStart();  // Handles service binding and connection
+        startUiTimer(mUiTimerPeriodFast);
+        // Trigger an immediate UI update if we are already connected.
+        // If not connected yet (fresh start), ServiceConnectedActivity will handle it.
+        if (mConnection != null && mConnection.mBound) {
+            updateUi();
         }
     }
 
     @Override
     protected void onStop() {
         Log.v(TAG, "onStop()");
-        super.onStop();
         stopUiTimer();
-        mUtil.unbindFromServer(getApplicationContext(), mConnection);
+        super.onStop();  // Handles service unbinding
     }
 
     @Override
@@ -460,7 +431,6 @@ public class LogManagerControlActivity extends AppCompatActivity {
         });
         refreshSysLog();
     }
-
 
     private void getRemoteEvents(boolean includeWarnings, boolean includeNDA) {
         // Add null safety checks to prevent crash during service shutdown

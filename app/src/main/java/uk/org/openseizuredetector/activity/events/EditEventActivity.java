@@ -1,20 +1,16 @@
 package uk.org.openseizuredetector.activity.events;
 import uk.org.openseizuredetector.R;
 
+import uk.org.openseizuredetector.activity.ServiceConnectedActivity;
 import uk.org.openseizuredetector.data.logging.LogManager;
-import uk.org.openseizuredetector.client.SdServiceConnection;
 import uk.org.openseizuredetector.comms.WebApiConnection;
-import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.Context;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import uk.org.openseizuredetector.data.logging.Log;
@@ -39,15 +35,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-public class EditEventActivity extends AppCompatActivity {
+
+public class EditEventActivity extends ServiceConnectedActivity {
     private String TAG = "EditEventActivity";
     private Context mContext;
     private WebApiConnection mWac;
     private LogManager mLm;
-    private SdServiceConnection mConnection;
-    final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
+    // mConnection, mUtil, serverStatusHandler now inherited from ServiceConnectedActivity
     private final Handler mUiHandler = new Handler(android.os.Looper.getMainLooper());
-    private OsdUtil mUtil;
     private List<String> mEventTypesList = null;
     private HashMap<String, ArrayList<String>> mEventSubTypesHashMap = null;
     private String mEventTypeStr = null;
@@ -68,27 +63,8 @@ public class EditEventActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.v(TAG, "onCreate()");
-        super.onCreate(savedInstanceState);
+        super.onCreate(savedInstanceState);  // Initializes mUtil, mConnection, configures system bars
         setContentView(R.layout.activity_edit_event);
-
-        // Configure system bar appearance to be edge-to-edge and handle insets
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-            if (controller != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                boolean isLightMode = isLightTheme();
-                controller.setAppearanceLightStatusBars(isLightMode);
-                controller.setAppearanceLightNavigationBars(isLightMode);
-            }
-        }
-
-
-
-        mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
-        mConnection = new SdServiceConnection(getApplicationContext());
-
-        //mWac = new WebApiConnection(this, this, this, this);
-        //mLm = new LogManager(this);
 
 
         Bundle extras = getIntent().getExtras();
@@ -121,124 +97,35 @@ public class EditEventActivity extends AppCompatActivity {
     }
 
     /**
-     * Check if the current theme is light mode
+     * Called by ServiceConnectedActivity when service connection is established.
      */
-    private boolean isLightTheme() {
-        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
-        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
-    }
-
-
     @Override
-    protected void onStart() {
-        super.onStart();
-        Log.i(TAG, "onStart()");
-        mIsActive = true;
-        
-        // Check if server is running before trying to bind
-        if (!mUtil.isServerRunning()) {
-            Log.w(TAG, "onStart() - Server not running, finishing activity");
-            finish();
-            return;
-        }
-        
-        mUtil.bindToServer(getApplicationContext(), mConnection);
-        waitForConnection();
-
-        updateUi();
-    }
-
-    @Override
-    protected void onStop() {
-        Log.i(TAG, "onStop()");
-        mIsActive = false;
-        synchronized (mPendingGroupUpdates) {
-            mPendingGroupUpdates.clear();
-        }
-        super.onStop();
-        mUtil.unbindFromServer(getApplicationContext(), mConnection);
-    }
-
-
-    private void waitForConnection() {
-        // We want the UI to update as soon as it is displayed, but it takes a finite time for
-        // the mConnection to bind to the service, so we delay half a second to give it chance
-        // to connect before trying to update the UI for the first time (it happens again periodically using the uiTimer)
-        
-        // Check if activity is being destroyed or server is shutting down
-        if (isFinishing() || isDestroyed()) {
-            Log.w(TAG, "waitForConnection - Activity finishing, aborting connection attempt");
-            return;
-        }
-        
-        if (!mUtil.isServerRunning()) {
-            Log.w(TAG, "waitForConnection - Server stopped, finishing activity");
-            finish();
-            return;
-        }
-        
-        if (mConnection.mBound) {
-            Log.v(TAG, "waitForConnection - Bound!");
-            initialiseServiceConnection();
-        } else {
-            Log.v(TAG, "waitForConnection - waiting...");
-            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    waitForConnection();
-                }
-            }, 100);
-        }
-    }
-
-    private void initialiseServiceConnection() {
-        // Check if activity is being destroyed
-        if (isFinishing() || isDestroyed()) {
-            Log.w(TAG, "initialiseServiceConnection() - Activity finishing, aborting");
-            return;
-        }
-        
-        // Check if connection and server are valid
-        if (mConnection == null || !mConnection.mBound || mConnection.mSdServer == null) {
-            Log.w(TAG, "initialiseServiceConnection() - Service not yet connected");
-            
-            // Check if we should retry or give up
-            if (!mUtil.isServerRunning()) {
-                Log.w(TAG, "initialiseServiceConnection() - Server stopped, finishing activity");
-                finish();
-                return;
-            }
-            
-            new Handler(Looper.getMainLooper()).postDelayed(this::initialiseServiceConnection, 100);
-            return;
-        }
-        
-        mLm = mConnection.mSdServer.mLm;
+    protected void onServiceConnected(LogManager logManager) {
+        Log.v(TAG, "onServiceConnected()");
+        mLm = logManager;
         
         // Add null check for mLm and mWac
         if (mLm == null || mLm.mWac == null) {
-            Log.e(TAG, "initialiseServiceConnection() - mLm or mWac is null, service may be shutting down");
+            Log.e(TAG, "onServiceConnected() - mLm or mWac is null, service may be shutting down");
             finish();
             return;
         }
         
-        mWac = mConnection.mSdServer.mLm.mWac;
+        mWac = mLm.mWac;
 
         // Retrieve the JSONObject containing the standard event types.
-        // Note this obscure syntax is to avoid having to create another interface, so it is worth it :)
-        // See https://medium.com/@pra4mesh/callback-function-in-java-20fa48b27797
         mWac.getEventTypes(new WebApiConnection.JSONObjectCallback() {
             @Override
             public void accept(JSONObject eventTypesObj) {
-                Log.v(TAG, "initialiseServiceConnection().onEventTypesReceived");
-                if (!mIsActive || isFinishing() || isDestroyed()) {
+                Log.v(TAG, "onServiceConnected().onEventTypesReceived");
+                if (!mIsActive || !isActivityActive()) {
                     Log.w(TAG, "Activity not active, ignoring getEventTypes callback");
                     return;
                 }
                 if (eventTypesObj == null) {
-                    Log.e(TAG, "initialiseServiceConnection().getEventTypes Callback:  Error Retrieving event types");
+                    Log.e(TAG, "onServiceConnected().getEventTypes Callback:  Error Retrieving event types");
                     mUiHandler.post(() -> {
-                        if (mIsActive && !isFinishing() && !isDestroyed()) {
+                        if (mIsActive && isActivityActive()) {
                             mUtil.showToast("Error Retrieving Event Types from Server - Please Try Again Later!");
                         }
                     });
@@ -248,7 +135,7 @@ public class EditEventActivity extends AppCompatActivity {
                     mEventSubTypesHashMap = new HashMap<String, ArrayList<String>>();
                     while (keys.hasNext()) {
                         String key = keys.next();
-                        Log.v(TAG, "initialiseServiceConnection().getEventTypes Callback: key=" + key);
+                        Log.v(TAG, "onServiceConnected().getEventTypes Callback: key=" + key);
                         mEventTypesList.add(key);
                         try {
                             JSONArray eventSubTypes = eventTypesObj.getJSONArray(key);
@@ -259,11 +146,11 @@ public class EditEventActivity extends AppCompatActivity {
                             mEventSubTypesHashMap.put(key, eventSubtypesList);
                             mEventTypesListChanged = true;
                         } catch (JSONException e) {
-                            Log.e(TAG, "initialiseServiceConnection().getEventTypes Callback: Error parsing JSONObject" + e.getMessage() + e.toString());
+                            Log.e(TAG, "onServiceConnected().getEventTypes Callback: Error parsing JSONObject" + e.getMessage() + e.toString());
                         }
                     }
                     mUiHandler.post(() -> {
-                        if (mIsActive && !isFinishing() && !isDestroyed()) {
+                        if (mIsActive && isActivityActive()) {
                             updateUi();
                         }
                     });
@@ -276,8 +163,8 @@ public class EditEventActivity extends AppCompatActivity {
             mWac.getEvent(mEventId, new WebApiConnection.JSONObjectCallback() {
                 @Override
                 public void accept(JSONObject eventObj) {
-                    Log.v(TAG, "initialiseServiceConnection.getEvent");
-                    if (!mIsActive || isFinishing() || isDestroyed()) {
+                    Log.v(TAG, "onServiceConnected.getEvent");
+                    if (!mIsActive || !isActivityActive()) {
                         Log.w(TAG, "Activity not active, ignoring getEvent callback");
                         return;
                     }
@@ -304,6 +191,24 @@ public class EditEventActivity extends AppCompatActivity {
             Log.e(TAG, "ERROR:" + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();  // Handles service binding and connection
+        Log.i(TAG, "onStart()");
+        mIsActive = true;
+        updateUi();
+    }
+
+    @Override
+    protected void onStop() {
+        Log.i(TAG, "onStop()");
+        mIsActive = false;
+        synchronized (mPendingGroupUpdates) {
+            mPendingGroupUpdates.clear();
+        }
+        super.onStop();  // Handles service unbinding
     }
 
     private void updateUi() {

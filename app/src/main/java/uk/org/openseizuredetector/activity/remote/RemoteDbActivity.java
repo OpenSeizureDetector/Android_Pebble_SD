@@ -1,24 +1,16 @@
 package uk.org.openseizuredetector.activity.remote;
 import uk.org.openseizuredetector.R;
 
-//import androidx.appcompat.app.AppCompatActivity;
-
+import uk.org.openseizuredetector.activity.ServiceConnectedActivity;
 import uk.org.openseizuredetector.data.logging.LogManager;
-import uk.org.openseizuredetector.client.SdServiceConnection;
-import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.os.Handler;
-import android.os.Looper;
 import androidx.preference.PreferenceManager;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import uk.org.openseizuredetector.data.logging.Log;
 import android.view.View;
@@ -30,15 +22,13 @@ import android.widget.TextView;
 import java.util.HashMap;
 
 import uk.org.openseizuredetector.activity.auth.AuthenticateActivity;
-public class RemoteDbActivity extends AppCompatActivity {
+public class RemoteDbActivity extends ServiceConnectedActivity {
     private String TAG = "RemoteDbActivity";
     private Context mContext;
     private UiTimer mUiTimer;
     private LogManager mLm;
     private WebView mWebView;
-    private SdServiceConnection mConnection;
-    private OsdUtil mUtil;
-    final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
+    // mConnection, mUtil, serverStatusHandler now inherited from ServiceConnectedActivity
     private String TOKEN_ID = "webApiAuthToken";
     private String mRemtoteUrl = "https://osdapi.ddns.net/";
 
@@ -46,25 +36,9 @@ public class RemoteDbActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.v(TAG, "onCreate()");
-        super.onCreate(savedInstanceState);
+        super.onCreate(savedInstanceState);  // Initializes mUtil, mConnection, configures system bars
         mContext = this;
         setContentView(R.layout.activity_remote_db);
-
-        // Configure system bar appearance to be edge-to-edge and handle insets
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-            WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
-            if (controller != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                boolean isLightMode = isLightTheme();
-                controller.setAppearanceLightStatusBars(isLightMode);
-                controller.setAppearanceLightNavigationBars(isLightMode);
-            }
-        }
-
-
-        mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
-        mConnection = new SdServiceConnection(getApplicationContext());
-        mUtil.bindToServer(getApplicationContext(), mConnection);
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -73,111 +47,27 @@ public class RemoteDbActivity extends AppCompatActivity {
             Log.d(TAG, "onCreate - mRemoteUrl=" + mRemtoteUrl);
         }
 
-        waitForConnection();
-
-        //mLm= new LogManager(mContext);
-
-        Button authBtn =
-                (Button) findViewById(R.id.auth_button);
+        Button authBtn = (Button) findViewById(R.id.auth_button);
         authBtn.setOnClickListener(onAuth);
-        //Button pruneBtn =
-        //        (Button) findViewById(R.id.pruneDatabaseBtn);
-        //pruneBtn.setOnClickListener(onPruneBtn);
 
         mWebView = (WebView) findViewById(R.id.remote_db_webview);
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setJavaScriptEnabled(true);
-
     }
 
     /**
-     * Check if the current theme is light mode
+     * Called by ServiceConnectedActivity when service connection is established.
      */
-    private boolean isLightTheme() {
-        int currentNightMode = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
-        return currentNightMode == android.content.res.Configuration.UI_MODE_NIGHT_NO;
-    }
-
-
-    private void waitForConnection() {
-        // We want the UI to update as soon as it is displayed, but it takes a finite time for
-        // the mConnection to bind to the service, so we delay half a second to give it chance
-        // to connect before trying to update the UI for the first time (it happens again periodically using the uiTimer)
-        
-        // Check if activity is being destroyed or server is shutting down
-        if (isFinishing() || isDestroyed()) {
-            Log.w(TAG, "waitForConnection - Activity finishing, aborting connection attempt");
-            return;
-        }
-        
-        if (!mUtil.isServerRunning()) {
-            Log.w(TAG, "waitForConnection - Server stopped, finishing activity");
-            finish();
-            return;
-        }
-        
-        if (mConnection.mBound) {
-            Log.d(TAG, "waitForConnection - Bound!");
-            initialiseServiceConnection();
-        } else {
-            Log.v(TAG, "waitForConnection - waiting...");
-            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    waitForConnection();
-                }
-            }, 100);
-        }
-    }
-
-    private void initialiseServiceConnection() {
-        // Check if activity is being destroyed
-        if (isFinishing() || isDestroyed()) {
-            Log.w(TAG, "initialiseServiceConnection() - Activity finishing, aborting");
-            return;
-        }
-        
-        // Check if connection and server are valid
-        if (mConnection == null || !mConnection.mBound || mConnection.mSdServer == null) {
-            Log.w(TAG, "initialiseServiceConnection() - Service not yet connected");
-            
-            // Check if we should retry or give up
-            if (!mUtil.isServerRunning()) {
-                Log.w(TAG, "initialiseServiceConnection() - Server stopped, finishing activity");
-                finish();
-                return;
-            }
-            
-            new Handler(Looper.getMainLooper()).postDelayed(this::initialiseServiceConnection, 100);
-            return;
-        }
-        
-        mLm = mConnection.mSdServer.mLm;
-        
-        // Add null check for mLm
-        if (mLm == null) {
-            Log.e(TAG, "initialiseServiceConnection() - mLm is null, service may be shutting down");
-            finish();
-            return;
-        }
-        
+    @Override
+    protected void onServiceConnected(LogManager logManager) {
+        Log.d(TAG, "onServiceConnected()");
+        mLm = logManager;
         mWebView.loadUrl(mRemtoteUrl, getAuthHeaders());
-        //mWac = mConnection.mSdServer.mLm.mWac;
     }
-
 
     @Override
     protected void onStart() {
-        super.onStart();
-        
-        // Check if server is running before trying to bind
-        if (!mUtil.isServerRunning()) {
-            Log.w(TAG, "onStart() - Server not running, finishing activity");
-            finish();
-            return;
-        }
-        
-        waitForConnection();
+        super.onStart();  // Handles service binding and connection
         updateUi();
         //startUiTimer();
     }

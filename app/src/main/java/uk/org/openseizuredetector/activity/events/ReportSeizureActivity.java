@@ -1,24 +1,18 @@
 package uk.org.openseizuredetector.activity.events;
 import uk.org.openseizuredetector.R;
 
-//import androidx.appcompat.app.AppCompatActivity;
-
+import uk.org.openseizuredetector.activity.ServiceConnectedActivity;
 import uk.org.openseizuredetector.data.logging.LogManager;
-import uk.org.openseizuredetector.client.SdServiceConnection;
 import uk.org.openseizuredetector.comms.WebApiConnection;
 import uk.org.openseizuredetector.data.AlarmState;
-import uk.org.openseizuredetector.utils.OsdUtil;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.os.Handler;
-import android.os.Looper;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
@@ -51,7 +45,7 @@ import java.util.List;
  * will ensure the data for the missed seizure is saved.
  * Based on: https://www.journaldev.com/9976/android-date-time-picker-dialog
  */
-public class ReportSeizureActivity extends AppCompatActivity {
+public class ReportSeizureActivity extends ServiceConnectedActivity {
     private String TAG = "ReportSeizureActivity";
     private Context mContext;
     private UiTimer mUiTimer;
@@ -60,9 +54,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
 
     private int mYear, mMonth, mDay, mHour, mMinute;
     private String mMsg = "Messages";
-    private SdServiceConnection mConnection;
-    private OsdUtil mUtil;
-    final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
+    // mConnection, mUtil, serverStatusHandler now inherited from ServiceConnectedActivity
     private List<String> mEventTypesList = null;
     private HashMap<String, ArrayList<String>> mEventSubTypesHashMap = null;
     private String mEventTypeStr = null;
@@ -78,17 +70,8 @@ public class ReportSeizureActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.v(TAG, "onCreate()");
-        super.onCreate(savedInstanceState);
+        super.onCreate(savedInstanceState);  // Initializes mUtil, mConnection, configures system bars
         mContext = this;
-        mUtil = new OsdUtil(this, serverStatusHandler);
-        if (!mUtil.isServerRunning()) {
-            mUtil.showToast(getString(R.string.error_server_not_running));
-            finish();
-            return;
-        }
-        mContext = this;
-        mConnection = new SdServiceConnection(getApplicationContext());
-
         setContentView(R.layout.activity_report_seizure);
         // Handle system window insets
         View rootView = findViewById(R.id.root_layout_report_seizure);
@@ -133,113 +116,37 @@ public class ReportSeizureActivity extends AppCompatActivity {
         mMinute = c.get(Calendar.MINUTE);
     }
 
+    /**
+     * Called by ServiceConnectedActivity when service connection is established.
+     */
     @Override
-    protected void onStart() {
-        super.onStart();
-        
-        // Check if server is running before trying to bind
-        if (!mUtil.isServerRunning()) {
-            Log.w(TAG, "onStart() - Server not running, finishing activity");
-            finish();
-            return;
-        }
-        
-        mUtil.bindToServer(getApplicationContext(), mConnection);
-        waitForConnection();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        stopUiTimer();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        //startUiTimer();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        mUtil.unbindFromServer(getApplicationContext(), mConnection);
-    }
-
-    private void waitForConnection() {
-        // Check if activity is being destroyed or server is shutting down
-        if (isFinishing() || isDestroyed()) {
-            Log.w(TAG, "waitForConnection - Activity finishing, aborting connection attempt");
-            return;
-        }
-        
-        if (!mUtil.isServerRunning()) {
-            Log.w(TAG, "waitForConnection - Server stopped, finishing activity");
-            finish();
-            return;
-        }
-        
-        if (mConnection.mBound) {
-            Log.v(TAG, "waitForConnection - Bound!");
-            initialiseServiceConnection();
-        } else {
-            Log.v(TAG, "waitForConnection - waiting...");
-            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    waitForConnection();
-                }
-            }, 100);
-        }
-    }
-
-    private void initialiseServiceConnection() {
-        // Check if activity is being destroyed
-        if (isFinishing() || isDestroyed()) {
-            Log.w(TAG, "initialiseServiceConnection() - Activity finishing, aborting");
-            return;
-        }
-        
-        // Check if connection and server are valid
-        if (mConnection == null || !mConnection.mBound || mConnection.mSdServer == null) {
-            Log.w(TAG, "initialiseServiceConnection() - Service not yet connected");
-            
-            // Check if we should retry or give up
-            if (!mUtil.isServerRunning()) {
-                Log.w(TAG, "initialiseServiceConnection() - Server stopped, finishing activity");
-                finish();
-                return;
-            }
-            
-            new Handler(Looper.getMainLooper()).postDelayed(this::initialiseServiceConnection, 100);
-            return;
-        }
-        
-        mLm = mConnection.mSdServer.mLm;
+    protected void onServiceConnected(LogManager logManager) {
+        Log.v(TAG, "onServiceConnected()");
+        mLm = logManager;
         
         // Add null check for mLm and mWac
         if (mLm == null || mLm.mWac == null) {
-            Log.e(TAG, "initialiseServiceConnection() - mLm or mWac is null, service may be shutting down");
+            Log.e(TAG, "onServiceConnected() - mLm or mWac is null, service may be shutting down");
             finish();
             return;
         }
         
-        mWac = mConnection.mSdServer.mLm.mWac;
+        mWac = mLm.mWac;
 
         if (mWac.isLoggedIn()) {
             mWac.getEventTypes(new WebApiConnection.JSONObjectCallback() {
                 @Override
                 public void accept(JSONObject eventTypesObj) {
-                    Log.v(TAG, "initialiseServiceConnection().onEventTypesReceived");
+                    Log.v(TAG, "onServiceConnected().onEventTypesReceived");
                     
                     // Check if activity is still active before processing callback
-                    if (isFinishing() || isDestroyed()) {
+                    if (!isActivityActive()) {
                         Log.w(TAG, "Activity not active, ignoring getEventTypes callback");
                         return;
                     }
                     
                     if (eventTypesObj == null) {
-                        Log.e(TAG, "initialiseServiceConnection().getEventTypes Callback:  Error Retrieving event types");
+                        Log.e(TAG, "onServiceConnected().getEventTypes Callback:  Error Retrieving event types");
                         mUtil.showToast("Error Retrieving Event Types from Server - Please Try Again Later!");
                     } else {
                         Iterator<String> keys = eventTypesObj.keys();
@@ -247,7 +154,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
                         mEventSubTypesHashMap = new HashMap<String, ArrayList<String>>();
                         while (keys.hasNext()) {
                             String key = keys.next();
-                            Log.v(TAG, "initialiseServiceConnection().getEventTypes Callback: key=" + key);
+                            Log.v(TAG, "onServiceConnected().getEventTypes Callback: key=" + key);
                             mEventTypesList.add(key);
                             try {
                                 JSONArray eventSubTypes = eventTypesObj.getJSONArray(key);
@@ -258,7 +165,7 @@ public class ReportSeizureActivity extends AppCompatActivity {
                                 mEventSubTypesHashMap.put(key, eventSubtypesList);
                                 mRedrawEventSubTypesList = true;
                             } catch (JSONException e) {
-                                Log.e(TAG, "initialiseServiceConnection().getEventTypes Callback: Error parsing JSONObject" + e.getMessage() + e.toString());
+                                Log.e(TAG, "onServiceConnected().getEventTypes Callback: Error parsing JSONObject" + e.getMessage() + e.toString());
                             }
                         }
                         mRedrawEventTypesList = true;
@@ -277,8 +184,19 @@ public class ReportSeizureActivity extends AppCompatActivity {
                         }
                     })
                     .show();
-
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopUiTimer();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //startUiTimer();
     }
 
 
