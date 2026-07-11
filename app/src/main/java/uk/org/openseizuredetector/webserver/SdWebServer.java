@@ -103,7 +103,7 @@ public class SdWebServer extends NanoHTTPD {
                             Log.v(TAG, "WebServer.serve() - GET /data - sending " + mSdData.toString());
                             answer = mSdData.toString();
                         } catch (Exception ex) {
-                            Log.v(TAG, "Error Creating Data Object - " + ex.toString());
+                            Log.e(TAG, "Error Creating Data Object - " + ex.toString());
                             answer = "{'msg': 'Error Creating Data Object'}";
                         }
                         break;
@@ -128,30 +128,18 @@ public class SdWebServer extends NanoHTTPD {
                         }
                         break;
                     default:
-                        Log.v(TAG, "WebServer.serve() - Unrecognised method - " + method);
+                        Log.e(TAG, "WebServer.serve() - Unrecognised method - " + method);
                 }
                 break;
 
             case "/settings":
                 switch (method) {
                     case GET:
-                        //Log.v(TAG,"WebServer.serve() - Returning settings");
+                        Log.v(TAG,"WebServer.serve() - Returning settings");
                         try {
-                            /*JSONObject jsonObj = new JSONObject();
-                            jsonObj.put("alarmFreqMin", mSdData.alarmFreqMin);
-                            jsonObj.put("alarmFreqMax", mSdData.alarmFreqMax);
-                            jsonObj.put("nMin", mSdData.nMin);
-                            jsonObj.put("nMax", mSdData.nMax);
-                            jsonObj.put("warnTime", mSdData.warnTime);
-                            jsonObj.put("alarmTime", mSdData.alarmTime);
-                            jsonObj.put("alarmThresh", mSdData.alarmThresh);
-                            jsonObj.put("alarmRatioThresh", mSdData.alarmRatioThresh);
-                            jsonObj.put("batteryPc", mSdData.batteryPc);
-                            answer = jsonObj.toString();
-                             */
                             answer = mSdData.toSettingsJSON();
                         } catch (Exception ex) {
-                            Log.v(TAG, "Error Creating Data Object - " + ex.toString());
+                            Log.e(TAG, "Error Creating Data Object - " + ex.toString());
                             answer = "{'msg': 'Error Creating Data Object'}";
                         }
                         break;
@@ -170,7 +158,7 @@ public class SdWebServer extends NanoHTTPD {
                         //mSdServer.mSdDataSource.updateFromJSON(parameters.toString());
                         break;
                     default:
-                        Log.v(TAG, "WebServer.serve() - Unrecognised method - " + method);
+                        Log.e(TAG, "WebServer.serve() - Unrecognised method - " + method);
                 }
                 break;
             case "/spectrum":
@@ -190,7 +178,7 @@ public class SdWebServer extends NanoHTTPD {
                     answer = jsonObj.toString();
                     Log.v(TAG, "WebServer.serve() - Returning spectrum - 5" + answer);
                 } catch (Exception ex) {
-                    Log.v(TAG, "Error Creating Data Object - " + ex.toString());
+                    Log.e(TAG, "Error Creating Data Object - " + ex.toString());
                     answer = "{'msg' : 'Error Creating Data Object'}";
                 }
                 break;
@@ -235,7 +223,7 @@ public class SdWebServer extends NanoHTTPD {
                         }
                         break;
                     default:
-                        Log.v(TAG, "WebServer.serve() - Unrecognised method - " + method);
+                        Log.e(TAG, "WebServer.serve() - Unrecognised method - " + method);
                 }
                 break;
 
@@ -254,7 +242,7 @@ public class SdWebServer extends NanoHTTPD {
                     Log.v(TAG, "WebServer.serve() - response = " + resp.toString());
                     return resp;
                 } else {
-                    Log.v(TAG, "WebServer.serve() - Unknown uri -" +
+                    Log.e(TAG, "WebServer.serve() - Unknown uri -" +
                             uri);
                     answer = "{'msg' : 'Unknown URI: " + uri + "'}";
                 }

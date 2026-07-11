@@ -41,26 +41,17 @@ function get_data() {
 };
 
 function process_data(dataObj) {
-   //var dataObj = JSON.parse(dataStr);
-   //alert (dataStr);
-   var timeStr = dataObj['Time'];
-   var maxFreq = dataObj['maxFreq'];
-   var maxVal = dataObj['maxVal'];
-   var specPow = dataObj['specPower'];
-   var roiPow = dataObj['roiPower'];
+    //console.log("process_data");
+    //console.log(dataObj);
+   var timeStr = dataObj['dataTime'];
    var alarmState = dataObj['alarmState'];
    var alarmPhrase = dataObj['alarmPhrase'];
-   var pebCon = dataObj['pebCon'];
-   var pebAppRun = dataObj['pebAppRun'];
-   $("#debugInfo").html(dataStr);
-   $("#maxFreq").html("Max Freq = "+maxFreq);
-   $("#maxVal").html("Max Val = "+maxVal);
-   $("#specPow").html("Spec Pow = "+specPow);
-   $("#roiPow").html("ROI Pow = "+roiPow+" - 10xRatio="+Math.round(10*roiPow/specPow));
+   var pebCon = dataObj['watchConnected'];
+   var pebAppRun = dataObj['watchAppRunning'];
    $("#alarmState").html("Alarm State = "+alarmState);
    $("#alarmPhrase").html("Alarm Phrase = "+alarmPhrase);
 
-   $("#benStat").html(alarmPhrase+"      -    ("+timeStr+")");
+   $("#benStat").html("status="+alarmPhrase+"      -    ("+timeStr+")");
 
    switch(alarmState) {
        case 0:
@@ -81,22 +72,22 @@ function process_data(dataObj) {
 
    switch(pebCon) {
       case false:
-          $("#pebStat1").html("*** Pebble Watch Not Connected ***")
+          $("#pebStat1").html("*** Watch Not Connected ***")
                       .css("background-color","red");
           break;
       case true:
-          $("#pebStat1").html("Pebble Watch Connected OK")
+          $("#pebStat1").html("Watch Connected OK")
                       .css("background-color","blue");
           break;
    }
 
    switch(pebAppRun) {
       case false:
-          $("#pebStat2").html("*** Pebble Watch App Not Running ***")
+          $("#pebStat2").html("*** Watch App Not Running ***")
                       .css("background-color","red");
           break;
       case true:
-          $("#pebStat2").html("Pebble Watch App Running OK")
+          $("#pebStat2").html("Watch App Running OK")
                       .css("background-color","blue");
           break;
    }
@@ -168,14 +159,16 @@ acceptAlarm = function() {
    $.ajax({url:"/acceptalarm"});
 };
 
+
+// NOTE:  Settings and spectrum retrieval disabled because we do not display those any more for simplicity.
 $(document).ready(function() {  
    sd_muted = 0;
-   get_settings();
+   //get_settings();
    get_data();
-   get_spectrum();
+   //get_spectrum();
    setInterval("get_data();",2000);
-   setInterval("get_settings();",10000);
-   setInterval("get_spectrum();",5000);
+   //setInterval("get_settings();",10000);
+   //setInterval("get_spectrum();",5000);
    $("#muteButton").click(toggleMute);
    $("#acceptButton").click(acceptAlarm);
 });
