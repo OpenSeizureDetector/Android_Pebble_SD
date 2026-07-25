@@ -438,10 +438,7 @@ public class StartupActivity extends AppCompatActivity {
     }
 
     private void handleBackPressed() {
-         Log.i(TAG, "onBackPressed() - user pressed back button");
-
-        // Set shutdown flag to prevent any restart attempts
-        mIsShuttingDown = true;
+        Log.i(TAG, "onBackPressed() - user pressed back button");
 
         // Cancel the UI timer immediately to prevent further checks
         if (mUiTimer != null) {
@@ -449,49 +446,13 @@ public class StartupActivity extends AppCompatActivity {
             mUiTimer = null;
         }
 
-        // Remove any pending handler callbacks
-        if (mHandler != null) {
-            mHandler.removeCallbacksAndMessages(null);
-        }
-
-        // If server is running, stop it with timeout protection
-        if (mUtil != null && mUtil.isServerRunning()) {
-            Log.i(TAG, "onBackPressed() - stopping server before exit");
-
-            mServerStopRequested = true;
-
-            // Stop server in background thread with timeout
-            new Thread(() -> {
-                try {
-                    mUtil.stopServer();
-                    Log.i(TAG, "onBackPressed() - server stopped successfully");
-                } catch (Exception e) {
-                    Log.e(TAG, "onBackPressed() - error stopping server: " + e.getMessage());
-                }
-
-                // Finish activity on UI thread
-                runOnUiThread(() -> {
-                    Log.i(TAG, "onBackPressed() - finishing activity");
-                    finish();
-                });
-            }).start();
-
-            // Also set a timeout to ensure we exit even if stop hangs
-            if (mHandler != null) {
-                mHandler.postDelayed(() -> {
-                    if (!isFinishing()) {
-                        Log.w(TAG, "onBackPressed() - server stop timeout, forcing exit");
-                        finish();
-                    }
-                }, 7000); // 7 seconds - slightly longer than BLE disconnect timeout
-            }
-
+        // Orchestrate clean shutdown via OsdUtil
+        if (mUtil != null) {
+            mUtil.shutdownApp(this, false, true, "Shutting Down...");
         } else {
-            // Server not running, just exit
-            Log.i(TAG, "onBackPressed() - server not running, exiting immediately");
             finish();
         }
-     }
+    }
 
 
     /*
@@ -567,28 +528,34 @@ public class StartupActivity extends AppCompatActivity {
                     tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
                     requestActivityPermissions();
                     allOk = false;
+                }
 
-                } else if (smsAlarmsActive && !areSMSPermissions1OK()) {
-                    Log.i(TAG, "serverStatusRunnable(): SMS permissions NOT OK");
-                    tv.setText(getString(R.string.SmsPermissionWarning));
-                    tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
-                    tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
-                    requestSMSPermissions();
-                    allOk = false;
-                } else if (smsAlarmsActive && !areLocationPermissions1OK()) {
-                    Log.i(TAG, "serverStatusRunnable(): Location permissions NOT OK");
-                    tv.setText(getString(R.string.SmsPermissionWarning));
-                    tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
-                    tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
-                    requestLocationPermissions1();
-                    allOk = false;
-                } else if (smsAlarmsActive && !areLocationPermissions2OK()) {
-                    Log.i(TAG, "serverStatusRunnable(): Location permissions2 NOT OK");
-                    tv.setText(getString(R.string.SmsPermissionWarning));
-                    tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
-                    tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
-                    requestLocationPermissions2();
-                    allOk = false;
+                // Check SMS and Location permissions if SMS alarms are active.
+                // These are now in a separate if block so they are checked even if the
+                // data source permissions (above) are already satisfied.
+                if (allOk && smsAlarmsActive) {
+                    if (!areSMSPermissions1OK()) {
+                        Log.i(TAG, "serverStatusRunnable(): SMS permissions NOT OK");
+                        tv.setText(getString(R.string.SmsPermissionWarning));
+                        tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
+                        tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
+                        requestSMSPermissions();
+                        allOk = false;
+                    } else if (!areLocationPermissions1OK()) {
+                        Log.i(TAG, "serverStatusRunnable(): Location permissions NOT OK");
+                        tv.setText(getString(R.string.SmsPermissionWarning));
+                        tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
+                        tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
+                        requestLocationPermissions1();
+                        allOk = false;
+                    } else if (!areLocationPermissions2OK()) {
+                        Log.i(TAG, "serverStatusRunnable(): Location permissions2 NOT OK");
+                        tv.setText(getString(R.string.SmsPermissionWarning));
+                        tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
+                        tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
+                        requestLocationPermissions2();
+                        allOk = false;
+                    }
                 }
             } else {
                 tv.setText(getString(R.string.AppPermissionsWarning));

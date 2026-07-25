@@ -435,23 +435,7 @@ public class MainActivity2 extends AppCompatActivity {
         } else if (itemId == R.id.action_exit) {
             // Respond to the start/stop server menu item.
             Log.i(TAG, "action_exit: Stopping Server");
-            // Show progress dialog immediately so user knows we are shutting down
-            new MaterialAlertDialogBuilder(this)
-                    .setTitle("Shutting Down")
-                    .setMessage("Stopping OpenSeizureDetector...")
-                    .setCancelable(false)
-                    .show();
-
-            // Delay the actual stop slightly to allow the dialog to render
-            mHandler.postDelayed(() -> {
-                // Set flag to indicate user explicitly stopped the service
-                SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
-                prefs.edit().putBoolean("user_stopped_service", true).apply();
-                Log.i(TAG, "action_exit: Set user_stopped_service flag");
-                mUtil.unbindFromServer(getApplicationContext(), mConnection);
-                stopServer();
-                finish();
-            }, 150);
+            mUtil.shutdownApp(this, false, true, "Stopping OpenSeizureDetector...");
             return true;
         } else if (itemId == R.id.action_test_alarm_beep) {
             Log.i(TAG, "action_test_alarm_beep");

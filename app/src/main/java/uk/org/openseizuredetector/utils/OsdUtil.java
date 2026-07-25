@@ -28,6 +28,7 @@ import uk.org.openseizuredetector.client.SdServiceConnection;
 import uk.org.openseizuredetector.data.AlarmState;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
@@ -44,6 +45,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -659,5 +662,72 @@ public class OsdUtil {
 
     public PersistentFileLogger getFileLogger() {
         return mFileLogger;
+    }
+
+    /**
+     * Orchestrates a clean shutdown of the background service and optionally restarts the app.
+     * Centralizing this here prevents race conditions between activities attempting to restart
+     * the system simultaneously.
+     *
+     * @param caller The activity initiating the shutdown.
+     * @param restart If true, the app will be fully restarted through StartupActivity.
+     * @param setStoppedFlag If true, sets the 'user_stopped_service' flag to prevent auto-restart.
+     *                       Should be true for Menu -> Exit, false for settings-triggered restarts.
+     * @param message Optional message to display via Toast.
+     */
+    public void shutdownApp(Activity caller, boolean restart, boolean setStoppedFlag, String message) {
+        if (caller == null || caller.isDestroyed()) return;
+
+        if (message != null && !message.isEmpty() && !caller.isFinishing()) {
+            // Show a non-cancelable dialog so the user knows the app is working on the shutdown/restart
+            String title = restart ? "Restarting" : "Shutting Down";
+            try {
+                new MaterialAlertDialogBuilder(caller)
+                        .setTitle(title)
+                        .setMessage(message)
+                        .setCancelable(false)
+                        .show();
+            } catch (Exception e) {
+                // Fallback to Toast if context is invalid for dialog
+                showToast(message);
+            }
+        }
+
+        // 1. Lock the service state IMMEDIATELY to prevent other activities (like MainActivity2)
+        // from auto-starting the server during the shutdown transition.
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(caller);
+        prefs.edit().putBoolean("user_stopped_service", true).apply();
+        Log.i(TAG, "shutdownApp: Locked service auto-restart flag (set to true)");
+
+        // To ensure any dialog renders before the service shutdown potentially blocks
+        // the UI thread, we perform the actual shutdown after a short delay (200ms).
+        mHandler.postDelayed(() -> {
+            // 2. Stop the background service
+            stopServer();
+
+            // 3. Delay the final action to allow SdServer.onDestroy() to release native resources
+            mHandler.postDelayed(() -> {
+                if (restart) {
+                    Log.i(TAG, "shutdownApp: Unlocking service and initiating full app restart");
+                    prefs.edit().putBoolean("user_stopped_service", false).apply();
+                    Intent i = new Intent(caller.getApplicationContext(), uk.org.openseizuredetector.activity.startup.StartupActivity.class);
+                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    caller.startActivity(i);
+                } else if (!setStoppedFlag) {
+                    // This was a server refresh (pref change that didn't need full UI restart)
+                    Log.i(TAG, "shutdownApp: Unlocking service and refreshing server");
+                    prefs.edit().putBoolean("user_stopped_service", false).apply();
+                    startServer();
+                } else {
+                    // This was an explicit "Exit" - keep user_stopped_service as true.
+                    Log.i(TAG, "shutdownApp: Shutdown complete, staying stopped.");
+                }
+
+                // Always finish the caller to ensure a clean slate
+                if (!caller.isFinishing()) {
+                    caller.finish();
+                }
+            }, 1500);
+        }, 200);
     }
 }

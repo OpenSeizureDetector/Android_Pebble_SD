@@ -1,5 +1,7 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.0.9  - Fixed issue with SMS alerts failing to send on some phones (Issue #264)
+            - Fixed issue with app not re-starting after selecting a bLE device (Issue #261)
     V5.0.8  - Fixed crash of advanced mode user interface (Issue #251)
     V5.0.7  - Fixed potential crash after changing settings (Issue #244).
             - Fixed issue where using the mute function on watch does not prevent fault pip sounds (Issue #247)

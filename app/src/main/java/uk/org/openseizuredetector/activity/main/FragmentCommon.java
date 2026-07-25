@@ -182,10 +182,14 @@ public class FragmentCommon extends FragmentOsdBaseClass {
 
             // The dataSourceInfoTv and serverStatusTv are now shown in FragmentSystem
 
-            // Deal with the 'Raise Alarm' Button - It is hidden if we are using network data source to reduce false alarm risk.
+            // Deal with the 'Raise Alarm' Button - It is hidden if we are using network data source to reduce false alarm risk,
+            // or if the user has disabled it in the alarm preferences.
             Button button = (Button) mRootView.findViewById(R.id.manualAlarmButton);
-            if (mConnection.mSdServer.mSdDataSourceName.equals("Network")) {
-                Log.v(TAG,"Network Data Source In Use - hiding manual alarm button - dataSourceName: " + mConnection.mSdServer.mSdDataSourceName);
+            SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences(mContext);
+            boolean showRaiseAlarmButton = SP.getBoolean("ShowRaiseAlarmButton", true);
+
+            if (!showRaiseAlarmButton || mConnection.mSdServer.mSdDataSourceName.equals("Network")) {
+                Log.v(TAG,"Hiding manual alarm button - showRaiseAlarmButton: " + showRaiseAlarmButton + ", dataSourceName: " + mConnection.mSdServer.mSdDataSourceName);
                 button.setVisibility(View.GONE);
             } else {
                 Log.v(TAG,"Showing manual alarm button");

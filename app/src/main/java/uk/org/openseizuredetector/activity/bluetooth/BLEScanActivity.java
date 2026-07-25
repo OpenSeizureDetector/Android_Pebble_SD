@@ -240,6 +240,7 @@ public class BLEScanActivity extends AppCompatActivity {
         Log.i(TAG, "Check of saved values - Name=" + SP.getString("BLE_Device_Name", "SET_FROM_XML") + ", Addr=" + SP.getString("BLE_Device_Addr", "SET_FROM_XML"));
 
         Log.i(TAG, "Returning to previous screen with selected device");
+        setResult(RESULT_OK);
         finish();
     }
 
