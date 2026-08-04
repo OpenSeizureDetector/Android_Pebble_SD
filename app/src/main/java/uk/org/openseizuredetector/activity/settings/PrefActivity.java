@@ -762,11 +762,16 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             super.onAttach(context);
             // Register file-picker launchers as early as possible (onAttach) so they are
             // always ready before onCreatePreferences wires up click listeners.
-            if (mPickerWarning == null) {
-                mPickerWarning = registerForActivityResult(
-                        new ActivityResultContracts.StartActivityForResult(),
-                        result -> handlePickerResult(result, KEY_WARNING_URI));
-            }
+            // #246: Warning no longer supports a custom MP3 file - it always uses the plain
+            // tone beep on the Notification stream, so its picker is disabled below. Remark
+            // this block back in (and the matching lines in onCreatePreferences,
+            // refreshSoundPickerVisibility, refreshSoundSummaries and getDefaultSummary) if
+            // MP3 support for Warning is reinstated.
+            // if (mPickerWarning == null) {
+            //     mPickerWarning = registerForActivityResult(
+            //             new ActivityResultContracts.StartActivityForResult(),
+            //             result -> handlePickerResult(result, KEY_WARNING_URI));
+            // }
             if (mPickerAlarm == null) {
                 mPickerAlarm = registerForActivityResult(
                         new ActivityResultContracts.StartActivityForResult(),
@@ -790,7 +795,8 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             refreshSoundPickerVisibility();
             refreshSoundSummaries();
             // Wire click listeners for the three file-picker prefs
-            wirePickerPref(KEY_WARNING_URI, mPickerWarning);
+            // #246: Warning picker disabled - see onAttach() for details.
+            // wirePickerPref(KEY_WARNING_URI, mPickerWarning);
             wirePickerPref(KEY_ALARM_URI,   mPickerAlarm);
             wirePickerPref(KEY_FAULT_URI,   mPickerFault);
         }
@@ -824,7 +830,8 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             SharedPreferences prefs =
                     PreferenceManager.getDefaultSharedPreferences(requireContext());
             boolean useMp3 = prefs.getBoolean(KEY_USE_MP3, false);
-            setPickerVisible(KEY_WARNING_URI, useMp3);
+            // #246: Warning picker disabled - see onAttach() for details.
+            // setPickerVisible(KEY_WARNING_URI, useMp3);
             setPickerVisible(KEY_ALARM_URI,   useMp3);
             setPickerVisible(KEY_FAULT_URI,   useMp3);
         }
@@ -836,8 +843,9 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
         /** Update each picker's summary to show the selected filename (or default text). */
         private void refreshSoundSummaries() {
-            refreshOneSummary(KEY_WARNING_URI,
-                    getString(R.string.mp3_warning_sound_summary_default));
+            // #246: Warning picker disabled - see onAttach() for details.
+            // refreshOneSummary(KEY_WARNING_URI,
+            //         getString(R.string.mp3_warning_sound_summary_default));
             refreshOneSummary(KEY_ALARM_URI,
                     getString(R.string.mp3_alarm_sound_summary_default));
             refreshOneSummary(KEY_FAULT_URI,

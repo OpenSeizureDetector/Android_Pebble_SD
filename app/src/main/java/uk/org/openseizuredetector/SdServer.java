@@ -224,7 +224,8 @@ public class SdServer extends Service implements SdDataReceiver {
 
     private OsdUtil mUtil;
     private Handler mHandler;
-    private ToneGenerator mToneGenerator;
+    private ToneGenerator mToneGenerator; // used for Alarm and Fault Warning beeps (STREAM_ALARM)
+    private ToneGenerator mWarningToneGenerator; // used for Warning beeps only (STREAM_NOTIFICATION)
     private android.media.MediaPlayer mMediaPlayer = null; // used for MP3 alarm sounds
     private String mCurrentMp3Uri = null; // URI of currently playing MP3
     private long mMp3StartTimeMs = 0; // Time when current MP3 started playing
@@ -277,6 +278,7 @@ public class SdServer extends Service implements SdDataReceiver {
         mSdData = new SdData();
         mSdDataHistory = new uk.org.openseizuredetector.data.SdDataHistory();  // Initialize history buffers
         mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+        mWarningToneGenerator = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
 
         mUtil = new OsdUtil(getApplicationContext(), mHandler);
         Log.i(TAG, "SdServer.onCreate()");
@@ -829,6 +831,10 @@ public class SdServer extends Service implements SdDataReceiver {
                 mToneGenerator.release();
                 mToneGenerator = null;
             }
+            if (mWarningToneGenerator != null) {
+                mWarningToneGenerator.release();
+                mWarningToneGenerator = null;
+            }
 
             this.stopForeground(STOP_FOREGROUND_REMOVE);
             // Cancel the notification.
@@ -939,8 +945,10 @@ public class SdServer extends Service implements SdDataReceiver {
     /**
      * Play an MP3 sound: uses the user-selected content URI if non-empty, otherwise falls back
      * to the bundled res/raw/ resource identified by rawResName.
-     * Audio attributes are set to USAGE_ALARM so the phone's alarm volume is used and the
-     * sound plays even in DND/silent modes (subject to user's DND alarm exception settings).
+     * Only used for Alarm and Fault sounds (never Warning - Warning always uses the plain tone
+     * beep on the Notification stream, see warningBeep()). Audio attributes are set to
+     * USAGE_ALARM so the phone's alarm volume is used and the sound plays even in DND/silent
+     * modes (subject to user's DND alarm exception settings).
      * 
      * If an MP3 is already playing, it will not be interrupted unless the latch alarm duration
      * has been exceeded.
@@ -1612,11 +1620,19 @@ public class SdServer extends Service implements SdDataReceiver {
     /* from http://stackoverflow.com/questions/12154940/how-to-make-a-beep-in-android */
 
     /**
-     * beep for duration milliseconds, using tone generator
+     * beep for duration milliseconds, using the Alarm-stream tone generator
      */
     private void beep(int duration) {
-        if (mToneGenerator != null) {
-            mToneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration);
+        beep(duration, mToneGenerator);
+    }
+
+    /**
+     * beep for duration milliseconds, using the supplied tone generator - lets callers choose
+     * which Android volume stream (Alarm or Notification) the beep is played against.
+     */
+    private void beep(int duration, ToneGenerator toneGenerator) {
+        if (toneGenerator != null) {
+            toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration);
             Log.v(TAG, "beep()");
         } else {
             mUtil.showToast(getString(R.string.PleaseForceStopOSDorRebootMsg));
@@ -1710,19 +1726,17 @@ public class SdServer extends Service implements SdDataReceiver {
     }
 
     /*
-     * beep, provided mAudibleWarning is set
+     * beep, provided mAudibleWarning is set.
+     * Warning always uses the plain tone beep on the Notification stream - it never plays an
+     * MP3 file, even if "Use MP3 Alarm Sound" (mMp3Alarm) is enabled for Alarms/Faults. This
+     * keeps the Warning sound tied to the Android Notification volume in all cases.
      */
     public void warningBeep() {
         if (mCancelAudible) {
             Log.v(TAG, "warningBeep() - CancelAudible Active - silent beep...");
         } else {
             if (mAudibleWarning) {
-                if (mMp3Alarm) {
-                    Log.i(TAG, "SdServer.warningBeep() - playing MP3");
-                    playMp3(mMp3WarningUri, "warning");
-                } else {
-                    beep(100);
-                }
+                beep(100, mWarningToneGenerator);
                 Log.v(TAG, "warningBeep()");
                 Log.i(TAG, "SdServer.warningBeep() - beeping");
             } else {
