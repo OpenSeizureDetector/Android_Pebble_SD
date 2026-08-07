@@ -17,10 +17,15 @@ import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.LineGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
 
-public class FragmentOsdAlg extends FragmentOsdBaseClass {
-    String TAG = "FragmentOsdAlg";
+/**
+ * Displays the "Flap" tab - a graph of the Flap algorithm's spectrum, identical in
+ * structure to the "OSD" tab (FragmentOsdAlg) but driven by the Flap algorithm's own
+ * data (sdData.flap*) and "Flap Alarm Threshold" setting (see issue #238).
+ */
+public class FragmentFlapAlg extends FragmentOsdBaseClass {
+    String TAG = "FragmentFlapAlg";
 
-    public FragmentOsdAlg() {
+    public FragmentFlapAlg() {
         // Required empty public constructor
     }
 
@@ -34,13 +39,13 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_osdalg, container, false);
+        return inflater.inflate(R.layout.fragment_flapalg, container, false);
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        GraphView chart = view.findViewById(R.id.chart1);
+        GraphView chart = view.findViewById(R.id.flapChart1);
         adjustChartHeightForMode(chart);
     }
 
@@ -56,34 +61,34 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             /////////////////////////////////////////////////////
             // Set ProgressBars to show margin to alarm.
             long powerPc;
-            if (mConnection.mSdServer.mSdData.alarmThresh != 0)
-                powerPc = mConnection.mSdServer.mSdData.roiPower * 100 /
-                        mConnection.mSdServer.mSdData.alarmThresh;
+            if (mConnection.mSdServer.mSdData.flapAlarmThresh != 0)
+                powerPc = mConnection.mSdServer.mSdData.flapRoiPower * 100 /
+                        mConnection.mSdServer.mSdData.flapAlarmThresh;
             else
                 powerPc = 0;
 
             long specPc;
-            if (mConnection.mSdServer.mSdData.specPower != 0 &&
-                    mConnection.mSdServer.mSdData.alarmRatioThresh != 0)
-                specPc = 100 * (mConnection.mSdServer.mSdData.roiPower * 10 /
-                        mConnection.mSdServer.mSdData.specPower) /
-                        mConnection.mSdServer.mSdData.alarmRatioThresh;
+            if (mConnection.mSdServer.mSdData.flapSpecPower != 0 &&
+                    mConnection.mSdServer.mSdData.flapAlarmRatioThresh != 0)
+                specPc = 100 * (mConnection.mSdServer.mSdData.flapRoiPower * 10 /
+                        mConnection.mSdServer.mSdData.flapSpecPower) /
+                        mConnection.mSdServer.mSdData.flapAlarmRatioThresh;
             else
                 specPc = 0;
 
             long specRatio;
-            if (mConnection.mSdServer.mSdData.specPower != 0) {
-                specRatio = 10 * mConnection.mSdServer.mSdData.roiPower /
-                        mConnection.mSdServer.mSdData.specPower;
+            if (mConnection.mSdServer.mSdData.flapSpecPower != 0) {
+                specRatio = 10 * mConnection.mSdServer.mSdData.flapRoiPower /
+                        mConnection.mSdServer.mSdData.flapSpecPower;
             } else
                 specRatio = 0;
 
-            ((TextView) mRootView.findViewById(R.id.powerTv)).setText(getString(R.string.PowerEquals) + mConnection.mSdServer.mSdData.roiPower +
-                    " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmThresh + ")");
+            ((TextView) mRootView.findViewById(R.id.flapPowerTv)).setText(getString(R.string.PowerEquals) + mConnection.mSdServer.mSdData.flapRoiPower +
+                    " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.flapAlarmThresh + ")");
 
             ProgressBar pb;
             Drawable pbDrawable;
-            pb = ((ProgressBar) mRootView.findViewById(R.id.powerProgressBar));
+            pb = ((ProgressBar) mRootView.findViewById(R.id.flapPowerProgressBar));
             pb.setMax(100);
             pb.setProgress((int) powerPc);
             pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_blue);
@@ -93,10 +98,10 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
                 pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_red);
             pb.setProgressDrawable(pbDrawable);
 
-            ((TextView) mRootView.findViewById(R.id.spectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
-                    " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.alarmRatioThresh + ")");
+            ((TextView) mRootView.findViewById(R.id.flapSpectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
+                    " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.flapAlarmRatioThresh + ")");
 
-            pb = ((ProgressBar) mRootView.findViewById(R.id.spectrumProgressBar));
+            pb = ((ProgressBar) mRootView.findViewById(R.id.flapSpectrumProgressBar));
             pb.setMax(100);
             pb.setProgress((int) specPc);
             pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_blue);
@@ -109,7 +114,7 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
 
             ////////////////////////////////////////////////////////////
             // Produce graph using GraphView with smoothed line
-            GraphView mChart = (GraphView) mRootView.findViewById(R.id.chart1);
+            GraphView mChart = (GraphView) mRootView.findViewById(R.id.flapChart1);
 
             mChart.removeAllSeries();
 
@@ -117,14 +122,14 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
                 DataPoint[] dataPoints = new DataPoint[10];
                 for (int i = 0; i < 10; i++) {
                     if (mConnection.mSdServer != null) {
-                        dataPoints[i] = new DataPoint(i, mConnection.mSdServer.mSdData.simpleSpec[i]);
+                        dataPoints[i] = new DataPoint(i, mConnection.mSdServer.mSdData.flapSimpleSpec[i]);
                     } else {
                         dataPoints[i] = new DataPoint(i, 0);
                     }
                 }
 
-                int alarmFreqMin = (int) mConnection.mSdServer.mSdData.alarmFreqMin;
-                int alarmFreqMax = (int) mConnection.mSdServer.mSdData.alarmFreqMax;
+                int alarmFreqMin = (int) mConnection.mSdServer.mSdData.flapAlarmFreqMin;
+                int alarmFreqMax = (int) mConnection.mSdServer.mSdData.flapAlarmFreqMax;
 
                 if (alarmFreqMin > 0) {
                     DataPoint[] graySegmentBefore = new DataPoint[alarmFreqMin + 1];
@@ -172,14 +177,10 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
                 Log.e(TAG, "Exception creating spectrum graph: " + e.getMessage());
             }
 
-            // CHANGED (issue #238): Y-axis maximum used to be hardcoded to 3000
-            // (mChart.getViewport().setMaxY(3000)). It is now derived from the "Alarm
-            // Threshold" setting plus 30% headroom, so the graph scales sensibly across
-            // different hardware/OS combinations where the appropriate threshold varies
-            // a lot (e.g. see issue #233). Falls back to the old value of 3000 only if
-            // the threshold is unset/zero, to avoid a degenerate zero-height Y-axis.
-            long alarmThresh = mConnection.mSdServer.mSdData.alarmThresh;
-            double maxY = alarmThresh > 0 ? alarmThresh * 1.3 : 3000;
+            // Y-axis maximum is derived from the "Flap Alarm Threshold" setting plus 30%
+            // headroom, mirroring the OSD tab's Y-axis behaviour (see issue #238).
+            long flapAlarmThresh = mConnection.mSdServer.mSdData.flapAlarmThresh;
+            double maxY = flapAlarmThresh > 0 ? flapAlarmThresh * 1.3 : 3000;
             mChart.getViewport().setYAxisBoundsManual(true);
             mChart.getViewport().setMinY(0);
             mChart.getViewport().setMaxY(maxY);
@@ -226,7 +227,7 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
         if (isBasicMode()) {
             return;
         }
-        // OSD graph updates are tied to new data to avoid flicker.
+        // Flap graph updates are tied to new data to avoid flicker.
     }
 
     private void adjustChartHeightForMode(GraphView chart) {

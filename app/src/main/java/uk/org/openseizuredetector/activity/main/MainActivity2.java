@@ -26,12 +26,13 @@ import uk.org.openseizuredetector.R;
  * - Position numbers must be consecutive starting from 0
  * - Commented out cases do NOT count toward the total
  *
- * Current Active Tabs (as of April 2026):
+ * Current Active Tabs (as of August 2026):
  * - Position 0: OSD Algorithm (FragmentOsdAlg)
- * - Position 1: ML Algorithm (FragmentMlAlg)
- * - Position 2: Heart Rate (FragmentHrAlg)
- * - Position 3: Fall Detection (FragmentFallAlg)  ← between HR and System
- * - Position 4: System (FragmentSystem - includes Signal & Battery graphs)
+ * - Position 1: Flap Algorithm (FragmentFlapAlg)  ← between OSD and ML
+ * - Position 2: ML Algorithm (FragmentMlAlg)
+ * - Position 3: Heart Rate (FragmentHrAlg)
+ * - Position 4: Fall Detection (FragmentFallAlg)
+ * - Position 5: System (FragmentSystem - includes Signal & Battery graphs)
  * Removed/Inactive:
  * - FragmentWatchSig (signal graph moved to System tab)
  * - FragmentBatt (battery graph moved to System tab)
@@ -318,20 +319,26 @@ public class MainActivity2 extends AppCompatActivity {
                     new TabLayoutMediator.TabConfigurationStrategy() {
                         @Override
                         public void onConfigureTab(TabLayout.Tab tab, int position) {
+                            // CHANGED (issue #238): inserted the new "Flap" tab at position 1.
+                            // ML/Heart Rate/Fall/System each shifted one position later
+                            // (were 1/2/3/4, now 2/3/4/5) - see the class doc comment above.
                             switch (position) {
                                 case 0:
                                     tab.setText("OSD");
                                     break;
                                 case 1:
-                                    tab.setText("ML");
+                                    tab.setText("Flap");
                                     break;
                                 case 2:
+                                    tab.setText("ML");
+                                    break;
+                                case 3:
                                     tab.setText("Heart Rate");
                                     break;
-                                 case 3:
+                                 case 4:
                                      tab.setText("Fall");
                                      break;
-                                 case 4:
+                                 case 5:
                                      tab.setText("System");
                                      break;
                                 default:
@@ -341,21 +348,35 @@ public class MainActivity2 extends AppCompatActivity {
                     });
             mTabLayoutMediator.attach();
 
-            // Grey out the Fall tab (position 3) when fall detection is disabled,
-            // so users can immediately see which tabs are relevant to the current configuration.
+            // CHANGED (issue #238): this used to only grey out the Fall tab. Extended the
+            // same treatment to the new OSD/Flap conditional-visibility requirement from
+            // the issue, instead of introducing a different mechanism (e.g. actually
+            // hiding tabs, which would require making tab count/positions dynamic).
+            // Grey out tabs whose underlying algorithm is disabled, so users can immediately
+            // see which tabs are relevant to the current configuration. Tabs are never fully
+            // hidden - only dimmed - matching the existing Fall tab behaviour.
             // We access the tab strip's child view directly as TabLayout has no public alpha API.
             try {
                 SharedPreferences tabPrefs = mSharedPrefs != null ? mSharedPrefs
                         : PreferenceManager.getDefaultSharedPreferences(this);
+                ViewGroup tabStrip = (ViewGroup) mTabLayout.getChildAt(0);
+
+                boolean osdActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "OsdAlarmActive");
+                if (!osdActive && tabStrip != null && tabStrip.getChildCount() > 0) {
+                    tabStrip.getChildAt(0).setAlpha(0.4f);
+                }
+
+                boolean flapActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "FlapAlarmActive");
+                if (!flapActive && tabStrip != null && tabStrip.getChildCount() > 1) {
+                    tabStrip.getChildAt(1).setAlpha(0.4f);
+                }
+
                 boolean fallActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "FallActive");
-                if (!fallActive) {
-                    ViewGroup tabStrip = (ViewGroup) mTabLayout.getChildAt(0);
-                    if (tabStrip != null && tabStrip.getChildCount() > 3) {
-                        tabStrip.getChildAt(3).setAlpha(0.4f);
-                    }
+                if (!fallActive && tabStrip != null && tabStrip.getChildCount() > 4) {
+                    tabStrip.getChildAt(4).setAlpha(0.4f);
                 }
             } catch (Exception e) {
-                Log.w(TAG, "onResume() - could not grey out Fall tab: " + e.getMessage());
+                Log.w(TAG, "onResume() - could not grey out tabs: " + e.getMessage());
             }
         } else {
             Log.d(TAG, "onResume() - TabLayout not found (landscape layout detected), skipping TabLayoutMediator");
@@ -575,17 +596,22 @@ public class MainActivity2 extends AppCompatActivity {
         @Override
         public Fragment createFragment(int position) {
             // Note - the number of positions must match the value returned by getItemCount() below.
+            // CHANGED (issue #238): inserted FragmentFlapAlg at position 1, shifting
+            // FragmentMlAlg/FragmentHrAlg/FragmentFallAlg/FragmentSystem down one position
+            // each (must stay in sync with the TabLayoutMediator switch above).
             switch (position) {
                 case 0:
                     return new FragmentOsdAlg();
                 case 1:
-                    return new FragmentMlAlg();
+                    return new FragmentFlapAlg();
                 case 2:
-                    return new FragmentHrAlg();
+                    return new FragmentMlAlg();
                 case 3:
+                    return new FragmentHrAlg();
+                case 4:
                     // Fall detection debug tab - graphs window min/max acceleration history
                     return new FragmentFallAlg();
-                case 4:
+                case 5:
                     return new FragmentSystem();
 
                 default:
@@ -596,7 +622,7 @@ public class MainActivity2 extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return 5; // Must match the number of active cases in createFragment() above
+            return 6; // CHANGED (issue #238): was 5, +1 for the new Flap tab. Must match the number of active cases in createFragment() above
         }
     }
 
@@ -850,17 +876,19 @@ public class MainActivity2 extends AppCompatActivity {
 
     /**
      * Determines which tab to show based on enabled algorithms
-     * Priority order: ML (tab 1), OSD (tab 0), HR (tab 2)
-     * Returns the tab index (0-3) or DEFAULT_TAB if no algorithms are enabled
+     * Priority order: ML (tab 2), OSD (tab 0), HR (tab 3)
+     * Returns the tab index or DEFAULT_TAB if no algorithms are enabled
+     * CHANGED (issue #238): ML/HR indices shifted from 1/2 to 2/3 because the new
+     * Flap tab was inserted at position 1. OSD stays at 0.
      */
     private int getDefaultTabFromAlgorithmSettings(SharedPreferences prefs) {
         // Check algorithms in priority order: ML, OSD, HR
 
-        // Tab 1: ML Algorithm
+        // Tab 2: ML Algorithm
         boolean mlEnabled = PreferenceUtils.getBooleanFromXml(prefs, "CnnAlarmActive");
         if (mlEnabled) {
-            Log.d(TAG, "ML algorithm is enabled - selecting ML tab (position 1)");
-            return 1;
+            Log.d(TAG, "ML algorithm is enabled - selecting ML tab (position 2)");
+            return 2;
         }
 
         // Tab 0: OSD Algorithm
@@ -870,11 +898,11 @@ public class MainActivity2 extends AppCompatActivity {
             return 0;
         }
 
-        // Tab 2: Heart Rate Algorithm
+        // Tab 3: Heart Rate Algorithm
         boolean hrEnabled = PreferenceUtils.getBooleanFromXml(prefs, "HRAlarmActive");
         if (hrEnabled) {
-            Log.d(TAG, "HR algorithm is enabled - selecting HR tab (position 2)");
-            return 2;
+            Log.d(TAG, "HR algorithm is enabled - selecting HR tab (position 3)");
+            return 3;
         }
 
         // No algorithms enabled - use default (OSD tab)
