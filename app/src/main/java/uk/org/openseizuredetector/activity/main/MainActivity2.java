@@ -359,31 +359,6 @@ public class MainActivity2 extends AppCompatActivity {
             try {
                 SharedPreferences tabPrefs = mSharedPrefs != null ? mSharedPrefs
                         : PreferenceManager.getDefaultSharedPreferences(this);
-<<<<<<< Updated upstream
-                ViewGroup tabStrip = (ViewGroup) mTabLayout.getChildAt(0);
-
-                boolean osdActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "OsdAlarmActive");
-                if (!osdActive && tabStrip != null && tabStrip.getChildCount() > 0) {
-                    tabStrip.getChildAt(0).setAlpha(0.4f);
-                }
-
-                boolean flapActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "FlapAlarmActive");
-                if (!flapActive && tabStrip != null && tabStrip.getChildCount() > 1) {
-                    tabStrip.getChildAt(1).setAlpha(0.4f);
-                }
-
-                boolean fallActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "FallActive");
-                if (!fallActive && tabStrip != null && tabStrip.getChildCount() > 4) {
-                    tabStrip.getChildAt(4).setAlpha(0.4f);
-=======
-<<<<<<< Updated upstream
-                boolean fallActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "FallActive");
-                if (!fallActive) {
-                    ViewGroup tabStrip = (ViewGroup) mTabLayout.getChildAt(0);
-                    if (tabStrip != null && tabStrip.getChildCount() > 3) {
-                        tabStrip.getChildAt(3).setAlpha(0.4f);
-                    }
-=======
                 ViewGroup tabStrip = (ViewGroup) mTabLayout.getChildAt(0);
 
                 boolean osdActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "OsdAlarmActive");
@@ -417,8 +392,6 @@ public class MainActivity2 extends AppCompatActivity {
                 if (tabStrip != null && tabStrip.getChildCount() > 4) {
                     tabStrip.getChildAt(4).setAlpha(fallActive ? 1.0f : 0.4f);
                     tabStrip.getChildAt(4).setEnabled(fallActive);
->>>>>>> Stashed changes
->>>>>>> Stashed changes
                 }
             } catch (Exception e) {
                 Log.w(TAG, "onResume() - could not grey out tabs: " + e.getMessage());

@@ -34,7 +34,6 @@
             android:title="@string/use_mp3_alarm_title" />
         <!-- Sound file pickers — only visible when UseMp3Alarm is checked.
              Visibility is controlled programmatically in AlarmPrefsFragment. -->
-<<<<<<< Updated upstream
         <!-- #246: Warning no longer supports a custom MP3 file - it always uses the plain tone
              beep on the Notification stream. Remark this preference back in (and the matching
              wiring in AlarmPrefsFragment) if MP3 support for Warning is reinstated.
@@ -42,10 +41,6 @@
             android:key="Mp3WarningUri"
             android:title="@string/mp3_warning_sound_title"
             android:summary="@string/mp3_warning_sound_summary_default" />
-=======
-        <!-- #246: Warnings should no longer use a custom MP3 file - instead only the plain tone
-             beeps on the Notification stream are used.
->>>>>>> Stashed changes
         -->
         <Preference
             android:key="Mp3AlarmUri"

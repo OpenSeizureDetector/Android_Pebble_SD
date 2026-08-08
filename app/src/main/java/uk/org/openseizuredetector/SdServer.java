@@ -224,14 +224,8 @@ public class SdServer extends Service implements SdDataReceiver {
 
     private OsdUtil mUtil;
     private Handler mHandler;
-<<<<<<< Updated upstream
     private ToneGenerator mToneGenerator; // used for Alarm and Fault Warning beeps (STREAM_ALARM)
     private ToneGenerator mWarningToneGenerator; // used for Warning beeps only (STREAM_NOTIFICATION)
-=======
-    // private ToneGenerator mToneGenerator;
-    private ToneGenerator mToneGenerator; // used for Alarm and Fault Warning beeps
-    private ToneGenerator mWarningToneGenerator; // used for Warning beeps only
->>>>>>> Stashed changes
     private android.media.MediaPlayer mMediaPlayer = null; // used for MP3 alarm sounds
     private String mCurrentMp3Uri = null; // URI of currently playing MP3
     private long mMp3StartTimeMs = 0; // Time when current MP3 started playing
@@ -1643,10 +1637,6 @@ public class SdServer extends Service implements SdDataReceiver {
      * beep for duration milliseconds, using the supplied tone generator - lets callers choose
      * which Android volume stream (Alarm or Notification) the beep is played against.
      */
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
     private void beep(int duration, ToneGenerator toneGenerator) {
         if (toneGenerator != null) {
             toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration);
