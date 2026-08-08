@@ -224,8 +224,14 @@ public class SdServer extends Service implements SdDataReceiver {
 
     private OsdUtil mUtil;
     private Handler mHandler;
+<<<<<<< Updated upstream
     private ToneGenerator mToneGenerator; // used for Alarm and Fault Warning beeps (STREAM_ALARM)
     private ToneGenerator mWarningToneGenerator; // used for Warning beeps only (STREAM_NOTIFICATION)
+=======
+    // private ToneGenerator mToneGenerator;
+    private ToneGenerator mToneGenerator; // used for Alarm and Fault Warning beeps
+    private ToneGenerator mWarningToneGenerator; // used for Warning beeps only
+>>>>>>> Stashed changes
     private android.media.MediaPlayer mMediaPlayer = null; // used for MP3 alarm sounds
     private String mCurrentMp3Uri = null; // URI of currently playing MP3
     private long mMp3StartTimeMs = 0; // Time when current MP3 started playing
@@ -945,10 +951,17 @@ public class SdServer extends Service implements SdDataReceiver {
     /**
      * Play an MP3 sound: uses the user-selected content URI if non-empty, otherwise falls back
      * to the bundled res/raw/ resource identified by rawResName.
+<<<<<<< Updated upstream
      * Only used for Alarm and Fault sounds (never Warning - Warning always uses the plain tone
      * beep on the Notification stream, see warningBeep()). Audio attributes are set to
      * USAGE_ALARM so the phone's alarm volume is used and the sound plays even in DND/silent
      * modes (subject to user's DND alarm exception settings).
+=======
+     * Only used for Alarm and Fault sounds (never for Warnings - Warnings will use the plain
+     * tone beep on the Notification stream instead, see warningBeep()).
+     * Audio/MP3 attributes are set to USAGE_ALARM, so the phone's alarm volume is used and
+     * the sound plays even in DND/silent mode (subject to user's DND alarm exception settings).
+>>>>>>> Stashed changes
      * 
      * If an MP3 is already playing, it will not be interrupted unless the latch alarm duration
      * has been exceeded.
@@ -1630,13 +1643,17 @@ public class SdServer extends Service implements SdDataReceiver {
      * beep for duration milliseconds, using the supplied tone generator - lets callers choose
      * which Android volume stream (Alarm or Notification) the beep is played against.
      */
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
     private void beep(int duration, ToneGenerator toneGenerator) {
         if (toneGenerator != null) {
             toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, duration);
             Log.v(TAG, "beep()");
         } else {
             mUtil.showToast(getString(R.string.PleaseForceStopOSDorRebootMsg));
-            Log.v(TAG, "beep() - Warming mToneGenerator is null - not beeping!!!");
+            Log.v(TAG, "beep() - Warning mToneGenerator is null - not beeping!!!");
             Log.i(TAG, "SdServer.beep() - mToneGenerator is null???");
         }
     }
@@ -1726,8 +1743,13 @@ public class SdServer extends Service implements SdDataReceiver {
     }
 
     /*
+<<<<<<< Updated upstream
      * beep, provided mAudibleWarning is set.
      * Warning always uses the plain tone beep on the Notification stream - it never plays an
+=======
+     * beep, provided that mAudibleWarning is set.
+     * Warnings always use the plain tone beep on the Notification stream - they never play an
+>>>>>>> Stashed changes
      * MP3 file, even if "Use MP3 Alarm Sound" (mMp3Alarm) is enabled for Alarms/Faults. This
      * keeps the Warning sound tied to the Android Notification volume in all cases.
      */
