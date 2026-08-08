@@ -359,6 +359,7 @@ public class MainActivity2 extends AppCompatActivity {
             try {
                 SharedPreferences tabPrefs = mSharedPrefs != null ? mSharedPrefs
                         : PreferenceManager.getDefaultSharedPreferences(this);
+<<<<<<< Updated upstream
                 ViewGroup tabStrip = (ViewGroup) mTabLayout.getChildAt(0);
 
                 boolean osdActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "OsdAlarmActive");
@@ -374,6 +375,50 @@ public class MainActivity2 extends AppCompatActivity {
                 boolean fallActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "FallActive");
                 if (!fallActive && tabStrip != null && tabStrip.getChildCount() > 4) {
                     tabStrip.getChildAt(4).setAlpha(0.4f);
+=======
+<<<<<<< Updated upstream
+                boolean fallActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "FallActive");
+                if (!fallActive) {
+                    ViewGroup tabStrip = (ViewGroup) mTabLayout.getChildAt(0);
+                    if (tabStrip != null && tabStrip.getChildCount() > 3) {
+                        tabStrip.getChildAt(3).setAlpha(0.4f);
+                    }
+=======
+                ViewGroup tabStrip = (ViewGroup) mTabLayout.getChildAt(0);
+
+                boolean osdActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "OsdAlarmActive");
+                if (tabStrip != null && tabStrip.getChildCount() > 0) {
+                    tabStrip.getChildAt(0).setAlpha(osdActive ? 1.0f : 0.4f);
+                    tabStrip.getChildAt(0).setEnabled(osdActive);
+                }
+
+                boolean flapActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "FlapAlarmActive");
+                if (tabStrip != null && tabStrip.getChildCount() > 1) {
+                    tabStrip.getChildAt(1).setAlpha(flapActive ? 1.0f : 0.4f);
+                    tabStrip.getChildAt(1).setEnabled(flapActive);
+                }
+
+                // ML and Heart Rate tabs are also backed by an enable/disable checkbox
+                // (CnnAlarmActive / HRAlarmActive respectively). System (position 5) has no
+                // such checkbox, so it is intentionally left out of this block.
+                boolean mlActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "CnnAlarmActive");
+                if (tabStrip != null && tabStrip.getChildCount() > 2) {
+                    tabStrip.getChildAt(2).setAlpha(mlActive ? 1.0f : 0.4f);
+                    tabStrip.getChildAt(2).setEnabled(mlActive);
+                }
+
+                boolean hrActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "HRAlarmActive");
+                if (tabStrip != null && tabStrip.getChildCount() > 3) {
+                    tabStrip.getChildAt(3).setAlpha(hrActive ? 1.0f : 0.4f);
+                    tabStrip.getChildAt(3).setEnabled(hrActive);
+                }
+
+                boolean fallActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "FallActive");
+                if (tabStrip != null && tabStrip.getChildCount() > 4) {
+                    tabStrip.getChildAt(4).setAlpha(fallActive ? 1.0f : 0.4f);
+                    tabStrip.getChildAt(4).setEnabled(fallActive);
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
                 }
             } catch (Exception e) {
                 Log.w(TAG, "onResume() - could not grey out tabs: " + e.getMessage());
