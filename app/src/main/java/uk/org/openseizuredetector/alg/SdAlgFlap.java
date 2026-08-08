@@ -14,6 +14,7 @@ import uk.org.openseizuredetector.data.SdData;
 public class SdAlgFlap extends SdAlgBase {
     private final static String TAG = "SdAlgFlap";
     private static final int ACCEL_SCALE_FACTOR = 1000;  // Acceleration data scaling factor
+    private static final int SIMPLE_SPEC_FMAX = 10;  // NEW (issue #238): number of 1Hz spectrum bins, matches SdAlgOsd
 
     private short mFlapThresh;
     private short mFlapRatioThresh;
@@ -123,6 +124,41 @@ public class SdAlgFlap extends SdAlgBase {
             roiRatio = 10 * roiPower / specPower;
 
             Log.d(TAG, "processSdData() - roiPower=" + roiPower + ", roiRatio=" + roiRatio);
+
+            // NEW (issue #238): calculate the simplified spectrum - power in 1Hz bins -
+            // the same way SdAlgOsd.processSdData() does for the OSD algorithm. Previously
+            // this algorithm computed roiPower/roiRatio for its own alarm decision below
+            // but never exposed a spectrum, so there was nothing for a "Flap" graph tab
+            // to plot. fft here already has the same nFreqCutoff filtering applied above.
+            double[] simpleSpec = new double[SIMPLE_SPEC_FMAX + 1];
+            for (int ifreq = 0; ifreq < SIMPLE_SPEC_FMAX; ifreq++) {
+                int binMin = (int) (1 + ifreq / freqRes);    // add 1 to lose dc component
+                int binMax = (int) (1 + (ifreq + 1) / freqRes);
+                simpleSpec[ifreq] = 0;
+                for (int i = binMin; i < binMax; i++) {
+                    simpleSpec[ifreq] = simpleSpec[ifreq] + getMagnitude(fft, i);
+                }
+                simpleSpec[ifreq] = simpleSpec[ifreq] / (binMax - binMin);
+            }
+
+            // NEW (issue #238): populate SdData so FragmentFlapAlg (the new "Flap" tab)
+            // has data to display, exactly as SdAlgOsd does for FragmentOsdAlg/the "OSD"
+            // tab. Note specPower/roiPower are NOT divided by ACCEL_SCALE_FACTOR again
+            // here - that division already happened above (lines computing specPower and
+            // roiPower), unlike SdAlgOsd where the scaling is applied later at assignment.
+            sdData.flapSpecPower = (long) specPower;
+            sdData.flapRoiPower = (long) roiPower;
+            sdData.flapAlarmThresh = mFlapThresh;
+            sdData.flapAlarmRatioThresh = mFlapRatioThresh;
+            sdData.flapAlarmFreqMin = (long) mFlapFreqMin;
+            sdData.flapAlarmFreqMax = (long) mFlapFreqMax;
+            for (int i = 0; i < SIMPLE_SPEC_FMAX; i++) {
+                // simpleSpec here is still on the raw/unscaled magnitude, so it does need
+                // the ACCEL_SCALE_FACTOR division, to end up on the same scale as
+                // flapRoiPower/flapAlarmThresh above (mirrors SdAlgOsd's simpleSpec population).
+                sdData.flapSimpleSpec[i] = (int) simpleSpec[i] / ACCEL_SCALE_FACTOR;
+            }
+            Log.v(TAG, "flapSimpleSpec = " + java.util.Arrays.toString(sdData.flapSimpleSpec));
 
         } catch (Exception e) {
             Log.e(TAG, "processSdData() - Exception during Analysis: " + e.toString());

@@ -126,6 +126,19 @@ public class SdData implements Parcelable {
     public long roiPower;
     public String alarmPhrase;
     public int simpleSpec[];
+
+    /* NEW (issue #238): Flap algorithm analysis results - mirrors the OSD algorithm
+       fields above (alarmFreqMin/Max, alarmThresh, alarmRatioThresh, specPower,
+       roiPower, simpleSpec). Previously SdAlgFlap did not write any of its results
+       into SdData at all, so there was nothing here for a "Flap" graph tab to read. */
+    public long flapAlarmFreqMin;
+    public long flapAlarmFreqMax;
+    public long flapAlarmThresh;
+    public long flapAlarmRatioThresh;
+    public long flapSpecPower;
+    public long flapRoiPower;
+    public int flapSimpleSpec[];
+
     public boolean watchConnected = false;
     public boolean watchAppRunning = false;
     public boolean serverOK = false;
@@ -169,6 +182,10 @@ public class SdData implements Parcelable {
 
     public SdData() {
         simpleSpec = new int[10];
+        // NEW (issue #238): must be initialized the same way as simpleSpec above, or the
+        // Flap graph tab (FragmentFlapAlg) will hit a NullPointerException reading it
+        // before the first analysis pass has run.
+        flapSimpleSpec = new int[10];
         rawData = new double[N_RAW_DATA];
         rawData3D = new double[N_RAW_DATA * 3];
         dataTimeMillis = System.currentTimeMillis();
@@ -268,6 +285,22 @@ public class SdData implements Parcelable {
         JSONArray specArr = jo.getJSONArray("simpleSpec");
         for (int i = 0; i < specArr.length() && i < simpleSpec.length; i++) {
             simpleSpec[i] = specArr.getInt(i);
+        }
+
+        // NEW (issue #238): Flap algorithm spectrum/threshold results, read defensively
+        // with opt*/has() (unlike the strict get* calls above) so that JSON written by
+        // an older build - before these fields existed - still parses without throwing.
+        flapAlarmFreqMin = jo.optLong("flapAlarmFreqMin", 0);
+        flapAlarmFreqMax = jo.optLong("flapAlarmFreqMax", 0);
+        flapAlarmThresh = jo.optLong("flapAlarmThresh", 0);
+        flapAlarmRatioThresh = jo.optLong("flapAlarmRatioThresh", 0);
+        flapSpecPower = jo.optLong("flapSpecPower", 0);
+        flapRoiPower = jo.optLong("flapRoiPower", 0);
+        if (jo.has("flapSimpleSpec")) {
+            JSONArray flapSpecArr = jo.getJSONArray("flapSimpleSpec");
+            for (int i = 0; i < flapSpecArr.length() && i < flapSimpleSpec.length; i++) {
+                flapSimpleSpec[i] = flapSpecArr.getInt(i);
+            }
         }
 
         // rawData and rawData3D if present (optional)
@@ -476,6 +509,20 @@ public class SdData implements Parcelable {
             JSONArray specArr = new JSONArray();
             for (int i = 0; i < simpleSpec.length; i++) specArr.put(simpleSpec[i]);
             jsonObj.put("simpleSpec", specArr);
+
+            // NEW (issue #238): Flap algorithm spectrum/threshold results, written here
+            // (and read back in fromJSON above) so the new "Flap" graph tab has data to
+            // display - mirrors the existing simpleSpec/alarmThresh fields above, which
+            // only ever carried the OSD algorithm's results.
+            jsonObj.put("flapAlarmFreqMin", flapAlarmFreqMin);
+            jsonObj.put("flapAlarmFreqMax", flapAlarmFreqMax);
+            jsonObj.put("flapAlarmThresh", flapAlarmThresh);
+            jsonObj.put("flapAlarmRatioThresh", flapAlarmRatioThresh);
+            jsonObj.put("flapSpecPower", flapSpecPower);
+            jsonObj.put("flapRoiPower", flapRoiPower);
+            JSONArray flapSpecArr = new JSONArray();
+            for (int i = 0; i < flapSimpleSpec.length; i++) flapSpecArr.put(flapSimpleSpec[i]);
+            jsonObj.put("flapSimpleSpec", flapSpecArr);
 
              // Algorithm flags
              jsonObj.put("OsdAlarmActive", mOsdAlarmActive);
