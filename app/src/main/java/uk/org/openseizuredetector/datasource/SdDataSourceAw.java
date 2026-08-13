@@ -47,6 +47,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -77,6 +79,10 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
     private MessageClient mMessageClient;
     private boolean mIsStarted = false;
     private final Executor mExecutor = Executors.newSingleThreadExecutor();
+    
+    // Keep-alive timer to maintain connection with watch
+    private ScheduledExecutorService mKeepAliveExecutor;
+    private static final long KEEP_ALIVE_INTERVAL_MS = 20000;  // 20 seconds
 
     public SdDataSourceAw(Context context, Handler handler,
                           SdDataReceiver sdDataReceiver) {
@@ -105,6 +111,10 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
 
         // Request initial data from watch
         sendMessageToWatch(PATH_SEND_SETTINGS, "start".getBytes(StandardCharsets.UTF_8));
+        
+        // Start keep-alive timer to periodically send alarm state to watch
+        // This maintains the connection even if no accel data is being processed
+        startKeepAliveTimer();
 
         Log.v(TAG, "start(): Android Wear message listener registered");
     }
@@ -115,6 +125,9 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
     @Override
     public void stop() {
         Log.v(TAG, "stop()");
+
+        // Stop keep-alive timer
+        stopKeepAliveTimer();
 
         try {
             if (mMessageClient != null && mIsStarted) {
@@ -389,6 +402,47 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
         if (mWatchAppRunningCheck) {
             mWatchAppRunningCheck = false;
             mDataStatusTimeMillis = System.currentTimeMillis();
+        }
+    }
+
+    /**
+     * Start the keep-alive timer to periodically send alarm state to watch.
+     * This maintains the connection even if no accel data is being processed,
+     * preventing the watch from showing "NO PHONE".
+     */
+    private void startKeepAliveTimer() {
+        if (mKeepAliveExecutor != null) {
+            Log.w(TAG, "startKeepAliveTimer: executor already running");
+            return;
+        }
+
+        mKeepAliveExecutor = Executors.newScheduledThreadPool(1);
+        mKeepAliveExecutor.scheduleAtFixedRate(
+                this::sendAlarmStateToWatch,
+                KEEP_ALIVE_INTERVAL_MS,  // Initial delay
+                KEEP_ALIVE_INTERVAL_MS,  // Repeat interval
+                TimeUnit.MILLISECONDS
+        );
+        Log.i(TAG, "startKeepAliveTimer: Keep-alive timer started (interval=" +
+                KEEP_ALIVE_INTERVAL_MS + "ms)");
+    }
+
+    /**
+     * Stop the keep-alive timer
+     */
+    private void stopKeepAliveTimer() {
+        if (mKeepAliveExecutor != null) {
+            try {
+                mKeepAliveExecutor.shutdown();
+                if (!mKeepAliveExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    mKeepAliveExecutor.shutdownNow();
+                }
+                mKeepAliveExecutor = null;
+                Log.i(TAG, "stopKeepAliveTimer: Keep-alive timer stopped");
+            } catch (InterruptedException e) {
+                mKeepAliveExecutor.shutdownNow();
+                Log.e(TAG, "Error stopping keep-alive timer: " + e.toString());
+            }
         }
     }
 }
