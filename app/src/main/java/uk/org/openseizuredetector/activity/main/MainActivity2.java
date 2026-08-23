@@ -495,7 +495,9 @@ public class MainActivity2 extends AppCompatActivity {
         } else if (itemId == R.id.action_test_alarm_beep) {
             Log.i(TAG, "action_test_alarm_beep");
             if (mConnection.mBound) {
-                mConnection.mSdServer.alarmBeep();
+                // isTest=true so a bundled MP3 sound plays once and stops, rather than
+                // looping forever as there is no LatchAlarmTimer to stop it (fixes #263).
+                mConnection.mSdServer.alarmBeep(true);
             }
             return true;
         } else if (itemId == R.id.action_test_warning_beep) {

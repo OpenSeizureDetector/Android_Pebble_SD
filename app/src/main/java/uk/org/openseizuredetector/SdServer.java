@@ -945,22 +945,27 @@ public class SdServer extends Service implements SdDataReceiver {
     /**
      * Play an MP3 sound: uses the user-selected content URI if non-empty, otherwise falls back
      * to the bundled res/raw/ resource identified by rawResName.
-<<<<<<< Updated upstream
      * Only used for Alarm and Fault sounds (never Warning - Warning always uses the plain tone
      * beep on the Notification stream, see warningBeep()). Audio attributes are set to
      * USAGE_ALARM so the phone's alarm volume is used and the sound plays even in DND/silent
      * modes (subject to user's DND alarm exception settings).
-=======
-     * Only used for Alarm and Fault sounds (never for Warnings - Warnings will use the plain
-     * tone beep on the Notification stream instead, see warningBeep()).
-     * Audio/MP3 attributes are set to USAGE_ALARM, so the phone's alarm volume is used and
-     * the sound plays even in DND/silent mode (subject to user's DND alarm exception settings).
->>>>>>> Stashed changes
      * 
      * If an MP3 is already playing, it will not be interrupted unless the latch alarm duration
      * has been exceeded.
      */
     private void playMp3(String userUriStr, String rawResName) {
+        playMp3(userUriStr, rawResName, false);
+    }
+
+    /**
+     * Same as playMp3(String, String) above, but with an explicit isTest flag.
+     * When isTest is true (i.e. this call originates from the "Test Alarm Beep" menu option,
+     * not from a real alarm), the short-sound looping behaviour introduced for issue #250 is
+     * disabled so the bundled res/raw/ sound plays exactly once and then stops - there is no
+     * LatchAlarmTimer tick to ever stop it otherwise (fixes #263).
+     * Real-alarm behaviour (isTest=false) is completely unchanged.
+     */
+    private void playMp3(String userUriStr, String rawResName, boolean isTest) {
         // Build the URI we want to play
         Uri soundUri;
         if (userUriStr != null && !userUriStr.isEmpty()) {
@@ -1007,13 +1012,14 @@ public class SdServer extends Service implements SdDataReceiver {
                 int duration = mp.getDuration();
                 Log.i(TAG, "playMp3() - MP3 duration: " + duration + "ms");
                 
-                // Loop if duration < 10 seconds, otherwise play once
-                if (duration > 0 && duration < 10000) {
+                // Loop if duration < 10 seconds, otherwise play once - but never loop for a
+                // test beep (isTest=true), since nothing polls a test beep to stop it (#263).
+                if (!isTest && duration > 0 && duration < 10000) {
                     mp.setLooping(true);
                     Log.i(TAG, "playMp3() - enabling looping for short MP3 (< 10s)");
                 } else {
                     mp.setLooping(false);
-                    Log.i(TAG, "playMp3() - playing MP3 once (>= 10s)");
+                    Log.i(TAG, "playMp3() - playing MP3 once" + (isTest ? " (test beep)" : " (>= 10s)"));
                 }
                 mp.start();
             });
@@ -1714,13 +1720,23 @@ public class SdServer extends Service implements SdDataReceiver {
      * beep, provided mAudibleAlarm is set
      */
     public void alarmBeep() {
+        alarmBeep(false);
+    }
+
+    /**
+     * Same as alarmBeep() above, but with an explicit isTest flag - pass true only when this
+     * call originates from the "Test Alarm Beep" menu option, so a bundled MP3 sound plays once
+     * and stops rather than looping forever (fixes #263). Real-alarm callers (LatchAlarmTimer
+     * etc.) continue to use the no-arg alarmBeep() above and are unaffected.
+     */
+    public void alarmBeep(boolean isTest) {
         if (mCancelAudible) {
             Log.v(TAG, "alarmBeep() - CancelAudible Active - silent beep...");
         } else {
             if (mAudibleAlarm) {
                 if (mMp3Alarm) {
                     Log.i(TAG, "SdServer.alarmBeep() - playing MP3");
-                    playMp3(mMp3AlarmUri, "alarm");
+                    playMp3(mMp3AlarmUri, "alarm", isTest);
                 } else {
                     beep(3000);
                 }
@@ -1733,13 +1749,8 @@ public class SdServer extends Service implements SdDataReceiver {
     }
 
     /*
-<<<<<<< Updated upstream
      * beep, provided mAudibleWarning is set.
      * Warning always uses the plain tone beep on the Notification stream - it never plays an
-=======
-     * beep, provided that mAudibleWarning is set.
-     * Warnings always use the plain tone beep on the Notification stream - they never play an
->>>>>>> Stashed changes
      * MP3 file, even if "Use MP3 Alarm Sound" (mMp3Alarm) is enabled for Alarms/Faults. This
      * keeps the Warning sound tied to the Android Notification volume in all cases.
      */

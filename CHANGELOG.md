@@ -144,7 +144,6 @@
           errors on garmin watch.   Made error messages json strings too.
           Added hrAlarmStanding value to /data json string, which should get remove
           heart rate alarms working with network datasource.
->>>>>>> master
 
     V3.1.11 - 23oct2019
         - Updated network data source so it displays heart rate data if it is available.
