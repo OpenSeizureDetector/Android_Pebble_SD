@@ -44,6 +44,8 @@ import org.json.JSONObject;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -79,6 +81,11 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
     private MessageClient mMessageClient;
     private boolean mIsStarted = false;
     private final Executor mExecutor = Executors.newSingleThreadExecutor();
+
+    // Per-path timing diagnostics for watch->phone messages.
+    private final Map<String, Long> mLastReceiveMsByPath = new HashMap<>();
+    private final Map<String, Long> mLastSentMsByPath = new HashMap<>();
+    private final Map<String, Long> mLastSeqByPath = new HashMap<>();
     
     // Keep-alive timer to maintain connection with watch
     private ScheduledExecutorService mKeepAliveExecutor;
@@ -150,8 +157,10 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
     public void onMessageReceived(MessageEvent messageEvent) {
         String path = messageEvent.getPath();
         byte[] data = messageEvent.getData();
+        long receivedMs = System.currentTimeMillis();
 
         Log.v(TAG, "onMessageReceived: " + path);
+        logTimingDiagnostics(path, data, receivedMs);
 
         // Mark that we've received data from the watch
         mWatchAppRunningCheck = true;
@@ -171,6 +180,65 @@ public class SdDataSourceAw extends SdDataSource implements MessageClient.OnMess
             }
         } catch (Exception e) {
             Log.e(TAG, "Error processing message: " + e.toString());
+        }
+    }
+
+    private static class TimingMetadata {
+        final boolean hasMetadata;
+        final long seq;
+        final long sentMs;
+
+        TimingMetadata(boolean hasMetadata, long seq, long sentMs) {
+            this.hasMetadata = hasMetadata;
+            this.seq = seq;
+            this.sentMs = sentMs;
+        }
+    }
+
+    private void logTimingDiagnostics(String path, byte[] data, long receivedMs) {
+        Long previousReceive = mLastReceiveMsByPath.put(path, receivedMs);
+        long rxDeltaMs = previousReceive == null ? -1L : receivedMs - previousReceive;
+
+        TimingMetadata timing = extractTimingMetadata(data);
+        if (!timing.hasMetadata) {
+            Log.i(TAG, "rxTiming path=" + path + " rxDeltaMs=" + rxDeltaMs + " metadata=none");
+            return;
+        }
+
+        Long previousSeq = mLastSeqByPath.put(path, timing.seq);
+        Long previousSent = mLastSentMsByPath.put(path, timing.sentMs);
+
+        long senderDeltaMs = previousSent == null ? -1L : timing.sentMs - previousSent;
+        long transitMs = receivedMs - timing.sentMs;
+        long seqDelta = previousSeq == null ? -1L : timing.seq - previousSeq;
+        long missing = (previousSeq == null || seqDelta <= 1) ? 0L : (seqDelta - 1L);
+
+        Log.i(
+                TAG,
+                "rxTiming path=" + path +
+                        " seq=" + timing.seq +
+                        " seqDelta=" + seqDelta +
+                        " missing=" + missing +
+                        " senderDeltaMs=" + senderDeltaMs +
+                        " rxDeltaMs=" + rxDeltaMs +
+                        " transitMs=" + transitMs
+        );
+    }
+
+    private TimingMetadata extractTimingMetadata(byte[] data) {
+        try {
+            String jsonStr = new String(data, StandardCharsets.UTF_8);
+            JSONObject json = new JSONObject(jsonStr);
+            if (!json.has("seq") || !json.has("sent_ms")) {
+                return new TimingMetadata(false, -1L, -1L);
+            }
+            return new TimingMetadata(
+                    true,
+                    json.getLong("seq"),
+                    json.getLong("sent_ms")
+            );
+        } catch (Exception e) {
+            return new TimingMetadata(false, -1L, -1L);
         }
     }
 

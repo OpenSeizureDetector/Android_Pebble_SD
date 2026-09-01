@@ -10,9 +10,9 @@ Communicates via the Wearable Data Layer API using JSON or binary messages sent 
 
 | Path | Direction | Format |
 |---|---|---|
-| `/osd/accel_data` | Watch → Phone | **Format A (array):** `{"samples": [double, ...]}` (vector magnitude values). **Format B (3D):** `{"x": double, "y": double, "z": double}`. **Binary:** 16-bit little-endian shorts. |
-| `/osd/settings` | Watch → Phone | `{"battery": int, "version": string, "name": string, "sample_freq": int}` |
-| `/osd/hr_data` | Watch → Phone | `{"hr": int}` (or a plain integer string). |
+| `/osd/accel_data` | Watch → Phone | **Format A (array):** `{"samples": [double, ...], "seq": long, "sent_ms": long}` (vector magnitude values). **Format B (3D):** `{"x": double, "y": double, "z": double}`. **Binary:** 16-bit little-endian shorts. |
+| `/osd/settings` | Watch → Phone | `{"battery": int, "version": string, "name": string, "sample_freq": int, "seq": long, "sent_ms": long}` |
+| `/osd/hr_data` | Watch → Phone | `{"hr": int, "seq": long, "sent_ms": long}` (or a plain integer string). |
 | `/osd/alarm_state` | Phone → Watch | `{"alarm_state": long, "alarm_phrase": string}` |
 
 ---

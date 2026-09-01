@@ -5,6 +5,7 @@
             - Hide Seizure Detector settings when using network data source because they are ignored (Issue #255)
             - Added the cause of the alarm to the data sharing event description (Issue #254)
             - Tidied up embedded web page (Issue #259)
+            - Changes to Android Wear Data source to get it working...
     V5.0.8  - Fixed crash of advanced mode user interface (Issue #251)
     V5.0.7  - Fixed potential crash after changing settings (Issue #244).
             - Fixed issue where using the mute function on watch does not prevent fault pip sounds (Issue #247)
