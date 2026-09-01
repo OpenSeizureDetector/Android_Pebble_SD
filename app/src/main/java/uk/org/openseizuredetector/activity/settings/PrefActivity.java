@@ -60,7 +60,9 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.view.ViewGroup;
+import android.view.MenuItem;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
@@ -95,6 +97,23 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     private List<HeaderItem> mHeaders = new ArrayList<>();
     private List<HeaderItem> mAllHeaders = new ArrayList<>();
     private ArrayAdapter<String> mHeaderAdapter;
+    private String mPreviousBleAddr = "";
+
+    private final ActivityResultLauncher<Intent> mBleScanLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+                    String currentAddr = sp.getString("BLE_Device_Addr", "");
+                    if (!currentAddr.equals(mPreviousBleAddr)) {
+                        Log.i(TAG, "BLE device address changed from " + mPreviousBleAddr + " to " + currentAddr + ", triggering app restart");
+                        restartApp();
+                    } else {
+                        Log.i(TAG, "BLE device selected, but address is unchanged (" + currentAddr + ") - skipping restart");
+                    }
+                }
+            }
+    );
 
     private static class HeaderItem {
         String fragmentClass;
@@ -166,6 +185,32 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         if (fragmentToShow != null) {
             showPreferenceFragment(fragmentToShow);
         }
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                    // Navigate back through fragments
+                    this.setEnabled(false); // Temporarily disable to let default handling work
+                    getOnBackPressedDispatcher().onBackPressed();
+                    this.setEnabled(true);
+                } else {
+                    // At the header list, check if restart is needed
+                    if (mIsShuttingDown) return;
+
+                    if (mUiRestartNeeded) {
+                        mIsShuttingDown = true;
+                        mUtil.shutdownApp(PrefActivity.this, true, false, "Settings changed - restarting app...");
+                    } else if (mPrefChanged) {
+                        mIsShuttingDown = true;
+                        mUtil.shutdownApp(PrefActivity.this, false, false, "Settings changed - server will restart...");
+                    } else {
+                        this.setEnabled(false);
+                        getOnBackPressedDispatcher().onBackPressed();
+                    }
+                }
+            }
+        });
 
         getSupportFragmentManager().addOnBackStackChangedListener(() -> {
             if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
@@ -317,6 +362,14 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         mPrefChanged = true;
     }
 
+    /**
+     * Called by child fragments to indicate that a critical setting has changed
+     * that requires a full application restart (via StartupActivity).
+     */
+    public void notifyUiRestartNeeded() {
+        mUiRestartNeeded = true;
+    }
+
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         Log.i(TAG, "SharedPreference " + s + " Changed.");
@@ -330,40 +383,27 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         }
 
         // Preferences that require UI restart (going through StartupActivity)
-        // These affect whether onboarding should be shown
-        if (s.equals("first_run_complete")) {
+        // These affect whether onboarding should be shown or permissions requested
+        if (s.equals("first_run_complete") || s.equals("SMSAlarm") || s.equals("DataSource") || s.equals("BLE_Device_Addr")) {
             mUiRestartNeeded = true;
             return;
         }
 
-        if (s.equals("SMSAlarm"))  {
-            if (PreferenceUtils.getBooleanFromXml(sharedPreferences, "SMSAlarm")) {
-                mIsShuttingDown = true;
-                mUtil.showToast("Restarting OpenSeizureDetector");
-                Intent i = new Intent(this, StartupActivity.class);
-                startActivity(i);
-                finish();
-                return;
-            } else {
-                mPrefChanged = true;
-            }
-        } else if (s.equals("DataSource"))  {
-            mIsShuttingDown = true;
-            mUtil.showToast("Restarting OpenSeizureDetector");
-            mUtil.stopServer();
-            mHandler.postDelayed(new Runnable() {
-                public void run() {
-                    Intent i = new Intent(getApplicationContext(), StartupActivity.class);
-                    startActivity(i);
-                    finish();
-                }}, 1000);
-            return;
-        } else if (s.equals("advancedMode")) {
+        if (s.equals("advancedMode")) {
             startActivity(getIntent());
             finish();
         } else {
             mPrefChanged = true;
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -397,58 +437,33 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     @Override
     protected void onStop() {
         super.onStop();
-        if (mPrefChanged || mUiRestartNeeded) {
-            // If UI restart is needed (e.g., onboarding setting changed), restart the entire app
-            // by going through StartupActivity to properly handle the onboarding flow
-            if (mUiRestartNeeded) {
-                mUtil.showToast("Settings changed - restarting app...");
-                mUtil.stopServer();
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        Intent i = new Intent(getApplicationContext(), StartupActivity.class);
-                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                        startActivity(i);
-                        finish();
-                    }
-                }, 1000);
-            } else {
-                // For other preference changes, just restart the server
-                mUtil.showToast("Settings changed - server will restart...");
-                mUtil.stopServer();
-
-                // Use a handler to start the server after a short delay
-                // to allow the old service instance to finish closing native resources
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        // Check if we're shutting down to avoid trying to start service from background
-                        if (mIsShuttingDown) {
-                            Log.i(TAG, "Shutdown in progress, skipping server restart.");
-                            return;
-                        }
-                        Log.i(TAG, "Restarting server after preference change.");
-                        try {
-                            mUtil.startServer();
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error restarting server after preference change: " + e.getMessage());
-                            mUtil.showToast("Error restarting server. Please restart the app.");
-                        }
-                    }
-                }, 1500); // 1.5 second delay is usually enough for GC/Cleanup
-            }
-
-            mPrefChanged = false;
-            mUiRestartNeeded = false;
+        if (mIsShuttingDown) {
+            Log.i(TAG, "onStop() - shutdown/restart already in progress, skipping.");
+            return;
         }
+
+        if (mUiRestartNeeded) {
+            mIsShuttingDown = true;
+            mUtil.shutdownApp(this, true, false, "Settings changed - restarting app...");
+        } else if (mPrefChanged) {
+            mIsShuttingDown = true;
+            mUtil.shutdownApp(this, false, false, "Settings changed - server will restart...");
+        }
+
+        mPrefChanged = false;
+        mUiRestartNeeded = false;
     }
 
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.selectBLEDeviceButton) {
-            final Intent intent = new Intent(this.mContext, BLEScanActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(intent);
+            // Store current address before launching scanner
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            mPreviousBleAddr = sp.getString("BLE_Device_Addr", "");
+            Log.d(TAG, "onClick: Storing previous BLE address: " + mPreviousBleAddr);
+
+            final Intent intent = new Intent(this, BLEScanActivity.class);
+            mBleScanLauncher.launch(intent);
         } else if (view.getId() == R.id.installWatchAppButton) {
             launchWatchInstallInstructions();
         } else if (view.getId() == R.id.updatePineTimeFirmwareButton) {
@@ -567,6 +582,19 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
         builder.create();
         builder.show();
+    }
+
+    /**
+     * Trigger a full application restart through StartupActivity.
+     * Used for critical setting changes that affect server initialization or permissions.
+     */
+    private void restartApp() {
+        if (mIsShuttingDown) return;
+        mIsShuttingDown = true;
+        mUiRestartNeeded = false;
+        mPrefChanged = false;
+
+        mUtil.shutdownApp(this, true, false, "Settings changed - restarting app...");
     }
 
     /* Core Fragments */
@@ -713,7 +741,13 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            if ("DataSource".equals(key)) updateBleButtonVisibility();
+            if ("DataSource".equals(key)) {
+                updateBleButtonVisibility();
+                // Forward change to parent activity to trigger restart on exit
+                if (getActivity() instanceof PrefActivity) {
+                    ((PrefActivity) getActivity()).notifyUiRestartNeeded();
+                }
+            }
         }
 
         private void updateBleButtonVisibility() {
@@ -811,6 +845,13 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
             if (KEY_USE_MP3.equals(key)) {
                 refreshSoundPickerVisibility();
+            }
+
+            // Forward critical changes to parent activity so it can orchestrate a restart
+            if ("SMSAlarm".equals(key)) {
+                if (getActivity() instanceof PrefActivity) {
+                    ((PrefActivity) getActivity()).notifyUiRestartNeeded();
+                }
             }
         }
 

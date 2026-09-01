@@ -99,6 +99,11 @@
             android:summary="@string/latch_timer_period_summary"
             android:numeric="integer"
             android:defaultValue="10" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="ShowRaiseAlarmButton"
+            android:summary="@string/show_raise_alarm_button_summary"
+            android:title="@string/show_raise_alarm_button_title" />
     </PreferenceCategory>
 
     <!--
