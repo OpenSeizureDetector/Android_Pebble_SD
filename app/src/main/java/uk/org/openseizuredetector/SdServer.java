@@ -1551,12 +1551,15 @@ public class SdServer extends Service implements SdDataReceiver {
 
         Log.v(TAG, "onSdDataFault()");
         mSdData = sdData;
-        mSdData.alarmState = AlarmState.FAULT;  // set fault alarm state.
-
-        // Ensure faultCause has something useful if not already set by datasource
+        // #275 Determine fault cause BEFORE normalizing alarmState to FAULT.
         if (mSdData.faultCause == null || mSdData.faultCause.isEmpty()) {
-             mSdData.faultCause = "Data Source Fault";
+            if (mSdData.alarmState == AlarmState.NETFAULT) {
+                mSdData.faultCause = "Network Fault";
+            } else {
+                mSdData.faultCause = "Data Source Fault";
+            }
         }
+        mSdData.alarmState = AlarmState.FAULT;  // set fault alarm state.
 
         mSdData.alarmPhrase = "FAULT";
         mSdData.alarmStanding = false;
