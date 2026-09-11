@@ -219,6 +219,10 @@
     <string name="enable_audible_warning_title">Enable Audible Warnings</string>
     <string name="enable_audible_fault_summary">Issue an audible alarm if the system detects a fault (e.g. can not talk to watch).</string>
     <string name="enable_audible_fault_title">Enable Audible System FaultWarnings</string>
+    <string name="use_max_volume_alerts_summary">Alarms always play at the maximum possible volume, regardless of the Android Alarm volume setting.</string>
+    <string name="use_max_volume_alerts_title">Use Max Volume for Alerts?</string>
+    <string name="warning_override_silent_mode_summary">If checked, Warnings will play like Alarms. When unchecked, they play like Notifications and will be muted in Silent mode.</string>
+    <string name="warning_override_silent_mode_title">Override Silent Mode for all Warnings?</string>
     <string name="fault_timer_period_title">Fault Timer Duration (sec)</string>
     <string name="fault_timer_period_summary">Duration that fault alarms are muted before initiating.</string>
     <string name="enable_data_frequency_check_title">Enable Data Sample Frequency Checks</string>
