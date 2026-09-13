@@ -6,11 +6,24 @@
             android:key="AudibleAlarm"
             android:summary="@string/enable_audible_alarm_summary"
             android:title="@string/enable_audible_alarm_title" />
+        <!-- Visible only while AudibleAlarm is checked - see AlarmPrefsFragment. -->
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="UseMaxVolumeForAlerts"
+            android:summary="@string/use_max_volume_alerts_summary"
+            android:title="@string/use_max_volume_alerts_title" />
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="AudibleWarning"
             android:summary="@string/enable_audible_warning_summary"
             android:title="@string/enable_audible_warning_title" />
+        <!-- Visible only while AudibleWarning is checked - see AlarmPrefsFragment. Also governs
+             FaultWarning, which shares the same underlying tone generator/stream as Warning. -->
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="WarningOverrideSilentMode"
+            android:summary="@string/warning_override_silent_mode_summary"
+            android:title="@string/warning_override_silent_mode_title" />
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="AudibleFaultWarning"

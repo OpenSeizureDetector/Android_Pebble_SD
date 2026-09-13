@@ -785,6 +785,12 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         private static final String KEY_FAULT_URI   = "Mp3FaultUri";
         private static final String KEY_USE_MP3     = "UseMp3Alarm";
 
+        // Keys for the two dependent checkboxes added by #333
+        private static final String KEY_AUDIBLE_ALARM          = "AudibleAlarm";
+        private static final String KEY_USE_MAX_VOLUME         = "UseMaxVolumeForAlerts";
+        private static final String KEY_AUDIBLE_WARNING        = "AudibleWarning";
+        private static final String KEY_WARNING_OVERRIDE_SILENT = "WarningOverrideSilentMode";
+
         // Request-code constants used with startActivityForResult (legacy path, but we use
         // ActivityResultLauncher instead — these are kept as documentation only).
         private ActivityResultLauncher<Intent> mPickerWarning;
@@ -820,6 +826,8 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             setPreferencesFromResource(R.xml.alarm_prefs, rootKey);
             refreshSoundPickerVisibility();
             refreshSoundSummaries();
+            refreshAudibleAlarmSubPrefVisibility();
+            refreshAudibleWarningSubPrefVisibility();
             // Wire click listeners for the three file-picker prefs
             // #246: Warning picker disabled - see onAttach() for details.
             // wirePickerPref(KEY_WARNING_URI, mPickerWarning);
@@ -846,6 +854,12 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             if (KEY_USE_MP3.equals(key)) {
                 refreshSoundPickerVisibility();
             }
+            if (KEY_AUDIBLE_ALARM.equals(key)) {
+                refreshAudibleAlarmSubPrefVisibility();
+            }
+            if (KEY_AUDIBLE_WARNING.equals(key)) {
+                refreshAudibleWarningSubPrefVisibility();
+            }
 
             // Forward critical changes to parent activity so it can orchestrate a restart
             if ("SMSAlarm".equals(key)) {
@@ -858,18 +872,34 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         // -----------------------------------------------------------------------------------------
         // Helpers
 
+        /** Show/hide "Use Max Volume for Alerts?" based on the AudibleAlarm checkbox. */
+        private void refreshAudibleAlarmSubPrefVisibility() {
+            SharedPreferences prefs =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext());
+            boolean audibleAlarm = prefs.getBoolean(KEY_AUDIBLE_ALARM, true);
+            setPrefVisible(KEY_USE_MAX_VOLUME, audibleAlarm);
+        }
+
+        /** Show/hide "Override Silent Mode for all Warnings?" based on the AudibleWarning checkbox. */
+        private void refreshAudibleWarningSubPrefVisibility() {
+            SharedPreferences prefs =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext());
+            boolean audibleWarning = prefs.getBoolean(KEY_AUDIBLE_WARNING, true);
+            setPrefVisible(KEY_WARNING_OVERRIDE_SILENT, audibleWarning);
+        }
+
         /** Show/hide the three sound-file pickers based on the UseMp3Alarm checkbox. */
         private void refreshSoundPickerVisibility() {
             SharedPreferences prefs =
                     PreferenceManager.getDefaultSharedPreferences(requireContext());
             boolean useMp3 = prefs.getBoolean(KEY_USE_MP3, false);
             // #246: Warning picker disabled - see onAttach() for details.
-            // setPickerVisible(KEY_WARNING_URI, useMp3);
-            setPickerVisible(KEY_ALARM_URI,   useMp3);
-            setPickerVisible(KEY_FAULT_URI,   useMp3);
+            // setPrefVisible(KEY_WARNING_URI, useMp3);
+            setPrefVisible(KEY_ALARM_URI,   useMp3);
+            setPrefVisible(KEY_FAULT_URI,   useMp3);
         }
 
-        private void setPickerVisible(String key, boolean visible) {
+        private void setPrefVisible(String key, boolean visible) {
             Preference p = findPreference(key);
             if (p != null) p.setVisible(visible);
         }

@@ -225,7 +225,18 @@ public class SdServer extends Service implements SdDataReceiver {
     private OsdUtil mUtil;
     private Handler mHandler;
     private ToneGenerator mToneGenerator; // used for Alarm beeps only (STREAM_ALARM)
-    private ToneGenerator mWarningToneGenerator; // used for Warning and FaultWarning beeps (STREAM_NOTIFICATION)
+    private ToneGenerator mWarningToneGenerator; // used for Warning and FaultWarning beeps
+    // Stream mWarningToneGenerator currently plays on - STREAM_ALARM by default, or
+    // STREAM_NOTIFICATION if the user has unchecked WarningOverrideSilentMode (see updatePrefs()).
+    private int mWarningToneStream = AudioManager.STREAM_ALARM;
+    private boolean mWarningOverrideSilentMode = true;
+
+    // "Use Max Volume for Alerts?" support - see boostAlarmStreamVolume()/restoreAlarmStreamVolume()
+    private AudioManager mAudioManager;
+    private boolean mUseMaxVolumeForAlerts = true;
+    private int mSavedAlarmStreamVolume = -1; // -1 = Alarm stream volume is not currently boosted
+    private boolean mAlarmMp3VolumeBoosted = false; // whether the *current* MP3 playback boosted the volume
+    private final Runnable mAlarmToneVolumeRestore = this::restoreAlarmStreamVolume;
     private android.media.MediaPlayer mMediaPlayer = null; // used for MP3 alarm sounds
     private String mCurrentMp3Uri = null; // URI of currently playing MP3
     private long mMp3StartTimeMs = 0; // Time when current MP3 started playing
@@ -282,7 +293,8 @@ public class SdServer extends Service implements SdDataReceiver {
         mSdData = new SdData();
         mSdDataHistory = new uk.org.openseizuredetector.data.SdDataHistory();  // Initialize history buffers
         mToneGenerator = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
-        mWarningToneGenerator = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100);
+        mWarningToneGenerator = new ToneGenerator(mWarningToneStream, 100);
+        mAudioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
 
         mUtil = new OsdUtil(getApplicationContext(), mHandler);
         Log.i(TAG, "SdServer.onCreate()");
@@ -830,6 +842,8 @@ public class SdServer extends Service implements SdDataReceiver {
             stopWebServer();
 
             stopMp3();  // release MediaPlayer if active (must be before ToneGenerator release)
+            restoreAlarmStreamVolume();  // safety net: don't leave Alarm volume stuck at max if
+                                          // destroyed mid-alert (stopMp3() only covers MP3 playback)
             Log.i(TAG, "SdServer.onDestroy() - releasing mToneGenerator");
             if (mToneGenerator != null) {
                 mToneGenerator.release();
@@ -944,6 +958,12 @@ public class SdServer extends Service implements SdDataReceiver {
         }
         mCurrentMp3Uri = null;
         mMp3StartTimeMs = 0;
+        // If the sound that just stopped was an Alarm MP3 we boosted the volume for, restore it.
+        // FaultWarning MP3 playback never sets this flag, so it's left untouched here.
+        if (mAlarmMp3VolumeBoosted) {
+            mAlarmMp3VolumeBoosted = false;
+            restoreAlarmStreamVolume();
+        }
     }
 
     /**
@@ -1650,6 +1670,53 @@ public class SdServer extends Service implements SdDataReceiver {
     }
 
     /**
+     * "Use Max Volume for Alerts?" support (#333). Temporarily forces the Alarm stream to its
+     * maximum volume for the duration of one Alarm alert, ignoring both the phone's current
+     * Alarm volume setting and Silent mode. Safe to call repeatedly: if a boost is already in
+     * effect (mSavedAlarmStreamVolume != -1) it is a no-op, so back-to-back alerts don't
+     * overwrite the volume level we need to restore to.
+     * Paired with restoreAlarmStreamVolume(), which puts the phone's Alarm volume back to
+     * whatever it was immediately before this alert - so each alert independently saves and
+     * restores around itself.
+     */
+    private void boostAlarmStreamVolume() {
+        if (!mUseMaxVolumeForAlerts || mAudioManager == null) return;
+        if (mSavedAlarmStreamVolume == -1) {
+            try {
+                mSavedAlarmStreamVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_ALARM);
+                int maxVolume = mAudioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM);
+                mAudioManager.setStreamVolume(AudioManager.STREAM_ALARM, maxVolume, 0);
+                Log.i(TAG, "boostAlarmStreamVolume() - boosted Alarm stream volume to max ("
+                        + maxVolume + "), was " + mSavedAlarmStreamVolume);
+            } catch (SecurityException e) {
+                // Some OEMs refuse volume changes while another app holds DND priority, etc.
+                Log.w(TAG, "boostAlarmStreamVolume() - could not change Alarm stream volume: "
+                        + e.getMessage());
+                mSavedAlarmStreamVolume = -1;
+            }
+        }
+    }
+
+    /**
+     * Restores the phone's Alarm stream volume to what it was before boostAlarmStreamVolume()
+     * was last called. No-op if no boost is currently in effect.
+     */
+    private void restoreAlarmStreamVolume() {
+        mHandler.removeCallbacks(mAlarmToneVolumeRestore);
+        if (mAudioManager != null && mSavedAlarmStreamVolume != -1) {
+            try {
+                mAudioManager.setStreamVolume(AudioManager.STREAM_ALARM, mSavedAlarmStreamVolume, 0);
+                Log.i(TAG, "restoreAlarmStreamVolume() - restored Alarm stream volume to "
+                        + mSavedAlarmStreamVolume);
+            } catch (SecurityException e) {
+                Log.w(TAG, "restoreAlarmStreamVolume() - could not restore Alarm stream volume: "
+                        + e.getMessage());
+            }
+        }
+        mSavedAlarmStreamVolume = -1;
+    }
+
+    /**
      * Returns the current phone battery level as a percentage (0–100),
      * or -1 if it cannot be determined.
      * Uses the sticky ACTION_BATTERY_CHANGED broadcast — no persistent registration needed.
@@ -1690,11 +1757,13 @@ public class SdServer extends Service implements SdDataReceiver {
 
     /*
      * beep, provided mAudibleFaultWarning is set.
-     * FaultWarnings always use plain tone beeps on the Notification stream - like Warning, they
-     * never play an MP3 file, even if "Use MP3 Alarm Sound" (mMp3Alarm) is enabled for Alarms.
+     * FaultWarnings always use plain tone beeps on mWarningToneGenerator's stream (Alarm by
+     * default, or Notification if the user has unchecked WarningOverrideSilentMode - see
+     * updatePrefs()) - like Warning, they never play an MP3 file, even if "Use MP3 Alarm Sound"
+     * (mMp3Alarm) is enabled for Alarms.
      * To stay clearly distinguishable from the single Warning beep (see warningBeep()) without
      * relying on a fragile difference in beep duration, FaultWarning plays a short double-beep
-     * pattern instead: two 80ms beeps 120ms apart, both on the Notification stream.
+     * pattern instead: two 80ms beeps 120ms apart, both on mWarningToneGenerator's stream.
      */
     public void faultWarningBeep() {
         if (mCancelAudible || (mSdData != null && mSdData.mMute != 0)) {
@@ -1726,11 +1795,21 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "alarmBeep() - CancelAudible Active - silent beep...");
         } else {
             if (mAudibleAlarm) {
+                boostAlarmStreamVolume();
                 if (mMp3Alarm) {
                     Log.i(TAG, "SdServer.alarmBeep() - playing MP3");
+                    // MP3 playback may loop or run long, so its volume restore happens when
+                    // playback actually stops (see stopMp3()), not on a fixed timer.
+                    mAlarmMp3VolumeBoosted = true;
                     playMp3(mMp3AlarmUri, "alarm");
                 } else {
                     beep(3000);
+                    // The tone is a fixed-length, fire-and-forget beep, so schedule the volume
+                    // restore to fire once it finishes. A later alarmBeep() call re-boosts and
+                    // re-schedules its own restore, so repeated alerts each save/restore around
+                    // themselves independently.
+                    mHandler.removeCallbacks(mAlarmToneVolumeRestore);
+                    mHandler.postDelayed(mAlarmToneVolumeRestore, 3000);
                 }
                 Log.v(TAG, "alarmBeep()");
                 Log.i(TAG, "SdServer.alarmBeep() - beeping");
@@ -1742,9 +1821,10 @@ public class SdServer extends Service implements SdDataReceiver {
 
     /*
      * beep, provided mAudibleWarning is set.
-     * Warning always uses the plain tone beep on the Notification stream - it never plays an
-     * MP3 file, even if "Use MP3 Alarm Sound" (mMp3Alarm) is enabled for Alarms. This
-     * keeps the Warning sound tied to the Android Notification volume in all cases.
+     * Warning always uses the plain tone beep on mWarningToneGenerator's stream (Alarm by
+     * default, or Notification if the user has unchecked WarningOverrideSilentMode - see
+     * updatePrefs()) - it never plays an MP3 file, even if "Use MP3 Alarm Sound" (mMp3Alarm)
+     * is enabled for Alarms.
      */
     public void warningBeep() {
         if (mCancelAudible) {
@@ -2148,8 +2228,37 @@ public class SdServer extends Service implements SdDataReceiver {
 
             mAudibleAlarm = SP.getBoolean("AudibleAlarm", true);
             Log.d(TAG, "updatePrefs() - mAudibleAlarm = " + mAudibleAlarm);
+            // #333: when enabled, alarmBeep() forces the Alarm stream to full volume for the
+            // duration of each alert, then restores the phone's previous Alarm volume afterwards
+            // - see boostAlarmStreamVolume()/restoreAlarmStreamVolume().
+            mUseMaxVolumeForAlerts = SP.getBoolean("UseMaxVolumeForAlerts", true);
+            Log.d(TAG, "updatePrefs() - mUseMaxVolumeForAlerts = " + mUseMaxVolumeForAlerts);
+
             mAudibleWarning = SP.getBoolean("AudibleWarning", true);
             Log.d(TAG, "updatePrefs() - mAudibleWarning = " + mAudibleWarning);
+
+            // #333: Warning/FaultWarning beeps play on the Notification stream by default,
+            // which Android silences whenever the phone's ringer mode is set to Silent (the
+            // Alarm stream is deliberately exempt from that muting). "Override Silent Mode for
+            // all Warnings?" (checked by default) routes the shared Warning/FaultWarning tone
+            // generator onto the Alarm stream instead so both stay audible when the phone is
+            // silenced; unchecked keeps them tied to the Notification stream/volume.
+            mWarningOverrideSilentMode = SP.getBoolean("WarningOverrideSilentMode", true);
+            Log.d(TAG, "updatePrefs() - mWarningOverrideSilentMode = " + mWarningOverrideSilentMode);
+            int desiredWarningToneStream = mWarningOverrideSilentMode
+                    ? AudioManager.STREAM_ALARM
+                    : AudioManager.STREAM_NOTIFICATION;
+            if (desiredWarningToneStream != mWarningToneStream || mWarningToneGenerator == null) {
+                mWarningToneStream = desiredWarningToneStream;
+                if (mWarningToneGenerator != null) {
+                    mWarningToneGenerator.release();
+                }
+                mWarningToneGenerator = new ToneGenerator(mWarningToneStream, 100);
+                Log.i(TAG, "updatePrefs() - Warning/FaultWarning tone generator now using "
+                        + (mWarningOverrideSilentMode
+                            ? "STREAM_ALARM (silent-mode override enabled)"
+                            : "STREAM_NOTIFICATION"));
+            }
             mMp3Alarm = SP.getBoolean("UseMp3Alarm", false);
             Log.d(TAG, "updatePrefs() - mMp3Alarm = " + mMp3Alarm);
             // User-selected MP3 URIs — empty string means "use bundled sound"
