@@ -7,9 +7,11 @@
             - Tidied up embedded web page (Issue #259)
             - Changes to Android Wear Data source to get it working...
             - Fixed issue with phone data source sample rate (Issue #276)
+	        - Improved reporting of network vs device faults in network data source (Issue #275)
+	        - Use can now select whether to play alerts at maxmum volume, or at the Android System volume setting (Issue #279)
     V5.0.9  - Fixed issue with SMS alerts failing to send on some phones (Issue #264)
             - Fixed issue with app not re-starting after selecting a bLE device (Issue #261)
-            - Improved handling of system re-start after changing settings.
+        - Improved handling of system re-start after changing settings.
     V5.0.8  - Fixed crash of advanced mode user interface (Issue #251)
     V5.0.7  - Fixed potential crash after changing settings (Issue #244).
             - Fixed issue where using the mute function on watch does not prevent fault pip sounds (Issue #247)
