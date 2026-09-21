@@ -118,10 +118,11 @@ public class FragmentCommon extends FragmentOsdBaseClass {
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
             String timeStr = timeFormat.format(new Date(mConnection.mSdServer.mSdData.dataTimeMillis));
             if (mIsBasicMode) {
-                tv.setText("Time =" + timeStr);
+                tv.setText(getString(R.string.label_time, timeStr));
             } else {
-                tv.setText("Time =" + timeStr
-                        + "  (" + String.format(Locale.getDefault(), "%.1f s, %.0f s", mConnection.mSdServer.mSdData.timeDiff, tdiff) + ")");
+                String extra = "  (" + String.format(Locale.getDefault(), "%.1f s, %.0f s",
+                        mConnection.mSdServer.mSdData.timeDiff, tdiff) + ")";
+                tv.setText(getString(R.string.label_time, timeStr) + extra);
             }
             tv.setBackgroundColor(okColour);
             tv.setTextColor(okTextColour);

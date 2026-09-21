@@ -75,11 +75,11 @@
         <item
             android:id="@+id/action_instructions"
             app:showAsAction="never|withText"
-            android:title="Help" />
+            android:title="@string/help" />
         <item
             android:id="@+id/action_troubleshooting"
             app:showAsAction="never|withText"
-            android:title="Troubleshooting" />
+            android:title="@string/troubleshooting" />
         <item
             android:id="@+id/action_about"
             app:showAsAction="never|withText"

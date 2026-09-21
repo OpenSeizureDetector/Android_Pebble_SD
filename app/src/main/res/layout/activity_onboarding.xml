@@ -34,7 +34,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:text="Back" />
+                android:text="@string/btn_back" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_skip"
@@ -42,14 +42,14 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:text="Skip" />
+                android:text="@string/btn_skip" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_next"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 style="@style/Widget.MaterialComponents.Button"
-                android:text="Next" />
+                android:text="@string/btn_next" />
         </LinearLayout>
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

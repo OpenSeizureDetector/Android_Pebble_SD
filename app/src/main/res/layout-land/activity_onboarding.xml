@@ -78,7 +78,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Data Source"
+                        android:text="@string/data_source"
                         android:textSize="12sp"
                         android:gravity="center"
                         android:layout_marginTop="4dp"
@@ -105,7 +105,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Configure"
+                        android:text="@string/configure"
                         android:textSize="12sp"
                         android:gravity="center"
                         android:layout_marginTop="4dp"

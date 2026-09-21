@@ -5,8 +5,8 @@
         <item>"BangleJS (BLE)"</item>
         <item>"PineTime (BLE2)"</item>
         <item>"Pebble Watch"</item>
-        <item>"Phone Sensor (for testing)"</item>
-        <item>"Network (for Wi-Fi Alerts)"</item>
+        <item>"Handy Sensor (nur für Tests)"</item>
+        <item>"Netzwerk (für Alarme via WLAN)"</item>
         <item>"Android Wear"</item>
     </string-array>
     <string-array name="datasource_list_values">
@@ -25,8 +25,8 @@
     <string-array name="datasource_list_normal">
         <item>"PineTime (BLE2)"</item>
         <item>"Garmin Watch"</item>
-        <item>"Phone Sensor (for testing)"</item>
-        <item>"Network (for Wi-Fi Alerts)"</item>
+        <item>"Handy Sensor (nur für Tests)"</item>
+        <item>"Netzwerk (für Alarme via WLAN)"</item>
     </string-array>
     <string-array name="datasource_list_normal_values">
         <item>"BLE2"</item>

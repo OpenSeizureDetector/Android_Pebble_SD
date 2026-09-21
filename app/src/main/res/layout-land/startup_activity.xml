@@ -43,7 +43,8 @@
                 android:layout_height="wrap_content"
                 android:text="OpenSeizureDetector"
                 android:textAppearance="?android:attr/textAppearanceLarge"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
 
             <TextView
                 android:id="@+id/dataSourceTextView"
@@ -68,7 +69,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="4dp"
-            android:text="Help"
+            android:text="@string/main_btn_help"
             style="@style/Widget.Material3.Button.TonalButton" />
 
         <com.google.android.material.button.MaterialButton
@@ -78,7 +79,7 @@
             android:layout_weight="1"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
-            android:text="Troubleshoot"
+            android:text="@string/troubleshoot"
             style="@style/Widget.Material3.Button.TonalButton" />
 
         <com.google.android.material.button.MaterialButton
@@ -212,7 +213,7 @@
                 android:id="@+id/installOsdAppButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Install App"
+                android:text="@string/install_app"
                 android:textSize="10sp"
                 android:paddingStart="4dp"
                 android:paddingEnd="4dp"
