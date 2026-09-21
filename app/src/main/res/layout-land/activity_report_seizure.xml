@@ -43,7 +43,7 @@
                         android:id="@+id/date_day_tv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="dd" />
+                        android:text="@string/dd" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -52,7 +52,7 @@
                         android:id="@+id/date_mon_tv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="mm" />
+                        android:text="@string/mm" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -61,7 +61,7 @@
                         android:id="@+id/date_year_tv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="yyyy"
+                        android:text="@string/yyyy"
                         android:layout_marginEnd="16dp" />
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/select_date_button"
@@ -160,7 +160,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="msg" />
+                    android:text="@string/msg" />
             </LinearLayout>
         </ScrollView>
     </LinearLayout>

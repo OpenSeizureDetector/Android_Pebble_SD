@@ -67,7 +67,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
-            android:text="Trouble-\nshooting"
+            android:text="@string/troubleshooting"
             android:id="@+id/troubleshootingButton"
             style="@style/Widget.Material3.Button.TonalButton" />
 
@@ -104,7 +104,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginStart="12dp"
                 android:gravity="center_vertical"
-                android:text="Permissions"
+                android:text="@string/permissions"
                 android:id="@+id/textItem1" />
         </LinearLayout>
 
@@ -124,7 +124,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginStart="12dp"
                 android:gravity="center_vertical"
-                android:text="Service Status"
+                android:text="@string/service_status"
                 android:id="@+id/textItem2" />
         </LinearLayout>
 
@@ -144,7 +144,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginStart="12dp"
                 android:gravity="center_vertical"
-                android:text="Watch Status"
+                android:text="@string/watch_status"
                 android:id="@+id/textItem3" />
         </LinearLayout>
 
@@ -192,7 +192,7 @@
                 android:layout_height="match_parent"
                 android:layout_marginStart="12dp"
                 android:gravity="center_vertical"
-                android:text="Settings Status"
+                android:text="@string/settings_status"
                 android:autoLink="web"
                 android:id="@+id/textItem6" />
         </LinearLayout>

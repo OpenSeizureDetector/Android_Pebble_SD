@@ -22,6 +22,7 @@
         android:entryValues="@array/dark_mode_values"
         android:defaultValue="system"
         android:dialogTitle="Select Theme" />
+        />
 
 
     <CheckBoxPreference
@@ -43,8 +44,8 @@
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="first_run_complete"
-        android:summary="Prevent the welcome/setup screens displaying when the app starts (they are not needed after initial set-up)."
-        android:title="Disable Welcome Screens"
+        android:summary="@string/prevent_the_welcome_setup_screens_displaying_when_the_app_starts_they_are_not_needed_after_initial_set_up"
+        android:title="@string/disable_welcome_screens"
         android:enabled="true"
         />
     <EditTextPreference

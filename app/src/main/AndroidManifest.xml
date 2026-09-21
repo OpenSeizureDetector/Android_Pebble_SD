@@ -89,7 +89,7 @@
         <activity
             android:name=".activity.settings.PrefActivity"
             android:theme="@style/AppTheme.TransparentSystemBars"
-            android:label="OpenSeizureDetector Preferences" />
+            android:label="@string/openseizuredetector_preferences" />
         <activity
             android:name="com.rohitss.uceh.UCEDefaultActivity"
             android:process=":error_activity" />

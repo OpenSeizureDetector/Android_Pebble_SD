@@ -1297,17 +1297,17 @@ public class SdServer extends Service implements SdDataReceiver {
         if (hasFault) {
             // Force fault state to override any alarm/warning state handling.
             sdData.alarmState = AlarmState.FAULT;
-            sdData.alarmPhrase = "FAULT";
+            sdData.alarmPhrase = getString(R.string.fault);
             sdData.alarmStanding = false;
             sdData.fallAlarmStanding = false;
 
             String faultReason = "";
             if (sdData.alarmState == AlarmState.FAULT) faultReason += "Data Source Fault. ";
             if (sdData.alarmState == AlarmState.NETFAULT) faultReason += "Network Fault. ";
-            if (sdData.mHRFaultStanding) faultReason += "HR Fault. ";
-            if (sdData.mHrFrozenFaultStanding) faultReason += "HR Frozen. ";
+            if (sdData.mHRFaultStanding) faultReason += getString(R.string.hr_fault);
+            if (sdData.mHrFrozenFaultStanding) faultReason += getString(R.string.hr_frozen);
             if (sdData.mPhoneBatteryFaultStanding) {
-                faultReason += "Phone battery low (" + getPhoneBatteryLevel() + "%). ";
+                faultReason += getString(R.string.phone_battery_low) + getPhoneBatteryLevel() + "%). ";
             }
 
             sdData.faultCause = faultReason.trim();
@@ -1325,7 +1325,7 @@ public class SdServer extends Service implements SdDataReceiver {
         }
         // Handle manual mute from watch buttons.
         if (sdData.alarmState == AlarmState.MUTE) {
-            sdData.alarmPhrase = "MUTE";
+            sdData.alarmPhrase = getString(R.string.mute);
             sdData.alarmStanding = false;
             sdData.fallAlarmStanding = false;
             showNotification(0);
@@ -1335,7 +1335,7 @@ public class SdServer extends Service implements SdDataReceiver {
             if ((!mLatchAlarms) ||
                     (mLatchAlarms &&
                             (!mSdData.alarmStanding && !mSdData.fallAlarmStanding))) {
-                sdData.alarmPhrase = "WARNING";
+                sdData.alarmPhrase = getString(R.string.warning);
                 sdData.alarmStanding = false;
                 sdData.fallAlarmStanding = false;
             }
@@ -1441,7 +1441,7 @@ public class SdServer extends Service implements SdDataReceiver {
         }
         // Handle heart rate alarm
         if ((sdData.mHRAlarmActive) && (sdData.mHRAlarmStanding)) {
-            sdData.alarmPhrase = "HR ABNORMAL";
+            sdData.alarmPhrase = getString(R.string.hr_abnormal);
             // Make alarm beep tone
             alarmBeep();
             showNotification(2);
@@ -1478,7 +1478,7 @@ public class SdServer extends Service implements SdDataReceiver {
 
         // Handle Oxygen Saturation alarm
         if ((sdData.mO2SatAlarmActive) && (sdData.mO2SatAlarmStanding)) {
-            sdData.alarmPhrase = "Oxygen Saturation ABNORMAL";
+            sdData.alarmPhrase = getString(R.string.oxygen_saturation_abnormal);
             if (mLogAlarms) {
                 Log.v(TAG, "***OXYGEN SATURATION*** - Logging to SD Card");
                 //writeAlarmToSD();
@@ -1574,9 +1574,9 @@ public class SdServer extends Service implements SdDataReceiver {
         // #275 Determine fault cause BEFORE normalizing alarmState to FAULT.
         if (mSdData.faultCause == null || mSdData.faultCause.isEmpty()) {
             if (mSdData.alarmState == AlarmState.NETFAULT) {
-                mSdData.faultCause = "Network Fault";
+                mSdData.faultCause = getString(R.string.network_fault);
             } else {
-                mSdData.faultCause = "Data Source Fault";
+                mSdData.faultCause = getString(R.string.data_source_fault);
             }
         }
         mSdData.alarmState = AlarmState.FAULT;  // set fault alarm state.
@@ -2189,7 +2189,7 @@ public class SdServer extends Service implements SdDataReceiver {
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
         try {
-            mSdDataSourceName = SP.getString("DataSource", "SET_FROM_XML");
+            mSdDataSourceName = SP.getString(getString(R.string.datasource), "SET_FROM_XML");
             Log.d(TAG, "updatePrefs() - DataSource = " + mSdDataSourceName);
             mLatchAlarms = SP.getBoolean("LatchAlarms", false);
             Log.d(TAG, "updatePrefs() - mLatchAlarms = " + mLatchAlarms);
