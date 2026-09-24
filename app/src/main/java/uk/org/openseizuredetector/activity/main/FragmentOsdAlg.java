@@ -187,6 +187,9 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             mChart.getViewport().setMinX(-0.5);
             mChart.getViewport().setMaxX(9.5);
 
+            // Show where the alarm threshold sits on the Y axis (thin line + value).
+            GraphThresholdLine.add(mChart, alarmThresh, -0.5, 9.5);
+
             mChart.getViewport().setScalable(false);
             mChart.getViewport().setScrollable(false);
 
