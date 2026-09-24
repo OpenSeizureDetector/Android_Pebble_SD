@@ -201,6 +201,11 @@ public class SdServer extends Service implements SdDataReceiver {
     private String mSMSMsgStr = "default SMS Message";
     private String mSMSFalseAlarmMsgStr = "default SMS False Alarm Message";
     public long mSMSTimeMillis = 0;  // last time we sent an SMS Alarm (limited to one per minute) - in milliseconds
+    // #249 - True once the first (no-location) SMS has been sent for the alarm episode currently
+    // standing.  Prevents re-sending / re-triggering a new location search every time new
+    // data arrives while the same alarm condition is still active.  Cleared when the alarm
+    // condition clears (OK / MUTE) or is accepted.
+    private boolean mSmsEpisodeActive = false;
     public SmsTimer mSmsTimer = null;  // Timer to wait for specified time before sending an alert to give the user chance to cancel it.
     public int mSmsTimerSecs = 10;    // Time delay in seconds before sending SMS alert.
     private AlertDialog.Builder mSMSAlertDialog;   // Dialog shown during countdown to sending SMS.
@@ -1320,6 +1325,12 @@ public class SdServer extends Service implements SdDataReceiver {
                 sdData.alarmPhrase = "OK";
                 sdData.alarmStanding = false;
                 sdData.fallAlarmStanding = false;
+                // #249 - mSmsEpisodeActive is deliberately NOT cleared here. A brief dip back
+                // to OK (e.g. a flapping alarm condition) should not be treated as the episode
+                // ending - otherwise a re-trigger a moment later would send a duplicate
+                // "no location" SMS while the original episode's location search is still in
+                // flight. The episode only ends when the carer actually acknowledges it
+                // (MUTE / acceptAlarm), see below.
                 showNotification(0);
             }
         }
@@ -1328,6 +1339,7 @@ public class SdServer extends Service implements SdDataReceiver {
             sdData.alarmPhrase = getString(R.string.mute);
             sdData.alarmStanding = false;
             sdData.fallAlarmStanding = false;
+            mSmsEpisodeActive = false;  // episode over - next alarm should send a fresh SMS
             showNotification(0);
         }
         // Handle warning alarm state
@@ -1377,15 +1389,15 @@ public class SdServer extends Service implements SdDataReceiver {
             }
             // Send SMS Alarm.
             if (mSMSAlarm) {
-                long tnowMillis = System.currentTimeMillis();
-                // limit SMS alarms to one per minute
-                if ((tnowMillis - mSMSTimeMillis) > 60000) {
+                // #249 - Send once per alarm episode, not repeatedly while the alarm condition
+                // persists - repeated sends were racing with the async location search.
+                if (!mSmsEpisodeActive) {
                     sendSMSAlarm();
                     sendPhoneAlarm();
-                    mSMSTimeMillis = tnowMillis;
+                    mSmsEpisodeActive = true;
                 } else {
                     //mUtil.showToast(getString(R.string.SMSAlarmAlreadySentMsg));
-                    Log.v(TAG, "SMS Alarm already sent - not re-sending");
+                    Log.v(TAG, "SMS Alarm already sent for this episode - not re-sending");
                 }
             } else {
                 //mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
@@ -1424,14 +1436,14 @@ public class SdServer extends Service implements SdDataReceiver {
             }
             // Send SMS Alarm.
             if (mSMSAlarm) {
-                long tnowMillis = System.currentTimeMillis();
-                // limit SMS alarms to one per minute
-                if ((tnowMillis - mSMSTimeMillis) > 60000) {
+                // #249 - Send once per alarm episode, not repeatedly while the alarm condition
+                // persists - repeated sends were racing with the async location search.
+                if (!mSmsEpisodeActive) {
                     sendSMSAlarm();
-                    mSMSTimeMillis = tnowMillis;
+                    mSmsEpisodeActive = true;
                 } else {
                     //mUtil.showToast(getString(R.string.SMSAlarmAlreadySentMsg));
-                    Log.v(TAG, "SMS Alarm already sent - not re-sending");
+                    Log.v(TAG, "SMS Alarm already sent for this episode - not re-sending");
                 }
             } else {
                 //mUtil.showToast(getString(R.string.msmsalarm_false_msg));
@@ -1461,14 +1473,14 @@ public class SdServer extends Service implements SdDataReceiver {
             }
             // Send SMS Alarm.
             if (mSMSAlarm) {
-                long tnowMillis = System.currentTimeMillis();
-                // limit SMS alarms to one per minute
-                if ((tnowMillis - mSMSTimeMillis) > 60000) {
+                // #249 - Send once per alarm episode, not repeatedly while the alarm condition
+                // persists - repeated sends were racing with the async location search.
+                if (!mSmsEpisodeActive) {
                     sendSMSAlarm();
-                    mSMSTimeMillis = tnowMillis;
+                    mSmsEpisodeActive = true;
                 } else {
                     //mUtil.showToast(getString(R.string.SMSAlarmAlreadySentMsg));
-                    Log.v(TAG, "SMS Alarm already sent - not re-sending");
+                    Log.v(TAG, "SMS Alarm already sent for this episode - not re-sending");
                 }
             } else {
                 //mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
@@ -1504,14 +1516,14 @@ public class SdServer extends Service implements SdDataReceiver {
             }
             // Send SMS Alarm.
             if (mSMSAlarm) {
-                long tnowMillis = System.currentTimeMillis();
-                // limit SMS alarms to one per minute
-                if ((tnowMillis - mSMSTimeMillis) > 60000) {
+                // #249 - Send once per alarm episode, not repeatedly while the alarm condition
+                // persists - repeated sends were racing with the async location search.
+                if (!mSmsEpisodeActive) {
                     sendSMSAlarm();
-                    mSMSTimeMillis = tnowMillis;
+                    mSmsEpisodeActive = true;
                 } else {
                     //mUtil.showToast(getString(R.string.sms_alarm_already_sent_msg));
-                    Log.v(TAG, "SMS Alarm already sent - not re-sending");
+                    Log.v(TAG, "SMS Alarm already sent for this episode - not re-sending");
                 }
             } else {
                 //mUtil.showToast(getString(R.string.SMSAlarmDisabledNotSendingMsg));
@@ -2023,6 +2035,7 @@ public class SdServer extends Service implements SdDataReceiver {
         Log.i(TAG, "acceptAlarm()");
         mSdData.alarmStanding = false;
         mSdData.fallAlarmStanding = false;
+        mSmsEpisodeActive = false;  // #249 episode over - next alarm should send a fresh SMS
         mSdDataSource.acceptAlarm();
         stopLatchTimer();
     }
