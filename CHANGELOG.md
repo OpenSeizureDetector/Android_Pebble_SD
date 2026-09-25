@@ -9,6 +9,9 @@
             - Fixed issue with phone data source sample rate (Issue #276)
 	        - Improved reporting of network vs device faults in network data source (Issue #275)
 	        - Use can now select whether to play alerts at maxmum volume, or at the Android System volume setting (Issue #279)
+            - Fixed issue with SMS location alerts not always sending (Issue #249)
+            - Hide unused tabs from user interface to simplify it (Issue #278)
+            - Add a threshold line to the OSD algorithm graphs (Issue #238)
     V5.0.9  - Fixed issue with SMS alerts failing to send on some phones (Issue #264)
             - Fixed issue with app not re-starting after selecting a bLE device (Issue #261)
         - Improved handling of system re-start after changing settings.
