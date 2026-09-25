@@ -57,7 +57,15 @@ public class LocationFinder implements LocationListener {
     }
 
     public void getLocation(SdLocationReceiver sdLocationReceiver) {
+        if (mSdLocationReceiver != null) {
+            // A search is already in progress (e.g. from a previous alarm episode that has
+            // not yet timed out) - don't clobber its receiver/timer, or the earlier caller's
+            // SMS with location will never be sent (or will be sent to the wrong caller).
+            Log.w(TAG, "getLocation() called while a location search is already in progress - ignoring");
+            return;
+        }
         mSdLocationReceiver = sdLocationReceiver;
+        mLastLocation = null;  // don't reuse a stale fix left over from a previous episode
         // Acquire a reference to the system Location Manager
         mLocationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
         // Register with the Location Manager to receive location updates using both network and GPS
@@ -79,7 +87,9 @@ public class LocationFinder implements LocationListener {
                 Log.v(TAG, "mTimeOutTimer expired - returning last location");
                 //mUtil.showToast("mTimeOutTimer expired - returning last location");
                 mLocationManager.removeUpdates(mLocationListener);
-                mSdLocationReceiver.onSdLocationReceived(mLastLocation);
+                SdLocationReceiver receiver = mSdLocationReceiver;
+                mSdLocationReceiver = null;  // free this LocationFinder for the next episode
+                receiver.onSdLocationReceived(mLastLocation);
             }
         }, mTimeoutPeriod * 1000);
 
