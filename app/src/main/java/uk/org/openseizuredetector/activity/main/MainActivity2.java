@@ -4,35 +4,27 @@ import uk.org.openseizuredetector.R;
 /*
  * ADDING OR REMOVING TABS AND FRAGMENTS:
  *
- * To add or remove tabs from the main screen, you must update THREE places:
+ * Tabs are identified by the TAB_* constants below, NOT by their position on screen.
+ * Which tabs are shown is decided at runtime by getVisibleTabs(): tabs whose algorithm
+ * is switched off in the "Seizure Detector Algorithms Selection" settings are hidden
+ * completely (the pager and the TabLayout only ever see the visible ones).
  *
- * 1. TabLayoutMediator Configuration (in onResume() method, around line 169):
- *    - Add/remove/modify the case statements that set tab labels
- *    - Each case number corresponds to a tab position (0-indexed)
- *    - Example: case 0: tab.setText("OSD");
+ * To add or remove a tab you must update FOUR places:
  *
- * 2. ScreenSlideFragmentPagerAdapter.createFragment() method (around line 409):
- *    - Add/remove/modify the case statements that return Fragment instances
- *    - Each case must match the tab position from step 1
- *    - Example: case 0: return new FragmentOsdAlg();
+ * 1. Add a TAB_* constant (never reuse or renumber an existing one - the value is also
+ *    what is saved in the "main_activity_active_tab" preference).
+ * 2. getVisibleTabs(): add the tab in the position you want it to appear, together with
+ *    the preference key that enables it (or always show it).
+ * 3. getTabTitle(): return the label shown on the tab.
+ * 4. ScreenSlideFragmentPagerAdapter.createFragment(): return the Fragment for the tab.
  *
- * 3. ScreenSlideFragmentPagerAdapter.getItemCount() method (around line 434):
- *    - Update the return value to match the TOTAL number of active tabs
- *    - This MUST equal the number of active cases in steps 1 and 2
- *    - Example: return 4; (for tabs at positions 0, 1, 2, 3)
- *
- * IMPORTANT: All three places must be kept in sync!
- * - If getItemCount() returns N, you must have cases 0 through N-1 defined
- * - Position numbers must be consecutive starting from 0
- * - Commented out cases do NOT count toward the total
- *
- * Current Active Tabs (as of August 2026):
- * - Position 0: OSD Algorithm (FragmentOsdAlg)
- * - Position 1: Flap Algorithm (FragmentFlapAlg)  ← between OSD and ML
- * - Position 2: ML Algorithm (FragmentMlAlg)
- * - Position 3: Heart Rate (FragmentHrAlg)
- * - Position 4: Fall Detection (FragmentFallAlg)
- * - Position 5: System (FragmentSystem - includes Signal & Battery graphs)
+ * Tabs (TAB_* id = value; on screen they appear in the order getVisibleTabs() adds them):
+ * - TAB_OSD    (0): OSD Algorithm (FragmentOsdAlg)        - hidden if OsdAlarmActive is off
+ * - TAB_FLAP   (1): Flap Algorithm (FragmentFlapAlg)      - hidden if FlapAlarmActive is off
+ * - TAB_ML     (2): ML Algorithm (FragmentMlAlg)          - hidden if CnnAlarmActive is off
+ * - TAB_HR     (3): Heart Rate (FragmentHrAlg)            - hidden if HRAlarmActive is off
+ * - TAB_FALL   (4): Fall Detection (FragmentFallAlg)      - hidden if FallActive is off
+ * - TAB_SYSTEM (5): System (FragmentSystem - includes Signal & Battery graphs) - always shown
  * Removed/Inactive:
  * - FragmentWatchSig (signal graph moved to System tab)
  * - FragmentBatt (battery graph moved to System tab)
@@ -82,6 +74,8 @@ import android.widget.TextView;
 
 import com.rohitss.uceh.UCEHandler;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -112,8 +106,20 @@ public class MainActivity2 extends AppCompatActivity {
     private Boolean mCurrentBasicMode;
 
     // Tab position persistence
+    // PREF_ACTIVE_TAB stores a TAB_* id (not a screen position), because hidden tabs mean
+    // the position of a tab changes with the settings. The TAB_* values equal the positions
+    // the tabs had when all six were always shown, so previously saved values stay valid.
     private static final String PREF_ACTIVE_TAB = "main_activity_active_tab";
-    private static final int DEFAULT_TAB = 0;
+    private static final int TAB_OSD = 0;
+    private static final int TAB_FLAP = 1;
+    private static final int TAB_ML = 2;
+    private static final int TAB_HR = 3;
+    private static final int TAB_FALL = 4;
+    private static final int TAB_SYSTEM = 5;
+    private static final int DEFAULT_TAB = TAB_OSD;
+
+    // The tabs currently shown, in screen order (TAB_* ids). Rebuilt on every onResume().
+    private List<Integer> mVisibleTabs = new ArrayList<>();
 
     final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
     private Handler mHandler = new Handler(Looper.getMainLooper());
@@ -282,10 +288,13 @@ public class MainActivity2 extends AppCompatActivity {
 
         // Save the current tab position before detaching
         if (mFragmentPager != null) {
-            int currentTab = mFragmentPager.getCurrentItem();
-            SharedPreferences prefs = mSharedPrefs != null ? mSharedPrefs : PreferenceManager.getDefaultSharedPreferences(this);
-            prefs.edit().putInt(PREF_ACTIVE_TAB, currentTab).apply();
-            Log.d(TAG, "Saved active tab position: " + currentTab);
+            int position = mFragmentPager.getCurrentItem();
+            if (position >= 0 && position < mVisibleTabs.size()) {
+                int currentTabId = mVisibleTabs.get(position);
+                SharedPreferences prefs = mSharedPrefs != null ? mSharedPrefs : PreferenceManager.getDefaultSharedPreferences(this);
+                prefs.edit().putInt(PREF_ACTIVE_TAB, currentTabId).apply();
+                Log.d(TAG, "Saved active tab id: " + currentTabId);
+            }
         }
 
         // Detach TabLayoutMediator to prevent memory leaks (only if it exists - portrait layout)
@@ -306,9 +315,14 @@ public class MainActivity2 extends AppCompatActivity {
         if (mSharedPrefs != null && mModePreferenceListener != null) {
             mSharedPrefs.registerOnSharedPreferenceChangeListener(mModePreferenceListener);
         }
+        SharedPreferences prefs = mSharedPrefs != null ? mSharedPrefs : PreferenceManager.getDefaultSharedPreferences(this);
+
+        // Work out which tabs to show (algorithms that are switched off get no tab at all).
+        mVisibleTabs = getVisibleTabs(prefs);
+
         // Instantiate a ViewPager2 and a PagerAdapter.
         mFragmentPager = findViewById(R.id.fragment_pager);
-        mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this);
+        mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this, mVisibleTabs);
         mFragmentPager.setAdapter(mFragmentStateAdapter);
 
         // Set up TabLayout with ViewPager2 (portrait layout)
@@ -319,90 +333,20 @@ public class MainActivity2 extends AppCompatActivity {
                     new TabLayoutMediator.TabConfigurationStrategy() {
                         @Override
                         public void onConfigureTab(TabLayout.Tab tab, int position) {
-                            // CHANGED (issue #238): inserted the new "Flap" tab at position 1.
-                            // ML/Heart Rate/Fall/System each shifted one position later
-                            // (were 1/2/3/4, now 2/3/4/5) - see the class doc comment above.
-                            switch (position) {
-                                case 0:
-                                    tab.setText("OSD");
-                                    break;
-                                case 1:
-                                    tab.setText("Flap");
-                                    break;
-                                case 2:
-                                    tab.setText("ML");
-                                    break;
-                                case 3:
-                                    tab.setText("Heart Rate");
-                                    break;
-                                 case 4:
-                                     tab.setText("Fall");
-                                     break;
-                                 case 5:
-                                     tab.setText("System");
-                                     break;
-                                default:
-                                    tab.setText("Screen " + position);
+                            if (position >= 0 && position < mVisibleTabs.size()) {
+                                tab.setText(getTabTitle(mVisibleTabs.get(position)));
+                            } else {
+                                tab.setText("Screen " + position);
                             }
                         }
                     });
             mTabLayoutMediator.attach();
-
-            // CHANGED (issue #238): this used to only grey out the Fall tab. Extended the
-            // same treatment to the new OSD/Flap conditional-visibility requirement from
-            // the issue, instead of introducing a different mechanism (e.g. actually
-            // hiding tabs, which would require making tab count/positions dynamic).
-            // Grey out tabs whose underlying algorithm is disabled, so users can immediately
-            // see which tabs are relevant to the current configuration. Tabs are never fully
-            // hidden - only dimmed - matching the existing Fall tab behaviour.
-            // We access the tab strip's child view directly as TabLayout has no public alpha API.
-            try {
-                SharedPreferences tabPrefs = mSharedPrefs != null ? mSharedPrefs
-                        : PreferenceManager.getDefaultSharedPreferences(this);
-                ViewGroup tabStrip = (ViewGroup) mTabLayout.getChildAt(0);
-
-                boolean osdActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "OsdAlarmActive");
-                if (tabStrip != null && tabStrip.getChildCount() > 0) {
-                    tabStrip.getChildAt(0).setAlpha(osdActive ? 1.0f : 0.4f);
-                    tabStrip.getChildAt(0).setEnabled(osdActive);
-                }
-
-                boolean flapActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "FlapAlarmActive");
-                if (tabStrip != null && tabStrip.getChildCount() > 1) {
-                    tabStrip.getChildAt(1).setAlpha(flapActive ? 1.0f : 0.4f);
-                    tabStrip.getChildAt(1).setEnabled(flapActive);
-                }
-
-                // ML and Heart Rate tabs are also backed by an enable/disable checkbox
-                // (CnnAlarmActive / HRAlarmActive respectively). System (position 5) has no
-                // such checkbox, so it is intentionally left out of this block.
-                boolean mlActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "CnnAlarmActive");
-                if (tabStrip != null && tabStrip.getChildCount() > 2) {
-                    tabStrip.getChildAt(2).setAlpha(mlActive ? 1.0f : 0.4f);
-                    tabStrip.getChildAt(2).setEnabled(mlActive);
-                }
-
-                boolean hrActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "HRAlarmActive");
-                if (tabStrip != null && tabStrip.getChildCount() > 3) {
-                    tabStrip.getChildAt(3).setAlpha(hrActive ? 1.0f : 0.4f);
-                    tabStrip.getChildAt(3).setEnabled(hrActive);
-                }
-
-                boolean fallActive = PreferenceUtils.getBooleanFromXml(tabPrefs, "FallActive");
-                if (tabStrip != null && tabStrip.getChildCount() > 4) {
-                    tabStrip.getChildAt(4).setAlpha(fallActive ? 1.0f : 0.4f);
-                    tabStrip.getChildAt(4).setEnabled(fallActive);
-                }
-            } catch (Exception e) {
-                Log.w(TAG, "onResume() - could not grey out tabs: " + e.getMessage());
-            }
         } else {
             Log.d(TAG, "onResume() - TabLayout not found (landscape layout detected), skipping TabLayoutMediator");
         }
 
-        // Restore the previously active tab position
+        // Restore the previously active tab
         // If no saved preference, choose tab based on enabled algorithms
-        SharedPreferences prefs = mSharedPrefs != null ? mSharedPrefs : PreferenceManager.getDefaultSharedPreferences(this);
 
         // Basic Mode Toggle Logic
         boolean basicMode = PreferenceUtils.getBooleanFromXml(prefs, "pref_basic_mode");
@@ -434,17 +378,27 @@ public class MainActivity2 extends AppCompatActivity {
             }
         }
 
-        int savedTab = prefs.getInt(PREF_ACTIVE_TAB, -1); // -1 means not set
+        int savedTabId = prefs.getInt(PREF_ACTIVE_TAB, -1); // -1 means not set
 
-        if (savedTab == -1) {
+        if (savedTabId == -1) {
             // No saved preference - select tab based on algorithm preferences
-            // Priority order: ML (1), OSD (0), HR (2)
-            savedTab = getDefaultTabFromAlgorithmSettings(prefs);
-            Log.d(TAG, "No saved tab preference, selected tab based on algorithm settings: " + savedTab);
+            // Priority order: ML, OSD, HR
+            savedTabId = getDefaultTabFromAlgorithmSettings(prefs);
+            Log.d(TAG, "No saved tab preference, selected tab based on algorithm settings: " + savedTabId);
         }
 
-        mFragmentPager.setCurrentItem(savedTab, false); // false = no animation on restore
-        Log.d(TAG, "Restored active tab position: " + savedTab);
+        // The saved tab may be hidden now (its algorithm was switched off since last time).
+        // Fall back to the default tab, and failing that to the first visible tab.
+        int savedPosition = mVisibleTabs.indexOf(savedTabId);
+        if (savedPosition < 0) {
+            savedPosition = mVisibleTabs.indexOf(getDefaultTabFromAlgorithmSettings(prefs));
+        }
+        if (savedPosition < 0) {
+            savedPosition = 0;
+        }
+
+        mFragmentPager.setCurrentItem(savedPosition, false); // false = no animation on restore
+        Log.d(TAG, "Restored active tab position: " + savedPosition + " (tab id " + mVisibleTabs.get(savedPosition) + ")");
 
         Fragment existingCommon = getSupportFragmentManager().findFragmentById(R.id.fragment_common_container_view);
         if (existingCommon == null) {
@@ -585,46 +539,91 @@ public class MainActivity2 extends AppCompatActivity {
 
 
     /**
-     * A simple pager adapter that represents 5 ScreenSlidePageFragment objects, in
-     * sequence.
+     * Returns the ids (TAB_*) of the tabs to show, in screen order. A tab whose algorithm
+     * is switched off in the "Seizure Detector Algorithms Selection" settings is left out
+     * entirely. The System tab has no such setting and is always included, so the list is
+     * never empty.
+     */
+    private List<Integer> getVisibleTabs(SharedPreferences prefs) {
+        List<Integer> tabs = new ArrayList<>();
+        if (PreferenceUtils.getBooleanFromXml(prefs, "OsdAlarmActive")) tabs.add(TAB_OSD);
+        if (PreferenceUtils.getBooleanFromXml(prefs, "FlapAlarmActive")) tabs.add(TAB_FLAP);
+        if (PreferenceUtils.getBooleanFromXml(prefs, "CnnAlarmActive")) tabs.add(TAB_ML);
+        if (PreferenceUtils.getBooleanFromXml(prefs, "HRAlarmActive")) tabs.add(TAB_HR);
+        if (PreferenceUtils.getBooleanFromXml(prefs, "FallActive")) tabs.add(TAB_FALL);
+        tabs.add(TAB_SYSTEM);
+        return tabs;
+    }
+
+    /** Label shown on the tab for a TAB_* id. */
+    private String getTabTitle(int tabId) {
+        switch (tabId) {
+            case TAB_OSD:
+                return "OSD";
+            case TAB_FLAP:
+                return "Flap";
+            case TAB_ML:
+                return "ML";
+            case TAB_HR:
+                return "Heart Rate";
+            case TAB_FALL:
+                return "Fall";
+            case TAB_SYSTEM:
+                return "System";
+            default:
+                return "Screen " + tabId;
+        }
+    }
+
+    /**
+     * A pager adapter that shows the tabs it is given (TAB_* ids, in screen order).
+     * Items are identified by their TAB_* id rather than by position, so that fragments
+     * restored by the framework are matched to the right tab when tabs are hidden.
      */
     private class ScreenSlideFragmentPagerAdapter extends FragmentStateAdapter {
         private String TAG = "ScreenSlideFragmentPagerAdapter";
+        private final List<Integer> mTabIds;
 
-        public ScreenSlideFragmentPagerAdapter(FragmentActivity fa) {
+        public ScreenSlideFragmentPagerAdapter(FragmentActivity fa, List<Integer> tabIds) {
             super(fa);
+            mTabIds = new ArrayList<>(tabIds);
         }
 
         @Override
         public Fragment createFragment(int position) {
-            // Note - the number of positions must match the value returned by getItemCount() below.
-            // CHANGED (issue #238): inserted FragmentFlapAlg at position 1, shifting
-            // FragmentMlAlg/FragmentHrAlg/FragmentFallAlg/FragmentSystem down one position
-            // each (must stay in sync with the TabLayoutMediator switch above).
-            switch (position) {
-                case 0:
+            switch (mTabIds.get(position)) {
+                case TAB_OSD:
                     return new FragmentOsdAlg();
-                case 1:
+                case TAB_FLAP:
                     return new FragmentFlapAlg();
-                case 2:
+                case TAB_ML:
                     return new FragmentMlAlg();
-                case 3:
+                case TAB_HR:
                     return new FragmentHrAlg();
-                case 4:
+                case TAB_FALL:
                     // Fall detection debug tab - graphs window min/max acceleration history
                     return new FragmentFallAlg();
-                case 5:
+                case TAB_SYSTEM:
                     return new FragmentSystem();
-
                 default:
-                    Log.e(TAG, "createFragment() - invalid Position " + position);
+                    Log.e(TAG, "createFragment() - invalid tab id " + mTabIds.get(position));
                     return null;
             }
         }
 
         @Override
         public int getItemCount() {
-            return 6; // CHANGED (issue #238): was 5, +1 for the new Flap tab. Must match the number of active cases in createFragment() above
+            return mTabIds.size();
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return mTabIds.get(position);
+        }
+
+        @Override
+        public boolean containsItem(long itemId) {
+            return mTabIds.contains((int) itemId);
         }
     }
 
@@ -878,37 +877,33 @@ public class MainActivity2 extends AppCompatActivity {
 
     /**
      * Determines which tab to show based on enabled algorithms
-     * Priority order: ML (tab 2), OSD (tab 0), HR (tab 3)
-     * Returns the tab index or DEFAULT_TAB if no algorithms are enabled
-     * CHANGED (issue #238): ML/HR indices shifted from 1/2 to 2/3 because the new
-     * Flap tab was inserted at position 1. OSD stays at 0.
+     * Priority order: ML, OSD, HR
+     * Returns a TAB_* id, or DEFAULT_TAB if no algorithms are enabled. The caller must
+     * check that the tab is actually visible (see getVisibleTabs()).
      */
     private int getDefaultTabFromAlgorithmSettings(SharedPreferences prefs) {
         // Check algorithms in priority order: ML, OSD, HR
 
-        // Tab 2: ML Algorithm
         boolean mlEnabled = PreferenceUtils.getBooleanFromXml(prefs, "CnnAlarmActive");
         if (mlEnabled) {
-            Log.d(TAG, "ML algorithm is enabled - selecting ML tab (position 2)");
-            return 2;
+            Log.d(TAG, "ML algorithm is enabled - selecting ML tab");
+            return TAB_ML;
         }
 
-        // Tab 0: OSD Algorithm
         boolean osdEnabled = PreferenceUtils.getBooleanFromXml(prefs, "OsdAlarmActive");
         if (osdEnabled) {
-            Log.d(TAG, "OSD algorithm is enabled - selecting OSD tab (position 0)");
-            return 0;
+            Log.d(TAG, "OSD algorithm is enabled - selecting OSD tab");
+            return TAB_OSD;
         }
 
-        // Tab 3: Heart Rate Algorithm
         boolean hrEnabled = PreferenceUtils.getBooleanFromXml(prefs, "HRAlarmActive");
         if (hrEnabled) {
-            Log.d(TAG, "HR algorithm is enabled - selecting HR tab (position 3)");
-            return 3;
+            Log.d(TAG, "HR algorithm is enabled - selecting HR tab");
+            return TAB_HR;
         }
 
         // No algorithms enabled - use default (OSD tab)
-        Log.d(TAG, "No algorithms enabled - using default tab (position 0)");
+        Log.d(TAG, "No algorithms enabled - using default tab");
         return DEFAULT_TAB;
     }
 
