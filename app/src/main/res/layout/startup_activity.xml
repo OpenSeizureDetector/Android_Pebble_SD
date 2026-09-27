@@ -57,7 +57,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:layout_marginEnd="4dp"
-            android:text="Help"
+            android:text="@string/help"
             android:id="@+id/instructionsButton"
             style="@style/Widget.Material3.Button.TonalButton" />
 
@@ -166,7 +166,7 @@
                 android:layout_weight="1"
                 android:layout_height="match_parent"
                 android:layout_marginStart="12dp"
-                android:text="Data Received"
+                android:text="@string/data_received"
                 android:gravity="center_vertical"
                 android:id="@+id/textItem5" />
             <com.google.android.material.button.MaterialButton

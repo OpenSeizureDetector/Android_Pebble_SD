@@ -21,7 +21,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="OSD Algorithm Status"
+                android:text="@string/osd_algorithm_status"
                 android:layout_marginBottom="8dp" />
 
             <TextView

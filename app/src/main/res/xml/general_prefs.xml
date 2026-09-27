@@ -20,8 +20,8 @@
         android:summary="@string/app_theme_summary"
         android:entries="@array/dark_mode_entries"
         android:entryValues="@array/dark_mode_values"
-        android:defaultValue="system"
-        android:dialogTitle="Select Theme" />
+        android:defaultValue="@string/system"
+        android:dialogTitle="@string/select_theme" />
         />
 
 

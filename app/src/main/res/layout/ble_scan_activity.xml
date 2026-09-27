@@ -18,7 +18,7 @@
             android:layout_height="wrap_content"
             android:background="?attr/colorSurfaceContainer"
             android:padding="16dp"
-            android:text="Ready to scan"
+            android:text="@string/ready_to_scan"
             android:textColor="?attr/colorOnSurface"
             android:textStyle="bold"
             android:textSize="16sp" />
@@ -42,7 +42,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
-                android:text="No devices found"
+                android:text="@string/no_devices_found"
                 android:textSize="18sp"
                 android:visibility="gone" />
 
@@ -80,7 +80,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:onClick="onCancelButtonClick"
-                android:text="Cancel" />
+                android:text="@string/Cancel" />
 
             <FrameLayout
                 android:layout_width="0dp"
@@ -94,7 +94,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:onClick="onScanButtonClick"
-                    android:text="Scan"
+                    android:text="@string/scan"
                     android:visibility="gone"/>
 
                 <com.google.android.material.button.MaterialButton
@@ -103,7 +103,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:onClick="onScanButtonClick"
-                    android:text="Scan"/>
+                    android:text="@string/scan"/>
             </FrameLayout>
 
             <FrameLayout
@@ -118,7 +118,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:onClick="onSelectButtonClick"
-                    android:text="Select"
+                    android:text="@string/select"
                     android:visibility="gone"/>
 
                 <com.google.android.material.button.MaterialButton
@@ -127,7 +127,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:onClick="onSelectButtonClick"
-                    android:text="Select"/>
+                    android:text="@string/select"/>
             </FrameLayout>
 
         </LinearLayout>

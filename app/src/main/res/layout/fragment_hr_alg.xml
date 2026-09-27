@@ -27,7 +27,7 @@
             android:id="@+id/fragment_hr_alg_tv1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="HR Algorithm Status"
+            android:text="@string/hr_algorithm_status"
             android:layout_marginBottom="16dp" />
 
         <androidx.appcompat.widget.LinearLayoutCompat
@@ -38,7 +38,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Current HR: " />
+                android:text="@string/current_hr" />
 
             <TextView
                 android:id="@+id/current_hr_tv"
@@ -49,7 +49,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" bpm" />
+                android:text="@string/bpm" />
         </androidx.appcompat.widget.LinearLayoutCompat>
 
         <androidx.appcompat.widget.LinearLayoutCompat
@@ -60,7 +60,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Adaptive Threshold Average HR: " />
+                android:text="@string/adaptive_threshold_average_hr" />
 
             <TextView
                 android:id="@+id/adaptive_avg_hr_tv"
@@ -71,14 +71,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=" bpm" />
+                android:text="@string/bpm" />
         </androidx.appcompat.widget.LinearLayoutCompat>
 
         <TextView
             android:id="@+id/textView2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Status Info"
+            android:text="@string/status_info"
             android:layout_marginBottom="16dp" />
 
         <com.jjoe64.graphview.GraphView

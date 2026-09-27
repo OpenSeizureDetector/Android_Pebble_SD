@@ -15,12 +15,12 @@
             android:id="@+id/fragment_data_sharing_tv1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Fragment_Data_Sharing" />
+            android:text="@string/fragment_data_sharing" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Data Sharing Status" />
+            android:text="@string/data_sharing_status" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 
