@@ -14,7 +14,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Watch Signal Strength History"
+            android:text="@string/watch_signal_strength_history"
             android:textColor="?attr/colorOnSurface"/>
 
 
@@ -25,7 +25,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Current Signal Strength: "
+                android:text="@string/current_signal_strength"
                 android:textColor="?attr/colorOnSurface" />
 
             <TextView

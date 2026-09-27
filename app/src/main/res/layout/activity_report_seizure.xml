@@ -50,7 +50,7 @@
                         android:id="@+id/date_day_tv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="dd" />
+                        android:text="@string/dd" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -61,7 +61,7 @@
                         android:id="@+id/date_mon_tv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="mm" />
+                        android:text="@string/mm" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -72,7 +72,7 @@
                         android:id="@+id/date_year_tv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="yyyy"
+                        android:text="@string/yyyy"
                         android:layout_marginEnd="16dp" />
 
                     <com.google.android.material.button.MaterialButton
@@ -100,7 +100,7 @@
                         android:id="@+id/time_hh_tv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="hh" />
+                        android:text="@string/hh" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -111,7 +111,7 @@
                         android:id="@+id/time_mm_tv"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="mm"
+                        android:text="@string/mm"
                         android:layout_marginEnd="16dp" />
 
                     <com.google.android.material.button.MaterialButton
@@ -151,7 +151,7 @@
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="notes about event"
+                    android:hint="@string/notes_about_event"
                     android:layout_marginBottom="24dp">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -188,7 +188,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="msg" />
+                    android:text="@string/msg" />
             </LinearLayout>
         </ScrollView>
     </LinearLayout>

@@ -53,7 +53,7 @@
                         android:id="@+id/textView"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Edit Settings"
+                        android:text="@string/edit_settings"
                         android:textAppearance="?android:attr/textAppearanceSmall" />
                 </LinearLayout>
 
@@ -134,7 +134,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Signal Strength History"
+                    android:text="@string/signal_strength_history"
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:textStyle="bold"
                     android:layout_marginBottom="4dp"/>
@@ -166,7 +166,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Watch Status"
+                    android:text="@string/watch_status"
                     android:textAppearance="?android:attr/textAppearanceMedium"
                     android:textStyle="bold"
                     android:layout_marginBottom="8dp" />
@@ -178,7 +178,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Manufacturer: "
+                        android:text="@string/manufacturer"
                         android:textSize="12sp"/>
                     <TextView
                         android:id="@+id/watch_manuf_tv"
@@ -195,7 +195,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Part No: "
+                        android:text="@string/part_no"
                         android:textSize="12sp"/>
                     <TextView
                         android:id="@+id/watch_partno_tv"
@@ -212,7 +212,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="FW Ver: "
+                        android:text="@string/fw_ver"
                         android:textSize="12sp"/>
                     <TextView
                         android:id="@+id/watch_fwver_tv"
@@ -229,7 +229,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="App Name: "
+                        android:text="@string/app_name"
                         android:textSize="12sp"/>
                     <TextView
                         android:id="@+id/watch_sdname_tv"
@@ -246,7 +246,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="App Ver: "
+                        android:text="@string/app_ver"
                         android:textSize="12sp"/>
                     <TextView
                         android:id="@+id/watch_sdver_tv"
@@ -270,7 +270,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Battery: "
+                        android:text="@string/battery"
                         android:textSize="12sp"/>
                     <TextView
                         android:id="@+id/watch_batt_tv"
@@ -287,7 +287,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Signal: "
+                        android:text="@string/signal"
                         android:textSize="12sp"/>
                     <TextView
                         android:id="@+id/watch_signal_tv"
@@ -310,7 +310,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Battery History"
+                    android:text="@string/battery_history"
                     android:textAppearance="?android:attr/textAppearanceSmall"
                     android:textStyle="bold"
                     android:layout_marginBottom="4dp" />

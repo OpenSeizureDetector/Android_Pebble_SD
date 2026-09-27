@@ -8,19 +8,19 @@
 
         <Preference
             android:key="flap_description"
-            android:summary="The Flap Alarm is an experimental feature to detect large-scale arm movements (shaking/flapping) that may occur during a seizure."
+            android:summary="@string/the_flap_alarm_is_an_experimental_feature_to_detect_large_scale_arm_movements_shaking_flapping_that_may_occur_during_a_seizure"
             android:selectable="false" />
 
         <EditTextPreference
             android:defaultValue="5000"
             android:key="FlapAlarmThresh"
-            android:summary="Flap Alarm Threshold"
+            android:summary="@string/flap_alarm_threshold"
             android:title="Flap Alarm Threshold" />
         <EditTextPreference
             android:defaultValue="90"
             android:key="FlapAlarmRatioThresh"
-            android:summary="Flap Alarm Ratio Threshold"
-            android:title="Flap Alarm Ratio Threshold" />
+            android:summary="@string/flap_alarm_ratio_threshold"
+            android:title="@string/flap_alarm_ratio_threshold" />
         <EditTextPreference
             android:defaultValue="2"
             android:key="FlapAlarmFreqMin"

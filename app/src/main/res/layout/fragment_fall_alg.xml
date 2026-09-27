@@ -27,7 +27,7 @@
                 android:id="@+id/fragment_fall_alg_tv1"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Fall Algorithm Status"
+                android:text="@string/fall_algorithm_status"
                 android:layout_marginBottom="8dp" />
 
             <!-- Current window min/max acceleration values -->
@@ -39,7 +39,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Window Min Accel: " />
+                    android:text="@string/window_min_accel" />
 
                 <TextView
                     android:id="@+id/fall_window_min_tv"
@@ -50,7 +50,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=" mg" />
+                    android:text="@string/mg" />
             </androidx.appcompat.widget.LinearLayoutCompat>
 
             <androidx.appcompat.widget.LinearLayoutCompat
@@ -61,7 +61,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Window Max Accel: " />
+                    android:text="@string/window_max_accel" />
 
                 <TextView
                     android:id="@+id/fall_window_max_tv"
@@ -72,7 +72,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=" mg" />
+                    android:text="@string/mg" />
             </androidx.appcompat.widget.LinearLayoutCompat>
 
             <!-- Status info (alarm state, alarm standing) -->
@@ -80,7 +80,7 @@
                 android:id="@+id/fall_status_tv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Status Info"
+                android:text="@string/status_info"
                 android:layout_marginBottom="16dp" />
 
             <!--

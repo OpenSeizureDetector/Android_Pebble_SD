@@ -15,13 +15,13 @@
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="HRAdaptiveAlarmActive"
-            android:title="Enable Adaptive Threshold"
-            android:summary="Adjusts heart rate alarm thresholds based on recent average heart rate." />
+            android:title="@string/enable_adaptive_threshold"
+            android:summary="@string/adjusts_heart_rate_alarm_thresholds_based_on_recent_average_heart_rate" />
 
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="HRAverageAlarmActive"
-            android:title="Enable Rolling Average"
+            android:title="@string/enable_rolling_average"
             android:summary="Uses a moving average of heart rate to detect significant changes." />
 
         <CheckBoxPreference

@@ -35,14 +35,14 @@
 
         <Preference
             android:key="add_ml_model"
-            android:title="Add ML Model"
-            android:summary="Download and install a new seizure detection model"
+            android:title="@string/add_ml_model"
+            android:summary="@string/download_and_install_a_new_seizure_detection_model"
             app:iconSpaceReserved="false" />
 
         <!-- Placeholder for the dynamic list of installed models -->
         <PreferenceCategory
             android:key="installed_models_category"
-            android:title="Installed Models">
+            android:title="@string/installed_models">
             <!-- Items added programmatically -->
         </PreferenceCategory>
 

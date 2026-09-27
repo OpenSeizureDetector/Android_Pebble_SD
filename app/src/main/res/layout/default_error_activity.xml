@@ -37,7 +37,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="View Error Log"
+                android:text="@string/view_error_log"
                 android:visibility="gone"
                 style="@style/Widget.Material3.Button.ElevatedButton"/>
 
@@ -46,7 +46,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Copy Error Log"
+                android:text="@string/copy_error_log"
                 android:visibility="gone"
                 style="@style/Widget.Material3.Button.OutlinedButton"/>
 
@@ -55,7 +55,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Share Error Log"
+                android:text="@string/share_error_log"
                 android:visibility="gone"
                 style="@style/Widget.Material3.Button.OutlinedButton"/>
 
@@ -64,7 +64,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Email Error Log"
+                android:text="@string/email_error_log"
                 style="@style/Widget.Material3.Button.ElevatedButton"/>
 
             <com.google.android.material.button.MaterialButton
@@ -72,7 +72,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Save Error Log"
+                android:text="@string/save_error_log"
                 android:visibility="gone"
                 style="@style/Widget.Material3.Button.OutlinedButton"/>
 
@@ -81,7 +81,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Close App"
+                android:text="@string/close_app"
                 style="@style/Widget.Material3.Button.TonalButton"/>
         </LinearLayout>
     </ScrollView>

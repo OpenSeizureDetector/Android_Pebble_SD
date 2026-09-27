@@ -20,14 +20,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="?android:attr/textColorPrimary"
-            android:text="Export Local Data"
+            android:text="@string/export_local_data"
             android:textStyle="bold" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="?android:attr/textColorPrimary"
-            android:text="End Date/Time (dd-mm-yyyy hh:mm)" />
+            android:text="@string/end_date_time_dd_mm_yyyy_hh_mm" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -40,7 +40,7 @@
                 android:layout_height="wrap_content"
                 android:ems="10"
                 android:textColor="?android:attr/textColorPrimary"
-                android:text="(end date)" />
+                android:text="@string/end_date" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/dateBtn"
@@ -50,7 +50,7 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 app:strokeColor="?attr/colorOutline"
                 android:textColor="?attr/colorOnSurface"
-                android:text="Select Date" />
+                android:text="@string/select_date" />
 
 
         </LinearLayout>
@@ -66,7 +66,7 @@
                 android:layout_height="wrap_content"
                 android:ems="10"
                 android:textColor="?android:attr/textColorPrimary"
-                android:text="(end time)" />
+                android:text="@string/end_time" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/timeBtn"
@@ -76,7 +76,7 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 app:strokeColor="?attr/colorOutline"
                 android:textColor="?attr/colorOnSurface"
-                android:text="Select Time" />
+                android:text="@string/select_time" />
 
 
         </LinearLayout>
@@ -85,7 +85,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="?android:attr/textColorPrimary"
-            android:text="Duration (hrs)" />
+            android:text="@string/duration_hrs" />
 
         <EditText
             android:id="@+id/durationText"
@@ -108,7 +108,7 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 app:strokeColor="?attr/colorOutline"
                 android:textColor="?attr/colorOnSurface"
-                android:text="Export Data" />
+                android:text="@string/export_data" />
 
             <ProgressBar
                 android:id="@+id/exportPb"

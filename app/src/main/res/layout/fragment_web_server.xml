@@ -15,12 +15,12 @@
             android:id="@+id/fragment_web_server_tv1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Fragment_WebServer" />
+            android:text="@string/fragment_webserver" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Web Server Status" />
+            android:text="@string/web_server_status" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
 

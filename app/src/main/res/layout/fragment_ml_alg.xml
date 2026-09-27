@@ -23,7 +23,7 @@
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:textStyle="bold"
-                android:text="Machine Learning Algorithm Status"
+                android:text="@string/machine_learning_algorithm_status"
                 android:layout_marginBottom="4dp" />
 
             <TextView
@@ -48,7 +48,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Seizure Probability History (%) (Last 10 Minutes):"
+                android:text="@string/seizure_probability_history_last_10_minutes"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:textStyle="bold"
                 android:layout_marginBottom="8dp" />

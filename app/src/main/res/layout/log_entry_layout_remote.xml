@@ -17,7 +17,7 @@
             android:layout_width="28dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="eventId"
+            android:text="@string/eventid"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:textColor="?attr/colorOnSurface"
             android:textStyle="bold" />
@@ -27,7 +27,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:textColor="?attr/colorOnSurface"
-            android:text="date"
+            android:text="@string/date"
             android:textStyle="bold" />
 
         <TextView
@@ -36,7 +36,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textColor="?attr/colorOnSurface"
-            android:text="duration"
+            android:text="@string/duration"
             android:gravity="end" />
 
         <TextView
@@ -45,7 +45,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="end"
-            android:text="alarm"
+            android:text="@string/alarm"
             android:textColor="?attr/colorOnSurface" />
 
     </LinearLayout>
@@ -99,7 +99,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="2"
             android:textColor="?attr/colorOnSurface"
-            android:text="notes"
+            android:text="@string/notes"
             android:textStyle="italic" />
 
     </LinearLayout>
