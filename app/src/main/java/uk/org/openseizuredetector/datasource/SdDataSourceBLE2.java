@@ -52,6 +52,7 @@ import com.welie.blessed.GattStatus;
 import com.welie.blessed.HciStatus;
 import com.welie.blessed.PhyOptions;
 import com.welie.blessed.PhyType;
+import com.welie.blessed.ScanFailure;
 import com.welie.blessed.WriteType;
 
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +61,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import co.beeline.android.bluetooth.currenttimeservice.CurrentTimeService;
 
@@ -146,13 +149,120 @@ public class SdDataSourceBLE2 extends SdDataSource {
     // After exhausting the array, continue retrying with the last delay indefinitely
     private volatile boolean mIsShuttingDown = false;
 
+    // ---------------------------------------------------------------------
+    // Diagnostics (see doc/BLE2_Reconnection_Analysis.md, section 7 "Phase 0").
+    //
+    // These counters are PROCESS LIFETIME and deliberately static: the defect
+    // they are there to expose (D1) is a leak of Bluetooth stack registrations
+    // against a per-application cap, so the numbers that matter accumulate
+    // across SdDataSourceBLE2 instances as well as across stop()/start()
+    // cycles. AtomicInteger/AtomicLong because stop() - and therefore
+    // forceCleanup() - can also run on SdServer.onDestroy()'s worker thread.
+    //
+    // All diagnostic log lines are prefixed BLE2DIAG: so a single
+    // "adb logcat | grep BLE2DIAG" captures the whole picture.
+    // ---------------------------------------------------------------------
+    private static final String DIAG_TAG = "BLE2DIAG";
+    private static final long DIAG_HEARTBEAT_PERIOD_MS = 60_000L;
+
+    /** Number of BluetoothCentralManager instances created in this process. Grows without bound => D1/D3. */
+    private static final AtomicInteger sManagerCreateCount = new AtomicInteger(0);
+    /** Number of forceCleanup() calls in this process. */
+    private static final AtomicInteger sForceCleanupCount = new AtomicInteger(0);
+    /** Number of autoConnectPeripheral() calls issued in this process. */
+    private static final AtomicInteger sAutoConnectCount = new AtomicInteger(0);
+    /** Number of scans started in this process. */
+    private static final AtomicInteger sScanStartCount = new AtomicInteger(0);
+    /** Number of onScanFailed() callbacks received in this process. */
+    private static final AtomicInteger sScanFailedCount = new AtomicInteger(0);
+    /** Number of onDiscoveredPeripheral() callbacks received in this process. */
+    private static final AtomicInteger sDiscoveredCount = new AtomicInteger(0);
+    /** Number of onConnectedPeripheral() callbacks received in this process. */
+    private static final AtomicInteger sConnectedCount = new AtomicInteger(0);
+    /** Number of onDisconnectedPeripheral() callbacks received in this process. */
+    private static final AtomicInteger sDisconnectedCount = new AtomicInteger(0);
+    /** Number of onConnectionFailed() callbacks received in this process. */
+    private static final AtomicInteger sConnectionFailedCount = new AtomicInteger(0);
+    /** Number of Bluetooth adapter state changes received in this process. */
+    private static final AtomicInteger sAdapterStateCount = new AtomicInteger(0);
+    /** Number of datasource start()/stop() pairs in this process. */
+    private static final AtomicInteger sStartCount = new AtomicInteger(0);
+    private static final AtomicInteger sStopCount = new AtomicInteger(0);
+    /**
+     * Number of characteristic notifications discarded because the datasource was shut down or
+     * not running. A burst of these shows data arriving that BLE2 threw away (D6/D8).
+     */
+    private static final AtomicInteger sDroppedUpdateCount = new AtomicInteger(0);
+    /** Number of completed 5-second acceleration bursts handed to doAnalysis(). */
+    private static final AtomicInteger sAccBurstCount = new AtomicInteger(0);
+
+    /** Wall-clock time of the last accepted acceleration burst - lets FAULT timing be correlated. */
+    private static final AtomicLong sLastAccDataMillis = new AtomicLong(0);
+
+    /**
+     * Generation id of the current BluetoothCentralManager. Incremented on every
+     * create, so log lines can be correlated to a specific manager instance and a
+     * callback arriving from a superseded ("zombie") manager shows up as an
+     * unexpected gap in the sequence (D3).
+     */
+    private static final AtomicInteger sManagerGeneration = new AtomicInteger(0);
+    private volatile int mManagerGeneration = -1;
+
+    /**
+     * True while we believe our own address-filtered scan is running. Set when we
+     * call scanForPeripheralsWithAddresses(), cleared when we call stopScan().
+     * An onDiscoveredPeripheral() arriving while this is false is a strong
+     * indicator of a callback from a superseded manager (D3).
+     */
+    private volatile boolean mScanActive = false;
+
+    /** True between autoConnectPeripheral()/connectPeripheral() and the next connect outcome. */
+    private volatile boolean mConnectAttemptPending = false;
+    private volatile long mConnectAttemptStartMillis = 0;
+
+    private Handler mDiagHandler;
+    private final Runnable mDiagHeartbeat = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                long now = System.currentTimeMillis();
+                long sinceAcc = sLastAccDataMillis.get() > 0
+                        ? (now - sLastAccDataMillis.get()) : -1;
+                boolean healthy = (mConnectionState == ConnectionState.CONNECTED)
+                        && (sinceAcc >= 0) && (sinceAcc < 15_000L);
+                if (healthy) {
+                    // Connected and data is flowing: emit a compact line so the syslog is not
+                    // flooded with full dumps while nothing interesting is happening.
+                    Log.i(TAG, DIAG_TAG + ": heartbeat OK - state=CONNECTED gen=" + mManagerGeneration
+                            + " msSinceLastAccBurst=" + sinceAcc
+                            + " mgrCreated=" + sManagerCreateCount.get()
+                            + " forceCleanup=" + sForceCleanupCount.get()
+                            + " scanFailed=" + sScanFailedCount.get()
+                            + " accBursts=" + sAccBurstCount.get());
+                } else {
+                    // Not connected, or data has stalled: this is the interesting case, so dump
+                    // everything. The counters here are the evidence for D1/D2/D4.
+                    logState("heartbeat-NOT-HEALTHY");
+                }
+                if (!mIsShuttingDown && !mShutdown && mDiagHandler != null) {
+                    mDiagHandler.postDelayed(this, DIAG_HEARTBEAT_PERIOD_MS);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "diagHeartbeat() - " + e.getMessage());
+            }
+        }
+    };
+
     public SdDataSourceBLE2(Context context, Handler handler,
                             SdDataReceiver sdDataReceiver) {
         super(context, handler, sdDataReceiver);
         mName = "BLE2";
         mTimeoutHandler = new Handler(Looper.getMainLooper());
         mReconnectionHandler = new Handler(Looper.getMainLooper());
+        mDiagHandler = new Handler(Looper.getMainLooper());
         mConnectionState = ConnectionState.IDLE;
+        Log.i(TAG, DIAG_TAG + ": SdDataSourceBLE2 instance created, hashCode="
+                + System.identityHashCode(this));
     }
 
 
@@ -164,6 +274,11 @@ public class SdDataSourceBLE2 extends SdDataSource {
         super.start();
         Log.i(TAG, "start() - mBleDeviceAddr="+mBleDeviceAddr);
         mUtil.writeMemoryLog("SdDataSourceBLE2.start");
+        Log.i(TAG, DIAG_TAG + ": start() #" + sStartCount.incrementAndGet()
+                + " - process-lifetime counters: " + countersToString());
+        mUtil.writeMemoryLog("BLE2 start #" + sStartCount.get()
+                + " mgrCreated=" + sManagerCreateCount.get()
+                + " forceCleanup=" + sForceCleanupCount.get());
 
         if (mBleDeviceAddr == "" || mBleDeviceAddr == null) {
             final Intent intent = new Intent(this.mContext, BLEScanActivity.class);
@@ -192,27 +307,57 @@ public class SdDataSourceBLE2 extends SdDataSource {
         mIsShuttingDown = false;
         mShutdown = false;
         mServicesDiscovered = false;
+        mConnectAttemptPending = false;
 
         // Only create new manager if we don't already have one
         if (mBluetoothCentralManager == null) {
+            mManagerGeneration = sManagerGeneration.incrementAndGet();
+            int created = sManagerCreateCount.incrementAndGet();
             Log.i(TAG,"bleConnect() - Creating new BluetoothCentralManager");
+            Log.w(TAG, DIAG_TAG + ": BluetoothCentralManager CREATED - generation="
+                    + mManagerGeneration + ", process-lifetime total=" + created
+                    + ". A steadily rising total across an outage is the D1 leak signature.");
+            mUtil.writeMemoryLog("BLE2 manager created gen=" + mManagerGeneration
+                    + " total=" + created);
             // Create BluetoothCentral and receive callbacks on the main thread
             mBluetoothCentralManager = new BluetoothCentralManager(mContext,
                     mBluetoothCentralManagerCallback,
                     new Handler(Looper.getMainLooper())
             );
+            // Surface blessed's own diagnostics. These are emitted via android.util.Log
+            // under the tags "BluetoothCentralManager" and "BluetoothPeripheral", so they
+            // appear in logcat only - they do NOT reach the app's syslog file. The strings
+            // to look for are listed in doc/BLE2_Reconnection_Analysis.md section 7.
+            try {
+                mBluetoothCentralManager.enableLogging();
+            } catch (Exception e) {
+                Log.w(TAG, "bleConnect() - could not enable blessed logging: " + e.getMessage());
+            }
         } else {
             Log.i(TAG,"bleConnect() - BluetoothCentralManager already exists, reusing it");
+            Log.i(TAG, DIAG_TAG + ": manager REUSED - generation=" + mManagerGeneration);
         }
 
         // Look for the specified device
         Log.i(TAG,"bleConnect() - scanning for device: "+mBleDeviceAddr);
-        setConnectionState(ConnectionState.SCANNING);
+        setConnectionState(ConnectionState.SCANNING, "bleConnect");
+        // Start the heartbeat BEFORE the scan attempt so that a repeatedly failing scan still
+        // produces a periodic state dump - that is exactly the case we most need to see.
+        startDiagHeartbeat();
 
         try {
             mBluetoothCentralManager.scanForPeripheralsWithAddresses(new String[]{mBleDeviceAddr});
+            mScanActive = true;
+            int scans = sScanStartCount.incrementAndGet();
+            Log.i(TAG, DIAG_TAG + ": scan started - generation=" + mManagerGeneration
+                    + ", process-lifetime scans=" + scans
+                    + ", scanFailedSoFar=" + sScanFailedCount.get());
         } catch (Exception e) {
+            mScanActive = false;
             Log.e(TAG, "bleConnect() - Error starting scan: " + e.getMessage());
+            Log.e(TAG, DIAG_TAG + ": SCAN START FAILED - " + e.getClass().getSimpleName()
+                    + ": " + e.getMessage());
+            mUtil.writeExceptionLog("SdDataSourceBLE2", "bleConnect - startScan", e);
             scheduleReconnection();
         }
     }
@@ -223,23 +368,53 @@ public class SdDataSourceBLE2 extends SdDataSource {
         public void onDiscoveredPeripheral(BluetoothPeripheral peripheral, ScanResult scanResult) {
             Log.i(TAG,"BluetoothCentralManagerCallback.onDiscoveredPeripheral()");
 
+            int discovered = sDiscoveredCount.incrementAndGet();
+            try {
+                Log.i(TAG, DIAG_TAG + ": onDiscoveredPeripheral #" + discovered
+                        + " addr=" + peripheral.getAddress()
+                        + " rssi=" + scanResult.getRssi()
+                        + " generation=" + mManagerGeneration
+                        + " managerHashCode=" + System.identityHashCode(mBluetoothCentralManager)
+                        + " mScanActive=" + mScanActive
+                        + " state=" + mConnectionState);
+                // A discovery while we believe our own scan is stopped means the event came
+                // from a manager we have already superseded - the D3 signature.
+                if (!mScanActive) {
+                    Log.w(TAG, DIAG_TAG + ": SUSPECT ZOMBIE CALLBACK - discovery delivered while"
+                            + " mScanActive=false. This discovery did not come from the scan this"
+                            + " instance believes it owns (D3).");
+                }
+            } catch (Exception e) {
+                Log.w(TAG, DIAG_TAG + ": onDiscoveredPeripheral - logging failed: " + e.getMessage());
+            }
+
             // CRITICAL: Null-safety check - manager can be destroyed during extended disconnections
             if (mBluetoothCentralManager == null) {
                 Log.e(TAG, "onDiscoveredPeripheral() - BluetoothCentralManager is null, ignoring scan result");
+                Log.e(TAG, DIAG_TAG + ": onDiscoveredPeripheral DROPPED - manager is null");
                 return;
             }
 
             // Check if we're shutting down - ignore new discoveries during shutdown
             if (mIsShuttingDown || mShutdown) {
                 Log.w(TAG, "onDiscoveredPeripheral() - System is shutting down, ignoring discovery");
+                Log.w(TAG, DIAG_TAG + ": onDiscoveredPeripheral DROPPED - shutting down"
+                        + " (mIsShuttingDown=" + mIsShuttingDown + ", mShutdown=" + mShutdown + ")");
                 return;
             }
 
             try {
                 // Update state machine
-                setConnectionState(ConnectionState.CONNECTING);
+                setConnectionState(ConnectionState.CONNECTING, "onDiscoveredPeripheral");
 
                 mBluetoothCentralManager.stopScan();
+                mScanActive = false;
+                int autoConnects = sAutoConnectCount.incrementAndGet();
+                Log.i(TAG, DIAG_TAG + ": issuing autoConnectPeripheral #" + autoConnects
+                        + " - NOTE blessed starts no timer for autoConnect, so if this never"
+                        + " resolves there will be no further callback (D2).");
+                mConnectAttemptPending = true;
+                mConnectAttemptStartMillis = System.currentTimeMillis();
                 mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
 
                 // Reset reconnection attempt counter on successful discovery
@@ -255,10 +430,105 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 scheduleReconnection();
             }
         }
+
+        /**
+         * Diagnostics only (Phase 0). blessed reports that a connection attempt has begun.
+         * Overriding this is what lets us distinguish "blessed is trying" from "blessed has
+         * silently given up", which is otherwise invisible.
+         */
+        @Override
+        public void onConnectingPeripheral(BluetoothPeripheral peripheral) {
+            Log.i(TAG, DIAG_TAG + ": onConnectingPeripheral addr=" + safeAddress(peripheral)
+                    + " generation=" + mManagerGeneration
+                    + " state=" + mConnectionState);
+            super.onConnectingPeripheral(peripheral);
+        }
+
+        /**
+         * Diagnostics only (Phase 0). blessed reports that a disconnect we asked for is in
+         * progress. Pairs with onConnectingPeripheral to bracket the shutdown sequence.
+         */
+        @Override
+        public void onDisconnectingPeripheral(BluetoothPeripheral peripheral) {
+            Log.i(TAG, DIAG_TAG + ": onDisconnectingPeripheral addr=" + safeAddress(peripheral)
+                    + " generation=" + mManagerGeneration
+                    + " mShutdown=" + mShutdown
+                    + " state=" + mConnectionState);
+            super.onDisconnectingPeripheral(peripheral);
+        }
+
+        /**
+         * Diagnostics only (Phase 0) - deliberately takes NO recovery action yet.
+         *
+         * blessed calls stopScan() itself before delivering this, so scanning is definitively
+         * over and blessed will not restart it. Until now BLE2 did not override this method at
+         * all, which is why a failed scan left the datasource parked in SCANNING forever with
+         * no retry (D4). APPLICATION_REGISTRATION_FAILED / OUT_OF_HARDWARE_RESOURCES /
+         * SCANNING_TOO_FREQUENTLY are the codes that a registration leak (D1) produces.
+         *
+         * Phase 2 will add scheduleReconnection() here; for now we only record it so the
+         * failure is visible in the field.
+         */
+        @Override
+        public void onScanFailed(ScanFailure failure) {
+            int failed = sScanFailedCount.incrementAndGet();
+            mScanActive = false;
+            Log.e(TAG, "onScanFailed() - " + failure);
+            Log.e(TAG, DIAG_TAG + ": onScanFailed #" + failed + " failure=" + failure
+                    + " generation=" + mManagerGeneration
+                    + " scanStartsSoFar=" + sScanStartCount.get()
+                    + " state=" + mConnectionState
+                    + " - blessed has stopped scanning and will NOT restart it (D4)."
+                    + " No recovery action is taken in Phase 0.");
+            mUtil.writeMemoryLog("BLE2 onScanFailed " + failure
+                    + " count=" + failed + " scans=" + sScanStartCount.get());
+            super.onScanFailed(failure);
+        }
+
+        /**
+         * Diagnostics only (Phase 0) - deliberately takes NO recovery action yet.
+         *
+         * blessed stops all scans and clears its reconnect bookkeeping on STATE_TURNING_OFF and
+         * restarts nothing on STATE_ON, so any Bluetooth toggle currently leaves BLE2 unable to
+         * recover (D5). Recording the transitions makes that visible; Phase 2 will re-scan on
+         * STATE_ON.
+         */
+        @Override
+        public void onBluetoothAdapterStateChanged(int state) {
+            int changes = sAdapterStateCount.incrementAndGet();
+            Log.i(TAG, DIAG_TAG + ": onBluetoothAdapterStateChanged #" + changes
+                    + " state=" + adapterStateToString(state)
+                    + " generation=" + mManagerGeneration
+                    + " state=" + mConnectionState);
+            if (state == BluetoothAdapter.STATE_TURNING_OFF || state == BluetoothAdapter.STATE_OFF) {
+                mScanActive = false;
+                Log.w(TAG, DIAG_TAG + ": Bluetooth going off - blessed will cancel all connections,"
+                        + " clear its reconnect lists and stop all scans. Nothing restarts them"
+                        + " automatically (D5).");
+                mUtil.writeMemoryLog("BLE2 adapter state " + adapterStateToString(state));
+            }
+            if (state == BluetoothAdapter.STATE_ON) {
+                Log.w(TAG, DIAG_TAG + ": Bluetooth back ON - no automatic re-scan is issued in"
+                        + " Phase 0; recovery depends on the SdServer fault-restart cycle.");
+                mUtil.writeMemoryLog("BLE2 adapter state ON, mScanActive=" + mScanActive);
+            }
+            super.onBluetoothAdapterStateChanged(state);
+        }
         @Override
         public void onConnectedPeripheral(BluetoothPeripheral peripheral) {
             Log.i(TAG,"BluetoothCentralManagerCallback.onConnectedPeripheral()");
-            setConnectionState(ConnectionState.CONNECTED);
+            int connected = sConnectedCount.incrementAndGet();
+            long attemptMs = mConnectAttemptPending
+                    ? (System.currentTimeMillis() - mConnectAttemptStartMillis) : -1;
+            mConnectAttemptPending = false;
+            Log.i(TAG, DIAG_TAG + ": onConnectedPeripheral #" + connected
+                    + " addr=" + safeAddress(peripheral)
+                    + " generation=" + mManagerGeneration
+                    + " connectAttemptDurationMs=" + attemptMs
+                    + " discoveriesSoFar=" + sDiscoveredCount.get());
+            mUtil.writeMemoryLog("BLE2 connected #" + connected
+                    + " attemptMs=" + attemptMs + " gen=" + mManagerGeneration);
+            setConnectionState(ConnectionState.CONNECTED, "onConnectedPeripheral");
             mReconnectionAttempt = 0; // Reset reconnection counter on successful connection
             mUtil.showToast("Watch Connected");
             super.onConnectedPeripheral(peripheral);
@@ -266,12 +536,24 @@ public class SdDataSourceBLE2 extends SdDataSource {
         @Override
         public void onConnectionFailed(BluetoothPeripheral peripheral, HciStatus status) {
             Log.i(TAG,"BluetoothCentralManagerCallback.onConnectionFailed() - status=" + status);
-            setConnectionState(ConnectionState.IDLE);
+            int failed = sConnectionFailedCount.incrementAndGet();
+            mConnectAttemptPending = false;
+            Log.w(TAG, DIAG_TAG + ": onConnectionFailed #" + failed + " status=" + status
+                    + " addr=" + safeAddress(peripheral)
+                    + " generation=" + mManagerGeneration
+                    + " - blessed has already retried once internally (MAX_CONNECTION_RETRIES=1).");
+            mUtil.writeMemoryLog("BLE2 connectionFailed " + status + " count=" + failed);
+            setConnectionState(ConnectionState.IDLE, "onConnectionFailed");
             mUtil.showToast("Failed to Connect to Watch - Retrying");
 
             // Defensive null-check
             if (mBluetoothCentralManager != null && !mIsShuttingDown && !mShutdown) {
                 try {
+                    int autoConnects = sAutoConnectCount.incrementAndGet();
+                    Log.i(TAG, DIAG_TAG + ": onConnectionFailed issuing autoConnectPeripheral #"
+                            + autoConnects);
+                    mConnectAttemptPending = true;
+                    mConnectAttemptStartMillis = System.currentTimeMillis();
                     mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
                 } catch (Exception e) {
                     Log.w(TAG, "onConnectionFailed() - Error attempting reconnection: " + e.getMessage());
@@ -287,11 +569,29 @@ public class SdDataSourceBLE2 extends SdDataSource {
         public void onDisconnectedPeripheral(BluetoothPeripheral peripheral, HciStatus status) {
             Log.i(TAG,"BluetoothCentralManagerCallback.onDisconnectedPeripheral() - status=" + status);
 
+            int disconnected = sDisconnectedCount.incrementAndGet();
             mServicesDiscovered = false;
+            mConnectAttemptPending = false;
+            long sinceAccData = sLastAccDataMillis.get() > 0
+                    ? (System.currentTimeMillis() - sLastAccDataMillis.get()) : -1;
+            Log.i(TAG, DIAG_TAG + ": onDisconnectedPeripheral #" + disconnected
+                    + " status=" + status
+                    + " addr=" + safeAddress(peripheral)
+                    + " generation=" + mManagerGeneration
+                    + " mShutdown=" + mShutdown
+                    + " mIsShuttingDown=" + mIsShuttingDown
+                    + " msSinceLastAccData=" + sinceAccData
+                    + " state=" + mConnectionState);
+            if (status == HciStatus.CONNECTION_TIMEOUT) {
+                Log.w(TAG, DIAG_TAG + ": disconnect reason is CONNECTION_TIMEOUT (supervision"
+                        + " timeout) - consistent with the watch going out of range.");
+            }
+            mUtil.writeMemoryLog("BLE2 disconnected #" + disconnected + " status=" + status
+                    + " shutdown=" + mShutdown);
 
             if (mShutdown) {
                 Log.i(TAG,"onDisconnectedPeripheral() - mShutdown is set, completing disconnect");
-                setConnectionState(ConnectionState.CLEANUP);
+                setConnectionState(ConnectionState.CLEANUP, "onDisconnectedPeripheral(shutdown)");
                 mDisconnected = true;
                 // Cancel timeout handler
                 if (mTimeoutHandler != null) {
@@ -301,7 +601,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 forceCleanup();
             } else {
                 Log.i(TAG,"onDisconnectedPeripheral() - unexpected disconnect");
-                setConnectionState(ConnectionState.IDLE);
+                setConnectionState(ConnectionState.IDLE, "onDisconnectedPeripheral(unexpected)");
                 mUtil.showToast("WATCH CONNECTION LOST");
                 int nextAttempt = mReconnectionAttempt + 1;
                 int nextDelay = (mReconnectionAttempt < BACKOFF_DELAYS_MS.length)
@@ -321,6 +621,14 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 // Check if manager is still available before reconnecting
                 if (mBluetoothCentralManager != null && !mIsShuttingDown) {
                     try {
+                        int autoConnects = sAutoConnectCount.incrementAndGet();
+                        Log.i(TAG, DIAG_TAG + ": onDisconnectedPeripheral issuing"
+                                + " autoConnectPeripheral #" + autoConnects
+                                + " - blessed arms NO timer for autoConnect and short-circuits"
+                                + " repeat calls with 'already issued autoconnect', so if this"
+                                + " never resolves nothing else will fire (D2/D7).");
+                        mConnectAttemptPending = true;
+                        mConnectAttemptStartMillis = System.currentTimeMillis();
                         mBluetoothCentralManager.autoConnectPeripheral(peripheral, peripheralCallback);
                     } catch (Exception e) {
                         Log.w(TAG, "onDisconnectedPeripheral() - Error attempting immediate reconnection: " + e.getMessage());
@@ -355,6 +663,14 @@ public class SdDataSourceBLE2 extends SdDataSource {
             mServicesDiscovered = true;
 
             Log.i(TAG,"onServicesDiscovered()");
+            // NOTE (D1): this is the ONLY place mBlePeripheral is assigned. Throughout the
+            // whole CONNECTING phase - and after any forceCleanup() - BLE2 therefore holds no
+            // reference to the peripheral that blessed is actively connecting, so a pending
+            // BluetoothGatt cannot be cancelled and is orphaned by close().
+            Log.i(TAG, DIAG_TAG + ": onServicesDiscovered - assigning mBlePeripheral (was "
+                    + (mBlePeripheral == null ? "null" : "hashCode=" + System.identityHashCode(mBlePeripheral))
+                    + ") to hashCode=" + System.identityHashCode(peripheral)
+                    + " generation=" + mManagerGeneration);
             mBlePeripheral = peripheral;
             // Request a higher MTU, iOS always asks for 185 - This is likely to have no effect, as Pinetime uses 23 bytes.
             Log.i(TAG,"onServicesDiscovered() - requesting higher MTU");
@@ -495,6 +811,12 @@ public class SdDataSourceBLE2 extends SdDataSource {
         @Override
         public void onCharacteristicUpdate(@NotNull BluetoothPeripheral peripheral, @NotNull byte[] value, @NotNull BluetoothGattCharacteristic characteristic, @NotNull GattStatus status) {
             if (mIsShuttingDown || mShutdown || !isRunning()) {
+                int dropped = sDroppedUpdateCount.incrementAndGet();
+                Log.w(TAG, DIAG_TAG + ": onCharacteristicUpdate DROPPED #" + dropped
+                        + " char=" + characteristic.getUuid()
+                        + " mIsShuttingDown=" + mIsShuttingDown
+                        + " mShutdown=" + mShutdown
+                        + " isRunning=" + isRunning());
                 return;
             }
              if (status != GattStatus.SUCCESS) return;
@@ -568,6 +890,11 @@ public class SdDataSourceBLE2 extends SdDataSource {
                         mSdData.mSampleFreq = 25;  // BLE device always sends data at 25 Hz
                         mWatchAppRunningCheck = true;
                         mDataStatusTimeMillis = System.currentTimeMillis();
+                        sLastAccDataMillis.set(mDataStatusTimeMillis);
+                        int bursts = sAccBurstCount.incrementAndGet();
+                        Log.i(TAG, DIAG_TAG + ": acc burst #" + bursts + " accepted"
+                                + " - state=" + mConnectionState
+                                + " generation=" + mManagerGeneration);
                         // Process the data to do seizure detection
                         doAnalysis();
                         // Update RSSI (check peripheral is still connected)
@@ -663,9 +990,18 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
     private void bleDisconnect() {
         Log.i(TAG, "bleDisconnect() - Starting disconnect sequence");
-        setConnectionState(ConnectionState.DISCONNECTING);
+        Log.i(TAG, DIAG_TAG + ": bleDisconnect() entered on thread="
+                + Thread.currentThread().getName()
+                + " mBlePeripheral=" + (mBlePeripheral == null
+                        ? "null (a pending BluetoothGatt cannot be cancelled from here - D1)"
+                        : "hashCode=" + System.identityHashCode(mBlePeripheral))
+                + " generation=" + mManagerGeneration);
+        logState("bleDisconnect-enter");
+        setConnectionState(ConnectionState.DISCONNECTING, "bleDisconnect");
         mShutdown = true;
         mDisconnected = false;
+        mConnectAttemptPending = false;
+        stopDiagHeartbeat();
 
         // Cancel any pending reconnection attempts
         if (mReconnectionHandler != null) {
@@ -676,6 +1012,10 @@ public class SdDataSourceBLE2 extends SdDataSource {
         if (mBluetoothCentralManager != null) {
             try {
                 mBluetoothCentralManager.stopScan();
+                mScanActive = false;
+                Log.i(TAG, DIAG_TAG + ": bleDisconnect stopped our scan. NOTE blessed's separate"
+                        + " autoconnect-by-scan scanner and its 180s scan-restart timer are NOT"
+                        + " stopped by stopScan() or by close() (D3).");
             } catch (Exception e) {
                 Log.w(TAG, "bleDisconnect() - Error stopping scan: " + e.getMessage());
             }
@@ -725,6 +1065,12 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
                 Log.i(TAG, "bleDisconnect() - Cancelling connection");
                 try {
+                    // NOTE: this is the PERIPHERAL-level cancelConnection(). Only the MANAGER-level
+                    // BluetoothCentralManager.cancelConnection(p) also clears blessed's
+                    // reconnectPeripheralAddresses / reconnectCallbacks bookkeeping.
+                    // blessed's cancelConnection() returns silently with NO callback when
+                    // bluetoothGatt is null or the state is already DISCONNECTED, so this call
+                    // cannot be relied on to set mDisconnected (D6).
                     mBlePeripheral.cancelConnection();
                 } catch (Exception e) {
                     Log.e(TAG, "bleDisconnect() - Error cancelling connection: " + e.getMessage());
@@ -732,6 +1078,11 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 }
             } else {
                 Log.w(TAG, "bleDisconnect() - mBlePeripheral is null - forcing cleanup");
+                Log.e(TAG, DIAG_TAG + ": D1 PATH TAKEN - mBlePeripheral is null, so any pending"
+                        + " BluetoothGatt held in blessed's unconnectedPeripherals map will be"
+                        + " orphaned by close() and never disconnect()/close()d. Its two bonding"
+                        + " BroadcastReceivers leak with it. This is the registration leak.");
+                mUtil.writeMemoryLog("BLE2 D1 path: mBlePeripheral null at bleDisconnect");
                 forceCleanup();
             }
         } catch (Exception e) {
@@ -746,9 +1097,19 @@ public class SdDataSourceBLE2 extends SdDataSource {
      */
     private void forceCleanup() {
         Log.i(TAG, "forceCleanup() - Forcing cleanup of BLE resources");
-        setConnectionState(ConnectionState.CLEANUP);
+        int cleanups = sForceCleanupCount.incrementAndGet();
+        Log.w(TAG, DIAG_TAG + ": forceCleanup #" + cleanups + " on thread="
+                + Thread.currentThread().getName()
+                + " generation=" + mManagerGeneration
+                + " mBlePeripheral=" + (mBlePeripheral == null ? "null"
+                        : "hashCode=" + System.identityHashCode(mBlePeripheral))
+                + " mScanActive=" + mScanActive);
+        setConnectionState(ConnectionState.CLEANUP, "forceCleanup");
 
         mServicesDiscovered = false;
+        mScanActive = false;
+        mConnectAttemptPending = false;
+        stopDiagHeartbeat();
         
         try {
             // Cancel any pending timeout
@@ -775,22 +1136,48 @@ public class SdDataSourceBLE2 extends SdDataSource {
                     Log.w(TAG, "forceCleanup() - Error cancelling peripheral connection: " + e.getMessage());
                 }
                 mBlePeripheral = null;
+            } else {
+                Log.w(TAG, DIAG_TAG + ": forceCleanup with mBlePeripheral == null - any peripheral"
+                        + " blessed is still connecting cannot be cancelled from here (D1).");
             }
 
             // Close the central manager
             if (mBluetoothCentralManager != null) {
                 try {
+                    // Record what blessed is about to drop on the floor. close() only clears its
+                    // internal maps and unregisters the adapter-state receiver: it does NOT stop
+                    // scans, does NOT cancel blessed's 180s scan-restart / autoconnect timers, and
+                    // does NOT disconnect or close any peripheral. Anything still in
+                    // unconnectedPeripherals - i.e. a pending connectGatt(autoConnect=true) - is
+                    // orphaned here and stays registered against the app's GATT-client budget.
+                    int stillConnected = -1;
+                    try {
+                        stillConnected = mBluetoothCentralManager.getConnectedPeripherals().size();
+                    } catch (Exception e) {
+                        Log.w(TAG, DIAG_TAG + ": could not read connected peripherals: " + e.getMessage());
+                    }
+                    Log.w(TAG, DIAG_TAG + ": closing manager generation=" + mManagerGeneration
+                            + " connectedPeripherals=" + stillConnected
+                            + " (blessed's UNconnected/pending peripherals are not enumerable via"
+                            + " the public API and will be orphaned).");
                     mBluetoothCentralManager.close();
                 } catch (Exception e) {
                     Log.w(TAG, "forceCleanup() - Error closing central manager: " + e.getMessage());
+                    mUtil.writeExceptionLog("SdDataSourceBLE2", "forceCleanup - close", e);
                 }
                 mBluetoothCentralManager = null;
+                mManagerGeneration = -1;
             }
 
             mDisconnected = true;
             Log.i(TAG, "forceCleanup() - Cleanup complete");
+            Log.i(TAG, DIAG_TAG + ": forceCleanup #" + cleanups + " complete - counters: "
+                    + countersToString());
+            mUtil.writeMemoryLog("BLE2 forceCleanup #" + cleanups
+                    + " mgrCreated=" + sManagerCreateCount.get());
         } catch (Exception e) {
             Log.e(TAG, "forceCleanup() - Error during force cleanup: " + e.getMessage());
+            mUtil.writeExceptionLog("SdDataSourceBLE2", "forceCleanup", e);
             mDisconnected = true; // Mark as disconnected anyway to allow service to stop
         }
     }
@@ -801,12 +1188,22 @@ public class SdDataSourceBLE2 extends SdDataSource {
     public void stop() {
         Log.i(TAG, "stop() - Beginning shutdown sequence");
         mUtil.writeMemoryLog("SdDataSourceBLE2.stop");
+        int stops = sStopCount.incrementAndGet();
+        String stopThread = Thread.currentThread().getName();
+        Log.i(TAG, DIAG_TAG + ": stop() #" + stops + " on thread=" + stopThread);
+        if ("main".equals(stopThread)) {
+            Log.w(TAG, DIAG_TAG + ": stop() is running on the MAIN thread. The busy-wait below"
+                    + " blocks it, and both the blessed callbacks that would set mDisconnected"
+                    + " and the mTimeoutHandler forceCleanup post run on this same looper - so"
+                    + " the wait is guaranteed to expire by timeout (D6).");
+        }
+        logState("stop-enter");
         super.stop();
 
         try {
             mShutdown = true;
             mIsShuttingDown = true; // Prevent reconnection attempts during shutdown
-            setConnectionState(ConnectionState.DISCONNECTING);
+            setConnectionState(ConnectionState.DISCONNECTING, "stop");
 
             // Stop the CurrentTimeService
             try {
@@ -836,10 +1233,19 @@ public class SdDataSourceBLE2 extends SdDataSource {
 
             if (!mDisconnected) {
                 Log.w(TAG, "stop() - Disconnect did not complete in time, forcing cleanup");
+                Log.w(TAG, DIAG_TAG + ": stop() #" + stops + " BUSY-WAIT EXPIRED after " + waitTime
+                        + "ms on thread=" + stopThread + " - main thread was blocked for that"
+                        + " whole period (D6). Forcing cleanup.");
+                mUtil.writeMemoryLog("BLE2 stop busy-wait expired after " + waitTime + "ms");
                 forceCleanup();
+            } else {
+                Log.i(TAG, DIAG_TAG + ": stop() #" + stops + " disconnect completed normally after "
+                        + waitTime + "ms");
             }
 
             Log.i(TAG, "stop() - Shutdown sequence complete");
+            Log.i(TAG, DIAG_TAG + ": stop() #" + stops + " complete - counters: "
+                    + countersToString());
 
         } catch (Exception e) {
             Log.e(TAG, "stop() - Error stopping data source: " + e.getMessage());
@@ -876,13 +1282,162 @@ public class SdDataSourceBLE2 extends SdDataSource {
         }
 
     /**
-     * Update the connection state and log state transitions
+     * Update the connection state and log state transitions.
+     *
+     * @param newState the state to move to
+     * @param reason   where the transition was requested from, so a state trace read back from
+     *                 the log shows cause as well as effect
      */
-    private synchronized void setConnectionState(ConnectionState newState) {
+    private synchronized void setConnectionState(ConnectionState newState, String reason) {
         if (mConnectionState != newState) {
             Log.i(TAG, "setConnectionState() - Transition: " + mConnectionState + " -> " + newState);
+            Log.i(TAG, DIAG_TAG + ": STATE " + mConnectionState + " -> " + newState
+                    + " (because: " + reason + ") generation=" + mManagerGeneration
+                    + " thread=" + Thread.currentThread().getName());
             mConnectionState = newState;
             Log.i(TAG, "BLE2 State: " + newState.name());
+        } else {
+            Log.i(TAG, DIAG_TAG + ": STATE unchanged at " + newState
+                    + " (requested by: " + reason + ")");
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Diagnostic helpers (Phase 0). Every one of these is wrapped so that a
+    // failure while collecting diagnostics can never break BLE operation.
+    // ---------------------------------------------------------------------
+
+    /** Process-lifetime counters on one line - the primary evidence for the D1 leak. */
+    private String countersToString() {
+        return "mgrCreated=" + sManagerCreateCount.get()
+                + " forceCleanup=" + sForceCleanupCount.get()
+                + " scans=" + sScanStartCount.get()
+                + " scanFailed=" + sScanFailedCount.get()
+                + " discovered=" + sDiscoveredCount.get()
+                + " autoConnect=" + sAutoConnectCount.get()
+                + " connected=" + sConnectedCount.get()
+                + " connFailed=" + sConnectionFailedCount.get()
+                + " disconnected=" + sDisconnectedCount.get()
+                + " adapterChanges=" + sAdapterStateCount.get()
+                + " start=" + sStartCount.get()
+                + " stop=" + sStopCount.get()
+                + " accBursts=" + sAccBurstCount.get()
+                + " droppedUpdates=" + sDroppedUpdateCount.get();
+    }
+
+    /** Address of a peripheral, tolerating nulls - diagnostics must not throw. */
+    private String safeAddress(BluetoothPeripheral peripheral) {
+        if (peripheral == null) return "null";
+        try {
+            return peripheral.getAddress();
+        } catch (Exception e) {
+            return "unavailable(" + e.getClass().getSimpleName() + ")";
+        }
+    }
+
+    /** Human-readable BluetoothAdapter state, for the onBluetoothAdapterStateChanged trace. */
+    private String adapterStateToString(int state) {
+        switch (state) {
+            case BluetoothAdapter.STATE_OFF:          return "STATE_OFF";
+            case BluetoothAdapter.STATE_TURNING_ON:   return "STATE_TURNING_ON";
+            case BluetoothAdapter.STATE_ON:           return "STATE_ON";
+            case BluetoothAdapter.STATE_TURNING_OFF:  return "STATE_TURNING_OFF";
+            default:                                  return "UNKNOWN(" + state + ")";
+        }
+    }
+
+    /**
+     * blessed's own view of whether a scan is live. Comparing this with mScanActive is how a
+     * superseded ("zombie") manager is detected: if blessed says it is scanning but we believe
+     * we stopped, the scan belongs to a manager we have already closed (D3).
+     */
+    private boolean isScanningSafely() {
+        try {
+            return mBluetoothCentralManager != null && mBluetoothCentralManager.isScanning();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Dump a full snapshot of the connection state machine, the flags that gate every retry
+     * path, and the process-lifetime counters. Called on every callback, every state transition
+     * of interest, and once per minute by the diagnostic heartbeat so that counter growth over a
+     * long outage is visible without needing repeated dumpsys captures.
+     */
+    private void logState(String context) {
+        try {
+            long now = System.currentTimeMillis();
+            long sinceAcc = sLastAccDataMillis.get() > 0 ? (now - sLastAccDataMillis.get()) : -1;
+            long attemptAge = mConnectAttemptPending ? (now - mConnectAttemptStartMillis) : -1;
+            boolean blessedScanning = isScanningSafely();
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("STATE-DUMP[").append(context).append("] ")
+              .append("state=").append(mConnectionState)
+              .append(" gen=").append(mManagerGeneration)
+              .append(" mgr=").append(mBluetoothCentralManager == null
+                      ? "null" : "hashCode=" + System.identityHashCode(mBluetoothCentralManager))
+              .append(" peripheral=").append(mBlePeripheral == null
+                      ? "null" : "hashCode=" + System.identityHashCode(mBlePeripheral))
+              .append(" scanActive(ours)=").append(mScanActive)
+              .append(" scanning(blessed)=").append(blessedScanning)
+              .append(" connectPending=").append(mConnectAttemptPending)
+              .append(" connectPendingAgeMs=").append(attemptAge)
+              .append(" servicesDiscovered=").append(mServicesDiscovered)
+              .append(" mShutdown=").append(mShutdown)
+              .append(" mIsShuttingDown=").append(mIsShuttingDown)
+              .append(" mDisconnected=").append(mDisconnected)
+              .append(" isRunning=").append(isRunning())
+              .append(" reconnectAttempt=").append(mReconnectionAttempt)
+              .append(" msSinceLastAccBurst=").append(sinceAcc)
+              .append(" thread=").append(Thread.currentThread().getName())
+              .append(" | ").append(countersToString());
+
+            Log.i(TAG, DIAG_TAG + ": " + sb);
+
+            // blessed scanning while we believe our scan is stopped is the D3 signature:
+            // a manager we closed is still scanning and can deliver callbacks into us.
+            if (blessedScanning && !mScanActive) {
+                Log.w(TAG, DIAG_TAG + ": ANOMALY - blessed reports an active scan but this"
+                        + " instance believes its scan is stopped. A superseded manager is"
+                        + " probably still scanning and routing callbacks here (D3).");
+            }
+            // A pending connection attempt that has been outstanding far longer than blessed's
+            // 35s direct-connect timeout means we are waiting on an autoConnect that will never
+            // report anything (D2).
+            if (mConnectAttemptPending && attemptAge > 60_000L) {
+                Log.w(TAG, DIAG_TAG + ": ANOMALY - connection attempt pending for "
+                        + (attemptAge / 1000) + "s with no callback. blessed arms no timer for"
+                        + " autoConnect, so this will never resolve on its own (D2).");
+            }
+        } catch (Exception e) {
+            Log.w(TAG, DIAG_TAG + ": logState failed for context=" + context
+                    + " - " + e.getMessage());
+        }
+    }
+
+    /** Start (or restart) the once-per-minute diagnostic heartbeat. */
+    private void startDiagHeartbeat() {
+        try {
+            if (mDiagHandler == null) return;
+            mDiagHandler.removeCallbacks(mDiagHeartbeat);
+            mDiagHandler.postDelayed(mDiagHeartbeat, DIAG_HEARTBEAT_PERIOD_MS);
+            Log.i(TAG, DIAG_TAG + ": diagnostic heartbeat started (period "
+                    + (DIAG_HEARTBEAT_PERIOD_MS / 1000) + "s)");
+        } catch (Exception e) {
+            Log.w(TAG, DIAG_TAG + ": could not start heartbeat - " + e.getMessage());
+        }
+    }
+
+    /** Stop the diagnostic heartbeat. */
+    private void stopDiagHeartbeat() {
+        try {
+            if (mDiagHandler != null) {
+                mDiagHandler.removeCallbacks(mDiagHeartbeat);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, DIAG_TAG + ": could not stop heartbeat - " + e.getMessage());
         }
     }
 
@@ -894,6 +1449,9 @@ public class SdDataSourceBLE2 extends SdDataSource {
         // Don't schedule if we're shutting down
         if (mIsShuttingDown || mShutdown) {
             Log.w(TAG, "scheduleReconnection() - Shutdown in progress, not scheduling reconnection");
+            Log.w(TAG, DIAG_TAG + ": scheduleReconnection SUPPRESSED by shutdown flags"
+                    + " (mIsShuttingDown=" + mIsShuttingDown + ", mShutdown=" + mShutdown + ")."
+                    + " If these are left set, no retry will ever be scheduled (D8).");
             return;
         }
 
@@ -917,10 +1475,15 @@ public class SdDataSourceBLE2 extends SdDataSource {
             if (!mIsShuttingDown && !mShutdown) {
                 Log.i(TAG, "scheduleReconnection() - Executing reconnection attempt #" + mReconnectionAttempt
                         + " (backoffDelay was " + delayMs + "ms)");
-                setConnectionState(ConnectionState.SCANNING);
+                Log.i(TAG, DIAG_TAG + ": backoff retry FIRING (attempt=" + mReconnectionAttempt
+                        + "). NOTE this path is only reachable from catch blocks and the"
+                        + " null-manager branch - it does NOT run in the normal disconnect path,"
+                        + " so the backoff loop is effectively dead code (D7).");
+                setConnectionState(ConnectionState.SCANNING, "scheduleReconnection");
                 bleConnect();
             } else {
                 Log.w(TAG, "scheduleReconnection() - Shutdown in progress, cancelling reconnection");
+                Log.w(TAG, DIAG_TAG + ": backoff retry CANCELLED by shutdown flags (D8)");
             }
         }, delayMs);
     }
