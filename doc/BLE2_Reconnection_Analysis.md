@@ -2,10 +2,12 @@
 
 **Source of Report**:  OpenCode using Qwen3.8_MAX model and the following prompt: "Review the SdDataSourceBLE2 code (app/src/main/java/uk/org/openseizuredetector/datasource/SdDataSourceBLE2.java) to see how it handles the watch going out of range for a period then coming back into range.  We find that short term interruptions work correctly with the watch reconnecting and resuming data transfer, but longer interruptoins result in the watch not reconnecting and the system has to be re-started to restore function.  You should review how the reconnection process works and identify deficiencies with recommended improvements (and their likelihood of successfully identifying the issue).  You can also consider the device firmware at /home/graham/osd/PineTimeSD in case changes to the device firmware would improve performance.  Write up your analysis to a file so it can be shared for wider review."
 
-**Status:** Draft for review
+**Status:** Phase 0 instrumentation + Phase 1/2 fixes implemented — awaiting overnight validation run
 **Component:** `app/src/main/java/uk/org/openseizuredetector/datasource/SdDataSourceBLE2.java`
 **Library:** `com.github.weliem:blessed-android:2.5.0` (`app/build.gradle`)
 **Firmware reviewed:** `/home/graham/osd/PineTimeSD` (`develop`, `fce434be`)
+**Build verified:** `:app:compileDebugJavaWithJavac` and `:app:testDebugUnitTest` both pass
+**Field evidence:** two on-device captures, 2026-10-01 — see section 11
 
 ---
 
@@ -162,11 +164,16 @@ These facts are load-bearing for the analysis. All **[V]**.
 | `onBluetoothAdapterStateChanged(int)`, `onConnectingPeripheral()`, `onDisconnectingPeripheral()` are all available to override | `BluetoothCentralManagerCallback` |
 | `internalCallback.disconnected()` calls `removePeripheralFromCaches(addr)` before invoking `onDisconnectedPeripheral` | `internalCallback` |
 | On `STATE_TURNING_OFF`, blessed stops all scans and sets `currentCallback = null`; on `STATE_ON` it restarts nothing | `handleAdapterState()` |
+| **`BluetoothCentralManager.cancelConnection(p)` is the only complete undo.** If the address is in `reconnectPeripheralAddresses` it removes it from that list *and* from `reconnectCallbacks` *and* from `unconnectedPeripherals`, calls the private `stopAutoconnectScan()`, and posts a callback; otherwise, if the peripheral is in the unconnected or connected map, it delegates to `peripheral.cancelConnection()`; otherwise it just logs `cannot cancel connection to unknown peripheral %s`. `BluetoothPeripheral.cancelConnection()` alone does **not** clear the reconnect bookkeeping and does **not** stop the autoconnect scanner. | `cancelConnection()` |
+| **The 180 s scan restart is posted as two separate messages.** `timeoutRunnable` (`$8`) logs `scanning timeout, restarting scan`, captures `currentCallback` + `currentFilters`, calls `stopScan()`, then `postDelayed($8$1, SCAN_RESTART_DELAY)` — and `$8$1` is what actually calls `startScan(...)` again. Calling `stopScan()` in the ~1 s between the two removes the *timer* but not the already-queued *restart*, and `close()` cancels neither, so a closed manager can start a live system scan that nothing can ever stop. | `$8`, `$8$1`, `setScanTimer()` |
+| Scan settings: the manager's own `scanSettings` (used by `scanForPeripheralsWithAddresses`) is built from `ScanMode.LOW_LATENCY` (Android `SCAN_MODE_LOW_LATENCY = 2`); `autoConnectScanSettings` is built from `ScanMode.LOW_POWER` (Android `SCAN_MODE_LOW_POWER = 0`) | constructor, `getScanSettings()` |
+| `autoConnectPeripheral()` has **four** silent early-return branches, none of which produces a callback: `already connected to %s`, `already issued autoconnect for '%s'`, `cannot connect to peripheral because Bluetooth is off`, and `peripheral does not support Bluetooth LE` | `autoConnectPeripheral()` |
 
-**BLE2 overrides only** `onDiscoveredPeripheral`, `onConnectedPeripheral`,
-`onConnectionFailed`, `onDisconnectedPeripheral`. It does **not** override
-`onScanFailed`, `onBluetoothAdapterStateChanged`, `onConnectingPeripheral` or
-`onDisconnectingPeripheral`. **[V]**
+**BLE2 originally overrode only** `onDiscoveredPeripheral`, `onConnectedPeripheral`,
+`onConnectionFailed`, `onDisconnectedPeripheral`. As of Phase 0 it also overrides
+`onScanFailed`, `onBluetoothAdapterStateChanged`, `onConnectingPeripheral` and
+`onDisconnectingPeripheral`; as of Phase 2 the first two take recovery action rather
+than only logging. **[V]**
 
 ---
 
@@ -613,6 +620,10 @@ and link stability (see D9).
 
 ### Phase 0 — Instrument first (do this before any behavioural change)
 
+> **Status: items 1–3 are IMPLEMENTED.** See section 8 for what was added and
+> section 9 for the test plan and procedure that uses it. Items 4–5 are test
+> activities, not code, and are covered by section 9.
+
 Several deficiencies are plausible; confirming which one fires is cheap and avoids
 fixing the wrong thing.
 
@@ -624,12 +635,17 @@ fixing the wrong thing.
    Watch for `already issued autoconnect for`, `scanning timeout, restarting scan`,
    `peripheral with address '%s' not in Bluetooth cache`, `scan failed with error
    code`, `cannot cancel connection because no connection attempt is made yet`.
+   ✅ *Implemented in `bleConnect()`.*
 2. **Override and log** `onScanFailed`, `onBluetoothAdapterStateChanged`,
    `onConnectingPeripheral`, `onDisconnectingPeripheral`.
+   ✅ *Implemented — all four overridden, log-only, no recovery action taken yet so
+   that behaviour is unchanged until Phase 2.*
 3. **Log a lifecycle counter**: number of `BluetoothCentralManager` instances
    created, number of `forceCleanup()` calls, number of `autoConnectPeripheral()`
    calls, plus `mConnectionState`, `mBlePeripheral == null`, `isScanning()` and
    both shutdown flags at every transition.
+   ✅ *Implemented as process-lifetime `AtomicInteger` counters plus a full
+   `STATE-DUMP` snapshot on every callback and a 60 s heartbeat.*
 4. **The decisive measurement** — while the phone is in the stuck `FAULT` state,
    before restarting the app:
    ```
@@ -638,32 +654,62 @@ fixing the wrong thing.
    Inspect the per-app **registered GATT clients** and **active scans**. A large
    and growing count confirms D1/D3 conclusively. Also capture `adb bugreport`.
 5. Reproduce on a schedule: 2 min / 30 min / 2 h out of range, plus a
-   Bluetooth off/on test, capturing (4) at each stage.
+   Bluetooth off/on test, capturing (4) at each stage. See section 9.
 
 ### Phase 1 — Stop the leak (highest expected value, low risk)
 
+> **Status: IMPLEMENTED except D1(1).** See section 12. D1(1) — one manager per
+> datasource lifetime — was deliberately *not* adopted: the field evidence in
+> section 11 showed the per-cycle `create`/`close` pair is balanced (receiver
+> registered ↔ unregistered, scan started ↔ stopped) and leaks nothing on its own,
+> so changing the lifecycle would have added risk without addressing a measured
+> problem. Teardown was instead made provably complete, which closes every leak
+> vector `close()` was implicated in.
+
 - D1(1): one `BluetoothCentralManager` per datasource lifetime; never `close()` +
-  recreate on fault-restart.
+  recreate on fault-restart. ❌ *Not adopted — see note above.*
 - D1(2): assign `mBlePeripheral` in `onDiscoveredPeripheral()` / override
-  `onConnectingPeripheral()`.
-- D1(3): if `close()` is retained anywhere, drain peripherals first.
-- D6: remove the main-thread busy-wait in `stop()`.
+  `onConnectingPeripheral()`. ✅ *Implemented.*
+- D1(3): if `close()` is retained anywhere, drain peripherals first. ✅ *Implemented
+  as a four-step ordered teardown: `stopScan()` → manager-level `cancelConnection()`
+  → `close()` → delayed zombie sweep.*
+- D6: remove the main-thread busy-wait in `stop()`. ✅ *Implemented — teardown is now
+  synchronous, so there is nothing to wait for.*
 
 ### Phase 2 — Guarantee a retry always exists
 
+> **Status: IMPLEMENTED.** See section 12.
+
 - D2: independent 30–45 s connection supervisor using manager-level
-  `cancelConnection()` + re-scan.
+  `cancelConnection()` + re-scan. ✅ *Implemented as a 30 s tick with five rules.*
 - D7: call `scheduleReconnection()` unconditionally from `onDisconnectedPeripheral`
   and `onConnectionFailed`; make it idempotent; reset the counter only on success.
-- D4: override `onScanFailed`.
-- D5: override `onBluetoothAdapterStateChanged`.
+  ✅ *Implemented, with one deviation: `onDisconnectedPeripheral` now re-scans
+  immediately rather than going through the backoff, because that is the path field
+  evidence proved works; `onConnectionFailed` uses the backoff so a device that is
+  refusing connections is not hammered.*
+- D4: override `onScanFailed`. ✅ *Implemented — now schedules a backoff retry.*
+- D5: override `onBluetoothAdapterStateChanged`. ✅ *Implemented — re-scans 2 s after
+  `STATE_ON`.*
+
+Also adopted from Phase 2's evidence: **discovery now leads to `connectPeripheral()`
+rather than `autoConnectPeripheral()`**, because the device is advertising at that
+moment and a direct connect is bounded by blessed's 35 s timer, so every attempt is
+guaranteed to report an outcome.
 
 ### Phase 3 — Robustness and hygiene
 
-- D3 ownership guard (if Phase 1(1) is not adopted).
+> **Status: D3 and D10 IMPLEMENTED; D8, D9 and the firmware items still open.**
+
+- D3 ownership guard (if Phase 1(1) is not adopted). ✅ *Implemented as
+  `isCallbackStale()` on every manager callback, plus the post-teardown zombie sweep.*
 - D8 flag ownership; D9 drop `LE_CODED`/`S8`, consider `BALANCED`;
   D10 UUID-based `setNotify` and null characteristics on disconnect.
-- Firmware F1–F7 as a separate PineTimeSD change set.
+  ⚠️ *D10 partially implemented — characteristics are now nulled on disconnect and at
+  teardown; UUID-based `setNotify` not changed. D8 and D9 deliberately untouched: D9
+  changes PHY negotiation, which would add an uncontrolled variable to the overnight
+  validation run.*
+- Firmware F1–F7 as a separate PineTimeSD change set. ❌ *Open.*
 
 ### Phase 4 — Environment
 
@@ -676,47 +722,599 @@ which is correct and has no Android 15 time cap.
 
 ---
 
-## 8. Verification plan
+## 8. Instrumentation implemented (Phase 0)
 
-| # | Test | Expected after fix |
+All changes are confined to `SdDataSourceBLE2.java`. **They were log-only at the time
+— no control flow, timing, retry policy or state machine behaviour was altered** — so
+that build reproduced the original defect while making it observable, which is what
+produced the field evidence in section 11. The Phase 1/2 behavioural fixes have since
+been applied on top of it, as described in section 12; all of this instrumentation is
+retained. Two things changed as a result: `onScanFailed` and
+`onBluetoothAdapterStateChanged` now take recovery action rather than only logging,
+and the `D1 PATH TAKEN` message no longer fires when nothing was actually pending.
+
+Build status: `:app:compileDebugJavaWithJavac` and `:app:testDebugUnitTest` both
+pass with no new warnings attributable to this file.
+
+### 8.1 New callback overrides
+
+Four `BluetoothCentralManagerCallback` methods that BLE2 previously did not
+implement are now overridden. Each **logs and then calls `super`** — deliberately
+no recovery action, so behaviour is unchanged until Phase 2.
+
+| Override | Why it matters | Deficiency |
 |---|---|---|
-| 1 | Connect, 2 min out of range, return | Reconnect + data resume (already works — regression guard) |
-| 2 | 30 min out of range, return | Reconnect within one supervisor interval |
-| 3 | **2 h out of range, return** | **Reconnect**; `dumpsys bluetooth_manager` shows a *bounded* GATT-client count throughout |
-| 4 | 8 h (overnight) out of range, return | Reconnect (also exercises firmware F1) |
-| 5 | Bluetooth off → on while connected | Reconnect without app restart (D5) |
-| 6 | Revoke Bluetooth permission mid-run, re-grant | No permanent stall |
-| 7 | Watch rebooted while out of range | Reconnect |
-| 8 | Monitor for 24 h connected | No duplicate data rate (guards the `mServicesDiscovered` double-subscribe check at :350) |
+| `onScanFailed(ScanFailure)` | blessed calls `stopScan()` before delivering this, so scanning is definitively over and will not be restarted. Previously silent. | D4 |
+| `onBluetoothAdapterStateChanged(int)` | blessed tears everything down on `STATE_TURNING_OFF` and restarts nothing on `STATE_ON`. Previously invisible. | D5 |
+| `onConnectingPeripheral(BluetoothPeripheral)` | Distinguishes "blessed is trying" from "blessed has silently given up". | D2 |
+| `onDisconnectingPeripheral(BluetoothPeripheral)` | Brackets the shutdown sequence so the 5.5 s stall can be timed. | D6 |
 
-For test 3, the pass criterion is not just "it reconnects" but that the registered
-GATT-client and scan counts stay flat across the whole outage. That is the
-objective evidence that the leak is gone.
+### 8.2 Process-lifetime counters
+
+`static AtomicInteger` / `AtomicLong` — deliberately static, because the D1 leak is
+a **per-process** resource budget, so the numbers must accumulate across
+`SdDataSourceBLE2` instances as well as across `stop()`/`start()` cycles. Atomic
+because `stop()` (hence `forceCleanup()`) can run on `SdServer.onDestroy()`'s worker
+thread.
+
+| Counter | Meaning | Anomaly that implicates |
+|---|---|---|
+| `mgrCreated` | `BluetoothCentralManager` instances created | **D1/D3** — rises without bound across an outage |
+| `forceCleanup` | `forceCleanup()` calls | D1 — tracks manager churn |
+| `scans` | scans started | D4 — compare against `scanFailed` |
+| `scanFailed` | `onScanFailed` callbacks | **D4** — any non-zero value is significant |
+| `discovered` | `onDiscoveredPeripheral` callbacks | baseline |
+| `autoConnect` | `autoConnectPeripheral` calls issued | **D2** — rises while `connected` stays flat |
+| `connected` / `connFailed` / `disconnected` | connection outcomes | D2 — `autoConnect` rising with none of these |
+| `adapterChanges` | adapter state changes | **D5** |
+| `start` / `stop` | datasource lifecycle pairs | correlates with `SdServer`'s 60 s restart |
+| `accBursts` | completed 5 s bursts handed to `doAnalysis()` | confirms data actually resumed |
+| `droppedUpdates` | notifications discarded while shut down / not running | **D6/D8** — a burst shows data thrown away |
+
+Plus `sLastAccDataMillis`, so every dump reports `msSinceLastAccBurst`.
+
+### 8.3 State tracking
+
+| Field | Purpose |
+|---|---|
+| `mManagerGeneration` / `sManagerGeneration` | id per manager instance, so a callback from a superseded manager shows up as an out-of-sequence generation |
+| `mScanActive` | our own view of whether our address-filtered scan is running |
+| `mConnectAttemptPending`, `mConnectAttemptStartMillis` | age of the outstanding connection attempt |
+
+Two automatic anomaly detectors run inside `logState()` and the heartbeat:
+
+- `scanning(blessed)=true` while `scanActive(ours)=false` →
+  `ANOMALY ... A superseded manager is probably still scanning and routing
+  callbacks here (D3)`.
+- `connectPending` older than 60 s →
+  `ANOMALY ... blessed arms no timer for autoConnect, so this will never resolve on
+  its own (D2)`.
+
+And in `onDiscoveredPeripheral`, a discovery delivered while `mScanActive=false`
+logs `SUSPECT ZOMBIE CALLBACK` (D3).
+
+### 8.4 Other instrumentation
+
+- `setConnectionState(newState, reason)` — every one of the 10 call sites now
+  records *why* the transition happened, so a state trace reads as cause and effect.
+  A no-op transition is also logged (`STATE unchanged at ...`).
+- `logState(context)` — full snapshot: state, generation, manager identity hash,
+  `mBlePeripheral` identity hash (or `null`), our scan flag vs blessed's
+  `isScanning()`, pending-attempt age, `mServicesDiscovered`, `mShutdown`,
+  `mIsShuttingDown`, `mDisconnected`, `isRunning()`, `mReconnectionAttempt`,
+  `msSinceLastAccBurst`, thread name, and all counters. Called on entry to
+  `bleDisconnect()` and `stop()`, and from the heartbeat.
+- 60 s diagnostic heartbeat on a dedicated `mDiagHandler` (so it survives
+  `removeCallbacksAndMessages(null)` on the other two handlers). While connected
+  and receiving data it emits one compact line; otherwise a full `STATE-DUMP`.
+  Started in `bleConnect()` **before** the scan attempt, so a repeatedly failing
+  scan still produces periodic dumps. Stopped in `bleDisconnect()` and
+  `forceCleanup()`.
+- `mBluetoothCentralManager.enableLogging()` on manager creation.
+- `mUtil.writeMemoryLog(...)` / `writeExceptionLog(...)` at manager creation,
+  connect, connection-failed, disconnect, scan-failed, adapter-state change, the D1
+  path, and busy-wait expiry — so the key events survive in the on-device syslog
+  even when logcat is not attached.
+- Explicit `D1 PATH TAKEN` error log at the `mBlePeripheral == null` branch of
+  `bleDisconnect()`, and a pre-`close()` log of
+  `getConnectedPeripherals().size()` in `forceCleanup()`.
+
+### 8.5 Log line signatures to grep for
+
+Every diagnostic line is prefixed `BLE2DIAG:` under tag `SdDataSourceBLE2`.
+
+```
+adb logcat -v time | grep BLE2DIAG
+```
+
+| Signature | Meaning |
+|---|---|
+| `BluetoothCentralManager CREATED - generation=N, process-lifetime total=M` | manager churn — the D1 leak counter |
+| `manager REUSED - generation=N` | good — no new manager this cycle |
+| `D1 PATH TAKEN - mBlePeripheral is null` | **a GATT client is about to be orphaned** |
+| `closing manager generation=N connectedPeripherals=K` | what blessed is dropping; pending peripherals are not enumerable |
+| `SUSPECT ZOMBIE CALLBACK` | D3 |
+| `ANOMALY - blessed reports an active scan but ...` | D3 |
+| `ANOMALY - connection attempt pending for Ns` | D2 |
+| `onScanFailed #N failure=...` | D4 |
+| `stop() is running on the MAIN thread` | D6 precondition |
+| `BUSY-WAIT EXPIRED after Nms` | **D6 confirmed** — main thread blocked that long |
+| `onCharacteristicUpdate DROPPED #N` | D6/D8 — data discarded |
+| `scheduleReconnection SUPPRESSED by shutdown flags` | D8 |
+| `backoff retry FIRING` | D7 — note how rarely this appears |
+| `disconnect reason is CONNECTION_TIMEOUT` | confirms the watch went out of range |
+| `acc burst #N accepted` | data flowing again — recovery confirmed |
+
+blessed's own messages appear under logcat tags `BluetoothCentralManager` and
+`BluetoothPeripheral` — **logcat only**, they do not reach the app's syslog file:
+
+```
+adb logcat -v time -s SdDataSourceBLE2:* BluetoothCentralManager:* BluetoothPeripheral:*
+```
+
+The strings to look for are `already issued autoconnect for`,
+`scanning timeout, restarting scan`,
+`peripheral with address '%s' not in Bluetooth cache`,
+`scan failed with error code`, and
+`cannot cancel connection because no connection attempt is made yet`.
 
 ---
 
-## 9. Summary
+## 9. Test plan and procedure
 
-| ID | Deficiency | Likelihood | Severity |
-|---|---|---|---|
-| D1 | Pending GATT clients orphaned by `forceCleanup()`; registrations accumulate | ~65 % | Critical |
-| D2 | No independent supervisor; stalled `autoConnect` is a permanent no-op deadlock | ~55 % | Critical |
-| D3 | Closed manager keeps scanning and drives the live manager via the shared callback | ~30 % | High |
-| D4 | `onScanFailed` not overridden — dead scan is silent | ~30 % | High |
-| D5 | `onBluetoothAdapterStateChanged` not overridden — no recovery after BT toggle | ~20 % | High |
-| D6 | `stop()` busy-waits on the main thread; guaranteed 5.5 s stall per cycle | ~20 % | High |
-| D7 | `scheduleReconnection()` unreachable; backoff loop is dead code | ~20 % | Med-High |
-| D8 | Shutdown-flag races suppress retries permanently | ~10 % | Medium |
-| D9 | `LE_CODED`/`S8` unsupported on nRF52832; `HIGH` priority accepted by firmware | ~5 % | Low |
-| D10 | Stale characteristic objects reused across connections | ~5 % | Low |
+### 9.1 Objectives
 
-**Working conclusion.** The most probable explanation is D1 + D2 acting together:
+1. **Confirm or refute D1** — that Bluetooth stack registrations accumulate during
+   a long outage until Android refuses new ones.
+2. Identify which of D2–D8 also fire, so Phase 1/2 effort is spent correctly.
+3. Establish a **baseline** that the same procedure can be re-run against after the
+   fixes, to prove the leak is gone rather than merely that "it reconnected once".
+
+Objective 3 is the important one. "It reconnected" is not a pass criterion; a
+bounded registration count across a 2 h outage is.
+
+### 9.2 Prerequisites
+
+| Item | Requirement |
+|---|---|
+| Phone | The model that reproduces the fault. If more than one reproduces, test the fastest-failing one first. Record make/model/Android version. |
+| Watch | PineTime running the PineTimeSD firmware, OSD app streaming. |
+| Build | Debug APK containing the section 8 instrumentation. |
+| Host | PC with `adb`, USB debugging authorised, ~10 GB free for bugreports. |
+| Range control | A way to put the watch reliably out of range — a different floor, a car, or a microwave/Faraday bag. Verify by watching RSSI drop before starting the timer. |
+| Battery optimisation | **Leave as the user has it.** Do not whitelist the app for the baseline run — OEM power management is part of the suspected mechanism. Record the setting. |
+| Time | Tests T1–T5 ≈ half a day. T6 (overnight) adds one night. T9 (24 h soak) adds a day. |
+
+### 9.3 Setup procedure
+
+1. Install the instrumented build:
+   ```
+   adb install -r app/build/outputs/apk/debug/app-debug.apk
+   ```
+2. In the app, set **Settings → Logging → System Log Level** to `VERBOSE` so the
+   diagnostic lines reach the on-device syslog as well as logcat. (Key
+   `SysLogLevel`, `app/src/main/res/xml/logging_prefs.xml:55`; files are written
+   daily to `/sdcard/Android/data/uk.org.openseizuredetector/files/logs/`.)
+3. Select the **BLE2** data source and pair with the watch via the BLE scan screen.
+4. Confirm the healthy baseline before starting any test — all three of:
+   ```
+   adb logcat -c
+   adb logcat -v time -s SdDataSourceBLE2:* BluetoothCentralManager:* BluetoothPeripheral:* \
+       | tee baseline.log
+   ```
+   - `BLE2DIAG: heartbeat OK - state=CONNECTED` appearing once per minute
+   - `acc burst #N accepted` with `N` increasing by ~12 per minute (5 s bursts)
+   - `mgrCreated=1`, `forceCleanup=0`, `scanFailed=0`
+5. Open a second shell for the registration measurements:
+   ```
+   adb shell dumpsys bluetooth_manager > dumpsys_t0.txt
+   ```
+   Note the app's entry: **registered GATT clients**, **active scans**, and
+   **registered receivers**. Record the three numbers in the sheet (9.6). This is
+   the single most important measurement in the whole plan.
+
+### 9.4 Capture commands
+
+Run these at every observation point defined below. Keep the filenames — the
+before/after comparison *is* the result.
+
+```
+# registration snapshot (the decisive measurement)
+adb shell dumpsys bluetooth_manager > dumpsys_<test>_<point>.txt
+
+# full system state, for OEM power-management and ANR evidence
+adb bugreport bugreport_<test>_<point>.zip
+
+# on-device syslog copy
+adb pull /sdcard/Android/data/uk.org.openseizuredetector/files/logs/ logs_<test>/
+
+# extract just the diagnostic trace from a captured logcat
+grep BLE2DIAG <logfile> > <logfile>.diag
+
+# count manager creations and cleanups across a whole capture
+grep -c "BluetoothCentralManager CREATED" <logfile>
+grep -c "forceCleanup #" <logfile>
+grep -c "D1 PATH TAKEN" <logfile>
+```
+
+### 9.5 Test cases
+
+For each test: start logcat capture, take a `dumpsys` snapshot at every observation
+point, and **do not restart the app** unless the test says so. If the app reaches
+the stuck `FAULT` state, take the snapshot *before* touching it — that snapshot is
+the evidence.
+
+---
+
+**T1 — Short outage (regression guard, must already pass)**
+
+| | |
+|---|---|
+| Purpose | Confirm the known-good path still works with instrumentation in place, and record its counter signature as the reference. |
+| Procedure | 1. Connected and streaming. 2. Move the watch out of range. 3. Wait **2 minutes**. 4. Return it to range. 5. Wait 3 minutes. |
+| Observe at | disconnect, +35 s (first fault), +95 s, on return, +3 min |
+| Pass | `disconnect reason is CONNECTION_TIMEOUT` at step 2; `acc burst #N accepted` resumes within 60 s of step 4; `mgrCreated` ≤ 2; no `onScanFailed`. |
+| Record | `mgrCreated`, `forceCleanup`, `autoConnect`, `connected` at end. |
+
+---
+
+**T2 — Medium outage (30 min)**
+
+| | |
+|---|---|
+| Purpose | Find the point at which behaviour diverges from T1. |
+| Procedure | As T1 but wait **30 minutes** out of range. |
+| Observe at | disconnect, +5 min, +15 min, +30 min, on return, +3 min |
+| Pass (baseline build) | May or may not recover — record which. |
+| Key evidence | Does `mgrCreated` rise roughly linearly at ~1 per minute? Does `autoConnect` rise while `connected` stays flat (D2)? Any `ANOMALY - connection attempt pending for Ns`? |
+
+---
+
+**T3 — Long outage (2 h) — the primary test**
+
+| | |
+|---|---|
+| Purpose | Reproduce the reported failure and measure the registration budget directly. **This is the test that decides D1.** |
+| Procedure | As T1 but wait **2 hours** out of range. Do not touch the phone. |
+| Observe at | disconnect, +5 min, +15 min, +30 min, +60 min, +90 min, +120 min, on return, +5 min |
+| Primary evidence | `dumpsys bluetooth_manager` at **every** observation point. Plot the app's registered GATT client count against time. |
+| **Fail (confirms D1)** | GATT-client count rises monotonically (~1 per restart cycle), `mgrCreated` rises with it, `D1 PATH TAKEN` appears repeatedly, and after return the app does **not** reconnect. `onScanFailed failure=APPLICATION_REGISTRATION_FAILED` or `OUT_OF_HARDWARE_RESOURCES` is the smoking gun. |
+| **Refutes D1** | GATT-client count stays flat across the whole 2 h yet recovery still fails → D1 is not the mechanism; pivot to D2/D4/D5 using the same captures. |
+| Then | Only after the final snapshot: force-stop and restart the app. If it reconnects immediately, that confirms per-process registration exhaustion. Record the result — it is diagnostic, not a fix. |
+
+---
+
+**T4 — Bluetooth off → on while connected**
+
+| | |
+|---|---|
+| Purpose | D5. |
+| Procedure | 1. Connected and streaming. 2. Turn phone Bluetooth **off**. 3. Wait 60 s. 4. Turn it **on**. 5. Wait 5 minutes. |
+| Pass (baseline build) | Expected to **fail** — record it. |
+| Key evidence | `onBluetoothAdapterStateChanged #N state=STATE_TURNING_OFF` then `STATE_ON`, followed by **no** `scan started` line and no recovery. blessed will log `cannot connect to peripheral because Bluetooth is off` if BLE2 tried to autoConnect in the window. |
+
+---
+
+**T5 — Watch rebooted while out of range**
+
+| | |
+|---|---|
+| Purpose | Distinguish a phone-side stall from a watch-side one, and exercise firmware F1/F2. |
+| Procedure | 1. Move the watch out of range. 2. Reboot the watch. 3. Wait 10 minutes. 4. Return to range. |
+| Pass | Reconnect within 60 s of return. |
+| Key evidence | If the phone's counters look healthy (`scanning(blessed)=true`, no `onScanFailed`) but no discovery occurs, the watch is not advertising — check firmware F2 (`StartAdvertising()` gated on `IsConnected()`). |
+
+---
+
+**T6 — Overnight outage (8 h)**
+
+| | |
+|---|---|
+| Purpose | Firmware F1 (advertising degrades to ~1.02 s intervals after ~8.3 h) plus long-run phone behaviour. |
+| Procedure | Leave the watch out of range overnight (~8 h). Snapshot `dumpsys` before sleeping and immediately on waking. Return the watch and wait 10 minutes. |
+| Key evidence | Compare time-to-rediscovery against T3. A markedly longer time-to-reconnect at 8 h vs 2 h, with healthy phone-side counters, implicates F1. |
+
+---
+
+**T7 — Permissions revoked mid-run**
+
+| | |
+|---|---|
+| Purpose | D8 / robustness of the `SecurityException` path in `bleConnect()`. |
+| Procedure | 1. Connected. 2. Revoke Bluetooth permission in system settings. 3. Wait 2 minutes. 4. Re-grant. 5. Wait 5 minutes. |
+| Pass | No permanent stall; `scheduleReconnection SUPPRESSED by shutdown flags` must **not** appear and stay. |
+
+---
+
+**T8 — Main-thread stall measurement (D6)**
+
+| | |
+|---|---|
+| Purpose | Quantify D6 without waiting for a long outage. |
+| Procedure | 1. Move the watch out of range. 2. Wait for the fault-driven restart (~90 s). 3. Capture logcat throughout. |
+| Pass (baseline build) | Expected to show `stop() is running on the MAIN thread` followed by `BUSY-WAIT EXPIRED after 5500ms`. Record the elapsed value and how often it recurs. |
+| Cross-check | `adb bugreport` → look for ANR traces or `Skipped NN frames` around those timestamps. |
+
+---
+
+**T9 — 24 h connected soak (regression guard)**
+
+| | |
+|---|---|
+| Purpose | Prove the instrumentation itself is not harmful, and guard the `mServicesDiscovered` double-subscribe check. |
+| Procedure | Leave connected and in range for 24 h with logcat captured to file. |
+| Pass | `acc burst #N` increases steadily at ~12/min with no gaps; `mgrCreated` stays at 1; no `onCharacteristicUpdate DROPPED` bursts; no `ANOMALY` lines; syslog file size growth acceptable (≈1 compact heartbeat line per minute). |
+
+---
+
+**T10 — Post-fix re-run (Phase 1/2 acceptance)**
+
+Re-run **T1, T3, T4, T8, T9** against the fixed build. Acceptance criteria:
+
+| Test | Acceptance |
+|---|---|
+| T1 | Unchanged — still passes. |
+| **T3** | **Reconnects within one supervisor interval of return, AND the `dumpsys` GATT-client count stays flat across the whole 2 h.** `mgrCreated` stays at 1. No `D1 PATH TAKEN`. |
+| T4 | Recovers without an app restart; `scan started` appears after `STATE_ON`. |
+| T8 | No `BUSY-WAIT EXPIRED`; `stop()` completes in < 1 s. |
+| T9 | Unchanged — still passes. |
+
+### 9.6 Results recording sheet
+
+Copy this table per test run. One row per observation point.
+
+| Test | Point (elapsed) | UI state | `mgrCreated` | `forceCleanup` | `scans` | `scanFailed` | `autoConnect` | `connected` | `accBursts` | dumpsys: GATT clients | dumpsys: active scans | dumpsys: receivers | Notes / anomalies |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| T3 | 0 min | OK | | | | | | | | | | | |
+| T3 | 5 min | FAULT | | | | | | | | | | | |
+| T3 | 15 min | | | | | | | | | | | | |
+| T3 | 30 min | | | | | | | | | | | | |
+| T3 | 60 min | | | | | | | | | | | | |
+| T3 | 90 min | | | | | | | | | | | | |
+| T3 | 120 min | | | | | | | | | | | | |
+| T3 | return +5 min | | | | | | | | | | | | |
+| T3 | after app restart | | | | | | | | | | | | |
+
+Also record once per run: phone make/model/Android version, firmware version,
+battery-optimisation setting, `SysLogLevel`, APK version/commit, and whether the
+screen was on or off.
+
+### 9.7 Interpretation matrix
+
+| Observation | Conclusion |
+|---|---|
+| GATT-client count rises ~1 per restart cycle; `D1 PATH TAKEN` repeats; recovery only after process restart | **D1 confirmed** — proceed to Phase 1 |
+| `autoConnect` rises while `connected`/`connFailed`/`disconnected` stay flat; `ANOMALY - connection attempt pending for Ns` | **D2 confirmed** — proceed to Phase 2 supervisor |
+| `SUSPECT ZOMBIE CALLBACK` or `ANOMALY - blessed reports an active scan but ...` | **D3 confirmed** — ownership guard required |
+| `onScanFailed failure=APPLICATION_REGISTRATION_FAILED` / `OUT_OF_HARDWARE_RESOURCES` / `SCANNING_TOO_FREQUENTLY` | **D4 confirmed**, and almost certainly a consequence of D1/D3 |
+| `STATE_ON` with no subsequent `scan started` | **D5 confirmed** |
+| `BUSY-WAIT EXPIRED after 5500ms` on the main thread | **D6 confirmed** |
+| `backoff retry FIRING` never appears across a 2 h outage | **D7 confirmed** — backoff is dead code |
+| `scheduleReconnection SUPPRESSED by shutdown flags` and never resumes | **D8 confirmed** |
+| blessed logs `already issued autoconnect for` | blessed is short-circuiting the retry — supports D2 |
+| blessed logs `peripheral with address '...' not in Bluetooth cache` | blessed diverted to `LOW_POWER` autoconnect-by-scan — supports D3, slows rediscovery |
+| All phone-side counters healthy, scanning active, no discovery | Look at the **watch** — firmware F1/F2 |
+
+### 9.8 Reporting
+
+For each completed test, attach to the issue:
+
+1. The filled 9.6 sheet.
+2. `dumpsys_<test>_<point>.txt` for every observation point.
+3. The `.diag` extract (grep of `BLE2DIAG`) plus the blessed-tag lines.
+4. `bugreport` for any test that reached the stuck state or showed an ANR.
+5. A one-line verdict per deficiency from the 9.7 matrix.
+
+Do not attach raw `adb bugreport` zips to a public issue — they contain
+location and account data. Extract only `bugreport.txt` sections
+`BLUETOOTH MANAGER`, `ACTIVITY MANAGER`, and the app's own log.
+
+---
+
+## 10. Summary
+
+| ID | Deficiency | Likelihood (pre-evidence) | Likelihood (post-evidence) | Severity | Status |
+|---|---|---|---|---|---|
+| D1 | Pending GATT clients orphaned by `forceCleanup()`; registrations accumulate | ~65 % | **~25 %** — see section 11 | Critical | **FIXED** (D1(2) + ordered teardown). D1(1) not adopted |
+| D2 | No independent supervisor; stalled `autoConnect` is a permanent no-op deadlock | ~55 % | **~70 % — CONFIRMED in the field** | Critical | **FIXED** (30 s supervisor + direct connect) |
+| D3 | Closed manager keeps scanning and drives the live manager via the shared callback | ~30 % | **~40 % — CONFIRMED in the field** | High | **FIXED** (`isCallbackStale()` guard + zombie sweep) |
+| D4 | `onScanFailed` not overridden — dead scan is silent | ~30 % | ~20 % (never fired in 17 cycles) | High | **FIXED** (backoff retry on failure) |
+| D5 | `onBluetoothAdapterStateChanged` not overridden — no recovery after BT toggle | ~20 % | ~20 % (untested — `adapterChanges=0`) | High | **FIXED** (re-scan 2 s after `STATE_ON`) |
+| D6 | `stop()` busy-waits on the main thread; guaranteed 5.5 s stall per cycle | ~20 % | **100 % — CONFIRMED at exactly 5500 ms** | High | **FIXED** (busy-wait removed) |
+| D7 | `scheduleReconnection()` unreachable; backoff loop is dead code | ~20 % | **CONFIRMED — never fired in 17 cycles** | Med-High | **FIXED** (idempotent, now the retry owner) |
+| D8 | Shutdown-flag races suppress retries permanently | ~10 % | ~10 % | Medium | Observable only |
+| D9 | `LE_CODED`/`S8` unsupported on nRF52832; `HIGH` priority accepted by firmware | ~5 % | ~5 % | Low | Open — deliberately untouched |
+| D10 | Stale characteristic objects reused across connections | ~5 % | ~5 % | Low | **Partly fixed** (nulled on disconnect/teardown) |
+
+**Original working conclusion (pre-evidence).** D1 + D2 acting together:
 `forceCleanup()` → `BluetoothCentralManager.close()` does not release pending GATT
 clients, so each fault-driven restart during an outage leaks a registration against
 a hard per-app cap; simultaneously, a stalled `autoConnect` cannot be retried
 because blessed short-circuits repeat calls and BLE2 has no independent supervisor.
-Once the cap is reached the app can neither scan nor connect, `onScanFailed` is not
-handled so the failure is silent, and only a process restart releases the
-registrations. D1's fix (a single long-lived manager plus tracking the connecting
-peripheral) plus D2's supervisor should resolve the reported symptom; Phase 0
-instrumentation will confirm it before the changes are made.
+
+**Revised working conclusion (post-evidence, section 11).** The two on-device
+captures confirm D2, D3, D6 and D7 and **do not** support D1 as the primary cause:
+across 17 fault-restart cycles every registration was balanced and `scanFailed`
+stayed at 0, and a watch that returned after 1000 s reconnected in 5.6 s. D1 is now
+understood as a *consequence* of D2 rather than an independent defect — it only bites
+when a stalled connect overlaps a teardown, because that is the only situation in
+which blessed holds a `BluetoothGatt` that BLE2 cannot reference. **D2 is therefore
+the primary defect**, and the >1 h duration threshold in the original report is most
+probably supplied by an environmental factor — Doze/OEM scan suspension, or firmware
+F1's advertising degradation after ~8.3 h — rather than by registration exhaustion.
+
+**Current state.** Phase 0 instrumentation (section 8), the Phase 1/2 fixes
+(section 12) and the test plan (section 9) are all in `SdDataSourceBLE2.java`;
+`:app:compileDebugJavaWithJavac` and `:app:testDebugUnitTest` both pass. The
+remaining validation is an overnight out-of-range run analysed against the acceptance
+criteria in section 12.4. D8, D9 and firmware F1–F7 remain open.
+
+---
+
+## 11. Field evidence — on-device captures, 2026-10-01
+
+Two logcat captures were taken on a real phone with the Phase 0 build, using a
+PineTime at `EB:27:55:B7:3E:57`. They are the first measurements rather than
+inference, and they changed the ranking in section 10.
+
+### 11.1 Capture A — watch Bluetooth switched off while connected
+
+| Time | Event | Verdict |
+|---|---|---|
+| 19:13:55.751 | `onDisconnectedPeripheral #1 status=REMOTE_USER_TERMINATED_CONNECTION`, `state=CONNECTED` | Clean termination, `mBlePeripheral` still valid |
+| 19:13:55.763 | `onDisconnectedPeripheral issuing autoConnectPeripheral #2` | blessed arms `connectGatt(autoConnect=true)` |
+| 19:13:55.797 | `onConnectingPeripheral ... state=IDLE` | blessed is genuinely attempting |
+| 19:13:55 → 19:15:07 | `connectPending=true`, `connectPendingAgeMs=71360`, `scanActive(ours)=false`, `scanning(blessed)=false`, **no callback of any kind** | **D2 CONFIRMED.** For 71 s the datasource did literally nothing: no scan, no timer, no retry |
+| 19:15:07 → 19:15:12 | `BUSY-WAIT EXPIRED after 5500ms on thread=main` | **D6 CONFIRMED** at exactly the predicted duration |
+| 19:15:12.713 → .782 | `closing manager generation=1` at .713, then `onDisconnectingPeripheral` at .728 and `onDisconnectedPeripheral #2` at .782, both `generation=-1 state=CLEANUP`, re-entering `forceCleanup #2` | **D3 CONFIRMED.** A closed manager drove the state machine after its own teardown |
+| every ~64 s | `mgrCreated` 1→17, `forceCleanup` 1→17, `scans` 1→17, `start`/`stop` 1:1 | **Churn confirmed** — one new manager and one `close()` per minute (`SdServer.java:1615-1647`) |
+| cycles 2–17 | `D1 PATH TAKEN` every cycle, but with `peripheral=null`, `connectPending=false`, `scanning(blessed)=false`; `scanFailed=0` throughout | **D1 NOT proven.** Nothing was pending to orphan: the scan had been stopped before `close()` and no connect was outstanding. In cycle 1 the pending GATT *was* released correctly (`cancelConnection()` → `status=SUCCESS`) |
+
+**The `D1 PATH TAKEN` message was over-eager.** It fired whenever `mBlePeripheral`
+was null, regardless of whether blessed was holding anything. That has been
+corrected: the message now distinguishes "a connect attempt was PENDING and
+unreferenceable" (a real leak) from "no pending attempt, nothing to orphan".
+
+### 11.2 Capture B — watch switched back on after ~1000 s
+
+| Time | Event | Reading |
+|---|---|---|
+| 19:31:13.231 | `scan started - generation=17` | Fresh manager, LOW_LATENCY address-filtered scan |
+| 19:31:49.926 | `onDiscoveredPeripheral #2 rssi=-78 generation=17 mScanActive=true` | Found **36.7 s** into the scan; generation matches and `mScanActive=true`, so **D3 did not fire** |
+| 19:31:49.947 | `issuing autoConnectPeripheral #3` | **`mBlePeripheral` is still null at this point** |
+| 19:31:52.049 | `onConnectedPeripheral #2 connectAttemptDurationMs=2100` | Connected in **2.1 s** |
+| 19:31:52.063 | `onServicesDiscovered - assigning mBlePeripheral (was null)` | Reference acquired **2.116 s after** the connect request |
+| 19:31:55.531 | `acc burst #24` | Data flowing 3.5 s later — full recovery in **5.6 s** |
+
+### 11.3 What the two captures together establish
+
+1. **The scan-only recovery path works.** A watch that reappears is found within tens
+   of seconds and connected in ~2 s. Any fix must not break this.
+2. **The D1 window is measurable: 2.116 s per successful connection, unbounded when a
+   connect stalls.** That is the precise coupling between D1 and D2 — D1 can only leak
+   when a stalled attempt survives until the next teardown.
+3. **`autoConnect` is not broken, it is unbounded.** It connected in 2.1 s because the
+   device was present; it stalled for 71 s because the device was absent and blessed
+   arms no timer. Since a discovery *proves* the device is present, a direct
+   `connectPeripheral()` is strictly better: same ~2 s success, plus a guaranteed
+   ≤35 s outcome on failure.
+4. **Nothing leaked across 17 cycles.** Per cycle the books balance — `registerReceiver`
+   ↔ `close()`'s `unregisterReceiver`, `startScan` ↔ `stopScan`, no pending GATT in
+   cycles 2–16. D1's likelihood is revised down accordingly.
+5. **`rssi=-78` is already marginal.** A watch at −85…−90 will still be *discovered* by
+   a LOW_LATENCY scan but may fail to *connect* — which produces exactly the
+   discovery-then-stall cycle that opens the D1 window indefinitely. A clean
+   switch-on/off test never produces it, which is why both clean tests recovered.
+6. **Still untested:** `adapterChanges=0` (D5), no `onScanFailed` ever (D4), no
+   stalled-connect-after-discovery (the D1+D2 interlock), no screen-off/Doze period,
+   no run past the firmware's 8.3 h advertising-degradation threshold (F1).
+
+### 11.4 Finding F8 — the fault-restart discards the armed autoConnect
+
+After an unexpected disconnect, blessed's `autoConnect` was correctly armed and would
+have reconnected at controller level whenever the watch returned, at no battery cost.
+`SdServer.java:1625` killed it ~71 s later and replaced it with scan-only mode.
+
+Capture B shows this is **not** fatal — the scan recovers fine — so F8 is stated here
+in its corrected form: *the restart discards the armed autoConnect, after which
+recovery depends entirely on the scan staying healthy; the scan is therefore the
+single point of failure, and it is the component most exposed to Doze, OEM battery
+management and Android scan throttling.* This is what the Phase 2 supervisor now
+polices independently of both blessed and `SdServer`.
+
+---
+
+## 12. Phase 1/2 implementation
+
+All changes are in `SdDataSourceBLE2.java`. Build status: `:app:compileDebugJavaWithJavac`
+and `:app:testDebugUnitTest` both pass.
+
+### 12.1 What changed
+
+| # | Change | Deficiency | Mechanism |
+|---|---|---|---|
+| 1 | Peripheral tracked from the moment a connect is requested | D1 | `mBlePeripheral` assigned in `onDiscoveredPeripheral()` *before* the connect call, and in `onConnectingPeripheral()` if still null; cleared only at teardown. A stalled attempt can now always be cancelled |
+| 2 | Connection supervisor | D2 | Own `Handler`, 30 s tick, five rules (below). Independent of blessed and of `SdServer`, so a silent stall can no longer be permanent |
+| 3 | Discovery leads to `connectPeripheral()`, not `autoConnectPeripheral()` | D2 | blessed arms `CONNECTION_TIMEOUT_IN_MS = 35000` for a direct connect and none for autoConnect, so every attempt now reports an outcome |
+| 4 | Ordered, synchronous, idempotent teardown | D1, D3 | `stopScan()` → **manager-level** `cancelConnection()` → `close()` → delayed zombie sweep, in `releaseBleResources()` |
+| 5 | Zombie-callback guard | D3 | `isCallbackStale()` at the top of every manager callback drops events from a manager that has already been closed and released |
+| 6 | Post-teardown zombie sweep | D3 | 2 s after teardown, `dying.isScanning()` is checked and stopped — covers blessed's `$8$1` restart runnable that outlives `close()` |
+| 7 | Busy-wait removed from `stop()` | D6 | Teardown completes synchronously, so there is nothing to wait for; no more 5.5 s main-thread block per cycle |
+| 8 | `onScanFailed` recovery | D4 | Schedules a backoff retry (deliberately not immediate, since `SCANNING_TOO_FREQUENTLY` means an immediate retry would extend Android's ban) |
+| 9 | `onBluetoothAdapterStateChanged` recovery | D5 | Re-scans 2 s after `STATE_ON`; clears scan/connect tracking on `STATE_OFF` |
+| 10 | `scheduleReconnection()` idempotent and live | D7 | `mReconnectionScheduled` allows at most one outstanding retry; counter reset only on success; toasts limited to the first 3 attempts |
+| 11 | Characteristics nulled on disconnect | D10 | `mOsdChar`/`mStatusChar`/`mHrChar`/`mBattChar` cleared in `onDisconnectedPeripheral()` and at teardown, so a stale GATT object is never written to |
+| 12 | `mDisconnected` reset in `bleConnect()` | — | It was left `true` by the previous cycle's teardown, which made the old busy-wait return immediately and made every `STATE-DUMP` misleading |
+
+**Deliberately not changed:** the per-cycle manager lifecycle (D1(1)), PHY negotiation
+(D9), shutdown-flag ownership (D8), and anything in `SdServer`. The fault-restart
+cadence is untouched, so BLE2 now has to be — and is — resilient to being restarted
+every ~64 s.
+
+### 12.2 Supervisor rules
+
+Evaluated in order on each 30 s tick. Every rule re-arms the tick; the tick is also
+re-armed by the 60 s diagnostic heartbeat if it is ever found unscheduled while
+unhealthy, so the watchdog is self-healing.
+
+| Rule | Condition | Action |
+|---|---|---|
+| 1 `NO-MANAGER` | running, but the manager is null or generation < 0 | `bleConnect()` — rebuild manager, scan, watchdogs |
+| 2 `CONNECTED-BUT-SILENT` | `CONNECTED` for ≥60 s **and** no acceleration burst for ≥60 s | `cancelConnectionAndRescan()`. The dual condition is required: `sLastAccDataMillis` is process-lifetime, so it still holds the previous connection's timestamp during the first seconds of a new one |
+| 3 `CONNECT-STALLED` | a connect attempt pending ≥45 s with no callback | `manager.cancelConnection()` + re-scan. 45 s is above blessed's 35 s timer, so this only fires if blessed's own timeout failed |
+| 4 `SCAN-DEAD` / `SCAN-STALLED` | we believe a scan is running but blessed reports none, **or** the scan has found nothing for ≥120 s | Restart the scan. One restart per 120 s is far below Android's 5-starts-per-30 s throttle |
+| 5 `IDLE-NOTHING-PENDING` | no scan, no pending connect, no scheduled retry | Start a scan. This is the state the old code could sit in permanently. Skipped when a backoff retry is already outstanding, so the backoff is not preempted |
+
+### 12.3 New counters and log signatures
+
+Added to every `STATE-DUMP` and `countersToString()` line:
+
+| Counter | Meaning | Healthy value over a long run |
+|---|---|---|
+| `directConnect` | `connectPeripheral()` requests issued | rises with each discovery |
+| `autoConnect` | retained for continuity — **now always 0**, which is the proof that no unbounded attempt is ever issued | 0 |
+| `supTicks` | supervisor ticks executed | ~2/min |
+| `supInterventions` | corrective actions taken | 0, or a few per outage |
+| `connectStalls` | attempts the supervisor had to break | **0** — anything else means a connect stalled |
+| `scanRestarts` | scans restarted by the supervisor | low |
+| `zombieDrops` | callbacks dropped from a closed manager | **0** — anything else means D3 is still occurring |
+| `zombieScans` | scans found running on a closed manager and stopped by the sweep | **0** |
+
+`STATE-DUMP` also gained `scanAgeMs`, `retryScheduled` and `supervisorScheduled`.
+
+Grep for these to check the fixes are working:
+
+```
+SUPERVISOR[            # every intervention, with its rule name
+CONNECT-STALLED        # a connect attempt had to be broken (should not appear)
+ZOMBIE CALLBACK DROPPED# D3 still occurring
+ZOMBIE SCAN FOUND      # blessed restarted a scan on a closed manager
+D1 PATH TAKEN          # now only fires when an attempt was genuinely pending
+D1 window CLOSED       # peripheral tracked from discovery - should appear on every discovery
+```
+
+### 12.4 Acceptance criteria for the overnight validation run
+
+Capture with all three tags, since blessed's own diagnostics are where
+`already issued autoconnect`, `scanning timeout, restarting scan` and
+`peripheral with address '...' not in Bluetooth cache` appear:
+
+```
+adb logcat -v time -s SdDataSourceBLE2 BluetoothCentralManager BluetoothPeripheral
+```
+
+| Criterion | Pass condition |
+|---|---|
+| Recovery | Watch reconnects and `acc burst` resumes without any app restart, at any point in the night |
+| No silent stall | `connectStalls=0`, or if non-zero, each is immediately followed by a re-scan and eventually `onConnectedPeripheral` |
+| No zombie activity | `zombieDrops=0` and `zombieScans=0` |
+| No main-thread block | no `BUSY-WAIT EXPIRED` line at all; every `stop() #N complete in Xms` shows a small X |
+| No leak | `mgrCreated` still rises ~1/min (expected — D1(1) not adopted), but `scanFailed=0` and GATT-client registrations for `uk.org.openseizuredetector` in `dumpsys bluetooth_manager` stay flat |
+| Supervisor alive | `supTicks` rises steadily all night (~2/min); `supervisorScheduled=true` in every unhealthy dump |
+| Firmware F1 | if discovery latency grows dramatically after ~8.3 h while `scanning(blessed)=true`, that is F1, not a phone-side defect |
+
+Capture `adb shell dumpsys bluetooth_manager` before the run, mid-run, and after —
+that is still the decisive measurement for D1, and it is now the only hypothesis the
+phone-side counters cannot settle on their own.
+
+
