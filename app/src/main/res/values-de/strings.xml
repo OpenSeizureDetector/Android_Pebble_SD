@@ -820,7 +820,6 @@
     <string name="darkmode">Dunkler Modus</string>
     <string name="system">System</string>
     <string name="select_theme">Designauswahl</string>
-    <string name="autostart">AutoStart</string>
     <string name="data_received">Daten erhalten</string>
     <string name="hh" />
     <string name="export_local_data">Lokale Daten exportieren?</string>
