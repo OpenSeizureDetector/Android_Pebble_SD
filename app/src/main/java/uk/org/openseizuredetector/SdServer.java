@@ -2285,6 +2285,12 @@ public class SdServer extends Service implements SdDataReceiver {
             createNotificationChannels();
 
             mSMSAlarm = PreferenceUtils.getBooleanFromXml(SP, "SMSAlarm");
+            // #295 - SMS alerts are not applicable with the Network data source. The stored
+            // preferences must be left untouched; only the runtime flag is suppressed.
+            if ("Network".equals(mSdDataSourceName)) {
+                mSMSAlarm = false;
+                Log.i(TAG, "updatePrefs() - Network data source: SMS alarms suppressed");
+            }
             Log.d(TAG, "updatePrefs() - mSMSAlarm = " + mSMSAlarm);
             mPhoneAlarm = SP.getBoolean("PhoneCallAlarm", false);
             String SMSNumberStr = SP.getString("SMSNumbers", "SET_FROM_XML");

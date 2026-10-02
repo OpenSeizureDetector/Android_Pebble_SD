@@ -791,6 +791,10 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         private static final String KEY_AUDIBLE_WARNING        = "AudibleWarning";
         private static final String KEY_WARNING_OVERRIDE_SILENT = "WarningOverrideSilentMode";
 
+        // #295 - SMS settings category - hidden when the Network data source is selected
+        private static final String KEY_SMS_CATEGORY = "SMSCategory";
+        private static final String KEY_DATA_SOURCE  = "DataSource";
+
         // Request-code constants used with startActivityForResult (legacy path, but we use
         // ActivityResultLauncher instead — these are kept as documentation only).
         private ActivityResultLauncher<Intent> mPickerWarning;
@@ -828,6 +832,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             refreshSoundSummaries();
             refreshAudibleAlarmSubPrefVisibility();
             refreshAudibleWarningSubPrefVisibility();
+            refreshSmsCategoryVisibility();
             // Wire click listeners for the three file-picker prefs
             // #246: Warning picker disabled - see onAttach() for details.
             // wirePickerPref(KEY_WARNING_URI, mPickerWarning);
@@ -860,6 +865,9 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             if (KEY_AUDIBLE_WARNING.equals(key)) {
                 refreshAudibleWarningSubPrefVisibility();
             }
+            if (KEY_DATA_SOURCE.equals(key)) {
+                refreshSmsCategoryVisibility();
+            }
 
             // Forward critical changes to parent activity so it can orchestrate a restart
             if ("SMSAlarm".equals(key)) {
@@ -886,6 +894,18 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                     PreferenceManager.getDefaultSharedPreferences(requireContext());
             boolean audibleWarning = prefs.getBoolean(KEY_AUDIBLE_WARNING, true);
             setPrefVisible(KEY_WARNING_OVERRIDE_SILENT, audibleWarning);
+        }
+
+        /**
+         * #295 - Hide the whole SMS settings category when the Network data source is selected (SMS
+         * alerts are not applicable there).  Only visibility changes - the stored SMS values
+         * are left untouched, so they are still present if another data source is chosen.
+         */
+        private void refreshSmsCategoryVisibility() {
+            SharedPreferences prefs =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext());
+            String dataSource = prefs.getString(KEY_DATA_SOURCE, "SET_FROM_XML");
+            setPrefVisible(KEY_SMS_CATEGORY, !"Network".equals(dataSource));
         }
 
         /** Show/hide the three sound-file pickers based on the UseMp3Alarm checkbox. */
