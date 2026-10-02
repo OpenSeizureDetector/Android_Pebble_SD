@@ -1231,37 +1231,29 @@ public class LogManagerControlActivity extends ServiceConnectedActivity {
                 public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
                     Log.v(TAG, "onItemClicKListener() - Position=" + position + ", id=" + id);// Confirmation dialog based on: https://stackoverflow.com/a/12213536/2104584
 
-                    if (mGroupEventsCb.isChecked() && mGroupedRemoteEventsList != null) {
-                        Log.v(TAG,"onItemClickListener() - Creating Grouped Events List from Position=" + position);
-                        // Get the group for this position
-                        ArrayList<HashMap<String, String>> group = mGroupedRemoteEventsList.get(position);
-                        ArrayList<String> eventIds = new ArrayList<>();
-                        for (HashMap<String, String> event : group) {
-                            Log.v(TAG,"onItemClickListener() - Adding event to edit list: " + event.get("id"));
-                            eventIds.add(event.get("id"));
-                        }
-                        Intent i = new Intent(getApplicationContext(), EditEventActivity.class);
-                        i.putStringArrayListExtra("eventIds", eventIds);
-                        startActivity(i);
-                    } else {
-                        Log.v(TAG,"onItemClickListener() - Editing Single event at Position=" + position);
-                        Object item = adapter.getItemAtPosition(position);
-                        if (!(item instanceof Map)) {
-                            Log.w(TAG, "onItemClickListener() - unexpected item type: " + item);
-                            return;
-                        }
-                        @SuppressWarnings("unchecked")
-                        Map<String, ?> eventObj = (Map<String, ?>) item;
-                        Object eventIdObj = eventObj.get("id");
-                        String eventId = eventIdObj != null ? eventIdObj.toString() : null;
-                        if (eventId == null) {
-                            Log.w(TAG, "onItemClickListener() - missing event id");
-                            return;
-                        }
-                        Intent i = new Intent(getApplicationContext(), EditEventActivity.class);
-                        i.putExtra("eventId", eventId);
-                        startActivity(i);
+                    // #271 - Local events (mEventsList) have no grouping concept - mGroupEventsCb and
+                    // mGroupedRemoteEventsList only apply to the Shared/Remote Data list bound to
+                    // onRemoteEventListClick below. Indexing mGroupedRemoteEventsList here using a
+                    // position from the local list caused an IndexOutOfBoundsException whenever the
+                    // remote list was shorter than the local one (e.g. position 61 into a 7-entry
+                    // grouped remote list left over from the Shared Data tab).
+                    Log.v(TAG,"onItemClickListener() - Editing Single event at Position=" + position);
+                    Object item = adapter.getItemAtPosition(position);
+                    if (!(item instanceof Map)) {
+                        Log.w(TAG, "onItemClickListener() - unexpected item type: " + item);
+                        return;
                     }
+                    @SuppressWarnings("unchecked")
+                    Map<String, ?> eventObj = (Map<String, ?>) item;
+                    Object eventIdObj = eventObj.get("id");
+                    String eventId = eventIdObj != null ? eventIdObj.toString() : null;
+                    if (eventId == null) {
+                        Log.w(TAG, "onItemClickListener() - missing event id");
+                        return;
+                    }
+                    Intent i = new Intent(getApplicationContext(), EditEventActivity.class);
+                    i.putExtra("eventId", eventId);
+                    startActivity(i);
                 }
             };
 
