@@ -1,14 +1,12 @@
 package uk.org.openseizuredetector.activity.main;
 import uk.org.openseizuredetector.R;
 
-import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import uk.org.openseizuredetector.data.logging.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.LinearLayoutCompat;
@@ -22,8 +20,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
 
-import uk.org.openseizuredetector.activity.logging.LogManagerControlActivity;
-import uk.org.openseizuredetector.activity.settings.PrefActivity;
 import uk.org.openseizuredetector.data.AlarmState;
 
 public class FragmentSystem extends FragmentOsdBaseClass {
@@ -63,41 +59,6 @@ public class FragmentSystem extends FragmentOsdBaseClass {
         if (mSignalLineChart != null) {
             setupSignalChart();
         }
-
-        // Handle Edit Settings Button
-        ImageButton button = (ImageButton) mRootView.findViewById(R.id.settingsButton);
-        button.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                Log.i(TAG, "settingsButton.onClick()");
-                try {
-                    Intent prefsIntent = new Intent(
-                            mContext,
-                            PrefActivity.class);
-                    mContext.startActivity(prefsIntent);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting settings activity " + ex.toString());
-                }
-
-            }
-        });
-
-        // Handle View System Logs Button
-        ImageButton systemLogsButton = (ImageButton) mRootView.findViewById(R.id.systemLogsButton);
-        systemLogsButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                Log.i(TAG, "systemLogsButton.onClick()");
-                try {
-                    Intent logsIntent = new Intent(
-                            mContext,
-                            LogManagerControlActivity.class);
-                    logsIntent.putExtra(LogManagerControlActivity.EXTRA_INITIAL_TAB,
-                            LogManagerControlActivity.TAB_SYSTEM_LOGS);
-                    mContext.startActivity(logsIntent);
-                } catch (Exception ex) {
-                    Log.i(TAG, "exception starting log manager activity " + ex.toString());
-                }
-            }
-        });
     }
 
     @Override

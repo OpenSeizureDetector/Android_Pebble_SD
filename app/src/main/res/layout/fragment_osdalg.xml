@@ -17,30 +17,6 @@
             android:padding="16dp">
 
             <TextView
-                android:id="@+id/fragment_osdalg_tv2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceMedium"
-                android:text="@string/osd_algorithm_status"
-                android:layout_marginBottom="8dp" />
-
-            <TextView
-                android:id="@+id/powerTv"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="---"
-                android:layout_marginBottom="4dp" />
-
-            <ProgressBar
-                android:id="@+id/powerProgressBar"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="20dp"
-                android:progressBackgroundTint="#EEEEEE"
-                android:layout_marginBottom="16dp" />
-
-            <TextView
                 android:id="@+id/spectrumTv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
