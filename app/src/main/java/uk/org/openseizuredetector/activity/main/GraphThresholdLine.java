@@ -20,7 +20,7 @@ import com.jjoe64.graphview.series.PointsGraphSeries;
  */
 final class GraphThresholdLine {
     /** Colour of the line and of its value label. */
-    static final int COLOUR = Color.RED;
+    static final int COLOUR = Color.BLUE;
     private static final int LINE_THICKNESS_PX = 2;    // the spectrum lines use 4
     private static final float LABEL_TEXT_DP = 11f;
     private static final float LABEL_GAP_DP = 3f;      // gap between the line and the label

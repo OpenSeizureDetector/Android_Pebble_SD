@@ -14,6 +14,8 @@ import androidx.appcompat.content.res.AppCompatResources;
 import android.view.ViewGroup.LayoutParams;
 
 import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.ValueDependentColor;
+import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.LineGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
 
@@ -59,14 +61,7 @@ public class FragmentFlapAlg extends FragmentOsdBaseClass {
 
         if (mConnection.mBound) {
             /////////////////////////////////////////////////////
-            // Set ProgressBars to show margin to alarm.
-            long powerPc;
-            if (mConnection.mSdServer.mSdData.flapAlarmThresh != 0)
-                powerPc = mConnection.mSdServer.mSdData.flapRoiPower * 100 /
-                        mConnection.mSdServer.mSdData.flapAlarmThresh;
-            else
-                powerPc = 0;
-
+            // Set ProgressBar to show margin to alarm (spectrum ratio).
             long specPc;
             if (mConnection.mSdServer.mSdData.flapSpecPower != 0 &&
                     mConnection.mSdServer.mSdData.flapAlarmRatioThresh != 0)
@@ -83,24 +78,11 @@ public class FragmentFlapAlg extends FragmentOsdBaseClass {
             } else
                 specRatio = 0;
 
-            ((TextView) mRootView.findViewById(R.id.flapPowerTv)).setText(getString(R.string.PowerEquals) + mConnection.mSdServer.mSdData.flapRoiPower +
-                    " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.flapAlarmThresh + ")");
-
-            ProgressBar pb;
-            Drawable pbDrawable;
-            pb = ((ProgressBar) mRootView.findViewById(R.id.flapPowerProgressBar));
-            pb.setMax(100);
-            pb.setProgress((int) powerPc);
-            pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_blue);
-            if (powerPc > 75)
-                pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_yellow);
-            if (powerPc > 100)
-                pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_red);
-            pb.setProgressDrawable(pbDrawable);
-
             ((TextView) mRootView.findViewById(R.id.flapSpectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
                     " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.flapAlarmRatioThresh + ")");
 
+            ProgressBar pb;
+            Drawable pbDrawable;
             pb = ((ProgressBar) mRootView.findViewById(R.id.flapSpectrumProgressBar));
             pb.setMax(100);
             pb.setProgress((int) specPc);
@@ -113,7 +95,7 @@ public class FragmentFlapAlg extends FragmentOsdBaseClass {
 
 
             ////////////////////////////////////////////////////////////
-            // Produce graph using GraphView with smoothed line
+            // Produce bar graph of the 0-10 Hz Flap spectrum using GraphView
             GraphView mChart = (GraphView) mRootView.findViewById(R.id.flapChart1);
 
             mChart.removeAllSeries();
@@ -121,56 +103,46 @@ public class FragmentFlapAlg extends FragmentOsdBaseClass {
             try {
                 DataPoint[] dataPoints = new DataPoint[10];
                 for (int i = 0; i < 10; i++) {
-                    if (mConnection.mSdServer != null) {
-                        dataPoints[i] = new DataPoint(i, mConnection.mSdServer.mSdData.flapSimpleSpec[i]);
-                    } else {
-                        dataPoints[i] = new DataPoint(i, 0);
-                    }
+                    double v = (mConnection.mSdServer != null)
+                            ? mConnection.mSdServer.mSdData.flapSimpleSpec[i] : 0;
+                    // Bin i covers i..i+1 Hz, so its bar is centred at i + 0.5
+                    dataPoints[i] = new DataPoint(i + 0.5, v);
                 }
 
-                int alarmFreqMin = (int) mConnection.mSdServer.mSdData.flapAlarmFreqMin;
-                int alarmFreqMax = (int) mConnection.mSdServer.mSdData.flapAlarmFreqMax;
+                final int alarmFreqMin = (int) mConnection.mSdServer.mSdData.flapAlarmFreqMin;
+                final int alarmFreqMax = (int) mConnection.mSdServer.mSdData.flapAlarmFreqMax;
 
-                if (alarmFreqMin > 0) {
-                    DataPoint[] graySegmentBefore = new DataPoint[alarmFreqMin + 1];
-                    for (int i = 0; i <= alarmFreqMin; i++) {
-                        graySegmentBefore[i] = dataPoints[i];
+                // Bar graph: one bar per 1 Hz bin. Bars inside the alarm band
+                // (flapAlarmFreqMin up to, not including, flapAlarmFreqMax) are red, the
+                // rest gray. The bars are slightly translucent because GraphView draws the
+                // grid lines BEFORE the series - opaque bars would hide the horizontal
+                // grid lines behind them.
+                final int barRed = Color.argb(190, 255, 0, 0);
+                final int barGray = Color.argb(190, 128, 128, 128);
+                BarGraphSeries<DataPoint> barSeries = new BarGraphSeries<>(dataPoints);
+                barSeries.setDataWidth(1.0);   // bins are 1.0 apart on the X axis
+                barSeries.setSpacing(20);      // 20% of each 1.0 slot is a gap => bar width 0.8
+                barSeries.setValueDependentColor(new ValueDependentColor<DataPoint>() {
+                    @Override
+                    public int get(DataPoint data) {
+                        int bin = (int) Math.floor(data.getX());   // x = bin + 0.5
+                        return (bin >= alarmFreqMin && bin < alarmFreqMax) ? barRed : barGray;
                     }
-                    com.jjoe64.graphview.series.LineGraphSeries<DataPoint> graySeriesBefore =
-                        new com.jjoe64.graphview.series.LineGraphSeries<>(graySegmentBefore);
-                    graySeriesBefore.setColor(Color.GRAY);
-                    graySeriesBefore.setThickness(4);
-                    graySeriesBefore.setDrawDataPoints(true);
-                    graySeriesBefore.setDataPointsRadius(6);
-                    mChart.addSeries(graySeriesBefore);
-                }
+                });
+                mChart.addSeries(barSeries);
 
-                int alarmRangeSize = alarmFreqMax - alarmFreqMin + 1;
-                DataPoint[] redSegment = new DataPoint[alarmRangeSize];
-                for (int i = 0; i < alarmRangeSize; i++) {
-                    redSegment[i] = dataPoints[alarmFreqMin + i];
-                }
-                com.jjoe64.graphview.series.LineGraphSeries<DataPoint> redSeries =
-                    new com.jjoe64.graphview.series.LineGraphSeries<>(redSegment);
-                redSeries.setColor(Color.RED);
-                redSeries.setThickness(4);
-                redSeries.setDrawDataPoints(true);
-                redSeries.setDataPointsRadius(6);
-                mChart.addSeries(redSeries);
-
-                if (alarmFreqMax < 9) {
-                    int grayAfterSize = 10 - alarmFreqMax;
-                    DataPoint[] graySegmentAfter = new DataPoint[grayAfterSize];
-                    for (int i = 0; i < grayAfterSize; i++) {
-                        graySegmentAfter[i] = dataPoints[alarmFreqMax + i];
-                    }
-                    com.jjoe64.graphview.series.LineGraphSeries<DataPoint> graySeriesAfter =
-                        new com.jjoe64.graphview.series.LineGraphSeries<>(graySegmentAfter);
-                    graySeriesAfter.setColor(Color.GRAY);
-                    graySeriesAfter.setThickness(4);
-                    graySeriesAfter.setDrawDataPoints(true);
-                    graySeriesAfter.setDataPointsRadius(6);
-                    mChart.addSeries(graySeriesAfter);
+                // Mark the region of interest on the bottom X axis in red, even when the
+                // bars are zero-height (a bar of value 0 draws nothing).
+                double roiStart = Math.max(0, Math.min(10, alarmFreqMin));
+                double roiEnd = Math.max(roiStart, Math.min(10, alarmFreqMax));
+                if (roiEnd > roiStart) {
+                    LineGraphSeries<DataPoint> roiAxisSeries = new LineGraphSeries<>(new DataPoint[]{
+                            new DataPoint(roiStart, 0),
+                            new DataPoint(roiEnd, 0)});
+                    roiAxisSeries.setColor(Color.RED);
+                    roiAxisSeries.setThickness(6);
+                    roiAxisSeries.setDrawDataPoints(false);
+                    mChart.addSeries(roiAxisSeries);
                 }
 
             } catch (Exception e) {
@@ -185,17 +157,23 @@ public class FragmentFlapAlg extends FragmentOsdBaseClass {
             mChart.getViewport().setMinY(0);
             mChart.getViewport().setMaxY(maxY);
             mChart.getViewport().setXAxisBoundsManual(true);
-            mChart.getViewport().setMinX(-0.5);
-            mChart.getViewport().setMaxX(9.5);
+            mChart.getViewport().setMinX(0);
+            mChart.getViewport().setMaxX(10);
 
             // Show where the Flap alarm threshold sits on the Y axis (thin line + value).
-            GraphThresholdLine.add(mChart, flapAlarmThresh, -0.5, 9.5);
+            GraphThresholdLine.add(mChart, flapAlarmThresh, 0.0, 10.0);
 
             mChart.getViewport().setScalable(false);
             mChart.getViewport().setScrollable(false);
 
             // Use theme-aware text color from base class
-            mChart.getGridLabelRenderer().setNumHorizontalLabels(10);
+            // 11 labels over the 10-unit-wide X range (0 .. 10) gives a label step of exactly
+            // 1.0, which GraphView's "human rounding" leaves alone (a step of 1.11 would be
+            // rounded to 2 and only every second label would show). Labels land on the
+            // bin edges 0..10 and each label also gets a vertical grid line.
+            mChart.getGridLabelRenderer().setNumHorizontalLabels(11);
+            // No special heavy line at the 0 value; the red ROI segment marks the axis.
+            mChart.getGridLabelRenderer().setHighlightZeroLines(false);
             mChart.getGridLabelRenderer().setNumVerticalLabels(5);
             mChart.getGridLabelRenderer().setHorizontalLabelsColor(okTextColour);
             mChart.getGridLabelRenderer().setVerticalLabelsColor(okTextColour);
@@ -206,8 +184,11 @@ public class FragmentFlapAlg extends FragmentOsdBaseClass {
                 public String formatLabel(double value, boolean isValueX) {
                     if (isValueX) {
                         int i = (int) Math.round(value);
-                        if (i >= 0 && i < 10) {
-                            return i + "-" + (i + 1) + "Hz";
+                        if (i == 0) {
+                            return "Hz:";
+                        }
+                        if (i > 0 && i <= 10) {
+                            return String.valueOf(i);
                         }
                         return "";
                     } else {
