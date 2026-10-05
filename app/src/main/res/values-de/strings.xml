@@ -769,8 +769,8 @@
     <string name="fgs_start_failed_notification_title">OSD Erfassung nicht gestartet</string>
     <string name="fgs_start_failed_notification_text">OpenSeizureDetector kann den Service im Hintergrund nicht starten, Dies kann passieren wenn Android das Tageslimit für diese Art von Service erreicht hat. Bitte die App neu starten. Wenn das Problem bleibt, dann starte das Handy neu.</string>
     <string name="view_system_logs">Systemprotokoll ansehen</string>
-    <string name="basic_mode_summary">Durch Nicht-Zeigen der erweiterten Einstellungen das Interface vereinfachen</string>
-    <string name="basic_mode">Einfacher Modus</string>
+    <string name="basic_mode_summary">Deaktivieren um zusätzliche Einstellungen und Tabs zu sehen</string>
+    <string name="basic_mode">Einfacher oder erweiterter Modus?</string>
     <string name="developer_mode_summary">Zusätzliche Entwickler-Optionen zeigen</string>
     <string name="developer_mode">Entwickler-Modus</string>
     <string name="app_theme">App Design</string>
