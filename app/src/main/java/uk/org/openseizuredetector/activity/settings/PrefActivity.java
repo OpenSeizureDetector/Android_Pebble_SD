@@ -296,7 +296,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     private void updateHeaders() {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         String currentDatasource = sp.getString("DataSource", "SET_FROM_XML");
-        boolean basicMode = PreferenceUtils.getBooleanFromXml(sp, "pref_basic_mode");
+        boolean basicMode = PreferenceUtils.getBooleanFromXml(sp, "pref_advanced_mode");
 
         mHeaders.clear();
 
@@ -378,7 +378,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             OsdUtil.applyTheme(this);
         }
 
-        if (s.equals("DataSource") || s.equals("pref_basic_mode")) {
+        if (s.equals("DataSource") || s.equals("pref_advanced_mode")) {
             updateHeaders();
         }
 
@@ -1081,7 +1081,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             setPreferencesFromResource(R.xml.sd_prefs_main, rootKey);
             
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-            mBasicMode = PreferenceUtils.getBooleanFromXml(prefs, "pref_basic_mode");
+            mBasicMode = !PreferenceUtils.getBooleanFromXml(prefs, "pref_advanced_mode");
             refreshSettingsCategory();
             syncAlgorithmToggles();
         }
@@ -1091,7 +1091,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             super.onResume();
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
             prefs.registerOnSharedPreferenceChangeListener(this);
-            mBasicMode = PreferenceUtils.getBooleanFromXml(prefs, "pref_basic_mode");
+            mBasicMode = !PreferenceUtils.getBooleanFromXml(prefs, "pref_advanced_mode");
             refreshSettingsCategory();
             syncAlgorithmToggles();
         }
@@ -1104,7 +1104,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-            if ("pref_basic_mode".equals(key)) {
+            if ("pref_advanced_mode".equals(key)) {
                 mBasicMode = PreferenceUtils.getBooleanFromXml(sharedPreferences, key);
                 refreshSettingsCategory();
                 syncAlgorithmToggles();
