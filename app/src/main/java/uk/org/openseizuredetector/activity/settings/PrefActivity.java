@@ -296,7 +296,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     private void updateHeaders() {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         String currentDatasource = sp.getString("DataSource", "SET_FROM_XML");
-        boolean basicMode = PreferenceUtils.getBooleanFromXml(sp, "pref_advanced_mode");
+        boolean basicMode = !PreferenceUtils.getBooleanFromXml(sp, "pref_advanced_mode");
 
         mHeaders.clear();
 
@@ -1105,7 +1105,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             if ("pref_advanced_mode".equals(key)) {
-                mBasicMode = PreferenceUtils.getBooleanFromXml(sharedPreferences, key);
+                mBasicMode = !PreferenceUtils.getBooleanFromXml(sharedPreferences, key);
                 refreshSettingsCategory();
                 syncAlgorithmToggles();
                 return;
