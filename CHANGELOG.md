@@ -12,7 +12,7 @@
             - Fixed issue with SMS location alerts not always sending (Issue #249)
             - Hide unused tabs from user interface to simplify it (Issue #278)
         - Add a threshold line to the OSD algorithm graphs (Issue #238)
-    	- Improved handling of non-english languages, and added German and French translations (thank you Peter Lins!)
+    	- Improved handling of non-english languages, and added German, French, Spanish and Polish translations (thank you Peter Lins!)
         - Fixed crash when clicking on a local event on the data sharing screen (Issue #271)
         - Hide SMS options when using network data source because they are ignored (Issue #295)
         - Improved reconnection of PineTime watch after it has been disconnected (Issue #297)
