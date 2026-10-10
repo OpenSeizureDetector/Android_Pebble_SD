@@ -801,6 +801,8 @@
     <string name="auth_failure_message">Authentication Failed - please check your username and password</string>
     <string name="show_raise_alarm_button_title">Show Raise Alarm Button</string>
     <string name="show_raise_alarm_button_summary">Display the \'Raise Alarm\' button on the main screen. Disable to prevent accidental alarms.</string>
+    <string name="show_mute_alarms_button_title">Show Mute Alarms Button</string>
+    <string name="show_mute_alarms_button_summary">Display the \'Mute Alarms\' button on the main screen, This allows the muting of alarms for 10 minutes. Disable to avoid any accidental muting of alarms.</string>
     <string name="system_status">SYSTEM STATUS</string>
     <string name="active_algorithms">Active Algorithms</string>
     <string name="label_time">Time = %s</string>
