@@ -151,8 +151,8 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
             // a lot (e.g. see issue #233). Falls back to the old value of 3000 only if
             // the threshold is unset/zero, to avoid a degenerate zero-height Y-axis.
             long alarmThresh = mConnection.mSdServer.mSdData.alarmThresh;
-            // double maxY = alarmThresh > 0 ? alarmThresh * 1.3 : 3000;
-            double maxY = alarmThresh > 0 ? alarmThresh * 100 : 3000;
+            double maxY = alarmThresh > 0 ? alarmThresh * 1.3 : 3000;
+            //double maxY = alarmThresh > 0 ? alarmThresh * 100 : 3000;
             mChart.getViewport().setYAxisBoundsManual(true);
             mChart.getViewport().setMinY(0);
             mChart.getViewport().setMaxY(maxY);
