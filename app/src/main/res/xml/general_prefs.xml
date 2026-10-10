@@ -1,18 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <CheckBoxPreference
-        android:defaultValue="true"
-        android:key="pref_basic_mode"
-        android:summary="@string/basic_mode_summary"
-        android:title="@string/basic_mode" />
-
-    <CheckBoxPreference
-        android:defaultValue="false"
-        android:key="pref_developer_mode"
-        android:summary="@string/developer_mode_summary"
-        android:title="@string/developer_mode" />
-
 
     <ListPreference
         android:key="darkMode"
@@ -23,7 +11,6 @@
         android:defaultValue="@string/system"
         android:dialogTitle="@string/select_theme" />
         />
-
 
     <CheckBoxPreference
         android:defaultValue="false"
@@ -48,6 +35,19 @@
         android:title="@string/disable_welcome_screens"
         android:enabled="true"
         />
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="pref_advanced_mode"
+        android:summary="@string/advanced_mode_summary"
+        android:title="@string/advanced_mode" />
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="pref_developer_mode"
+        android:summary="@string/developer_mode_summary"
+        android:title="@string/developer_mode" />
+
     <EditTextPreference
         android:defaultValue=""
         android:key="AppVersionName"

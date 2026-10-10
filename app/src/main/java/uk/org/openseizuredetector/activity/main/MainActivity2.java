@@ -144,7 +144,7 @@ public class MainActivity2 extends AppCompatActivity {
         mModePreferenceListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
              @Override
              public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-                 if ("pref_basic_mode".equals(key)) {
+                 if ("pref_advanced_mode".equals(key)) {
                      recreateCommonFragment();
                  } else if ("LatchAlarms".equals(key)) {
                     invalidateOptionsMenu();
@@ -349,7 +349,7 @@ public class MainActivity2 extends AppCompatActivity {
         // If no saved preference, choose tab based on enabled algorithms
 
         // Basic Mode Toggle Logic
-        boolean basicMode = PreferenceUtils.getBooleanFromXml(prefs, "pref_basic_mode");
+        boolean basicMode = !PreferenceUtils.getBooleanFromXml(prefs, "pref_advanced_mode");
         if (mCurrentBasicMode == null) {
             mCurrentBasicMode = basicMode;
         } else if (mCurrentBasicMode != basicMode) {

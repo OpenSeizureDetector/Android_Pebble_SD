@@ -266,7 +266,7 @@ public class FragmentOsdBaseClass extends Fragment {
             return true;
         }
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-        return PreferenceUtils.getBooleanFromXml(prefs, "pref_basic_mode");
+        return !PreferenceUtils.getBooleanFromXml(prefs, "pref_advanced_mode");
     }
 
  }

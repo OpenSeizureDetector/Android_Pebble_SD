@@ -217,8 +217,8 @@ public class PrefActivityTest {
         // Set Pebble datasource to make PebbleDatasource header potentially visible
         prefs.edit().putString("DataSource", "Pebble").commit();
 
-        // Test with basic mode OFF - advanced settings visible
-        prefs.edit().putBoolean("pref_basic_mode", false).commit();
+        // Test with Advanced Mode ON - advanced settings visible
+        prefs.edit().putBoolean("pref_advanced_mode", true).commit();
         PrefActivity activityAdvanced = Robolectric.buildActivity(PrefActivity.class)
                 .create()
                 .start()
@@ -229,8 +229,8 @@ public class PrefActivityTest {
         boolean loggingVisibleAdvanced = isHeaderVisible(activityAdvanced, "Logging") ||
                                           isHeaderVisible(activityAdvanced, "logging");
 
-        // Test with basic mode ON - advanced settings hidden
-        prefs.edit().putBoolean("pref_basic_mode", true).commit();
+        // Test with Advanced Mode OFF - advanced settings hidden
+        prefs.edit().putBoolean("pref_advanced_mode", false).commit();
         PrefActivity activityBasic = Robolectric.buildActivity(PrefActivity.class)
                 .create()
                 .start()
@@ -258,7 +258,7 @@ public class PrefActivityTest {
     public void testCombinedFiltersBasicModeAndNetwork() {
         prefs.edit()
                 .putString("DataSource", "Network")
-                .putBoolean("pref_basic_mode", true)
+                .putBoolean("pref_advanced_mode", false)
                 .commit();
 
         PrefActivity activity = Robolectric.buildActivity(PrefActivity.class)
@@ -292,7 +292,7 @@ public class PrefActivityTest {
             for (boolean basicMode : basicModes) {
                 prefs.edit()
                         .putString("DataSource", ds)
-                        .putBoolean("pref_basic_mode", basicMode)
+                        .putBoolean("pref_advanced_mode", basicMode)
                         .commit();
 
                 PrefActivity activity = Robolectric.buildActivity(PrefActivity.class)

@@ -472,7 +472,7 @@
     <string name="OsdAlarmEnabledTitle">Original OSD Algorithm</string>
     <string name="CnnAlarmEnabledTitle">Machine Learning (ML or \'AI\') Algorithm</string>
     <string name="CnnAlarmEnabledSummary">Machine Learning / Artificial Intelligence / Neural Network algorithm to generate alarms.</string>
-    <string name="basic_mode_active_info">Basic Mode Active: To change the settings of the selected algorithms, disable Basic Mode in the General Settings screen</string>
+    <string name="basic_mode_active_info">Basic Mode Active: To change the settings of the selected algorithms, enable Advanced Mode in the General Settings screen</string>
     <string name="AlgorithmSelectionTitle">Seizure Detection Algorithms Selection</string>
     <string name="mark_unverified_events_false_alarm_dialog_title">Mark all Unverified Events as False Alarm</string>
     <string name="mark_unverified_events_false_alarm_dialog_message">Please confirm that all genuine seizure events have been verified before marking all unverified events as type \'False Alarm\'.   \n\nContinue to mark unverified events as False Alarm?</string>
@@ -790,8 +790,8 @@
     <string name="fgs_start_failed_notification_title">OSD Monitoring Not Started</string>
     <string name="fgs_start_failed_notification_text">OpenSeizureDetector could not start its background monitoring service. This can happen if Android has reached its daily limit for this type of background service. Please restart the app. If the problem persists, reboot your phone.</string>
     <string name="view_system_logs">View System Logs</string>
-    <string name="basic_mode_summary">Simplify the interface by hiding advanced settings and tabs</string>
-    <string name="basic_mode">Basic Mode</string>
+    <string name="basic_mode_summary">Uncheck to show additional advanced settings and tabs</string>
+    <string name="basic_mode">Basic or Advanced Mode?</string>
     <string name="developer_mode_summary">Show additional options for developers</string>
     <string name="developer_mode">Developer Mode</string>
     <string name="app_theme">App Theme</string>
@@ -902,4 +902,6 @@
     <string name="download_and_install_a_new_seizure_detection_model">Download and install a new seizure detection model</string>
     <string name="installed_models">Installed Models</string>
     <string name="osd_algorithm">OSD Algorithm</string>
+    <string name="advanced_mode_summary">Enable Advanced Mode to view additional settings and tabs</string>
+    <string name="advanced_mode">Advanced Mode</string>
 </resources>

@@ -708,8 +708,8 @@
     <string name="fgs_start_failed_notification_title">Surveillance OSD non démarrée</string>
     <string name="fgs_start_failed_notification_text">OSD ne peut démarrer la surveillance en arrière-plan. Android a peut-être atteint sa limite quotidienne pour ce service. Redémarrez l’app. Si le problème persiste, redémarrez le téléphone.</string>
     <string name="view_system_logs">Voir journaux système</string>
-    <string name="basic_mode_summary">Simplifier l’interface en masquant les paramètres et onglets avancés</string>
-    <string name="basic_mode">Mode de base</string>
+    <string name="basic_mode_summary">Décocher pour afficher des paramètres avancés et des onglets supplémentaires</string>
+    <string name="basic_mode">Mode Basique ou Avancé?</string>
     <string name="developer_mode_summary">Afficher options développeur</string>
     <string name="developer_mode">Mode développeur</string>
     <string name="app_theme">Thème app</string>
@@ -805,7 +805,7 @@
     <string name="web_server_status">Statut du serveur Web</string>
     <string name="alarm">alarme</string>
     <string name="reason">raison</string>
-    <string name="uploaded">téléchargé</string>
+    <string name="uploaded">envoyé</string>
     <string name="duration">durée</string>
     <string name="notes">notes</string>
     <string name="the_flap_alarm_is_an_experimental_feature_to_detect_large_scale_arm_movements_shaking_flapping_that_may_occur_during_a_seizure">Alarme Flap expérimentale : détecte les grands mouvements des bras (tremblements/flapping) lors d\'une crise.</string>
@@ -815,7 +815,7 @@
     <string name="adjusts_heart_rate_alarm_thresholds_based_on_recent_average_heart_rate">Ajuste les seuils d\'alarme cardiaque selon la FC moyenne récente.</string>
     <string name="enable_rolling_average">Activer moyenne glissante</string>
     <string name="add_ml_model">Ajouter modèle IA</string>
-    <string name="download_and_install_a_new_seizure_detection_model">Télécharger et installer modèle détection crise</string>
+    <string name="download_and_install_a_new_seizure_detection_model">Télécharger et installer un nouveau modèle de détection de crise</string>
     <string name="installed_models">Modèles IA installés</string>
     <string name="osd_algorithm">Algorithme OSD</string>
 </resources>
