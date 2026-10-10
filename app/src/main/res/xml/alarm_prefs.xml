@@ -120,6 +120,11 @@
             android:key="ShowRaiseAlarmButton"
             android:summary="@string/show_raise_alarm_button_summary"
             android:title="@string/show_raise_alarm_button_title" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="ShowMuteAlarmsButton"
+            android:summary="@string/show_mute_alarms_button_summary"
+            android:title="@string/show_mute_alarms_button_title" />
     </PreferenceCategory>
 
     <!--

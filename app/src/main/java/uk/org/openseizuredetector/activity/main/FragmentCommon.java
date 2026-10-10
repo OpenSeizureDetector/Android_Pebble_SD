@@ -183,6 +183,19 @@ public class FragmentCommon extends FragmentOsdBaseClass {
 
             // The dataSourceInfoTv and serverStatusTv are now shown in FragmentSystem
 
+            // #303 - Handle the 'Mute Alarms' Button - it can be hidden to reduce the risk of accidentally muting real alarms
+            Button MAbutton = (Button) mRootView.findViewById(R.id.cancelAudibleButton);
+            SharedPreferences SPM = PreferenceManager.getDefaultSharedPreferences(mContext);
+            boolean showMuteAlarmsButton = SPM.getBoolean("ShowMuteAlarmsButton", true);
+
+            if (!showMuteAlarmsButton) {
+                Log.v(TAG,"Hiding Mute Alarms button - showMuteAlarmsButton: " + showMuteAlarmsButton + ", dataSourceName: " + mConnection.mSdServer.mSdDataSourceName);
+                MAbutton.setVisibility(View.GONE);
+            } else {
+                Log.v(TAG,"Showing Mute Alarms button");
+                MAbutton.setVisibility(View.VISIBLE);
+            }
+
             // Deal with the 'Raise Alarm' Button - It is hidden if we are using network data source to reduce false alarm risk,
             // or if the user has disabled it in the alarm preferences.
             Button button = (Button) mRootView.findViewById(R.id.manualAlarmButton);
