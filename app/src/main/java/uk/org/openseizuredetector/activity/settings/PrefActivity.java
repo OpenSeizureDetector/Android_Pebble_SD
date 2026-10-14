@@ -795,6 +795,9 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         private static final String KEY_SMS_CATEGORY = "SMSCategory";
         private static final String KEY_DATA_SOURCE  = "DataSource";
 
+        // "Show Raise Alarm Button" checkbox - hidden in Network mode (value is kept)
+        private static final String KEY_SHOW_RAISE_ALARM_BUTTON = "ShowRaiseAlarmButton";
+
         // Request-code constants used with startActivityForResult (legacy path, but we use
         // ActivityResultLauncher instead — these are kept as documentation only).
         private ActivityResultLauncher<Intent> mPickerWarning;
@@ -833,6 +836,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             refreshAudibleAlarmSubPrefVisibility();
             refreshAudibleWarningSubPrefVisibility();
             refreshSmsCategoryVisibility();
+            refreshRaiseAlarmButtonVisibility();
             // Wire click listeners for the three file-picker prefs
             // #246: Warning picker disabled - see onAttach() for details.
             // wirePickerPref(KEY_WARNING_URI, mPickerWarning);
@@ -867,6 +871,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             }
             if (KEY_DATA_SOURCE.equals(key)) {
                 refreshSmsCategoryVisibility();
+                refreshRaiseAlarmButtonVisibility();
             }
 
             // Forward critical changes to parent activity so it can orchestrate a restart
@@ -906,6 +911,19 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                     PreferenceManager.getDefaultSharedPreferences(requireContext());
             String dataSource = prefs.getString(KEY_DATA_SOURCE, "SET_FROM_XML");
             setPrefVisible(KEY_SMS_CATEGORY, !"Network".equals(dataSource));
+        }
+
+        /**
+         * Hide the "Show Raise Alarm Button" checkbox when the Network data source is selected
+         * and show it again for any other data source.  Only visibility changes - the stored
+         * true/false value is left untouched, so the checkbox shows the same value as before
+         * once another data source is chosen.
+         */
+        private void refreshRaiseAlarmButtonVisibility() {
+            SharedPreferences prefs =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext());
+            String dataSource = prefs.getString(KEY_DATA_SOURCE, "SET_FROM_XML");
+            setPrefVisible(KEY_SHOW_RAISE_ALARM_BUTTON, !"Network".equals(dataSource));
         }
 
         /** Show/hide the three sound-file pickers based on the UseMp3Alarm checkbox. */
