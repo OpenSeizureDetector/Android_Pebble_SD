@@ -18,6 +18,8 @@
         - Improved reconnection of PineTime watch after it has been disconnected (Issue #297)
         - Allow the 'mute alarms' button to be hidden if desired (Issue #303)
         - Renamed 'Enable Basic Mode' setting to 'Enable Advanced Mode' to make it clearer what it does (Issue #299)
+        - Fixed fault warning pips being interrupted during datasource restarts
+        - Hide the 'Show Raise Alarm' option from the settings when using network data source, as it is ignored (Issue #309)
     V5.0.9  - Fixed issue with SMS alerts failing to send on some phones (Issue #264)
             - Fixed issue with app not re-starting after selecting a bLE device (Issue #261)
         - Improved handling of system re-start after changing settings.
