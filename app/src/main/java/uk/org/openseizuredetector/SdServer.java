@@ -155,7 +155,38 @@ public class SdServer extends Service implements SdDataReceiver {
     private FaultTimer mFaultTimer = null;
     private CheckEventsTimer mEventsTimer = null;
     private int mFaultTimerPeriod = 30;  // Fault Timer Period in sec
-    private boolean mFaultTimerCompleted = false;
+    private volatile boolean mFaultTimerCompleted = false;
+    // True from startFaultTimer() until stopFaultTimer(). Set synchronously (before the FaultTimer
+    // is actually created on the UI thread) so that a start/stop race can neither create two
+    // timers nor leave a timer running after the fault has been cleared.
+    private boolean mFaultTimerActive = false;
+    private final Object mFaultTimerLock = new Object();
+
+    // FaultWarning beep loop: once the fault timer has completed, a single beep is played every
+    // FAULT_BEEP_PERIOD_MS until the fault clears. It is driven by mFaultBeepLoop - NOT by the
+    // data source's fault callbacks - so the beeping carries on while the data source is being
+    // stopped/restarted (even when doesn't deliver callbacks for approx. 20 s).
+    private static final long FAULT_BEEP_PERIOD_MS = 5000;
+    // change fault beep to a single pip of 60 ms instead of double-pip
+    private static final int FAULT_BEEP_DURATION_MS = 60;
+    private boolean mFaultBeepLoopRunning = false;
+    private final Object mFaultBeepLock = new Object();
+    private final Runnable mFaultBeepLoop = new Runnable() {
+        @Override
+        public void run() {
+            synchronized (mFaultBeepLock) {
+                if (!mFaultBeepLoopRunning || mIsDestroying) return;
+            }
+            faultWarningBeep();
+            synchronized (mFaultBeepLock) {
+                if (mFaultBeepLoopRunning && !mIsDestroying) {
+                    // removeCallbacks first so a stop/start race can never leave two loops running
+                    mHandler.removeCallbacks(this);
+                    mHandler.postDelayed(this, FAULT_BEEP_PERIOD_MS);
+                }
+            }
+        }
+    };
 
     private CheckModelUpdateTimer mModelUpdateTimer = null;
     private long mModelUpdateCheckPeriod = 86400;  // Model update check period in seconds (default: 1 day)
@@ -245,10 +276,6 @@ public class SdServer extends Service implements SdDataReceiver {
     private android.media.MediaPlayer mMediaPlayer = null; // used for MP3 alarm sounds
     private String mCurrentMp3Uri = null; // URI of currently playing MP3
     private long mMp3StartTimeMs = 0; // Time when current MP3 started playing
-    // Second beep of the FaultWarning's double-beep pattern (see faultWarningBeep()) - kept as
-    // a field so a repeat FaultWarning can cancel/replace a still-pending second beep instead
-    // of letting them pile up.
-    private final Runnable mFaultWarningSecondBeep = () -> beep(80, mWarningToneGenerator);
 
     private NetworkBroadcastReceiver mNetworkBroadcastReceiver;
 
@@ -814,11 +841,15 @@ public class SdServer extends Service implements SdDataReceiver {
             mWatchdogThread = null;
         }
 
-        // Stop the Fault timer
-        if (mFaultTimer != null) {
-            Log.d(TAG, "onDestroy(): cancelling fault timer");
-            mFaultTimer.cancel();
-            mFaultTimer = null;
+        // Stop the Fault timer and the FaultWarning beep loop
+        stopFaultBeepLoop();
+        synchronized (mFaultTimerLock) {
+            mFaultTimerActive = false;
+            if (mFaultTimer != null) {
+                Log.d(TAG, "onDestroy(): cancelling fault timer");
+                mFaultTimer.cancel();
+                mFaultTimer = null;
+            }
         }
 
         // Stop the Event timer
@@ -1773,9 +1804,9 @@ public class SdServer extends Service implements SdDataReceiver {
      * default, or Notification if the user has unchecked WarningOverrideSilentMode - see
      * updatePrefs()) - like Warning, they never play an MP3 file, even if "Use MP3 Alarm Sound"
      * (mMp3Alarm) is enabled for Alarms.
-     * To stay clearly distinguishable from the single Warning beep (see warningBeep()) without
-     * relying on a fragile difference in beep duration, FaultWarning plays a short double-beep
-     * pattern instead: two 80ms beeps 120ms apart, both on mWarningToneGenerator's stream.
+     * FaultWarning plays a single short (FAULT_BEEP_DURATION_MS) beep on mWarningToneGenerator's
+     * stream. It is repeated every FAULT_BEEP_PERIOD_MS by the beep loop (see startFaultBeepLoop()),
+     * which is independent of the data source's fault callbacks.
      */
     public void faultWarningBeep() {
         if (mCancelAudible || (mSdData != null && mSdData.mMute != 0)) {
@@ -1786,11 +1817,9 @@ public class SdServer extends Service implements SdDataReceiver {
                     Log.i(TAG, "SdServer.faultWarningBeep() - playing MP3");
                     playMp3(mMp3FaultUri, "fault");
                 } else {
-                    beep(80, mWarningToneGenerator);
-                    mHandler.removeCallbacks(mFaultWarningSecondBeep);
-                    mHandler.postDelayed(mFaultWarningSecondBeep, 120);
+                    beep(FAULT_BEEP_DURATION_MS, mWarningToneGenerator);
                     Log.v(TAG, "faultWarningBeep()");
-                    Log.i(TAG, "SdServer.faultWarningBeep() - double-beeping");
+                    Log.i(TAG, "SdServer.faultWarningBeep() - beeping");
                 }
             } else {
                 Log.v(TAG, "faultWarningBeep() - silent...");
@@ -2611,8 +2640,9 @@ public class SdServer extends Service implements SdDataReceiver {
      */
     private void doFaultPipCheck() {
         if (mFaultTimerCompleted) {
-            Log.w(TAG, "FAULT: Timer completed - calling faultWarningBeep()");
-            faultWarningBeep();
+            // Idempotent - the loop does the actual beeping every FAULT_BEEP_PERIOD_MS, whether
+            // or not the data source keeps delivering fault callbacks.
+            startFaultBeepLoop();
         } else {
             startFaultTimer();
             Log.i(TAG, "doFaultPipCheck() - starting Fault Timer");
@@ -2620,34 +2650,73 @@ public class SdServer extends Service implements SdDataReceiver {
     }
 
     public void startFaultTimer() {
-        if (mFaultTimer != null) {
-            Log.v(TAG, "startFaultTimer(): fault timer already running - not doing anything.");
-            Log.i(TAG, "startFaultTimer() - fault timer already running");
-        } else {
-            Log.v(TAG, "startFaultTimer(): starting fault timer.");
-            Log.i(TAG, "startFaultTimer() - starting fault timer");
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    mFaultTimerCompleted = false;
+        synchronized (mFaultTimerLock) {
+            if (mFaultTimerActive) {
+                Log.v(TAG, "startFaultTimer(): fault timer already running - not doing anything.");
+                Log.i(TAG, "startFaultTimer() - fault timer already running");
+                return;
+            }
+            mFaultTimerActive = true;
+            mFaultTimerCompleted = false;
+        }
+        Log.v(TAG, "startFaultTimer(): starting fault timer.");
+        Log.i(TAG, "startFaultTimer() - starting fault timer");
+        runOnUiThread(new Runnable() {
+            public void run() {
+                synchronized (mFaultTimerLock) {
+                    // stopFaultTimer() may have been called before we got here.
+                    if (!mFaultTimerActive || mFaultTimer != null) return;
                     mFaultTimer =
                             // convert to ms.
                             new FaultTimer(mFaultTimerPeriod * 1000, 1000);
                     mFaultTimer.start();
                 }
-            });
-        }
+            }
+        });
     }
 
     public void stopFaultTimer() {
-        if (mFaultTimer != null) {
-            //Log.v(TAG, "stopFaultTimer(): fault timer already running - cancelling it.");
-            Log.i(TAG, "stopFaultTimer() - stopping fault timer");
-            mFaultTimer.cancel();
-            mFaultTimer = null;
+        boolean wasActive;
+        synchronized (mFaultTimerLock) {
+            wasActive = mFaultTimerActive;
+            mFaultTimerActive = false;
             mFaultTimerCompleted = false;
-        } else {
-            //Log.v(TAG, "stopFaultTimer(): fault timer not running - not doing anything.");
-            //Log.i(TAG, "stopFaultTimer() - fault timer not running");
+            if (mFaultTimer != null) {
+                mFaultTimer.cancel();
+                mFaultTimer = null;
+            }
+        }
+        stopFaultBeepLoop();
+        if (wasActive) {
+            Log.i(TAG, "stopFaultTimer() - stopping fault timer");
+        }
+    }
+
+    /**
+     * Start the repeating FaultWarning beep (one beep every FAULT_BEEP_PERIOD_MS). Safe to call
+     * repeatedly and from any thread: does nothing if the loop is already running. The first beep
+     * is played straight away.
+     */
+    private void startFaultBeepLoop() {
+        synchronized (mFaultBeepLock) {
+            if (mFaultBeepLoopRunning || mIsDestroying) return;
+            mFaultBeepLoopRunning = true;
+            Log.i(TAG, "startFaultBeepLoop() - starting fault beep loop");
+            mHandler.post(mFaultBeepLoop);
+        }
+    }
+
+    /**
+     * Stop the repeating FaultWarning beep. Called when the fault clears (stopFaultTimer()) and
+     * when the service is destroyed.
+     */
+    private void stopFaultBeepLoop() {
+        synchronized (mFaultBeepLock) {
+            if (mFaultBeepLoopRunning) {
+                Log.i(TAG, "stopFaultBeepLoop() - stopping fault beep loop");
+            }
+            mFaultBeepLoopRunning = false;
+            if (mHandler != null) mHandler.removeCallbacks(mFaultBeepLoop);
         }
     }
 
@@ -2666,9 +2735,15 @@ public class SdServer extends Service implements SdDataReceiver {
         @Override
         public void onFinish() {
             try {
-                mFaultTimerCompleted = true;
+                // Ignore a timer that has been cancelled/replaced in the meantime.
+                synchronized (mFaultTimerLock) {
+                    if (!mFaultTimerActive || mFaultTimer != FaultTimer.this) return;
+                    mFaultTimerCompleted = true;
+                }
                 Log.v(TAG, "mFaultTimer - removing mFaultTimerRunning flag");
                 Log.d(TAG, "FaultTimer.onFinish()");
+                Log.w(TAG, "FAULT: Timer completed - starting fault beep loop");
+                startFaultBeepLoop();
             } catch (Exception e) {
                 Log.e(TAG, "Error in FaultTimer.onFinish()", e);
                 mUtil.writeExceptionLog("FaultTimer", "onFinish", e);
