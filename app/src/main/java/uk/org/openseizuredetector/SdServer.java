@@ -168,7 +168,7 @@ public class SdServer extends Service implements SdDataReceiver {
     // stopped/restarted (even when doesn't deliver callbacks for approx. 20 s).
     private static final long FAULT_BEEP_PERIOD_MS = 5000;
     // change fault beep to a single pip of 60 ms instead of double-pip
-    private static final int FAULT_BEEP_DURATION_MS = 60;
+    private static final int FAULT_BEEP_DURATION_MS = 10;
     private boolean mFaultBeepLoopRunning = false;
     private final Object mFaultBeepLock = new Object();
     private final Runnable mFaultBeepLoop = new Runnable() {
