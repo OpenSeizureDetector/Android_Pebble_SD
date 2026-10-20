@@ -712,6 +712,8 @@
     <string name="auth_failure_message">Uwierzytelnianie nieudane - sprawdź nazwę użytkownika i hasło</string>
     <string name="show_raise_alarm_button_title">Pokaż przycisk alarmu</string>
     <string name="show_raise_alarm_button_summary">Pokaż przycisk „Wywołaj alarm” na ekranie głównym. Wyłącz, aby zapobiec przypadkowym alarmom.</string>
+    <string name="show_mute_alarms_button_title">Pokaż przycisk \'Wycisz alarmy\'</string>
+    <string name="show_mute_alarms_button_summary">Wyświetl przycisk \'Wycisz alarmy\' na ekranie głównym. Umożliwia to wyciszenie alarmów na 10 minut. Wyłącz tę funkcję, aby uniknąć przypadkowego wyciszenia alarmów.</string>
     <string name="system_status">STAN SYSTEMU</string>
     <string name="active_algorithms">Aktywne algorytmy:</string>
     <string name="label_time">Czas = %s</string>
@@ -810,4 +812,7 @@
     <string name="add_ml_model">Dodaj model ML</string>
     <string name="download_and_install_a_new_seizure_detection_model">Pobierz i zainstaluj nowy model wykrywania</string>
     <string name="installed_models">Zainstalowane modele</string>
-    <string name="osd_algorithm">Algorytm OSD</string></resources>
+    <string name="osd_algorithm">Algorytm OSD</string>
+    <string name="advanced_mode_summary">Włącz tryb zaawansowany, aby wyświetlić dodatkowe ustawienia i zakładki</string>
+    <string name="advanced_mode">Tryb zaawansowany</string>
+</resources>

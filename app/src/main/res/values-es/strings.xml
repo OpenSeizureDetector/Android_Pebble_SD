@@ -704,6 +704,8 @@ o envía un correo a graham@openseizuredetector.org.uk\n\nApp Android y app de r
     <string name="auth_failure_message">Autenticación fallida - comprueba usuario y clave</string>
     <string name="show_raise_alarm_button_title">Mostrar botón Activar alarma</string>
     <string name="show_raise_alarm_button_summary">Mostrar el botón «Activar alarma» en la pantalla principal. Desactívalo para evitar alarmas accidentales.</string>
+    <string name="show_mute_alarms_button_title">Botón Mostrar alarmas silenciadas</string>
+    <string name="show_mute_alarms_button_summary">Muestra el botón \'Silenciar alarmas\' en la pantalla principal. Esto permite silenciar las alarmas durante 10 minutos. Desactívalo para evitar que las alarmas se silencien accidentalmente.</string>
     <string name="system_status">ESTADO</string>
     <string name="active_algorithms">Algoritmos activos</string>
     <string name="label_time">Hora = %s</string>
@@ -803,4 +805,6 @@ o envía un correo a graham@openseizuredetector.org.uk\n\nApp Android y app de r
     <string name="download_and_install_a_new_seizure_detection_model">Descargar e instalar modelo de detección</string>
     <string name="installed_models">Modelos instalados</string>
     <string name="osd_algorithm">Algoritmo OSD</string>
+    <string name="advanced_mode_summary">Activa el modo avanzado para ver opciones y pestañas adicionales</string>
+    <string name="advanced_mode">Modo avanzado</string>
 </resources>

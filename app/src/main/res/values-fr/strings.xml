@@ -719,6 +719,8 @@
     <string name="auth_failure_message">Échec connexion – vérifiez identifiant et mot de passe</string>
     <string name="show_raise_alarm_button_title">Afficher bouton Alarme</string>
     <string name="show_raise_alarm_button_summary">Afficher le bouton « Déclencher alarme » sur l’écran principal. Désactivez-le pour éviter les alarmes accidentelles.</string>
+    <string name="show_mute_alarms_button_title">Afficher \'Muet\' des alarmes</string>
+    <string name="show_mute_alarms_button_summary">Affichez le bouton \'Désactiver alarmes\' sur l\'écran principal. Cela permet de désactiver les alarmes pendant 10 minutes. Désactivez cette option pour éviter désactivation accidentelle des alarmes.</string>
     <string name="system_status">ÉTAT SYSTÈME</string>
     <string name="active_algorithms">Algorithmes actifs</string>
     <string name="label_time">Heure=%s</string>
@@ -818,4 +820,6 @@
     <string name="download_and_install_a_new_seizure_detection_model">Télécharger et installer un nouveau modèle de détection de crise</string>
     <string name="installed_models">Modèles IA installés</string>
     <string name="osd_algorithm">Algorithme OSD</string>
+    <string name="advanced_mode_summary">Activez le mode avancé pour afficher des paramètres et des onglets supplémentaires</string>
+    <string name="advanced_mode">Mode Avancé</string>
 </resources>
