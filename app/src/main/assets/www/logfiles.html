@@ -1,28 +1,365 @@
-<html>
-  
-  <head>
-    <title>Open Seizure Detector</title>
-    <script src="js/jquery.js"></script>
-    <script src="js/jBeep.js"></script>
-    <script src="js/Chart.min.js"></script>
-    <script src="js/osd_main.js"></script>
-    <script src="js/osd_logs.js"></script>
-    <link rel="stylesheet" href="css/osd.css" />
-  </head>
-  
-  <body>    
-    <div data-role="page" id="logs">
-      <div data-role="header">
-	<a href="/"><img src="img/icon_48x48.png" alt="logo"/></a>
-	<h1>Open Seizure Detector - Logs</h1>
-      </div>
-      <div role="main" class="ui-content">
-	<div id="logfilelist"> </div>
-      </div>
-      <div data-role="footer">
-	<a href="/">Home</a>
-      </div>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0d1626">
+  <title>Log files - Open Seizure Detector</title>
+
+  <!-- Self-contained: no jQuery, no external CSS (the server sends every asset as text/html). -->
+  <style>
+    :root {
+      --ink: #0d1626;
+      --panel: #15223a;
+      --panel-hi: #1b2b48;
+      --line: #2a3b5c;
+      --text: #e9eef7;
+      --muted: #93a3bf;
+      --ok: #3cc7b0;
+      --info: #7fa6ff;
+      --warn: #f2a93b;
+      --alarm: #ff5d5d;
+      --font: "Avenir Next", "Segoe UI", Roboto, "Helvetica Neue", system-ui, sans-serif;
+      --mono: ui-monospace, "Cascadia Mono", Consolas, Menlo, "DejaVu Sans Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--ink);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 1rem;
+      line-height: 1.45;
+    }
+
+    .wrap { max-width: 78rem; margin: 0 auto; padding: 0 1.25rem 3rem; }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      padding: 1.25rem 0 1rem;
+    }
+    header img { width: 2.5rem; height: 2.5rem; border-radius: .6rem; }
+    header h1 { margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--muted); flex: 1; }
+    header a { color: var(--muted); text-underline-offset: .2em; }
+    header a:hover { color: var(--text); }
+
+    /* ---------- toolbar ---------- */
+    .toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .6rem;
+      align-items: center;
+      padding: .75rem 0;
+      background: var(--ink);
+      border-bottom: 1px solid var(--line);
+    }
+    select, input[type="search"], .btn {
+      min-height: 2.6rem;
+      border: 1px solid var(--line);
+      border-radius: .7rem;
+      background: var(--panel);
+      color: var(--text);
+      font: inherit;
+      padding: 0 .9rem;
+    }
+    select { min-width: 14rem; max-width: 100%; }
+    input[type="search"] { flex: 1 1 12rem; min-width: 10rem; }
+    .btn { cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+    .btn:hover, select:hover { border-color: var(--muted); }
+    :focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: .4rem; width: 100%; }
+    .chip {
+      min-height: 2.2rem;
+      padding: 0 .8rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: .9rem;
+      cursor: pointer;
+    }
+    .chip[aria-pressed="true"] { color: var(--text); background: var(--panel-hi); border-color: var(--c, var(--muted)); }
+    .chip .n { color: var(--muted); margin-left: .35rem; font-variant-numeric: tabular-nums; }
+    .chip[data-level="ERROR"]   { --c: var(--alarm); }
+    .chip[data-level="WARN"]    { --c: var(--warn); }
+    .chip[data-level="INFO"]    { --c: var(--info); }
+
+    .meta { margin: .8rem 0 .6rem; color: var(--muted); font-size: .92rem; min-height: 1.4em; }
+    .meta button {
+      margin-left: .6rem; padding: 0 .7rem; min-height: 1.9rem;
+      border: 1px solid var(--line); border-radius: .5rem;
+      background: var(--panel); color: var(--text); font: inherit; font-size: .88rem; cursor: pointer;
+    }
+
+    /* ---------- log lines ---------- */
+    #view { border: 1px solid var(--line); border-radius: .9rem; background: var(--panel); overflow: hidden; }
+
+    .row {
+      display: grid;
+      grid-template-columns: 6.8rem 4.6rem 11rem 1fr;
+      gap: 0 .8rem;
+      align-items: baseline;
+      padding: .28rem .9rem;
+      border-left: .3rem solid transparent;
+      font-size: .9rem;
+    }
+    .row:hover { background: rgba(255, 255, 255, .035); }
+    .t   { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .lvl { font-size: .78rem; font-weight: 700; letter-spacing: .03em; color: var(--lc, var(--muted)); }
+    .tag { color: var(--text); opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .msg { font-family: var(--mono); font-size: .86rem; overflow-wrap: anywhere; white-space: pre-wrap; }
+    .extra { grid-column: 4; margin: .15rem 0 0; color: var(--muted); font-family: var(--mono); font-size: .8rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+    .lv-ERROR   { --lc: var(--alarm); border-left-color: var(--alarm); background: rgba(255, 93, 93, .09); }
+    .lv-WARN    { --lc: var(--warn);  border-left-color: var(--warn);  background: rgba(242, 169, 59, .07); }
+    .lv-INFO    { --lc: var(--info); }
+    .lv-DEBUG, .lv-VERBOSE { --lc: var(--muted); }
+    .lv-DEBUG .msg, .lv-VERBOSE .msg { color: var(--muted); }
+
+    .day, .mark, .plain {
+      padding: .5rem .9rem;
+      font-size: .85rem;
+      color: var(--muted);
+      background: var(--panel-hi);
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    .plain { background: none; border: 0; padding: .2rem .9rem; font-family: var(--mono); font-size: .86rem; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; }
+    .mark { color: var(--ok); }
+
+    .empty { padding: 2.5rem 1.2rem; color: var(--muted); }
+    .empty strong { color: var(--text); display: block; margin-bottom: .3rem; font-weight: 600; }
+
+    @media (max-width: 52rem) {
+      .row { grid-template-columns: auto auto 1fr; }
+      .tag { grid-column: 3; }
+      .msg, .extra { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header>
+      <img src="img/icon_48x48.png" alt="">
+      <h1>Log files</h1>
+      <a href="index.html">Back to status</a>
+    </header>
+
+    <div class="toolbar">
+      <select id="file" aria-label="Log file"><option value="">Loading file list…</option></select>
+      <input id="q" type="search" placeholder="Filter text" aria-label="Filter text">
+      <button class="btn" id="reload" type="button">Reload</button>
+      <button class="btn" id="end" type="button">Jump to end</button>
+      <a class="btn" id="raw" href="#" download hidden>Download</a>
+      <div class="chips" id="chips"></div>
     </div>
-  </body>
-  
+
+    <div class="meta" id="meta"></div>
+
+    <div id="view">
+      <div class="empty"><strong>No file selected</strong>Choose a log file above to read it here, one entry per line.</div>
+    </div>
+
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  var MAX_ROWS = 3000;
+  var LEVEL_ORDER = ["ERROR", "WARN", "INFO", "DEBUG", "VERBOSE"];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var els = { file: $("file"), q: $("q"), view: $("view"), meta: $("meta"),
+              chips: $("chips"), reload: $("reload"), end: $("end"), raw: $("raw") };
+
+  var entries = [];
+  var levelOn = {};      // level -> false when switched off; anything else counts as on
+  var showAll = false;
+  var current = "";
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  function normLevel(l) {
+    l = l.toUpperCase();
+    var map = { WARNING: "WARN", W: "WARN", E: "ERROR", I: "INFO", D: "DEBUG", V: "VERBOSE", TRACE: "VERBOSE" };
+    return map[l] || l;
+  }
+
+  // 2026-10-08 00:00:00.743 [INFO] [main] SdServer: message...
+  var LINE = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2}(?:[.,]\d+)?)\s+\[([A-Za-z]+)\]\s+(?:\[([^\]]*)\]\s+)?([^\s:]+):\s?(.*)$/;
+
+  function parse(text) {
+    var out = [], last = null;
+    text.split(/\r?\n/).forEach(function (raw) {
+      if (!raw.trim()) return;
+      var m = LINE.exec(raw);
+      if (m) {
+        last = { kind: "log", date: m[1], time: m[2].replace(",", "."), level: normLevel(m[3]),
+                 thread: m[4] || "", tag: m[5], msg: m[6], extra: [] };
+        out.push(last);
+      } else if (/^=+\s.*\s=+$/.test(raw.trim())) {
+        last = null;
+        out.push({ kind: "mark", text: raw.replace(/^\s*=+\s*/, "").replace(/\s*=+\s*$/, "") });
+      } else if (last) {
+        last.extra.push(raw);               // every real entry starts with a timestamp, so anything else continues the entry above (stack traces, wrapped text)
+      } else {
+        last = null;
+        out.push({ kind: "plain", text: raw });
+      }
+    });
+    return out;
+  }
+
+  function buildChips() {
+    var counts = {};
+    entries.forEach(function (e) { if (e.kind === "log") counts[e.level] = (counts[e.level] || 0) + 1; });
+    var levels = Object.keys(counts).sort(function (a, b) {
+      var ia = LEVEL_ORDER.indexOf(a), ib = LEVEL_ORDER.indexOf(b);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+    els.chips.innerHTML = levels.map(function (l) {
+      var on = levelOn[l] !== false;
+      return '<button type="button" class="chip" data-level="' + esc(l) + '" aria-pressed="' + on + '">' +
+             esc(l) + '<span class="n">' + counts[l] + '</span></button>';
+    }).join("");
+  }
+
+  function render(keepScroll) {
+    var q = els.q.value.trim().toLowerCase();
+    var visible = entries.filter(function (e) {
+      if (e.kind === "log" && levelOn[e.level] === false) return false;
+      if (q) {
+        var hay = e.kind === "log" ? e.tag + " " + e.thread + " " + e.msg + " " + e.extra.join(" ") : e.text;
+        if (hay.toLowerCase().indexOf(q) < 0) return false;
+      }
+      return true;
+    });
+
+    var shown = showAll ? visible : visible.slice(-MAX_ROWS);
+    var html = [], lastDate = "";
+    shown.forEach(function (e) {
+      if (e.kind === "log") {
+        if (e.date !== lastDate) { html.push('<div class="day">' + esc(e.date) + '</div>'); lastDate = e.date; }
+        html.push('<div class="row lv-' + esc(e.level) + '">' +
+          '<span class="t">' + esc(e.time) + '</span>' +
+          '<span class="lvl">' + esc(e.level) + '</span>' +
+          '<span class="tag" title="' + esc(e.tag + (e.thread ? " on thread " + e.thread : "")) + '">' + esc(e.tag) + '</span>' +
+          '<span class="msg">' + esc(e.msg) + '</span>' +
+          (e.extra.length ? '<div class="extra">' + esc(e.extra.join("\n")) + '</div>' : "") +
+          '</div>');
+      } else if (e.kind === "mark") {
+        html.push('<div class="mark">' + esc(e.text) + '</div>');
+      } else {
+        html.push('<div class="plain">' + esc(e.text) + '</div>');
+      }
+    });
+
+    if (!html.length) {
+      els.view.innerHTML = '<div class="empty"><strong>Nothing to show</strong>' +
+        (entries.length ? "No entries match the current filters." : "This file is empty.") + '</div>';
+    } else {
+      els.view.innerHTML = html.join("");
+    }
+
+    var hidden = visible.length - shown.length;
+    els.meta.innerHTML = esc(current) + ": " + entries.length + " entries, " + visible.length + " match" +
+      (hidden > 0 ? ", showing the newest " + shown.length + '<button type="button" id="all">Show all</button>' : "");
+    if (!keepScroll) window.scrollTo(0, document.body.scrollHeight);
+  }
+
+  function setMessage(title, text) {
+    els.view.innerHTML = '<div class="empty"><strong>' + esc(title) + '</strong>' + esc(text) + '</div>';
+    els.meta.textContent = "";
+  }
+
+  function load(name) {
+    if (!name) return;
+    current = name;
+    showAll = false;
+    els.file.value = name;
+    history.replaceState(null, "", "#file=" + encodeURIComponent(name));
+    els.raw.href = "/logs/" + encodeURIComponent(name);
+    els.raw.setAttribute("download", name);
+    els.raw.hidden = false;
+    setMessage("Loading", name);
+
+    fetch("/logs/" + encodeURIComponent(name), { cache: "no-store" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); })
+      .then(function (text) {
+        entries = parse(text);
+        buildChips();
+        render(false);
+      })
+      .catch(function (err) {
+        setMessage("Could not load the file", err.message + ". Check that the app is running on the phone, then press Reload.");
+      });
+  }
+
+  function loadList() {
+    fetch("/logs", { cache: "no-store" })
+      .then(function (r) { return r.text(); })      // the server labels this JSON as text/html, so parse by hand
+      .then(function (t) {
+        var names = (JSON.parse(t).logFileList || []).slice().sort().reverse();
+        if (!names.length) {
+          els.file.innerHTML = '<option value="">No log files found</option>';
+          setMessage("No log files yet", "The app has not written any log files on this phone.");
+          return;
+        }
+        els.file.innerHTML = '<option value="">Choose a log file…</option>' +
+          names.map(function (n) { return '<option value="' + esc(n) + '">' + esc(n) + '</option>'; }).join("");
+        var m = /file=([^&]+)/.exec(location.hash);
+        if (m) load(decodeURIComponent(m[1]));
+      })
+      .catch(function () {
+        els.file.innerHTML = '<option value="">File list unavailable</option>';
+        setMessage("Could not read the file list", "Check that the app is running on the phone, then reload this page.");
+      });
+  }
+
+  els.file.addEventListener("change", function () { load(els.file.value); });
+  els.reload.addEventListener("click", function () { if (current) load(current); else loadList(); });
+  els.end.addEventListener("click", function () { window.scrollTo(0, document.body.scrollHeight); });
+
+  var timer;
+  els.q.addEventListener("input", function () {
+    clearTimeout(timer);
+    timer = setTimeout(function () { render(true); }, 200);
+  });
+
+  els.chips.addEventListener("click", function (ev) {
+    var b = ev.target.closest(".chip");
+    if (!b) return;
+    var l = b.getAttribute("data-level");
+    levelOn[l] = levelOn[l] === false;           // toggle
+    b.setAttribute("aria-pressed", levelOn[l] !== false);
+    render(true);
+  });
+
+  els.meta.addEventListener("click", function (ev) {
+    if (ev.target.id === "all") { showAll = true; render(true); }
+  });
+
+  loadList();
+})();
+</script>
+</body>
+
 </html>

@@ -27,12 +27,20 @@ function populate_settings(dataObj) {
               ;
    $("#sdSettings").html(htmlStr);
 
-   $("#pebStat3").html("Pebble Battery Charge = "+batteryPc+" %<br/>");
+   if (!battery_from_data) setBattery(batteryPc);
+}
 
-   bgCol = "blue";
-   if (batteryPc<30) bgCol = "orange";
-   if (batteryPc<20) bgCol = "red";
-   $("#pebStat3").css("background-color",bgCol);
+// Watch battery tile.  batteryPc comes either from /data (preferred, if the server
+// includes it) or from /settings (fallback, polled slowly because it changes slowly).
+var battery_from_data = false;
+
+function setBattery(batteryPc) {
+   if (typeof batteryPc === 'undefined' || batteryPc === null || isNaN(batteryPc)) return;
+   var bgCol = "blue";
+   if (batteryPc < 30) bgCol = "orange";
+   if (batteryPc < 20) bgCol = "red";
+   $("#pebStat3").html("Watch battery = " + batteryPc + " %")
+                 .css("background-color", bgCol);
 }
 
 // Request data from the server.
@@ -44,6 +52,12 @@ function process_data(dataObj) {
     //console.log("process_data");
     //console.log(dataObj);
    var timeStr = dataObj['dataTime'];
+   var tm = /\d{1,2}:\d{2}:\d{2}/.exec(String(timeStr));   // show the time only, not the date
+   if (tm) timeStr = tm[0];
+   if (typeof dataObj['batteryPc'] !== 'undefined') {
+       battery_from_data = true;
+       setBattery(dataObj['batteryPc']);
+   }
    var alarmState = dataObj['alarmState'];
    var alarmPhrase = dataObj['alarmPhrase'];
    var pebCon = dataObj['watchConnected'];
@@ -163,11 +177,11 @@ acceptAlarm = function() {
 // NOTE:  Settings and spectrum retrieval disabled because we do not display those any more for simplicity.
 $(document).ready(function() {  
    sd_muted = 0;
-   //get_settings();
+   get_settings();
    get_data();
    //get_spectrum();
    setInterval("get_data();",2000);
-   //setInterval("get_settings();",10000);
+   setInterval("if (!battery_from_data) get_settings();",60000);
    //setInterval("get_spectrum();",5000);
    $("#muteButton").click(toggleMute);
    $("#acceptButton").click(acceptAlarm);
