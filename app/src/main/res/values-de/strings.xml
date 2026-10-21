@@ -780,6 +780,8 @@
     <string name="auth_failure_message">Anmeldung fehlgeschlagen - bitte prüfe Benutzername und Passwort</string>
     <string name="show_raise_alarm_button_title">Alarm auslösen Button zeigen</string>
     <string name="show_raise_alarm_button_summary">Den \'Alarm\' auslösen Button auf dem Hauptbildschirm zeigen. Deaktivieren um versehentliche Alarmauslösung zu vermeiden.</string>
+    <string name="show_mute_alarms_button_title">Alarme stummschalten Button anzeigen?</string>
+    <string name="show_mute_alarms_button_summary">\'Alarme stummschalten\' auf dem Hauptbildschirm anzeigen. Damit lassen sich Alarme für 10 Minuten stummschalten. Diese Funktion deaktivieren, um ein versehentliches Stummschalten der Alarme zu vermeiden.</string>
     <string name="system_status">SYSTEMSTATUS</string>
     <string name="active_algorithms">Aktive Algorithmen:</string>
     <string name="label_time">Zeit = %s</string>
@@ -880,4 +882,6 @@
     <string name="data_source_fault">Fehler Datenquelle</string>
     <string name="network_fault">Netzwerkfehler</string>
     <string name="osd_algorithm">OSD Algorithmus</string>
+    <string name="advanced_mode_summary">Erweiterten Modus aktivieren, um zusätzliche Einstellungen anzuzeigen</string>
+    <string name="advanced_mode">Erweiterte Einstellungen</string>
 </resources>
