@@ -21,6 +21,7 @@
         - Fixed fault warning pips being interrupted during datasource restarts
         - Hide the 'Show Raise Alarm' option from the settings when using network data source, as it is ignored (Issue #309)
         - Added Chinese translation (thank you abdilim0118!)
+        - Modernised the web page interface
     V5.0.9  - Fixed issue with SMS alerts failing to send on some phones (Issue #264)
             - Fixed issue with app not re-starting after selecting a bLE device (Issue #261)
         - Improved handling of system re-start after changing settings.
