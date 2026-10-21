@@ -1418,7 +1418,7 @@ public class LogManagerControlActivity extends ServiceConnectedActivity {
 
 
     private void showDataSharingDialog() {
-        Log.i(TAG, "MainActivity.showDataSharingDialog()");
+        Log.i(TAG, "LogManagerControlActivity.showDataSharingDialog()");
         View aboutView = getLayoutInflater().inflate(R.layout.data_sharing_dialog_layout, null, false);
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setIcon(R.drawable.datasharing_fault_24x24);

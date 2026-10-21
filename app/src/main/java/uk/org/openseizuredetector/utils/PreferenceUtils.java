@@ -15,7 +15,7 @@ public final class PreferenceUtils {
 
     public static boolean getBooleanFromXml(SharedPreferences prefs, String key) {
         if (!prefs.contains(key)) {
-            Log.w(TAG, "Preference '" + key + "' not initialised - returning XML fallback");
+            Log.w(TAG, "Preference '" + key + "' not initialised - returning false");
         }
         return prefs.getBoolean(key, false);
     }
