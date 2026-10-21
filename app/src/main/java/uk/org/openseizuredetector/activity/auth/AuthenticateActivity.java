@@ -75,7 +75,6 @@ public class AuthenticateActivity extends AppCompatActivity {
 
 
         mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
-        mUtil = new OsdUtil(getApplicationContext(), serverStatusHandler);
         if (!mUtil.isServerRunning()) {
             mUtil.showToast(getString(R.string.error_server_not_running));
             finish();
@@ -202,8 +201,6 @@ public class AuthenticateActivity extends AppCompatActivity {
                 updateUi();
             });
 
-// ...
-
 
     private void updateUi() {
         Log.v(TAG, "updateUi()");
@@ -311,16 +308,8 @@ public class AuthenticateActivity extends AppCompatActivity {
                                 .createSignInIntentBuilder()
                                 .setAvailableProviders(Arrays.asList(
                                         new AuthUI.IdpConfig.GoogleBuilder().build(),
-                                        //new AuthUI.IdpConfig.FacebookBuilder().build(),
-                                        //new AuthUI.IdpConfig.TwitterBuilder().build(),
-                                        //new AuthUI.IdpConfig.MicrosoftBuilder().build(),
-                                        //new AuthUI.IdpConfig.YahooBuilder().build(),
-                                        //new AuthUI.IdpConfig.AppleBuilder().build(),
                                         new AuthUI.IdpConfig.EmailBuilder().build()
-                                        //new AuthUI.IdpConfig.PhoneBuilder().build()
-                                        //new AuthUI.IdpConfig.AnonymousBuilder().build()))
                                 ))
-                                // ... options ...
                                 .build();
                         signInLauncher.launch(signInIntent);
                     } else {
@@ -330,31 +319,28 @@ public class AuthenticateActivity extends AppCompatActivity {
                         String passwd = mPasswdEt.getText().toString();
                         Log.v(TAG, "onOK() - uname=" + uname + ", passwd=" + passwd);
                         showProgressDialog();
-                        mWac.authenticate(uname, passwd, new WebApiConnection.StringCallback() {
-                            @Override
-                            public void accept(String retVal) {
-                                dismissProgressDialog();
-                                if (retVal != null && !retVal.startsWith("ERROR:")) {
-                                    Log.d(TAG, "Authentication Success - token is " + retVal);
-                                    mUtil.showToast("Login Successful");
-                                    saveAuthToken(retVal);
-                                    updateUi();
-                                    // Trigger immediate upload after successful login
-                                    if (mLm != null) {
-                                        Log.i(TAG, "Authentication successful - triggering immediate upload");
-                                        mLm.triggerImmediateUpload();
-                                    }
+                        mWac.authenticate(uname, passwd, retVal -> {
+                            if (isFinishing() || isDestroyed()) {
+                                return;
+                            }
+                            dismissProgressDialog();
+                            if (retVal != null && !retVal.startsWith("ERROR:")) {
+                                Log.i(TAG, "Authentication Successful");
+                                mUtil.showToast("Login Successful - restarting app to apply new credentials");
+                                saveAuthToken(retVal);
+                                // Restart the app to ensure that the new credentials are applied and log manager starts uploading correctly.
+                                mUtil.shutdownApp(AuthenticateActivity.this, true, false, "Settings changed - restarting app...");
+                            } else {
+                                Log.e(TAG, "onOk: Authentication failure for " + uname + " - error: " + retVal);
+                                // Show a specific message so the user knows whether to check
+                                // their credentials or their network connection.
+                                if ("ERROR:TIMEOUT".equals(retVal)) {
+                                    mUtil.showToast(getString(R.string.auth_timeout_message));
+                                } else if ("ERROR:NETWORK".equals(retVal)) {
+                                    mUtil.showToast(getString(R.string.auth_network_error_message));
                                 } else {
                                     Log.e(TAG, "onOk: Authentication failure for " + uname + " - error: " + retVal);
-                                    // Show a specific message so the user knows whether to check
-                                    // their credentials or their network connection.
-                                    if ("ERROR:TIMEOUT".equals(retVal)) {
-                                        mUtil.showToast(getString(R.string.auth_timeout_message));
-                                    } else if ("ERROR:NETWORK".equals(retVal)) {
-                                        mUtil.showToast(getString(R.string.auth_network_error_message));
-                                    } else {
-                                        mUtil.showToast(getString(R.string.auth_failure_message));
-                                    }
+                                    mUtil.showToast(getString(R.string.auth_failure_message));
                                 }
                             }
                         });
