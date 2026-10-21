@@ -220,6 +220,7 @@ public class SdData implements Parcelable {
         watchConnected = jo.getBoolean("watchConnected");
         watchAppRunning = jo.getBoolean("watchAppRunning");
         haveSettings = jo.getBoolean("haveSettings");
+        watchSignalStrength = jo.optInt("watchSignalStrength", -1);  // Optional field for backwards compatibility
 
         alarmState = jo.getLong("alarmState");
         alarmPhrase = jo.getString("alarmPhrase");
@@ -476,6 +477,7 @@ public class SdData implements Parcelable {
             jsonObj.put("phoneBatteryPc", phoneBatteryPc);
             jsonObj.put("watchConnected", watchConnected);
             jsonObj.put("watchAppRunning", watchAppRunning);
+            jsonObj.put("watchSignalStrength", watchSignalStrength);
             jsonObj.put("haveSettings", haveSettings);
             jsonObj.put("alarmState", alarmState);
             jsonObj.put("alarmPhrase", alarmPhrase);
