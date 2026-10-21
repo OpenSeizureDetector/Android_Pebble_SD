@@ -1,48 +1,212 @@
-<html>
-  
-  <head>
-    <title>Open Seizure Detector</title>
-    <script src="js/jquery.js"></script>
-    <script src="js/jBeep.js"></script>
-    <script src="js/Chart.min.js"></script>
-    <script src="js/osd_main.js"></script>
-    <script src="js/osd_logs.js"></script>
-    <link rel="stylesheet" href="css/osd.css" />
-  </head>
-  
-  <body>
-    <div data-role="page" id="home">
-      <div id="header" data-role="header">
-	<img src="img/icon_48x48.png" alt="logo"/>
-	<h1>Open Seizure Detector</h1>
-      </div>
-      <div role="main" class="ui-content">
-	<div id="benStat">
-	  OK
-	</div>
-	<div style="clear:both">
-	  <div id="pebStat1">
-	    <font size="7">Watch Connected</font>
-	  </div>
-	  <div id="pebStat2">
-	    <font size="7">Watch App Running</font>
-	  </div>
-	  <div id="pebStat3">
-	    Watch Battery
-	  </div>
-	</div>
-	
-	<button id="acceptButton">Accept Alarm</button>
-        <button id="muteButton">Mute Alarm</button>
+<!DOCTYPE html>
+<html lang="en">
 
-	
-      </div> <!-- content -->
-      <div data-role="footer">
-	<a href="logfiles.html">View Log Files</a>
-	<div id="debugInfo"></div>
-      </div> <!--footer-->
-    </div> <!--page -->
-    
-  </body>
-  
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#0d1626">
+  <title>Open Seizure Detector</title>
+
+  <!-- Same scripts as before: osd_main.js is unchanged and drives everything below by element id. -->
+  <script src="js/jquery.js"></script>
+  <script src="js/jBeep.js"></script>
+  <script src="js/Chart.min.js"></script>
+  <script src="js/osd_main.js"></script>
+  <script src="js/osd_logs.js"></script>
+
+  <!--
+    The CSS is inline on purpose: SdWebServer.serveFile() sends every file as text/html,
+    and browsers in standards mode refuse external stylesheets with that MIME type.
+  -->
+  <style>
+    :root {
+      --ink: #0d1626;
+      --panel: #15223a;
+      --line: #2a3b5c;
+      --text: #e9eef7;
+      --muted: #93a3bf;
+
+      --ok: #3cc7b0;     --ok-soft: rgba(60, 199, 176, .13);
+      --warn: #f2a93b;   --warn-soft: rgba(242, 169, 59, .15);
+      --alarm: #ff5d5d;  --alarm-soft: rgba(255, 93, 93, .17);
+      --idle: #7a8aa8;   --idle-soft: rgba(122, 138, 168, .14);
+
+      --font: "Avenir Next", "Segoe UI", Roboto, "Helvetica Neue", system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--ink);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 1.05rem;
+      line-height: 1.45;
+    }
+
+    #home {
+      max-width: 46rem;
+      margin: 0 auto;
+      padding: 1.25rem 1.25rem 3rem;
+    }
+
+    /* ---------- header ---------- */
+    #header {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      margin-bottom: 1.5rem;
+    }
+    #header img { width: 2.5rem; height: 2.5rem; border-radius: .6rem; }
+    #header h1 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: .01em;
+      color: var(--muted);
+    }
+
+    /*
+      osd_main.js colours these elements by setting an inline background-color
+      (blue = ok, orange = warning, red = alarm). The rules below read that value
+      and turn it into a state colour (--c / --cs), then override the inline
+      background itself with !important.
+    */
+    #benStat, .tile { --c: var(--idle); --cs: var(--idle-soft); }
+
+    #benStat[style*="blue"],   .tile[style*="blue"]   { --c: var(--ok);    --cs: var(--ok-soft); }
+    #benStat[style*="orange"], .tile[style*="orange"] { --c: var(--warn);  --cs: var(--warn-soft); }
+    #benStat[style*="red"],    .tile[style*="red"]    { --c: var(--alarm); --cs: var(--alarm-soft); }
+
+    /* ---------- main status: the beacon ---------- */
+    #benStat {
+      display: flex;
+      align-items: center;
+      gap: 1.4rem;
+      padding: 2rem 1.6rem;
+      margin-bottom: 1rem;
+      border: 1px solid var(--c);
+      border-radius: 1.4rem;
+      background: var(--cs) !important;
+      font-size: clamp(1.3rem, 4.6vw, 2rem);
+      font-weight: 650;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+    #benStat::before {
+      content: "";
+      flex: none;
+      width: 3.6rem;
+      height: 3.6rem;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--c) 0 36%, transparent 38%);
+      box-shadow: inset 0 0 0 2px var(--c), 0 0 0 .4rem var(--cs);
+      animation: breathe 5s ease-in-out infinite;
+    }
+    #benStat[style*="orange"]::before { animation-duration: 2.6s; }
+    #benStat[style*="red"]::before    { animation-duration: 1.8s; }
+
+    /* Alarm: solid fill so it cannot be missed. The motion is a slow swell, never a flash. */
+    #benStat[style*="red"] {
+      background: var(--alarm) !important;
+      border-color: var(--alarm);
+      color: #230707;
+    }
+    #benStat[style*="red"]::before {
+      --c: #230707;
+      --cs: rgba(35, 7, 7, .22);
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: scale(1);    opacity: .8; }
+      50%      { transform: scale(1.12); opacity: 1;  }
+    }
+
+    /* ---------- device tiles ---------- */
+    .tiles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+      gap: .75rem;
+      margin-bottom: 1.75rem;
+    }
+    .tile {
+      padding: 1rem 1.1rem;
+      border: 1px solid var(--line);
+      border-left: .4rem solid var(--c);
+      border-radius: .9rem;
+      background: var(--panel) !important;
+      font-size: 1rem;
+      overflow-wrap: anywhere;
+    }
+    .tile[style*="red"] { background: var(--alarm-soft) !important; border-color: var(--alarm); }
+
+    /* ---------- buttons ---------- */
+    .actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+    button {
+      min-height: 3.4rem;
+      padding: 0 1.5rem;
+      border: 1px solid var(--line);
+      border-radius: .9rem;
+      background: var(--panel);
+      color: var(--text);
+      font: inherit;
+      cursor: pointer;
+    }
+    button:hover { border-color: var(--muted); }
+    #acceptButton {
+      background: var(--text);
+      border-color: var(--text);
+      color: var(--ink);
+      font-weight: 650;
+    }
+    #acceptButton:hover { background: #fff; }
+    a:focus-visible, button:focus-visible { outline: 3px solid var(--warn); outline-offset: 3px; }
+
+    /* ---------- footer ---------- */
+    #footer { margin-top: 2.5rem; font-size: .95rem; }
+    #footer a { color: var(--muted); text-underline-offset: .2em; }
+    #footer a:hover { color: var(--text); }
+    #debugInfo { margin-top: .5rem; color: var(--muted); font-size: .85rem; }
+
+    @media (prefers-reduced-motion: reduce) {
+      #benStat::before { animation: none !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="home">
+
+    <div id="header">
+      <img src="img/icon_48x48.png" alt="">
+      <h1>Open Seizure Detector</h1>
+    </div>
+
+    <div role="main">
+      <!-- Shows neutral grey until the first reading arrives, instead of a reassuring "OK". -->
+      <div id="benStat">Waiting for data from the phone…</div>
+
+      <div class="tiles">
+        <div id="pebStat1" class="tile">Checking watch connection…</div>
+        <div id="pebStat2" class="tile">Checking watch app…</div>
+        <div id="pebStat3" class="tile">Watch battery…</div>
+      </div>
+
+      <div class="actions">
+        <button id="acceptButton">Accept Alarm</button>
+        <button id="muteButton">Mute Alarm</button>
+      </div>
+    </div>
+
+    <div id="footer">
+      <a href="logfiles.html">View log files</a>
+      <div id="debugInfo"></div>
+    </div>
+
+  </div>
+</body>
+
 </html>
