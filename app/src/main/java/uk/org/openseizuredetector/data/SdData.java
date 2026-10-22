@@ -159,6 +159,7 @@ public class SdData implements Parcelable {
     public float watchSignalStrength;
 
     // Individual ML Model Results (for multi-model voting)
+    public JSONArray mlModelConfig = new JSONArray();  // Model configuration (name, thresholds, etc.)
     public String[] mlModelNames = new String[5];     // Model names
     public double[] mlModelProbs = new double[5];     // Probabilities (0-1)
     public int[] mlModelStates = new int[5];          // States (0=OK, 1=WARNING, 2=ALARM)
@@ -431,6 +432,7 @@ public class SdData implements Parcelable {
             jsonObj.put("o2SatAlarmActive", mO2SatAlarmActive);
             jsonObj.put("o2SatAlarmStanding", mO2SatAlarmStanding);
             jsonObj.put("o2SatThreshMin", mO2SatThreshMin);
+            jsonObj.put("mlModelConfig", mlModelConfig);
             jsonObj.put("dataSourceName", dataSourceName);
             jsonObj.put("phoneAppVersion", phoneAppVersion);
             jsonObj.put("watchManuf", watchManuf);

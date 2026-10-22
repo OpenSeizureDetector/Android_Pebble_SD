@@ -71,6 +71,7 @@ public class SdAlgMl extends SdAlgBase {
 
         // Initialize frameworks and load all installed models
         initializeAndLoadModels();
+
     }
 
     private void initializeAndLoadModels() {
@@ -137,8 +138,16 @@ public class SdAlgMl extends SdAlgBase {
 
     /**
      * Evaluate all loaded models and return individual results for voting.
+     * It also initialises the sdData.mlModelConfig if it is empty, to ensure that the configuration is recorded for future analysis (E.g. in data sharing database).
+     * @param sdData - the seizure detector data to analyze
+     * @return List of AlgorithmResult containing the evaluation results for each model
      */
     public List<AlgorithmResult> evaluateAllModels(SdData sdData) {
+        if (sdData.mlModelConfig.length()==0) {
+            Log.i(TAG, "evaluateAllModels(): Initialising sdData ML model configuration");
+            sdData.mlModelConfig = mMm.getInstalledModels();
+        }
+
         List<AlgorithmResult> results = new ArrayList<>();
         reloadThresholdPreferences();
 
@@ -167,6 +176,17 @@ public class SdAlgMl extends SdAlgBase {
 
     @Override
     public int processSdData(SdData sdData) {
+        // NOTE:  This is not called - SeizureDetector calls EvaluateAllModels() directly for voting.  This method is retained for compatibility.
+        // Although Android Studio shows 18 usages, this is 18 usages of the parent class processSdData, and not this version.
+        Log.d(TAG, "processSdData(): Processing SdData with " + mModels.size() + " model(s)");
+
+        if (sdData.mlModelConfig.length()==0) {
+            Log.i(TAG, "processSdData(): Initialising sdData ML model configuration");
+            sdData.mlModelConfig = mMm.getInstalledModels();
+        } else {
+            Log.v(TAG, "processSdData(): ML model configuration already set - mlModelConfig.length=" + sdData.mlModelConfig.length());
+        }
+
         List<AlgorithmResult> results = evaluateAllModels(sdData);
 
         if (results.isEmpty()) {
