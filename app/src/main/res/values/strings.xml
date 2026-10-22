@@ -9,6 +9,7 @@
         &lt;br/>       - Added the cause of the alarm to the data sharing event description (Issue #254)
         &lt;br/>       - Tidied up embedded web page (Issue #259)
         <br/>       - Fixed issue with phone data source sampling rate on some devices (Issue #276)
+        <br/>       - Added French, German, Polish, Spanish and Chinese translations (Thank you Peter Lins and abdilim0118!)
         &lt;br/>
         &lt;br/> See CHANGELOG.md at https://github.com/OpenSeizureDetector/Android_Pebble_SD for details.
     </string>
