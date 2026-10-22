@@ -818,7 +818,6 @@
     <string name="warning">WARNUNG</string>
     <string name="hr_abnormal">HF ABNORMAL</string>
     <string name="oxygen_saturation_abnormal">Sauerstoff-Saturation ABNORMAL</string>
-    <string name="datasource">Datenquelle</string>
     <string name="darkmode">Dunkler Modus</string>
     <string name="system">System</string>
     <string name="select_theme">Designauswahl</string>
