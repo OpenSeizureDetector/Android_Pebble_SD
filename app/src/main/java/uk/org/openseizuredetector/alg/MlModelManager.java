@@ -74,6 +74,11 @@ public class MlModelManager {
         void onNoUpdate();
     }
 
+    /**
+     * ModelLoadResult class.
+     * Used to encapsulate the result of loading a model, including its name, framework,
+     * memory-mapped buffer (if applicable), file reference, input format, input size, and alarm threshold.
+     */
     public static class ModelLoadResult {
         public final String name;
         public final String framework;
@@ -83,7 +88,11 @@ public class MlModelManager {
         public final int inputSize;
         public final double alarmThreshold;
 
-        public ModelLoadResult(String name, String framework, java.nio.MappedByteBuffer tfliteBuffer, 
+        /**
+         * Constructor for ModelLoadResult.
+         * Used for storing model metadata and the loaded model buffer (if applicable).
+         */
+        public ModelLoadResult(String name, String framework, java.nio.MappedByteBuffer tfliteBuffer,
                                File file, int inputFormat, int inputSize, double alarmThreshold) {
             this.name = name;
             this.framework = framework;
@@ -95,6 +104,10 @@ public class MlModelManager {
         }
     }
 
+    /**
+     * Constructor for MlModelManager.
+     * @param context - the application context
+     */
     public MlModelManager(Context context) {
         mContext = context;
         mUtil = new OsdUtil(mContext, new Handler(Looper.getMainLooper()));
@@ -110,6 +123,10 @@ public class MlModelManager {
         this.mModelIndexFname = indexFname;
     }
 
+    /**
+     * close().
+     * Closes the ML model manager and stops all active threads.
+     */
     public void close() {
         if (mQueue != null) {
             mQueue.cancelAll(INDEX_TAG);
@@ -118,6 +135,11 @@ public class MlModelManager {
         waitForThreadsToComplete(5000);
     }
 
+    /**
+     * waitForThreadsToComplete(timeoutMs).
+     * Waits for all active threads to complete, up to the specified timeout in milliseconds.
+     * @param timeoutMs
+     */
     private void waitForThreadsToComplete(long timeoutMs) {
         long startTime = System.currentTimeMillis();
         List<Thread> threadsToWait;
@@ -135,16 +157,33 @@ public class MlModelManager {
         }
     }
 
+    /**
+     * registerThread(t).
+     * Registers a thread as active - this is to help with tidying up the app when we close
+     * it using the close() method and waitForThreadsToComplete().
+     * @param t - the thread to register
+     */
     private void registerThread(Thread t) {
         synchronized (mThreadLock) { mActiveThreads.add(t); }
     }
 
+    /**
+     * unregisterThread(t).
+     * Unregisters a thread as active.
+     * @param t - the thread to unregister
+     */
     private void unregisterThread(Thread t) {
         synchronized (mThreadLock) { mActiveThreads.remove(t); }
     }
 
     private final String INDEX_TAG = "MlModelIndex";
 
+    /**
+     * getMlModelIndex(callback).
+     * Fetches the ML model index from the server and returns it as a JSONArray to the provided callback.
+     * Uses the Volley library StringRequest for asynchronous HTTP requests.
+     * @param callback
+     */
     public void getMlModelIndex(JSONArrayCallback callback) {
         String urlStr = mUrlBase + mModelIndexFname;
         StringRequest req = new StringRequest(Request.Method.GET, urlStr,
@@ -172,13 +211,27 @@ public class MlModelManager {
         mQueue.add(req);
     }
 
+    /**
+     * downloadAndInstallModel(modelInfo, callback).
+     * Downloads a model file from the server and saves it to the app's internal storage.
+     * Then registers the model as installed and applies recommended thresholds if provided.
+     * @param modelInfo - a JSONObject containing model metadata, must include "fname" (filename)
+     * @param callback - a DownloadCallback that will be called when the download is complete or cancelled
+     */
     public void downloadAndInstallModel(JSONObject modelInfo, DownloadCallback callback) {
         String fname = modelInfo.optString("fname", "");
         if (fname.isEmpty()) {
+            Log.e(TAG, "downloadAndInstallModel() - modelInfo missing 'fname' - not doing anything.");
             callback.onComplete(false, null);
             return;
         }
 
+        // Notes for next time I try to remember how this works....
+        // We are calling downloadModel() with a filename, a boolean and a callback function.
+        // But the callback function is defined here as a lambda (un-named) function which takes
+        // two parameters, success and file.  The function body is defined in the -> { ... } block.
+        // The lambda function is referred to as onComplete() in the DownloadCallback interface.
+        // This modern syntax makes me feel like a Luddite, but I'll try to get used to it!
         downloadModel(fname, new AtomicBoolean(false), (success, file) -> {
             if (success && file != null) {
                 try {
@@ -186,16 +239,27 @@ public class MlModelManager {
                     installedModel.put("localPath", file.getAbsolutePath());
                     registerInstalledModel(installedModel);
                     applyRecommendedThresholdsFromModel(installedModel);
+                    Log.i(TAG, "downloadAndInstallModel() - Successfully downloaded and registered model: " + fname);
                     callback.onComplete(true, file);
                 } catch (JSONException e) {
+                    Log.e(TAG, "downloadAndInstallModel() - Error registering installed model: " + e.getMessage());
                     callback.onComplete(false, null);
                 }
             } else {
+                Log.e(TAG, "downloadAndInstallModel() - Failed to download model file: " + fname);
                 callback.onComplete(false, null);
             }
         });
     }
 
+    /**
+     * downloadModel(fname, cancelFlag, callback).
+     * Downloads a model file from the server and saves it to the app's internal storage.
+     * calls callback.onComplete(success, file) when done.
+     * @param fname  - the filename of the model file on the server (e.g., "model.tflite")
+     * @param cancelFlag - an AtomicBoolean that can be set to true to cancel the download
+     * @param callback - a DownloadCallback that will be called when the download is complete or cancelled
+     */
     public void downloadModel(String fname, AtomicBoolean cancelFlag, DownloadCallback callback) {
         String urlStr = mUrlBase + fname;
         Thread t = new Thread(() -> {
@@ -243,6 +307,12 @@ public class MlModelManager {
         t.start();
     }
 
+    /**
+     * getInstalledModels().
+     * Returns a list of all installed models.
+     * The installed models are stored as a JSON array in the PREF_INSTALLED_MODELS preference.
+     * @return a JSONArray containing the list of installed models
+     */
     public JSONArray getInstalledModels() {
         Log.i(TAG,"getInstalledModels()");
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
@@ -255,6 +325,12 @@ public class MlModelManager {
         }
     }
 
+    /**
+     * registerInstalledModel(model).
+     * Registers a model as installed by adding it to the list of installed models in SharedPreferences
+     * The installed models are stored as a JSON array in the PREF_INSTALLED_MODELS preference.
+     * @param model - a JSONObject containing model metadata, must include "fname" (filename)
+     */
     private void registerInstalledModel(JSONObject model) {
         JSONArray models = getInstalledModels();
         try {
@@ -274,6 +350,14 @@ public class MlModelManager {
         }
     }
 
+    /**
+     * applyRecommendedThresholdsFromModel(modelInfo).
+     * Applies recommended thresholds from the model metadata to the app's preferences.
+     * It sets the accSD standard deviation threshold and seizure probability threshold if they are provided in the model metadata.
+     * It looks for accel_std_threshold_pct and seizure_probability_threshold_pct in the modelInfo JSON object.
+     * If the user has already set a preference for a threshold, it will not be overridden
+     * @param modelInfo
+     */
     public void applyRecommendedThresholdsFromModel(JSONObject modelInfo) {
         if (modelInfo == null) {
             return;
@@ -343,6 +427,11 @@ public class MlModelManager {
         return String.format(java.util.Locale.US, "%.2f", clamped).replaceAll("0+$", "").replaceAll("\\.$", "");
     }
 
+    /**
+     * deleteModel(fname).
+     * Deletes a model from the list of installed models and removes its local file if it exists.
+     * @param fname - the filename of the model to delete
+     */
     public void deleteModel(String fname) {
         JSONArray models = getInstalledModels();
         JSONArray newList = new JSONArray();
@@ -468,6 +557,13 @@ public class MlModelManager {
         return featuresSet;
     }
 
+    /**
+     * loadAllActiveModels().
+     * Loads all installed models that are compatible with the device.
+     * For TensorFlow Lite models, it attempts to memory-map the model file for efficient loading.
+     * For PyTorch models, it simply registers the model file without memory-mapping.
+     * @return - a list of ModelLoadResult objects representing the loaded models
+     */
     public List<ModelLoadResult> loadAllActiveModels() {
         List<ModelLoadResult> results = new ArrayList<>();
         JSONArray installed = getInstalledModels();
@@ -524,6 +620,13 @@ public class MlModelManager {
         return results;
     }
 
+    /**
+     * checkForModelUpdate()
+     * Checks for available model updates.   Downloads the model index from the server and checks for a recommended model that is compatible with the device.
+     * Calls the provided callback with the result: either onUpdateAvailable() with the recommended model info, or onNoUpdate() if no compatible recommended model is found.
+     * @param prefs - the shared preferences
+     * @param callback - the callback to notify of update status
+     */
     public void checkForModelUpdate(android.content.SharedPreferences prefs, ModelUpdateCallback callback) {
         getMlModelIndex(arr -> {
             if (arr == null || arr.length() == 0) {
