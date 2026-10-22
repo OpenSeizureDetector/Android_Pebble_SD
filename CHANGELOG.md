@@ -23,6 +23,7 @@
         - Added Chinese translation (thank you abdilim0118!)
         - Modernised the web page interface
         - Fixed issue with events not always starting to upload after logging into data sharing (Issue #307)
+        - Fixed Pinetime signal strength graph with Network Datasource.
     V5.0.9  - Fixed issue with SMS alerts failing to send on some phones (Issue #264)
             - Fixed issue with app not re-starting after selecting a bLE device (Issue #261)
         - Improved handling of system re-start after changing settings.
