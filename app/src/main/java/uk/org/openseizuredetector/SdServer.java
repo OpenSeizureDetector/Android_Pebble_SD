@@ -2231,7 +2231,7 @@ public class SdServer extends Service implements SdDataReceiver {
         SharedPreferences SP = PreferenceManager
                 .getDefaultSharedPreferences(getBaseContext());
         try {
-            mSdDataSourceName = SP.getString(getString(R.string.datasource), "SET_FROM_XML");
+            mSdDataSourceName = SP.getString("DataSource", "SET_FROM_XML");
             Log.d(TAG, "updatePrefs() - DataSource = " + mSdDataSourceName);
             mLatchAlarms = SP.getBoolean("LatchAlarms", false);
             Log.d(TAG, "updatePrefs() - mLatchAlarms = " + mLatchAlarms);

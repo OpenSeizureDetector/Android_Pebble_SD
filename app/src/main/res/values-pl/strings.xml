@@ -751,7 +751,6 @@
     <string name="warning">UWAGA</string>
     <string name="hr_abnormal">HR NIEPRAW.</string>
     <string name="oxygen_saturation_abnormal">Saturacja tlenu NIEPRAWIDŁOWA</string>
-    <string name="datasource">Źródło</string>
     <string name="darkmode">tryb ciemny</string>
     <string name="system">system</string>
     <string name="select_theme">Wybierz motyw</string>

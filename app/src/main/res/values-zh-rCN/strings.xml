@@ -675,7 +675,6 @@
   <string name="warning">预警</string>
   <string name="hr_abnormal">心率异常</string>
   <string name="oxygen_saturation_abnormal">血氧饱和度异常</string>
-  <string name="datasource">数据源</string>
   <string name="darkmode">深色模式</string>
   <string name="system">系统</string>
   <string name="select_theme">选择主题</string>

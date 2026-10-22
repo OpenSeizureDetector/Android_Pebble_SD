@@ -743,7 +743,6 @@ o envía un correo a graham@openseizuredetector.org.uk\n\nApp Android y app de r
     <string name="warning">AVISO</string>
     <string name="hr_abnormal">FC ANÓMALA</string>
     <string name="oxygen_saturation_abnormal">SATURACIÓN DE OXÍGENO ANÓMALA</string>
-    <string name="datasource">FuenteDatos</string>
     <string name="darkmode">modoOscuro</string>
     <string name="system">sist.</string>
     <string name="select_theme">Elegir tema</string>

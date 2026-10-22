@@ -758,7 +758,6 @@
     <string name="warning">AVERT.</string>
     <string name="hr_abnormal">FC ANORMALE</string>
     <string name="oxygen_saturation_abnormal">Saturation O₂ ANORMALE</string>
-    <string name="datasource">Source</string>
     <string name="darkmode">Sombre</string>
     <string name="system">system</string>
     <string name="select_theme">Sélectionner un thème</string>
