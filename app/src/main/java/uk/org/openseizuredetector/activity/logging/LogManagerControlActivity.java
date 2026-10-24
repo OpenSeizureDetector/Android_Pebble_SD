@@ -510,7 +510,7 @@ public class LogManagerControlActivity extends ServiceConnectedActivity {
             Log.v(TAG, "getRemoteEvents()");
             if (remoteEventsObj == null) {
                 Log.e(TAG, "getRemoteEvents Callback:  Error Retrieving events");
-                mUtil.showToast("Error Retrieving Remote Events from Server - Please Try Again Later!");
+                mUtil.showToast(getString(R.string.error_retrieving_remote_events_from_server));
             } else {
                 //Log.v(TAG, "remoteEventsObj = " + remoteEventsObj.toString());
                 try {

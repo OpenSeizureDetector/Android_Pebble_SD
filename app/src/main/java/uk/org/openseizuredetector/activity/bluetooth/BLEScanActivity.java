@@ -124,7 +124,7 @@ public class BLEScanActivity extends AppCompatActivity {
 
         // Set ActionBar title using getSupportActionBar for AppCompatActivity
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Scan for Bluetooth Devices");
+            getSupportActionBar().setTitle(R.string.scan_for_bluetooth_devices);
         }
 
         // Get reference to ListView from layout
@@ -214,7 +214,7 @@ public class BLEScanActivity extends AppCompatActivity {
 
     public void onSelectButtonClick(View v) {
         if (mSelectedPosition == -1) {
-            Toast.makeText(this, "Please select a device", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.please_select_a_device, Toast.LENGTH_SHORT).show();
             return;
         }
         final BluetoothDevice device = mLeDeviceListAdapter.getDevice(mSelectedPosition);
@@ -234,7 +234,7 @@ public class BLEScanActivity extends AppCompatActivity {
             Log.i(TAG, "Saved Device Name=" + device.getName() + " and Address=" + device.getAddress());
         } catch (SecurityException ex) {
             Log.e(TAG, "Error Saving Device Name and Address!");
-            Toast.makeText(this, "Problem Saving Device Name and Address", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.problem_saving_device_name_and_address, Toast.LENGTH_SHORT).show();
         }
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences((this));
         Log.i(TAG, "Check of saved values - Name=" + SP.getString("BLE_Device_Name", "SET_FROM_XML") + ", Addr=" + SP.getString("BLE_Device_Addr", "SET_FROM_XML"));
@@ -349,7 +349,7 @@ public class BLEScanActivity extends AppCompatActivity {
             Log.v(TAG, "Saved Device Name=" + device.getName() + " and Address=" + device.getAddress());
         } catch (SecurityException ex) {
             Log.e(TAG, "Error Saving Device Name and Address!");
-            Toast toast = Toast.makeText(this, "Problem Saving Device Name and Address", Toast.LENGTH_SHORT);
+            Toast toast = Toast.makeText(this, R.string.problem_saving_device_name_and_address_2, Toast.LENGTH_SHORT);
             toast.show();
         }
         SharedPreferences SP = PreferenceManager.getDefaultSharedPreferences((this));
@@ -383,7 +383,7 @@ public class BLEScanActivity extends AppCompatActivity {
                         new android.view.ContextThemeWrapper(this, R.style.AppTheme_AlertDialog));
                 alertDialogBuilder
                         .setTitle(getString(R.string.permissions_required))
-                        .setMessage("Additional Permissions are required to scan for Bluetooth Devices - please grant the permissions in the following dialogs")
+                        .setMessage(R.string.additional_bluetooth_permissions_are_required_message)
                         .setCancelable(false)
                         .setNegativeButton(getString(R.string.closeBtnTxt), new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
@@ -460,7 +460,7 @@ public class BLEScanActivity extends AppCompatActivity {
             Log.i(TAG, "scanLeDevice - enabling scan");
             mSelectedPosition = -1;
             updateButtonStyles();
-            if (mBleScanStatusTv != null) mBleScanStatusTv.setText("Scanning...");
+            if (mBleScanStatusTv != null) mBleScanStatusTv.setText(R.string.scanning_in_progress);
 
             // Stops scanning after a pre-defined scan period.
             mHandler.postDelayed(new Runnable() {
@@ -469,10 +469,10 @@ public class BLEScanActivity extends AppCompatActivity {
                     Log.i(TAG, "scanLeDevice - timeout reached, stopping scan");
                     stopScan();
                     updateButtonStyles();
-                    if (mBleScanStatusTv != null) mBleScanStatusTv.setText("Scan complete");
+                    if (mBleScanStatusTv != null) mBleScanStatusTv.setText(R.string.scan_complete);
                     TextView tv = (TextView) (findViewById(R.id.empty));
                     if (mLeDeviceListAdapter.getCount() == 0) {
-                        tv.setText("No devices found.");
+                        tv.setText(R.string.scan_found_no_devices);
                         tv.setVisibility(View.VISIBLE);
                     } else {
                         tv.setVisibility(View.GONE);
@@ -482,7 +482,7 @@ public class BLEScanActivity extends AppCompatActivity {
 
             startScan();
             tv = (TextView) (findViewById(R.id.empty));
-            tv.setText("Scanning for devices...");
+            tv.setText(R.string.scanning_for_devices);
             tv.setVisibility(View.VISIBLE);
 
 
@@ -490,10 +490,10 @@ public class BLEScanActivity extends AppCompatActivity {
             Log.i(TAG, "scanLeDevice - disabling scan");
             stopScan();
             updateButtonStyles();
-            if (mBleScanStatusTv != null) mBleScanStatusTv.setText("Current Status: Not Scanning");
+            if (mBleScanStatusTv != null) mBleScanStatusTv.setText(R.string.current_status_not_scanning);
             tv = (TextView) (findViewById(R.id.empty));
             if (mLeDeviceListAdapter.getCount() == 0) {
-                tv.setText("No devices found.");
+                tv.setText(R.string.no_devices_found_2);
                 tv.setVisibility(View.VISIBLE);
             } else {
                 tv.setVisibility(View.GONE);

@@ -126,7 +126,7 @@ public class EditEventActivity extends ServiceConnectedActivity {
                     Log.e(TAG, "onServiceConnected().getEventTypes Callback:  Error Retrieving event types");
                     mUiHandler.post(() -> {
                         if (mIsActive && isActivityActive()) {
-                            mUtil.showToast("Error Retrieving Event Types from Server - Please Try Again Later!");
+                            mUtil.showToast(getString(R.string.error_retrieving_event_types_from_server));
                         }
                     });
                 } else {
@@ -180,7 +180,7 @@ public class EditEventActivity extends ServiceConnectedActivity {
                     } else {
                         mUiHandler.post(() -> {
                             if (mIsActive && !isFinishing() && !isDestroyed()) {
-                                mUtil.showToast("Failed to Retrieve Event from Remote Database");
+                                mUtil.showToast(getString(R.string.failed_to_retrieve_event_from_remote_database));
                                 finish();
                             }
                         });
@@ -379,7 +379,7 @@ public class EditEventActivity extends ServiceConnectedActivity {
                         e.printStackTrace();
                         mUiHandler.post(() -> {
                             if (mIsActive && !isFinishing() && !isDestroyed()) {
-                                mUtil.showToast("Error Updating Event");
+                                mUtil.showToast(getString(R.string.error_updating_event));
                                 updateUi();
                             }
                         });
@@ -394,7 +394,7 @@ public class EditEventActivity extends ServiceConnectedActivity {
             Log.v(TAG, "updateGroupEventsSequentially - All events updated");
             mUiHandler.post(() -> {
                 if (mIsActive && !isFinishing() && !isDestroyed()) {
-                    mUtil.showToast("All events in group updated OK");
+                    mUtil.showToast(getString(R.string.all_events_in_group_updated_ok));
                     finish();
                 }
             });

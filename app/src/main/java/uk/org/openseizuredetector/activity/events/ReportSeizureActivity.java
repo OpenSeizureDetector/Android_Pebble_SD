@@ -279,7 +279,7 @@ public class ReportSeizureActivity extends ServiceConnectedActivity {
 
         mLm.createLocalEvent(dateStr, AlarmState.MANUAL, seizureTypeStr, seizureSubTypeStr, "Manual", notesStr,
                 mConnection.mSdServer.mSdData.toSettingsJSON());
-        mUtil.showToast("Seizure Event Created");
+        mUtil.showToast(getString(R.string.seizure_event_created));
         finish();
     };
 
