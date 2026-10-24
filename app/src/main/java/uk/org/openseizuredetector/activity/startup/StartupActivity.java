@@ -301,7 +301,7 @@ public class StartupActivity extends AppCompatActivity {
                     startActivity(i);
                 } catch (Exception ex) {
                     Log.v(TAG, "exception displaying troubleshooting " + ex.toString());
-                    mUtil.showToast("ERROR Displaying Troubleshooting Tips");
+                    mUtil.showToast(getString(R.string.error_displaying_troubleshooting_tips));
                 }
 
             }
@@ -961,10 +961,10 @@ public class StartupActivity extends AppCompatActivity {
             if (!anyCompatible) {
                 mMlIncompatibilityDialogDisplayed = true;
                 new MaterialAlertDialogBuilder(this)
-                        .setTitle("ML Compatibility Error")
-                        .setMessage("The Machine Learning algorithm is enabled, but no compatible models are installed for this device's CPU.\n\nPlease install a compatible model (e.g. one without 'dotprod' requirements) or disable the ML algorithm.")
+                        .setTitle(R.string.ml_compatibility_error)
+                        .setMessage(R.string.ml_no_compatible_models_are_installed_message)
                         .setCancelable(false)
-                        .setPositiveButton("Open Settings", (dialog, which) -> {
+                        .setPositiveButton(R.string.open_settings, (dialog, which) -> {
                             Intent intent = new Intent(this, PrefActivity.class);
                             intent.putExtra("fragment", "uk.org.openseizuredetector.activity.settings.PrefActivity$MlAlgPrefsFragment");
                             startActivity(intent);
@@ -1232,21 +1232,21 @@ public class StartupActivity extends AppCompatActivity {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
 
         // Create the dialog with title and message
-        AlertDialog dialog = builder.setTitle("BLE Device Not Selected")
-                .setMessage("You selected a BLE data source but haven't configured a device yet. What would you like to do?")
+        AlertDialog dialog = builder.setTitle(R.string.ble_device_not_selected)
+                .setMessage(R.string.ble_data_source_selected_but_not_configured_message)
                 .setCancelable(false)
-                .setPositiveButton("Scan for Device", (dialogInterface, which) -> {
+                .setPositiveButton(R.string.scan_for_device, (dialogInterface, which) -> {
                     Log.i(TAG, "User chose to scan for BLE device");
                     Intent i = new Intent(getApplicationContext(), BLEScanActivity.class);
                     startActivity(i);
                 })
-                .setNeutralButton("Configure Later", (dialogInterface, which) -> {
+                .setNeutralButton(R.string.configure_later, (dialogInterface, which) -> {
                     Log.i(TAG, "User chose to configure later - continuing with app");
                     dialogInterface.dismiss();
                     // Continue with normal startup - the app will use the BLE datasource without a device
                     // and may show warnings or reduced functionality
                 })
-                .setNegativeButton("Go to Settings", (dialogInterface, which) -> {
+                .setNegativeButton(R.string.go_to_settings, (dialogInterface, which) -> {
                     Log.i(TAG, "User chose to go to settings to change datasource");
                     Intent i = new Intent(this, PrefActivity.class);
                     startActivity(i);
@@ -1310,10 +1310,10 @@ public class StartupActivity extends AppCompatActivity {
      */
     private void showPermissionDeniedDialog() {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-        builder.setTitle("Permission Required")
-                .setMessage("OpenSeizureDetector requires the 'Activity Recognition' permission to start the health monitoring service on Android 12 and later. " +
-                           "Without this permission, the app cannot function properly. " +
-                           "Please grant the permission and try again.")
+        builder.setTitle(R.string.permission_required)
+                .setMessage(getString(R.string.activity_recognition_permission_required_message_1) +
+                           getString(R.string.activity_recognition_permission_required_message_2) +
+                           getString(R.string.activity_recognition_permission_required_message_3))
                 .setCancelable(false)
                 .setPositiveButton("Exit", (dialog, which) -> {
                     Log.i(TAG, "User acknowledged permission denied - exiting app");
