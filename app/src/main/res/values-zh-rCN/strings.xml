@@ -726,7 +726,7 @@
   <string name="uploaded">已上传</string>
   <string name="duration">时长</string>
   <string name="notes">备注</string>
-  <string name="the_flap_alarm_is_an_experimental_feature_to_detect_large_scale_arm_movements_shaking_flapping_that_may_occur_during_a_seizure">手臂摆动警报是一项实验功能，用于检测发作时可能出现的大幅度手臂运动，如抖动或挥动。</string>
+  <string name="flap_is_a_feature_to_detect_large_arm_movements">手臂摆动警报是一项实验功能，用于检测发作时可能出现的大幅度手臂运动，如抖动或挥动。</string>
   <string name="flap_alarm_threshold">手臂摆动警报阈值</string>
   <string name="flap_alarm_ratio_threshold">手臂摆动警报比率阈值</string>
   <string name="enable_adaptive_threshold">启用自适应阈值</string>

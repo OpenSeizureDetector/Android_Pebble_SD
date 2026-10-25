@@ -8,7 +8,7 @@
 
         <Preference
             android:key="flap_description"
-            android:summary="@string/the_flap_alarm_is_an_experimental_feature_to_detect_large_scale_arm_movements_shaking_flapping_that_may_occur_during_a_seizure"
+            android:summary="@string/flap_is_a_feature_to_detect_large_arm_movements"
             android:selectable="false" />
 
         <EditTextPreference
