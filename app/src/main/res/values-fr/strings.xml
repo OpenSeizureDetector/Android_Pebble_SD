@@ -342,7 +342,7 @@
     <string name="num_local_events">Nombre d’événements stockés : </string>
     <string name="num_local_datapoints">"Nombre de points de données stockés : "</string>
     <string name="view_remote_db_btn">Voir données externes</string>
-    <string name="report_seizure">Signaler cris</string>
+    <string name="report_seizure">Signaler une crise</string>
     <string name="date">"Date : "</string>
     <string name="select_date">Choisir la date</string>
     <string name="time">"H : "</string>
