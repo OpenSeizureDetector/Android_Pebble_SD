@@ -318,32 +318,9 @@ public class MainActivity2 extends AppCompatActivity {
         SharedPreferences prefs = mSharedPrefs != null ? mSharedPrefs : PreferenceManager.getDefaultSharedPreferences(this);
 
         // Work out which tabs to show (algorithms that are switched off get no tab at all).
+        Log.v(TAG,"onResume() - getting enabled algorithms from sdServer");
         mVisibleTabs = getVisibleTabs(prefs);
-
-        // Instantiate a ViewPager2 and a PagerAdapter.
-        mFragmentPager = findViewById(R.id.fragment_pager);
-        mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this, mVisibleTabs);
-        mFragmentPager.setAdapter(mFragmentStateAdapter);
-
-        // Set up TabLayout with ViewPager2 (portrait layout)
-        // The landscape layout doesn't have a TabLayout - it uses sidebar navigation instead
-        mTabLayout = findViewById(R.id.tab_layout);
-        if (mTabLayout != null) {
-            mTabLayoutMediator = new TabLayoutMediator(mTabLayout, mFragmentPager,
-                    new TabLayoutMediator.TabConfigurationStrategy() {
-                        @Override
-                        public void onConfigureTab(TabLayout.Tab tab, int position) {
-                            if (position >= 0 && position < mVisibleTabs.size()) {
-                                tab.setText(getTabTitle(mVisibleTabs.get(position)));
-                            } else {
-                                tab.setText("Screen " + position);
-                            }
-                        }
-                    });
-            mTabLayoutMediator.attach();
-        } else {
-            Log.d(TAG, "onResume() - TabLayout not found (landscape layout detected), skipping TabLayoutMediator");
-        }
+        setVisibleTabs();
 
         // Restore the previously active tab
         // If no saved preference, choose tab based on enabled algorithms
@@ -551,24 +528,76 @@ public class MainActivity2 extends AppCompatActivity {
     private List<Integer> getVisibleTabs(SharedPreferences prefs) {
         List<Integer> tabs = new ArrayList<>();
         if (mConnection != null && mConnection.mBound && mConnection.mSdServer != null) {
-            Log.v(TAG,"getVisibleTabs() - getting enabled algorithms from sdServer");
+            Log.d(TAG,"getVisibleTabs() - getting enabled algorithms from sdServer");
             // If the server is bound, get the enabled algorithms from the server
-            if (mConnection.mSdServer.mSdData.mOsdAlarmActive) tabs.add(TAB_OSD);
-            if (mConnection.mSdServer.mSdData.mFlapAlarmActive) tabs.add(TAB_FLAP);
-            if (mConnection.mSdServer.mSdData.mCnnAlarmActive) tabs.add(TAB_ML);
-            if (mConnection.mSdServer.mSdData.mHRAlarmActive) tabs.add(TAB_HR);
-            if (mConnection.mSdServer.mSdData.mFallActive) tabs.add(TAB_FALL);
+            if (mConnection.mSdServer.mSdData.mOsdAlarmActive) {
+                Log.v(TAG,"getVisibleTabs() - OSD alarm is active");
+                tabs.add(TAB_OSD);
+            }
+            if (mConnection.mSdServer.mSdData.mFlapAlarmActive) {
+                Log.v(TAG,"getVisibleTabs() - Flap alarm is active");
+                tabs.add(TAB_FLAP);
+            }
+            if (mConnection.mSdServer.mSdData.mCnnAlarmActive) {
+                Log.v(TAG,"getVisibleTabs() - CNN alarm is active");
+                tabs.add(TAB_ML);
+            }
+            if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
+                Log.v(TAG,"getVisibleTabs() - Heart Rate alarm is active");
+                tabs.add(TAB_HR);
+            }
+            if (mConnection.mSdServer.mSdData.mFallActive) {
+                Log.v(TAG,"getVisibleTabs() - Fall alarm is active");
+                tabs.add(TAB_FALL);
+            }
         } else {
-            Log.v(TAG,"getVisibleTabs() - server not bound, getting enabled algorithms from preferences");
+            Log.d(TAG,"getVisibleTabs() - server not bound, getting enabled algorithms from preferences");
+            Log.v(TAG,"getVisibleTabs() - mConnection="+mConnection+", mBound="+(mConnection != null ? mConnection.mBound : "null")+", mSdServer="+(mConnection != null ? mConnection.mSdServer : "null"));
             // If the server is not bound, fall back to using the stored preferences
             if (PreferenceUtils.getBooleanFromXml(prefs, "OsdAlarmActive")) tabs.add(TAB_OSD);
             if (PreferenceUtils.getBooleanFromXml(prefs, "FlapAlarmActive")) tabs.add(TAB_FLAP);
             if (PreferenceUtils.getBooleanFromXml(prefs, "CnnAlarmActive")) tabs.add(TAB_ML);
             if (PreferenceUtils.getBooleanFromXml(prefs, "HRAlarmActive")) tabs.add(TAB_HR);
             if (PreferenceUtils.getBooleanFromXml(prefs, "FallActive")) tabs.add(TAB_FALL);
+            Log.d(TAG,"getVisibleTabs() - server not bound - trying again in 500ms....");
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    Log.i(TAG, "getVisibleTabs() - getting algorithms from sdServer");
+                    mVisibleTabs = getVisibleTabs(prefs);
+                    setVisibleTabs();
+                }
+            }, 500);
         }
         tabs.add(TAB_SYSTEM);
         return tabs;
+    }
+
+    private void setVisibleTabs() {
+        // Instantiate a ViewPager2 and a PagerAdapter.
+        mFragmentPager = findViewById(R.id.fragment_pager);
+        mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this, mVisibleTabs);
+        mFragmentPager.setAdapter(mFragmentStateAdapter);
+
+        // Set up TabLayout with ViewPager2 (portrait layout)
+        // The landscape layout doesn't have a TabLayout - it uses sidebar navigation instead
+        mTabLayout = findViewById(R.id.tab_layout);
+        if (mTabLayout != null) {
+            mTabLayoutMediator = new TabLayoutMediator(mTabLayout, mFragmentPager,
+                    new TabLayoutMediator.TabConfigurationStrategy() {
+                        @Override
+                        public void onConfigureTab(TabLayout.Tab tab, int position) {
+                            if (position >= 0 && position < mVisibleTabs.size()) {
+                                tab.setText(getTabTitle(mVisibleTabs.get(position)));
+                            } else {
+                                tab.setText("Screen " + position);
+                            }
+                        }
+                    });
+            mTabLayoutMediator.attach();
+        } else {
+            Log.d(TAG, "setVisibleTabs() - TabLayout not found (landscape layout detected), skipping TabLayoutMediator");
+        }
+
     }
 
     /** Label shown on the tab for a TAB_* id. */
