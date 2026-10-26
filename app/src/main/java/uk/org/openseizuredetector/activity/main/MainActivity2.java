@@ -543,14 +543,30 @@ public class MainActivity2 extends AppCompatActivity {
      * is switched off in the "Seizure Detector Algorithms Selection" settings is left out
      * entirely. The System tab has no such setting and is always included, so the list is
      * never empty.
+     * NOTE:  This derives the list of tabs from the enabled algorithms in the stored shared
+     *        preferences.   This is appropriate if this instance is the 'main' OSD instance,
+     *        but is not appropriate for Network Datasource where the algorithms are not running in this instance.
+     *        In that case, the list of tabs is derived from the network source as part of the UI display.  FIXME - provide reference.
      */
     private List<Integer> getVisibleTabs(SharedPreferences prefs) {
         List<Integer> tabs = new ArrayList<>();
-        if (PreferenceUtils.getBooleanFromXml(prefs, "OsdAlarmActive")) tabs.add(TAB_OSD);
-        if (PreferenceUtils.getBooleanFromXml(prefs, "FlapAlarmActive")) tabs.add(TAB_FLAP);
-        if (PreferenceUtils.getBooleanFromXml(prefs, "CnnAlarmActive")) tabs.add(TAB_ML);
-        if (PreferenceUtils.getBooleanFromXml(prefs, "HRAlarmActive")) tabs.add(TAB_HR);
-        if (PreferenceUtils.getBooleanFromXml(prefs, "FallActive")) tabs.add(TAB_FALL);
+        if (mConnection != null && mConnection.mBound && mConnection.mSdServer != null) {
+            Log.v(TAG,"getVisibleTabs() - getting enabled algorithms from sdServer");
+            // If the server is bound, get the enabled algorithms from the server
+            if (mConnection.mSdServer.mSdData.mOsdAlarmActive) tabs.add(TAB_OSD);
+            if (mConnection.mSdServer.mSdData.mFlapAlarmActive) tabs.add(TAB_FLAP);
+            if (mConnection.mSdServer.mSdData.mCnnAlarmActive) tabs.add(TAB_ML);
+            if (mConnection.mSdServer.mSdData.mHRAlarmActive) tabs.add(TAB_HR);
+            if (mConnection.mSdServer.mSdData.mFallActive) tabs.add(TAB_FALL);
+        } else {
+            Log.v(TAG,"getVisibleTabs() - server not bound, getting enabled algorithms from preferences");
+            // If the server is not bound, fall back to using the stored preferences
+            if (PreferenceUtils.getBooleanFromXml(prefs, "OsdAlarmActive")) tabs.add(TAB_OSD);
+            if (PreferenceUtils.getBooleanFromXml(prefs, "FlapAlarmActive")) tabs.add(TAB_FLAP);
+            if (PreferenceUtils.getBooleanFromXml(prefs, "CnnAlarmActive")) tabs.add(TAB_ML);
+            if (PreferenceUtils.getBooleanFromXml(prefs, "HRAlarmActive")) tabs.add(TAB_HR);
+            if (PreferenceUtils.getBooleanFromXml(prefs, "FallActive")) tabs.add(TAB_FALL);
+        }
         tabs.add(TAB_SYSTEM);
         return tabs;
     }
