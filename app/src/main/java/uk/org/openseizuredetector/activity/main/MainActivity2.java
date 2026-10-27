@@ -604,19 +604,19 @@ public class MainActivity2 extends AppCompatActivity {
     private String getTabTitle(int tabId) {
         switch (tabId) {
             case TAB_OSD:
-                return "OSD";
+                return getString(R.string.osd);
             case TAB_FLAP:
-                return "Flap";
+                return getString(R.string.flap);
             case TAB_ML:
                 return "ML";
             case TAB_HR:
-                return "Heart Rate";
+                return getString(R.string.heart_rate);
             case TAB_FALL:
                 return "Fall";
             case TAB_SYSTEM:
                 return "System";
             default:
-                return "Screen " + tabId;
+                return getString(R.string.screen) + tabId;
         }
     }
 
@@ -787,7 +787,7 @@ public class MainActivity2 extends AppCompatActivity {
             }
         } catch (Exception ex) {
             Log.e(TAG, "Error launching PineTime Updater: " + ex.toString());
-            mUtil.showToast("Error: " + ex.getMessage());
+            mUtil.showToast(getString(R.string.error) + ex.getMessage());
         }
     }
 
@@ -796,14 +796,14 @@ public class MainActivity2 extends AppCompatActivity {
      */
     private void showPineTimeUpdaterWarningDialog(final String pineTimePackageName) {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-        builder.setTitle("Update PineTime Firmware");
-        builder.setMessage("To update your PineTime watch firmware:\n\n" +
-                "1. The OpenSeizureDetector monitoring service will be stopped\n" +
-                "2. Your PineTime watch will disconnect from this app\n" +
-                "3. The PineTime Firmware Updater will launch\n" +
-                "4. After the firmware update completes, you must manually restart the OpenSeizureDetector app to resume monitoring\n\n" +
-                "WARNING: Seizure detection will NOT be active during the firmware update.\n\n" +
-                "Do you want to continue?");
+        builder.setTitle(R.string.update_pinetime_firmware_1);
+        builder.setMessage(getString(R.string.update_pinetime_firmware_2) +
+                getString(R.string.update_pinetime_firmware_3) +
+                getString(R.string.update_pinetime_firmware_4) +
+                getString(R.string.update_pinetime_firmware_5) +
+                getString(R.string.update_pinetime_firmware_6) +
+                getString(R.string.update_pinetime_firmware_7) +
+                getString(R.string.update_pinetime_firmware_8));
         builder.setIcon(android.R.drawable.ic_dialog_alert);
 
         builder.setPositiveButton("Continue", new DialogInterface.OnClickListener() {
@@ -868,13 +868,13 @@ public class MainActivity2 extends AppCompatActivity {
      */
     private void showPineTimeUpdaterInstallDialog() {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-        builder.setTitle("PineTime Firmware Updater");
-        builder.setMessage("The PineTime Firmware Updater app is not installed.\n\n" +
-                "This companion app is required to update the firmware on your PineTime watch.\n\n" +
-                "Would you like to install it from the Google Play Store?");
+        builder.setTitle(R.string.pinetime_firmware_installer_1);
+        builder.setMessage(getString(R.string.pinetime_firmware_installer_2) +
+                getString(R.string.pinetime_firmware_installer_3) +
+                getString(R.string.pinetime_firmware_installer_4));
         builder.setIcon(android.R.drawable.ic_dialog_info);
 
-        builder.setPositiveButton("Install", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(R.string.install, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // Open the PineTime Updater app in Google Play Store

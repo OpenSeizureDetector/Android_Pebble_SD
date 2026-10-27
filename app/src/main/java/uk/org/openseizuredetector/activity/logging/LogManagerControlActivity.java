@@ -1,4 +1,6 @@
 package uk.org.openseizuredetector.activity.logging;
+import static uk.org.openseizuredetector.R.string.error_retrieving_remote_events_from_server;
+
 import uk.org.openseizuredetector.R;
 
 import uk.org.openseizuredetector.activity.ServiceConnectedActivity;
@@ -510,7 +512,7 @@ public class LogManagerControlActivity extends ServiceConnectedActivity {
             Log.v(TAG, "getRemoteEvents()");
             if (remoteEventsObj == null) {
                 Log.e(TAG, "getRemoteEvents Callback:  Error Retrieving events");
-                mUtil.showToast(getString(R.string.error_retrieving_remote_events_from_server));
+                mUtil.showToast(getString(error_retrieving_remote_events_from_server));
             } else {
                 //Log.v(TAG, "remoteEventsObj = " + remoteEventsObj.toString());
                 try {
