@@ -62,7 +62,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
 
             // Header row: "N models active | AccStDev: X%"
             TextView modelStatusTv = mRootView.findViewById(R.id.fragment_ml_alg_model_name);
-            String statusText = String.format(Locale.getDefault(), "%d model(s) active  |  AccStDev: %.1f%%", 
+            String statusText = String.format(Locale.getDefault(), getString(R.string.d_model_s_active_accstdev_1f),
                                             sdData.mlNumModels, sdData.mAccelMagStdDev);
             modelStatusTv.setText(statusText);
 
@@ -239,7 +239,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
                     LineGraphSeries<DataPoint> accelSeries = new LineGraphSeries<>(validAccelDataPoints);
                     accelSeries.setColor(Color.argb(100, Color.red(STDDEV_COLOR), Color.green(STDDEV_COLOR), Color.blue(STDDEV_COLOR))); // Very faint gray
                     accelSeries.setThickness(2);
-                    accelSeries.setTitle("Std");
+                    accelSeries.setTitle(getString(R.string.std));
                     historyChart.addSeries(accelSeries);
                 }
             }
@@ -270,7 +270,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
                         // Prefer descriptive name if available, else fallback to MLx
                         String title = (sdData.mlModelNames != null && i < sdData.mlModelNames.length && sdData.mlModelNames[i] != null && !sdData.mlModelNames[i].isEmpty())
                                 ? sdData.mlModelNames[i]
-                                : ("ML" + (i + 1));
+                                : (getString(R.string.ml) + (i + 1));
                         series.setTitle(title);
                         historyChart.addSeries(series);
                         addedAnyModelSeries = true;

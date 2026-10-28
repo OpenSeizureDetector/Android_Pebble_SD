@@ -76,7 +76,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         mLineChart.getGridLabelRenderer().setHorizontalLabelsColor(okTextColour);
         mLineChart.getGridLabelRenderer().setVerticalLabelsColor(okTextColour);
         mLineChart.getGridLabelRenderer().setGridColor(Color.GRAY);
-        mLineChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (minutes ago)");
+        mLineChart.getGridLabelRenderer().setHorizontalAxisTitle(getString(R.string.time_minutes_ago));
         mLineChart.getGridLabelRenderer().setHorizontalAxisTitleColor(okTextColour);
 
         mLineChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {
@@ -119,9 +119,9 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                     tvAvgAHr.setText(String.valueOf((short) mConnection.mSdServer.mSdData
                             .mAdaptiveHrAverage));
                 tvCurrent.setText(new StringBuilder()
-                        .append("\nResult of checks: Adaptive Hr Alarm Standing: ")
+                        .append(getString(R.string.result_of_checks_adaptive_hr_alarm_standing))
                         .append(mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding)
-                        .append("\nAverage Hr Alarm Standing: ")
+                        .append(getString(R.string.average_hr_alarm_standing))
                         .append(mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding)
                         .toString());
 

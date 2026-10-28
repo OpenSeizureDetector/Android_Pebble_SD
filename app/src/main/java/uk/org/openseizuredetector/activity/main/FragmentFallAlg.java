@@ -148,8 +148,8 @@ public class FragmentFallAlg extends FragmentOsdBaseClass {
         uk.org.openseizuredetector.data.SdData sdData = mConnection.mSdServer.mSdData;
 
         // Show whether fall detection is currently enabled
-        String activeStatus = sdData.mFallActive ? "ACTIVE" : "INACTIVE";
-        if (tvHeader != null) tvHeader.setText("Fall detection: " + activeStatus);
+        String activeStatus = sdData.mFallActive ? getString(R.string.active) : getString(R.string.inactive);
+        if (tvHeader != null) tvHeader.setText(getString(R.string.fall_detection) + activeStatus);
 
         // Read fall thresholds directly from SharedPreferences, the same way SdAlgFall does.
         // sdData.mFallThreshMin/Max are only populated from watch-protocol data and will be
@@ -179,10 +179,10 @@ public class FragmentFallAlg extends FragmentOsdBaseClass {
         // Status block: algorithm state + alarm standing flag + thresholds from preferences
         if (tvStatus != null) {
             tvStatus.setText(new StringBuilder()
-                    .append("Algorithm state: ").append(sdData.fallAlgState)
-                    .append("\nFall alarm standing: ").append(sdData.fallAlarmStanding)
-                    .append("\nThresholds  Min=").append((int) threshMin)
-                    .append(" mg  Max=").append((int) threshMax).append(" mg")
+                    .append(getString(R.string.algorithm_state)).append(sdData.fallAlgState)
+                    .append(getString(R.string.fall_alarm_standing)).append(sdData.fallAlarmStanding)
+                    .append(getString(R.string.thresholds_min)).append((int) threshMin)
+                    .append(getString(R.string.mg_max)).append((int) threshMax).append(" mg")
                     .toString());
         }
 

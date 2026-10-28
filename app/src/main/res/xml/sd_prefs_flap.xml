@@ -24,12 +24,12 @@
         <EditTextPreference
             android:defaultValue="2"
             android:key="FlapAlarmFreqMin"
-            android:summary="@string/AlarmFreqMinSummary"
-            android:title="@string/AlarmFreqMinTitle" />
+            android:summary="@string/FlapAlarmFreqMinSummary"
+            android:title="@string/FlapAlarmFreqMinTitle" />
         <EditTextPreference
             android:defaultValue="4"
             android:key="FlapAlarmFreqMax"
-            android:summary="@string/AlarmFreqMaxSummary"
-            android:title="@string/AlarmFreqMaxTitle" />
+            android:summary="@string/FlapAlarmFreqMaxSummary"
+            android:title="@string/FlapAlarmFreqMaxTitle" />
     </PreferenceCategory>
 </PreferenceScreen>

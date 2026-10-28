@@ -85,7 +85,7 @@ public class FragmentSystem extends FragmentOsdBaseClass {
         mBattLineChart.getGridLabelRenderer().setHorizontalLabelsColor(okTextColour);
         mBattLineChart.getGridLabelRenderer().setVerticalLabelsColor(okTextColour);
         mBattLineChart.getGridLabelRenderer().setGridColor(Color.GRAY);
-        mBattLineChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (hours ago)");
+        mBattLineChart.getGridLabelRenderer().setHorizontalAxisTitle(getString(R.string.time_hours_ago));
         mBattLineChart.getGridLabelRenderer().setHorizontalAxisTitleColor(okTextColour);
 
         mBattLineChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {
@@ -172,8 +172,8 @@ public class FragmentSystem extends FragmentOsdBaseClass {
                 TextView dsTv = (TextView) mRootView.findViewById(R.id.dataSourceInfoTv);
                 dsTv.setBackgroundColor(okColour);
                 dsTv.setTextColor(okTextColour);
-                if (mConnection.mSdServer.mSdDataSourceName.equals("Phone")) {
-                    dsTv.setText(getString(R.string.DataSource) + " = " + "Phone (Demo Mode)");
+                if (mConnection.mSdServer.mSdDataSourceName.equals(getString(R.string.phone))) {
+                    dsTv.setText(getString(R.string.DataSource) + " = " + getString(R.string.phone_demo_mode));
                     dsTv.setBackgroundColor(warnColour);
                     dsTv.setTextColor(warnTextColour);
                 } else if (mConnection.mSdServer.mSdDataSourceName.equals("BLE")

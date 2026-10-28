@@ -109,6 +109,10 @@
     <string name="AlarmFreqMaxSummary">Maximum Frequency of ROI (Hz) (Default = 8 Hz)</string>
     <string name="AlarmFreqMinTitle">AlarmFreqMin (Hz)</string>
     <string name="AlarmFreqMinSummary">Minimum Frequency of ROI (Hz) (Default = 3 Hz)</string>
+    <string name="FlapAlarmFreqMaxTitle">Flap AlarmFreqMax (Hz)</string>
+    <string name="FlapAlarmFreqMaxSummary">Maximum Frequency of ROI (Hz) (Default = 4 Hz)</string>
+    <string name="FlapAlarmFreqMinTitle">Flap AlarmFreqMin (Hz)</string>
+    <string name="FlapAlarmFreqMinSummary">Minimum Frequency of ROI (Hz) (Default = 2 Hz)</string>
     <string name="HRAlarmEnabledTitle">Heart Rate Alarms</string>
     <string name="HRAlarmEnabledSummary" />
     <string name="HRNullAlarmTitle">Treat a Null heart rate as an alarm condition</string>
@@ -902,4 +906,40 @@
     <string name="settings_changed_restarting_app">Settings changed - restarting app...</string>
     <string name="seizure_event_created">Seizure Event Created</string>
     <string name="error_retrieving_remote_events_from_server">Error Retrieving Remote Events from Server - Please Try Again Later!</string>
+    <string name="bound_to_server">Bound to Server</string>
+    <string name="not_bound_to_server">****NOT BOUND TO SERVER***</string>
+    <string name="active">ACTIVE</string>
+    <string name="inactive">INACTIVE</string>
+    <string name="fall_detection">"Fall detection: "</string>
+    <string name="algorithm_state">"Algorithm state: "</string>
+    <string name="fall_alarm_standing">"\nFall alarm standing: "</string>
+    <string name="thresholds_min">\nThresholds  Min=</string>
+    <string name="mg_max">" mg  Max="</string>
+    <string name="time_minutes_ago">Time (minutes ago)</string>
+    <string name="result_of_checks_adaptive_hr_alarm_standing">"\nResult of checks: Adaptive Hr Alarm Standing: "</string>
+    <string name="average_hr_alarm_standing">"\nAverage Hr Alarm Standing: "</string>
+    <string name="d_model_s_active_accstdev_1f">%d model(s) active  |  AccStDev: %.1f%%</string>
+    <string name="std">Std</string>
+    <string name="ml">ML</string>
+    <string name="time_hours_ago">Time (hours ago)</string>
+    <string name="phone">Phone</string>
+    <string name="phone_demo_mode">Phone (Demo Mode)</string>
+    <string name="osd">OSD</string>
+    <string name="flap">Flap</string>
+    <string name="heart_rate">Heart Rate</string>
+    <string name="screen">"Screen "</string>
+    <string name="error">"Error: "</string>
+    <string name="update_pinetime_firmware_1">Update PineTime Firmware</string>
+    <string name="update_pinetime_firmware_2">To update your PineTime watch firmware:\n\n</string>
+    <string name="update_pinetime_firmware_3">1. The OpenSeizureDetector monitoring service will be stopped\n</string>
+    <string name="update_pinetime_firmware_4">2. Your PineTime watch will disconnect from this app\n</string>
+    <string name="update_pinetime_firmware_5">3. The PineTime Firmware Updater will launch\n</string>
+    <string name="update_pinetime_firmware_6">4. After the firmware update completes, you must manually restart the OpenSeizureDetector app to resume monitoring\n\n</string>
+    <string name="update_pinetime_firmware_7">WARNING: Seizure detection will NOT be active during the firmware update.\n\n</string>
+    <string name="update_pinetime_firmware_8">Do you want to continue?</string>
+    <string name="pinetime_firmware_installer_1">PineTime Firmware Updater</string>
+    <string name="pinetime_firmware_installer_2">The PineTime Firmware Updater app is not installed.\n\n</string>
+    <string name="pinetime_firmware_installer_3">This companion app is required to update the firmware on your PineTime watch.\n\n</string>
+    <string name="pinetime_firmware_installer_4">Would you like to install it from the Google Play Store?</string>
+    <string name="install">Install</string>
 </resources>
