@@ -1,5 +1,6 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.1.2  - Fixed issue with dark mode not working in non-english languages (Issue #333)
     V5.1.1  - Fixed issue with incorrect tabs being shown when using Network Datasource (Issue #327)
             - Fixed display of acceleration stdev on ML tab in network datasource
     V5.1.0  - Fixed occasional crash during system shutdown (Issue #260)
