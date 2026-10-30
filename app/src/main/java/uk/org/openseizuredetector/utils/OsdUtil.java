@@ -30,11 +30,17 @@ import uk.org.openseizuredetector.data.AlarmState;
 import android.Manifest;
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.media.AudioAttributes;
+import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Build;
@@ -44,6 +50,7 @@ import uk.org.openseizuredetector.data.logging.Log;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -60,6 +67,7 @@ import java.util.List;
 import java.util.Locale;
 
 import uk.org.openseizuredetector.SdServer;
+import uk.org.openseizuredetector.activity.startup.StartupActivity;
 /**
  * OsdUtil - OpenSeizureDetector Utilities
  * Deals with starting and stopping the background service and binding to it to receive data.
@@ -85,6 +93,12 @@ public class OsdUtil {
     private static PersistentFileLogger mFileLogger = null;
 
     private static int mNbound = 0;
+
+    // Notification channel/ID used to alert the user when the background monitoring service
+    // fails to start. The channel ID is versioned because channel settings (sound/importance)
+    // are immutable once the channel has been created on a device.
+    private static final String FGS_FAILURE_CHANNEL_ID = "OSD_FGS_Failure_Channel_v1";
+    private static final int FGS_FAILURE_NOTIFICATION_ID = 2;
 
     public final String[] BT_PERMISSIONS_API30 = {
             Manifest.permission.ACCESS_FINE_LOCATION,
@@ -203,8 +217,93 @@ public class OsdUtil {
         Intent sdServerIntent;
         sdServerIntent = new Intent(mContext, SdServer.class);
         sdServerIntent.setData(Uri.parse("Start"));
-        Log.i(TAG, "Starting Foreground Service (Android 8 and above)");
-        mContext.startForegroundService(sdServerIntent);
+        try {
+            Log.i(TAG, "Starting Foreground Service (Android 8 and above)");
+            mContext.startForegroundService(sdServerIntent);
+        } catch (android.app.ForegroundServiceStartNotAllowedException e) {
+            // Android 12+ (enforced strictly from Android 15): startForegroundService() is denied
+            // when the app is in the background (mAllowStartForeground == false). This happens when
+            // shutdownApp() schedules a delayed server refresh that fires after the user has left
+            // the app. Rather than crash - and leave monitoring silently stopped - alert the user
+            // with a sound + notification. mAllowStartForeground becomes true again once an activity
+            // resumes, and the existing activity-resume flow (MainActivity2.onStart / StartupActivity)
+            // restarts the service when the user reopens the app.
+            Log.e(TAG, "startForegroundService() denied - app is backgrounded. "
+                    + "Alerting user; service will restart when app returns to foreground.", e);
+            showFgsStartupFailureNotification();
+        }
+    }
+
+    /**
+     * Alert the user that the background monitoring service could not be started. Shared by both
+     * known failure causes so the user-facing alert is identical:
+     * <ol>
+     *   <li>startForegroundService() is denied because the app is in the background
+     *       (ForegroundServiceStartNotAllowedException thrown from {@link #startServer()}).</li>
+     *   <li>startForeground() inside SdServer fails because Android has exhausted the daily time
+     *       limit for the requested foreground-service type (e.g. dataSync's 6 h/day cap).</li>
+     * </ol>
+     * A sound + heads-up notification is used so the failure is NOT silent even when the user is
+     * not looking at the phone. Uses the application context, so it works whether or not SdServer
+     * is running and even if the launching activity is finishing.
+     */
+    public void showFgsStartupFailureNotification() {
+        // Immediate on-screen feedback for users who are actively looking at their phone.
+        if (mHandler != null) {
+            mHandler.post(() -> Toast.makeText(mContext,
+                    mContext.getString(R.string.fgs_start_failed_toast),
+                    Toast.LENGTH_LONG).show());
+        }
+
+        try {
+            NotificationManager nm =
+                    (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm == null) {
+                Log.e(TAG, "showFgsStartupFailureNotification() - NotificationManager is null");
+                return;
+            }
+
+            // Dedicated HIGH-importance channel so the alert appears as a heads-up banner and plays
+            // a sound even when the app is in the background. The channel ID is versioned because
+            // channel settings (sound/importance) are immutable once the channel has been created.
+            NotificationChannel channel = new NotificationChannel(
+                    FGS_FAILURE_CHANNEL_ID,
+                    mContext.getString(R.string.fgs_error_channel_name),
+                    NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription(mContext.getString(R.string.fgs_start_failed_notification_text));
+            channel.enableVibration(true);
+            Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+            AudioAttributes audioAttrs = new AudioAttributes.Builder()
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .build();
+            channel.setSound(soundUri, audioAttrs);
+            nm.createNotificationChannel(channel);
+
+            // Tapping the notification opens the app, which restarts the monitoring service.
+            Intent intent = new Intent(mContext, StartupActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            PendingIntent pendingIntent = PendingIntent.getActivity(
+                    mContext, 0, intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+            Notification notification = new NotificationCompat.Builder(mContext, FGS_FAILURE_CHANNEL_ID)
+                    .setSmallIcon(R.drawable.logo_new_simplified_48x48)
+                    .setContentTitle(mContext.getString(R.string.fgs_start_failed_notification_title))
+                    .setContentText(mContext.getString(R.string.fgs_start_failed_notification_text))
+                    .setStyle(new NotificationCompat.BigTextStyle()
+                            .bigText(mContext.getString(R.string.fgs_start_failed_notification_text)))
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setCategory(NotificationCompat.CATEGORY_ALARM)
+                    .setAutoCancel(true)
+                    .setContentIntent(pendingIntent)
+                    .build();
+
+            nm.notify(FGS_FAILURE_NOTIFICATION_ID, notification);
+            Log.i(TAG, "showFgsStartupFailureNotification() - alert notification posted");
+        } catch (Exception ex) {
+            Log.e(TAG, "showFgsStartupFailureNotification() - failed: " + ex.toString(), ex);
+        }
     }
 
     /**

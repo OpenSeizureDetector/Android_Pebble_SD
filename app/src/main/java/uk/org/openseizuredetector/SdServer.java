@@ -400,7 +400,7 @@ public class SdServer extends Service implements SdDataReceiver {
                                 ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
                     } catch (Exception e2) {
                         Log.e(TAG, "startForeground fallback also failed – notifying user and stopping service.", e2);
-                        showFgsStartupFailureNotification();
+                        mUtil.showFgsStartupFailureNotification();
                         stopSelf();
                     }
                 }
@@ -434,41 +434,6 @@ public class SdServer extends Service implements SdDataReceiver {
         // Unknown source: default to connectedDevice – it has no time limit and avoids the
         // Android 15 dataSync 6-hour exhaustion that previously caused a crash here.
         return ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
-    }
-
-    /**
-     * Shows a Toast AND a persistent status-bar notification when the foreground service
-     * fails to start (e.g. Android 15 dataSync time-limit exhausted and all fallbacks failed).
-     * Both channels are used so the user sees feedback whether or not they are actively
-     * looking at the screen.
-     */
-    private void showFgsStartupFailureNotification() {
-        // Immediate on-screen feedback for users who are actively looking at their phone.
-        new Handler(Looper.getMainLooper()).post(() ->
-                Toast.makeText(this,
-                        getString(R.string.fgs_start_failed_toast),
-                        Toast.LENGTH_LONG).show()
-        );
-
-        // Persistent status-bar notification so the user is informed even if they miss the Toast.
-        // Use a dedicated HIGH-importance channel so it appears as a heads-up banner.
-        final String errorChId = "OSD_Error_Channel";
-        NotificationChannel errorChannel = new NotificationChannel(
-                errorChId,
-                getString(R.string.fgs_error_channel_name),
-                NotificationManager.IMPORTANCE_HIGH);
-        mNM.createNotificationChannel(errorChannel);
-
-        Notification errorNotification = new NotificationCompat.Builder(this, errorChId)
-                .setSmallIcon(R.drawable.logo_new_simplified_48x48)
-                .setContentTitle(getString(R.string.fgs_start_failed_notification_title))
-                .setContentText(getString(R.string.fgs_start_failed_notification_text))
-                .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText(getString(R.string.fgs_start_failed_notification_text)))
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true)
-                .build();
-        mNM.notify(NOTIFICATION_ID + 1, errorNotification);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
