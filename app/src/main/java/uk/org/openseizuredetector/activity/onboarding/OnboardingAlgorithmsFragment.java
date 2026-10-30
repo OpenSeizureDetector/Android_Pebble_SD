@@ -214,10 +214,10 @@ public class OnboardingAlgorithmsFragment extends Fragment {
     private void showHeartRateConfiguration() {
         Log.i(TAG, "Configuring Heart Rate Algorithm");
 
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Heart Rate Alerts")
-            .setMessage("Default Heart Rate Alert configuration has been enabled.\n\n" +
-                       "You can review and update these settings in the Settings menu when the app starts.")
+        new MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.heart_rate_alerts)
+            .setMessage(getString(R.string.default_heart_rate_alert_configuration_has_been_enabled) +
+                       getString(R.string.you_can_review_update_these_settings))
             .setPositiveButton("OK", (d, w) -> {
                 if (mNextButton != null) {
                     mNextButton.performClick();
@@ -233,10 +233,10 @@ public class OnboardingAlgorithmsFragment extends Fragment {
     private void showOsdConfiguration() {
         Log.i(TAG, "Configuring OSD Algorithm");
 
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+        new MaterialAlertDialogBuilder(requireContext())
             .setTitle("OSD Algorithm")
-            .setMessage("Default OpenSeizureDetector Algorithm settings have been applied.\n\n" +
-                       "You can customize these settings in the Settings menu when the app starts.")
+            .setMessage(getString(R.string.default_openseizuredetector_algorithm_settings_have_been_applied) +
+                       getString(R.string.you_can_customize_these_when_the_app_starts))
             .setPositiveButton("OK", (d, w) -> {
                 if (mNextButton != null) {
                     mNextButton.performClick();
@@ -252,9 +252,9 @@ public class OnboardingAlgorithmsFragment extends Fragment {
     private void showFlapConfiguration() {
         Log.i(TAG, "Configuring OSD Flap Detection");
 
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-            .setTitle("OSD with Flap Detection")
-            .setMessage("Default settings for OSD Flap Detection have been applied.\n\n" +
+        new MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.osd_with_flap_detection)
+            .setMessage(getString(R.string.default_settings_for_osd_flap_detection_applied) +
                        "You can customize these settings in the Settings menu when the app starts.")
             .setPositiveButton("OK", (d, w) -> {
                 if (mNextButton != null) {

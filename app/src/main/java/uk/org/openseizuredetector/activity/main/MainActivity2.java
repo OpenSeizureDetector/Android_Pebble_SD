@@ -247,7 +247,7 @@ public class MainActivity2 extends AppCompatActivity {
                 Log.i(TAG, "MainActivity2.onStart() - User stopped service via Exit, not auto-starting");
                 Log.i(TAG, "MainActivity2.onStart - User stopped service, not auto-starting");
                 // Show message and close activity
-                mUtil.showToast("Service was stopped. Please restart from launcher.");
+                mUtil.showToast(getString(R.string.service_stopped_restart_from_launcher));
                 finish();
             } else {
                 Log.i(TAG, "MainActivity2.onStart() - Server Not Running - Starting Server");
@@ -405,7 +405,7 @@ public class MainActivity2 extends AppCompatActivity {
         } else if (itemId == R.id.action_exit) {
             // Respond to the start/stop server menu item.
             Log.i(TAG, "action_exit: Stopping Server");
-            mUtil.shutdownApp(this, false, true, "Stopping OpenSeizureDetector...");
+            mUtil.shutdownApp(this, false, true, getString(R.string.stopping_openseizuredetector));
             return true;
         } else if (itemId == R.id.action_test_alarm_beep) {
             Log.i(TAG, "action_test_alarm_beep");
@@ -489,7 +489,7 @@ public class MainActivity2 extends AppCompatActivity {
                 startActivity(i);
             } catch (Exception ex) {
                 Log.v(TAG, "exception displaying instructions " + ex.toString());
-                mUtil.showToast("ERROR Displaying Instructions");
+                mUtil.showToast(getString(R.string.error_displaying_instructions));
             }
             return true;
         } else if (itemId == R.id.action_troubleshooting) {
@@ -806,7 +806,7 @@ public class MainActivity2 extends AppCompatActivity {
                 getString(R.string.update_pinetime_firmware_8));
         builder.setIcon(android.R.drawable.ic_dialog_alert);
 
-        builder.setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(R.string.continue, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 Log.i(TAG, "User confirmed PineTime Updater launch - stopping service");
@@ -893,7 +893,7 @@ public class MainActivity2 extends AppCompatActivity {
                         startActivity(browserIntent);
                     } catch (Exception ex) {
                         Log.e(TAG, "Error opening Play Store: " + ex.toString());
-                        mUtil.showToast("Error opening Play Store");
+                        mUtil.showToast(getString(R.string.error_opening_play_store));
                     }
                 }
             }

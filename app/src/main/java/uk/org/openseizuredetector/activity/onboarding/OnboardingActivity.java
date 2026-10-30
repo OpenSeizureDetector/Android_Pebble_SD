@@ -216,7 +216,7 @@ public class OnboardingActivity extends AppCompatActivity {
         
         // Update Next button text and Skip visibility on last page
         if (position == mAdapter.getItemCount() - 1) {
-            mBtnNext.setText("Get Started");
+            mBtnNext.setText(R.string.get_started);
             mBtnSkip.setVisibility(View.GONE);
         } else {
             mBtnNext.setText("Next");

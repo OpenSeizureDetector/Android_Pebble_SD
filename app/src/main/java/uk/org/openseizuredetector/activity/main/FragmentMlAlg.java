@@ -149,8 +149,8 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
     private String getStatusText(int state) {
         switch (state) {
             case 2: return "ALARM";
-            case 1: return "WARN";
-            default: return "OK";
+            case 1: return getString(R.string.warn);
+            default: return getString(R.string.ok);
         }
     }
 
@@ -324,8 +324,8 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         }
 
         // Threshold entries are listed after primary parameters/series.
-        addLegendItem(legendLayout, getPrimaryProbabilityColor(sdData), "Prob Thresh", true);
-        addLegendItem(legendLayout, STDDEV_COLOR, "Std Thresh", true);
+        addLegendItem(legendLayout, getPrimaryProbabilityColor(sdData), getString(R.string.probabilty_thresh), true);
+        addLegendItem(legendLayout, STDDEV_COLOR, getString(R.string.std_thresh), true);
     }
 
     private int getPrimaryProbabilityColor(SdData sdData) {

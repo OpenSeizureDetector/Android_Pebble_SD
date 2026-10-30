@@ -187,7 +187,7 @@ public class FragmentOsdAlg extends FragmentOsdBaseClass {
                     if (isValueX) {
                         int i = (int) Math.round(value);
                         if (i == 0) {
-                            return "Hz:";
+                            return getString(R.string.frequency_hertz);
                         }
                         if (i > 0 && i <= 10) {
                             return String.valueOf(i);

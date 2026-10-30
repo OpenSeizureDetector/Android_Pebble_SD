@@ -71,16 +71,16 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
                     if (result.getResultCode() == android.app.Activity.RESULT_OK) {
                         Intent data = result.getData();
                         if (data != null && data.hasExtra("mac_address")) {
-                            String macAddress = data.getStringExtra("mac_address");
+                            String macAddress = data.getStringExtra(getString(R.string.mac_address));
                             if (macAddress != null && !macAddress.isEmpty()) {
                                 Log.i(TAG, "Received MAC address from PineTime Updater: " + macAddress);
 
                                 // Save the MAC address to SharedPreferences
                                 SharedPreferences.Editor editor = mPrefs.edit();
-                                editor.putString("BLE_Device_Addr", macAddress);
+                                editor.putString(getString(R.string.ble_device_addr), macAddress);
                                 // The updater does not provide the device name, so we'll use a placeholder.
                                 // The name will be updated on the next connection.
-                                editor.putString("BLE_Device_Name", getString(R.string.pinetime_device_name_placeholder));
+                                editor.putString(getString(R.string.ble_device_name), getString(R.string.pinetime_device_name_placeholder));
                                 editor.apply();
 
                                 // Refresh the display to show the new device
