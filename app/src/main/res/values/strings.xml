@@ -970,6 +970,5 @@
     <string name="ml_algorithm">ML Algorithm</string>
     <string name="no_algorithms_configured">No algorithms configured</string>
     <string name="mac_address">mac_address</string>
-    <string name="ble_device_addr">BLE_Device_Addr</string>
-    <string name="ble_device_name">BLE_Device_Name</string>
+    <string name="status_alarm">ALARM</string>
 </resources>

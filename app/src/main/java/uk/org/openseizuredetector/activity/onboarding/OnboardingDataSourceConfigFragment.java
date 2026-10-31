@@ -77,10 +77,10 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
 
                                 // Save the MAC address to SharedPreferences
                                 SharedPreferences.Editor editor = mPrefs.edit();
-                                editor.putString(getString(R.string.ble_device_addr), macAddress);
+                                editor.putString("BLE_Device_Addr", macAddress);
                                 // The updater does not provide the device name, so we'll use a placeholder.
                                 // The name will be updated on the next connection.
-                                editor.putString(getString(R.string.ble_device_name), getString(R.string.pinetime_device_name_placeholder));
+                                editor.putString("BLE_Device_Name", getString(R.string.pinetime_device_name_placeholder));
                                 editor.apply();
 
                                 // Refresh the display to show the new device

@@ -148,7 +148,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
 
     private String getStatusText(int state) {
         switch (state) {
-            case 2: return "ALARM";
+            case 2: return getString(R.string.status_alarm);
             case 1: return getString(R.string.warn);
             default: return getString(R.string.ok);
         }

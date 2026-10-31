@@ -488,7 +488,7 @@ public class MainActivity2 extends AppCompatActivity {
                 i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(i);
             } catch (Exception ex) {
-                Log.v(TAG, "exception displaying instructions " + ex.toString());
+                Log.e(TAG, "exception displaying instructions " + ex.toString());
                 mUtil.showToast(getString(R.string.error_displaying_instructions));
             }
             return true;
@@ -806,7 +806,7 @@ public class MainActivity2 extends AppCompatActivity {
                 getString(R.string.update_pinetime_firmware_8));
         builder.setIcon(android.R.drawable.ic_dialog_alert);
 
-        builder.setPositiveButton(R.string.continue, new DialogInterface.OnClickListener() {
+        builder.setPositiveButton("Continue", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 Log.i(TAG, "User confirmed PineTime Updater launch - stopping service");
