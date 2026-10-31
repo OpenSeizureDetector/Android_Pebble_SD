@@ -126,7 +126,7 @@ public class FragmentSystem extends FragmentOsdBaseClass {
         mSignalLineChart.getGridLabelRenderer().setHorizontalLabelsColor(okTextColour);
         mSignalLineChart.getGridLabelRenderer().setVerticalLabelsColor(okTextColour);
         mSignalLineChart.getGridLabelRenderer().setGridColor(Color.GRAY);
-        mSignalLineChart.getGridLabelRenderer().setHorizontalAxisTitle("Time (minutes ago)");
+        mSignalLineChart.getGridLabelRenderer().setHorizontalAxisTitle(getString(R.string.Time_minutes_ago));
         mSignalLineChart.getGridLabelRenderer().setHorizontalAxisTitleColor(okTextColour);
 
         mSignalLineChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {

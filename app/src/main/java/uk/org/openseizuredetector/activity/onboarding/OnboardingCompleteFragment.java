@@ -82,16 +82,16 @@ public class OnboardingCompleteFragment extends Fragment {
                 String deviceName = prefs.getString("BLE_Device_Name", "SET_FROM_XML");
                 String deviceAddr = prefs.getString("BLE_Device_Addr", "SET_FROM_XML");
                 if (deviceName != null && deviceAddr != null) {
-                    return "PineTime Watch (BLE)\n" + deviceName + "\n" + deviceAddr;
+                    return getString(R.string.pinetime_watch_ble) + deviceName + "\n" + deviceAddr;
                 } else {
-                    return "PineTime Watch (BLE)\n(No device selected)";
+                    return getString(R.string.pinetime_watch_ble_no_device_selected);
                 }
             case "Garmin":
-                return "Garmin Watch";
+                return getString(R.string.garmin_watch);
             case "Network":
-                return "Network (Remote Device)";
+                return getString(R.string.network_remote_device);
             case "Phone":
-                return "Phone Accelerometer";
+                return getString(R.string.phone_accelerometer);
             default:
                 return dataSource;
         }
@@ -105,14 +105,14 @@ public class OnboardingCompleteFragment extends Fragment {
 
         // Network data source doesn't use local algorithms
         if ("Network".equals(dataSource)) {
-            algorithms.add("Configured on remote device");
+            algorithms.add(getString(R.string.configured_on_remote_device));
             return algorithms;
         }
 
         // Check which algorithms are enabled
         // Use false as defaults to match what was set in onboarding
         if (PreferenceUtils.getBooleanFromXml(prefs, "OsdAlarmActive")) {
-            algorithms.add("Original OpenSeizureDetector (OSD)");
+            algorithms.add(getString(R.string.original_openseizuredetector_osd));
         }
 
         if (PreferenceUtils.getBooleanFromXml(prefs, "FlapAlarmActive")) {
@@ -124,7 +124,7 @@ public class OnboardingCompleteFragment extends Fragment {
             if (modelName != null) {
                 algorithms.add("ML Algorithm (" + modelName + ")");
             } else {
-                algorithms.add("ML Algorithm");
+                algorithms.add(getString(R.string.ml_algorithm));
             }
         }
 
@@ -140,7 +140,7 @@ public class OnboardingCompleteFragment extends Fragment {
      */
     private String formatAlgorithms(List<String> algorithms) {
         if (algorithms.isEmpty()) {
-            return "No algorithms configured";
+            return getString(R.string.no_algorithms_configured);
         }
 
         StringBuilder sb = new StringBuilder();
