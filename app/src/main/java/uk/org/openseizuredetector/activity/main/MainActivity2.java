@@ -245,13 +245,11 @@ public class MainActivity2 extends AppCompatActivity {
 
             if (userStopped) {
                 Log.i(TAG, "MainActivity2.onStart() - User stopped service via Exit, not auto-starting");
-                Log.i(TAG, "MainActivity2.onStart - User stopped service, not auto-starting");
                 // Show message and close activity
                 mUtil.showToast(getString(R.string.service_stopped_restart_from_launcher));
                 finish();
             } else {
                 Log.i(TAG, "MainActivity2.onStart() - Server Not Running - Starting Server");
-                Log.i(TAG, "MainActivity2.onStart - Server Not Running - Starting Server");
                 mUtil.startServer();
                 // Give server a moment to start before binding
                 mHandler.postDelayed(new Runnable() {
@@ -269,8 +267,7 @@ public class MainActivity2 extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        Log.i(TAG, "onStop() - unbinding from server");
-        Log.i(TAG, "MainActivity.onStop()");
+        Log.i(TAG, "MainActivity.onStop() - unbinding from server");
         mUtil.unbindFromServer(getApplicationContext(), mConnection);
     }
 
@@ -562,13 +559,29 @@ public class MainActivity2 extends AppCompatActivity {
             Log.d(TAG,"getVisibleTabs() - server not bound - trying again in 500ms....");
             mHandler.postDelayed(new Runnable() {
                 public void run() {
-                    Log.i(TAG, "getVisibleTabs() - getting algorithms from sdServer");
+                    Log.i(TAG, "getVisibleTabs() - getting algorithms from sdServer after 500ms delay");
                     mVisibleTabs = getVisibleTabs(prefs);
                     setVisibleTabs();
                 }
             }, 500);
         }
         tabs.add(TAB_SYSTEM);
+
+        // If the server has just re-started, the algorithm states may not yet have been set, so only the System tab will be visible.
+        // We catch this by checking for only a single visible tab, and if that is the case, we try again in 2 seconds to give the server chance
+        // to initialise fully.    Fixes Issue #339.
+        Log.d(TAG,"getVisibleTabs() - visible tabs: " + tabs.toString());
+
+        if (tabs.size() == 1) {
+            Log.w(TAG, "getVisibleTabs() - only System tab is visible, but server is running - this might be because it has just re-started and the algorithm states have not yet been updated.  Will try again in 5000ms.");
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    Log.i(TAG, "getVisibleTabs() - getting algorithms from sdServer after 2000ms delay");
+                    mVisibleTabs = getVisibleTabs(prefs);
+                    setVisibleTabs();
+                }
+            }, 2000);
+        }
         return tabs;
     }
 
