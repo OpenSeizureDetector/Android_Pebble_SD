@@ -58,6 +58,7 @@
       display: flex;
       align-items: center;
       gap: .8rem;
+      justify-content: center;
       margin-bottom: 1.5rem;
     }
     #header img { width: 2.5rem; height: 2.5rem; border-radius: .6rem; }
@@ -87,7 +88,7 @@
       align-items: center;
       gap: 1.4rem;
       padding: 2rem 1.6rem;
-      margin-bottom: 1rem;
+      margin-bottom: .6rem;
       border: 1px solid var(--c);
       border-radius: 1.4rem;
       background: var(--cs) !important;
@@ -143,26 +144,43 @@
     }
     .tile[style*="red"] { background: var(--alarm-soft) !important; border-color: var(--alarm); }
 
-    /* ---------- buttons ---------- */
-    .actions { display: flex; flex-wrap: wrap; gap: .75rem; }
-    button {
-      min-height: 3.4rem;
-      padding: 0 1.5rem;
-      border: 1px solid var(--line);
-      border-radius: .9rem;
-      background: var(--panel);
-      color: var(--text);
-      font: inherit;
-      cursor: pointer;
+    /* ---------- alarm types: one small icon per enabled detector ---------- */
+    #alarmTypes { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin: 0 0 1rem; }
+    #alarmTypes:empty { display: none; }
+    .atype {
+      display: flex; flex-direction: column; align-items: center; gap: .2rem;
+      min-width: 4.2rem; padding: .5rem .6rem;
+      border: 1px solid var(--line); border-radius: .8rem;
+      background: var(--panel); color: var(--muted);
+      font-size: .72rem; line-height: 1.2; text-align: center;
     }
-    button:hover { border-color: var(--muted); }
-    #acceptButton {
-      background: var(--text);
-      border-color: var(--text);
-      color: var(--ink);
-      font-weight: 650;
+    .atype svg {
+      width: 1.7rem; height: 1.7rem; fill: none; stroke: currentColor;
+      stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
     }
-    #acceptButton:hover { background: #fff; }
+    .atype text { fill: currentColor; stroke: none; }
+    .atype.lv0 { color: var(--ok); }                                   /* enabled, quiet */
+    .atype.lv1 { color: var(--warn); background: var(--warn-soft); border-color: var(--warn); }
+    .atype.lv2 { color: #230707; background: var(--alarm); border-color: var(--alarm);
+                 font-weight: 650; animation: breathe 1.8s ease-in-out infinite; }
+
+    /* status text: phrase on the first line, time of the reading below it */
+    .stxt .stime { margin-top: .3rem; font-size: .55em; font-weight: 500; opacity: .85; font-variant-numeric: tabular-nums; }
+
+    /* ---------- browser mute button (full width, last item of the tile grid) ---------- */
+    #muteButton {
+      grid-column: 1 / -1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .15rem;
+      min-height: 3.6rem; padding: .6rem 1.2rem;
+      border: 1px solid var(--line); border-radius: .9rem;
+      background: var(--panel); color: var(--text);
+      font: inherit; font-size: 1rem; font-weight: 600; cursor: pointer;
+    }
+    #muteButton small { font-size: .78rem; font-weight: 400; color: var(--muted); }
+    #muteButton:hover { border-color: var(--muted); }
+    #muteButton.muted { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); font-variant-numeric: tabular-nums; }
+    #muteButton.muted small { color: var(--text); }
+
     a:focus-visible, button:focus-visible { outline: 3px solid var(--warn); outline-offset: 3px; }
 
     /* ---------- footer ---------- */
@@ -172,7 +190,7 @@
     #debugInfo { margin-top: .5rem; color: var(--muted); font-size: .85rem; }
 
     @media (prefers-reduced-motion: reduce) {
-      #benStat::before { animation: none !important; }
+      #benStat::before, .atype { animation: none !important; }
     }
   </style>
 </head>
@@ -188,16 +206,16 @@
     <div role="main">
       <!-- Shows neutral grey until the first reading arrives, instead of a reassuring "OK". -->
       <div id="benStat">Waiting for data from the phone…</div>
+      <div id="alarmTypes"></div>
 
       <div class="tiles">
-        <div id="pebStat1" class="tile">Checking watch connection…</div>
-        <div id="pebStat2" class="tile">Checking watch app…</div>
+        <!-- Hidden while the watch is fine; osd_main.js shows them in red only when something is wrong. -->
+        <div id="pebStat1" class="tile" style="display:none"></div>
+        <div id="pebStat2" class="tile" style="display:none"></div>
         <div id="pebStat3" class="tile">Watch battery…</div>
-      </div>
-
-      <div class="actions">
-        <button id="acceptButton">Accept Alarm</button>
-        <button id="muteButton">Mute Alarm</button>
+        <div id="pebStat4" class="tile">Watch signal…</div>
+        <div id="pebStat5" class="tile">Phone battery…</div>
+        <button id="muteButton" type="button">Mute alarm sound<small>for 10 minutes</small></button>
       </div>
     </div>
 
