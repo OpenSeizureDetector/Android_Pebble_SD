@@ -971,4 +971,10 @@
     <string name="no_algorithms_configured">No algorithms configured</string>
     <string name="mac_address">mac_address</string>
     <string name="status_alarm">ALARM</string>
+    <string name="vibrate_on_alarm_title">Vibrate on Alarm?</string>
+    <string name="vibrate_on_alarm_summary">Also vibrate the phone (three long buzzes) when an alarm sounds.</string>
+    <string name="vibrate_on_warning_title">Vibrate on Warning?</string>
+    <string name="vibrate_on_warning_summary">Also vibrate the phone (one long buzz) when a warning sounds.</string>
+    <string name="vibrate_on_fault_title">Vibrate on System Fault?</string>
+    <string name="vibrate_on_fault_summary">Also vibrate the phone (one short buzz) when a system fault warning sounds.</string>
 </resources>

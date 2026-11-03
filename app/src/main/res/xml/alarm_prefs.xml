@@ -12,6 +12,12 @@
             android:key="UseMaxVolumeForAlerts"
             android:summary="@string/use_max_volume_alerts_summary"
             android:title="@string/use_max_volume_alerts_title" />
+        <!-- Visible only while AudibleAlarm is checked - see AlarmPrefsFragment. -->
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="VibrateOnAlarm"
+            android:summary="@string/vibrate_on_alarm_summary"
+            android:title="@string/vibrate_on_alarm_title" />
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="AudibleWarning"
@@ -24,11 +30,23 @@
             android:key="WarningOverrideSilentMode"
             android:summary="@string/warning_override_silent_mode_summary"
             android:title="@string/warning_override_silent_mode_title" />
+        <!-- Visible only while AudibleWarning is checked - see AlarmPrefsFragment. -->
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="VibrateOnWarning"
+            android:summary="@string/vibrate_on_warning_summary"
+            android:title="@string/vibrate_on_warning_title" />
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="AudibleFaultWarning"
             android:summary="@string/enable_audible_fault_summary"
             android:title="@string/enable_audible_fault_title" />
+        <!-- Visible only while AudibleFaultWarning is checked - see AlarmPrefsFragment. -->
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="VibrateOnFault"
+            android:summary="@string/vibrate_on_fault_summary"
+            android:title="@string/vibrate_on_fault_title" />
         <EditTextPreference
             android:key="FaultTimerPeriod"
             android:title="@string/fault_timer_period_title"
