@@ -372,29 +372,43 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        Log.i(TAG, "SharedPreference " + s + " Changed.");
+        Log.i(TAG, "onSharedPreferenceChanged(): SharedPreference " + s + " Changed.");
 
         if (s.equals("darkMode")) {
+            Log.i(TAG," onSharedPreferenceChanged(): darkMode changed, applying theme.");
             OsdUtil.applyTheme(this);
         }
 
         if (s.equals("DataSource") || s.equals("pref_advanced_mode")) {
+            Log.i(TAG," onSharedPreferenceChanged(): DataSource or pref_advanced_mode changed, updating headers.");
             updateHeaders();
         }
 
         // Preferences that require UI restart (going through StartupActivity)
         // These affect whether onboarding should be shown or permissions requested
         if (s.equals("first_run_complete") || s.equals("SMSAlarm") || s.equals("DataSource") || s.equals("BLE_Device_Addr")) {
+            Log.i(TAG," onSharedPreferenceChanged(): " + s + " changed, marking UI restart needed.");
             mUiRestartNeeded = true;
             return;
         }
 
         if (s.equals("advancedMode")) {
+            Log.i(TAG, " onSharedPreferenceChanged(): advancedMode changed, restarting activity to apply changes.");
             startActivity(getIntent());
             finish();
-        } else {
-            mPrefChanged = true;
         }
+
+        // We need this because the shutdown reason and time are updated by the server when it shuts down, and we don't want to trigger a restart just because those values changed.
+        // Part of fix for Issue #340.
+        if (s.equals("SdServer_ShutdownReason") || s.equals("SdServer_ShutdownTime")) {
+            Log.i(TAG," onSharedPreferenceChanged(): " + s + " changed, NOT marking preference as changed to avoid unnecessary restarts.");
+            mPrefChanged = false;
+            return;
+        }
+
+
+        Log.i(TAG," onSharedPreferenceChanged(): " + s + " changed, marking preference changed.");
+        mPrefChanged = true;
     }
 
     @Override
@@ -521,7 +535,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         builder.setIcon(android.R.drawable.ic_dialog_alert);
 
         builder.setPositiveButton("Continue", (dialog, which) -> {
-            Log.i(TAG, "User confirmed PineTime Updater launch - stopping service");
+            Log.i(TAG, "User confirmed PineTime Updater launch - stopping service, then launching updater app after a short delay");
             mUtil.stopServer();
 
             mHandler.postDelayed(() -> {
