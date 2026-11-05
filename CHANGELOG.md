@@ -5,6 +5,7 @@
 	- Improved web page interface
 	- Fixed problem with visible tabs not updating correctly (Issue #339)
 	- Added more translations for DE,  FR, PL and ES.
+    - Fixed PineTime update issue (Issue #340)
     V5.1.2  - Fixed issue with dark mode not working in non-english languages (Issue #333)
     V5.1.1  - Fixed issue with incorrect tabs being shown when using Network Datasource (Issue #327)
             - Fixed display of acceleration stdev on ML tab in network datasource

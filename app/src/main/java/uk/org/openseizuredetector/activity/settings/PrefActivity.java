@@ -544,7 +544,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                     if (launchIntent != null) {
                         launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(launchIntent);
-                        moveTaskToBack(true);
+                        //moveTaskToBack(true);
                     } else {
                         Log.e(TAG, "Failed to get launch intent for PineTime Updater");
                         mUtil.showToast("Error: Cannot launch PineTime Updater");
