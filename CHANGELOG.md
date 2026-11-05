@@ -1,5 +1,10 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+	V5.1.3
+	- Added optional vibration alerts (Issue #338)
+	- Improved web page interface
+	- Fixed problem with visible tabs not updating correctly (Issue #339)
+	- Added more translations for DE,  FR, PL and ES.
     V5.1.2  - Fixed issue with dark mode not working in non-english languages (Issue #333)
     V5.1.1  - Fixed issue with incorrect tabs being shown when using Network Datasource (Issue #327)
             - Fixed display of acceleration stdev on ML tab in network datasource

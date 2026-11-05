@@ -805,6 +805,12 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         private static final String KEY_AUDIBLE_WARNING        = "AudibleWarning";
         private static final String KEY_WARNING_OVERRIDE_SILENT = "WarningOverrideSilentMode";
 
+        // "Vibrate on ...?" checkboxes - each shown only while its Audible* parent is checked
+        private static final String KEY_AUDIBLE_FAULT_WARNING = "AudibleFaultWarning";
+        private static final String KEY_VIBRATE_ON_ALARM      = "VibrateOnAlarm";
+        private static final String KEY_VIBRATE_ON_WARNING    = "VibrateOnWarning";
+        private static final String KEY_VIBRATE_ON_FAULT      = "VibrateOnFault";
+
         // #295 - SMS settings category - hidden when the Network data source is selected
         private static final String KEY_SMS_CATEGORY = "SMSCategory";
         private static final String KEY_DATA_SOURCE  = "DataSource";
@@ -849,6 +855,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             refreshSoundSummaries();
             refreshAudibleAlarmSubPrefVisibility();
             refreshAudibleWarningSubPrefVisibility();
+            refreshAudibleFaultSubPrefVisibility();
             refreshSmsCategoryVisibility();
             refreshRaiseAlarmButtonVisibility();
             // Wire click listeners for the three file-picker prefs
@@ -883,6 +890,9 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             if (KEY_AUDIBLE_WARNING.equals(key)) {
                 refreshAudibleWarningSubPrefVisibility();
             }
+            if (KEY_AUDIBLE_FAULT_WARNING.equals(key)) {
+                refreshAudibleFaultSubPrefVisibility();
+            }
             if (KEY_DATA_SOURCE.equals(key)) {
                 refreshSmsCategoryVisibility();
                 refreshRaiseAlarmButtonVisibility();
@@ -899,20 +909,30 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         // -----------------------------------------------------------------------------------------
         // Helpers
 
-        /** Show/hide "Use Max Volume for Alerts?" based on the AudibleAlarm checkbox. */
+        /** Show/hide "Use Max Volume for Alerts?" and "Vibrate on Alarm?" based on the AudibleAlarm checkbox. */
         private void refreshAudibleAlarmSubPrefVisibility() {
             SharedPreferences prefs =
                     PreferenceManager.getDefaultSharedPreferences(requireContext());
             boolean audibleAlarm = prefs.getBoolean(KEY_AUDIBLE_ALARM, true);
             setPrefVisible(KEY_USE_MAX_VOLUME, audibleAlarm);
+            setPrefVisible(KEY_VIBRATE_ON_ALARM, audibleAlarm);
         }
 
-        /** Show/hide "Override Silent Mode for all Warnings?" based on the AudibleWarning checkbox. */
+        /** Show/hide "Override Silent Mode for all Warnings?" and "Vibrate on Warning?" based on the AudibleWarning checkbox. */
         private void refreshAudibleWarningSubPrefVisibility() {
             SharedPreferences prefs =
                     PreferenceManager.getDefaultSharedPreferences(requireContext());
             boolean audibleWarning = prefs.getBoolean(KEY_AUDIBLE_WARNING, true);
             setPrefVisible(KEY_WARNING_OVERRIDE_SILENT, audibleWarning);
+            setPrefVisible(KEY_VIBRATE_ON_WARNING, audibleWarning);
+        }
+
+        /** Show/hide "Vibrate on System Fault?" based on the AudibleFaultWarning checkbox. */
+        private void refreshAudibleFaultSubPrefVisibility() {
+            SharedPreferences prefs =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext());
+            boolean audibleFault = prefs.getBoolean(KEY_AUDIBLE_FAULT_WARNING, true);
+            setPrefVisible(KEY_VIBRATE_ON_FAULT, audibleFault);
         }
 
         /**
