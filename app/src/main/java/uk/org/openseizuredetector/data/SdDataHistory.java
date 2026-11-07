@@ -58,6 +58,11 @@ public class SdDataHistory {
     public CircBuf mFallWindowMaxBuf = new CircBuf(120, -1.0);
     public CircBuf mFallEventBuf = new CircBuf(120, 0.0);
 
+    // Spectrum ratio (10 * ROI power / spectrum power) of the OSD and Flap algorithms, one value
+    // per 5 s, 120 samples = 10 minutes. Used by the Advanced Mode "10 minutes" graphs.
+    public CircBuf mOsdRatioHistBuf = new CircBuf(120, -1.0);
+    public CircBuf mFlapRatioHistBuf = new CircBuf(120, -1.0);
+
     public SdDataHistory() {
         Log.d(TAG, "SdDataHistory created - history buffers initialized");
 
@@ -70,6 +75,8 @@ public class SdDataHistory {
             mFallWindowMinBuf.add(0.0);
             mFallWindowMaxBuf.add(0.0);
             mFallEventBuf.add(0.0);
+            mOsdRatioHistBuf.add(0.0);
+            mFlapRatioHistBuf.add(0.0);
         }
         
         // Initialize individual ML model buffers
@@ -90,6 +97,20 @@ public class SdDataHistory {
      * @param fallWindowMax  Highest window-maximum acceleration this period (-1.0 = no data)
      * @param fallDetected   True if a fall was detected this analysis period
      */
+    /**
+     * As below, and also records the OSD and Flap spectrum ratios used by the 10 minute graphs.
+     */
+    public void addDataPoint(long batteryPc, int phoneBatteryPc, double watchSignalStrength,
+                             double pSeizure, double accelMagStdDev, double heartRate,
+                             double[] mlModelProbs,
+                             double fallWindowMin, double fallWindowMax, boolean fallDetected,
+                             double osdRatio, double flapRatio) {
+        addDataPoint(batteryPc, phoneBatteryPc, watchSignalStrength, pSeizure, accelMagStdDev,
+                heartRate, mlModelProbs, fallWindowMin, fallWindowMax, fallDetected);
+        mOsdRatioHistBuf.add(osdRatio >= 0 ? osdRatio : 0.0);
+        mFlapRatioHistBuf.add(flapRatio >= 0 ? flapRatio : 0.0);
+    }
+
     public void addDataPoint(long batteryPc, int phoneBatteryPc, double watchSignalStrength,
                              double pSeizure, double accelMagStdDev, double heartRate,
                              double[] mlModelProbs,

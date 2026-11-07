@@ -9,23 +9,34 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import androidx.appcompat.content.res.AppCompatResources;
 import android.view.ViewGroup.LayoutParams;
 
 import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.ValueDependentColor;
 import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.LineGraphSeries;
+import com.jjoe64.graphview.ValueDependentColor;
 import com.jjoe64.graphview.series.DataPoint;
 
+import uk.org.openseizuredetector.data.SdData;
+
 /**
- * Displays the "Flap" tab - a graph of the Flap algorithm's spectrum, identical in
- * structure to the "OSD" tab (FragmentOsdAlg) but driven by the Flap algorithm's own
- * data (sdData.flap*) and "Flap Alarm Threshold" setting (see issue #238).
+ * Displays the "Flap" section - the Flap algorithm's spectrum (identical in structure to the OSD section but
+ * driven by sdData.flap* and the "Flap Alarm Threshold" setting, see issue #238).
+ *
+ * Two display modes, chosen by the Advanced Mode option "graphs over 10 minutes":
+ *  - real time (default): bar graph of the 0-10 Hz spectrum of the latest 5 second period
+ *  - 10 minutes: line graph of the spectrum ratio over the last 10 minutes (see RatioHistoryChart)
+ * In both modes the graph can be zoomed by pinching. The viewport bounds are only set when the
+ * mode (or the Y-axis scale) changes, never on every redraw, so a zoom is not undone every 5 s.
  */
 public class FragmentFlapAlg extends FragmentOsdBaseClass {
     String TAG = "FragmentFlapAlg";
+
+    /** Mode the chart is currently configured for (null = not configured yet). */
+    private Boolean mChartInHistoryMode = null;
+    /** Y-axis maximum last applied in spectrum mode (so it is only changed when needed). */
+    private double mSpectrumYMaxApplied = -1;
 
     public FragmentFlapAlg() {
         // Required empty public constructor
@@ -49,6 +60,8 @@ public class FragmentFlapAlg extends FragmentOsdBaseClass {
         super.onViewCreated(view, savedInstanceState);
         GraphView chart = view.findViewById(R.id.flapChart1);
         adjustChartHeightForMode(chart);
+        // The views are new, so the chart has to be configured again.
+        mChartInHistoryMode = null;
     }
 
     @Override
@@ -57,29 +70,35 @@ public class FragmentFlapAlg extends FragmentOsdBaseClass {
         if (isBasicMode()) {
             return;
         }
-        TextView tv;
 
         if (mConnection.mBound) {
+            SdData sdData = mConnection.mSdServer.mSdData;
+
+            // Shown because of "show all algorithms" but not selected by the user.
+            if (!applyAlgorithmState(sdData.dataTimeMillis == 0 || sdData.mFlapAlarmActive, isShowAllAlgs())) {
+                return;
+            }
+
             /////////////////////////////////////////////////////
             // Set ProgressBar to show margin to alarm (spectrum ratio).
             long specPc;
-            if (mConnection.mSdServer.mSdData.flapSpecPower != 0 &&
-                    mConnection.mSdServer.mSdData.flapAlarmRatioThresh != 0)
-                specPc = 100 * (mConnection.mSdServer.mSdData.flapRoiPower * 10 /
-                        mConnection.mSdServer.mSdData.flapSpecPower) /
-                        mConnection.mSdServer.mSdData.flapAlarmRatioThresh;
+            if (sdData.flapSpecPower != 0 &&
+                    sdData.flapAlarmRatioThresh != 0)
+                specPc = 100 * (sdData.flapRoiPower * 10 /
+                        sdData.flapSpecPower) /
+                        sdData.flapAlarmRatioThresh;
             else
                 specPc = 0;
 
             long specRatio;
-            if (mConnection.mSdServer.mSdData.flapSpecPower != 0) {
-                specRatio = 10 * mConnection.mSdServer.mSdData.flapRoiPower /
-                        mConnection.mSdServer.mSdData.flapSpecPower;
+            if (sdData.flapSpecPower != 0) {
+                specRatio = 10 * sdData.flapRoiPower /
+                        sdData.flapSpecPower;
             } else
                 specRatio = 0;
 
-            ((TextView) mRootView.findViewById(R.id.flapSpectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
-                    " (" + getString(R.string.Threshold) + "=" + mConnection.mSdServer.mSdData.flapAlarmRatioThresh + ")");
+            ((android.widget.TextView) mRootView.findViewById(R.id.flapSpectrumTv)).setText(getString(R.string.SpectrumRatioEquals) + specRatio +
+                    " (" + getString(R.string.Threshold) + "=" + sdData.flapAlarmRatioThresh + ")");
 
             ProgressBar pb;
             Drawable pbDrawable;
@@ -93,111 +112,175 @@ public class FragmentFlapAlg extends FragmentOsdBaseClass {
                 pbDrawable = AppCompatResources.getDrawable(mContext, R.drawable.progress_bar_red);
             pb.setProgressDrawable(pbDrawable);
 
-
-            ////////////////////////////////////////////////////////////
-            // Produce bar graph of the 0-10 Hz Flap spectrum using GraphView
             GraphView mChart = (GraphView) mRootView.findViewById(R.id.flapChart1);
+            if (mChart == null) return;
 
-            mChart.removeAllSeries();
-
-            try {
-                DataPoint[] dataPoints = new DataPoint[10];
-                for (int i = 0; i < 10; i++) {
-                    double v = (mConnection.mSdServer != null)
-                            ? mConnection.mSdServer.mSdData.flapSimpleSpec[i] : 0;
-                    // Bin i covers i..i+1 Hz, so its bar is centred at i + 0.5
-                    dataPoints[i] = new DataPoint(i + 0.5, v);
+            // (Re)configure the graph when the display mode has been changed in the settings.
+            boolean history = isHistoryMode();
+            if (mChartInHistoryMode == null || mChartInHistoryMode != history) {
+                if (history) {
+                    RatioHistoryChart.configure(mChart, okTextColour, getString(R.string.time_minutes_ago));
+                } else {
+                    configureSpectrumChart(mChart);
                 }
-
-                final int alarmFreqMin = (int) mConnection.mSdServer.mSdData.flapAlarmFreqMin;
-                final int alarmFreqMax = (int) mConnection.mSdServer.mSdData.flapAlarmFreqMax;
-
-                // Bar graph: one bar per 1 Hz bin. Bars inside the alarm band
-                // (flapAlarmFreqMin up to, not including, flapAlarmFreqMax) are red, the
-                // rest gray. The bars are slightly translucent because GraphView draws the
-                // grid lines BEFORE the series - opaque bars would hide the horizontal
-                // grid lines behind them.
-                final int barRed = Color.argb(190, 255, 0, 0);
-                final int barGray = Color.argb(190, 128, 128, 128);
-                BarGraphSeries<DataPoint> barSeries = new BarGraphSeries<>(dataPoints);
-                barSeries.setDataWidth(1.0);   // bins are 1.0 apart on the X axis
-                barSeries.setSpacing(20);      // 20% of each 1.0 slot is a gap => bar width 0.8
-                barSeries.setValueDependentColor(new ValueDependentColor<DataPoint>() {
-                    @Override
-                    public int get(DataPoint data) {
-                        int bin = (int) Math.floor(data.getX());   // x = bin + 0.5
-                        return (bin >= alarmFreqMin && bin < alarmFreqMax) ? barRed : barGray;
-                    }
-                });
-                mChart.addSeries(barSeries);
-
-                // Mark the region of interest on the bottom X axis in red, even when the
-                // bars are zero-height (a bar of value 0 draws nothing).
-                double roiStart = Math.max(0, Math.min(10, alarmFreqMin));
-                double roiEnd = Math.max(roiStart, Math.min(10, alarmFreqMax));
-                if (roiEnd > roiStart) {
-                    LineGraphSeries<DataPoint> roiAxisSeries = new LineGraphSeries<>(new DataPoint[]{
-                            new DataPoint(roiStart, 0),
-                            new DataPoint(roiEnd, 0)});
-                    roiAxisSeries.setColor(Color.RED);
-                    roiAxisSeries.setThickness(6);
-                    roiAxisSeries.setDrawDataPoints(false);
-                    mChart.addSeries(roiAxisSeries);
-                }
-
-            } catch (Exception e) {
-                Log.e(TAG, "Exception creating spectrum graph: " + e.getMessage());
+                mChartInHistoryMode = history;
             }
 
-            // Y-axis maximum is derived from the "Flap Alarm Threshold" setting plus 30%
-            // headroom, mirroring the OSD tab's Y-axis behaviour (see issue #238).
-            long flapAlarmThresh = mConnection.mSdServer.mSdData.flapAlarmThresh;
-            double maxY = flapAlarmThresh > 0 ? flapAlarmThresh * 1.3 : 3000;
-            mChart.getViewport().setYAxisBoundsManual(true);
-            mChart.getViewport().setMinY(0);
-            mChart.getViewport().setMaxY(maxY);
-            mChart.getViewport().setXAxisBoundsManual(true);
-            mChart.getViewport().setMinX(0);
-            mChart.getViewport().setMaxX(10);
+            if (history) {
+                drawRatioHistory(mChart, sdData);
+            } else {
+                drawSpectrum(mChart, sdData);
+            }
+        }
+    }
 
-            // Show where the Flap alarm threshold sits on the Y axis (thin line + value).
-            GraphThresholdLine.add(mChart, flapAlarmThresh, 0.0, 10.0);
+    // -------------------------------------------------------------------------
+    // Real time mode: spectrum of the latest 5 second period
+    // -------------------------------------------------------------------------
 
-            mChart.getViewport().setScalable(false);
-            mChart.getViewport().setScrollable(false);
+    /** Bounds, labels and gestures of the spectrum graph. Called once per switch to this mode. */
+    private void configureSpectrumChart(GraphView mChart) {
+        mChart.removeAllSeries();
+        mChart.setTitle("");
+        mChart.getGridLabelRenderer().setHorizontalAxisTitle("");
 
-            // Use theme-aware text color from base class
-            // 11 labels over the 10-unit-wide X range (0 .. 10) gives a label step of exactly
-            // 1.0, which GraphView's "human rounding" leaves alone (a step of 1.11 would be
-            // rounded to 2 and only every second label would show). Labels land on the
-            // bin edges 0..10 and each label also gets a vertical grid line.
-            mChart.getGridLabelRenderer().setNumHorizontalLabels(11);
-            // No special heavy line at the 0 value; the red ROI segment marks the axis.
-            mChart.getGridLabelRenderer().setHighlightZeroLines(false);
-            mChart.getGridLabelRenderer().setNumVerticalLabels(5);
-            mChart.getGridLabelRenderer().setHorizontalLabelsColor(okTextColour);
-            mChart.getGridLabelRenderer().setVerticalLabelsColor(okTextColour);
-            mChart.getGridLabelRenderer().setGridColor(Color.GRAY);
+        mSpectrumYMaxApplied = 3000;
+        mChart.getViewport().setYAxisBoundsManual(true);
+        mChart.getViewport().setMinY(0);
+        mChart.getViewport().setMaxY(mSpectrumYMaxApplied);
+        mChart.getViewport().setXAxisBoundsManual(true);
+        mChart.getViewport().setMinX(0);
+        mChart.getViewport().setMaxX(10);
 
-            mChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {
-                @Override
-                public String formatLabel(double value, boolean isValueX) {
-                    if (isValueX) {
-                        int i = (int) Math.round(value);
-                        if (i == 0) {
-                            return "Hz:";
-                        }
-                        if (i > 0 && i <= 10) {
-                            return String.valueOf(i);
-                        }
+        // The user can pinch to zoom in on part of the 0-10 Hz range.
+        mChart.getViewport().setScalable(true);
+        mChart.getViewport().setScrollable(true);
+
+        // 11 labels over the 10-unit-wide X range (0 .. 10) gives a label step of exactly 1.0,
+        // which GraphView's "human rounding" leaves alone (a step of 1.11 would be rounded to 2
+        // and only every second label would show).
+        // Keep human rounding ON (the GraphView default, as before). With it off GraphView
+        // derives each new label step from the previous one, and because the Y maximum here
+        // changes at run time the steps collapsed into dozens of grid lines and labels.
+        mChart.getGridLabelRenderer().setHumanRounding(true);
+        mChart.getGridLabelRenderer().setNumHorizontalLabels(11);
+        // No special heavy line at the 0 value; the red ROI segment marks the axis.
+        mChart.getGridLabelRenderer().setHighlightZeroLines(false);
+        mChart.getGridLabelRenderer().setNumVerticalLabels(5);
+        mChart.getGridLabelRenderer().setHorizontalLabelsColor(okTextColour);
+        mChart.getGridLabelRenderer().setVerticalLabelsColor(okTextColour);
+        mChart.getGridLabelRenderer().setGridColor(Color.GRAY);
+
+        mChart.getGridLabelRenderer().setLabelFormatter(new com.jjoe64.graphview.DefaultLabelFormatter() {
+            @Override
+            public String formatLabel(double value, boolean isValueX) {
+                if (isValueX) {
+                    int i = (int) Math.round(value);
+                    // When zoomed in, labels fall between the whole numbers: leave those out.
+                    if (Math.abs(value - i) > 0.05) {
                         return "";
-                    } else {
-                        return super.formatLabel(value, isValueX);
                     }
+                    if (i == 0) {
+                        return getString(R.string.frequency_hertz);
+                    }
+                    if (i > 0 && i <= 10) {
+                        return String.valueOf(i);
+                    }
+                    return "";
+                } else {
+                    return super.formatLabel(value, isValueX);
+                }
+            }
+        });
+
+        mChart.getLegendRenderer().setVisible(false);
+    }
+
+    private void drawSpectrum(GraphView mChart, SdData sdData) {
+        mChart.removeAllSeries();
+
+        try {
+            DataPoint[] dataPoints = new DataPoint[10];
+            for (int i = 0; i < 10; i++) {
+                double v = sdData.flapSimpleSpec[i];
+                // Bin i covers i..i+1 Hz, so its bar is centred at i + 0.5
+                dataPoints[i] = new DataPoint(i + 0.5, v);
+            }
+
+            final int alarmFreqMin = (int) sdData.flapAlarmFreqMin;
+            final int alarmFreqMax = (int) sdData.flapAlarmFreqMax;
+
+            // Bar graph: one bar per 1 Hz bin. Bars inside the alarm band
+            // (AlarmFreqMin up to, not including, AlarmFreqMax) are red, the rest gray.
+            // The bars are slightly translucent because GraphView draws the grid
+            // lines BEFORE the series - opaque bars would hide the horizontal grid
+            // lines behind them.
+            final int barRed = Color.argb(190, 255, 0, 0);
+            final int barGray = Color.argb(190, 128, 128, 128);
+            BarGraphSeries<DataPoint> barSeries = new BarGraphSeries<>(dataPoints);
+            barSeries.setDataWidth(1.0);   // bins are 1.0 apart on the X axis
+            barSeries.setSpacing(20);      // 20% of each 1.0 slot is a gap => bar width 0.8
+            barSeries.setValueDependentColor(new ValueDependentColor<DataPoint>() {
+                @Override
+                public int get(DataPoint data) {
+                    int bin = (int) Math.floor(data.getX());   // x = bin + 0.5
+                    return (bin >= alarmFreqMin && bin < alarmFreqMax) ? barRed : barGray;
                 }
             });
+            mChart.addSeries(barSeries);
 
-            mChart.getLegendRenderer().setVisible(false);
+            // Mark the region of interest on the bottom X axis in red, even when the
+            // bars are zero-height (a bar of value 0 draws nothing).
+            double roiStart = Math.max(0, Math.min(10, alarmFreqMin));
+            double roiEnd = Math.max(roiStart, Math.min(10, alarmFreqMax));
+            if (roiEnd > roiStart) {
+                LineGraphSeries<DataPoint> roiAxisSeries = new LineGraphSeries<>(new DataPoint[]{
+                        new DataPoint(roiStart, 0),
+                        new DataPoint(roiEnd, 0)});
+                roiAxisSeries.setColor(Color.RED);
+                roiAxisSeries.setThickness(6);
+                roiAxisSeries.setDrawDataPoints(false);
+                mChart.addSeries(roiAxisSeries);
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "Exception creating spectrum graph: " + e.getMessage());
+        }
+
+        // Y-axis maximum is derived from the "Flap Alarm Threshold" setting plus 30% headroom (issue #238),
+        // falling back to 3000 if the threshold is unset. Only touched when it changes, so that
+        // the viewport (and any zoom) is left alone on ordinary redraws.
+        long alarmThresh = sdData.flapAlarmThresh;
+        double maxY = alarmThresh > 0 ? alarmThresh * 1.3 : 3000;
+        if (maxY != mSpectrumYMaxApplied) {
+            mChart.getViewport().setMaxY(maxY);
+            mSpectrumYMaxApplied = maxY;
+        }
+
+        // Show where the alarm threshold sits on the Y axis (thin line + value).
+        GraphThresholdLine.add(mChart, alarmThresh, 0.0, 10.0);
+    }
+
+    // -------------------------------------------------------------------------
+    // 10 minute mode: spectrum ratio history
+    // -------------------------------------------------------------------------
+
+    private void drawRatioHistory(GraphView mChart, SdData sdData) {
+        try {
+            int n = mConnection.mSdServer.mSdDataHistory.mFlapRatioHistBuf.getNumVals();
+            double[] ratios = mConnection.mSdServer.mSdDataHistory.mFlapRatioHistBuf.getVals();
+            int lineColour;
+            try {
+                lineColour = mContext.getResources().getColor(R.color.colorAccent, null);
+            } catch (Exception e) {
+                lineColour = Color.RED;
+            }
+            float xSpan = (n * 5.0f) / 60.0f;   // minutes
+            RatioHistoryChart.draw(mChart, ratios, n, sdData.flapAlarmRatioThresh, lineColour,
+                    getString(R.string.flap_ratio_history, xSpan));
+            mChart.setTitleColor(okTextColour);
+        } catch (Exception e) {
+            Log.e(TAG, "Exception creating ratio history graph: " + e.getMessage());
         }
     }
 
@@ -211,7 +294,7 @@ public class FragmentFlapAlg extends FragmentOsdBaseClass {
         if (isBasicMode()) {
             return;
         }
-        // Flap graph updates are tied to new data to avoid flicker.
+        // Graph updates are tied to new data to avoid flicker.
     }
 
     private void adjustChartHeightForMode(GraphView chart) {

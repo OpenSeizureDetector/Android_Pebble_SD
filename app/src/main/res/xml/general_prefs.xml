@@ -42,6 +42,26 @@
         android:summary="@string/advanced_mode_summary"
         android:title="@string/advanced_mode" />
 
+    <!-- The three options below are only shown while Advanced Mode is on (see
+         PrefActivity.GeneralPrefsFragment). -->
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="pref_advanced_show_all_algs"
+        android:summary="@string/advanced_show_all_algs_summary"
+        android:title="@string/advanced_show_all_algs" />
+
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="pref_advanced_graph_10min"
+        android:summary="@string/advanced_graph_10min_summary"
+        android:title="@string/advanced_graph_10min" />
+
+    <Preference
+        android:key="pref_advanced_section_order"
+        android:persistent="false"
+        android:summary="@string/advanced_section_order_summary"
+        android:title="@string/advanced_section_order_title" />
+
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="pref_developer_mode"
