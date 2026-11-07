@@ -51,6 +51,9 @@ public class FragmentFallAlg extends FragmentOsdBaseClass {
     private TextView tvWindowMin;
     private TextView tvWindowMax;
 
+    /** Mode the chart is currently configured for: true = 10 minute history, false = real time. */
+    private Boolean mChartInHistoryMode = null;
+
     public FragmentFallAlg() {
         // Required empty public constructor
     }
@@ -66,6 +69,7 @@ public class FragmentFallAlg extends FragmentOsdBaseClass {
         View rootView = inflater.inflate(R.layout.fragment_fall_alg, container, false);
         mLineChart = rootView.findViewById(R.id.fall_line_chart);
         setupChart();
+        mChartInHistoryMode = true;   // setupChart() configures the 10 minute history graph
         adjustChartHeightForMode(mLineChart);
         return rootView;
     }
@@ -147,6 +151,11 @@ public class FragmentFallAlg extends FragmentOsdBaseClass {
 
         uk.org.openseizuredetector.data.SdData sdData = mConnection.mSdServer.mSdData;
 
+        // Shown because of "show all algorithms" but not selected by the user.
+        if (!applyAlgorithmState(sdData.dataTimeMillis == 0 || sdData.mFallActive, isShowAllAlgs())) {
+            return;
+        }
+
         // Show whether fall detection is currently enabled
         String activeStatus = sdData.mFallActive ? getString(R.string.active) : getString(R.string.inactive);
         if (tvHeader != null) tvHeader.setText(getString(R.string.fall_detection) + activeStatus);
@@ -186,6 +195,24 @@ public class FragmentFallAlg extends FragmentOsdBaseClass {
                     .toString());
         }
 
+        // (Re)configure the graph when the display mode has been changed in the settings.
+        boolean history = isHistoryMode();
+        if (mChartInHistoryMode == null || mChartInHistoryMode != history) {
+            if (history) {
+                setupChart();
+            } else {
+                SnapshotBars.configure(mLineChart,
+                        new String[]{getString(R.string.snap_min), getString(R.string.snap_max)},
+                        0, 6000, okTextColour);
+            }
+            mChartInHistoryMode = history;
+        }
+
+        if (!history) {
+            displaySnapshotChart(sdData, threshMin, threshMax);
+            return;
+        }
+
         // Refresh graph from history buffers
         int nVals = mConnection.mSdServer.mSdDataHistory.mFallWindowMinBuf.getNumVals();
         double[] minHistory = mConnection.mSdServer.mSdDataHistory.mFallWindowMinBuf.getVals();
@@ -196,6 +223,28 @@ public class FragmentFallAlg extends FragmentOsdBaseClass {
             displayHistoryChart(minHistory, maxHistory, eventHistory, nVals,
                     threshMin, threshMax);
         }
+    }
+
+    /**
+     * Real time mode: the lowest and highest acceleration of the latest 5 second period as two
+     * bars, each with its configured threshold (FallThreshMin / FallThreshMax) as a blue line.
+     */
+    private void displaySnapshotChart(uk.org.openseizuredetector.data.SdData sdData,
+                                      double threshMin, double threshMax) {
+        if (mLineChart == null) return;
+        int accentColour;
+        try {
+            accentColour = mContext.getResources().getColor(R.color.colorAccent, null);
+        } catch (Exception e) {
+            accentColour = Color.BLUE;
+        }
+        SnapshotBars.draw(mLineChart,
+                new double[]{sdData.mFallWindowMin, sdData.mFallWindowMax},
+                new int[]{accentColour, Color.RED},
+                new double[]{threshMin, threshMax});
+        mLineChart.setTitle(getString(R.string.fall_snapshot_title));
+        mLineChart.setTitleTextSize(36f);
+        mLineChart.setTitleColor(okTextColour);
     }
 
     @Override

@@ -2,19 +2,30 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     tools:context=".activity.main.FragmentHrAlg">
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp">
+            <!-- Shown instead of the content when the algorithm is not selected by the user
+                 (only possible with the Advanced Mode option "show all algorithms"). -->
+            <TextView
+                android:id="@+id/alg_inactive_tv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/algorithm_not_selected"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:visibility="gone" />
+
+            <androidx.appcompat.widget.LinearLayoutCompat
+                android:id="@+id/alg_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
 
         <TextView
             android:layout_width="match_parent"
@@ -81,12 +92,12 @@
             android:text="@string/status_info"
             android:layout_marginBottom="16dp" />
 
-        <com.jjoe64.graphview.GraphView
+        <uk.org.openseizuredetector.activity.main.ZoomableGraphView
             android:id="@+id/lineChart"
             android:layout_width="match_parent"
             android:layout_height="250dp" />
 
+                    </androidx.appcompat.widget.LinearLayoutCompat>
         </androidx.appcompat.widget.LinearLayoutCompat>
-    </ScrollView>
 
 </FrameLayout>

@@ -1575,7 +1575,11 @@ public class SdServer extends Service implements SdDataReceiver {
                     sdData.mAccelMagStdDev, sdData.mHR,
                     sdData.mlModelProbs,
                     sdData.mFallWindowMin, sdData.mFallWindowMax,
-                    sdData.fallAlgState == AlarmState.ALARM);
+                    sdData.fallAlgState == AlarmState.ALARM,
+                    // spectrum ratios for the OSD / Flap 10 minute graphs (same units as the
+                    // "Spectrum Ratio" shown on the OSD and Flap screens)
+                    sdData.specPower != 0 ? 10.0 * sdData.roiPower / sdData.specPower : 0.0,
+                    sdData.flapSpecPower != 0 ? 10.0 * sdData.flapRoiPower / sdData.flapSpecPower : 0.0);
         }
 
         if (mLm != null) mLm.updateSdData(mSdData);

@@ -2,32 +2,20 @@ package uk.org.openseizuredetector.activity.main;
 import uk.org.openseizuredetector.R;
 
 /*
- * ADDING OR REMOVING TABS AND FRAGMENTS:
+ * MAIN DISPLAY:
  *
- * Tabs are identified by the TAB_* constants below, NOT by their position on screen.
- * Which tabs are shown is decided at runtime by getVisibleTabs(): tabs whose algorithm
- * is switched off in the "Seizure Detector Algorithms Selection" settings are hidden
- * completely (the pager and the TabLayout only ever see the visible ones).
+ * Basic mode:    only FragmentCommon (status area) is shown.
+ * Advanced mode: FragmentCommon at the top and, below it, a scrolling list of "sections"
+ *                (one fragment each: OSD, Flap, ML, HR, Fall, system status, signal graph,
+ *                battery graph). There are no tabs any more.
  *
- * To add or remove a tab you must update FOUR places:
+ * The sections, their ids and their default order are defined in AdvancedSections; the user
+ * chooses the order in Settings - General. Which algorithm sections are listed is decided by
+ * getActiveAlgorithmSections() (algorithms switched off in the "Seizure Detector Algorithms
+ * Selection" settings are left out) unless the option "Show all algorithms" is on.
+ * rebuildSections() (called from onResume) creates the fragments.
  *
- * 1. Add a TAB_* constant (never reuse or renumber an existing one - the value is also
- *    what is saved in the "main_activity_active_tab" preference).
- * 2. getVisibleTabs(): add the tab in the position you want it to appear, together with
- *    the preference key that enables it (or always show it).
- * 3. getTabTitle(): return the label shown on the tab.
- * 4. ScreenSlideFragmentPagerAdapter.createFragment(): return the Fragment for the tab.
- *
- * Tabs (TAB_* id = value; on screen they appear in the order getVisibleTabs() adds them):
- * - TAB_OSD    (0): OSD Algorithm (FragmentOsdAlg)        - hidden if OsdAlarmActive is off
- * - TAB_FLAP   (1): Flap Algorithm (FragmentFlapAlg)      - hidden if FlapAlarmActive is off
- * - TAB_ML     (2): ML Algorithm (FragmentMlAlg)          - hidden if CnnAlarmActive is off
- * - TAB_HR     (3): Heart Rate (FragmentHrAlg)            - hidden if HRAlarmActive is off
- * - TAB_FALL   (4): Fall Detection (FragmentFallAlg)      - hidden if FallActive is off
- * - TAB_SYSTEM (5): System (FragmentSystem - includes Signal & Battery graphs) - always shown
- * Removed/Inactive:
- * - FragmentWatchSig (signal graph moved to System tab)
- * - FragmentBatt (battery graph moved to System tab)
+ * To add a section: see the notes at the top of AdvancedSections.
  */
 
 import uk.org.openseizuredetector.client.SdServiceConnection;
@@ -38,13 +26,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.MenuCompat;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentContainerView;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.fragment.app.FragmentActivity;
-import androidx.viewpager2.adapter.FragmentStateAdapter;
-import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.tabs.TabLayout;
-import com.google.android.material.tabs.TabLayoutMediator;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -93,10 +80,14 @@ public class MainActivity2 extends AppCompatActivity {
     private int warnTextColour = Color.WHITE;
     private int alarmTextColour = Color.BLACK;
 
-    private ViewPager2 mFragmentPager;
-    private FragmentStateAdapter mFragmentStateAdapter;
-    private TabLayout mTabLayout;
-    private TabLayoutMediator mTabLayoutMediator;
+    // Advanced Mode: scrolling list of sections (replaces the old tabs)
+    private View mSectionsScroll;
+    private LinearLayout mSectionsContainer;
+    private static final String SECTION_TAG_PREFIX = "section_";
+    /** The sections currently built, as text, so rebuildSections() can skip needless rebuilds. */
+    private String mSectionsSignature = "";
+    private int mSectionRetryCount = 0;
+    private static final int MAX_SECTION_RETRIES = 6;
     private Context mContext;
     private OsdUtil mUtil;
     private SdServiceConnection mConnection;
@@ -105,21 +96,6 @@ public class MainActivity2 extends AppCompatActivity {
     private SharedPreferences.OnSharedPreferenceChangeListener mModePreferenceListener;
     private Boolean mCurrentBasicMode;
 
-    // Tab position persistence
-    // PREF_ACTIVE_TAB stores a TAB_* id (not a screen position), because hidden tabs mean
-    // the position of a tab changes with the settings. The TAB_* values equal the positions
-    // the tabs had when all six were always shown, so previously saved values stay valid.
-    private static final String PREF_ACTIVE_TAB = "main_activity_active_tab";
-    private static final int TAB_OSD = 0;
-    private static final int TAB_FLAP = 1;
-    private static final int TAB_ML = 2;
-    private static final int TAB_HR = 3;
-    private static final int TAB_FALL = 4;
-    private static final int TAB_SYSTEM = 5;
-    private static final int DEFAULT_TAB = TAB_OSD;
-
-    // The tabs currently shown, in screen order (TAB_* ids). Rebuilt on every onResume().
-    private List<Integer> mVisibleTabs = new ArrayList<>();
 
     final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
     private Handler mHandler = new Handler(Looper.getMainLooper());
@@ -128,6 +104,14 @@ public class MainActivity2 extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
+
+        mSectionsScroll = findViewById(R.id.sections_scroll);
+        mSectionsContainer = findViewById(R.id.sections_container);
+        if (savedInstanceState != null) {
+            // The framework restores the section fragments but not their containers (which are
+            // created at run time), so drop them here; onResume() builds them again.
+            removeSectionFragments();
+        }
 
         Log.i(TAG, "onCreate()");
 
@@ -283,22 +267,6 @@ public class MainActivity2 extends AppCompatActivity {
             Log.i(TAG, "MainActivity2.onPause()");
         }
 
-        // Save the current tab position before detaching
-        if (mFragmentPager != null) {
-            int position = mFragmentPager.getCurrentItem();
-            if (position >= 0 && position < mVisibleTabs.size()) {
-                int currentTabId = mVisibleTabs.get(position);
-                SharedPreferences prefs = mSharedPrefs != null ? mSharedPrefs : PreferenceManager.getDefaultSharedPreferences(this);
-                prefs.edit().putInt(PREF_ACTIVE_TAB, currentTabId).apply();
-                Log.d(TAG, "Saved active tab id: " + currentTabId);
-            }
-        }
-
-        // Detach TabLayoutMediator to prevent memory leaks (only if it exists - portrait layout)
-        if (mTabLayoutMediator != null) {
-            mTabLayoutMediator.detach();
-            Log.d(TAG, "onPause() - Detached TabLayoutMediator");
-        }
     }
 
     @Override
@@ -314,14 +282,6 @@ public class MainActivity2 extends AppCompatActivity {
         }
         SharedPreferences prefs = mSharedPrefs != null ? mSharedPrefs : PreferenceManager.getDefaultSharedPreferences(this);
 
-        // Work out which tabs to show (algorithms that are switched off get no tab at all).
-        Log.v(TAG,"onResume() - getting enabled algorithms from sdServer");
-        mVisibleTabs = getVisibleTabs(prefs);
-        setVisibleTabs();
-
-        // Restore the previously active tab
-        // If no saved preference, choose tab based on enabled algorithms
-
         // Basic Mode Toggle Logic
         boolean basicMode = !PreferenceUtils.getBooleanFromXml(prefs, "pref_advanced_mode");
         if (mCurrentBasicMode == null) {
@@ -333,8 +293,7 @@ public class MainActivity2 extends AppCompatActivity {
         View fragmentContainer = findViewById(R.id.fragment_common_container_view);
 
         if (basicMode) {
-            if (mTabLayout != null) mTabLayout.setVisibility(View.GONE);
-            if (mFragmentPager != null) mFragmentPager.setVisibility(View.GONE);
+            if (mSectionsScroll != null) mSectionsScroll.setVisibility(View.GONE);
             if (fragmentContainer != null) {
                 LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) fragmentContainer.getLayoutParams();
                 params.height = LinearLayout.LayoutParams.MATCH_PARENT;
@@ -342,8 +301,7 @@ public class MainActivity2 extends AppCompatActivity {
                 fragmentContainer.setLayoutParams(params);
             }
         } else {
-            if (mTabLayout != null) mTabLayout.setVisibility(View.VISIBLE);
-            if (mFragmentPager != null) mFragmentPager.setVisibility(View.VISIBLE);
+            if (mSectionsScroll != null) mSectionsScroll.setVisibility(View.VISIBLE);
             if (fragmentContainer != null) {
                 LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) fragmentContainer.getLayoutParams();
                 params.height = LinearLayout.LayoutParams.WRAP_CONTENT;
@@ -352,27 +310,14 @@ public class MainActivity2 extends AppCompatActivity {
             }
         }
 
-        int savedTabId = prefs.getInt(PREF_ACTIVE_TAB, -1); // -1 means not set
-
-        if (savedTabId == -1) {
-            // No saved preference - select tab based on algorithm preferences
-            // Priority order: ML, OSD, HR
-            savedTabId = getDefaultTabFromAlgorithmSettings(prefs);
-            Log.d(TAG, "No saved tab preference, selected tab based on algorithm settings: " + savedTabId);
+        // Advanced Mode: build the scrolling list of sections. Basic Mode: no sections at all
+        // (removing the fragments also stops their timers and server connections).
+        if (basicMode) {
+            clearSections();
+        } else {
+            mSectionRetryCount = 0;
+            rebuildSections(prefs);
         }
-
-        // The saved tab may be hidden now (its algorithm was switched off since last time).
-        // Fall back to the default tab, and failing that to the first visible tab.
-        int savedPosition = mVisibleTabs.indexOf(savedTabId);
-        if (savedPosition < 0) {
-            savedPosition = mVisibleTabs.indexOf(getDefaultTabFromAlgorithmSettings(prefs));
-        }
-        if (savedPosition < 0) {
-            savedPosition = 0;
-        }
-
-        mFragmentPager.setCurrentItem(savedPosition, false); // false = no animation on restore
-        Log.d(TAG, "Restored active tab position: " + savedPosition + " (tab id " + mVisibleTabs.get(savedPosition) + ")");
 
         Fragment existingCommon = getSupportFragmentManager().findFragmentById(R.id.fragment_common_container_view);
         if (existingCommon == null) {
@@ -513,176 +458,134 @@ public class MainActivity2 extends AppCompatActivity {
 
 
     /**
-     * Returns the ids (TAB_*) of the tabs to show, in screen order. A tab whose algorithm
-     * is switched off in the "Seizure Detector Algorithms Selection" settings is left out
-     * entirely. The System tab has no such setting and is always included, so the list is
-     * never empty.
-     * NOTE:  This derives the list of tabs from the enabled algorithms in the stored shared
-     *        preferences.   This is appropriate if this instance is the 'main' OSD instance,
-     *        but is not appropriate for Network Datasource where the algorithms are not running in this instance.
-     *        In that case, the list of tabs is derived from the network source as part of the UI display.  FIXME - provide reference.
+     * Returns the ids (AdvancedSections.OSD ... FALL) of the algorithms that are switched on.
+     * NOTE:  This uses the algorithms the bound server reports, or, if the server is not bound yet,
+     *        the stored shared preferences. This is appropriate if this instance is the 'main'
+     *        OSD instance, but not for a Network Datasource where the algorithms are not running
+     *        in this instance.   FIXME - provide reference.
      */
-    private List<Integer> getVisibleTabs(SharedPreferences prefs) {
-        List<Integer> tabs = new ArrayList<>();
-        if (mConnection != null && mConnection.mBound && mConnection.mSdServer != null) {
-            Log.d(TAG,"getVisibleTabs() - getting enabled algorithms from sdServer");
-            // If the server is bound, get the enabled algorithms from the server
-            if (mConnection.mSdServer.mSdData.mOsdAlarmActive) {
-                Log.v(TAG,"getVisibleTabs() - OSD alarm is active");
-                tabs.add(TAB_OSD);
-            }
-            if (mConnection.mSdServer.mSdData.mFlapAlarmActive) {
-                Log.v(TAG,"getVisibleTabs() - Flap alarm is active");
-                tabs.add(TAB_FLAP);
-            }
-            if (mConnection.mSdServer.mSdData.mCnnAlarmActive) {
-                Log.v(TAG,"getVisibleTabs() - CNN alarm is active");
-                tabs.add(TAB_ML);
-            }
-            if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
-                Log.v(TAG,"getVisibleTabs() - Heart Rate alarm is active");
-                tabs.add(TAB_HR);
-            }
-            if (mConnection.mSdServer.mSdData.mFallActive) {
-                Log.v(TAG,"getVisibleTabs() - Fall alarm is active");
-                tabs.add(TAB_FALL);
-            }
+    private List<Integer> getActiveAlgorithmSections(SharedPreferences prefs) {
+        List<Integer> active = new ArrayList<>();
+        if (mConnection != null && mConnection.mBound && mConnection.mSdServer != null
+                && mConnection.mSdServer.mSdData != null) {
+            if (mConnection.mSdServer.mSdData.mOsdAlarmActive) active.add(AdvancedSections.OSD);
+            if (mConnection.mSdServer.mSdData.mFlapAlarmActive) active.add(AdvancedSections.FLAP);
+            if (mConnection.mSdServer.mSdData.mCnnAlarmActive) active.add(AdvancedSections.ML);
+            if (mConnection.mSdServer.mSdData.mHRAlarmActive) active.add(AdvancedSections.HR);
+            if (mConnection.mSdServer.mSdData.mFallActive) active.add(AdvancedSections.FALL);
         } else {
-            Log.d(TAG,"getVisibleTabs() - server not bound, getting enabled algorithms from preferences");
-            Log.v(TAG,"getVisibleTabs() - mConnection="+mConnection+", mBound="+(mConnection != null ? mConnection.mBound : "null")+", mSdServer="+(mConnection != null ? mConnection.mSdServer : "null"));
-            // If the server is not bound, fall back to using the stored preferences
-            if (PreferenceUtils.getBooleanFromXml(prefs, "OsdAlarmActive")) tabs.add(TAB_OSD);
-            if (PreferenceUtils.getBooleanFromXml(prefs, "FlapAlarmActive")) tabs.add(TAB_FLAP);
-            if (PreferenceUtils.getBooleanFromXml(prefs, "CnnAlarmActive")) tabs.add(TAB_ML);
-            if (PreferenceUtils.getBooleanFromXml(prefs, "HRAlarmActive")) tabs.add(TAB_HR);
-            if (PreferenceUtils.getBooleanFromXml(prefs, "FallActive")) tabs.add(TAB_FALL);
-            Log.d(TAG,"getVisibleTabs() - server not bound - trying again in 500ms....");
-            mHandler.postDelayed(new Runnable() {
-                public void run() {
-                    Log.i(TAG, "getVisibleTabs() - getting algorithms from sdServer after 500ms delay");
-                    mVisibleTabs = getVisibleTabs(prefs);
-                    setVisibleTabs();
+            Log.d(TAG, "getActiveAlgorithmSections() - server not bound, using preferences");
+            for (int id : new int[]{AdvancedSections.OSD, AdvancedSections.FLAP, AdvancedSections.ML,
+                    AdvancedSections.HR, AdvancedSections.FALL}) {
+                if (PreferenceUtils.getBooleanFromXml(prefs, AdvancedSections.algorithmPrefKey(id))) {
+                    active.add(id);
                 }
-            }, 500);
+            }
         }
-        tabs.add(TAB_SYSTEM);
-
-        // If the server has just re-started, the algorithm states may not yet have been set, so only the System tab will be visible.
-        // We catch this by checking for only a single visible tab, and if that is the case, we try again in 2 seconds to give the server chance
-        // to initialise fully.    Fixes Issue #339.
-        Log.d(TAG,"getVisibleTabs() - visible tabs: " + tabs.toString());
-
-        if (tabs.size() == 1) {
-            Log.w(TAG, "getVisibleTabs() - only System tab is visible, but server is running - this might be because it has just re-started and the algorithm states have not yet been updated.  Will try again in 5000ms.");
-            mHandler.postDelayed(new Runnable() {
-                public void run() {
-                    Log.i(TAG, "getVisibleTabs() - getting algorithms from sdServer after 2000ms delay");
-                    mVisibleTabs = getVisibleTabs(prefs);
-                    setVisibleTabs();
-                }
-            }, 2000);
-        }
-        return tabs;
+        return active;
     }
 
-    private void setVisibleTabs() {
-        // Instantiate a ViewPager2 and a PagerAdapter.
-        mFragmentPager = findViewById(R.id.fragment_pager);
-        mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this, mVisibleTabs);
-        mFragmentPager.setAdapter(mFragmentStateAdapter);
-
-        // Set up TabLayout with ViewPager2 (portrait layout)
-        // The landscape layout doesn't have a TabLayout - it uses sidebar navigation instead
-        mTabLayout = findViewById(R.id.tab_layout);
-        if (mTabLayout != null) {
-            mTabLayoutMediator = new TabLayoutMediator(mTabLayout, mFragmentPager,
-                    new TabLayoutMediator.TabConfigurationStrategy() {
-                        @Override
-                        public void onConfigureTab(TabLayout.Tab tab, int position) {
-                            if (position >= 0 && position < mVisibleTabs.size()) {
-                                tab.setText(getTabTitle(mVisibleTabs.get(position)));
-                            } else {
-                                tab.setText("Screen " + position);
-                            }
-                        }
-                    });
-            mTabLayoutMediator.attach();
-        } else {
-            Log.d(TAG, "setVisibleTabs() - TabLayout not found (landscape layout detected), skipping TabLayoutMediator");
+    /** The sections to show, in the order the user has chosen. */
+    private List<Integer> buildSectionList(SharedPreferences prefs) {
+        List<Integer> active = getActiveAlgorithmSections(prefs);
+        boolean showAll = AdvancedSections.isShowAllAlgs(prefs);
+        List<Integer> sections = new ArrayList<>();
+        for (int id : AdvancedSections.getOrder(prefs)) {
+            if (!AdvancedSections.isAlgorithm(id) || showAll || active.contains(id)) {
+                sections.add(id);
+            }
         }
-
+        return sections;
     }
 
-    /** Label shown on the tab for a TAB_* id. */
-    private String getTabTitle(int tabId) {
-        switch (tabId) {
-            case TAB_OSD:
-                return getString(R.string.osd);
-            case TAB_FLAP:
-                return getString(R.string.flap);
-            case TAB_ML:
-                return "ML";
-            case TAB_HR:
-                return getString(R.string.heart_rate);
-            case TAB_FALL:
-                return "Fall";
-            case TAB_SYSTEM:
-                return "System";
-            default:
-                return getString(R.string.screen) + tabId;
+    /** Removes the section fragments (if any) from the fragment manager. */
+    private void removeSectionFragments() {
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction ft = null;
+        for (Fragment f : fm.getFragments()) {
+            if (f.getTag() != null && f.getTag().startsWith(SECTION_TAG_PREFIX)) {
+                if (ft == null) ft = fm.beginTransaction().setReorderingAllowed(true);
+                ft.remove(f);
+            }
         }
+        if (ft != null) {
+            ft.commitNowAllowingStateLoss();
+        }
+    }
+
+    private void clearSections() {
+        if (mSectionsContainer == null) return;
+        removeSectionFragments();
+        mSectionsContainer.removeAllViews();
+        mSectionsSignature = "";
     }
 
     /**
-     * A pager adapter that shows the tabs it is given (TAB_* ids, in screen order).
-     * Items are identified by their TAB_* id rather than by position, so that fragments
-     * restored by the framework are matched to the right tab when tabs are hidden.
+     * (Re)builds the scrolling list of sections for Advanced Mode, one FragmentContainerView per
+     * section. Does nothing if the list is unchanged since the last call.
      */
-    private class ScreenSlideFragmentPagerAdapter extends FragmentStateAdapter {
-        private String TAG = "ScreenSlideFragmentPagerAdapter";
-        private final List<Integer> mTabIds;
+    private void rebuildSections(final SharedPreferences prefs) {
+        if (isFinishing() || isDestroyed() || mSectionsContainer == null) {
+            return;
+        }
+        List<Integer> sections = buildSectionList(prefs);
 
-        public ScreenSlideFragmentPagerAdapter(FragmentActivity fa, List<Integer> tabIds) {
-            super(fa);
-            mTabIds = new ArrayList<>(tabIds);
+        // If the server has only just (re)started its algorithm states may not be set yet, so
+        // the list could be too short. Look again a few times (fixes Issue #339).
+        boolean showAll = AdvancedSections.isShowAllAlgs(prefs);
+        boolean noAlgorithm = true;
+        for (int id : sections) {
+            if (AdvancedSections.isAlgorithm(id)) noAlgorithm = false;
+        }
+        if (!showAll && noAlgorithm && mSectionRetryCount < MAX_SECTION_RETRIES) {
+            mSectionRetryCount++;
+            Log.w(TAG, "rebuildSections() - no algorithm is active yet (server may still be starting) - looking again in 2000ms");
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    SharedPreferences sp = mSharedPrefs != null ? mSharedPrefs : prefs;
+                    if (mCurrentBasicMode != null && !mCurrentBasicMode) {
+                        rebuildSections(sp);
+                    }
+                }
+            }, 2000);
         }
 
-        @Override
-        public Fragment createFragment(int position) {
-            switch (mTabIds.get(position)) {
-                case TAB_OSD:
-                    return new FragmentOsdAlg();
-                case TAB_FLAP:
-                    return new FragmentFlapAlg();
-                case TAB_ML:
-                    return new FragmentMlAlg();
-                case TAB_HR:
-                    return new FragmentHrAlg();
-                case TAB_FALL:
-                    // Fall detection debug tab - graphs window min/max acceleration history
-                    return new FragmentFallAlg();
-                case TAB_SYSTEM:
-                    return new FragmentSystem();
-                default:
-                    Log.e(TAG, "createFragment() - invalid tab id " + mTabIds.get(position));
-                    return null;
+        // The graph mode is part of the signature: the fragments (and their graphs) are created
+        // afresh when it changes, because GraphView keeps label-step state between redraws.
+        String signature = sections.toString() + "|10min=" + AdvancedSections.isHistoryMode(prefs);
+        if (signature.equals(mSectionsSignature)) {
+            return;
+        }
+        Log.i(TAG, "rebuildSections() - sections: " + signature);
+
+        removeSectionFragments();
+        mSectionsContainer.removeAllViews();
+
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction().setReorderingAllowed(true);
+        float density = getResources().getDisplayMetrics().density;
+        boolean first = true;
+        for (int id : sections) {
+            Fragment fragment = AdvancedSections.createFragment(id);
+            if (fragment == null) continue;
+            if (!first) {
+                // thin divider between the sections
+                View divider = new View(this);
+                divider.setLayoutParams(new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, Math.round(density))));
+                divider.setBackgroundColor(Color.argb(60, 128, 128, 128));
+                mSectionsContainer.addView(divider);
             }
+            first = false;
+            FragmentContainerView container = new FragmentContainerView(this);
+            container.setId(View.generateViewId());
+            container.setLayoutParams(new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            mSectionsContainer.addView(container);
+            ft.add(container.getId(), fragment, SECTION_TAG_PREFIX + id);
         }
-
-        @Override
-        public int getItemCount() {
-            return mTabIds.size();
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return mTabIds.get(position);
-        }
-
-        @Override
-        public boolean containsItem(long itemId) {
-            return mTabIds.contains((int) itemId);
-        }
+        ft.commitNowAllowingStateLoss();
+        mSectionsSignature = signature;
     }
 
     private void startServer() {
@@ -931,38 +834,6 @@ public class MainActivity2 extends AppCompatActivity {
                 .setReorderingAllowed(true)
                 .replace(R.id.fragment_common_container_view, FragmentCommon.class, null)
                 .commitNowAllowingStateLoss();
-    }
-
-    /**
-     * Determines which tab to show based on enabled algorithms
-     * Priority order: ML, OSD, HR
-     * Returns a TAB_* id, or DEFAULT_TAB if no algorithms are enabled. The caller must
-     * check that the tab is actually visible (see getVisibleTabs()).
-     */
-    private int getDefaultTabFromAlgorithmSettings(SharedPreferences prefs) {
-        // Check algorithms in priority order: ML, OSD, HR
-
-        boolean mlEnabled = PreferenceUtils.getBooleanFromXml(prefs, "CnnAlarmActive");
-        if (mlEnabled) {
-            Log.d(TAG, "ML algorithm is enabled - selecting ML tab");
-            return TAB_ML;
-        }
-
-        boolean osdEnabled = PreferenceUtils.getBooleanFromXml(prefs, "OsdAlarmActive");
-        if (osdEnabled) {
-            Log.d(TAG, "OSD algorithm is enabled - selecting OSD tab");
-            return TAB_OSD;
-        }
-
-        boolean hrEnabled = PreferenceUtils.getBooleanFromXml(prefs, "HRAlarmActive");
-        if (hrEnabled) {
-            Log.d(TAG, "HR algorithm is enabled - selecting HR tab");
-            return TAB_HR;
-        }
-
-        // No algorithms enabled - use default (OSD tab)
-        Log.d(TAG, "No algorithms enabled - using default tab");
-        return DEFAULT_TAB;
     }
 
 }

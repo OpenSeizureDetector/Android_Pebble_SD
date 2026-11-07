@@ -22,8 +22,31 @@ import java.util.Objects;
 
 import uk.org.openseizuredetector.data.AlarmState;
 
+/**
+ * The system sections of the main display. In Advanced Mode this one class is used for three
+ * separate full-width sections (see AdvancedSections): the status texts (server status, data
+ * source, watch status), the signal strength history graph and the battery history graph.
+ * Which one an instance shows is chosen with newInstance(); the layout contains all three
+ * blocks and the ones not wanted are hidden (and not updated).
+ */
 public class FragmentSystem extends FragmentOsdBaseClass {
     String TAG = "FragmentSystem";
+
+    public static final int PART_STATUS = 0;
+    public static final int PART_SIGNAL = 1;
+    public static final int PART_BATTERY = 2;
+    private static final String ARG_PART = "part";
+
+    private int mPart = PART_STATUS;
+
+    public static FragmentSystem newInstance(int part) {
+        FragmentSystem f = new FragmentSystem();
+        Bundle args = new Bundle();
+        args.putInt(ARG_PART, part);
+        f.setArguments(args);
+        return f;
+    }
+
     private static final int HISTORY_LINE_COLOR = Color.BLUE;
     private static final int HISTORY_LINE_THICKNESS = 4;
     private static final double SAMPLE_PERIOD_SECONDS = 5.0;
@@ -37,6 +60,15 @@ public class FragmentSystem extends FragmentOsdBaseClass {
         // Required empty public constructor
     }
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Bundle args = getArguments();
+        if (args != null) {
+            mPart = args.getInt(ARG_PART, PART_STATUS);
+        }
+    }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -48,16 +80,34 @@ public class FragmentSystem extends FragmentOsdBaseClass {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Show only the part of the layout this instance is for.
+        setBlockVisible(R.id.system_status_block, mPart == PART_STATUS);
+        setBlockVisible(R.id.system_signal_block, mPart == PART_SIGNAL);
+        setBlockVisible(R.id.system_batt_block, mPart == PART_BATTERY);
+
         // Setup battery history chart
-        mBattLineChart = mRootView.findViewById(R.id.system_batt_line_chart);
-        if (mBattLineChart != null) {
-            setupBatteryChart();
+        mBattLineChart = null;
+        if (mPart == PART_BATTERY) {
+            mBattLineChart = mRootView.findViewById(R.id.system_batt_line_chart);
+            if (mBattLineChart != null) {
+                setupBatteryChart();
+            }
         }
 
         // Setup signal strength history chart
-        mSignalLineChart = mRootView.findViewById(R.id.system_signal_line_chart);
-        if (mSignalLineChart != null) {
-            setupSignalChart();
+        mSignalLineChart = null;
+        if (mPart == PART_SIGNAL) {
+            mSignalLineChart = mRootView.findViewById(R.id.system_signal_line_chart);
+            if (mSignalLineChart != null) {
+                setupSignalChart();
+            }
+        }
+    }
+
+    private void setBlockVisible(int id, boolean visible) {
+        View v = mRootView.findViewById(id);
+        if (v != null) {
+            v.setVisibility(visible ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -151,6 +201,10 @@ public class FragmentSystem extends FragmentOsdBaseClass {
 
     @Override
     protected void updateUi() {
+        // The graph-only instances have no text to update.
+        if (mPart != PART_STATUS) {
+            return;
+        }
         TextView tv;
 
         LinearLayoutCompat ll = (LinearLayoutCompat) mRootView.findViewById(R.id.fragment_ll);

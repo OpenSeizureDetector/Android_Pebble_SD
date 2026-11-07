@@ -19,25 +19,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tab_layout"
+        <!-- Advanced Mode: the sections (OSD, Flap, ML, HR, Fall, system status, signal, battery)
+             are stacked here one below the other, in the order chosen in the settings, and the
+             user scrolls through them. MainActivity2 fills sections_container with one
+             fragment container per section. Replaces the old tabs. -->
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/sections_scroll"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:tabIndicatorColor="?attr/colorPrimary"
-            app:tabSelectedTextColor="?attr/colorPrimary"
-            app:tabTextColor="?android:attr/textColorSecondary"
-            app:tabMode="scrollable"
-            app:tabGravity="fill"
-            app:tabIndicatorHeight="4dp"
-            app:tabRippleColor="?attr/colorPrimaryVariant"
-            app:tabPaddingStart="16dp"
-            app:tabPaddingEnd="16dp"
-            app:tabMinWidth="72dp"
-            app:tabTextAppearance="@style/TabTextAppearance" />
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:clipToPadding="false">
 
-        <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/fragment_pager"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            <LinearLayout
+                android:id="@+id/sections_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </androidx.core.widget.NestedScrollView>
     </LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

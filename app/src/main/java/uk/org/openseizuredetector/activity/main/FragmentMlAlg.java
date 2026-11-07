@@ -34,6 +34,11 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
     };
     private static final int STDDEV_COLOR = Color.rgb(180, 180, 180);
 
+    /** Mode the chart is currently configured for: true = 10 minute history, false = real time. */
+    private Boolean mChartInHistoryMode = null;
+    /** Bar labels the real time chart is currently configured for (it is rebuilt if they change). */
+    private String mSnapshotLabelsKey = "";
+
     public FragmentMlAlg() {
         // Required empty public constructor
     }
@@ -44,6 +49,7 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         View rootView = inflater.inflate(R.layout.fragment_ml_alg, container, false);
         historyChart = rootView.findViewById(R.id.seizure_history_chart);
         setupChart();
+        mChartInHistoryMode = true;   // setupChart() configures the 10 minute history graph
         adjustChartHeightForMode(historyChart);
         return rootView;
     }
@@ -60,6 +66,11 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         try {
             SdData sdData = mConnection.mSdServer.mSdData;
 
+            // Shown because of "show all algorithms" but not selected by the user.
+            if (!applyAlgorithmActiveState(sdData.dataTimeMillis == 0 || sdData.mCnnAlarmActive)) {
+                return;
+            }
+
             // Header row: "N models active | AccStDev: X%"
             TextView modelStatusTv = mRootView.findViewById(R.id.fragment_ml_alg_model_name);
             String statusText = String.format(Locale.getDefault(), getString(R.string.d_model_s_active_accstdev_1f),
@@ -69,8 +80,29 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
             // Update the 2-column grid of model statuses
             updateIndividualModelDisplay(sdData);
 
-            // Update history chart with multiple model lines
-            displayHistoryChart(sdData);
+            // (Re)configure the graph when the display mode has been changed in the settings.
+            boolean history = isHistoryMode();
+            if (mChartInHistoryMode == null || mChartInHistoryMode != history) {
+                if (history) {
+                    setupChart();
+                }
+                mSnapshotLabelsKey = "";
+                mChartInHistoryMode = history;
+            }
+            TextView chartTitleTv = mRootView.findViewById(R.id.ml_chart_title_tv);
+            if (chartTitleTv != null) {
+                chartTitleTv.setText(history
+                        ? R.string.seizure_probability_history_last_10_minutes
+                        : R.string.seizure_probability_now);
+            }
+
+            if (history) {
+                // Update history chart with multiple model lines
+                displayHistoryChart(sdData);
+            } else {
+                clearCustomLegend();
+                displaySnapshotChart(sdData);
+            }
 
         } catch (Exception e) {
             Log.e(TAG, "Error updating UI: " + e.getMessage(), e);
@@ -194,6 +226,59 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
         // Disable GraphView's built-in legend due to sizing issues
         // We use a custom legend below instead
         historyChart.getLegendRenderer().setVisible(false);
+    }
+
+    /**
+     * Real time mode: one bar per active model showing its seizure probability (%) for the
+     * latest 5 second period, with the configured probability threshold as a blue line.
+     */
+    private void displaySnapshotChart(SdData sdData) {
+        if (historyChart == null) return;
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+        double probThresholdPct = getPercentPreference(
+                prefs,
+                MlModelManager.PREF_ML_SEIZURE_PROB_THRESHOLD_PCT,
+                MlModelManager.DEFAULT_ML_SEIZURE_PROB_THRESHOLD_PCT);
+
+        java.util.List<String> labels = new java.util.ArrayList<>();
+        java.util.List<Double> values = new java.util.ArrayList<>();
+        java.util.List<Integer> colours = new java.util.ArrayList<>();
+        int maxModels = Math.min(5, sdData.mlNumModels);
+        for (int i = 0; i < maxModels; i++) {
+            if (sdData.mlModelActive == null || i >= sdData.mlModelActive.length || !sdData.mlModelActive[i]) continue;
+            String name = (sdData.mlModelNames != null && i < sdData.mlModelNames.length
+                    && sdData.mlModelNames[i] != null && !sdData.mlModelNames[i].isEmpty())
+                    ? sdData.mlModelNames[i]
+                    : (getString(R.string.ml) + (i + 1));
+            labels.add(name);
+            values.add(sdData.mlModelProbs[i] * 100.0);
+            colours.add(SERIES_COLORS[i % SERIES_COLORS.length]);
+        }
+
+        if (labels.isEmpty()) {
+            historyChart.removeAllSeries();
+            mSnapshotLabelsKey = "";
+            return;
+        }
+
+        String key = android.text.TextUtils.join("|", labels);
+        if (!key.equals(mSnapshotLabelsKey)) {
+            SnapshotBars.configure(historyChart, labels.toArray(new String[0]), 0, 100, okTextColour);
+            mSnapshotLabelsKey = key;
+        }
+
+        double[] vals = new double[values.size()];
+        int[] cols = new int[values.size()];
+        double[] thresholds = new double[values.size()];
+        for (int i = 0; i < vals.length; i++) {
+            vals[i] = values.get(i);
+            cols[i] = colours.get(i);
+            thresholds[i] = probThresholdPct;
+        }
+        SnapshotBars.draw(historyChart, vals, cols, thresholds);
+        historyChart.setTitle(getString(R.string.ml_snapshot_title));
+        historyChart.setTitleTextSize(36f);
+        historyChart.setTitleColor(okTextColour);
     }
 
     private void displayHistoryChart(SdData sdData) {

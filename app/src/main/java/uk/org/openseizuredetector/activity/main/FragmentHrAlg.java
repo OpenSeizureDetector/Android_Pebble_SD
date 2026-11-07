@@ -18,6 +18,8 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 import java.util.Locale;
 import java.util.Objects;
 
+import uk.org.openseizuredetector.data.SdData;
+
 
 public class FragmentHrAlg extends FragmentOsdBaseClass {
     String TAG = "FragmentHrAlg";
@@ -28,6 +30,9 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     private TextView tv;
     private TextView tvCurrent;
     private SwitchCompat switchAverages;
+
+    /** Mode the chart is currently configured for: true = 10 minute history, false = real time. */
+    private Boolean mChartInHistoryMode = null;
 
     public FragmentHrAlg() {
         // Required empty public constructor
@@ -46,6 +51,7 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         View rootView = inflater.inflate(R.layout.fragment_hr_alg, container, false);
         mLineChart = rootView.findViewById(R.id.lineChart);
         setupChart();
+        mChartInHistoryMode = true;   // setupChart() configures the 10 minute history graph
         adjustChartHeightForMode(mLineChart);
         return rootView;
     }
@@ -111,6 +117,12 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
         if (mConnection.mBound) {
             tv.setText("Bound to Server");
 
+            // Shown because of "show all algorithms" but not selected by the user.
+            SdData sd = mConnection.mSdServer.mSdData;
+            if (!applyAlgorithmState(sd.dataTimeMillis == 0 || sd.mHRAlarmActive, isShowAllAlgs())) {
+                return;
+            }
+
             tvCurrent = mRootView.findViewById(R.id.textView2);
             if (Objects.nonNull(tvCurrent)) {
                 if (Objects.nonNull(tvHr))
@@ -125,11 +137,28 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
                         .append(mConnection.mSdServer.mSdData.mAdaptiveHrAlarmStanding)
                         .toString());
 
-                int nHistArr = mConnection.mSdServer.mSdDataHistory.mHrHistBuf.getNumVals();
-                double hrHistArr[] = mConnection.mSdServer.mSdDataHistory.mHrHistBuf.getVals();
+                // (Re)configure the graph when the display mode has been changed in the settings.
+                boolean history = isHistoryMode();
+                if (mChartInHistoryMode == null || mChartInHistoryMode != history) {
+                    if (history) {
+                        setupChart();
+                    } else {
+                        SnapshotBars.configure(mLineChart,
+                                new String[]{getString(R.string.snap_hr), getString(R.string.snap_avg_hr)},
+                                40, 240, okTextColour);
+                    }
+                    mChartInHistoryMode = history;
+                }
 
-                if (Objects.nonNull(hrHistArr) && nHistArr > 0) {
-                    displayHistoryChart(hrHistArr, nHistArr);
+                if (history) {
+                    int nHistArr = mConnection.mSdServer.mSdDataHistory.mHrHistBuf.getNumVals();
+                    double hrHistArr[] = mConnection.mSdServer.mSdDataHistory.mHrHistBuf.getVals();
+
+                    if (Objects.nonNull(hrHistArr) && nHistArr > 0) {
+                        displayHistoryChart(hrHistArr, nHistArr);
+                    }
+                } else {
+                    displaySnapshotChart(sd);
                 }
             }
         } else {
@@ -145,6 +174,24 @@ public class FragmentHrAlg extends FragmentOsdBaseClass {
     @Override
     protected void updateUiFast() {
         // HR graph updates are tied to new data to avoid flicker.
+    }
+
+    /** Real time mode: the heart rate of the latest 5 second period against the adaptive average. */
+    private void displaySnapshotChart(SdData sd) {
+        if (mLineChart == null) return;
+        int accent;
+        try {
+            accent = mContext.getResources().getColor(R.color.colorAccent, null);
+        } catch (Exception e) {
+            accent = Color.RED;
+        }
+        SnapshotBars.draw(mLineChart,
+                new double[]{sd.mHR, sd.mAdaptiveHrAverage},
+                new int[]{accent, Color.GRAY},
+                null);
+        mLineChart.setTitle(getString(R.string.hr_snapshot_title));
+        mLineChart.setTitleTextSize(36f);
+        mLineChart.setTitleColor(okTextColour);
     }
 
     private void displayHistoryChart(double[] historyData, int length) {

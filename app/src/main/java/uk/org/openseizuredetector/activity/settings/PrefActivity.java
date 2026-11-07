@@ -45,6 +45,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
+import uk.org.openseizuredetector.activity.main.AdvancedSections;
+import uk.org.openseizuredetector.activity.main.SectionOrderDialog;
 import androidx.preference.PreferenceCategory;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
@@ -407,6 +409,12 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         }
 
 
+        // These only change how the main display looks; the server does not need to restart.
+        if (s.equals(AdvancedSections.PREF_ORDER) || s.equals(AdvancedSections.PREF_GRAPH_10MIN)) {
+            Log.i(TAG," onSharedPreferenceChanged(): " + s + " changed, no server restart needed.");
+            return;
+        }
+
         Log.i(TAG," onSharedPreferenceChanged(): " + s + " changed, marking preference changed.");
         mPrefChanged = true;
     }
@@ -616,6 +624,44 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.general_prefs, rootKey);
+
+            // The Advanced Mode sub-options are only shown while Advanced Mode is on.
+            Preference advancedMode = findPreference("pref_advanced_mode");
+            boolean advancedOn = advancedMode instanceof TwoStatePreference
+                    && ((TwoStatePreference) advancedMode).isChecked();
+            setAdvancedOptionsVisible(advancedOn);
+            if (advancedMode != null) {
+                advancedMode.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                    @Override
+                    public boolean onPreferenceChange(Preference preference, Object newValue) {
+                        setAdvancedOptionsVisible(Boolean.TRUE.equals(newValue));
+                        return true;
+                    }
+                });
+            }
+
+            Preference order = findPreference(AdvancedSections.PREF_ORDER);
+            if (order != null) {
+                order.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                    @Override
+                    public boolean onPreferenceClick(Preference preference) {
+                        SectionOrderDialog.show(requireContext());
+                        return true;
+                    }
+                });
+            }
+        }
+
+        private void setAdvancedOptionsVisible(boolean visible) {
+            String[] keys = {AdvancedSections.PREF_SHOW_ALL_ALGS,
+                    AdvancedSections.PREF_GRAPH_10MIN,
+                    AdvancedSections.PREF_ORDER};
+            for (String key : keys) {
+                Preference p = findPreference(key);
+                if (p != null) {
+                    p.setVisible(visible);
+                }
+            }
         }
     }
 
