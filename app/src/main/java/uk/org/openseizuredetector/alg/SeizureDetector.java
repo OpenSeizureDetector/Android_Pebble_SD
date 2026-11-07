@@ -38,6 +38,12 @@ public class SeizureDetector {
     private boolean mCnnAlarmActive;
     private boolean mHRAlarmActive;
 
+    // Advanced Mode option "show all algorithms": OSD, Flap, Fall and HR are then also run for
+    // algorithms the user has NOT selected, in "display only" mode. Their results fill SdData so
+    // the main display can show them, but they never vote, never raise an alarm and are never
+    // an alarm cause. (ML models are not run this way - they are too heavy.)
+    private boolean mShowAllAlgs;
+
     // Voting strategy
     private VotingStrategy mVotingStrategy;
     private boolean mUseVoting = false;
@@ -62,14 +68,14 @@ public class SeizureDetector {
 
         int activeCount = 0;
 
-        if (mOsdAlarmActive) {
+        if (mOsdAlarmActive || mShowAllAlgs) {
             mSdAlgOsd = new SdAlgOsd(mContext);
-            activeCount++;
+            if (mOsdAlarmActive) activeCount++;
         }
 
-        if (mFlapAlarmActive) {
+        if (mFlapAlarmActive || mShowAllAlgs) {
             mSdAlgFlap = new SdAlgFlap(mContext);
-            activeCount++;
+            if (mFlapAlarmActive) activeCount++;
         }
 
         if (mCnnAlarmActive) {
@@ -79,12 +85,12 @@ public class SeizureDetector {
             // Note: In voting, we'll count each evaluated model result
         }
 
-        if (mHRAlarmActive) {
+        if (mHRAlarmActive || mShowAllAlgs) {
             mSdAlgHr = new SdAlgHr(mContext);
-            activeCount++;
+            if (mHRAlarmActive) activeCount++;
         }
 
-        if (mFallActive) {
+        if (mFallActive || mShowAllAlgs) {
             mSdAlgFall = new SdAlgFall(mContext);
             // NOTE: Fall is intentionally NOT counted in activeCount.
             // A fall alarm bypasses voting entirely and directly produces an ALARM state
@@ -111,6 +117,11 @@ public class SeizureDetector {
             mFallActive = PreferenceUtils.getBooleanFromXml(mSP, "FallActive");
             mCnnAlarmActive = PreferenceUtils.getBooleanFromXml(mSP, "CnnAlarmActive");
             mHRAlarmActive = PreferenceUtils.getBooleanFromXml(mSP, "HRAlarmActive");
+            // Keys are those of AdvancedSections.PREF_SHOW_ALL_ALGS / "pref_advanced_mode" (in
+            // activity.main); literals are used here to keep this package free of UI classes.
+            mShowAllAlgs = PreferenceUtils.getBooleanFromXml(mSP, "pref_advanced_mode")
+                    && mSP.getBoolean("pref_advanced_show_all_algs", false);
+            Log.v(TAG,"updatePrefs() - mShowAllAlgs=" + mShowAllAlgs);
             Log.v(TAG,"updatePrefs() - mOsdAlarmActive=" + mOsdAlarmActive + " mFlapAlarmActive=" + mFlapAlarmActive + " mFallActive=" + mFallActive + " mCnnAlarmActive=" + mCnnAlarmActive + " mHRAlarmActive=" + mHRAlarmActive + "");
         } catch (Exception ex) {
             Log.e(TAG, "updatePrefs() - Problem parsing preferences: " + ex.toString());
@@ -133,17 +144,21 @@ public class SeizureDetector {
         if (mSdAlgOsd != null) {
             int osdResult = mSdAlgOsd.processSdData(sdData);
             Log.d(TAG,"osdResult=" + osdResult);
-            sdData.osdAlgState = osdResult;
-            algorithmResults.add(new AlgorithmResult("OSD", osdResult, 1.0f, 1.0f));
-            if (osdResult == AlarmState.ALARM) alarmCauses.add(mSdAlgOsd.getAlarmCause());
+            if (mOsdAlarmActive) {   // otherwise display only: results are not used
+                sdData.osdAlgState = osdResult;
+                algorithmResults.add(new AlgorithmResult("OSD", osdResult, 1.0f, 1.0f));
+                if (osdResult == AlarmState.ALARM) alarmCauses.add(mSdAlgOsd.getAlarmCause());
+            }
         }
 
         if (mSdAlgFlap != null) {
             int flapResult = mSdAlgFlap.processSdData(sdData);
             Log.d(TAG,"flapResult=" + flapResult);
-            sdData.flapAlgState = flapResult;
-            algorithmResults.add(new AlgorithmResult("FLAP", flapResult, 1.0f, 1.0f));
-            if (flapResult == AlarmState.ALARM) alarmCauses.add(mSdAlgFlap.getAlarmCause());
+            if (mFlapAlarmActive) {   // otherwise display only: results are not used
+                sdData.flapAlgState = flapResult;
+                algorithmResults.add(new AlgorithmResult("FLAP", flapResult, 1.0f, 1.0f));
+                if (flapResult == AlarmState.ALARM) alarmCauses.add(mSdAlgFlap.getAlarmCause());
+            }
         }
 
         // -----------------------------------------------------------------------
@@ -154,10 +169,10 @@ public class SeizureDetector {
         // -----------------------------------------------------------------------
         boolean fallAlarmTriggered = false;
         if (mSdAlgFall != null) {
-            int fallResult = mSdAlgFall.processSdData(sdData);
+            int fallResult = mSdAlgFall.processSdData(sdData);   // also fills sdData.mFallWindowMin/Max
             Log.d(TAG,"fallResult=" + fallResult);
-            sdData.fallAlgState = fallResult;
-            if (fallResult == AlarmState.ALARM) {
+            if (mFallActive) sdData.fallAlgState = fallResult;   // display only: result is not used
+            if (mFallActive && fallResult == AlarmState.ALARM) {
                 // Mark that a fall alarm has fired - this will override voting below.
                 fallAlarmTriggered = true;
                 alarmCauses.add(mSdAlgFall.getAlarmCause());
@@ -192,14 +207,16 @@ public class SeizureDetector {
         }
 
         if (mSdAlgHr != null) {
-            int hrResult = mSdAlgHr.processSdData(sdData);
+            int hrResult = mSdAlgHr.processSdData(sdData);   // also fills sdData.mAdaptiveHrAverage
             Log.d(TAG,"hrResult=" + hrResult);
-            sdData.hrAlgState = hrResult;
-            algorithmResults.add(new AlgorithmResult("HR", hrResult, 1.0f, 1.0f));
-            if (hrResult == AlarmState.ALARM) {
-                if (sdData.mHRAlarmStanding) alarmCauses.add("HR");
-                if (sdData.mAdaptiveHrAlarmStanding) alarmCauses.add("HR_ADAPT");
-                if (sdData.mAverageHrAlarmStanding) alarmCauses.add("HR_AVG");
+            if (mHRAlarmActive) {   // otherwise display only: results are not used
+                sdData.hrAlgState = hrResult;
+                algorithmResults.add(new AlgorithmResult("HR", hrResult, 1.0f, 1.0f));
+                if (hrResult == AlarmState.ALARM) {
+                    if (sdData.mHRAlarmStanding) alarmCauses.add("HR");
+                    if (sdData.mAdaptiveHrAlarmStanding) alarmCauses.add("HR_ADAPT");
+                    if (sdData.mAverageHrAlarmStanding) alarmCauses.add("HR_AVG");
+                }
             }
         }
 

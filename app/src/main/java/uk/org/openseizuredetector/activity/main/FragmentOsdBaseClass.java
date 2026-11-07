@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.TypedArray;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.os.Bundle;
 
 import androidx.core.content.ContextCompat;
@@ -43,6 +44,10 @@ public class FragmentOsdBaseClass extends Fragment {
     private boolean mLastFallAlarmStanding = false;
     private long mLastThrottledUpdateMillis = 0;
     private boolean mLastBoundState = false;
+    // Advanced Mode shows many fragments in one scrolling list, all of them resumed at once.
+    // Only fragments that are actually on screen redraw (saves battery); see isOnScreen().
+    private boolean mWasOnScreen = false;
+    private final Rect mVisibleRect = new Rect();
     private static final long THROTTLED_UPDATE_MS = 30000;
 
     // Use transparent for OK state by default to allow theme background to show through
@@ -145,6 +150,7 @@ public class FragmentOsdBaseClass extends Fragment {
         mCachedScrollView = null;
         // Reset dataTime so UI updates when fragment is resumed
         mLastDataTime = 0;
+        mWasOnScreen = false;
         mUtil.unbindFromServer(mContext, mConnection);
     }
 
@@ -154,6 +160,19 @@ public class FragmentOsdBaseClass extends Fragment {
             public void run() {
                 if (mContext != null && mRootView != null) {
                     try {
+                        // Skip all drawing while this fragment is scrolled out of view. When it
+                        // scrolls back in, force a full refresh instead of waiting up to 5 s
+                        // for the next data period.
+                        if (!isOnScreen()) {
+                            mWasOnScreen = false;
+                            return;
+                        }
+                        if (!mWasOnScreen) {
+                            mWasOnScreen = true;
+                            mLastDataTime = 0;
+                            mLastThrottledUpdateMillis = 0;
+                        }
+
                         boolean isBound = mConnection.mBound && mConnection.mSdServer != null
                                 && mConnection.mSdServer.mSdData != null;
 
@@ -259,6 +278,68 @@ public class FragmentOsdBaseClass extends Fragment {
 
     protected void updateUiThrottled() {
         // Override in subclasses for low-frequency heavy updates (e.g., graphs).
+    }
+
+    /**
+     * True if any part of this fragment's view is currently visible on screen (i.e. not hidden
+     * and not scrolled out of the visible part of the page).
+     */
+    protected boolean isOnScreen() {
+        return mRootView != null && mRootView.isShown()
+                && mRootView.getGlobalVisibleRect(mVisibleRect);
+    }
+
+    /**
+     * Advanced Mode option "graphs over 10 minutes". True: graphs show the history of the last
+     * 10 minutes. False (default): graphs show "real time" data, i.e. the latest 5 second period.
+     */
+    protected boolean isHistoryMode() {
+        if (mContext == null) {
+            return false;
+        }
+        return AdvancedSections.isHistoryMode(PreferenceManager.getDefaultSharedPreferences(mContext));
+    }
+
+    /**
+     * Used by the algorithm fragments. If the algorithm is not selected by the user (it is only
+     * shown because of the Advanced Mode option "show all algorithms") the fragment's content
+     * (view R.id.alg_content) is hidden and a note (view R.id.alg_inactive_tv) is shown instead.
+     *
+     * @return true if the algorithm is active and the fragment should draw its normal content.
+     */
+    protected boolean applyAlgorithmActiveState(boolean active) {
+        return applyAlgorithmState(active, false);
+    }
+
+    /**
+     * As applyAlgorithmActiveState(), for the algorithms that can run in "display only" mode
+     * (OSD, Flap, Fall, HR: see SeizureDetector). If the algorithm is not selected but
+     * displayOnly is true, the content is shown together with a note that the algorithm
+     * is for display only and can never raise an alarm.
+     */
+    protected boolean applyAlgorithmState(boolean selected, boolean displayOnly) {
+        boolean showContent = selected || displayOnly;
+        if (mRootView == null) {
+            return showContent;
+        }
+        TextView note = mRootView.findViewById(R.id.alg_inactive_tv);
+        View content = mRootView.findViewById(R.id.alg_content);
+        if (note != null) {
+            note.setText(displayOnly ? R.string.algorithm_display_only : R.string.algorithm_not_selected);
+            note.setVisibility(selected ? View.GONE : View.VISIBLE);
+        }
+        if (content != null) {
+            content.setVisibility(showContent ? View.VISIBLE : View.GONE);
+        }
+        return showContent;
+    }
+
+    /** True if the Advanced Mode option "show all algorithms" is on. */
+    protected boolean isShowAllAlgs() {
+        if (mContext == null) {
+            return false;
+        }
+        return AdvancedSections.isShowAllAlgs(PreferenceManager.getDefaultSharedPreferences(mContext));
     }
 
     protected boolean isBasicMode() {
