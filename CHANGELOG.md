@@ -1,5 +1,14 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+	V5.1.3
+	- Added optional vibration alerts (Issue #338)
+	- Improved web page interface
+	- Fixed problem with visible tabs not updating correctly (Issue #339)
+	- Added more translations for DE,  FR, PL and ES.
+    - Fixed PineTime update issue (Issue #340)
+    V5.1.2  - Fixed issue with dark mode not working in non-english languages (Issue #333)
+    V5.1.1  - Fixed issue with incorrect tabs being shown when using Network Datasource (Issue #327)
+            - Fixed display of acceleration stdev on ML tab in network datasource
     V5.1.0  - Fixed occasional crash during system shutdown (Issue #260)
             - MP3 alerts now play for full duration of mp3 rather than re-starting every 5 seconds (Issue #250)
             - Hide Seizure Detector settings when using network data source because they are ignored (Issue #255)

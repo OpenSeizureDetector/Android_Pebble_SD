@@ -71,7 +71,7 @@ public class OnboardingDataSourceConfigFragment extends Fragment {
                     if (result.getResultCode() == android.app.Activity.RESULT_OK) {
                         Intent data = result.getData();
                         if (data != null && data.hasExtra("mac_address")) {
-                            String macAddress = data.getStringExtra("mac_address");
+                            String macAddress = data.getStringExtra(getString(R.string.mac_address));
                             if (macAddress != null && !macAddress.isEmpty()) {
                                 Log.i(TAG, "Received MAC address from PineTime Updater: " + macAddress);
 

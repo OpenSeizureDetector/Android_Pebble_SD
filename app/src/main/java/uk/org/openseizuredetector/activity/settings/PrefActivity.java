@@ -372,29 +372,43 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        Log.i(TAG, "SharedPreference " + s + " Changed.");
+        Log.i(TAG, "onSharedPreferenceChanged(): SharedPreference " + s + " Changed.");
 
         if (s.equals("darkMode")) {
+            Log.i(TAG," onSharedPreferenceChanged(): darkMode changed, applying theme.");
             OsdUtil.applyTheme(this);
         }
 
         if (s.equals("DataSource") || s.equals("pref_advanced_mode")) {
+            Log.i(TAG," onSharedPreferenceChanged(): DataSource or pref_advanced_mode changed, updating headers.");
             updateHeaders();
         }
 
         // Preferences that require UI restart (going through StartupActivity)
         // These affect whether onboarding should be shown or permissions requested
         if (s.equals("first_run_complete") || s.equals("SMSAlarm") || s.equals("DataSource") || s.equals("BLE_Device_Addr")) {
+            Log.i(TAG," onSharedPreferenceChanged(): " + s + " changed, marking UI restart needed.");
             mUiRestartNeeded = true;
             return;
         }
 
         if (s.equals("advancedMode")) {
+            Log.i(TAG, " onSharedPreferenceChanged(): advancedMode changed, restarting activity to apply changes.");
             startActivity(getIntent());
             finish();
-        } else {
-            mPrefChanged = true;
         }
+
+        // We need this because the shutdown reason and time are updated by the server when it shuts down, and we don't want to trigger a restart just because those values changed.
+        // Part of fix for Issue #340.
+        if (s.equals("SdServer_ShutdownReason") || s.equals("SdServer_ShutdownTime")) {
+            Log.i(TAG," onSharedPreferenceChanged(): " + s + " changed, NOT marking preference as changed to avoid unnecessary restarts.");
+            mPrefChanged = false;
+            return;
+        }
+
+
+        Log.i(TAG," onSharedPreferenceChanged(): " + s + " changed, marking preference changed.");
+        mPrefChanged = true;
     }
 
     @Override
@@ -521,7 +535,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         builder.setIcon(android.R.drawable.ic_dialog_alert);
 
         builder.setPositiveButton("Continue", (dialog, which) -> {
-            Log.i(TAG, "User confirmed PineTime Updater launch - stopping service");
+            Log.i(TAG, "User confirmed PineTime Updater launch - stopping service, then launching updater app after a short delay");
             mUtil.stopServer();
 
             mHandler.postDelayed(() -> {
@@ -530,7 +544,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                     if (launchIntent != null) {
                         launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(launchIntent);
-                        moveTaskToBack(true);
+                        //moveTaskToBack(true);
                     } else {
                         Log.e(TAG, "Failed to get launch intent for PineTime Updater");
                         mUtil.showToast("Error: Cannot launch PineTime Updater");
@@ -791,6 +805,12 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         private static final String KEY_AUDIBLE_WARNING        = "AudibleWarning";
         private static final String KEY_WARNING_OVERRIDE_SILENT = "WarningOverrideSilentMode";
 
+        // "Vibrate on ...?" checkboxes - each shown only while its Audible* parent is checked
+        private static final String KEY_AUDIBLE_FAULT_WARNING = "AudibleFaultWarning";
+        private static final String KEY_VIBRATE_ON_ALARM      = "VibrateOnAlarm";
+        private static final String KEY_VIBRATE_ON_WARNING    = "VibrateOnWarning";
+        private static final String KEY_VIBRATE_ON_FAULT      = "VibrateOnFault";
+
         // #295 - SMS settings category - hidden when the Network data source is selected
         private static final String KEY_SMS_CATEGORY = "SMSCategory";
         private static final String KEY_DATA_SOURCE  = "DataSource";
@@ -835,6 +855,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             refreshSoundSummaries();
             refreshAudibleAlarmSubPrefVisibility();
             refreshAudibleWarningSubPrefVisibility();
+            refreshAudibleFaultSubPrefVisibility();
             refreshSmsCategoryVisibility();
             refreshRaiseAlarmButtonVisibility();
             // Wire click listeners for the three file-picker prefs
@@ -869,6 +890,9 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             if (KEY_AUDIBLE_WARNING.equals(key)) {
                 refreshAudibleWarningSubPrefVisibility();
             }
+            if (KEY_AUDIBLE_FAULT_WARNING.equals(key)) {
+                refreshAudibleFaultSubPrefVisibility();
+            }
             if (KEY_DATA_SOURCE.equals(key)) {
                 refreshSmsCategoryVisibility();
                 refreshRaiseAlarmButtonVisibility();
@@ -885,20 +909,30 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         // -----------------------------------------------------------------------------------------
         // Helpers
 
-        /** Show/hide "Use Max Volume for Alerts?" based on the AudibleAlarm checkbox. */
+        /** Show/hide "Use Max Volume for Alerts?" and "Vibrate on Alarm?" based on the AudibleAlarm checkbox. */
         private void refreshAudibleAlarmSubPrefVisibility() {
             SharedPreferences prefs =
                     PreferenceManager.getDefaultSharedPreferences(requireContext());
             boolean audibleAlarm = prefs.getBoolean(KEY_AUDIBLE_ALARM, true);
             setPrefVisible(KEY_USE_MAX_VOLUME, audibleAlarm);
+            setPrefVisible(KEY_VIBRATE_ON_ALARM, audibleAlarm);
         }
 
-        /** Show/hide "Override Silent Mode for all Warnings?" based on the AudibleWarning checkbox. */
+        /** Show/hide "Override Silent Mode for all Warnings?" and "Vibrate on Warning?" based on the AudibleWarning checkbox. */
         private void refreshAudibleWarningSubPrefVisibility() {
             SharedPreferences prefs =
                     PreferenceManager.getDefaultSharedPreferences(requireContext());
             boolean audibleWarning = prefs.getBoolean(KEY_AUDIBLE_WARNING, true);
             setPrefVisible(KEY_WARNING_OVERRIDE_SILENT, audibleWarning);
+            setPrefVisible(KEY_VIBRATE_ON_WARNING, audibleWarning);
+        }
+
+        /** Show/hide "Vibrate on System Fault?" based on the AudibleFaultWarning checkbox. */
+        private void refreshAudibleFaultSubPrefVisibility() {
+            SharedPreferences prefs =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext());
+            boolean audibleFault = prefs.getBoolean(KEY_AUDIBLE_FAULT_WARNING, true);
+            setPrefVisible(KEY_VIBRATE_ON_FAULT, audibleFault);
         }
 
         /**

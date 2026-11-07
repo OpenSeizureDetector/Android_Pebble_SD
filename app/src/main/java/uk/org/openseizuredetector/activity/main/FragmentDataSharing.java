@@ -34,9 +34,9 @@ public class FragmentDataSharing extends FragmentOsdBaseClass {
         TextView tv;
         tv = (TextView) mRootView.findViewById(R.id.fragment_data_sharing_tv1);
         if (mConnection.mBound) {
-            tv.setText("Bound to Server");
+            tv.setText(R.string.bound_to_server);
         } else {
-            tv.setText("****NOT BOUND TO SERVER***");
+            tv.setText(R.string.not_bound_to_server);
             return;
         }
 

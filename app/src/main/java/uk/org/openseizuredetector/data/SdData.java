@@ -216,6 +216,7 @@ public class SdData implements Parcelable {
         maxFreq = jo.getInt("maxFreq");
         specPower = jo.getInt("specPower");
         roiPower = jo.getInt("roiPower");
+        mAccelMagStdDev = jo.optDouble("accStd",-1);
         batteryPc = jo.getLong("batteryPc");
         phoneBatteryPc = jo.getInt("phoneBatteryPc");
         watchConnected = jo.getBoolean("watchConnected");
@@ -346,6 +347,7 @@ public class SdData implements Parcelable {
             jsonObj.put("maxFreq", maxFreq);
             jsonObj.put("specPower", specPower);
             jsonObj.put("roiPower", roiPower);
+            jsonObj.put("accStd",mAccelMagStdDev);
             if (specPower != 0) jsonObj.put("roiRatio", 10 * roiPower / specPower);
             else jsonObj.put("roiRatio", 0);
             jsonObj.put("alarmState", alarmState);
@@ -475,6 +477,7 @@ public class SdData implements Parcelable {
             jsonObj.put("maxFreq", maxFreq);
             jsonObj.put("specPower", specPower);
             jsonObj.put("roiPower", roiPower);
+            jsonObj.put("accStd",mAccelMagStdDev);
             jsonObj.put("batteryPc", batteryPc);
             jsonObj.put("phoneBatteryPc", phoneBatteryPc);
             jsonObj.put("watchConnected", watchConnected);

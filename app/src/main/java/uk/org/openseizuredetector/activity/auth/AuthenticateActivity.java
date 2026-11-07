@@ -326,10 +326,10 @@ public class AuthenticateActivity extends AppCompatActivity {
                             dismissProgressDialog();
                             if (retVal != null && !retVal.startsWith("ERROR:")) {
                                 Log.i(TAG, "Authentication Successful");
-                                mUtil.showToast("Login Successful - restarting app to apply new credentials");
+                                mUtil.showToast(getString(R.string.restarting_app_to_apply_new_credentials));
                                 saveAuthToken(retVal);
                                 // Restart the app to ensure that the new credentials are applied and log manager starts uploading correctly.
-                                mUtil.shutdownApp(AuthenticateActivity.this, true, false, "Settings changed - restarting app...");
+                                mUtil.shutdownApp(AuthenticateActivity.this, true, false, getString(R.string.settings_changed_restarting_app));
                             } else {
                                 Log.e(TAG, "onOk: Authentication failure for " + uname + " - error: " + retVal);
                                 // Show a specific message so the user knows whether to check

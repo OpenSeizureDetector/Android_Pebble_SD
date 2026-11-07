@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">OpenSeizureDetector</string>
     <string name="changelog">
-        &lt;b>V5.1.0: CHANGES IN THIS VERSION&lt;/b>&lt;br/>
+        &lt;b>V5.1: CHANGES IN THIS VERSION&lt;/b>&lt;br/>
         &lt;br/>       - MP3 alerts will now play for their full duration, rather than re-starting every 5 seconds (Issue #250)
         &lt;br/>       - Fixed occasional crash during system shutdown (Issue #260)
         &lt;br/>       - Hide Seizure Detector settings when using network data source because they are ignored (Issue #255)
@@ -109,6 +109,10 @@
     <string name="AlarmFreqMaxSummary">Maximum Frequency of ROI (Hz) (Default = 8 Hz)</string>
     <string name="AlarmFreqMinTitle">AlarmFreqMin (Hz)</string>
     <string name="AlarmFreqMinSummary">Minimum Frequency of ROI (Hz) (Default = 3 Hz)</string>
+    <string name="FlapAlarmFreqMaxTitle">Flap AlarmFreqMax (Hz)</string>
+    <string name="FlapAlarmFreqMaxSummary">Maximum Frequency of ROI (Hz) (Default = 4 Hz)</string>
+    <string name="FlapAlarmFreqMinTitle">Flap AlarmFreqMin (Hz)</string>
+    <string name="FlapAlarmFreqMinSummary">Minimum Frequency of ROI (Hz) (Default = 2 Hz)</string>
     <string name="HRAlarmEnabledTitle">Heart Rate Alarms</string>
     <string name="HRAlarmEnabledSummary" />
     <string name="HRNullAlarmTitle">Treat a Null heart rate as an alarm condition</string>
@@ -460,7 +464,7 @@
         and selecting <b>Apps->OpenSeizureDetector->Permissions</b>.
     </string>
     <string name="permissions_required">Permissions Disclosure</string>
-    <string name="about_data_sharing">About\nData Sharing</string>
+    <string name="about_data_sharing">About Data Sharing</string>
     <string name="privacy_policy">Privacy\nPolicy</string>
     <string name="more_information">More Information</string>
     <string name="mark_unverified_events_as_unknown">Mark Unverified Events as Unknown</string>
@@ -569,42 +573,7 @@
     <string name="next">Next</string>
     <string name="previous">Previous</string>
 
-    <string name="lorem_ipsum">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris
-        volutpat, dolor id interdum ullamcorper, risus dolor egestas lectus, sit amet mattis purus
-        dui nec risus. Maecenas non sodales nisi, vel dictum dolor. Class aptent taciti sociosqu ad
-        litora torquent per conubia nostra, per inceptos himenaeos. Suspendisse blandit eleifend
-        diam, vel rutrum tellus vulputate quis. Aliquam eget libero aliquet, imperdiet nisl a,
-        ornare ex. Sed rhoncus est ut libero porta lobortis. Fusce in dictum tellus.\n\n
-        Suspendisse interdum ornare ante. Aliquam nec cursus lorem. Morbi id magna felis. Vivamus
-        egestas, est a condimentum egestas, turpis nisl iaculis ipsum, in dictum tellus dolor sed
-        neque. Morbi tellus erat, dapibus ut sem a, iaculis tincidunt dui. Interdum et malesuada
-        fames ac ante ipsum primis in faucibus. Curabitur et eros porttitor, ultricies urna vitae,
-        molestie nibh. Phasellus at commodo eros, non aliquet metus. Sed maximus nisl nec dolor
-        bibendum, vel congue leo egestas.\n\n
-        Sed interdum tortor nibh, in sagittis risus mollis quis. Curabitur mi odio, condimentum sit
-        amet auctor at, mollis non turpis. Nullam pretium libero vestibulum, finibus orci vel,
-        molestie quam. Fusce blandit tincidunt nulla, quis sollicitudin libero facilisis et. Integer
-        interdum nunc ligula, et fermentum metus hendrerit id. Vestibulum lectus felis, dictum at
-        lacinia sit amet, tristique id quam. Cras eu consequat dui. Suspendisse sodales nunc ligula,
-        in lobortis sem porta sed. Integer id ultrices magna, in luctus elit. Sed a pellentesque
-        est.\n\n
-        Aenean nunc velit, lacinia sed dolor sed, ultrices viverra nulla. Etiam a venenatis nibh.
-        Morbi laoreet, tortor sed facilisis varius, nibh orci rhoncus nulla, id elementum leo dui
-        non lorem. Nam mollis ipsum quis auctor varius. Quisque elementum eu libero sed commodo. In
-        eros nisl, imperdiet vel imperdiet et, scelerisque a mauris. Pellentesque varius ex nunc,
-        quis imperdiet eros placerat ac. Duis finibus orci et est auctor tincidunt. Sed non viverra
-        ipsum. Nunc quis augue egestas, cursus lorem at, molestie sem. Morbi a consectetur ipsum, a
-        placerat diam. Etiam vulputate dignissim convallis. Integer faucibus mauris sit amet finibus
-        convallis.\n\n
-        Phasellus in aliquet mi. Pellentesque habitant morbi tristique senectus et netus et
-        malesuada fames ac turpis egestas. In volutpat arcu ut felis sagittis, in finibus massa
-        gravida. Pellentesque id tellus orci. Integer dictum, lorem sed efficitur ullamcorper,
-        libero justo consectetur ipsum, in mollis nisl ex sed nisl. Donec maximus ullamcorper
-        sodales. Praesent bibendum rhoncus tellus nec feugiat. In a ornare nulla. Donec rhoncus
-        libero vel nunc consequat, quis tincidunt nisl eleifend. Cras bibendum enim a justo luctus
-        vestibulum. Fusce dictum libero quis erat maximus, vitae volutpat diam dignissim.
-    </string>
+    <string name="lorem_ipsum">"         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam in scelerisque sem. Mauris         volutpat, dolor id interdum ullamcorper, risus dolor egestas lectus, sit amet mattis purus         dui nec risus. Maecenas non sodales nisi, vel dictum dolor. Class aptent taciti sociosqu ad         litora torquent per conubia nostra, per inceptos himenaeos. Suspendisse blandit eleifend         diam, vel rutrum tellus vulputate quis. Aliquam eget libero aliquet, imperdiet nisl a,         ornare ex. Sed rhoncus est ut libero porta lobortis. Fusce in dictum tellus.           Suspendisse interdum ornare ante. Aliquam nec cursus lorem. Morbi id magna felis. Vivamus         egestas, est a condimentum egestas, turpis nisl iaculis ipsum, in dictum tellus dolor sed         neque. Morbi tellus erat, dapibus ut sem a, iaculis tincidunt dui. Interdum et malesuada         fames ac ante ipsum primis in faucibus. Curabitur et eros porttitor, ultricies urna vitae,         molestie nibh. Phasellus at commodo eros, non aliquet metus. Sed maximus nisl nec dolor         bibendum, vel congue leo egestas.           Sed interdum tortor nibh, in sagittis risus mollis quis. Curabitur mi odio, condimentum sit         amet auctor at, mollis non turpis. Nullam pretium libero vestibulum, finibus orci vel,         molestie quam. Fusce blandit tincidunt nulla, quis sollicitudin libero facilisis et. Integer         interdum nunc ligula, et fermentum metus hendrerit id. Vestibulum lectus felis, dictum at         lacinia sit amet, tristique id quam. Cras eu consequat dui. Suspendisse sodales nunc ligula,         in lobortis sem porta sed. Integer id ultrices magna, in luctus elit. Sed a pellentesque         est.           Aenean nunc velit, lacinia sed dolor sed, ultrices viverra nulla. Etiam a venenatis nibh.         Morbi laoreet, tortor sed facilisis varius, nibh orci rhoncus nulla, id elementum leo dui         non lorem. Nam mollis ipsum quis auctor varius. Quisque elementum eu libero sed commodo. In         eros nisl, imperdiet vel imperdiet et, scelerisque a mauris. Pellentesque varius ex nunc,         quis imperdiet eros placerat ac. Duis finibus orci et est auctor tincidunt. Sed non viverra         ipsum. Nunc quis augue egestas, cursus lorem at, molestie sem. Morbi a consectetur ipsum, a         placerat diam. Etiam vulputate dignissim convallis. Integer faucibus mauris sit amet finibus         convallis.           Phasellus in aliquet mi. Pellentesque habitant morbi tristique senectus et netus et         malesuada fames ac turpis egestas. In volutpat arcu ut felis sagittis, in finibus massa         gravida. Pellentesque id tellus orci. Integer dictum, lorem sed efficitur ullamcorper,         libero justo consectetur ipsum, in mollis nisl ex sed nisl. Donec maximus ullamcorper         sodales. Praesent bibendum rhoncus tellus nec feugiat. In a ornare nulla. Donec rhoncus         libero vel nunc consequat, quis tincidunt nisl eleifend. Cras bibendum enim a justo luctus         vestibulum. Fusce dictum libero quis erat maximus, vitae volutpat diam dignissim.     "</string>
     <string name="title_activity_main2">MainActivity2</string>
     <string name="tab_text_1">Tab 1</string>
     <string name="tab_text_2">Tab 2</string>
@@ -789,7 +758,7 @@
     <string name="fgs_error_channel_name">OpenSeizureDetector Errors</string>
     <string name="fgs_start_failed_toast">OpenSeizureDetector could not start monitoring — please restart the app or reboot your phone.</string>
     <string name="fgs_start_failed_notification_title">OSD Monitoring Not Started</string>
-    <string name="fgs_start_failed_notification_text">OpenSeizureDetector could not start its background monitoring service. This can happen if Android has reached its daily limit for this type of background service. Please restart the app. If the problem persists, reboot your phone.</string>
+    <string name="fgs_start_failed_notification_text">OpenSeizureDetector could not start its background monitoring service. Please restart the app. If the problem persists, reboot your phone.</string>
     <string name="view_system_logs">View System Logs</string>
     <string name="basic_mode_summary">Uncheck to show additional advanced settings and tabs</string>
     <string name="basic_mode">Basic or Advanced Mode?</string>
@@ -893,7 +862,7 @@
     <string name="uploaded">uploaded</string>
     <string name="duration">duration</string>
     <string name="notes">notes</string>
-    <string name="the_flap_alarm_is_an_experimental_feature_to_detect_large_scale_arm_movements_shaking_flapping_that_may_occur_during_a_seizure">The Flap Alarm is an experimental feature to detect large-scale arm movements (shaking/flapping) that may occur during a seizure.</string>
+    <string name="flap_is_a_feature_to_detect_large_arm_movements">The Flap Alarm is an experimental feature to detect large-scale arm movements (shaking/flapping) that may occur during a seizure.</string>
     <string name="flap_alarm_threshold">Flap Alarm Threshold</string>
     <string name="flap_alarm_ratio_threshold">Flap Alarm Ratio Threshold</string>
     <string name="enable_adaptive_threshold">Enable Adaptive Threshold</string>
@@ -905,4 +874,107 @@
     <string name="osd_algorithm">OSD Algorithm</string>
     <string name="advanced_mode_summary">Enable Advanced Mode to view additional settings and tabs</string>
     <string name="advanced_mode">Advanced Mode</string>
+    <string name="ml_no_compatible_models_are_installed_message">The Machine Learning algorithm is enabled, but no compatible models are installed for this device\'s CPU.  Please install a compatible model (e.g. one without \'dotprod\' requirements) or disable the ML algorithm.</string>
+    <string name="error_displaying_troubleshooting_tips">ERROR Displaying Troubleshooting Tips</string>
+    <string name="ml_compatibility_error">ML Compatibility Error</string>
+    <string name="open_settings">Open Settings</string>
+    <string name="ble_device_not_selected">BLE Device Not Selected</string>
+    <string name="ble_data_source_selected_but_not_configured_message">You selected a BLE data source but haven\'t configured a device yet. What would you like to do?</string>
+    <string name="scan_for_device">Scan for Device</string>
+    <string name="configure_later">Configure Later</string>
+    <string name="go_to_settings">Go to Settings</string>
+    <string name="permission_required">Permission Required</string>
+    <string name="activity_recognition_permission_required_message_1">"OpenSeizureDetector requires the \'Activity Recognition\' permission to start the health monitoring service on Android 12 and later. "</string>
+    <string name="activity_recognition_permission_required_message_2">"Without this permission, the app cannot function properly. "</string>
+    <string name="activity_recognition_permission_required_message_3">Please grant the permission and try again.</string>
+    <string name="scan_for_bluetooth_devices">Scan for Bluetooth Devices</string>
+    <string name="please_select_a_device">Please select a device</string>
+    <string name="problem_saving_device_name_and_address">Problem Saving Device Name and Address</string>
+    <string name="problem_saving_device_name_and_address_2">Problem Saving Device Name and Address</string>
+    <string name="additional_bluetooth_permissions_are_required_message">Additional Permissions are required to scan for Bluetooth Devices - please grant the permissions in the following dialogs</string>
+    <string name="scanning_in_progress">Scanning...</string>
+    <string name="scan_complete">Scan complete</string>
+    <string name="scan_found_no_devices">No devices found.</string>
+    <string name="scanning_for_devices">Scanning for devices...</string>
+    <string name="current_status_not_scanning">Current Status: Not Scanning</string>
+    <string name="error_retrieving_event_types_from_server">Error Retrieving Event Types from Server - Please Try Again Later!</string>
+    <string name="failed_to_retrieve_event_from_remote_database">Failed to Retrieve Event from Remote Database</string>
+    <string name="error_updating_event">Error Updating Event</string>
+    <string name="all_events_in_group_updated_ok">All events in group updated OK</string>
+    <string name="no_devices_found_2">No devices found.</string>
+    <string name="restarting_app_to_apply_new_credentials">Login Successful - restarting app to apply new credentials</string>
+    <string name="settings_changed_restarting_app">Settings changed - restarting app...</string>
+    <string name="seizure_event_created">Seizure Event Created</string>
+    <string name="error_retrieving_remote_events_from_server">Error Retrieving Remote Events from Server - Please Try Again Later!</string>
+    <string name="bound_to_server">Bound to Server</string>
+    <string name="not_bound_to_server">****NOT BOUND TO SERVER***</string>
+    <string name="active">ACTIVE</string>
+    <string name="inactive">INACTIVE</string>
+    <string name="fall_detection">"Fall detection: "</string>
+    <string name="algorithm_state">"Algorithm state: "</string>
+    <string name="fall_alarm_standing">"\nFall alarm standing: "</string>
+    <string name="thresholds_min">\nThresholds  Min=</string>
+    <string name="mg_max">" mg  Max="</string>
+    <string name="time_minutes_ago">Time (minutes ago)</string>
+    <string name="result_of_checks_adaptive_hr_alarm_standing">"\nResult of checks: Adaptive Hr Alarm Standing: "</string>
+    <string name="average_hr_alarm_standing">"\nAverage Hr Alarm Standing: "</string>
+    <string name="d_model_s_active_accstdev_1f">%d model(s) active  |  AccStDev: %.1f%%</string>
+    <string name="std">Std</string>
+    <string name="ml">ML</string>
+    <string name="time_hours_ago">Time (hours ago)</string>
+    <string name="phone">Phone</string>
+    <string name="phone_demo_mode">Phone (Demo Mode)</string>
+    <string name="osd">OSD</string>
+    <string name="flap">Flap</string>
+    <string name="heart_rate">Heart Rate</string>
+    <string name="screen">"Screen "</string>
+    <string name="error">"Error: "</string>
+    <string name="update_pinetime_firmware_1">Update PineTime Firmware</string>
+    <string name="update_pinetime_firmware_2">To update your PineTime watch firmware:\n\n</string>
+    <string name="update_pinetime_firmware_3">1. The OpenSeizureDetector monitoring service will be stopped\n</string>
+    <string name="update_pinetime_firmware_4">2. Your PineTime watch will disconnect from this app\n</string>
+    <string name="update_pinetime_firmware_5">3. The PineTime Firmware Updater will launch\n</string>
+    <string name="update_pinetime_firmware_6">4. After the firmware update completes, you must manually restart the OpenSeizureDetector app to resume monitoring\n\n</string>
+    <string name="update_pinetime_firmware_7">WARNING: Seizure detection will NOT be active during the firmware update.\n\n</string>
+    <string name="update_pinetime_firmware_8">Do you want to continue?</string>
+    <string name="pinetime_firmware_installer_1">PineTime Firmware Updater</string>
+    <string name="pinetime_firmware_installer_2">The PineTime Firmware Updater app is not installed.\n\n</string>
+    <string name="pinetime_firmware_installer_3">This companion app is required to update the firmware on your PineTime watch.\n\n</string>
+    <string name="pinetime_firmware_installer_4">Would you like to install it from the Google Play Store?</string>
+    <string name="install">Install</string>
+    <string name="warn">WARN</string>
+    <string name="ok">OK</string>
+    <string name="std_thresh">Std Thresh</string>
+    <string name="probabilty_thresh">Prob Thresh</string>
+    <string name="frequency_hertz">Hz:</string>
+    <string name="Time_minutes_ago">Time (minutes ago)</string>
+    <string name="service_stopped_restart_from_launcher">Service was stopped. Please restart from launcher.</string>
+    <string name="error_displaying_instructions">ERROR Displaying Instructions</string>
+    <string name="stopping_openseizuredetector">Stopping OpenSeizureDetector...</string>
+    <string name="error_opening_play_store">Error opening Play Store</string>
+    <string name="get_started">Get Started</string>
+    <string name="heart_rate_alerts">Heart Rate Alerts</string>
+    <string name="default_heart_rate_alert_configuration_has_been_enabled">Default Heart Rate Alert configuration has been enabled.\n\n</string>
+    <string name="you_can_review_update_these_settings">You can review and update these settings in the Settings menu when the app starts.</string>
+    <string name="default_openseizuredetector_algorithm_settings_have_been_applied">Default OpenSeizureDetector Algorithm settings have been applied.\n\n</string>
+    <string name="you_can_customize_these_when_the_app_starts">You can customize these settings in the Settings menu when the app starts.</string>
+    <string name="osd_with_flap_detection">OSD with Flap Detection</string>
+    <string name="default_settings_for_osd_flap_detection_applied">Default settings for OSD Flap Detection have been applied.\n\n</string>
+    <string name="pinetime_watch_ble">PineTime Watch (BLE)\n</string>
+    <string name="pinetime_watch_ble_no_device_selected">PineTime Watch (BLE)\n(No device selected)</string>
+    <string name="garmin_watch">Garmin Watch</string>
+    <string name="network_remote_device">Network (Remote Device)</string>
+    <string name="phone_accelerometer">Phone Accelerometer</string>
+    <string name="configured_on_remote_device">Configured on remote device</string>
+    <string name="original_openseizuredetector_osd">Original OpenSeizureDetector (OSD)</string>
+    <string name="ml_algorithm">ML Algorithm</string>
+    <string name="no_algorithms_configured">No algorithms configured</string>
+    <string name="mac_address">mac_address</string>
+    <string name="status_alarm">ALARM</string>
+    <string name="vibrate_on_alarm_title">Vibrate on Alarm?</string>
+    <string name="vibrate_on_alarm_summary">Also vibrate the phone (three long buzzes) when an alarm sounds.</string>
+    <string name="vibrate_on_warning_title">Vibrate on Warning?</string>
+    <string name="vibrate_on_warning_summary">Also vibrate the phone (one long buzz) when a warning sounds.</string>
+    <string name="vibrate_on_fault_title">Vibrate on System Fault?</string>
+    <string name="vibrate_on_fault_summary">Also vibrate the phone (one short buzz) when a system fault warning sounds.</string>
 </resources>

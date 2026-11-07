@@ -245,13 +245,11 @@ public class MainActivity2 extends AppCompatActivity {
 
             if (userStopped) {
                 Log.i(TAG, "MainActivity2.onStart() - User stopped service via Exit, not auto-starting");
-                Log.i(TAG, "MainActivity2.onStart - User stopped service, not auto-starting");
                 // Show message and close activity
-                mUtil.showToast("Service was stopped. Please restart from launcher.");
+                mUtil.showToast(getString(R.string.service_stopped_restart_from_launcher));
                 finish();
             } else {
                 Log.i(TAG, "MainActivity2.onStart() - Server Not Running - Starting Server");
-                Log.i(TAG, "MainActivity2.onStart - Server Not Running - Starting Server");
                 mUtil.startServer();
                 // Give server a moment to start before binding
                 mHandler.postDelayed(new Runnable() {
@@ -269,8 +267,7 @@ public class MainActivity2 extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        Log.i(TAG, "onStop() - unbinding from server");
-        Log.i(TAG, "MainActivity.onStop()");
+        Log.i(TAG, "MainActivity.onStop() - unbinding from server");
         mUtil.unbindFromServer(getApplicationContext(), mConnection);
     }
 
@@ -318,32 +315,9 @@ public class MainActivity2 extends AppCompatActivity {
         SharedPreferences prefs = mSharedPrefs != null ? mSharedPrefs : PreferenceManager.getDefaultSharedPreferences(this);
 
         // Work out which tabs to show (algorithms that are switched off get no tab at all).
+        Log.v(TAG,"onResume() - getting enabled algorithms from sdServer");
         mVisibleTabs = getVisibleTabs(prefs);
-
-        // Instantiate a ViewPager2 and a PagerAdapter.
-        mFragmentPager = findViewById(R.id.fragment_pager);
-        mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this, mVisibleTabs);
-        mFragmentPager.setAdapter(mFragmentStateAdapter);
-
-        // Set up TabLayout with ViewPager2 (portrait layout)
-        // The landscape layout doesn't have a TabLayout - it uses sidebar navigation instead
-        mTabLayout = findViewById(R.id.tab_layout);
-        if (mTabLayout != null) {
-            mTabLayoutMediator = new TabLayoutMediator(mTabLayout, mFragmentPager,
-                    new TabLayoutMediator.TabConfigurationStrategy() {
-                        @Override
-                        public void onConfigureTab(TabLayout.Tab tab, int position) {
-                            if (position >= 0 && position < mVisibleTabs.size()) {
-                                tab.setText(getTabTitle(mVisibleTabs.get(position)));
-                            } else {
-                                tab.setText("Screen " + position);
-                            }
-                        }
-                    });
-            mTabLayoutMediator.attach();
-        } else {
-            Log.d(TAG, "onResume() - TabLayout not found (landscape layout detected), skipping TabLayoutMediator");
-        }
+        setVisibleTabs();
 
         // Restore the previously active tab
         // If no saved preference, choose tab based on enabled algorithms
@@ -428,7 +402,7 @@ public class MainActivity2 extends AppCompatActivity {
         } else if (itemId == R.id.action_exit) {
             // Respond to the start/stop server menu item.
             Log.i(TAG, "action_exit: Stopping Server");
-            mUtil.shutdownApp(this, false, true, "Stopping OpenSeizureDetector...");
+            mUtil.shutdownApp(this, false, true, getString(R.string.stopping_openseizuredetector));
             return true;
         } else if (itemId == R.id.action_test_alarm_beep) {
             Log.i(TAG, "action_test_alarm_beep");
@@ -511,8 +485,8 @@ public class MainActivity2 extends AppCompatActivity {
                 i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(i);
             } catch (Exception ex) {
-                Log.v(TAG, "exception displaying instructions " + ex.toString());
-                mUtil.showToast("ERROR Displaying Instructions");
+                Log.e(TAG, "exception displaying instructions " + ex.toString());
+                mUtil.showToast(getString(R.string.error_displaying_instructions));
             }
             return true;
         } else if (itemId == R.id.action_troubleshooting) {
@@ -543,35 +517,119 @@ public class MainActivity2 extends AppCompatActivity {
      * is switched off in the "Seizure Detector Algorithms Selection" settings is left out
      * entirely. The System tab has no such setting and is always included, so the list is
      * never empty.
+     * NOTE:  This derives the list of tabs from the enabled algorithms in the stored shared
+     *        preferences.   This is appropriate if this instance is the 'main' OSD instance,
+     *        but is not appropriate for Network Datasource where the algorithms are not running in this instance.
+     *        In that case, the list of tabs is derived from the network source as part of the UI display.  FIXME - provide reference.
      */
     private List<Integer> getVisibleTabs(SharedPreferences prefs) {
         List<Integer> tabs = new ArrayList<>();
-        if (PreferenceUtils.getBooleanFromXml(prefs, "OsdAlarmActive")) tabs.add(TAB_OSD);
-        if (PreferenceUtils.getBooleanFromXml(prefs, "FlapAlarmActive")) tabs.add(TAB_FLAP);
-        if (PreferenceUtils.getBooleanFromXml(prefs, "CnnAlarmActive")) tabs.add(TAB_ML);
-        if (PreferenceUtils.getBooleanFromXml(prefs, "HRAlarmActive")) tabs.add(TAB_HR);
-        if (PreferenceUtils.getBooleanFromXml(prefs, "FallActive")) tabs.add(TAB_FALL);
+        if (mConnection != null && mConnection.mBound && mConnection.mSdServer != null) {
+            Log.d(TAG,"getVisibleTabs() - getting enabled algorithms from sdServer");
+            // If the server is bound, get the enabled algorithms from the server
+            if (mConnection.mSdServer.mSdData.mOsdAlarmActive) {
+                Log.v(TAG,"getVisibleTabs() - OSD alarm is active");
+                tabs.add(TAB_OSD);
+            }
+            if (mConnection.mSdServer.mSdData.mFlapAlarmActive) {
+                Log.v(TAG,"getVisibleTabs() - Flap alarm is active");
+                tabs.add(TAB_FLAP);
+            }
+            if (mConnection.mSdServer.mSdData.mCnnAlarmActive) {
+                Log.v(TAG,"getVisibleTabs() - CNN alarm is active");
+                tabs.add(TAB_ML);
+            }
+            if (mConnection.mSdServer.mSdData.mHRAlarmActive) {
+                Log.v(TAG,"getVisibleTabs() - Heart Rate alarm is active");
+                tabs.add(TAB_HR);
+            }
+            if (mConnection.mSdServer.mSdData.mFallActive) {
+                Log.v(TAG,"getVisibleTabs() - Fall alarm is active");
+                tabs.add(TAB_FALL);
+            }
+        } else {
+            Log.d(TAG,"getVisibleTabs() - server not bound, getting enabled algorithms from preferences");
+            Log.v(TAG,"getVisibleTabs() - mConnection="+mConnection+", mBound="+(mConnection != null ? mConnection.mBound : "null")+", mSdServer="+(mConnection != null ? mConnection.mSdServer : "null"));
+            // If the server is not bound, fall back to using the stored preferences
+            if (PreferenceUtils.getBooleanFromXml(prefs, "OsdAlarmActive")) tabs.add(TAB_OSD);
+            if (PreferenceUtils.getBooleanFromXml(prefs, "FlapAlarmActive")) tabs.add(TAB_FLAP);
+            if (PreferenceUtils.getBooleanFromXml(prefs, "CnnAlarmActive")) tabs.add(TAB_ML);
+            if (PreferenceUtils.getBooleanFromXml(prefs, "HRAlarmActive")) tabs.add(TAB_HR);
+            if (PreferenceUtils.getBooleanFromXml(prefs, "FallActive")) tabs.add(TAB_FALL);
+            Log.d(TAG,"getVisibleTabs() - server not bound - trying again in 500ms....");
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    Log.i(TAG, "getVisibleTabs() - getting algorithms from sdServer after 500ms delay");
+                    mVisibleTabs = getVisibleTabs(prefs);
+                    setVisibleTabs();
+                }
+            }, 500);
+        }
         tabs.add(TAB_SYSTEM);
+
+        // If the server has just re-started, the algorithm states may not yet have been set, so only the System tab will be visible.
+        // We catch this by checking for only a single visible tab, and if that is the case, we try again in 2 seconds to give the server chance
+        // to initialise fully.    Fixes Issue #339.
+        Log.d(TAG,"getVisibleTabs() - visible tabs: " + tabs.toString());
+
+        if (tabs.size() == 1) {
+            Log.w(TAG, "getVisibleTabs() - only System tab is visible, but server is running - this might be because it has just re-started and the algorithm states have not yet been updated.  Will try again in 5000ms.");
+            mHandler.postDelayed(new Runnable() {
+                public void run() {
+                    Log.i(TAG, "getVisibleTabs() - getting algorithms from sdServer after 2000ms delay");
+                    mVisibleTabs = getVisibleTabs(prefs);
+                    setVisibleTabs();
+                }
+            }, 2000);
+        }
         return tabs;
+    }
+
+    private void setVisibleTabs() {
+        // Instantiate a ViewPager2 and a PagerAdapter.
+        mFragmentPager = findViewById(R.id.fragment_pager);
+        mFragmentStateAdapter = new ScreenSlideFragmentPagerAdapter(this, mVisibleTabs);
+        mFragmentPager.setAdapter(mFragmentStateAdapter);
+
+        // Set up TabLayout with ViewPager2 (portrait layout)
+        // The landscape layout doesn't have a TabLayout - it uses sidebar navigation instead
+        mTabLayout = findViewById(R.id.tab_layout);
+        if (mTabLayout != null) {
+            mTabLayoutMediator = new TabLayoutMediator(mTabLayout, mFragmentPager,
+                    new TabLayoutMediator.TabConfigurationStrategy() {
+                        @Override
+                        public void onConfigureTab(TabLayout.Tab tab, int position) {
+                            if (position >= 0 && position < mVisibleTabs.size()) {
+                                tab.setText(getTabTitle(mVisibleTabs.get(position)));
+                            } else {
+                                tab.setText("Screen " + position);
+                            }
+                        }
+                    });
+            mTabLayoutMediator.attach();
+        } else {
+            Log.d(TAG, "setVisibleTabs() - TabLayout not found (landscape layout detected), skipping TabLayoutMediator");
+        }
+
     }
 
     /** Label shown on the tab for a TAB_* id. */
     private String getTabTitle(int tabId) {
         switch (tabId) {
             case TAB_OSD:
-                return "OSD";
+                return getString(R.string.osd);
             case TAB_FLAP:
-                return "Flap";
+                return getString(R.string.flap);
             case TAB_ML:
                 return "ML";
             case TAB_HR:
-                return "Heart Rate";
+                return getString(R.string.heart_rate);
             case TAB_FALL:
                 return "Fall";
             case TAB_SYSTEM:
                 return "System";
             default:
-                return "Screen " + tabId;
+                return getString(R.string.screen) + tabId;
         }
     }
 
@@ -742,7 +800,7 @@ public class MainActivity2 extends AppCompatActivity {
             }
         } catch (Exception ex) {
             Log.e(TAG, "Error launching PineTime Updater: " + ex.toString());
-            mUtil.showToast("Error: " + ex.getMessage());
+            mUtil.showToast(getString(R.string.error) + ex.getMessage());
         }
     }
 
@@ -751,14 +809,14 @@ public class MainActivity2 extends AppCompatActivity {
      */
     private void showPineTimeUpdaterWarningDialog(final String pineTimePackageName) {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-        builder.setTitle("Update PineTime Firmware");
-        builder.setMessage("To update your PineTime watch firmware:\n\n" +
-                "1. The OpenSeizureDetector monitoring service will be stopped\n" +
-                "2. Your PineTime watch will disconnect from this app\n" +
-                "3. The PineTime Firmware Updater will launch\n" +
-                "4. After the firmware update completes, you must manually restart the OpenSeizureDetector app to resume monitoring\n\n" +
-                "WARNING: Seizure detection will NOT be active during the firmware update.\n\n" +
-                "Do you want to continue?");
+        builder.setTitle(R.string.update_pinetime_firmware_1);
+        builder.setMessage(getString(R.string.update_pinetime_firmware_2) +
+                getString(R.string.update_pinetime_firmware_3) +
+                getString(R.string.update_pinetime_firmware_4) +
+                getString(R.string.update_pinetime_firmware_5) +
+                getString(R.string.update_pinetime_firmware_6) +
+                getString(R.string.update_pinetime_firmware_7) +
+                getString(R.string.update_pinetime_firmware_8));
         builder.setIcon(android.R.drawable.ic_dialog_alert);
 
         builder.setPositiveButton("Continue", new DialogInterface.OnClickListener() {
@@ -823,13 +881,13 @@ public class MainActivity2 extends AppCompatActivity {
      */
     private void showPineTimeUpdaterInstallDialog() {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-        builder.setTitle("PineTime Firmware Updater");
-        builder.setMessage("The PineTime Firmware Updater app is not installed.\n\n" +
-                "This companion app is required to update the firmware on your PineTime watch.\n\n" +
-                "Would you like to install it from the Google Play Store?");
+        builder.setTitle(R.string.pinetime_firmware_installer_1);
+        builder.setMessage(getString(R.string.pinetime_firmware_installer_2) +
+                getString(R.string.pinetime_firmware_installer_3) +
+                getString(R.string.pinetime_firmware_installer_4));
         builder.setIcon(android.R.drawable.ic_dialog_info);
 
-        builder.setPositiveButton("Install", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(R.string.install, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // Open the PineTime Updater app in Google Play Store
@@ -848,7 +906,7 @@ public class MainActivity2 extends AppCompatActivity {
                         startActivity(browserIntent);
                     } catch (Exception ex) {
                         Log.e(TAG, "Error opening Play Store: " + ex.toString());
-                        mUtil.showToast("Error opening Play Store");
+                        mUtil.showToast(getString(R.string.error_opening_play_store));
                     }
                 }
             }

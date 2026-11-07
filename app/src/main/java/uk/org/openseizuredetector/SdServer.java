@@ -57,6 +57,11 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.SystemClock;
+import android.os.VibrationAttributes;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.os.VibratorManager;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.service.notification.StatusBarNotification;
@@ -217,6 +222,21 @@ public class SdServer extends Service implements SdDataReceiver {
     public boolean mAudibleAlarm = false;   // set to public because it is accessed by MainActivity
     private boolean mAudibleWarning = false;
     private boolean mAudibleFaultWarning = false;
+    // "Vibrate on Alarm/Warning/System Fault?" - only honoured while the matching Audible* option
+    // is also enabled (the checkboxes are hidden otherwise) - see vibrate().
+    private boolean mVibrateOnAlarm = false;
+    private boolean mVibrateOnWarning = false;
+    private boolean mVibrateOnFault = false;
+    private Vibrator mVibrator = null;
+    private int mVibrationPriority = 0;       // priority of the vibration currently running (0 = none)
+    private long mVibrationEndElapsedMs = 0;  // SystemClock.elapsedRealtime() when it finishes
+    private static final int VIBRATE_PRIORITY_FAULT = 1;
+    private static final int VIBRATE_PRIORITY_WARNING = 2;
+    private static final int VIBRATE_PRIORITY_ALARM = 3;
+    // Vibration patterns: {initial delay, on, off, on, ...} in milliseconds.
+    private static final long[] VIBRATE_PATTERN_ALARM = {0, 800, 300, 800, 300, 800};  // three long buzzes
+    private static final long[] VIBRATE_PATTERN_WARNING = {0, 800};                    // one long buzz
+    private static final long[] VIBRATE_PATTERN_FAULT = {0, 200};                      // one short buzz
     private boolean mMp3Alarm = false;
     // User-selected MP3 URIs (null/empty = use bundled res/raw/ file)
     private String mMp3WarningUri = "";
@@ -400,7 +420,7 @@ public class SdServer extends Service implements SdDataReceiver {
                                 ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
                     } catch (Exception e2) {
                         Log.e(TAG, "startForeground fallback also failed – notifying user and stopping service.", e2);
-                        showFgsStartupFailureNotification();
+                        mUtil.showFgsStartupFailureNotification();
                         stopSelf();
                     }
                 }
@@ -434,41 +454,6 @@ public class SdServer extends Service implements SdDataReceiver {
         // Unknown source: default to connectedDevice – it has no time limit and avoids the
         // Android 15 dataSync 6-hour exhaustion that previously caused a crash here.
         return ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE;
-    }
-
-    /**
-     * Shows a Toast AND a persistent status-bar notification when the foreground service
-     * fails to start (e.g. Android 15 dataSync time-limit exhausted and all fallbacks failed).
-     * Both channels are used so the user sees feedback whether or not they are actively
-     * looking at the screen.
-     */
-    private void showFgsStartupFailureNotification() {
-        // Immediate on-screen feedback for users who are actively looking at their phone.
-        new Handler(Looper.getMainLooper()).post(() ->
-                Toast.makeText(this,
-                        getString(R.string.fgs_start_failed_toast),
-                        Toast.LENGTH_LONG).show()
-        );
-
-        // Persistent status-bar notification so the user is informed even if they miss the Toast.
-        // Use a dedicated HIGH-importance channel so it appears as a heads-up banner.
-        final String errorChId = "OSD_Error_Channel";
-        NotificationChannel errorChannel = new NotificationChannel(
-                errorChId,
-                getString(R.string.fgs_error_channel_name),
-                NotificationManager.IMPORTANCE_HIGH);
-        mNM.createNotificationChannel(errorChannel);
-
-        Notification errorNotification = new NotificationCompat.Builder(this, errorChId)
-                .setSmallIcon(R.drawable.logo_new_simplified_48x48)
-                .setContentTitle(getString(R.string.fgs_start_failed_notification_title))
-                .setContentText(getString(R.string.fgs_start_failed_notification_text))
-                .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText(getString(R.string.fgs_start_failed_notification_text)))
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true)
-                .build();
-        mNM.notify(NOTIFICATION_ID + 1, errorNotification);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
@@ -877,6 +862,7 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.i(TAG, "SdServer.onDestroy() - stopping Web Server");
             stopWebServer();
 
+            cancelVibration();  // don't leave the phone buzzing after the service has gone
             stopMp3();  // release MediaPlayer if active (must be before ToneGenerator release)
             restoreAlarmStreamVolume();  // safety net: don't leave Alarm volume stuck at max if
                                           // destroyed mid-alert (stopMp3() only covers MP3 playback)
@@ -1713,6 +1699,81 @@ public class SdServer extends Service implements SdDataReceiver {
     }
 
     /**
+     * Returns the phone's Vibrator, or null if it has none. Looked up lazily and cached.
+     */
+    private Vibrator getVibrator() {
+        if (mVibrator == null) {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    VibratorManager vm = (VibratorManager) getSystemService(Context.VIBRATOR_MANAGER_SERVICE);
+                    if (vm != null) mVibrator = vm.getDefaultVibrator();
+                } else {
+                    mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "getVibrator() - could not get Vibrator: " + e.getMessage());
+            }
+        }
+        return mVibrator;
+    }
+
+    /**
+     * Vibrates the phone with the given pattern, in addition to the audible alert that the caller
+     * is already producing.  The vibration is flagged as an ALARM usage so that Android does not
+     * suppress it in Do Not Disturb / silent modes.
+     * A vibration already in progress is never interrupted by one of lower priority
+     * (Alarm > Warning > System Fault), and repeat calls of the same priority while it is still
+     * running (e.g. repeated alarmBeep() calls) are ignored so buzzes do not restart/overlap.
+     */
+    private void vibrate(long[] pattern, int priority) {
+        try {
+            Vibrator v = getVibrator();
+            if (v == null || !v.hasVibrator()) {
+                Log.v(TAG, "vibrate() - no vibrator available");
+                return;
+            }
+            long now = SystemClock.elapsedRealtime();
+            if (now < mVibrationEndElapsedMs && priority <= mVibrationPriority) {
+                Log.v(TAG, "vibrate() - vibration of equal/higher priority already running - skipping");
+                return;
+            }
+            long total = 0;
+            for (long t : pattern) total += t;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                v.vibrate(VibrationEffect.createWaveform(pattern, -1),
+                        VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM));
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                v.vibrate(VibrationEffect.createWaveform(pattern, -1),
+                        new AudioAttributes.Builder()
+                                .setUsage(AudioAttributes.USAGE_ALARM)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                .build());
+            } else {
+                v.vibrate(pattern, -1);
+            }
+            mVibrationPriority = priority;
+            mVibrationEndElapsedMs = now + total;
+            Log.i(TAG, "vibrate() - vibrating, priority=" + priority + ", duration=" + total + "ms");
+        } catch (Exception e) {
+            // Vibration is a nice-to-have on top of the audible alert - never let it break alerting.
+            Log.w(TAG, "vibrate() - failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Stops any vibration currently in progress.
+     */
+    private void cancelVibration() {
+        try {
+            if (mVibrator != null) mVibrator.cancel();
+        } catch (Exception e) {
+            Log.w(TAG, "cancelVibration() - failed: " + e.getMessage());
+        }
+        mVibrationPriority = 0;
+        mVibrationEndElapsedMs = 0;
+    }
+
+    /**
      * "Use Max Volume for Alerts?" support (#333). Temporarily forces the Alarm stream to its
      * maximum volume for the duration of one Alarm alert, ignoring both the phone's current
      * Alarm volume setting and Silent mode. Safe to call repeatedly: if a boost is already in
@@ -1813,6 +1874,7 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "faultWarningBeep() - CancelAudible Active - silent beep...");
         } else {
             if (mAudibleFaultWarning) {
+                if (mVibrateOnFault) vibrate(VIBRATE_PATTERN_FAULT, VIBRATE_PRIORITY_FAULT);
                 if (mMp3Alarm) {
                     Log.i(TAG, "SdServer.faultWarningBeep() - playing MP3");
                     playMp3(mMp3FaultUri, "fault");
@@ -1836,6 +1898,7 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "alarmBeep() - CancelAudible Active - silent beep...");
         } else {
             if (mAudibleAlarm) {
+                if (mVibrateOnAlarm) vibrate(VIBRATE_PATTERN_ALARM, VIBRATE_PRIORITY_ALARM);
                 boostAlarmStreamVolume();
                 if (mMp3Alarm) {
                     Log.i(TAG, "SdServer.alarmBeep() - playing MP3");
@@ -1872,6 +1935,7 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.v(TAG, "warningBeep() - CancelAudible Active - silent beep...");
         } else {
             if (mAudibleWarning) {
+                if (mVibrateOnWarning) vibrate(VIBRATE_PATTERN_WARNING, VIBRATE_PRIORITY_WARNING);
                 beep(100, mWarningToneGenerator);
                 Log.v(TAG, "warningBeep()");
                 Log.i(TAG, "SdServer.warningBeep() - beeping");
@@ -2246,6 +2310,8 @@ public class SdServer extends Service implements SdDataReceiver {
             }
             mAudibleFaultWarning = SP.getBoolean("AudibleFaultWarning", true);
             Log.d(TAG, "updatePrefs() - mAuidbleFaultWarning = " + mAudibleFaultWarning);
+            mVibrateOnFault = SP.getBoolean("VibrateOnFault", false);
+            Log.d(TAG, "updatePrefs() - mVibrateOnFault = " + mVibrateOnFault);
             // Parse the faultTimer period setting.
             try {
                 String faultTimerPeriodStr = SP.getString("FaultTimerPeriod", "SET_FROM_XML");
@@ -2270,6 +2336,8 @@ public class SdServer extends Service implements SdDataReceiver {
 
             mAudibleAlarm = SP.getBoolean("AudibleAlarm", true);
             Log.d(TAG, "updatePrefs() - mAudibleAlarm = " + mAudibleAlarm);
+            mVibrateOnAlarm = SP.getBoolean("VibrateOnAlarm", false);
+            Log.d(TAG, "updatePrefs() - mVibrateOnAlarm = " + mVibrateOnAlarm);
             // #333: when enabled, alarmBeep() forces the Alarm stream to full volume for the
             // duration of each alert, then restores the phone's previous Alarm volume afterwards
             // - see boostAlarmStreamVolume()/restoreAlarmStreamVolume().
@@ -2278,6 +2346,8 @@ public class SdServer extends Service implements SdDataReceiver {
 
             mAudibleWarning = SP.getBoolean("AudibleWarning", true);
             Log.d(TAG, "updatePrefs() - mAudibleWarning = " + mAudibleWarning);
+            mVibrateOnWarning = SP.getBoolean("VibrateOnWarning", false);
+            Log.d(TAG, "updatePrefs() - mVibrateOnWarning = " + mVibrateOnWarning);
 
             // #333: Warning/FaultWarning beeps play on the Notification stream by default,
             // which Android silences whenever the phone's ringer mode is set to Silent (the
