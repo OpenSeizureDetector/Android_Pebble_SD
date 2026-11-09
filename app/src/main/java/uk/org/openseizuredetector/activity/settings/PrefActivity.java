@@ -695,7 +695,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 if (bleAddrPref != null) {
                     bleAddrPref.setSummaryProvider(preference -> {
                         String val = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("BLE_Device_Addr", "");
-                        return val.isEmpty() ? .getString(R.string.not_set) : val;
+                        return val.isEmpty() ? "Not set" : val;
                     });
                 }
 
