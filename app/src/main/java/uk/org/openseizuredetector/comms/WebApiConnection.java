@@ -1,5 +1,6 @@
 package uk.org.openseizuredetector.comms;
 
+import uk.org.openseizuredetector.R;
 import uk.org.openseizuredetector.utils.OsdUtil;
 import android.content.Context;
 import android.os.Handler;
@@ -190,7 +191,7 @@ public abstract class WebApiConnection {
             });
         } else {
             Log.i(TAG, "markEventsAsTypeSubtype(): No more events to Modify");
-            mUtil.showToast("No more unvalidated events to modify.");
+            mUtil.showToast(mContext.getString(R.string.no_more_unvalidated_events_to_modify));
 
         }
         return (true);

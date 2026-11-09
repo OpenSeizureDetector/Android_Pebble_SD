@@ -448,7 +448,7 @@ public class StartupActivity extends AppCompatActivity {
 
         // Orchestrate clean shutdown via OsdUtil
         if (mUtil != null) {
-            mUtil.shutdownApp(this, false, true, "Shutting Down...");
+            mUtil.shutdownApp(this, false, true, getString(R.string.shutting_down));
         } else {
             finish();
         }
@@ -589,7 +589,7 @@ public class StartupActivity extends AppCompatActivity {
                 // Only required if Data Source is Phone
                 if (mSdDataSourceName.equals("Phone") && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !areHealthForegroundServicePermissionsOK()) {
                     Log.i(TAG, "serverStatusRunnable(): health foreground service permissions not granted - requesting");
-                    tv.setText("Requesting Permissions");
+                    tv.setText(R.string.requesting_permissions);
                     tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                     tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
                     if (mDefaultIndeterminateDrawable != null) {
@@ -624,7 +624,7 @@ public class StartupActivity extends AppCompatActivity {
                     mUtil.startServer();
                     mBindInProgress = false;
                     allOk = false;
-                    tv.setText("Starting Server");
+                    tv.setText(R.string.starting_server);
                     tv.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_background));
                     tv.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.status_warning_text));
                     if (mDefaultIndeterminateDrawable != null) {

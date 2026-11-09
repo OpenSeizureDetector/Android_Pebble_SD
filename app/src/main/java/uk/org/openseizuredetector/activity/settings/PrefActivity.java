@@ -203,7 +203,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                         mUtil.shutdownApp(PrefActivity.this, true, false, "Settings changed - restarting app...");
                     } else if (mPrefChanged) {
                         mIsShuttingDown = true;
-                        mUtil.shutdownApp(PrefActivity.this, false, false, "Settings changed - server will restart...");
+                        mUtil.shutdownApp(PrefActivity.this, false, false, getString(R.string.settings_changed_server_will_restart));
                     } else {
                         this.setEnabled(false);
                         getOnBackPressedDispatcher().onBackPressed();
@@ -493,7 +493,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(i);
         } catch (Exception ex) {
-            mUtil.showToast("Error Displaying Installation Instructions");
+            mUtil.showToast(getString(R.string.error_displaying_installation_instructions));
         }
     }
 
@@ -525,13 +525,13 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
     private void showPineTimeUpdaterWarningDialog(final String pineTimePackageName) {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle("Update PineTime Firmware");
-        builder.setMessage("To update your PineTime watch firmware:\n\n" +
-                "1. The OpenSeizureDetector monitoring service will be stopped\n" +
-                "2. Your PineTime watch will disconnect from this app\n" +
-                "3. The PineTime Firmware Updater will launch\n" +
-                "4. After the firmware update completes, you must manually restart the OpenSeizureDetector app to resume monitoring\n\n" +
-                "WARNING: Seizure detection will NOT be active during the firmware update.\n\n" +
-                "Do you want to continue?");
+        builder.setMessage(getString(R.string.to_update_your_pinetime_watch_firmware) +
+                getString(R.string._1_the_openseizuredetector_monitoring_service_will_be_stopped) +
+                getString(R.string._2_your_pinetime_watch_will_disconnect_from_this_app) +
+                getString(R.string._3_the_pinetime_firmware_updater_will_launch) +
+                getString(R.string._4_after_the_firmware_update_completes_you_must_manually_restart_the_openseizuredetector_app_to_resume_monitoring) +
+                getString(R.string.warning_seizure_detection_will_not_be_active_during_the_firmware_update) +
+                getString(R.string.do_you_want_to_continue));
         builder.setIcon(android.R.drawable.ic_dialog_alert);
 
         builder.setPositiveButton("Continue", (dialog, which) -> {
@@ -547,7 +547,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                         //moveTaskToBack(true);
                     } else {
                         Log.e(TAG, "Failed to get launch intent for PineTime Updater");
-                        mUtil.showToast("Error: Cannot launch PineTime Updater");
+                        mUtil.showToast(getString(R.string.error_cannot_launch_pinetime_updater));
                         mUtil.startServer();
                     }
                 } catch (Exception ex) {
@@ -567,10 +567,10 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
 
     private void showPineTimeUpdaterInstallDialog() {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-        builder.setTitle("PineTime Firmware Updater");
-        builder.setMessage("The PineTime Firmware Updater app is not installed.\n\n" +
-                "This companion app is required to update the firmware on your PineTime watch.\n\n" +
-                "Would you like to install it from the Google Play Store?");
+        builder.setTitle(R.string.pinetime_firmware_updater);
+        builder.setMessage(getString(R.string.the_pinetime_firmware_updater_app_is_not_installed) +
+                getString(R.string.this_companion_app_is_required_to_update_the_firmware_on_your_pinetime_watch) +
+                getString(R.string.would_you_like_to_install_it_from_the_google_play_store));
         builder.setIcon(android.R.drawable.ic_dialog_info);
 
         builder.setPositiveButton("Install", (dialog, which) -> {
@@ -695,7 +695,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 if (bleAddrPref != null) {
                     bleAddrPref.setSummaryProvider(preference -> {
                         String val = PreferenceManager.getDefaultSharedPreferences(getContext()).getString("BLE_Device_Addr", "");
-                        return val.isEmpty() ? "Not set" : val;
+                        return val.isEmpty() ? .getString(R.string.not_set) : val;
                     });
                 }
 
@@ -1179,7 +1179,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                         }
                         if (!anyCompatible) {
                             new AlertDialog.Builder(getContext())
-                                .setTitle("CPU Incompatibility")
+                                .setTitle(R.string.cpu_incompatibility)
                                 .setMessage("None of your installed ML models are compatible with this device's CPU. " +
                                            "You may need to download a 'generic' version of the model if available.")
                                 .setPositiveButton("OK", null)
@@ -1271,7 +1271,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             } else {
                 if (mSettingsCategory == null) {
                     mSettingsCategory = new PreferenceCategory(getPreferenceManager().getContext());
-                    mSettingsCategory.setTitle("Algorithm Settings");
+                    mSettingsCategory.setTitle(.getString(R.string.algorithm_settings));
                     screen.addPreference(mSettingsCategory);
                 }
                 updateDynamicSettings();
@@ -1401,7 +1401,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             if (installed.length() == 0) {
                 Preference empty = new Preference(getContext());
                 empty.setTitle("No models installed");
-                empty.setSummary("Click 'Add ML Model' below to download one.");
+                empty.setSummary(.getString(R.string.click_add_ml_model_below_to_download_one));
                 empty.setSelectable(false);
                 category.addPreference(empty);
             }
@@ -1439,20 +1439,20 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         private void showAvailableModelsDialog() {
             if (!mOsdUtil.isNetworkConnected()) {
                 new AlertDialog.Builder(getContext())
-                    .setTitle("No Connection")
-                    .setMessage("You must be connected to the internet to browse and download ML models.")
+                    .setTitle(R.string.no_connection)
+                    .setMessage(R.string.you_must_be_connected_to_the_internet_to_browse_and_download_ml_models)
                     .setPositiveButton("OK", null)
                     .show();
                 return;
             }
 
-            showProgressDialog("Checking Server", "Fetching available models...");
+            showProgressDialog("Checking Server", .getString(R.string.fetching_available_models));
             mMm.getMlModelIndex(arr -> {
                 dismissProgressDialog();
                 if (arr == null) {
                     new AlertDialog.Builder(getContext())
                         .setTitle("Connection Error")
-                        .setMessage("Failed to fetch the list of available models from the server. Please check your internet connection.")
+                        .setMessage(R.string.failed_to_fetch_the_list_of_available_models_from_the_server_please_check_your_internet_connection)
                         .setPositiveButton("OK", null)
                         .show();
                     return;
@@ -1469,7 +1469,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 }
 
                 new AlertDialog.Builder(getContext())
-                    .setTitle("Select Model to Download")
+                    .setTitle(R.string.select_model_to_download)
                     .setAdapter(new ArrayAdapter<String>(getContext(), android.R.layout.simple_list_item_2, android.R.id.text1, names) {
                         @Override
                         public View getView(int pos, View convert, ViewGroup parent) {
@@ -1493,8 +1493,8 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                         JSONObject selected = arr.optJSONObject(which);
                         if (!mMm.isDeviceCompatible(selected)) {
                             new AlertDialog.Builder(getContext())
-                                .setTitle("Compatibility Warning")
-                                .setMessage("This model is marked as incompatible with your device's CPU and will likely crash if used. Download anyway?")
+                                .setTitle(R.string.compatibility_warning)
+                                .setMessage(R.string.this_model_is_marked_as_incompatible_with_your_device_s_cpu_and_will_likely_crash_if_used_download_anyway)
                                 .setPositiveButton("Download", (d, w) -> downloadModel(selected))
                                 .setNegativeButton("Cancel", null)
                                 .show();
@@ -1515,7 +1515,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 getActivity().runOnUiThread(() -> {
                     if (success) {
                         refreshInstalledModelsList();
-                        Toast.makeText(getContext(), "Model installed successfully", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), R.string.model_installed_successfully, Toast.LENGTH_SHORT).show();
                     } else {
                         new AlertDialog.Builder(getContext())
                             .setTitle("Download Failed")

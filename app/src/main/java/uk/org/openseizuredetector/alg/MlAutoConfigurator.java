@@ -18,6 +18,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import uk.org.openseizuredetector.R;
 import uk.org.openseizuredetector.utils.OsdUtil;
 
 /**
@@ -43,7 +44,7 @@ public final class MlAutoConfigurator {
         MlModelManager mm = new MlModelManager(context);
 
         if (!osdUtil.isNetworkConnected()) {
-            handleNetworkIssue(context, mm, options, "No network connectivity. Please connect to download ML models.");
+            handleNetworkIssue(context, mm, options, context.getString(R.string.no_network_connectivity_please_connect_to_download_ml_models));
             return;
         }
 
