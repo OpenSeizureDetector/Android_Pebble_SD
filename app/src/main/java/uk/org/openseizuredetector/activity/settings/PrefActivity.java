@@ -1401,7 +1401,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             if (installed.length() == 0) {
                 Preference empty = new Preference(getContext());
                 empty.setTitle("No models installed");
-                empty.setSummary(.getString(R.string.click_add_ml_model_below_to_download_one));
+                empty.setSummary("Click 'Add ML Model' below to download one.");
                 empty.setSelectable(false);
                 category.addPreference(empty);
             }
