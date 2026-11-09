@@ -1446,7 +1446,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 return;
             }
 
-            showProgressDialog("Checking Server", .getString(R.string.fetching_available_models));
+            showProgressDialog("Checking Server", "Fetching available models...");
             mMm.getMlModelIndex(arr -> {
                 dismissProgressDialog();
                 if (arr == null) {
