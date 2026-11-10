@@ -458,6 +458,24 @@ public class SdDataSourceBLE2 extends SdDataSource {
      * make sure any changes to preferences are taken into account.
      */
     public void start() {
+        // Issue #355: refuse a start() delivered against an SdServer that is being - or has
+        // been - destroyed. A delayed fault-restart callback that outlived the service
+        // shutdown used to resurrect this datasource here, creating a "zombie" that kept
+        // scanning and connecting with no service or notification behind it (and holding the
+        // watch's single BLE link, so a freshly started app could never receive data).
+        // SdServer.onDestroy() drains its handler and guards the restart runnables now; this
+        // is the last line of defence, and it logs loudly so any future resurrection path
+        // identifies itself in the syslog.
+        if (mSdDataReceiver != null && mSdDataReceiver.isDestroying()) {
+            Log.e(TAG, "start() REFUSED - receiver (SdServer) is being destroyed, so this start"
+                    + " would create a zombie datasource (Issue #355)");
+            Log.e(TAG, DIAG_TAG + ": start() REFUSED - receiver isDestroying=true (Issue #355)."
+                    + " Stack trace follows so the caller can be identified.");
+            mUtil.writeMemoryLog("BLE2 start REFUSED - receiver destroying (#355)");
+            mUtil.writeExceptionLog("SdDataSourceBLE2", "start-refused-zombie-guard-#355",
+                    new Throwable("start() called while SdServer isDestroying - caller stack"));
+            return;
+        }
         super.start();
         Log.i(TAG, "start() - mBleDeviceAddr="+mBleDeviceAddr);
         mUtil.writeMemoryLog("SdDataSourceBLE2.start");
@@ -612,11 +630,19 @@ public class SdDataSourceBLE2 extends SdDataSource {
         }
     }
 
-    /** Stop the connection supervisor. */
+    /**
+     * Stop the connection supervisor.
+     *
+     * Drains the WHOLE handler rather than only removing mSupervisorTick: the adapter-ON
+     * recovery lambda posted by onBluetoothAdapterStateChanged() also lives on this handler
+     * and is NOT the tick runnable, so it previously survived teardown. It self-gates on the
+     * shutdown flags, but Issue #355 showed that a start() resurrecting the datasource clears
+     * those flags, so nothing posted here should be allowed to outlive a stop().
+     */
     private void stopSupervisor() {
         try {
             if (mSupervisorHandler != null) {
-                mSupervisorHandler.removeCallbacks(mSupervisorTick);
+                mSupervisorHandler.removeCallbacksAndMessages(null);
             }
         } catch (Exception e) {
             Log.w(TAG, DIAG_TAG + ": could not stop supervisor - " + e.getMessage());

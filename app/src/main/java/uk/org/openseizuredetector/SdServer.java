@@ -150,7 +150,7 @@ public class SdServer extends Service implements SdDataReceiver {
     // Android 13+ allows users to dismiss foreground service notifications. Re-post silently
     // at this interval so the notification reappears within one data cycle of being dismissed.
     private static final long NOTIFICATION_REPOST_INTERVAL_MS = 15_000L; // 15 seconds
-    private boolean mIsDestroying = false;  // Flag to prevent actions during shutdown
+    private volatile boolean mIsDestroying = false;  // Flag to prevent actions during shutdown
     private SdWebServer webServer = null;
     private final static String TAG = "SdServer";
     //private Timer dataLogTimer = null;
@@ -720,6 +720,16 @@ public class SdServer extends Service implements SdDataReceiver {
         return START_STICKY;
     }
 
+    /**
+     * Issue #355: expose the shutdown flag (SdDataReceiver interface) so datasources can
+     * detect - and refuse - a "zombie" start() delivered after the service has been
+     * destroyed by a delayed restart callback.
+     */
+    @Override
+    public boolean isDestroying() {
+        return mIsDestroying;
+    }
+
     @Override
     public void onDestroy() {
         Log.i(TAG, "SdServer.onDestroy()");
@@ -746,6 +756,17 @@ public class SdServer extends Service implements SdDataReceiver {
         // Set flag to prevent notifications and other actions during shutdown
         mIsDestroying = true;
 
+        // Issue #355: remove EVERY callback still queued on the main handler. The fault
+        // recovery path (onSdDataFault) posts anonymous stop()/start() runnables up to 4s
+        // into the future, and they previously survived this method: a queued start()
+        // could fire after the service was destroyed, resurrecting the datasource as a
+        // "zombie" that kept scanning and connecting with no service or notification
+        // behind it, killable only by a force-stop of the app.
+        if (mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
+            Log.i(TAG, "onDestroy(): removed all pending main-handler callbacks (Issue #355)");
+        }
+
         // release the wake lock to allow CPU to sleep and reduce
         // battery drain.
         if (mWakeLock != null) {
@@ -766,10 +787,13 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.d(TAG, "stopping mSdDataSource");
             Log.i(TAG, "SdServer.onDestroy() - stopping mSdDataSource");
 
-            // Stop datasource in a separate thread with timeout to prevent blocking
+            // Stop datasource in a separate thread with timeout to prevent blocking.
+            // Captured in a final local so the field can safely be nulled below (Issue #355)
+            // even if this thread is still running after the join timeout.
+            final SdDataSource dsToStop = mSdDataSource;
             final Thread stopThread = new Thread(() -> {
                 try {
-                    mSdDataSource.stop();
+                    dsToStop.stop();
                     Log.d(TAG, "onDestroy(): datasource stopped successfully");
                 } catch (Exception e) {
                     Log.e(TAG, "onDestroy(): Error stopping datasource: " + e.getMessage());
@@ -789,6 +813,11 @@ public class SdServer extends Service implements SdDataReceiver {
             } catch (InterruptedException e) {
                 Log.w(TAG, "onDestroy(): interrupted while waiting for datasource to stop");
             }
+
+            // Issue #355: drop the reference now that it has been stopped, so any delayed
+            // callback that somehow still fires and null-checks mSdDataSource (e.g. the
+            // fault-restart runnables) becomes a harmless no-op.
+            mSdDataSource = null;
         } else {
             Log.e(TAG, "ERROR - mSdDataSource is null - why????");
             Log.i(TAG, "SdServer.onDestroy() - mSdDataSource is null - why???");
@@ -1634,8 +1663,20 @@ public class SdServer extends Service implements SdDataReceiver {
                 mDataSourceRestartInProgress = true;
                 mLastDatasourceRestartMillis = System.currentTimeMillis();
 
+                // Issue #355: both runnables below check mIsDestroying when they fire.
+                // onDestroy() also drains mHandler now, but these guards make sure a
+                // queued restart can never resurrect the datasource against a destroyed
+                // service even if a runnable does somehow run - that resurrection created
+                // a "zombie" BLE2 datasource which kept scanning and connecting with no
+                // service or notification behind it, killable only by a force-stop.
                 mHandler.postDelayed(new Runnable() {
                     public void run() {
+                        if (mIsDestroying) {
+                            Log.w(TAG, "FAULT: datasource restart CANCELLED - service is being"
+                                    + " destroyed (Issue #355)");
+                            mDataSourceRestartInProgress = false;
+                            return;
+                        }
                         try {
                             Log.w(TAG, "FAULT: Stopping data source for restart");
                             if (mSdDataSource != null) {
@@ -1648,6 +1689,11 @@ public class SdServer extends Service implements SdDataReceiver {
                         mHandler.postDelayed(new Runnable() {
                             public void run() {
                                 try {
+                                    if (mIsDestroying) {
+                                        Log.w(TAG, "FAULT: datasource re-start CANCELLED - service"
+                                                + " is being destroyed (Issue #355)");
+                                        return;
+                                    }
                                     Log.w(TAG, "FAULT: Restarting data source");
                                     if (mSdDataSource != null) {
                                         mSdDataSource.start();
@@ -2129,7 +2175,11 @@ public class SdServer extends Service implements SdDataReceiver {
         mSdData.alarmStanding = false;
         mSdData.fallAlarmStanding = false;
         mSmsEpisodeActive = false;  // #249 episode over - next alarm should send a fresh SMS
-        mSdDataSource.acceptAlarm();
+        if (mSdDataSource != null) {
+            mSdDataSource.acceptAlarm();
+        } else {
+            Log.w(TAG, "acceptAlarm() - mSdDataSource is null - not forwarding (Issue #355)");
+        }
         stopLatchTimer();
     }
 
