@@ -2334,6 +2334,18 @@ public class SdServer extends Service implements SdDataReceiver {
                 mPhoneBatteryAlarmThreshold = 5;
             }
 
+
+            // Initialise the cancel audible (mute) period from shared preferences (Issue #357)
+            try {
+                String cancelAudiblePeriodStr = SP.getString("CancelAudiblePeriod", "10");
+                mCancelAudiblePeriod = Integer.parseInt(cancelAudiblePeriodStr);
+                Log.d(TAG, "updatePrefs() - mCancelAudiblePeriod = " + mCancelAudiblePeriod);
+            } catch (Exception ex) {
+                Log.w(TAG, "updatePrefs() - Problem with CancelAudiblePeriod preference, using default 10 minutes");
+                mCancelAudiblePeriod = 10;
+                mUtil.showToast(getString(R.string.problem_parsing_preferences));
+            }
+
             mAudibleAlarm = SP.getBoolean("AudibleAlarm", true);
             Log.d(TAG, "updatePrefs() - mAudibleAlarm = " + mAudibleAlarm);
             mVibrateOnAlarm = SP.getBoolean("VibrateOnAlarm", false);
@@ -2432,6 +2444,7 @@ public class SdServer extends Service implements SdDataReceiver {
             Log.d(TAG, "mDataRetentionPeriod=" + mDataRetentionPeriod);
             Log.d(TAG, "mRemoteLogPeriod=" + mRemoteLogPeriod);
 
+            // FIXME - I don't think this is used, so could be deleted in the future.
             mOSDUrl = SP.getString("OSDUrl", "SET_FROM_XML");
             Log.d(TAG, "updatePrefs() - mOSDUrl = " + mOSDUrl);
 
