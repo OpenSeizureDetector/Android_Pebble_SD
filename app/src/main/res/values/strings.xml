@@ -977,4 +977,6 @@
     <string name="vibrate_on_warning_summary">Also vibrate the phone (one long buzz) when a warning sounds.</string>
     <string name="vibrate_on_fault_title">Vibrate on System Fault?</string>
     <string name="vibrate_on_fault_summary">Also vibrate the phone (one short buzz) when a system fault warning sounds.</string>
+    <string name="cancel_audible_period_title">Mute Alarms Period</string>
+    <string name="cancel_audible_period_summary">The time (in minutes) for which alarms are muted to prevent alarms sounding after the \'Mute Alarms\' button is pressed.</string>
 </resources>

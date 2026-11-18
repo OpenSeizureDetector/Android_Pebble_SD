@@ -1,5 +1,8 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.1.4
+    - Added option to select the mute alarms period (previous versions were hard coded at 10 minutes) - defaults to 10 minutes if invalid value is entered.
+    - Fixed exception during restart.
 	V5.1.3
 	- Added optional vibration alerts (Issue #338)
 	- Improved web page interface
