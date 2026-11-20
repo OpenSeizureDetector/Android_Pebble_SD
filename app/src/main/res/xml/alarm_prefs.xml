@@ -82,11 +82,6 @@
             android:title="@string/mp3_fault_sound_title"
             android:summary="@string/mp3_fault_sound_summary_default" />
 
-        <EditTextPreference
-            android:key="CancelAudiblePeriod"
-            android:title="@string/cancel_audible_period_title"
-            android:summary="@string/cancel_audible_period_summary"
-            android:defaultValue="10" />
 
     </PreferenceCategory>
 
@@ -149,6 +144,12 @@
             android:key="ShowMuteAlarmsButton"
             android:summary="@string/show_mute_alarms_button_summary"
             android:title="@string/show_mute_alarms_button_title" />
+        <EditTextPreference
+            android:key="CancelAudiblePeriod"
+            android:title="@string/cancel_audible_period_title"
+            android:summary="@string/cancel_audible_period_summary"
+            android:defaultValue="10" />
+
     </PreferenceCategory>
 
     <!--

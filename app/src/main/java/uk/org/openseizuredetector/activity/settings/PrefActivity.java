@@ -818,6 +818,9 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
         // "Show Raise Alarm Button" checkbox - hidden in Network mode (value is kept)
         private static final String KEY_SHOW_RAISE_ALARM_BUTTON = "ShowRaiseAlarmButton";
 
+        private static final String KEY_SHOW_MUTE_ALARMS_BUTTON = "ShowMuteAlarmsButton";
+        private static final String KEY_CANCEL_AUDIBLE_PERIOD = "CancelAudiblePeriod";
+
         // Request-code constants used with startActivityForResult (legacy path, but we use
         // ActivityResultLauncher instead — these are kept as documentation only).
         private ActivityResultLauncher<Intent> mPickerWarning;
@@ -858,6 +861,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             refreshAudibleFaultSubPrefVisibility();
             refreshSmsCategoryVisibility();
             refreshRaiseAlarmButtonVisibility();
+            refreshCancelAudiblePeriodVisibility();
             // Wire click listeners for the three file-picker prefs
             // #246: Warning picker disabled - see onAttach() for details.
             // wirePickerPref(KEY_WARNING_URI, mPickerWarning);
@@ -898,6 +902,10 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
                 refreshRaiseAlarmButtonVisibility();
             }
 
+            if (KEY_SHOW_MUTE_ALARMS_BUTTON.equals(key)) {
+                refreshCancelAudiblePeriodVisibility();
+            }
+
             // Forward critical changes to parent activity so it can orchestrate a restart
             if ("SMSAlarm".equals(key)) {
                 if (getActivity() instanceof PrefActivity) {
@@ -934,6 +942,15 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             boolean audibleFault = prefs.getBoolean(KEY_AUDIBLE_FAULT_WARNING, true);
             setPrefVisible(KEY_VIBRATE_ON_FAULT, audibleFault);
         }
+
+        /** Show/hide "Mute Alarms Period" button based on the show Mute Alarms button checkbox. */
+        private void refreshCancelAudiblePeriodVisibility() {
+            SharedPreferences prefs =
+                    PreferenceManager.getDefaultSharedPreferences(requireContext());
+            boolean showMuteAlarmsButton = prefs.getBoolean(KEY_SHOW_MUTE_ALARMS_BUTTON, true);
+            setPrefVisible(KEY_CANCEL_AUDIBLE_PERIOD, showMuteAlarmsButton);
+        }
+
 
         /**
          * #295 - Hide the whole SMS settings category when the Network data source is selected (SMS
