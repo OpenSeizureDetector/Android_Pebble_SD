@@ -49,6 +49,7 @@ import androidx.preference.PreferenceManager;
 import uk.org.openseizuredetector.data.logging.Log;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
@@ -86,6 +87,7 @@ public class OsdUtil {
     private static String TAG = "OsdUtil";
     private boolean mPermissionsRequested = false;
     private boolean mSMSPermissionsRequested = false;
+    private AlertDialog mShutdownDialog;
 
     // File-based persistent logger (static is safe because it stores application context only)
     // PersistentFileLogger internally calls context.getApplicationContext() to avoid leaks
@@ -763,6 +765,19 @@ public class OsdUtil {
         return mFileLogger;
     }
 
+    private void dismissShutdownDialog() {
+        if (mShutdownDialog != null) {
+            try {
+                if (mShutdownDialog.isShowing()) {
+                    mShutdownDialog.dismiss();
+                }
+            } catch (Exception ignored) {
+                // The activity may already have destroyed its window.
+            }
+            mShutdownDialog = null;
+        }
+    }
+
     /**
      * Orchestrates a clean shutdown of the background service and optionally restarts the app.
      * Centralizing this here prevents race conditions between activities attempting to restart
@@ -775,19 +790,23 @@ public class OsdUtil {
      * @param message Optional message to display via Toast.
      */
     public void shutdownApp(Activity caller, boolean restart, boolean setStoppedFlag, String message) {
-        if (caller == null || caller.isDestroyed()) return;
+        if (caller == null || caller.isDestroyed() || caller.isFinishing()) return;
 
-        if (message != null && !message.isEmpty() && !caller.isFinishing()) {
-            // Show a non-cancelable dialog so the user knows the app is working on the shutdown/restart
+        if (message != null && !message.isEmpty()) {
+            // Show a non-cancelable dialog so the user knows the app is working on the shutdown/restart.
+            // Keep a reference and dismiss it before the activity is destroyed: a dialog attached to
+            // a finishing Activity cannot survive as a valid window and produces WindowLeaked.
             String title = restart ? "Restarting" : "Shutting Down";
             try {
-                new MaterialAlertDialogBuilder(caller)
+                dismissShutdownDialog();
+                mShutdownDialog = new MaterialAlertDialogBuilder(caller)
                         .setTitle(title)
                         .setMessage(message)
                         .setCancelable(false)
-                        .show();
+                        .create();
+                mShutdownDialog.show();
             } catch (Exception e) {
-                // Fallback to Toast if context is invalid for dialog
+                mShutdownDialog = null;
                 showToast(message);
             }
         }
@@ -801,11 +820,16 @@ public class OsdUtil {
         // To ensure any dialog renders before the service shutdown potentially blocks
         // the UI thread, we perform the actual shutdown after a short delay (200ms).
         mHandler.postDelayed(() -> {
+            // Dismiss the status window before stopping the service or destroying the caller.
+            dismissShutdownDialog();
+
             // 2. Stop the background service
             stopServer();
 
             // 3. Delay the final action to allow SdServer.onDestroy() to release native resources
             mHandler.postDelayed(() -> {
+                dismissShutdownDialog();
+
                 if (restart) {
                     Log.i(TAG, "shutdownApp: Unlocking service and initiating full app restart");
                     prefs.edit().putBoolean("user_stopped_service", false).apply();
