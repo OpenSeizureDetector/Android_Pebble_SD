@@ -255,7 +255,7 @@ public class OnboardingAlgorithmsFragment extends Fragment {
         new MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.osd_with_flap_detection)
             .setMessage(getString(R.string.default_settings_for_osd_flap_detection_applied) +
-                       "You can customize these settings in the Settings menu when the app starts.")
+                       getString(R.string.you_can_customize_these_settings_in_the_settings_menu_when_the_app_starts))
             .setPositiveButton("OK", (d, w) -> {
                 if (mNextButton != null) {
                     mNextButton.performClick();

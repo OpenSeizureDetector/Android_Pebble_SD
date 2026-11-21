@@ -219,8 +219,8 @@ public class FragmentMlAlg extends FragmentOsdBaseClass {
             int probThresholdColor = getPrimaryProbabilityColor(sdData);
 
             // Draw threshold overlays first so measured traces remain visually dominant.
-            historyChart.addSeries(createThresholdSeries(probThresholdPct, probThresholdColor, "Prob Thresh"));
-            historyChart.addSeries(createThresholdSeries(stdThresholdPct, STDDEV_COLOR, "Std Thresh"));
+            historyChart.addSeries(createThresholdSeries(probThresholdPct, probThresholdColor, getString(R.string.prob_thresh)));
+            historyChart.addSeries(createThresholdSeries(stdThresholdPct, STDDEV_COLOR, "Std T hresh"));
 
             // 1. Draw Acceleration StdDev as a faint background line
             double[] accelStdDevData = mConnection.mSdServer.mSdDataHistory.mAccelMagStdDevHistBuf.getVals();

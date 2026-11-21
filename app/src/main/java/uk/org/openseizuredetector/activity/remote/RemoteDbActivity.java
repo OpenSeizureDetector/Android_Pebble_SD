@@ -87,7 +87,7 @@ public class RemoteDbActivity extends ServiceConnectedActivity {
     private HashMap<String, String> getAuthHeaders() {
         HashMap<String, String> headersMap = new HashMap<>();
         String authToken = getAuthToken();
-        headersMap.put("Authorization", "Token " + authToken);
+        headersMap.put(getString(R.string.authorization), "Token " + authToken);
         return (headersMap);
     }
 
@@ -115,15 +115,15 @@ public class RemoteDbActivity extends ServiceConnectedActivity {
         btn = (Button) findViewById(R.id.auth_button);
         if (mLm != null && mLm.mWac != null) {
             if (mLm.mWac.isLoggedIn()) {
-                tv.setText("Authenticated");
-                btn.setText("Log Out");
+                tv.setText(R.string.authenticated);
+                btn.setText(R.string.log_out);
             } else {
                 tv.setText("NOT AUTHENTICATED");
-                btn.setText("Log In");
+                btn.setText(R.string.log_in);
             }
         } else {
             Log.w(TAG, "updateUi() - mLm or mWac is null, skipping auth status update");
-            tv.setText("NOT CONNECTED");
+            tv.setText(R.string.not_connected);
             btn.setText("Log In");
         }
     }
