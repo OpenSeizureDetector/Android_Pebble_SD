@@ -3,6 +3,7 @@
     V5.1.5
     - Added additional string translations.
     - Fixed issue with PineTime (BLE2) data source not always shuttindg down cleanly.
+    - Added a fix for Issue #362 to improve shutdown reliability of the Network Datasource.
     V5.1.4
     - Added option to select the mute alarms period (previous versions were hard coded at 10 minutes) - defaults to 10 minutes if invalid value is entered.
     - Fixed exception during restart.

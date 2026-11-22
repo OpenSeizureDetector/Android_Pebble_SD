@@ -72,11 +72,13 @@ public class SdDataSourceNetwork extends SdDataSource {
         Log.i(TAG, "stop()");
         // Stop the data update timer
         if (mDataUpdateTimer != null) {
-            Log.v(TAG, "stop(): cancelling status timer");
+            Log.v(TAG, "stop(): cancelling data update timer");
             mDataUpdateTimer.cancel();
             mDataUpdateTimer.purge();
             mDataUpdateTimer = null;
         }
+        // Call parent stop to cancel ALL parent class timers (mStatusTimer, mSettingsTimer, mFaultCheckTimer)
+        super.stop();
         // Mark as stopped so background tasks won't post results
         setRunning(false);
 
