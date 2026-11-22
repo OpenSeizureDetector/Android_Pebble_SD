@@ -1288,7 +1288,7 @@ public class PrefActivity extends AppCompatActivity implements SharedPreferences
             } else {
                 if (mSettingsCategory == null) {
                     mSettingsCategory = new PreferenceCategory(getPreferenceManager().getContext());
-                    mSettingsCategory.setTitle("Algorithm settings"));
+                    mSettingsCategory.setTitle("Algorithm settings");
                     screen.addPreference(mSettingsCategory);
                 }
                 updateDynamicSettings();
