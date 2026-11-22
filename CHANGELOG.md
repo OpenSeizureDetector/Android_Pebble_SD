@@ -1,5 +1,8 @@
 	OpenSeizureDetector Android App - Change Log
 	============================================
+    V5.1.5
+    - Added additional string translations.
+    - Fixed issue with PineTime (BLE2) data source not always shuttindg down cleanly.
     V5.1.4
     - Added option to select the mute alarms period (previous versions were hard coded at 10 minutes) - defaults to 10 minutes if invalid value is entered.
     - Fixed exception during restart.
