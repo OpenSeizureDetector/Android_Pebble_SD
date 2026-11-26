@@ -977,4 +977,8 @@
     <string name="vibrate_on_warning_summary">Also vibrate the phone (one long buzz) when a warning sounds.</string>
     <string name="vibrate_on_fault_title">Vibrate on System Fault?</string>
     <string name="vibrate_on_fault_summary">Also vibrate the phone (one short buzz) when a system fault warning sounds.</string>
+    <string name="pinetime_fw_update_title">Update Firmware?</string>
+    <string name="pinetime_fw_update_message">A new watch firmware (version %1$s) is available. Your watch has version %2$s.</string>
+    <string name="pinetime_fw_update_now">Update firmware</string>
+    <string name="pinetime_fw_not_now">Not Now</string>
 </resources>

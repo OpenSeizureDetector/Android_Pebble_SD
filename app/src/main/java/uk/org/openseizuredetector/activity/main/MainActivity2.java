@@ -100,10 +100,26 @@ public class MainActivity2 extends AppCompatActivity {
     final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
     private Handler mHandler = new Handler(Looper.getMainLooper());
 
+    // --- PineTime "Update Firmware?" prompt ---
+    private final PineTimeFirmwareChecker mFwChecker = new PineTimeFirmwareChecker();
+    private int mFwCheckAttempts = 0;
+    private final Runnable mFwCheckRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (isFinishing() || isDestroyed()) return;
+            boolean done = mFwChecker.checkAndPrompt(MainActivity2.this, getWatchFirmwareVersion(),
+                    MainActivity2.this::startPineTimeUpdaterForUpdate);
+            // The watch may take a while to connect and report its version: retry for about 2 minutes.
+            if (!done && ++mFwCheckAttempts < 24) mHandler.postDelayed(this, 5000);
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
+        // Screen rotation etc. re-creates the activity: do not ask again. A real app start does ask.
+        if (savedInstanceState != null) mFwChecker.markDone();
 
         mSectionsScroll = findViewById(R.id.sections_scroll);
         mSectionsContainer = findViewById(R.id.sections_container);
@@ -260,6 +276,7 @@ public class MainActivity2 extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         Log.i(TAG, "onPause()");
+        mHandler.removeCallbacks(mFwCheckRunnable);
         if (mSharedPrefs != null && mModePreferenceListener != null) {
             mSharedPrefs.unregisterOnSharedPreferenceChangeListener(mModePreferenceListener);
         }
@@ -330,6 +347,12 @@ public class MainActivity2 extends AppCompatActivity {
         // Force the screen to stay on when the app is running
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        // PineTime firmware check (skipped inside the checker when "Developer Mode" is checked)
+        if (!mFwChecker.isDone()) {
+            mFwCheckAttempts = 0;
+            mHandler.removeCallbacks(mFwCheckRunnable);
+            mHandler.postDelayed(mFwCheckRunnable, 3000);
+        }
     }
 
 
@@ -605,6 +628,50 @@ public class MainActivity2 extends AppCompatActivity {
         mUtil.stopServer();
     }
 
+
+    /** Firmware version the watch reported (mSdData.watchSdVersion), or null if not known yet. */
+    private String getWatchFirmwareVersion() {
+        if (mConnection != null && mConnection.mBound && mConnection.mSdServer != null
+                && mConnection.mSdServer.mSdData != null) {
+            return mConnection.mSdServer.mSdData.watchSdVersion;
+        }
+        return null;
+    }
+
+    /** User tapped "Update firmware" in the prompt: stop the server and start the PineTime Updater. */
+    private void startPineTimeUpdaterForUpdate(final PineTimeFirmwareChecker.Firmware rec) {
+        final String pkg = getString(R.string.pinetime_updater_package);
+        try {
+            getPackageManager().getPackageInfo(pkg, 0);
+        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            showPineTimeUpdaterInstallDialog();          // existing dialog -> Play Store
+            return;
+        }
+        final String mac = mSharedPrefs.getString("BLE_Device_Addr", "");
+        final String installed = getWatchFirmwareVersion();
+        if (mConnection.mBound) {
+            mUtil.unbindFromServer(getApplicationContext(), mConnection);
+        }
+        mUtil.stopServer();                              // the updater needs the BLE connection to the watch
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Intent i = getPackageManager().getLaunchIntentForPackage(pkg);
+                if (i == null) {
+                    mUtil.showToast(getString(R.string.cannot_launch_pinetime_updater));
+                    mUtil.startServer();
+                    return;
+                }
+                // Same as OnboardingDataSourceConfigFragment: stay in OSD's task
+                i.setFlags(i.getFlags() & ~Intent.FLAG_ACTIVITY_NEW_TASK);
+                i.putExtra(PineTimeFirmwareChecker.EXTRA_AUTO_SELECT, true);
+                i.putExtra(PineTimeFirmwareChecker.EXTRA_MAC_ADDRESS, mac);
+                i.putExtra(PineTimeFirmwareChecker.EXTRA_FIRMWARE_VERSION, rec.version);
+                i.putExtra(PineTimeFirmwareChecker.EXTRA_INSTALLED_VERSION, installed);
+                startActivity(i);
+            }
+        }, 500);
+    }
 
     private void showAbout() {
         Log.i(TAG, "MainActivity.showAbout()");
