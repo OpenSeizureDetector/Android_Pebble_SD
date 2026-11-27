@@ -2179,6 +2179,13 @@ public class SdServer extends Service implements SdDataReceiver {
     protected void startWebServer() {
         Log.i(TAG, "startWebServer()");
         Log.i(TAG, "SdServer.Start Web Server.");
+        // Team decision: the web server is never available with the Network
+        // data source, and there is deliberately no preference to override this.
+        if (isWebServerBlocked()) {
+            Log.i(TAG, "startWebServer(): Network data source - web server disabled");
+            stopWebServer();   // in case one is still running from a previous data source
+            return;
+        }
         if (webServer == null) {
             webServer = new SdWebServer(getApplicationContext(), mSdData, this);
             try {
@@ -2202,20 +2209,19 @@ public class SdServer extends Service implements SdDataReceiver {
         Log.i(TAG, "SdServer.stopWebServer()");
         if (webServer != null) {
             webServer.stop();
-            if (webServer == null) {
-                Log.i(TAG, "stopWebServer() - server null - server died ok");
-                Log.v(TAG, "stopWebServer() - server null - server died ok");
+            if (webServer.isAlive()) {
+                Log.w(TAG, "stopWebServer() - server still alive???");
             } else {
-                if (webServer.isAlive()) {
-                    Log.w(TAG, "stopWebServer() - server still alive???");
-                    Log.i(TAG, "stopWebServer() - server still alive???");
-                } else {
-                    Log.i(TAG, "stopWebServer() - server died ok");
-                    Log.v(TAG, "stopWebServer() - server died ok");
-                }
+                Log.i(TAG, "stopWebServer() - server died ok");
             }
-            //webServer = null;
+            // A stopped NanoHTTPD instance cannot be restarted, so drop the reference.
+            webServer = null;
         }
+    }
+
+    /** The web server must never run with the "Network" data source. */
+    private boolean isWebServerBlocked() {
+        return "Network".equals(mSdDataSourceName);
     }
 
     private class NetworkBroadcastReceiver extends BroadcastReceiver {
@@ -2301,6 +2307,11 @@ public class SdServer extends Service implements SdDataReceiver {
         try {
             mSdDataSourceName = SP.getString("DataSource", "SET_FROM_XML");
             Log.d(TAG, "updatePrefs() - DataSource = " + mSdDataSourceName);
+            // If the data source was changed to Network while running, shut the web server down now.
+            if (isWebServerBlocked() && webServer != null) {
+                Log.i(TAG, "updatePrefs() - Network data source: stopping web server");
+                stopWebServer();
+            }
             mLatchAlarms = SP.getBoolean("LatchAlarms", false);
             Log.d(TAG, "updatePrefs() - mLatchAlarms = " + mLatchAlarms);
             // Parse the LatchAlarmPeriod setting.
