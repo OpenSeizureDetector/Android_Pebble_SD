@@ -108,7 +108,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
     public static String CHAR_OSD_BATT_DATA = "000085e9-0002-1000-8000-00805f9b34fb";
     public static String CHAR_OSD_WATCH_ID = "000085e9-0003-1000-8000-00805f9b34fb";
     public static String CHAR_OSD_WATCH_FW = "000085e9-0004-1000-8000-00805f9b34fb";
-    /** True once the OSD firmware version characteristic has been read on this connection, so the
+    /** True once the OSD firmware version characteristic have been read on this connection, so the
      *  generic Device Information firmware revision (0x2A26) can no longer overwrite watchSdVersion. */
     private volatile boolean mOsdFwVersionReceived = false;
     public static String CHAR_OSD_ACC_FMT = "000085e9-0005-1000-8000-00805f9b34fb";

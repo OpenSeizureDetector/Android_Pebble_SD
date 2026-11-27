@@ -25,7 +25,7 @@ import uk.org.openseizuredetector.data.logging.Log;
  * Rules (as specified):
  *  1. "Developer Mode" checked  -> no check, no prompt.
  *  2. Otherwise open https://osdapi.org.uk/static/pineTimeSdFw/index.json, read "recommendedFw" (an index),
- *     look it up in "releases" and read that entry's "version".
+ *     look into "releases" and read that entry's "version".
  *  3. If that version is higher than the version installed on the watch (watchSdVersion) -> prompt.
  *  4. The user can only choose "Update firmware" or "Not Now". "Not Now" skips the update; the prompt
  *     comes back the next time the app is started.

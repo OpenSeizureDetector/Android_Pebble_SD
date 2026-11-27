@@ -981,4 +981,9 @@
     <string name="pinetime_fw_update_message">A new watch firmware (version %1$s) is available. Your watch has version %2$s.</string>
     <string name="pinetime_fw_update_now">Update firmware</string>
     <string name="pinetime_fw_not_now">Not Now</string>
+    <!-- Firmware update toast -->
+    <string name="pinetime_fw_update_title">Update Firmware?</string>
+    <string name="pinetime_fw_update_message">A new watch firmware (version %1$s) is available. Your watch has version %2$s.</string>
+    <string name="pinetime_fw_update_now">Update firmware</string>
+    <string name="pinetime_fw_not_now">Not Now</string>
 </resources>

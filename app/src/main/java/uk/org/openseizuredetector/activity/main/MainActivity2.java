@@ -100,7 +100,7 @@ public class MainActivity2 extends AppCompatActivity {
     final Handler serverStatusHandler = new Handler(Looper.getMainLooper());
     private Handler mHandler = new Handler(Looper.getMainLooper());
 
-    // --- PineTime "Update Firmware?" prompt ---
+    // -- PineTime "Update Firmware?" prompt --
     private final PineTimeFirmwareChecker mFwChecker = new PineTimeFirmwareChecker();
     private int mFwCheckAttempts = 0;
     private final Runnable mFwCheckRunnable = new Runnable() {
