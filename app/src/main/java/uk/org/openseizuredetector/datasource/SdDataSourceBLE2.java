@@ -108,6 +108,9 @@ public class SdDataSourceBLE2 extends SdDataSource {
     public static String CHAR_OSD_BATT_DATA = "000085e9-0002-1000-8000-00805f9b34fb";
     public static String CHAR_OSD_WATCH_ID = "000085e9-0003-1000-8000-00805f9b34fb";
     public static String CHAR_OSD_WATCH_FW = "000085e9-0004-1000-8000-00805f9b34fb";
+    /** True once the OSD firmware version characteristic have been read on this connection, so the
+     *  generic Device Information firmware revision (0x2A26) can no longer overwrite watchSdVersion. */
+    private volatile boolean mOsdFwVersionReceived = false;
     public static String CHAR_OSD_ACC_FMT = "000085e9-0005-1000-8000-00805f9b34fb";
     // Valid values are 0: 8 bit vector magnitude scaled so 1g=44
     public final static int ACC_FMT_8BIT = 0;
@@ -920,6 +923,7 @@ public class SdDataSourceBLE2 extends SdDataSource {
             mUtil.writeMemoryLog("BLE2 connected #" + connected
                     + " attemptMs=" + attemptMs + " gen=" + mManagerGeneration);
             setConnectionState(ConnectionState.CONNECTED, "onConnectedPeripheral");
+            mOsdFwVersionReceived = false;   // re-read after every (re)connect
             mConnectedSinceMillis = System.currentTimeMillis();
             mReconnectionAttempt = 0; // Reset reconnection counter on successful connection
             // Cancel any retry that was posted while we were trying to connect (D7).
@@ -1352,7 +1356,13 @@ public class SdDataSourceBLE2 extends SdDataSource {
                 byte[] rawDataBytes = value;
                 String watchFwVer = new String(rawDataBytes, StandardCharsets.UTF_8);
                 Log.i(TAG, "onCharacteristicUpdate(): Received Watch Firmware Version: " + watchFwVer);
-                mSdData.watchSdVersion = watchFwVer;
+                if (charUuidStr.equals(CHAR_OSD_WATCH_FW)) {
+                    mOsdFwVersionReceived = true;
+                    mSdData.watchSdVersion = watchFwVer;
+                } else if (!mOsdFwVersionReceived) {
+                    // Generic firmware revision: only used when the OSD characteristic is absent
+                    mSdData.watchSdVersion = watchFwVer;
+                }
             } else {
                 byte[] rawDataBytes = value;
                 String strVal = new String(rawDataBytes, StandardCharsets.UTF_8);
